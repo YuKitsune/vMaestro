@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<BaseOutputPath>$(USERPROFILE)\Documents\vatSys Files\Profiles\Australia\Plugins\TFMS</BaseOutputPath>
+		<LangVersion>10.0</LangVersion>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<Reference Include="System.ComponentModel.Composition" />
+		<Reference Include="vatSys">
+			<HintPath>E:\VATSIM\vatSys\bin\vatSys.exe</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="VATSYSControls">
+			<HintPath>E:\VATSIM\vatSys\bin\VATSYSControls.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="System.Windows.Forms" />
+	</ItemGroup>
+
+</Project>
