@@ -11,11 +11,11 @@
 	<ItemGroup>
 		<Reference Include="System.ComponentModel.Composition" />
 		<Reference Include="vatSys">
-			<HintPath>E:\VATSIM\vatSys\bin\vatSys.exe</HintPath>
+			<HintPath>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)\bin\vatSys.exe</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="VATSYSControls">
-			<HintPath>E:\VATSIM\vatSys\bin\VATSYSControls.dll</HintPath>
+			<HintPath>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)\bin\VATSYSControls.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="System.Windows.Forms" />
