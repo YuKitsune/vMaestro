@@ -1,0 +1,91 @@
+﻿<UserControl x:Class="TFMS.Wpf.TFMSView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TFMS.Wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="800"
+             d:DesignWidth="600"
+             d:Background="#A0AAAA">
+    <StackPanel Orientation="Vertical">
+        
+        <!-- Toolbar -->
+        <local:BeveledBorder Gurth="2" BevelType="Raised">
+            <local:BeveledBorder Gurth="2" BevelType="Sunken">
+                <Grid Height="40" Margin="1">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="75" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="75" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="75" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="75" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Sector ID -->
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center">Sector ID</TextBlock>
+
+                    <local:Separator Grid.Column="1" Width="2" Orientation="Horizontal"/>
+
+                    <!-- Aerodrome Selector -->
+                    <ComboBox Grid.Column="2" Padding="5" ItemsSource="{Binding Path=AvailableAerodromes}" SelectedItem="{Binding Path=SelectedAerodrome}" DisplayMemberPath="Code"/>
+
+                    <local:Separator Grid.Column="3" Width="2" Orientation="Horizontal"/>
+
+                    <!-- Runway Selector -->
+                    <ComboBox Grid.Column="4" Padding="5" ItemsSource="{Binding Path=AvailableRunwayConfigurations}" SelectedItem="{Binding Path=SelectedRunwayConfiguration}" DisplayMemberPath="Name"/>
+
+                    <local:Separator Grid.Column="5" Width="2" Orientation="Horizontal"/>
+
+                    <!-- Runway Intervals -->
+                    <local:BeveledBorder Grid.Column="6" Gurth="1" BevelType="Raised">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock>
+                                34L:90s - 34R:90s
+                            </TextBlock>
+                            <TextBlock>
+                                16L:90s - 16R:90s
+                            </TextBlock>
+                        </StackPanel>
+                    </local:BeveledBorder>
+
+                    <local:Separator Grid.Column="7" Width="2" Orientation="Horizontal"/>
+
+                    <!-- Setup Button -->
+                    <Button Grid.Column="8">
+                        <TextBlock>Setup</TextBlock>
+                    </Button>
+                </Grid>
+            </local:BeveledBorder>
+        </local:BeveledBorder>
+
+        <!-- Tab Bar -->
+        <StackPanel Orientation="Horizontal">
+            <Button>
+                <TextBlock>DEPS</TextBlock>
+            </Button>
+            <Button>
+                <TextBlock>DESQ</TextBlock>
+            </Button>
+            <Button>
+                <TextBlock>GUN</TextBlock>
+            </Button>
+            <Button>
+                <TextBlock>MDE</TextBlock>
+            </Button>
+            <Button>
+                <TextBlock>OCN</TextBlock>
+            </Button>
+            <Button>
+                <TextBlock>RWY</TextBlock>
+            </Button>
+        </StackPanel>
+
+        <!-- Ladder -->
+    </StackPanel>
+</UserControl>

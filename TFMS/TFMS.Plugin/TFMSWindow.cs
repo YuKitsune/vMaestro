@@ -1,24 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Windows.Forms.Integration;
+using System.Windows.Forms;
 using vatsys;
+using TFMS.Wpf;
 
 namespace TFMS.Plugin
 {
-    public partial class TFMSWindow : BaseForm
+    public class TFMSWindow : BaseForm
     {
-        private void InitializeComponent()
+        public TFMSWindow()
         {
-            this.SuspendLayout();
-            // 
-            // TFMSWindow
-            // 
-            this.ClientSize = new System.Drawing.Size(591, 593);
-            this.Name = "TFMSWindow";
-            this.ResumeLayout(false);
+            AutoScaleMode = AutoScaleMode.Dpi;
+            var elementHost = new ElementHost
+            {
+                Dock = DockStyle.Fill,
+                Child = new TFMSView(
+                    new Theme
+                    {
+                        Font = Font,
+                        BackgroundColor = BackColor,
+                        ForegroundColor = ForeColor,
+                        ButtonHoverColor = ButtonHoverColor,
+                        BorderColor = BorderColor
+                    })
+            };
 
+            this.Controls.Add(elementHost);
         }
     }
 }

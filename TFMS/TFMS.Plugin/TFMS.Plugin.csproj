@@ -7,8 +7,20 @@
 		<BaseOutputPath>$(USERPROFILE)\Documents\vatSys Files\Profiles\Australia\Plugins\TFMS</BaseOutputPath>
 		<LangVersion>10.0</LangVersion>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
+	  <PackageReference Include="ReactiveUI.WinForms" Version="20.2.45" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\TFMS.Wpf\TFMS.Wpf.csproj" />
+	</ItemGroup>
 	
 	<ItemGroup>
+		<Reference Include="PresentationCore" />
+		<Reference Include="PresentationFramework" />
 		<Reference Include="System.ComponentModel.Composition" />
 		<Reference Include="vatSys">
 			<HintPath>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)\bin\vatSys.exe</HintPath>
@@ -19,6 +31,7 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="System.Windows.Forms" />
+		<Reference Include="WindowsFormsIntegration" />
 	</ItemGroup>
 
 </Project>

@@ -1,5 +1,9 @@
 ﻿using System.ComponentModel.Composition;
+using System.Security.Authentication.ExtendedProtection;
 using System.Windows.Forms;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using TFMS.Wpf;
 using vatsys;
 using vatsys.Plugin;
 
@@ -35,7 +39,7 @@ namespace TFMS.Plugin
             }
             catch (Exception ex)
             {
-                Errors.Add(new Exception(ex.Message), DisplayName);
+                Errors.Add(ex, DisplayName);
                 if (ex.InnerException != null) Errors.Add(new Exception(ex.InnerException.Message), DisplayName);
             }
         }
@@ -47,21 +51,34 @@ namespace TFMS.Plugin
 
         private static void ShowTFMS()
         {
-
-            if (TFMSWindow == null || TFMSWindow.IsDisposed)
-            {
-                TFMSWindow = new TFMSWindow();
-            }
-
-            var mainForm = Application.OpenForms["MainForm"];
-
-            if (mainForm == null) return;
-
             try
             {
+                if (TFMSWindow == null || TFMSWindow.IsDisposed)
+                {
+                    TFMSWindow = InitializeWindow();
+                }
+
+                var mainForm = Application.OpenForms["MainForm"];
+
+                if (mainForm == null)
+                    return;
+
                 MMI.InvokeOnGUI(delegate () { TFMSWindow.Show(mainForm); });
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Errors.Add(ex, DisplayName);
+            }
+        }
+
+        static TFMSWindow InitializeWindow()
+        {
+            Ioc.Default.ConfigureServices(
+                new ServiceCollection()
+                    .AddSingleton<TFMSViewModel>()
+                    .BuildServiceProvider());
+
+            return new TFMSWindow();
         }
 
         void Network_Connected(object sender, EventArgs e)
