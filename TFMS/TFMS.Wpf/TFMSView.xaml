@@ -8,10 +8,14 @@
              d:DesignHeight="800"
              d:DesignWidth="600"
              d:Background="#A0AAAA">
-    <StackPanel Orientation="Vertical">
-        
-        <!-- Toolbar -->
-        <local:BeveledBorder Gurth="2" BevelType="Raised">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <local:BeveledBorder Grid.Row="0" Gurth="2" BevelType="Raised">
             <local:BeveledBorder Gurth="2" BevelType="Sunken">
                 <Grid Height="40" Margin="1">
 
@@ -65,7 +69,7 @@
         </local:BeveledBorder>
 
         <!-- Tab Bar -->
-        <StackPanel Orientation="Horizontal">
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
             <Button>
                 <TextBlock>DEPS</TextBlock>
             </Button>
@@ -87,5 +91,8 @@
         </StackPanel>
 
         <!-- Ladder -->
-    </StackPanel>
+        <Grid Grid.Row="2">
+            <local:LadderView />
+        </Grid>
+    </Grid>
 </UserControl>
