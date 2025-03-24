@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace TFMS.Wpf
 {
@@ -21,13 +23,20 @@ namespace TFMS.Wpf
     public partial class LadderView : UserControl
     {
         const int MinuteHeight = 10;
+        const int SpineWidth = 16;
+        const int TickWidth = 8;
 
         public LadderView()
         {
             InitializeComponent();
+            DataContext = Ioc.Default.GetRequiredService<LadderViewModel>();
+
             Loaded += ControlLoaded;
             SizeChanged += OnSizeChanged;
+            ViewModel.PropertyChanged += PropertyChanged;
         }
+
+        public LadderViewModel ViewModel => (LadderViewModel)DataContext;
 
         void ControlLoaded(object sender, RoutedEventArgs e)
         {
@@ -39,17 +48,59 @@ namespace TFMS.Wpf
             DrawLadder();
         }
 
-        void DrawLadder()
+        void PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            LadderCanvas.Children.Clear();
-            DrawSpine(DateTime.Now);
+            DrawLadder();
         }
 
-        void DrawSpine(DateTime currentTime)
+        void DrawLadder()
         {
-            const int SpineWidth = 16;
-            const int TickWidth = 8;
+            this.Dispatcher.Invoke(() =>
+            {
+                LadderCanvas.Children.Clear();
 
+                var now = DateTimeOffset.Now;
+                DrawSpine(now);
+                DrawAircraft(now);
+            });
+        }
+
+        void DrawAircraft(DateTimeOffset currentTime)
+        {
+            double canvasHeight = LadderCanvas.ActualHeight;
+            double canvasWidth = LadderCanvas.ActualWidth;
+            var middlePoint = canvasWidth / 2;
+
+            foreach (var aircraft in ViewModel.Aircraft)
+            {
+                var yOffset = GetYOffsetForTime(currentTime, aircraft.LandingTime);
+
+                var yPosition = canvasHeight - yOffset;
+
+                if (yOffset < 0 || yOffset >= canvasHeight)
+                    continue;
+
+                var aircraftView = new AircraftView
+                {
+                    DataContext = aircraft
+                };
+
+                aircraftView.Loaded += OnAircraftLoaded;
+
+                LadderCanvas.Children.Add(aircraftView);
+
+                void OnAircraftLoaded(object _, RoutedEventArgs e)
+                {
+                    Canvas.SetTop(aircraftView, yPosition - aircraftView.ActualHeight / 2);
+                    Canvas.SetLeft(aircraftView, 0);
+                    Canvas.SetRight(aircraftView, middlePoint - SpineWidth/2 - TickWidth);
+                    aircraftView.Loaded -= OnAircraftLoaded;
+                }
+            }
+        }
+
+        void DrawSpine(DateTimeOffset currentTime)
+        {
             double canvasHeight = LadderCanvas.ActualHeight;
             double canvasWidth = LadderCanvas.ActualWidth;
 
@@ -138,12 +189,12 @@ namespace TFMS.Wpf
             }
         }
 
-        double GetYOffsetForTime(DateTime currentTime, DateTime nextTime)
+        double GetYOffsetForTime(DateTimeOffset currentTime, DateTimeOffset nextTime)
         {
             return (nextTime - currentTime).TotalMinutes * MinuteHeight;
         }
 
-        DateTime GetNearest5Minutes(DateTime currentTime)
+        DateTimeOffset GetNearest5Minutes(DateTimeOffset currentTime)
         {
             // Round up the minutes to the next multiple of 5
             int minutes = (currentTime.Minute / 5) * 5;
@@ -160,7 +211,7 @@ namespace TFMS.Wpf
             }
 
             // Create the new DateTime with the rounded-up minute
-            DateTime nextInterval = new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, minutes, 0);
+            var nextInterval = new DateTimeOffset(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, minutes, 0, TimeSpan.Zero);
             return nextInterval;
         }
     }

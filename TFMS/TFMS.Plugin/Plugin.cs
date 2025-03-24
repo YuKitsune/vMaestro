@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.Composition;
 using System.Security.Authentication.ExtendedProtection;
 using System.Windows.Forms;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using DynamicData;
 using Microsoft.Extensions.DependencyInjection;
 using TFMS.Wpf;
 using vatsys;
@@ -76,6 +78,7 @@ namespace TFMS.Plugin
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
                     .AddSingleton<TFMSViewModel>()
+                    .AddSingleton<LadderViewModel>()
                     .BuildServiceProvider());
 
             return new TFMSWindow();
@@ -84,6 +87,20 @@ namespace TFMS.Plugin
         void Network_Connected(object sender, EventArgs e)
         {
             // TODO: Deinit.
+            var yssy = Airspace2.GetAirport("YPAD")!;
+
+            var yssyArrivals = RDP.RadarTracks.Where(t => t.CoupledFDR?.DesAirport == "YPAD");
+
+            var aircraft = yssyArrivals.Select(r => new AircraftViewModel
+            {
+                Callsign = r.CoupledFDR.Callsign,
+                TotalDelay = TimeSpan.Zero,
+                RemainingDelay = TimeSpan.Zero,
+                LandingTime = FDP2.GetSystemEstimateAtPosition(r.CoupledFDR, yssy.LatLong)
+            }).ToList();
+
+            var viewModel = Ioc.Default.GetRequiredService<LadderViewModel>();
+            viewModel.Aircraft = aircraft;
         }
 
         void Network_Disconnected(object sender, EventArgs e)
@@ -93,7 +110,23 @@ namespace TFMS.Plugin
 
         public void OnFDRUpdate(FDP2.FDR updated) {}
 
-        public void OnRadarTrackUpdate(RDP.RadarTrack updated) { }
+        public void OnRadarTrackUpdate(RDP.RadarTrack updated)
+        {
+            var yssy = Airspace2.GetAirport("YPAD")!;
+            if (updated.CoupledFDR?.DesAirport == "YPAD")
+            {
+                var viewModel = Ioc.Default.GetRequiredService<LadderViewModel>();
+
+                if (viewModel.Aircraft.Any(a => a.Callsign == updated.CoupledFDR.Callsign))
+                    return;
+
+                viewModel.Aircraft.Add(new List<AircraftViewModel>() {new AircraftViewModel
+                {
+                    Callsign = updated.CoupledFDR.Callsign,
+                    LandingTime = FDP2.GetSystemEstimateAtPosition(updated.CoupledFDR, yssy.LatLong)
+                } });
+            }
+        }
 
         public void Dispose()
         {
