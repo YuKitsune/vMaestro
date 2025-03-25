@@ -14,14 +14,12 @@ namespace TFMS.Wpf
 
         public DateTimeOffset FeederFixTime { get; set; }
 
-        public DateTimeOffset ProjectedFeederFixTime { get; set; }
-
-        public string Runway { get; set; }
+        public string? Runway { get; set; }
 
         public TimeSpan TotalDelay { get; set; }
 
         public TimeSpan RemainingDelay { get; set; }
 
-        public bool Maintain250Kts { get; set; }
+        public bool MaintainProfileSpeed { get; set; }
     }
 }

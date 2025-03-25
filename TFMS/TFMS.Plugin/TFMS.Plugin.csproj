@@ -4,17 +4,19 @@
 		<TargetFramework>net48</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
 		<BaseOutputPath>$(USERPROFILE)\Documents\vatSys Files\Profiles\Australia\Plugins\TFMS</BaseOutputPath>
-		<LangVersion>10.0</LangVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
 	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	  <PackageReference Include="MediatR" Version="12.4.1" />
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
 	  <PackageReference Include="ReactiveUI.WinForms" Version="20.2.45" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\TFMS.Core\TFMS.Core.csproj" />
 	  <ProjectReference Include="..\TFMS.Wpf\TFMS.Wpf.csproj" />
 	</ItemGroup>
 	
