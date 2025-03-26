@@ -211,7 +211,7 @@ namespace TFMS.Wpf
             }
 
             // Create the new DateTime with the rounded-up minute
-            var nextInterval = new DateTimeOffset(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, minutes, 0, TimeSpan.Zero);
+            var nextInterval = new DateTimeOffset(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, minutes, 0, currentTime.Offset);
             return nextInterval;
         }
     }

@@ -9,6 +9,9 @@ public class SequenceModifiedNotificationHandler(LadderViewModel viewModel) : IN
 
     public Task Handle(SequenceModifiedNotification notification, CancellationToken _)
     {
+        if (notification.Sequence.AirportIdentifier != "YSSY")
+            return Task.CompletedTask;
+
         _viewModel.Aircraft = notification.Sequence.Arrivals.Select(a =>
             new AircraftViewModel
             {

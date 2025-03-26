@@ -34,3 +34,10 @@
     - [ ] CSV or XLSX backup
     - [ ] Training mode
     - [ ] Customisable UI layout
+
+
+Need to figure out:
+- When is the initial FF and landing time set? Is it ever reset?
+- When does the ladder switch from using the estimated times to scheduled times?
+    - Are the scheduled times set from the beginning and constantly re-calculated?
+    

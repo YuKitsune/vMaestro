@@ -5,18 +5,19 @@ using TFMS.Core.Model;
 
 namespace TFMS.Core.Handlers;
 
-public class FDRUpdatedNotificationHandler(SequenceProvider sequenceProvider, ILogger<FDRUpdatedNotificationHandler> logger)
+public class FDRUpdatedNotificationHandler(IMediator mediator, SequenceProvider sequenceProvider)
     : INotificationHandler<FDRUpdatedNotification>
 {
+    readonly IMediator mediator = mediator;
     readonly SequenceProvider _sequenceProvider = sequenceProvider;
-    readonly ILogger<FDRUpdatedNotificationHandler> _logger = logger;
+    // readonly ILogger<FDRUpdatedNotificationHandler> _logger = logger;
 
     public Task Handle(FDRUpdatedNotification notification, CancellationToken cancellationToken)
     {
         var sequence = _sequenceProvider.Sequences.FirstOrDefault(s => s.AirportIdentifier == notification.FlightDataRecord.DestinationIcaoCode);
         if (sequence == null)
         {
-            sequence = new Sequence(notification.FlightDataRecord.DestinationIcaoCode);
+            sequence = new Sequence(mediator, notification.FlightDataRecord.DestinationIcaoCode);
             _sequenceProvider.Sequences.Add(sequence);
         }
 
@@ -24,7 +25,7 @@ public class FDRUpdatedNotificationHandler(SequenceProvider sequenceProvider, IL
         var feederFix = notification.FlightDataRecord.Estimates.FirstOrDefault(f => Configuration.Demo.Airports.Single().FeederFixes.Contains(f.Identifier));
         if (feederFix is null)
         {
-            _logger.LogWarning($"Could not find feeder fix for {notification.FlightDataRecord.Callsign} arriving at {notification.FlightDataRecord.DestinationIcaoCode}");
+            // _logger.LogWarning($"Could not find feeder fix for {notification.FlightDataRecord.Callsign} arriving at {notification.FlightDataRecord.DestinationIcaoCode}");
             return Task.CompletedTask;
         }
 

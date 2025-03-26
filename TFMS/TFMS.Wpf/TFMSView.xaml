@@ -4,15 +4,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TFMS.Wpf"
+             xmlns:converters="clr-namespace:TFMS.Wpf.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="800"
              d:DesignWidth="600"
              d:Background="#A0AAAA">
+    <UserControl.Resources>
+        <converters:TotalSecondsConverter x:Key="TotalSecondsConverter"/>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <local:BeveledBorder Grid.Row="0" Gurth="2" BevelType="Raised">
@@ -37,25 +43,34 @@
                     <local:Separator Grid.Column="1" Width="2" Orientation="Horizontal"/>
 
                     <!-- Aerodrome Selector -->
-                    <ComboBox Grid.Column="2" Padding="5" ItemsSource="{Binding Path=AvailableAerodromes}" SelectedItem="{Binding Path=SelectedAerodrome}" DisplayMemberPath="Code"/>
+                    <ComboBox Grid.Column="2" Padding="5" ItemsSource="{Binding Path=AvailableAirports}" SelectedItem="{Binding Path=SelectedAirport}" DisplayMemberPath="Identifier"/>
 
                     <local:Separator Grid.Column="3" Width="2" Orientation="Horizontal"/>
 
                     <!-- Runway Selector -->
-                    <ComboBox Grid.Column="4" Padding="5" ItemsSource="{Binding Path=AvailableRunwayConfigurations}" SelectedItem="{Binding Path=SelectedRunwayConfiguration}" DisplayMemberPath="Name"/>
+                    <ComboBox Grid.Column="4" Padding="5" ItemsSource="{Binding Path=AvailableRunwayModes}" SelectedItem="{Binding Path=SelectedRunwayMode}" DisplayMemberPath="Identifier"/>
 
                     <local:Separator Grid.Column="5" Width="2" Orientation="Horizontal"/>
 
                     <!-- Runway Intervals -->
                     <local:BeveledBorder Grid.Column="6" Gurth="1" BevelType="Raised">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock>
-                                34L:90s - 34R:90s
-                            </TextBlock>
-                            <TextBlock>
-                                16L:90s - 16R:90s
-                            </TextBlock>
-                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Path=RunwayRates}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text=" - "/>
+                                        <TextBlock Text="{Binding Identifier}"/>
+                                        <TextBlock>:</TextBlock>
+                                        <TextBlock Text="{Binding LandingRate, Converter={StaticResource TotalSecondsConverter}}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </local:BeveledBorder>
 
                     <local:Separator Grid.Column="7" Width="2" Orientation="Horizontal"/>
@@ -76,15 +91,20 @@
             <Button>
                 <TextBlock>DESQ</TextBlock>
             </Button>
-            <Button>
-                <TextBlock>GUN</TextBlock>
-            </Button>
-            <Button>
-                <TextBlock>MDE</TextBlock>
-            </Button>
-            <Button>
-                <TextBlock>OCN</TextBlock>
-            </Button>
+            <ItemsControl ItemsSource="{Binding Path=AvailableSectors}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Command="{Binding SelectSectorCommand}" CommandParameter="{Binding .}">
+                            <TextBlock Text="{Binding Identifier}" />
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <Button>
                 <TextBlock>RWY</TextBlock>
             </Button>
@@ -93,6 +113,51 @@
         <!-- Ladder -->
         <Grid Grid.Row="2">
             <local:LadderView />
+        </Grid>
+
+        <!-- Footer -->
+        <Grid Grid.Row="3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+            </Grid>
+
+
+            <ItemsControl Grid.Column="0" ItemsSource="{Binding Path=LeftFeederFixes}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding .}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Grid Grid.Column="1">
+                <TextBlock x:Name="ClockText"/>
+            </Grid>
+
+
+            <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding .}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            
+            
         </Grid>
     </Grid>
 </UserControl>

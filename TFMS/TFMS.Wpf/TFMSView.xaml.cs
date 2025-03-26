@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace TFMS.Wpf
@@ -33,8 +34,18 @@ namespace TFMS.Wpf
 
             Background = new SolidColorBrush(theme.BackgroundColor.ToWindowsColor());
             Foreground = new SolidColorBrush(theme.ForegroundColor.ToWindowsColor());
+
+            DispatcherTimer LiveTime = new DispatcherTimer();
+            LiveTime.Interval = TimeSpan.FromSeconds(1);
+            LiveTime.Tick += TimerTick;
+            LiveTime.Start();
         }
 
         public TFMSViewModel ViewModel => (TFMSViewModel)DataContext;
+
+        void TimerTick(object sender, EventArgs args)
+        {
+            ClockText.Text = DateTimeOffset.UtcNow.ToString("HH:mm:ss");
+        }
     }
 }

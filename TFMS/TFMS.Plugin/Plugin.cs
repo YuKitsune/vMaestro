@@ -124,8 +124,8 @@ namespace TFMS.Plugin
                 fdr.Callsign,
                 fdr.DepAirport,
                 fdr.DesAirport,
-                fdr.ArrivalRunway.Name,
-                fdr.STAR.Name,
+                fdr.ArrivalRunway?.Name,
+                fdr.STAR?.Name,
                 fdr.ParsedRoute.Select(s => new Fix(s.Intersection.Name, new DateTimeOffset(s.ETO, TimeSpan.Zero))).ToArray());
         }
     }

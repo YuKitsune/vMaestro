@@ -17,6 +17,6 @@ public class InitializedNotificationHandler(SequenceProvider sequenceProvider, I
             _mediator.Publish(new FDRUpdatedNotification(flightDataRecord));
         }
 
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 }

@@ -1,7 +1,11 @@
-﻿namespace TFMS.Core.Model;
+﻿using MediatR;
+using TFMS.Core.DTOs;
 
-public class Sequence(string airportIdentifier)
+namespace TFMS.Core.Model;
+
+public class Sequence(IMediator mediator, string airportIdentifier)
 {
+    readonly IMediator mediator = mediator;
     readonly List<Arrival> arrivals = new();
 
     public string AirportIdentifier { get; } = airportIdentifier;
@@ -21,5 +25,7 @@ public class Sequence(string airportIdentifier)
         }
 
         arrivals.Add(new Arrival(callsign, origin, destination, assignedRunway, performanceData, initialFeederFixEstimate, initialDestinationEstimate));
+
+        mediator.Publish(new SequenceModifiedNotification(this));
     }
 }

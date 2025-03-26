@@ -107,7 +107,8 @@ public class Configuration
                     Identifier = "ALL",
                     Fixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"]
                 }
-            ]
+            ],
+                    FeederFixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"]
         }
     ];
 }
