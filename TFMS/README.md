@@ -1,21 +1,33 @@
 # TODO:
+
+- [ ] Configuration
+    - [ ] Load configuration from file
+    - [ ] Use configuration in TFMS window
+    - [ ] Use configuration in Ladder
+    - [ ] Use configuration in Sequence
+
+- [ ] Load arrivals from vatSys into sequences
+- [ ] Consider how to model sequences
+- [ ] Display arrivals on ladder
+- [ ] Ensure ladder re-draws when FDR updates
+- [ ] Refresh ladder on timer
+- [ ] Clock
+
 - [ ] Eurocat Look and Feel
     - [ ] Pull theme from vatSys
-    - [ ] UI mock ups
+    - [ ] Better beveled borders
+    - [ ] Better timeline
+    - [ ] Ladder scrolling
 
-- [ ] Loading aircraft
-    - [ ] Pull arrivals from vatSys and display them on the ladder
-    - [ ] Switch between airports and runway modes
+- [ ] Sequencing algorithm
+- [ ] Standalone mode
+    - [ ] Automatically determine the sequence locally
+- [ ] Online mode
+    - [ ] Master publishes sequence to clients
+    - [ ] Master can manually sequence and control landing rates
+    - [ ] Clients get a read-only view of the sequence
 
-- [ ] Sequencing
-    - [ ] Consider how to model sequences
-    - [ ] Automatic sequencing
-    - [ ] Manual sequencing
-    - [ ] Master and Slave mode
-
-- [ ] MVP
-    - [ ] Super duper configurable
-    - [ ] Rename to Maestro
+- [ ] Rename to Maestro
 
 - [ ] Nice to haves
     - [ ] Arrival list / GlobalOps backup
