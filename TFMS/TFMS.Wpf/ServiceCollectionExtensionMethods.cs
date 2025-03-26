@@ -12,8 +12,7 @@ namespace TFMS.Wpf
         public static IServiceCollection AddViewModels(this IServiceCollection serviceCollection)
         {
             return serviceCollection
-                .AddSingleton<TFMSViewModel>()
-                .AddSingleton<LadderViewModel>();
+                .AddSingleton<TFMSViewModel>();
         }
     }
 }

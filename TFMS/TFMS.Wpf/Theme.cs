@@ -1,29 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Windows;
+using System.Windows.Media;
 
-namespace TFMS.Wpf
+namespace TFMS.Wpf;
+
+public static class Theme
 {
-    public class Theme
-    {
-        public Font Font { get; set; }
-        public Color BackgroundColor { get; set; }
-        public Color ForegroundColor { get; set; }
-        public Color ButtonHoverColor { get; set; }
-        public Color BorderColor { get; set; }
+    public static SolidColorBrush BackgroundColor { get; set; } = new SolidColorBrush(System.Drawing.Color.FromArgb(255, 160, 170, 170).ToWindowsColor());
+    public static SolidColorBrush GenericTextColor { get; set; } = new SolidColorBrush(System.Drawing.Color.FromArgb(255, 96, 0, 0).ToWindowsColor());
+    public static SolidColorBrush InteractiveTextColor { get; set; } = new SolidColorBrush(System.Drawing.Color.FromArgb(255, 0, 0, 96).ToWindowsColor());
+    public static SolidColorBrush NonInteractiveTextColor { get; set; } = new SolidColorBrush(System.Drawing.Color.FromArgb(255, 90, 90, 90).ToWindowsColor());
+    public static SolidColorBrush SelectedButtonColor { get; set; } = new SolidColorBrush(System.Drawing.Color.FromArgb(255, 0, 0, 96).ToWindowsColor());
 
-        public Color BorderColorTopLeft { get; set; }
-
-        public Color BorderColorBottomRight { get; set; }
-
-        public static Theme Default => new Theme
-        {
-            Font = new Font("Terminus (TTF)", 14f),
-            BackgroundColor = SystemColors.ControlLight,
-            ForegroundColor = Color.Salmon,
-        };
-    }
+    // TODO: Support live updating font sizes
+    public static FontFamily FontFamily { get; set; } = new FontFamily("Terminus (TTF)");
+    public static double FontSize { get; set; } = 18.0;
+    public static FontWeight FontWeight { get; set; } = FontWeights.Bold;
 }

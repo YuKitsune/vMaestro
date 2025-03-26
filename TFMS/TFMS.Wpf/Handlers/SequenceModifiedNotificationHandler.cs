@@ -3,9 +3,9 @@ using TFMS.Core.DTOs;
 
 namespace TFMS.Wpf.Handlers;
 
-public class SequenceModifiedNotificationHandler(LadderViewModel viewModel) : INotificationHandler<SequenceModifiedNotification>
+public class SequenceModifiedNotificationHandler(TFMSViewModel viewModel) : INotificationHandler<SequenceModifiedNotification>
 {
-    readonly LadderViewModel _viewModel = viewModel;
+    readonly TFMSViewModel _viewModel = viewModel;
 
     public Task Handle(SequenceModifiedNotification notification, CancellationToken _)
     {

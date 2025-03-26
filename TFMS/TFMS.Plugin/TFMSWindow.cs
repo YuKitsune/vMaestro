@@ -13,15 +13,7 @@ namespace TFMS.Plugin
             var elementHost = new ElementHost
             {
                 Dock = DockStyle.Fill,
-                Child = new TFMSView(
-                    new Theme
-                    {
-                        Font = Font,
-                        BackgroundColor = BackColor,
-                        ForegroundColor = ForeColor,
-                        ButtonHoverColor = ButtonHoverColor,
-                        BorderColor = BorderColor
-                    })
+                Child = new TFMSView()
             };
 
             this.Controls.Add(elementHost);

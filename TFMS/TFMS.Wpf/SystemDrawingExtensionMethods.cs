@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TFMS.Wpf
 {
-    internal static class SystemDrawingExtensionMethods
+    public static class SystemDrawingExtensionMethods
     {
         public static System.Windows.Media.Color ToWindowsColor(this System.Drawing.Color color)
         {

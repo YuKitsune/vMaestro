@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.Composition;
+using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +29,7 @@ namespace TFMS.Plugin
             try
             {
                 ConfigureServices();
+                ConfigureTheme();
                 AddMenuItem();
 
                 mediator = Ioc.Default.GetRequiredService<IMediator>();
@@ -38,6 +41,18 @@ namespace TFMS.Plugin
             {
                 Errors.Add(ex, DisplayName);
             }
+        }
+
+        void ConfigureTheme()
+        {
+            Theme.BackgroundColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowBackground).ToWindowsColor());
+            Theme.GenericTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.GenericText).ToWindowsColor());
+            Theme.InteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.InteractiveText).ToWindowsColor());
+            Theme.NonInteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.NonInteractiveText).ToWindowsColor());
+            Theme.SelectedButtonColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowButtonSelected).ToWindowsColor());
+            Theme.FontFamily = new FontFamily(MMI.ASDMainFont.FontFamily.Name);
+            Theme.FontSize = MMI.ASDMainFont.Size;
+            Theme.FontWeight = MMI.ASDMainFont.Bold ? FontWeights.Bold : FontWeights.Regular;
         }
 
         void ConfigureServices()
@@ -74,7 +89,7 @@ namespace TFMS.Plugin
                     TFMSWindow = new TFMSWindow();
                 }
 
-                var mainForm = Application.OpenForms["MainForm"];
+                var mainForm = System.Windows.Forms.Application.OpenForms["MainForm"];
                 if (mainForm == null)
                     return;
 

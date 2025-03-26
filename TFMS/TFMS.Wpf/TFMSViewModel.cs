@@ -37,13 +37,13 @@ namespace TFMS.Wpf
     public partial class TFMSViewModel : ObservableObject
     {
         [ObservableProperty]
-        private AirportViewModel[] _availableAirports;
+        private AirportViewModel[] _availableAirports = [];
 
         [ObservableProperty]
         private AirportViewModel? _selectedAirport;
 
         [ObservableProperty]
-        private RunwayModeViewModel[] _availableRunwayModes;
+        private RunwayModeViewModel[] _availableRunwayModes = [];
 
         [ObservableProperty]
         private RunwayModeViewModel? _selectedRunwayMode;
@@ -52,7 +52,7 @@ namespace TFMS.Wpf
         private RunwayViewModel[] _runwayRates;
 
         [ObservableProperty]
-        private SectorViewModel[] _availableSectors;
+        private SectorViewModel[] _availableSectors = [];
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(LeftFeederFixes))]
@@ -61,6 +61,9 @@ namespace TFMS.Wpf
 
         public string[] LeftFeederFixes => SelectedSector is null ? [] : SelectedSector.FeederFixes.Take(SelectedSector.FeederFixes.Length / 2).ToArray();
         public string[] RightFeederFixes => SelectedSector is null ? [] : SelectedSector.FeederFixes.Skip(SelectedSector.FeederFixes.Length / 2).ToArray();
+
+        [ObservableProperty]
+        List<AircraftViewModel> _aircraft = [];
 
         public TFMSViewModel()
         {

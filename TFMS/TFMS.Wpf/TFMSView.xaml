@@ -5,12 +5,23 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TFMS.Wpf"
              xmlns:converters="clr-namespace:TFMS.Wpf.Converters"
-             mc:Ignorable="d" 
+             mc:Ignorable="d"
              d:DesignHeight="800"
-             d:DesignWidth="600"
-             d:Background="#A0AAAA">
+             d:DesignWidth="600">
     <UserControl.Resources>
-        <converters:TotalSecondsConverter x:Key="TotalSecondsConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/TFMS.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:TotalSecondsConverter x:Key="TotalSecondsConverter"/>
+
+            <Style x:Key="TabBarButtons" TargetType="{x:Type Button}" BasedOn="{StaticResource ControlBaseStyle}">
+                <Setter Property="MinWidth" Value="50" />
+                <Setter Property="Margin" Value="0,0,2,0"/>
+            </Style>
+
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid>
@@ -23,27 +34,38 @@
 
         <local:BeveledBorder Grid.Row="0" Gurth="2" BevelType="Raised">
             <local:BeveledBorder Gurth="2" BevelType="Sunken">
-                <Grid Height="40" Margin="1">
+                <Grid Height="32" Margin="1">
 
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="75" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="75" />
+                        <ColumnDefinition Width="50" />
                         <ColumnDefinition Width="6" />
                         <ColumnDefinition Width="75" />
                         <ColumnDefinition Width="6" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="6" />
-                        <ColumnDefinition Width="75" />
+                        <ColumnDefinition Width="60" />
                     </Grid.ColumnDefinitions>
 
                     <!-- Sector ID -->
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center">Sector ID</TextBlock>
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        TextWrapping="Wrap"
+                        HorizontalAlignment="Center">
+                        FLOW
+                    </TextBlock>
 
                     <local:Separator Grid.Column="1" Width="2" Orientation="Horizontal"/>
 
                     <!-- Aerodrome Selector -->
-                    <ComboBox Grid.Column="2" Padding="5" ItemsSource="{Binding Path=AvailableAirports}" SelectedItem="{Binding Path=SelectedAirport}" DisplayMemberPath="Identifier"/>
+                    <ComboBox
+                        Grid.Column="2"
+                        Padding="5"
+                        ItemsSource="{Binding Path=AvailableAirports}"
+                        SelectedItem="{Binding Path=SelectedAirport}"
+                        DisplayMemberPath="Identifier"/>
 
                     <local:Separator Grid.Column="3" Width="2" Orientation="Horizontal"/>
 
@@ -85,6 +107,9 @@
 
         <!-- Tab Bar -->
         <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource TabBarButtons}" />
+            </StackPanel.Resources>
             <Button>
                 <TextBlock>DEPS</TextBlock>
             </Button>
@@ -112,7 +137,41 @@
 
         <!-- Ladder -->
         <Grid Grid.Row="2">
-            <local:LadderView />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Scroll Buttons -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Button Grid.Row="0" Margin="0,0,0,1">
+                        <Path 
+                            Fill="{x:Static local:Theme.InteractiveTextColor}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Data="M3,0 L6,6 L0,6 z"/>
+                    </Button>
+                    <Button Grid.Row="1" Margin="0,1,0,1"></Button>
+                    <Button Grid.Row="2" Margin="0,1,0,0">
+                        <Path 
+                            Fill="{x:Static local:Theme.InteractiveTextColor}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Data="M3,6 L0,0 L6,0 z"/>
+                    </Button>
+                </Grid>
+
+                <!-- Ladder Canvas -->
+                <Canvas Grid.Column="1" Name="LadderCanvas" ClipToBounds="True"/>
+
+            </Grid>
         </Grid>
 
         <!-- Footer -->
@@ -120,7 +179,7 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
             </Grid>
@@ -143,7 +202,6 @@
                 <TextBlock x:Name="ClockText"/>
             </Grid>
 
-
             <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -156,8 +214,6 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            
-            
         </Grid>
     </Grid>
 </UserControl>
