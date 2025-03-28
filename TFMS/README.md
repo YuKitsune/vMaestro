@@ -1,5 +1,13 @@
 # TODO:
 
+- [ ] Eurocat Look and Feel
+    - [X] Pull theme from vatSys
+    - [ ] Create custom controls to follow vatSys theme
+    - [ ] Custom buttons
+    - [ ] Custom combobox
+    - [ ] Custom separators
+    - [ ] Clean up timeline
+
 - [ ] Configuration
     - [ ] Load configuration from file
     - [ ] Use configuration in TFMS window
@@ -13,12 +21,6 @@
 - [ ] Refresh ladder on timer
 - [ ] Clock
 
-- [ ] Eurocat Look and Feel
-    - [ ] Pull theme from vatSys
-    - [ ] Better beveled borders
-    - [ ] Better timeline
-    - [ ] Ladder scrolling
-
 - [ ] Sequencing algorithm
 - [ ] Standalone mode
     - [ ] Automatically determine the sequence locally
@@ -30,6 +32,7 @@
 - [ ] Rename to Maestro
 
 - [ ] Nice to haves
+    - [ ] Debugger configuration for vatSys
     - [ ] Arrival list / GlobalOps backup
     - [ ] CSV or XLSX backup
     - [ ] Training mode

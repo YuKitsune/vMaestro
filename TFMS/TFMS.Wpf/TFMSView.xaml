@@ -4,8 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TFMS.Wpf"
+             xmlns:controls="clr-namespace:TFMS.Wpf.Controls"
              xmlns:converters="clr-namespace:TFMS.Wpf.Converters"
              mc:Ignorable="d"
+             d:Background="{x:Static local:Theme.BackgroundColor}"
              d:DesignHeight="800"
              d:DesignWidth="600">
     <UserControl.Resources>
@@ -32,78 +34,77 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <local:BeveledBorder Grid.Row="0" Gurth="2" BevelType="Raised">
-            <local:BeveledBorder Gurth="2" BevelType="Sunken">
-                <Grid Height="32" Margin="1">
+        <controls:BeveledBorder BevelType="Outline" BorderThickness="2" Margin="2">
+            <Grid Margin="1">
 
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="75" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="50" />
-                        <ColumnDefinition Width="6" />
-                        <ColumnDefinition Width="75" />
-                        <ColumnDefinition Width="6" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="6" />
-                        <ColumnDefinition Width="60" />
-                    </Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="75" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="75" />
+                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="60" />
+                </Grid.ColumnDefinitions>
 
-                    <!-- Sector ID -->
-                    <TextBlock
+                <!-- Sector ID -->
+                <TextBlock
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         TextWrapping="Wrap"
                         HorizontalAlignment="Center">
                         FLOW
-                    </TextBlock>
+                </TextBlock>
 
-                    <local:Separator Grid.Column="1" Width="2" Orientation="Horizontal"/>
+                <local:Separator Grid.Column="1" Width="2" Orientation="Horizontal"/>
 
-                    <!-- Aerodrome Selector -->
-                    <ComboBox
+                <!-- Aerodrome Selector -->
+                <ComboBox
                         Grid.Column="2"
                         Padding="5"
                         ItemsSource="{Binding Path=AvailableAirports}"
                         SelectedItem="{Binding Path=SelectedAirport}"
                         DisplayMemberPath="Identifier"/>
 
-                    <local:Separator Grid.Column="3" Width="2" Orientation="Horizontal"/>
+                <local:Separator Grid.Column="3" Width="2" Orientation="Horizontal"/>
 
-                    <!-- Runway Selector -->
-                    <ComboBox Grid.Column="4" Padding="5" ItemsSource="{Binding Path=AvailableRunwayModes}" SelectedItem="{Binding Path=SelectedRunwayMode}" DisplayMemberPath="Identifier"/>
+                <!-- Runway Selector -->
+                <ComboBox Grid.Column="4" Padding="5" ItemsSource="{Binding Path=AvailableRunwayModes}" SelectedItem="{Binding Path=SelectedRunwayMode}" DisplayMemberPath="Identifier"/>
 
-                    <local:Separator Grid.Column="5" Width="2" Orientation="Horizontal"/>
+                <local:Separator Grid.Column="5" Width="2" Orientation="Horizontal"/>
 
-                    <!-- Runway Intervals -->
-                    <local:BeveledBorder Grid.Column="6" Gurth="1" BevelType="Raised">
-                        <ItemsControl ItemsSource="{Binding Path=RunwayRates}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text=" - "/>
-                                        <TextBlock Text="{Binding Identifier}"/>
-                                        <TextBlock>:</TextBlock>
-                                        <TextBlock Text="{Binding LandingRate, Converter={StaticResource TotalSecondsConverter}}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </local:BeveledBorder>
+                <!-- Runway Intervals -->
+                <local:BeveledBorderDecorator Grid.Column="6" BorderThickness="1" BevelType="Raised">
+                    <ItemsControl ItemsSource="{Binding Path=RunwayRates}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text=" - "/>
+                                    <TextBlock Text="{Binding Identifier}"/>
+                                    <TextBlock>:</TextBlock>
+                                    <TextBlock Text="{Binding LandingRate, Converter={StaticResource TotalSecondsConverter}}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </local:BeveledBorderDecorator>
 
-                    <local:Separator Grid.Column="7" Width="2" Orientation="Horizontal"/>
+                <local:Separator Grid.Column="7" Width="2" Orientation="Horizontal"/>
 
-                    <!-- Setup Button -->
-                    <Button Grid.Column="8">
-                        <TextBlock>Setup</TextBlock>
-                    </Button>
-                </Grid>
-            </local:BeveledBorder>
-        </local:BeveledBorder>
+                <!-- Setup Button -->
+                <Button Grid.Column="8">
+                    <TextBlock>Setup</TextBlock>
+                </Button>
+            </Grid>
+
+        </controls:BeveledBorder>
 
         <!-- Tab Bar -->
         <StackPanel Grid.Row="1" Orientation="Horizontal">
