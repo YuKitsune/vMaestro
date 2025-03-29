@@ -2,9 +2,9 @@
 
 - [ ] Eurocat Look and Feel
     - [X] Pull theme from vatSys
-    - [ ] Create custom controls to follow vatSys theme
-    - [ ] Custom buttons
-    - [ ] Custom combobox
+    - [X] Create custom controls to follow vatSys theme
+    - [X] Custom buttons
+    - [X] Custom combobox
     - [ ] Custom separators
     - [ ] Clean up timeline
 

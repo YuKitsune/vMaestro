@@ -1,12 +1,18 @@
 ﻿using System.Windows.Media;
 using System.Windows;
 using System.Windows.Markup;
-using System.Windows.Controls;
 
 namespace TFMS.Wpf.Controls;
 
+public enum BevelType
+{
+    Raised,
+    Sunken,
+    Outline
+}
+
 [ContentProperty(nameof(Child))]
-class BeveledBorder : FrameworkElement
+public class BeveledBorder : FrameworkElement
 {
     static readonly float Alpha = 0.375f;
     static readonly Brush LightBrush = new SolidColorBrush(Color.FromScRgb(Alpha, 255, 255, 255));
@@ -23,7 +29,8 @@ class BeveledBorder : FrameworkElement
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.AffectsParentArrange |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
-                FrameworkPropertyMetadataOptions.AffectsRender));
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                OnChildChanged));
 
     public static readonly DependencyProperty BorderThicknessProperty =
         DependencyProperty.Register(
@@ -37,30 +44,15 @@ class BeveledBorder : FrameworkElement
             nameof(BevelType),
             typeof(BevelType),
             typeof(BeveledBorder),
-            new UIPropertyMetadata(BevelType.Raised));
+            new FrameworkPropertyMetadata(
+                BevelType.Raised, 
+                FrameworkPropertyMetadataOptions.AffectsRender,
+                OnBevelTypeChanged));
 
     public UIElement? Child
     {
         get { return (UIElement)GetValue(ChildProperty); }
-        set
-        {
-            var old = Child;
-            if (old is not null)
-            {
-                RemoveVisualChild(old);
-                RemoveLogicalChild(old);
-            }
-
-            SetValue(ChildProperty, value);
-
-            if (value is not null)
-            {
-                RemoveVisualChild(value);
-                RemoveLogicalChild(value);
-            }
-
-            InvalidateVisual();
-        }
+        set { SetValue(ChildProperty, value); }
     }
 
     public Thickness BorderThickness
@@ -78,11 +70,35 @@ class BeveledBorder : FrameworkElement
     public BevelType BevelType
     {
         get { return (BevelType)GetValue(BevelTypeProperty); }
-        set
-        { 
-            SetValue(BevelTypeProperty, value);
-            InvalidateVisual();
+        set { SetValue(BevelTypeProperty, value); }
+    }
+
+    static void OnChildChanged(object sender, DependencyPropertyChangedEventArgs args)
+    {
+        if (sender is not BeveledBorder beveledBorder)
+            return;
+
+        if (args.OldValue is UIElement oldChild)
+        {
+            beveledBorder.RemoveVisualChild(oldChild);
+            beveledBorder.RemoveLogicalChild(oldChild);
         }
+
+        if (args.NewValue is UIElement newChild)
+        {
+            beveledBorder.AddVisualChild(newChild);
+            beveledBorder.AddLogicalChild(newChild);
+        }
+
+        beveledBorder.InvalidateVisual();
+    }
+
+    static void OnBevelTypeChanged(object sender, DependencyPropertyChangedEventArgs args)
+    {
+        if (sender is not BeveledBorder beveledBorder)
+            return;
+
+        beveledBorder.InvalidateVisual();
     }
 
     protected override int VisualChildrenCount => Child is not null ? 1 : 0 ;
@@ -94,8 +110,8 @@ class BeveledBorder : FrameworkElement
         if (Child != null)
         {
             var availableChildSize = new Size(
-                availableSize.Width - BorderThickness.Left - BorderThickness.Right,
-                availableSize.Height - BorderThickness.Top - BorderThickness.Bottom);
+                Math.Max(availableSize.Width - BorderThickness.Left - BorderThickness.Right, 0),
+                Math.Max(availableSize.Height - BorderThickness.Top - BorderThickness.Bottom, 0));
 
             Child.Measure(availableChildSize);
 
@@ -128,22 +144,22 @@ class BeveledBorder : FrameworkElement
     {
         switch (BevelType)
         {
-            case Wpf.BevelType.Raised:
-            case Wpf.BevelType.Sunken:
+            case BevelType.Raised:
+            case BevelType.Sunken:
                 {
-                    var topLeftBrush = BevelType == Wpf.BevelType.Raised ? LightBrush : DarkBrush;
+                    var topLeftBrush = BevelType == BevelType.Raised ? LightBrush : DarkBrush;
                     var topLeftPen = new Pen(topLeftBrush, 0);
                     var topLeftGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
                     drawingContext.DrawGeometry(topLeftBrush, topLeftPen, topLeftGeometry);
 
-                    var bottomRightBrush = BevelType == Wpf.BevelType.Raised ? DarkBrush : LightBrush;
+                    var bottomRightBrush = BevelType == BevelType.Raised ? DarkBrush : LightBrush;
                     var bottomRightPen = new Pen(bottomRightBrush, 0);
                     var bottomRightGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
                     drawingContext.DrawGeometry(bottomRightBrush, bottomRightPen, bottomRightGeometry);
                     break;
                 }
 
-            case Wpf.BevelType.Outline:
+            case BevelType.Outline:
                 {
                     var topLeftOuterBrush = LightBrush;
                     var topLeftOuterPen = new Pen(topLeftOuterBrush, 0);

@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace TFMS.Wpf
+namespace TFMS.Wpf;
+
+public static class ServiceCollectionExtensionMethods
 {
-    public static class ServiceCollectionExtensionMethods
+    public static IServiceCollection AddViewModels(this IServiceCollection serviceCollection)
     {
-        public static IServiceCollection AddViewModels(this IServiceCollection serviceCollection)
-        {
-            return serviceCollection
-                .AddSingleton<TFMSViewModel>();
-        }
+        return serviceCollection
+            .AddSingleton<TFMSViewModel>();
     }
 }

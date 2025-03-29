@@ -15,4 +15,7 @@ public static class Theme
     public static FontFamily FontFamily { get; set; } = new FontFamily("Terminus (TTF)");
     public static double FontSize { get; set; } = 18.0;
     public static FontWeight FontWeight { get; set; } = FontWeights.Bold;
+
+    public static Thickness BeveledBorderThickness = new Thickness(2);
+    public static double BeveledLineWidth = 2;
 }

@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace TFMS.Wpf;
 
-namespace TFMS.Wpf
+public static class SystemDrawingExtensionMethods
 {
-    public static class SystemDrawingExtensionMethods
+    public static System.Windows.Media.Color ToWindowsColor(this System.Drawing.Color color)
     {
-        public static System.Windows.Media.Color ToWindowsColor(this System.Drawing.Color color)
-        {
-            return System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
-        }
+        return System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+    }
 
-        public static System.Windows.Media.FontFamily ToWindowsFontFamily(this System.Drawing.FontFamily fontFamily)
-        {
-            return new System.Windows.Media.FontFamily(fontFamily.Name);
-        }
+    public static System.Windows.Media.FontFamily ToWindowsFontFamily(this System.Drawing.FontFamily fontFamily)
+    {
+        return new System.Windows.Media.FontFamily(fontFamily.Name);
     }
 }

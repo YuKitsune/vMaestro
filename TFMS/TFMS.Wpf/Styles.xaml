@@ -1,18 +1,16 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:TFMS.Wpf">
+    xmlns:local="clr-namespace:TFMS.Wpf"
+    xmlns:controls="clr-namespace:TFMS.Wpf.Controls">
 
+    <!-- Global Styles -->
     <Style x:Key="ControlBaseStyle" TargetType="{x:Type Control}">
         <Setter Property="Background" Value="{x:Static local:Theme.BackgroundColor}"/>
         <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
         <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
         <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
-    </Style>
-
-    <Style TargetType="{x:Type local:TFMSView}">
-        <Setter Property="Background" Value="{x:Static local:Theme.BackgroundColor}"/>
     </Style>
 
     <Style TargetType="{x:Type TextBlock}">
@@ -22,34 +20,87 @@
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
     </Style>
 
-    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ControlBaseStyle}" />
+    <!-- Button Styling -->
+    <Style x:Key="ButtonBaseStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource ControlBaseStyle}">
 
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border Background="{x:Static local:Theme.BackgroundColor}">
+                        <controls:BeveledBorder
+                            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                            BevelType="Raised">
+                            <ContentPresenter 
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"/>
+                        </controls:BeveledBorder>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Style.Triggers>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border Background="{x:Static local:Theme.BackgroundColor}">
+                                <controls:BeveledBorder
+                                    BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                                    BevelType="Sunken">
+                                    <ContentPresenter 
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"/>
+                                </controls:BeveledBorder>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ComboBox Button -->
     <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
-        <Grid>
-            <Border 
+        <Border Background="{x:Static local:Theme.BackgroundColor}">
+            <controls:BeveledBorder
                 x:Name="Border"
-                Background="{x:Static local:Theme.BackgroundColor}" />
-        </Grid>
+                BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                BevelType="Raised" />
+        </Border>
+
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Border" Property="BevelType" Value="Sunken"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
     </ControlTemplate>
 
-    <Style x:Key="{x:Type ComboBox}" TargetType="{x:Type ComboBox}">
+    <!-- ComboBox -->
+    <Style x:Key="{x:Type ComboBox}" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource ControlBaseStyle}">
         <Setter Property="SnapsToDevicePixels" Value="true"/>
         <Setter Property="OverridesDefaultStyle" Value="true"/>
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.CanContentScroll" Value="true"/>
-        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ComboBox}">
                     <Grid>
-                        <ToggleButton 
-                                Name="ToggleButton" 
-                                Template="{StaticResource ComboBoxToggleButton}" 
-                                Grid.Column="2" 
-                                Focusable="false"
-                                IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
-                                ClickMode="Press" />
+                        <ToggleButton
+                            Name="ToggleButton" 
+                            Template="{StaticResource ComboBoxToggleButton}" 
+                            Grid.Column="2" 
+                            Focusable="false"
+                            IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
+                            ClickMode="Press" />
 
                         <ContentPresenter
                             Name="ContentSite"
@@ -58,37 +109,40 @@
                             ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                             ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
                             VerticalAlignment="Center"
-                            HorizontalAlignment="Left" />
+                            HorizontalAlignment="Center" />
+
                         <Popup 
                             Name="Popup"
                             Placement="Bottom"
                             IsOpen="{TemplateBinding IsDropDownOpen}"
                             Focusable="False"
                             PopupAnimation="None">
-                            <Grid Name="DropDown"
-                                  SnapsToDevicePixels="True"                
-                                  MinWidth="{TemplateBinding ActualWidth}"
-                                  MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                  Background="{x:Static local:Theme.BackgroundColor}">
+                            <Grid
+                                Name="DropDown"
+                                SnapsToDevicePixels="True"                
+                                MinWidth="{TemplateBinding ActualWidth}"
+                                MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                Background="{x:Static local:Theme.BackgroundColor}">
                                 <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
-                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    <ItemsPresenter />
                                 </ScrollViewer>
                             </Grid>
                         </Popup>
                     </Grid>
+                    
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="false">
                             <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
+
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Style.Triggers>
-        </Style.Triggers>
     </Style>
 
-    <Style x:Key="{x:Type ComboBoxItem}" TargetType="{x:Type ComboBoxItem}">
+    <!-- TODO: ComboBox Item -->
+    <Style x:Key="{x:Type ComboBoxItem}" TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource ControlBaseStyle}">
         <Setter Property="SnapsToDevicePixels" Value="true"/>
         <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
         <Setter Property="OverridesDefaultStyle" Value="true"/>
@@ -97,7 +151,6 @@
                 <ControlTemplate TargetType="{x:Type ComboBoxItem}">
                     <Border 
                         Name="Border"
-                        Padding="2"
                         SnapsToDevicePixels="true">
                         <ContentPresenter />
                     </Border>
