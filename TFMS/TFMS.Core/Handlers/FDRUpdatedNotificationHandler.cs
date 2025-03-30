@@ -48,6 +48,7 @@ public class FDRUpdatedNotificationHandler(IMediator mediator, SequenceProvider 
                 notification.FlightDataRecord.Callsign,
                 notification.FlightDataRecord.OriginIcaoCode,
                 notification.FlightDataRecord.DestinationIcaoCode,
+                feederFix.Identifier,
                 notification.FlightDataRecord.AssignedRunway,
                 null, //TODO,
                 feederFix.Estimate,

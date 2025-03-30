@@ -65,14 +65,22 @@ public partial class TFMSViewModel : ObservableObject
         AvailableAirports = Configuration.Demo.Airports
             .Select(a => new AirportViewModel { Identifier = a.Identifier })
             .ToArray();
+    }
 
-        SelectedAirport = AvailableAirports.FirstOrDefault();
+    partial void OnAvailableAirportsChanged(AirportViewModel[] availableAirports)
+    {
+        if (SelectedAirport == null || !availableAirports.Any(a => a.Identifier == SelectedAirport.Identifier))
+        {
+            SelectedAirport = availableAirports.FirstOrDefault();
+        }
     }
 
     partial void OnSelectedAirportChanged(AirportViewModel airportViewModel)
     {
-        AvailableRunwayModes = Configuration.Demo.Airports
-            .First(a => a.Identifier == airportViewModel.Identifier)
+        var airport = Configuration.Demo.Airports
+            .First(a => a.Identifier == airportViewModel.Identifier);
+
+        AvailableRunwayModes = airport
             .RunwayModes.Select(rm =>
                 new RunwayModeViewModel
                 { 
@@ -86,7 +94,30 @@ public partial class TFMSViewModel : ObservableObject
                 })
             .ToArray();
 
-        SelectedRunwayMode = AvailableRunwayModes.FirstOrDefault();
+        AvailableSectors = airport.Sectors
+            .Select(s =>
+                new SectorViewModel
+                {
+                    Identifier = s.Identifier,
+                    FeederFixes = s.Fixes
+                })
+            .ToArray();
+    }
+
+    partial void OnAvailableRunwayModesChanged(RunwayModeViewModel[] availableRunwayModes)
+    {
+        if (SelectedRunwayMode == null || !availableRunwayModes.Any(r => r.Identifier == SelectedRunwayMode.Identifier))
+        {
+            SelectedRunwayMode = availableRunwayModes.FirstOrDefault();
+        }
+    }
+
+    partial void OnAvailableSectorsChanged(SectorViewModel[] availableSectors)
+    {
+        if (SelectedSector == null || !availableSectors.Any(s => s.Identifier == SelectedSector.Identifier))
+        {
+            SelectedSector = availableSectors.FirstOrDefault();
+        }
     }
 
     partial void OnSelectedRunwayModeChanged(RunwayModeViewModel runwayModeViewModel)

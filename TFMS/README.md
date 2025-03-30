@@ -6,7 +6,9 @@
     - [X] Custom buttons
     - [X] Custom separators
     - [X] Clean up timeline
-    - [ ] Clena up combobox
+    - [X] Clean up combobox
+    - [ ] Fix sector selector
+    - [ ] Move inline styles into Theme and Style.xaml
 
 - [ ] Configuration
     - [ ] Load configuration from file
@@ -14,8 +16,12 @@
     - [ ] Use configuration in Ladder
     - [ ] Use configuration in Sequence
 
+- [ ] Data Modelling
+    - [ ] Consider how sequences should be modelled
+    - [ ] Consider internal infrastructure for online and offline modes
+    - [ ] Implement domain models, handlers, tiny types, etc.
+
 - [ ] Load arrivals from vatSys into sequences
-- [ ] Consider how to model sequences
 - [ ] Display arrivals on ladder
 - [ ] Ensure ladder re-draws when FDR updates
 - [ ] Refresh ladder on timer
@@ -29,7 +35,10 @@
     - [ ] Master can manually sequence and control landing rates
     - [ ] Clients get a read-only view of the sequence
 
-- [ ] Rename to Maestro
+- [ ] MVP
+    - [ ] Rename to Maestro
+    - [ ] Fix DPI scaling issue
+    - [ ] Fix font issue
 
 - [ ] Nice to haves
     - [ ] Debugger configuration for vatSys
@@ -40,6 +49,6 @@
 
 Need to figure out:
 - When is the initial FF and landing time set? Is it ever reset?
-- When does the ladder switch from using the estimated times to scheduled times?
+- Does the ladder switch from using the estimated times to scheduled times?
     - Are the scheduled times set from the beginning and constantly re-calculated?
     

@@ -42,6 +42,7 @@ public partial class TFMSView : UserControl
     void TimerTick(object sender, EventArgs args)
     {
         ClockText.Text = DateTimeOffset.UtcNow.ToString("HH:mm:ss");
+        InvalidateVisual();
     }
 
     void ControlLoaded(object sender, RoutedEventArgs e)
@@ -79,29 +80,42 @@ public partial class TFMSView : UserControl
 
         foreach (var aircraft in ViewModel.Aircraft)
         {
-            var yOffset = GetYOffsetForTime(currentTime, aircraft.LandingTime);
+            var yOffset = GetYOffsetForTime(currentTime, aircraft.FeederFixTime);
 
             var yPosition = canvasHeight - yOffset;
 
             if (yOffset < 0 || yOffset >= canvasHeight)
                 continue;
 
+            var distanceFromMiddle = (LadderWidth / 2) + LineThickness + TickWidth;
+            var width = middlePoint - distanceFromMiddle;
+
             var aircraftView = new AircraftView
             {
-                DataContext = aircraft
+                DataContext = aircraft,
+                Width = width,
             };
 
-            aircraftView.Loaded += OnAircraftLoaded;
+            if (ViewModel.LeftFeederFixes.Contains(aircraft.FeederFix))
+            {
+                aircraftView.Loaded += PositionOnCanvas(
+                    left: 0,
+                    right: middlePoint - distanceFromMiddle,
+                    y: yPosition);
+            }
+            else if (ViewModel.RightFeederFixes.Contains(aircraft.FeederFix))
+            {
+                aircraftView.Loaded += PositionOnCanvas(
+                    left: middlePoint + distanceFromMiddle,
+                    right: canvasWidth,
+                    y: yPosition);
+            }
+            else
+            {
+                continue;
+            }
 
             LadderCanvas.Children.Add(aircraftView);
-
-            void OnAircraftLoaded(object _, RoutedEventArgs e)
-            {
-                Canvas.SetTop(aircraftView, yPosition - aircraftView.ActualHeight / 2);
-                Canvas.SetLeft(aircraftView, 0);
-                Canvas.SetRight(aircraftView, middlePoint - LadderWidth / 2 - TickWidth);
-                aircraftView.Loaded -= OnAircraftLoaded;
-            }
         }
     }
 

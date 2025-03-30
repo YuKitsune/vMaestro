@@ -21,7 +21,7 @@ public record AircraftPerformanceData(
     string TypeCode,
     WakeCategory WakeCategory);
 
-public class Arrival(string callsign, string origin, string destination, string? runway, AircraftPerformanceData performanceData, DateTimeOffset initialFeederFixEstimate, DateTimeOffset initialDestinationEstimate)
+public class Arrival(string callsign, string origin, string destination, string feederFix, string? runway, AircraftPerformanceData performanceData, DateTimeOffset initialFeederFixEstimate, DateTimeOffset initialDestinationEstimate)
 {
     public string Callsign { get; } = callsign;
     public string OriginIcaoCode { get; } = origin;
@@ -30,6 +30,7 @@ public class Arrival(string callsign, string origin, string destination, string?
 
     public SequenceState State { get; } = SequenceState.Unstable;
 
+    public string FeederFix { get; private set; } = feederFix;
     public string? AssignedRunway { get; private set; } = runway;
 
     // TODO: What can change the initial estimate?

@@ -17,11 +17,12 @@ public class SequenceModifiedNotificationHandler(TFMSViewModel viewModel) : INot
             {
                 Callsign = a.Callsign,
 
+                FeederFix = a.FeederFix,
+                Runway = a.AssignedRunway,
+
                 // TODO: Figure out which times to use here.
                 LandingTime = a.EstimatedLandingTime,
                 FeederFixTime = a.EstimatedFeederFixTime,
-
-                Runway = a.AssignedRunway,
                 TotalDelay = a.TotalDelay ?? TimeSpan.Zero,
                 RemainingDelay = a.RemainingDelay ?? TimeSpan.Zero,
                 MaintainProfileSpeed = true

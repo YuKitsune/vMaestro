@@ -108,7 +108,7 @@ public class Configuration
                     Fixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"]
                 }
             ],
-                    FeederFixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"]
+            FeederFixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"]
         }
     ];
 }

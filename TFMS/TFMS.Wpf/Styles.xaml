@@ -121,18 +121,20 @@
                             IsOpen="{TemplateBinding IsDropDownOpen}"
                             Focusable="False"
                             PopupAnimation="None">
-                            <controls:BeveledBorder BevelType="Raised" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
-                                <Grid
+                            <Border Background="{x:Static local:Theme.BackgroundColor}">
+                                <controls:BeveledBorder BevelType="Raised" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                                    <Grid
                                     Name="DropDown"
                                     SnapsToDevicePixels="True"
                                     MinWidth="{TemplateBinding ActualWidth}"
                                     MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                     Background="{x:Static local:Theme.BackgroundColor}">
-                                    <ScrollViewer SnapsToDevicePixels="True">
-                                        <ItemsPresenter />
-                                    </ScrollViewer>
-                                </Grid>
-                            </controls:BeveledBorder>
+                                        <ScrollViewer SnapsToDevicePixels="True">
+                                            <ItemsPresenter />
+                                        </ScrollViewer>
+                                    </Grid>
+                                </controls:BeveledBorder>
+                            </Border>
                         </Popup>
                     </Grid>
                     
@@ -157,7 +159,8 @@
                 <ControlTemplate TargetType="{x:Type ComboBoxItem}">
                     <Border 
                         Name="Border"
-                        SnapsToDevicePixels="true">
+                        SnapsToDevicePixels="true"
+                        Padding="2,0,2,0">
                         <ContentPresenter />
                     </Border>
                     <ControlTemplate.Triggers>

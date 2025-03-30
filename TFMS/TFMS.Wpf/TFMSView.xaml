@@ -38,7 +38,7 @@
             <RowDefinition Height="5.733"/>
             <RowDefinition Height="24" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="40" />
+            <RowDefinition Height="32" />
         </Grid.RowDefinitions>
 
         <!-- Unknown Buttons -->
@@ -160,6 +160,8 @@
                     <Setter Property="MinWidth" Value="56" />
                     <Setter Property="Margin" Value="0,0,2,0"/>
                 </Style>
+
+                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
             </StackPanel.Resources>
             <Button>
                 <TextBlock>DEPS</TextBlock>
@@ -167,7 +169,7 @@
             <Button>
                 <TextBlock>DESQ</TextBlock>
             </Button>
-            <ItemsControl ItemsSource="{Binding Path=AvailableSectors}">
+            <ItemsControl ItemsSource="{Binding AvailableSectors, RelativeSource={RelativeSource AncestorType=local:TFMSViewModel}}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -175,7 +177,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Command="{Binding SelectSectorCommand}" CommandParameter="{Binding .}">
+                        <Button Command="{Binding SelectSectorCommand, RelativeSource={RelativeSource AncestorType=local:TFMSViewModel}}" CommandParameter="{Binding}">
                             <TextBlock Text="{Binding Identifier}" />
                         </Button>
                     </DataTemplate>
@@ -221,15 +223,13 @@
 
         <!-- Footer -->
         <Grid Grid.Column="1" Grid.Row="4">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="48"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-            </Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <ItemsControl Grid.Column="0" ItemsSource="{Binding Path=LeftFeederFixes}">
+            <ItemsControl Grid.Column="0" HorizontalAlignment="Right" ItemsSource="{Binding Path=LeftFeederFixes}" Margin="2,0,2,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -237,7 +237,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding .}" />
+                        <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -246,7 +246,7 @@
                 <TextBlock x:Name="ClockText" TextAlignment="Center" VerticalAlignment="Center" Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
             </controls:BeveledBorder>
 
-            <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}">
+            <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}" Margin="2,0,2,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -254,7 +254,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding .}" />
+                        <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

@@ -12,7 +12,7 @@ public class Sequence(IMediator mediator, string airportIdentifier)
 
     public IReadOnlyList<Arrival> Arrivals => arrivals;
 
-    public void Add(string callsign, string origin, string destination, string? assignedRunway, AircraftPerformanceData performanceData, DateTimeOffset initialFeederFixEstimate, DateTimeOffset initialDestinationEstimate)
+    public void Add(string callsign, string origin, string destination, string feederFix, string? assignedRunway, AircraftPerformanceData performanceData, DateTimeOffset initialFeederFixEstimate, DateTimeOffset initialDestinationEstimate)
     {
         if (arrivals.Any(c => c.Callsign == callsign))
         {
@@ -24,7 +24,7 @@ public class Sequence(IMediator mediator, string airportIdentifier)
             throw new Exception($"Cannot add {callsign} to sequence for {AirportIdentifier} as the destination is {destination}");
         }
 
-        arrivals.Add(new Arrival(callsign, origin, destination, assignedRunway, performanceData, initialFeederFixEstimate, initialDestinationEstimate));
+        arrivals.Add(new Arrival(callsign, origin, destination, feederFix, assignedRunway, performanceData, initialFeederFixEstimate, initialDestinationEstimate));
 
         mediator.Publish(new SequenceModifiedNotification(this));
     }
