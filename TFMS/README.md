@@ -4,9 +4,9 @@
     - [X] Pull theme from vatSys
     - [X] Create custom controls to follow vatSys theme
     - [X] Custom buttons
-    - [X] Custom combobox
-    - [ ] Custom separators
-    - [ ] Clean up timeline
+    - [X] Custom separators
+    - [X] Clean up timeline
+    - [ ] Clena up combobox
 
 - [ ] Configuration
     - [ ] Load configuration from file
@@ -37,7 +37,6 @@
     - [ ] CSV or XLSX backup
     - [ ] Training mode
     - [ ] Customisable UI layout
-
 
 Need to figure out:
 - When is the initial FF and landing time set? Is it ever reset?

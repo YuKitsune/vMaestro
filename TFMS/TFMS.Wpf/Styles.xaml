@@ -13,11 +13,15 @@
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
     </Style>
 
-    <Style TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+    <Style x:Key="TextBaseStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}" />
         <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
         <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+    </Style>
+
+    <Style x:Key="InteractiveTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
     </Style>
 
     <!-- Button Styling -->
@@ -117,16 +121,18 @@
                             IsOpen="{TemplateBinding IsDropDownOpen}"
                             Focusable="False"
                             PopupAnimation="None">
-                            <Grid
-                                Name="DropDown"
-                                SnapsToDevicePixels="True"                
-                                MinWidth="{TemplateBinding ActualWidth}"
-                                MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                Background="{x:Static local:Theme.BackgroundColor}">
-                                <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
-                                    <ItemsPresenter />
-                                </ScrollViewer>
-                            </Grid>
+                            <controls:BeveledBorder BevelType="Raised" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                                <Grid
+                                    Name="DropDown"
+                                    SnapsToDevicePixels="True"
+                                    MinWidth="{TemplateBinding ActualWidth}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    Background="{x:Static local:Theme.BackgroundColor}">
+                                    <ScrollViewer SnapsToDevicePixels="True">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Grid>
+                            </controls:BeveledBorder>
                         </Popup>
                     </Grid>
                     
@@ -155,19 +161,16 @@
                         <ContentPresenter />
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsSelected" Value="true">
-                            <Setter TargetName="Border" Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}"/>
-                        </Trigger>
-                        
-                        <!-- TODO: Find a better color -->
+
+                        <!-- TODO: Separate color for combobox hover -->
                         <Trigger Property="IsHighlighted" Value="true">
-                            <Setter TargetName="Border" Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}"/>
-                            <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}"/>
+                            <Setter TargetName="Border" Property="Background" Value="{x:Static local:Theme.DarkBrush}"/>
                         </Trigger>
 
                         <Trigger Property="IsEnabled" Value="false">
                             <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}"/>
                         </Trigger>
+
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

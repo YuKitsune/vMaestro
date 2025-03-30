@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using TFMS.Wpf.Controls;
 
 namespace TFMS.Wpf;
 
@@ -13,9 +14,10 @@ namespace TFMS.Wpf;
 /// </summary>
 public partial class TFMSView : UserControl
 {
-    const int MinuteHeight = 10;
-    const int SpineWidth = 16;
+    const int MinuteHeight = 12;
+    const int LadderWidth = 24;
     const int TickWidth = 8;
+    const int LineThickness = 2;
 
     readonly DispatcherTimer dispatcherTimer;
 
@@ -97,7 +99,7 @@ public partial class TFMSView : UserControl
             {
                 Canvas.SetTop(aircraftView, yPosition - aircraftView.ActualHeight / 2);
                 Canvas.SetLeft(aircraftView, 0);
-                Canvas.SetRight(aircraftView, middlePoint - SpineWidth / 2 - TickWidth);
+                Canvas.SetRight(aircraftView, middlePoint - LadderWidth / 2 - TickWidth);
                 aircraftView.Loaded -= OnAircraftLoaded;
             }
         }
@@ -110,58 +112,72 @@ public partial class TFMSView : UserControl
 
         var durationToDisplay = TimeSpan.FromMinutes(canvasHeight / MinuteHeight);
         var ladderCeilingTime = currentTime.Add(durationToDisplay);
+
         var middlePoint = canvasWidth / 2;
+        var ladderLeftPosition = middlePoint - (LadderWidth / 2) - LineThickness;
+        var ladderRightPosition = middlePoint + (LadderWidth / 2) + LineThickness;
 
-        var leftLine = new Line()
+        var leftLine = new BeveledLine
         {
-            Y1 = 0,
-            X1 = middlePoint - SpineWidth / 2,
-            Y2 = canvasHeight,
-            X2 = middlePoint - SpineWidth / 2,
-            StrokeThickness = 1,
-            Stroke = new SolidColorBrush(Colors.Black),
+            Orientation = Orientation.Vertical,
+            Width = LineThickness,
+            Height = canvasHeight,
+            ClipToBounds = true,
         };
 
-        var rightLine = new Line()
+        leftLine.Loaded += PositionOnCanvas(
+            top: 0,
+            bottom: canvasHeight,
+            x: ladderLeftPosition);
+
+        LadderCanvas.Children.Add(leftLine);
+
+        var rightLine = new BeveledLine
         {
-            Y1 = 0,
-            X1 = middlePoint + SpineWidth / 2,
-            Y2 = canvasHeight,
-            X2 = middlePoint + SpineWidth / 2,
-            StrokeThickness = 1,
-            Stroke = new SolidColorBrush(Colors.Black),
+            Orientation = Orientation.Vertical,
+            Width = LineThickness,
+            Height = canvasHeight,
+            ClipToBounds = true,
         };
+
+        rightLine.Loaded += PositionOnCanvas(
+            top: 0,
+            bottom: canvasHeight,
+            x: ladderRightPosition);
 
         LadderCanvas.Children.Add(rightLine);
-        LadderCanvas.Children.Add(leftLine);
 
         var nextMinute = currentTime.Add(new TimeSpan(0, 0, 60 - currentTime.Second));
         var yOffset = GetYOffsetForTime(currentTime, nextMinute);
         while (yOffset <= canvasHeight)
         {
             var yPosition = canvasHeight - yOffset;
+            var topPosition = yPosition - (LineThickness / 2);
 
-            var leftTick = new Line()
+            var leftTickXPosition = ladderLeftPosition - LineThickness - (TickWidth / 2);
+            var rightTickXPosition = ladderRightPosition + LineThickness + (TickWidth / 2);
+
+            var leftTick = new BeveledLine
             {
-                X1 = middlePoint - SpineWidth / 2 - TickWidth,
-                Y1 = yPosition,
-                X2 = middlePoint - SpineWidth / 2,
-                Y2 = yPosition,
-                StrokeThickness = 1,
-                Stroke = new SolidColorBrush(Colors.Black),
+                Orientation = Orientation.Horizontal,
+                Height = LineThickness,
+                Width = TickWidth
             };
-
-            var rightTick = new Line()
-            {
-                X1 = middlePoint + SpineWidth / 2 + TickWidth,
-                Y1 = yPosition,
-                X2 = middlePoint + SpineWidth / 2,
-                Y2 = yPosition,
-                StrokeThickness = 1,
-                Stroke = new SolidColorBrush(Colors.Black),
-            };
-
+            leftTick.Loaded += PositionOnCanvas(
+                x: leftTickXPosition,
+                y: yPosition);
             LadderCanvas.Children.Add(leftTick);
+
+            var rightTick = new BeveledLine
+            {
+                Orientation = Orientation.Horizontal,
+                Height = LineThickness,
+                Width = TickWidth
+            };
+
+            rightTick.Loaded += PositionOnCanvas(
+                x: rightTickXPosition,
+                y: yPosition);
             LadderCanvas.Children.Add(rightTick);
 
             yOffset += MinuteHeight;
@@ -174,23 +190,57 @@ public partial class TFMSView : UserControl
             var yPosition = canvasHeight - yOffset;
             var text = new TextBlock
             {
-                Text = nextTime.Minute.ToString("00"),
+                Text = nextTime.Minute.ToString("00")
             };
 
-            text.Loaded += OnTextLoaded;
+            text.Loaded += PositionOnCanvas(
+                x: middlePoint,
+                y: yPosition);
 
             LadderCanvas.Children.Add(text);
 
             nextTime = nextTime.AddMinutes(5);
             yOffset += MinuteHeight * 5;
-
-            void OnTextLoaded(object _, RoutedEventArgs e)
-            {
-                Canvas.SetTop(text, yPosition - text.ActualHeight / 2);
-                Canvas.SetLeft(text, middlePoint - text.ActualWidth / 2);
-                text.Loaded -= OnTextLoaded;
-            }
         }
+    }
+
+    RoutedEventHandler PositionOnCanvas(
+        double? left = null,
+        double? top = null,
+        double? right = null,
+        double? bottom = null,
+        double? x = null,
+        double? y = null)
+    {
+        return (object sender, RoutedEventArgs args) =>
+        {
+            if (sender is not FrameworkElement element)
+                return;
+
+            if (left.HasValue)
+                Canvas.SetLeft(element, left.Value);
+
+            if (top.HasValue)
+                Canvas.SetTop(element, top.Value);
+
+            if (right.HasValue)
+                Canvas.SetRight(element, right.Value);
+
+            if (bottom.HasValue)
+                Canvas.SetBottom(element, bottom.Value);
+
+            if (x.HasValue)
+            {
+                var left = x.Value - (element.ActualWidth / 2);
+                Canvas.SetLeft(element, left);
+            }
+
+            if (y.HasValue)
+            {
+                var top = y.Value - (element.ActualHeight / 2);
+                Canvas.SetTop(element, top);
+            }
+        };
     }
 
     double GetYOffsetForTime(DateTimeOffset currentTime, DateTimeOffset nextTime)

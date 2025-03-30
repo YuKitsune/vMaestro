@@ -14,10 +14,6 @@ public enum BevelType
 [ContentProperty(nameof(Child))]
 public class BeveledBorder : FrameworkElement
 {
-    static readonly float Alpha = 0.375f;
-    static readonly Brush LightBrush = new SolidColorBrush(Color.FromScRgb(Alpha, 255, 255, 255));
-    static readonly Brush DarkBrush = new SolidColorBrush(Color.FromScRgb(Alpha, 0, 0, 0));
-
     public static readonly DependencyProperty ChildProperty =
         DependencyProperty.RegisterAttached(
             nameof(Child),
@@ -147,12 +143,12 @@ public class BeveledBorder : FrameworkElement
             case BevelType.Raised:
             case BevelType.Sunken:
                 {
-                    var topLeftBrush = BevelType == BevelType.Raised ? LightBrush : DarkBrush;
+                    var topLeftBrush = BevelType == BevelType.Raised ? Theme.LightBrush : Theme.DarkBrush;
                     var topLeftPen = new Pen(topLeftBrush, 0);
                     var topLeftGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
                     drawingContext.DrawGeometry(topLeftBrush, topLeftPen, topLeftGeometry);
 
-                    var bottomRightBrush = BevelType == BevelType.Raised ? DarkBrush : LightBrush;
+                    var bottomRightBrush = BevelType == BevelType.Raised ? Theme.DarkBrush : Theme.LightBrush;
                     var bottomRightPen = new Pen(bottomRightBrush, 0);
                     var bottomRightGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
                     drawingContext.DrawGeometry(bottomRightBrush, bottomRightPen, bottomRightGeometry);
@@ -161,22 +157,22 @@ public class BeveledBorder : FrameworkElement
 
             case BevelType.Outline:
                 {
-                    var topLeftOuterBrush = LightBrush;
+                    var topLeftOuterBrush = Theme.LightBrush;
                     var topLeftOuterPen = new Pen(topLeftOuterBrush, 0);
                     var topLeftOuterGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThicknessHalved);
                     drawingContext.DrawGeometry(topLeftOuterBrush, topLeftOuterPen, topLeftOuterGeometry);
 
-                    var bottomRightOuterBrush = DarkBrush;
+                    var bottomRightOuterBrush = Theme.DarkBrush;
                     var bottomRightOuterPen = new Pen(bottomRightOuterBrush, 0);
                     var bottomRightOuterGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThicknessHalved);
                     drawingContext.DrawGeometry(bottomRightOuterBrush, bottomRightOuterPen, bottomRightOuterGeometry);
 
-                    var topLeftInnerBrush = DarkBrush;
+                    var topLeftInnerBrush = Theme.DarkBrush;
                     var topLeftInnerPen = new Pen(topLeftInnerBrush, 0);
                     var topLeftInnerGeometry = GetTopLeftGeometry(BorderThicknessHalved.Left, BorderThicknessHalved.Top, ActualWidth - BorderThicknessHalved.Right, ActualHeight - BorderThicknessHalved.Bottom, BorderThicknessHalved);
                     drawingContext.DrawGeometry(topLeftInnerBrush, topLeftInnerPen, topLeftInnerGeometry);
 
-                    var bottomRightInnerBrush = LightBrush;
+                    var bottomRightInnerBrush = Theme.LightBrush;
                     var bottomRightInnerPen = new Pen(bottomRightInnerBrush, 0);
                     var bottomRightInnerGeometry = GetBottomRightGeometry(BorderThicknessHalved.Left, BorderThicknessHalved.Top, ActualWidth - BorderThicknessHalved.Right, ActualHeight - BorderThicknessHalved.Bottom, BorderThicknessHalved);
                     drawingContext.DrawGeometry(bottomRightInnerBrush, bottomRightInnerPen, bottomRightInnerGeometry);

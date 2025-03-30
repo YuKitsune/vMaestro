@@ -22,6 +22,7 @@
             <converters:TotalSecondsConverter x:Key="TotalSecondsConverter"/>
 
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}" />
 
         </ResourceDictionary>
     </UserControl.Resources>
@@ -105,7 +106,7 @@
 
                 <!-- Runway Intervals -->
                 <controls:BeveledBorder Grid.Column="6" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Raised">
-                    <ItemsControl ItemsSource="{Binding Path=RunwayRates}">
+                    <ItemsControl ItemsSource="{Binding Path=RunwayRates}" VerticalAlignment="Center" Margin="2">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel />
@@ -113,12 +114,25 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
+                                <DataTemplate.Resources>
+                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}"/>
+                                </DataTemplate.Resources>
+                                
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text=" - "/>
+                                    <TextBlock x:Name="Separator" Text=" - " />
                                     <TextBlock Text="{Binding Identifier}"/>
                                     <TextBlock>:</TextBlock>
                                     <TextBlock Text="{Binding LandingRate, Converter={StaticResource TotalSecondsConverter}}"/>
                                 </StackPanel>
+
+                                <DataTemplate.Triggers>
+                                    
+                                    <!-- Hide the separator on the first iteration -->
+                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                        <Setter Property="Visibility" TargetName="Separator" Value="Collapsed"/>
+                                    </DataTrigger>
+
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -206,11 +220,11 @@
             ClipToBounds="True" />
 
         <!-- Footer -->
-        <Grid Grid.Column="1"  Grid.Row="4">
+        <Grid Grid.Column="1" Grid.Row="4">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="104"/>
+                    <ColumnDefinition Width="48"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
             </Grid>
@@ -229,7 +243,7 @@
             </ItemsControl>
 
             <controls:BeveledBorder Grid.Column="1" BevelType="Outline" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
-                <TextBlock x:Name="ClockText"/>
+                <TextBlock x:Name="ClockText" TextAlignment="Center" VerticalAlignment="Center" Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
             </controls:BeveledBorder>
 
             <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}">

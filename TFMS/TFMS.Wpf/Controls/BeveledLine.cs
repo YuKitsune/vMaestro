@@ -6,10 +6,6 @@ namespace TFMS.Wpf.Controls;
 
 public class BeveledLine : FrameworkElement
 {
-    static readonly float Alpha = 0.375f;
-    static readonly Brush LightBrush = new SolidColorBrush(Color.FromScRgb(Alpha, 255, 255, 255));
-    static readonly Brush DarkBrush = new SolidColorBrush(Color.FromScRgb(Alpha, 0, 0, 0));
-
     public static DependencyProperty OrientationProperty =
         DependencyProperty.Register(
             nameof(Orientation),
@@ -66,12 +62,12 @@ public class BeveledLine : FrameworkElement
         {
             case Orientation.Horizontal:
                 {
-                    var topBrush = Flipped ? DarkBrush : LightBrush;
+                    var topBrush = Flipped ? Theme.DarkBrush : Theme.LightBrush;
                     var topPen = new Pen(topBrush, 0);
                     var topGeometry = GetGeometry(0, 0, ActualWidth, ActualHeight / 2);
                     drawingContext.DrawGeometry(topBrush, topPen, topGeometry);
 
-                    var bottomBrush = Flipped ? LightBrush : DarkBrush;
+                    var bottomBrush = Flipped ? Theme.LightBrush : Theme.DarkBrush;
                     var bottomPen = new Pen(bottomBrush, 0);
                     var bottomGeometry = GetGeometry(0, ActualHeight / 2, ActualWidth, ActualHeight);
                     drawingContext.DrawGeometry(bottomBrush, bottomPen, bottomGeometry);
@@ -79,12 +75,12 @@ public class BeveledLine : FrameworkElement
                 }
             case Orientation.Vertical:
                 {
-                    var leftBrush = Flipped ? DarkBrush : LightBrush;
+                    var leftBrush = Flipped ? Theme.DarkBrush : Theme.LightBrush;
                     var leftPen = new Pen(leftBrush, 0);
                     var leftGeometry = GetGeometry(0, 0, ActualWidth / 2, ActualHeight);
                     drawingContext.DrawGeometry(leftBrush, leftPen, leftGeometry);
 
-                    var bottomBrush = Flipped ? LightBrush : DarkBrush;
+                    var bottomBrush = Flipped ? Theme.LightBrush : Theme.DarkBrush;
                     var bottomPen = new Pen(bottomBrush, 0);
                     var bottomGeometry = GetGeometry(ActualWidth / 2, 0, ActualWidth, ActualHeight);
                     drawingContext.DrawGeometry(bottomBrush, bottomPen, bottomGeometry);

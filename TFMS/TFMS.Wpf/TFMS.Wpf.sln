@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFMS.Wpf", "TFMS.Wpf.csproj", "{13E3EC30-954B-B754-CEB7-58200810D89F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{13E3EC30-954B-B754-CEB7-58200810D89F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13E3EC30-954B-B754-CEB7-58200810D89F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13E3EC30-954B-B754-CEB7-58200810D89F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13E3EC30-954B-B754-CEB7-58200810D89F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {24B867FB-D602-459A-84DE-69C7AC638DA5}
+	EndGlobalSection
+EndGlobal
