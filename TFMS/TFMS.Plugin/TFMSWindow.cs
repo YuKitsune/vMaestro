@@ -9,7 +9,7 @@ namespace TFMS.Plugin
     {
         public TFMSWindow()
         {
-            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.Font;
             var elementHost = new ElementHost
             {
                 Dock = DockStyle.Fill,

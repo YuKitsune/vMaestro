@@ -87,13 +87,14 @@ public partial class TFMSView : UserControl
             if (yOffset < 0 || yOffset >= canvasHeight)
                 continue;
 
-            var distanceFromMiddle = (LadderWidth / 2) + LineThickness + TickWidth;
+            var distanceFromMiddle = (LadderWidth / 2) + (LineThickness * 2) + TickWidth;
             var width = middlePoint - distanceFromMiddle;
 
             var aircraftView = new AircraftView
             {
                 DataContext = aircraft,
                 Width = width,
+                Margin = new Thickness(2,0,2,0)
             };
 
             if (ViewModel.LeftFeederFixes.Contains(aircraft.FeederFix))
@@ -152,6 +153,7 @@ public partial class TFMSView : UserControl
             Width = LineThickness,
             Height = canvasHeight,
             ClipToBounds = true,
+            Flipped = true,
         };
 
         rightLine.Loaded += PositionOnCanvas(

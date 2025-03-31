@@ -9,7 +9,7 @@
              mc:Ignorable="d"
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DesignHeight="800"
-             d:DesignWidth="800">
+             d:DesignWidth="500">
     <UserControl.DataContext>
         <local:TFMSViewModel />
     </UserControl.DataContext>
@@ -20,9 +20,9 @@
             </ResourceDictionary.MergedDictionaries>
 
             <converters:TotalSecondsConverter x:Key="TotalSecondsConverter"/>
-
-            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
+            
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}" />
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
 
         </ResourceDictionary>
     </UserControl.Resources>
@@ -34,22 +34,27 @@
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="42.267" />
-            <RowDefinition Height="5.733"/>
-            <RowDefinition Height="24" />
+            <RowDefinition Height="22" />
+            <RowDefinition Height="22"/>
+            <RowDefinition Height="22" />
             <RowDefinition Height="*" />
             <RowDefinition Height="32" />
         </Grid.RowDefinitions>
 
         <!-- Unknown Buttons -->
+        <!-- TODO: Not implemented -->
         <Grid Grid.Column="0" Grid.Row="0" Grid.RowSpan="3">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Button Grid.Row="0"/>
-            <Button Grid.Row="1"/>
+            <Button Grid.Row="0" Margin="0,0,0,1" IsEnabled="False">
+                <controls:Chevron Direction="Left" />
+            </Button>
+            <Button Grid.Row="1" Margin="0,1,0,1" IsEnabled="False">
+                <controls:Chevron Direction="Right" />
+            </Button>
         </Grid>
 
         <!-- Header -->
@@ -58,18 +63,25 @@
             Grid.Row="0"
             BevelType="Outline"
             BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
-            Margin="1,1,1,1" Grid.RowSpan="2">
+            Margin="2,0,2,0"
+            Grid.RowSpan="2">
+
+            <controls:BeveledBorder.Resources>
+                <Style TargetType="{x:Type controls:BeveledLine}">
+                    <Setter Property="Margin" Value="4,0,4,0" />
+                </Style>
+            </controls:BeveledBorder.Resources>
 
             <Grid Margin="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="72" />
-                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="56" />
-                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="72" />
-                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="72" />
                 </Grid.ColumnDefinitions>
 
@@ -78,7 +90,8 @@
                     Grid.Column="0"
                     VerticalAlignment="Center"
                     TextWrapping="Wrap"
-                    HorizontalAlignment="Center">
+                    HorizontalAlignment="Center"
+                    Style="{StaticResource MultiLineText}">
                         FLOW
                 </TextBlock>
 
@@ -154,22 +167,24 @@
             Grid.Column="1"
             Grid.Row="2"
             Orientation="Horizontal"
-            Margin="1,1,1,1">
+            Margin="2">
             <StackPanel.Resources>
                 <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
-                    <Setter Property="MinWidth" Value="56" />
                     <Setter Property="Margin" Value="0,0,2,0"/>
+                    <Setter Property="Width" Value="48" />
                 </Style>
-
-                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
             </StackPanel.Resources>
-            <Button>
-                <TextBlock>DEPS</TextBlock>
-            </Button>
-            <Button>
-                <TextBlock>DESQ</TextBlock>
-            </Button>
-            <ItemsControl ItemsSource="{Binding AvailableSectors, RelativeSource={RelativeSource AncestorType=local:TFMSViewModel}}">
+            
+            <Button IsEnabled="False" Content="DEPS"/>
+            <Button Content="COORD"/>
+            <Button Content="DESQ"/>
+
+            <ItemsControl ItemsSource="{Binding AvailableSectors}">
+                <ItemsControl.Resources>
+                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
+                        <Setter Property="Width" Value="72" />
+                    </Style>
+                </ItemsControl.Resources>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -177,18 +192,14 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Command="{Binding SelectSectorCommand, RelativeSource={RelativeSource AncestorType=local:TFMSViewModel}}" CommandParameter="{Binding}">
-                            <TextBlock Text="{Binding Identifier}" />
-                        </Button>
+                        <Button Command="{Binding SelectSectorCommand}" CommandParameter="{Binding}" Content="{Binding Identifier}"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <Button>
-                <TextBlock>RWY</TextBlock>
-            </Button>
         </StackPanel>
 
         <!-- Scroll Bar -->
+        <!-- TODO: Not implemented -->
         <Grid Grid.Column="0" Grid.Row="3">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -196,20 +207,12 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Button Grid.Row="0" Margin="0,0,0,1">
-                <Path 
-                    Fill="{x:Static local:Theme.InteractiveTextColor}"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Center"
-                    Data="M3,0 L6,6 L0,6 z"/>
+            <Button Grid.Row="0" Margin="0,1,0,1" IsEnabled="False">
+                <controls:Chevron Direction="Up" />
             </Button>
-            <Button Grid.Row="1" Margin="0,1,0,1"></Button>
-            <Button Grid.Row="2" Margin="0,1,0,0">
-                <Path 
-                Fill="{x:Static local:Theme.InteractiveTextColor}"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Data="M3,6 L0,0 L6,0 z"/>
+            <Button Grid.Row="1" Margin="0,1,0,1" Background="{x:Static local:Theme.SelectedButtonColor}"/>
+            <Button Grid.Row="2" Margin="0,1,0,0" IsEnabled="False">
+                <controls:Chevron Direction="Down" />
             </Button>
         </Grid>
 
@@ -229,35 +232,42 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <ItemsControl Grid.Column="0" HorizontalAlignment="Right" ItemsSource="{Binding Path=LeftFeederFixes}" Margin="2,0,2,0">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Right" Margin="0,0,6,0">
+                <TextBlock>All Runways</TextBlock>
+                <ItemsControl HorizontalAlignment="Right" ItemsSource="{Binding Path=LeftFeederFixes}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
 
             <controls:BeveledBorder Grid.Column="1" BevelType="Outline" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
                 <TextBlock x:Name="ClockText" TextAlignment="Center" VerticalAlignment="Center" Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
             </controls:BeveledBorder>
 
-            <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}" Margin="2,0,2,0">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <StackPanel Grid.Column="2" HorizontalAlignment="Left" Margin="6,0,0,0">
+
+                <TextBlock>All Runways</TextBlock>
+                <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

@@ -20,7 +20,7 @@ namespace TFMS.Plugin
         public string Name => "TFMS";
         public static string DisplayName => "TFMS";
 
-        static TFMSWindow TFMSWindow;
+        static BaseForm? TFMSWindow;
 
         IMediator mediator;
 

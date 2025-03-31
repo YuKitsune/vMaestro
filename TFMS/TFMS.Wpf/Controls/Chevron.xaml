@@ -1,0 +1,30 @@
+﻿<UserControl x:Class="TFMS.Wpf.Controls.Chevron"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TFMS.Wpf"
+             xmlns:converters="clr-namespace:TFMS.Wpf.Converters"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             mc:Ignorable="d" 
+             d:DesignHeight="8" d:DesignWidth="8">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/TFMS.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:DirectionToRotationAngleConverter x:Key="DirectionToRotationAngleConverter" />
+
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Path 
+        Fill="{Binding Foreground}"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Center"
+        Data="M4,0 L8,8 L0,8 z">
+        <Path.RenderTransform>
+            <RotateTransform CenterX="4" CenterY="4"  Angle="{Binding Direction, Converter={StaticResource DirectionToRotationAngleConverter}}" />
+        </Path.RenderTransform>
+    </Path>
+</UserControl>

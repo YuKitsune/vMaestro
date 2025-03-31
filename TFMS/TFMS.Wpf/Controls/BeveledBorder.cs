@@ -61,7 +61,7 @@ public class BeveledBorder : FrameworkElement
         }
     }
 
-    Thickness BorderThicknessHalved => new Thickness(BorderThickness.Left / 2, BorderThickness.Top / 2, BorderThickness.Right / 2, BorderThickness.Bottom / 2);
+    Thickness BorderThicknessDoubled => new Thickness(BorderThickness.Left * 2, BorderThickness.Top * 2, BorderThickness.Right * 2, BorderThickness.Bottom * 2);
 
     public BevelType BevelType
     {
@@ -105,15 +105,17 @@ public class BeveledBorder : FrameworkElement
     {
         if (Child != null)
         {
+            var thickness = BevelType == BevelType.Outline ? BorderThicknessDoubled : BorderThickness;
+
             var availableChildSize = new Size(
-                Math.Max(availableSize.Width - BorderThickness.Left - BorderThickness.Right, 0),
-                Math.Max(availableSize.Height - BorderThickness.Top - BorderThickness.Bottom, 0));
+                Math.Max(availableSize.Width - thickness.Left - thickness.Right, 0),
+                Math.Max(availableSize.Height - thickness.Top - thickness.Bottom, 0));
 
             Child.Measure(availableChildSize);
 
             return new Size(
-                Child.DesiredSize.Width + BorderThickness.Left + BorderThickness.Right,
-                Child.DesiredSize.Height + BorderThickness.Top + BorderThickness.Bottom);
+                Child.DesiredSize.Width + thickness.Left + thickness.Right,
+                Child.DesiredSize.Height + thickness.Top + thickness.Bottom);
         }
 
         return new Size(0, 0);
@@ -124,11 +126,12 @@ public class BeveledBorder : FrameworkElement
         // Arrange the child control, taking padding into account
         if (Child != null)
         {
+            var thickness = BevelType == BevelType.Outline ? BorderThicknessDoubled : BorderThickness;
             var childRect = new Rect(
-                BorderThickness.Left,
-                BorderThickness.Top,
-                finalSize.Width - BorderThickness.Left - BorderThickness.Right,
-                finalSize.Height - BorderThickness.Top - BorderThickness.Bottom);
+                thickness.Left,
+                thickness.Top,
+                finalSize.Width - thickness.Left - thickness.Right,
+                finalSize.Height - thickness.Top - thickness.Bottom);
 
             Child.Arrange(childRect);
         }
@@ -159,22 +162,22 @@ public class BeveledBorder : FrameworkElement
                 {
                     var topLeftOuterBrush = Theme.LightBrush;
                     var topLeftOuterPen = new Pen(topLeftOuterBrush, 0);
-                    var topLeftOuterGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThicknessHalved);
+                    var topLeftOuterGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
                     drawingContext.DrawGeometry(topLeftOuterBrush, topLeftOuterPen, topLeftOuterGeometry);
 
                     var bottomRightOuterBrush = Theme.DarkBrush;
                     var bottomRightOuterPen = new Pen(bottomRightOuterBrush, 0);
-                    var bottomRightOuterGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThicknessHalved);
+                    var bottomRightOuterGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
                     drawingContext.DrawGeometry(bottomRightOuterBrush, bottomRightOuterPen, bottomRightOuterGeometry);
 
                     var topLeftInnerBrush = Theme.DarkBrush;
                     var topLeftInnerPen = new Pen(topLeftInnerBrush, 0);
-                    var topLeftInnerGeometry = GetTopLeftGeometry(BorderThicknessHalved.Left, BorderThicknessHalved.Top, ActualWidth - BorderThicknessHalved.Right, ActualHeight - BorderThicknessHalved.Bottom, BorderThicknessHalved);
+                    var topLeftInnerGeometry = GetTopLeftGeometry(BorderThickness.Left, BorderThickness.Top, ActualWidth - BorderThickness.Right, ActualHeight - BorderThickness.Bottom, BorderThickness);
                     drawingContext.DrawGeometry(topLeftInnerBrush, topLeftInnerPen, topLeftInnerGeometry);
 
                     var bottomRightInnerBrush = Theme.LightBrush;
                     var bottomRightInnerPen = new Pen(bottomRightInnerBrush, 0);
-                    var bottomRightInnerGeometry = GetBottomRightGeometry(BorderThicknessHalved.Left, BorderThicknessHalved.Top, ActualWidth - BorderThicknessHalved.Right, ActualHeight - BorderThicknessHalved.Bottom, BorderThicknessHalved);
+                    var bottomRightInnerGeometry = GetBottomRightGeometry(BorderThickness.Left, BorderThickness.Top, ActualWidth - BorderThickness.Right, ActualHeight - BorderThickness.Bottom, BorderThickness);
                     drawingContext.DrawGeometry(bottomRightInnerBrush, bottomRightInnerPen, bottomRightInnerGeometry);
                     break;
                 }

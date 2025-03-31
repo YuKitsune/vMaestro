@@ -2,7 +2,19 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:TFMS.Wpf"
-    xmlns:controls="clr-namespace:TFMS.Wpf.Controls">
+    xmlns:controls="clr-namespace:TFMS.Wpf.Controls"
+    xmlns:converters="clr-namespace:TFMS.Wpf.Converters">
+
+    <converters:FontSizeToHeightConverter x:Key="FontSizeToHeightConverter"/>
+    <converters:FontSizeToLineHeightConverter x:Key="FontSizeToLineHeightConverter"/>
+
+    <Style TargetType="Window">
+        <Setter Property="UseLayoutRounding" Value="True" />
+    </Style>
+
+    <Style TargetType="UserControl">
+        <Setter Property="UseLayoutRounding" Value="True" />
+    </Style>
 
     <!-- Global Styles -->
     <Style x:Key="ControlBaseStyle" TargetType="{x:Type Control}">
@@ -18,6 +30,20 @@
         <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
         <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="Height" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToHeightConverter}}" />
+        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
+    </Style>
+
+    <Style x:Key="MultiLineText" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}" />
+        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
+        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
+        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
     </Style>
 
     <Style x:Key="InteractiveTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}">
@@ -29,6 +55,9 @@
 
         <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
 
+        <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight"/>
+        <Setter Property="TextBlock.LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -36,11 +65,13 @@
                         <controls:BeveledBorder
                             BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
                             BevelType="Raised">
-                            <ContentPresenter 
-                                Content="{TemplateBinding Content}"
-                                ContentTemplate="{TemplateBinding ContentTemplate}" 
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Center"/>
+                            <Border Background="{TemplateBinding Background}">
+                                <ContentPresenter 
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"/>
+                            </Border>
                         </controls:BeveledBorder>
                     </Border>
                 </ControlTemplate>
@@ -56,16 +87,22 @@
                                 <controls:BeveledBorder
                                     BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
                                     BevelType="Sunken">
-                                    <ContentPresenter 
-                                        Content="{TemplateBinding Content}"
-                                        ContentTemplate="{TemplateBinding ContentTemplate}" 
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Center"/>
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter 
+                                            Content="{TemplateBinding Content}"
+                                            ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"/>
+                                    </Border>
                                 </controls:BeveledBorder>
                             </Border>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Trigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}" />
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -149,7 +186,7 @@
         </Setter>
     </Style>
 
-    <!-- TODO: ComboBox Item -->
+    <!-- ComboBox Item -->
     <Style x:Key="{x:Type ComboBoxItem}" TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource ControlBaseStyle}">
         <Setter Property="SnapsToDevicePixels" Value="true"/>
         <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>

@@ -89,7 +89,7 @@ public class Configuration
             [
                 new Sector
                 {
-                    Identifier = "BIK",
+                    Identifier = "BIK/GLB",
                     Fixes = ["RIVET", "WELSH"]
                 },
                 new Sector

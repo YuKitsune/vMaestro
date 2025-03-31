@@ -5,7 +5,7 @@ namespace TFMS.Wpf;
 
 public static class Theme
 {
-    public static float Alpha = 0.5f;
+    public static float Alpha = 0.4f;
     public static Brush LightBrush = new SolidColorBrush(Color.FromScRgb(Alpha, 255, 255, 255));
     public static Brush DarkBrush = new SolidColorBrush(Color.FromScRgb(Alpha, 0, 0, 0));
 
@@ -21,5 +21,5 @@ public static class Theme
     public static FontWeight FontWeight { get; set; } = FontWeights.Bold;
 
     public static Thickness BeveledBorderThickness = new Thickness(2);
-    public static double BeveledLineWidth = 2;
+    public static double BeveledLineWidth = 4;
 }
