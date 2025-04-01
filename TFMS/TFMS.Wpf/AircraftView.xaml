@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:TFMS.Wpf"
              xmlns:converters="clr-namespace:TFMS.Wpf.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="24" d:DesignWidth="200">
+             d:DesignHeight="16" d:DesignWidth="200">
     <UserControl.DataContext>
         <local:AircraftViewModel/>
     </UserControl.DataContext>

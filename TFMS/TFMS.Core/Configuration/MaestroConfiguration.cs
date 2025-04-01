@@ -1,8 +1,8 @@
-﻿namespace TFMS.Core;
+﻿namespace TFMS.Core.Configuration;
 
-public class Configuration
+public class MaestroConfiguration
 {
-    public static Configuration Demo = new Configuration();
+    //public static MaestroConfiguration Demo = new MaestroConfiguration();
 
     public TimeSpan UnstableWindow { get; set; } = TimeSpan.FromMinutes(60);
 
@@ -27,61 +27,61 @@ public class Configuration
                 new RunwayMode
                 { 
                     Identifier = "34IVA",
-                    RunwayRates =
+                    Runways =
                     [
-                        new RunwayRate{ RunwayIdentifier = "34L", LandingRate = TimeSpan.FromSeconds(180) },
-                        new RunwayRate{ RunwayIdentifier = "34R", LandingRate = TimeSpan.FromSeconds(180) }
+                        new Runway { Identifier = "34L", DefaultLandingRateSeconds = 180 },
+                        new Runway { Identifier = "34R", DefaultLandingRateSeconds = 180 }
                     ]
                 },
                 new RunwayMode
                 {
                     Identifier = "34I",
-                    RunwayRates =
+                    Runways =
                     [
-                        new RunwayRate{ RunwayIdentifier = "34L", LandingRate = TimeSpan.FromSeconds(210) },
-                        new RunwayRate{ RunwayIdentifier = "34R", LandingRate = TimeSpan.FromSeconds(210) }
+                        new Runway { Identifier = "34L", DefaultLandingRateSeconds = 210 },
+                        new Runway { Identifier = "34R", DefaultLandingRateSeconds = 210 }
                     ]
                 },
                 new RunwayMode
                 {
                     Identifier = "16IVA",
-                    RunwayRates =
+                    Runways =
                     [
-                        new RunwayRate{ RunwayIdentifier = "16R", LandingRate = TimeSpan.FromSeconds(180) },
-                        new RunwayRate{ RunwayIdentifier = "16L", LandingRate = TimeSpan.FromSeconds(180) }
+                        new Runway { Identifier = "16R", DefaultLandingRateSeconds = 180 },
+                        new Runway { Identifier = "16L", DefaultLandingRateSeconds = 180 }
                     ]
                 },
                 new RunwayMode
                 {
                     Identifier = "16I",
-                    RunwayRates =
+                    Runways =
                     [
-                        new RunwayRate{ RunwayIdentifier = "16R", LandingRate = TimeSpan.FromSeconds(210) },
-                        new RunwayRate{ RunwayIdentifier = "16L", LandingRate = TimeSpan.FromSeconds(210) }
+                        new Runway { Identifier = "16R", DefaultLandingRateSeconds = 210 },
+                        new Runway { Identifier = "16L", DefaultLandingRateSeconds = 210 }
                     ]
                 },
                 new RunwayMode
                 {
                     Identifier = "25I",
-                    RunwayRates =
+                    Runways =
                     [
-                        new RunwayRate{ RunwayIdentifier = "25", LandingRate = TimeSpan.FromSeconds(210) }
+                        new Runway { Identifier = "25", DefaultLandingRateSeconds = 210 }
                     ]
                 },
                 new RunwayMode
                 {
                     Identifier = "07I",
-                    RunwayRates =
+                    Runways =
                     [
-                        new RunwayRate{ RunwayIdentifier = "07", LandingRate = TimeSpan.FromSeconds(210) }
+                        new Runway { Identifier = "07", DefaultLandingRateSeconds = 210 }
                     ]
                 },
                 new RunwayMode
                 {
                     Identifier = "SODPROPS",
-                    RunwayRates =
+                    Runways =
                     [
-                        new RunwayRate{ RunwayIdentifier = "34L", LandingRate = TimeSpan.FromSeconds(300) }
+                        new Runway { Identifier = "34L", DefaultLandingRateSeconds = 300 }
                     ]
                 }
             ],
@@ -125,19 +125,13 @@ public class Airport
 public class Runway
 {
     public string Identifier { get; set; }
-    public TimeSpan? DefaultLandingRate { get; set; }
+    public int DefaultLandingRateSeconds { get; set; }
 }
 
 public class RunwayMode
 {
     public string Identifier { get; set; }
-    public RunwayRate[] RunwayRates { get; set; }
-}
-
-public class RunwayRate
-{
-    public string RunwayIdentifier { get; set; }
-    public TimeSpan LandingRate { get; set; }
+    public Runway[] Runways { get; set; }
 }
 
 public class Sector

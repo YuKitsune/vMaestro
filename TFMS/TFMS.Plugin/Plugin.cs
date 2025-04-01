@@ -57,8 +57,11 @@ namespace TFMS.Plugin
 
         void ConfigureServices()
         {
+            var configurationProvider = new ProfileConfigurationProvider();
+
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
+                    .AddConfiguration(configurationProvider)
                     .AddViewModels()
                     .AddMaestro()
                     .AddMediatR(c => c.RegisterServicesFromAssemblies([typeof(Sequence).Assembly, typeof(TFMSView).Assembly])) // TODO: CommunityToolkit has a messenger. what if we just used that?
@@ -86,7 +89,11 @@ namespace TFMS.Plugin
             {
                 if (TFMSWindow == null || TFMSWindow.IsDisposed)
                 {
-                    TFMSWindow = new TFMSWindow();
+                    TFMSWindow = new TFMSWindow
+                    {
+                        Width = 560,
+                        Height = 800
+                    };
                 }
 
                 var mainForm = System.Windows.Forms.Application.OpenForms["MainForm"];

@@ -1,15 +1,16 @@
 ﻿using MediatR;
-using Microsoft.Extensions.Logging;
+using TFMS.Core.Configuration;
 using TFMS.Core.DTOs;
 using TFMS.Core.Model;
 
 namespace TFMS.Core.Handlers;
 
-public class FDRUpdatedNotificationHandler(IMediator mediator, SequenceProvider sequenceProvider)
+public class FDRUpdatedNotificationHandler(IMediator mediator, SequenceProvider sequenceProvider, IConfigurationProvider configurationProvider)
     : INotificationHandler<FDRUpdatedNotification>
 {
     readonly IMediator mediator = mediator;
     readonly SequenceProvider _sequenceProvider = sequenceProvider;
+    readonly IConfigurationProvider _configurationProvider = configurationProvider;
     // readonly ILogger<FDRUpdatedNotificationHandler> _logger = logger;
 
     public Task Handle(FDRUpdatedNotification notification, CancellationToken cancellationToken)
@@ -22,7 +23,7 @@ public class FDRUpdatedNotificationHandler(IMediator mediator, SequenceProvider 
         }
 
         // TODO: Source feeders from sequence
-        var feederFix = notification.FlightDataRecord.Estimates.FirstOrDefault(f => Configuration.Demo.Airports.Single().FeederFixes.Contains(f.Identifier));
+        var feederFix = notification.FlightDataRecord.Estimates.FirstOrDefault(f => _configurationProvider.GetConfiguration().Airports.Single().FeederFixes.Contains(f.Identifier));
         if (feederFix is null)
         {
             // _logger.LogWarning($"Could not find feeder fix for {notification.FlightDataRecord.Callsign} arriving at {notification.FlightDataRecord.DestinationIcaoCode}");

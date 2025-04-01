@@ -48,6 +48,10 @@
 
     <Style x:Key="InteractiveTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}">
         <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
+        <Setter Property="Height" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToHeightConverter}}" />
     </Style>
 
     <!-- Button Styling -->

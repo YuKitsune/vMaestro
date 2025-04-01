@@ -8,11 +8,10 @@
              xmlns:converters="clr-namespace:TFMS.Wpf.Converters"
              mc:Ignorable="d"
              Background="{x:Static local:Theme.BackgroundColor}"
+             MinWidth="480"
+             d:DataContext="{d:DesignInstance Type=local:TFMSViewModel}"
              d:DesignHeight="800"
-             d:DesignWidth="500">
-    <UserControl.DataContext>
-        <local:TFMSViewModel />
-    </UserControl.DataContext>
+             d:DesignWidth="560">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -101,8 +100,8 @@
                 <ComboBox
                     Grid.Column="2"
                     Padding="5"
-                    ItemsSource="{Binding Path=AvailableAirports}"
-                    SelectedItem="{Binding Path=SelectedAirport}"
+                    ItemsSource="{Binding Path=AvailableAirports, UpdateSourceTrigger=PropertyChanged}"
+                    SelectedItem="{Binding Path=SelectedAirport, UpdateSourceTrigger=PropertyChanged}"
                     DisplayMemberPath="Identifier" />
 
                 <controls:BeveledLine Grid.Column="3" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
@@ -111,7 +110,7 @@
                 <ComboBox
                     Grid.Column="4"
                     Padding="5"
-                    ItemsSource="{Binding Path=AvailableRunwayModes}"
+                    ItemsSource="{Binding Path=SelectedAirport.RunwayModes}"
                     SelectedItem="{Binding Path=SelectedRunwayMode}"
                     DisplayMemberPath="Identifier" />
 
@@ -119,7 +118,7 @@
 
                 <!-- Runway Intervals -->
                 <controls:BeveledBorder Grid.Column="6" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Raised">
-                    <ItemsControl ItemsSource="{Binding Path=RunwayRates}" VerticalAlignment="Center" Margin="2">
+                    <ItemsControl ItemsSource="{Binding Path=SelectedRunwayMode.Runways}" VerticalAlignment="Center" Margin="2">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel />
@@ -179,7 +178,7 @@
             <Button Content="COORD"/>
             <Button Content="DESQ"/>
 
-            <ItemsControl ItemsSource="{Binding AvailableSectors}">
+            <ItemsControl ItemsSource="{Binding SelectedAirport.Sectors}" Name="SectorList">
                 <ItemsControl.Resources>
                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
                         <Setter Property="Width" Value="72" />
@@ -192,7 +191,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Command="{Binding SelectSectorCommand}" CommandParameter="{Binding}" Content="{Binding Identifier}"/>
+                        <Button Command="{Binding Path=DataContext.SelectSectorCommand, ElementName=SectorList}" CommandParameter="{Binding}" Content="{Binding Identifier}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -221,7 +220,7 @@
             Grid.Column="1"
             Grid.Row="3"
             Name="LadderCanvas" 
-            Margin="1,1,1,1"
+            Margin="1"
             ClipToBounds="True" />
 
         <!-- Footer -->
@@ -233,7 +232,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Right" Margin="0,0,6,0">
-                <TextBlock>All Runways</TextBlock>
+                <TextBlock TextAlignment="Right">All Runways</TextBlock>
                 <ItemsControl HorizontalAlignment="Right" ItemsSource="{Binding Path=LeftFeederFixes}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -242,7 +241,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
+                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" Margin="6,0,0,0"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -252,7 +251,7 @@
                 <TextBlock x:Name="ClockText" TextAlignment="Center" VerticalAlignment="Center" Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
             </controls:BeveledBorder>
 
-            <StackPanel Grid.Column="2" HorizontalAlignment="Left" Margin="6,0,0,0">
+            <StackPanel Grid.Column="2" HorizontalAlignment="Left" Margin="12,0,0,0">
 
                 <TextBlock>All Runways</TextBlock>
                 <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}">
@@ -263,7 +262,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" />
+                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" Margin="0,0,12,0"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

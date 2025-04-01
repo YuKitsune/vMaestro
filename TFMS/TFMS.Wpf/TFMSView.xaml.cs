@@ -23,9 +23,9 @@ public partial class TFMSView : UserControl
 
     public TFMSView()
     {
-        InitializeComponent();
-
         DataContext = Ioc.Default.GetRequiredService<TFMSViewModel>();
+
+        InitializeComponent();
 
         dispatcherTimer = new DispatcherTimer();
         dispatcherTimer.Interval = TimeSpan.FromSeconds(1);

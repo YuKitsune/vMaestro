@@ -1,141 +1,146 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using TFMS.Core;
+using TFMS.Core.Configuration;
 
 namespace TFMS.Wpf;
 
-public class AirportViewModel
+public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, SectorViewModel[] sectors) : ObservableObject
 {
-    public string Identifier { get; set; }
+    public string Identifier => identifier;
+
+    [ObservableProperty]
+    private ObservableCollection<RunwayModeViewModel> _runwayModes = new(runwayModes);
+
+    [ObservableProperty]
+    private ObservableCollection<SectorViewModel> _sectors = new(sectors);
 }
 
-public class RunwayModeViewModel
+public class RunwayModeViewModel(string identifier, RunwayViewModel[] runwayModes)
 {
-    public string Identifier { get; set; }
+    public string Identifier => identifier;
 
-    public RunwayViewModel[] Runways { get; set; }
-
+    public RunwayViewModel[] Runways => runwayModes;
 }
 
-public class RunwayViewModel
+public partial class RunwayViewModel(string identifier, TimeSpan defaultLandingRate) : ObservableObject
 {
-    public string Identifier { get; set; }
-    public TimeSpan LandingRate { get; set; }
+    public string Identifier => identifier;
+
+    public TimeSpan DefaultLandingRate => defaultLandingRate;
+
+    [ObservableProperty]
+    private TimeSpan _landingRate = defaultLandingRate;
 }
 
-public class SectorViewModel
+public class SectorViewModel(string identifier, string[] feederFixes)
 {
-    public string Identifier { get; set; }
-    public string[] FeederFixes { get; set; }
+    public string Identifier => identifier;
+    public string[] FeederFixes => feederFixes;
 }
 
 public partial class TFMSViewModel : ObservableObject
 {
     [ObservableProperty]
-    private AirportViewModel[] _availableAirports = [];
+    private ObservableCollection<AirportViewModel> _availableAirports = [];
 
     [ObservableProperty]
     private AirportViewModel? _selectedAirport;
 
     [ObservableProperty]
-    private RunwayModeViewModel[] _availableRunwayModes = [];
-
-    [ObservableProperty]
     private RunwayModeViewModel? _selectedRunwayMode;
 
     [ObservableProperty]
-    private RunwayViewModel[] _runwayRates;
-
-    [ObservableProperty]
-    private SectorViewModel[] _availableSectors = [];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(LeftFeederFixes))]
-    [NotifyPropertyChangedFor(nameof(RightFeederFixes))]
     private SectorViewModel? _selectedSector;
 
-    public string[] LeftFeederFixes => SelectedSector is null ? [] : SelectedSector.FeederFixes.Take(SelectedSector.FeederFixes.Length / 2).ToArray();
-    public string[] RightFeederFixes => SelectedSector is null ? [] : SelectedSector.FeederFixes.Skip(SelectedSector.FeederFixes.Length / 2).ToArray();
+    [ObservableProperty]
+    private string[] _leftFeederFixes = [];
+
+    [ObservableProperty]
+    private string[] _rightFeederFixes = [];
+
+    readonly IConfigurationProvider _configurationProvider;
 
     [ObservableProperty]
     List<AircraftViewModel> _aircraft = [];
 
-    public TFMSViewModel()
+    public TFMSViewModel(IConfigurationProvider configurationProvider)
     {
-        AvailableAirports = Configuration.Demo.Airports
-            .Select(a => new AirportViewModel { Identifier = a.Identifier })
-            .ToArray();
+        _configurationProvider = configurationProvider;
+        LoadConfiguration();
     }
 
-    partial void OnAvailableAirportsChanged(AirportViewModel[] availableAirports)
+    void LoadConfiguration()
     {
+        var configuration = _configurationProvider.GetConfiguration();
+        AvailableAirports.Clear();
+
+        foreach (var airport in configuration.Airports)
+        {
+            var runwayModes = airport.RunwayModes.Select(rm =>
+                new RunwayModeViewModel(
+                    rm.Identifier,
+                    rm.Runways.Select(r =>
+                        new RunwayViewModel(r.Identifier, TimeSpan.FromSeconds(r.DefaultLandingRateSeconds)))
+                    .ToArray()))
+                .ToArray();
+
+            var sectors = airport.Sectors.Select(s =>
+                new SectorViewModel(s.Identifier, s.Fixes))
+                .ToArray();
+
+            AvailableAirports.Add(new AirportViewModel(airport.Identifier, runwayModes, sectors));
+        }
+    }
+
+    partial void OnAvailableAirportsChanged(ObservableCollection<AirportViewModel> availableAirports)
+    {
+        // Select the first airport if the selected one no longer exists
         if (SelectedAirport == null || !availableAirports.Any(a => a.Identifier == SelectedAirport.Identifier))
         {
             SelectedAirport = availableAirports.FirstOrDefault();
         }
     }
 
-    partial void OnSelectedAirportChanged(AirportViewModel airportViewModel)
+    partial void OnSelectedAirportChanged(AirportViewModel? airportViewModel)
     {
-        var airport = Configuration.Demo.Airports
-            .First(a => a.Identifier == airportViewModel.Identifier);
-
-        AvailableRunwayModes = airport
-            .RunwayModes.Select(rm =>
-                new RunwayModeViewModel
-                { 
-                    Identifier = rm.Identifier,
-                    Runways = rm.RunwayRates.Select(r =>
-                        new RunwayViewModel
-                        {
-                            Identifier = r.RunwayIdentifier,
-                            LandingRate = r.LandingRate,
-                        }).ToArray()
-                })
-            .ToArray();
-
-        AvailableSectors = airport.Sectors
-            .Select(s =>
-                new SectorViewModel
-                {
-                    Identifier = s.Identifier,
-                    FeederFixes = s.Fixes
-                })
-            .ToArray();
-    }
-
-    partial void OnAvailableRunwayModesChanged(RunwayModeViewModel[] availableRunwayModes)
-    {
-        if (SelectedRunwayMode == null || !availableRunwayModes.Any(r => r.Identifier == SelectedRunwayMode.Identifier))
+        if (airportViewModel is null)
         {
-            SelectedRunwayMode = availableRunwayModes.FirstOrDefault();
+            SelectedRunwayMode = null;
+            SelectedSector = null;
+            return;
+        }
+
+        if (SelectedRunwayMode == null || !airportViewModel.RunwayModes.Any(r => r.Identifier == SelectedRunwayMode.Identifier))
+        {
+            SelectedRunwayMode = airportViewModel.RunwayModes.FirstOrDefault();
+        }
+
+        if (SelectedSector == null || !airportViewModel.Sectors.Any(s => s.Identifier == SelectedSector.Identifier))
+        {
+            SelectedSector = airportViewModel.Sectors.FirstOrDefault();
         }
     }
 
-    partial void OnAvailableSectorsChanged(SectorViewModel[] availableSectors)
+    partial void OnSelectedSectorChanged(SectorViewModel? sectorViewModel)
     {
-        if (SelectedSector == null || !availableSectors.Any(s => s.Identifier == SelectedSector.Identifier))
+        if (sectorViewModel is null)
         {
-            SelectedSector = availableSectors.FirstOrDefault();
+            LeftFeederFixes = [];
+            RightFeederFixes = [];
+            return;
         }
-    }
 
-    partial void OnSelectedRunwayModeChanged(RunwayModeViewModel runwayModeViewModel)
-    {
-        RunwayRates = Configuration.Demo.Airports
-            .First(a => a.Identifier == SelectedAirport.Identifier)
-            .RunwayModes.First(r => r.Identifier == runwayModeViewModel.Identifier)
-            .RunwayRates.Select(r =>
-                new RunwayViewModel
-                {
-                    Identifier = r.RunwayIdentifier,
-                    LandingRate = r.LandingRate
-                })
-            .ToArray();
+        double midPoint = (sectorViewModel.FeederFixes.Length + 1) / 2;
+        var middleIndex = (int) Math.Ceiling(midPoint);
+
+        LeftFeederFixes = sectorViewModel.FeederFixes.Take(middleIndex).ToArray();
+        RightFeederFixes = sectorViewModel.FeederFixes.Skip(middleIndex).ToArray();
     }
 
     [RelayCommand]
-    void SelectSector(SectorViewModel sectorViewModel)
+    void SelectSector(SectorViewModel? sectorViewModel)
     {
         SelectedSector = sectorViewModel;
     }

@@ -1,25 +1,25 @@
 # TODO:
 
-- [ ] Eurocat Look and Feel
+- [X] Eurocat Look and Feel
     - [X] Pull theme from vatSys
     - [X] Create custom controls to follow vatSys theme
     - [X] Custom buttons
     - [X] Custom separators
     - [X] Clean up timeline
     - [X] Clean up combobox
-    - [ ] Fix sector selector
-    - [ ] Move inline styles into Theme and Style.xaml
+    - [X] Fix sector selector
+    - [X] Move inline styles into Theme and Style.xaml
 
-- [ ] Configuration
-    - [ ] Load configuration from file
-    - [ ] Use configuration in TFMS window
-    - [ ] Use configuration in Ladder
-    - [ ] Use configuration in Sequence
+- [X] Configuration
+    - [X] Load configuration from profile
 
 - [ ] Data Modelling
     - [ ] Consider how sequences should be modelled
     - [ ] Consider internal infrastructure for online and offline modes
     - [ ] Implement domain models, handlers, tiny types, etc.
+
+- [ ] Temporary feed
+    - [ ] Load data from existing Maestro API
 
 - [ ] Load arrivals from vatSys into sequences
 - [ ] Display arrivals on ladder
@@ -27,10 +27,12 @@
 - [ ] Refresh ladder on timer
 - [ ] Clock
 
-- [ ] Sequencing algorithm
 - [ ] Standalone mode
+    - [ ] Sequencing algorithm
     - [ ] Automatically determine the sequence locally
+
 - [ ] Online mode
+    - [ ] Load configuration from maestro server
     - [ ] Master publishes sequence to clients
     - [ ] Master can manually sequence and control landing rates
     - [ ] Clients get a read-only view of the sequence
@@ -38,7 +40,6 @@
 - [ ] MVP
     - [ ] Rename to Maestro
     - [ ] Fix DPI scaling issue
-    - [ ] Fix font issue
 
 - [ ] Nice to haves
     - [ ] Debugger configuration for vatSys
