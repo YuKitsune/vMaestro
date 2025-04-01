@@ -63,8 +63,8 @@ public class Arrival(string callsign, string origin, string destination, string 
         EstimatedFeederFixTime = feederFixEstimate;
     }
 
-    public void UpdateEstimatedLandingTime(DateTimeOffset estimatedLandingTime)
+    public void UpdateLanidngEstimate(DateTimeOffset landingEstimate)
     {
-        EstimatedLandingTime = estimatedLandingTime;
+        EstimatedLandingTime = landingEstimate;
     }
 }

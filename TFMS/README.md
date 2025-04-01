@@ -12,6 +12,7 @@
 
 - [X] Configuration
     - [X] Load configuration from profile
+    - [ ] Separate local and shared configuration (E.g: Server URLs, logging, airport config, etc.)
 
 - [ ] Data Modelling
     - [ ] Consider how sequences should be modelled
@@ -47,6 +48,7 @@
     - [ ] CSV or XLSX backup
     - [ ] Training mode
     - [ ] Customisable UI layout
+    - [ ] Per-sequence online mode (E.g: YSSY offline, YMML online)
 
 Need to figure out:
 - When is the initial FF and landing time set? Is it ever reset?
