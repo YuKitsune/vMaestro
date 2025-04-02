@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TFMS.Wpf"
+             xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:controls="clr-namespace:TFMS.Wpf.Controls"
              xmlns:converters="clr-namespace:TFMS.Wpf.Converters"
              mc:Ignorable="d"
@@ -12,6 +13,13 @@
              d:DataContext="{d:DesignInstance Type=local:TFMSViewModel}"
              d:DesignHeight="800"
              d:DesignWidth="560">
+    <behaviors:Interaction.Triggers>
+        <behaviors:EventTrigger
+            EventName="Loaded" 
+            SourceObject="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}">
+            <behaviors:InvokeCommandAction Command="{Binding LoadConfigurationCommand}"/>
+        </behaviors:EventTrigger>
+    </behaviors:Interaction.Triggers>
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

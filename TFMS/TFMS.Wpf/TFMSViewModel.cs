@@ -1,8 +1,8 @@
 ﻿using System.Collections.ObjectModel;
-using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using TFMS.Core.Configuration;
+using MediatR;
+using TFMS.Core.Dtos.Messages;
 
 namespace TFMS.Wpf;
 
@@ -60,38 +60,14 @@ public partial class TFMSViewModel : ObservableObject
     [ObservableProperty]
     private string[] _rightFeederFixes = [];
 
-    readonly IConfigurationProvider _configurationProvider;
+    readonly IMediator _mediator;
 
     [ObservableProperty]
     List<AircraftViewModel> _aircraft = [];
 
-    public TFMSViewModel(IConfigurationProvider configurationProvider)
+    public TFMSViewModel(IMediator mediator)
     {
-        _configurationProvider = configurationProvider;
-        LoadConfiguration();
-    }
-
-    void LoadConfiguration()
-    {
-        var configuration = _configurationProvider.GetConfiguration();
-        AvailableAirports.Clear();
-
-        foreach (var airport in configuration.Airports)
-        {
-            var runwayModes = airport.RunwayModes.Select(rm =>
-                new RunwayModeViewModel(
-                    rm.Identifier,
-                    rm.Runways.Select(r =>
-                        new RunwayViewModel(r.Identifier, TimeSpan.FromSeconds(r.DefaultLandingRateSeconds)))
-                    .ToArray()))
-                .ToArray();
-
-            var sectors = airport.Sectors.Select(s =>
-                new SectorViewModel(s.Identifier, s.Fixes))
-                .ToArray();
-
-            AvailableAirports.Add(new AirportViewModel(airport.Identifier, runwayModes, sectors));
-        }
+        _mediator = mediator;
     }
 
     partial void OnAvailableAirportsChanged(ObservableCollection<AirportViewModel> availableAirports)
@@ -137,6 +113,31 @@ public partial class TFMSViewModel : ObservableObject
 
         LeftFeederFixes = sectorViewModel.FeederFixes.Take(middleIndex).ToArray();
         RightFeederFixes = sectorViewModel.FeederFixes.Skip(middleIndex).ToArray();
+    }
+
+    [RelayCommand]
+    async Task LoadConfiguration()
+    {
+        var response = await _mediator.Send(new GetAirportConfigurationRequest(), CancellationToken.None);
+
+        AvailableAirports.Clear();
+
+        foreach (var airport in response.Airports)
+        {
+            var runwayModes = airport.RunwayModes.Select(rm =>
+                new RunwayModeViewModel(
+                    rm.Identifier,
+                    rm.Runways.Select(r =>
+                        new RunwayViewModel(r.Identifier, TimeSpan.FromSeconds(r.DefaultLandingRateSeconds)))
+                    .ToArray()))
+                .ToArray();
+
+            var sectors = airport.Sectors.Select(s =>
+                new SectorViewModel(s.Identifier, s.Fixes))
+                .ToArray();
+
+            AvailableAirports.Add(new AirportViewModel(airport.Identifier, runwayModes, sectors));
+        }
     }
 
     [RelayCommand]

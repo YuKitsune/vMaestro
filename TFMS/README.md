@@ -12,7 +12,7 @@
 
 - [X] Configuration
     - [X] Load configuration from profile
-    - [ ] Separate local and shared configuration (E.g: Server URLs, logging, airport config, etc.)
+    - [X] Separate configuration access for offline and online modes
 
 - [ ] Data Modelling
     - [ ] Consider how sequences should be modelled

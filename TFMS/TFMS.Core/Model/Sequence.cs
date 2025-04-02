@@ -1,31 +1,34 @@
 ﻿using MediatR;
-using TFMS.Core.DTOs;
+using TFMS.Core.Dtos.Messages;
 
 namespace TFMS.Core.Model;
 
-public class Sequence(IMediator mediator, string airportIdentifier)
+public class Sequence(IMediator mediator, string airportIdentifier, string[] feederFixes)
 {
     readonly IMediator mediator = mediator;
-    readonly List<Arrival> arrivals = new();
+    readonly List<Flight> arrivals = new();
 
     public string AirportIdentifier { get; } = airportIdentifier;
+    public string[] FeederFixes { get; } = feederFixes;
 
-    public IReadOnlyList<Arrival> Arrivals => arrivals;
+    public IReadOnlyList<Flight> Arrivals => arrivals;
 
-    public void Add(string callsign, string origin, string destination, string feederFix, string? assignedRunway, AircraftPerformanceData performanceData, DateTimeOffset initialFeederFixEstimate, DateTimeOffset initialDestinationEstimate)
+    public void Add(Flight flight)
     {
-        if (arrivals.Any(c => c.Callsign == callsign))
+        if (arrivals.Any(c => c.Callsign == flight.Callsign))
         {
-            throw new Exception($"{callsign} is already in the sequence for {AirportIdentifier}");
+            throw new Exception($"{flight.Callsign} is already in the sequence for {AirportIdentifier}");
         }
 
-        if (destination != AirportIdentifier)
+        if (flight.DestinationIcaoCode != AirportIdentifier)
         {
-            throw new Exception($"Cannot add {callsign} to sequence for {AirportIdentifier} as the destination is {destination}");
+            throw new Exception($"Cannot add {flight.Callsign} to sequence for {AirportIdentifier} as the destination is {flight.DestinationIcaoCode}");
         }
 
-        arrivals.Add(new Arrival(callsign, origin, destination, feederFix, assignedRunway, performanceData, initialFeederFixEstimate, initialDestinationEstimate));
+        // TODO: Additional validation
 
-        mediator.Publish(new SequenceModifiedNotification(this));
+        arrivals.Add(flight);
+
+        mediator.Publish(new SequenceModifiedNotification(this.ToDTO()));
     }
 }

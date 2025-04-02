@@ -1,21 +1,34 @@
 ﻿using System.Reflection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using TFMS.Core.Configuration;
+using TFMS.Core.Dtos.Configuration;
 using vatsys;
 
-namespace TFMS.Plugin;
+namespace TFMS.Plugin.Configuration;
 
-public class ProfileConfigurationProvider : IConfigurationProvider
+public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirportConfigurationProvider
 {
     const string ConfigurationFileName = "Maestro.json";
-    readonly Lazy<MaestroConfiguration> _lazyLoadConfiguration = new Lazy<MaestroConfiguration>(GetConfigurationInternal);
 
-    public MaestroConfiguration GetConfiguration()
+    readonly Lazy<PluginConfiguration> _lazyPluginConfiguration = new Lazy<PluginConfiguration>(GetPluginConfiguration);
+
+    public LogLevel GetLogLevel()
     {
-        return _lazyLoadConfiguration.Value;
+        return _lazyPluginConfiguration.Value.Logging.LogLevel;
     }
 
-    static MaestroConfiguration GetConfigurationInternal()
+    public string GetOutputPath()
+    {
+        return _lazyPluginConfiguration.Value.Logging.OutputPath;
+    }
+
+    public AirportConfigurationDTO[] GetAirportConfigurations()
+    {
+        return _lazyPluginConfiguration.Value.Airports;
+    }
+
+    static PluginConfiguration GetPluginConfiguration()
     {
         var assemblyLocation = Assembly.GetExecutingAssembly().Location;
 
@@ -38,9 +51,7 @@ public class ProfileConfigurationProvider : IConfigurationProvider
     static bool ContinueSearch(DirectoryInfo? directory)
     {
         if (directory is null)
-        {
             return false;
-        }
 
         string[] specialFolders =
             [
@@ -50,20 +61,18 @@ public class ProfileConfigurationProvider : IConfigurationProvider
             ];
 
         if (specialFolders.Contains(directory.FullName))
-        {
             return false;
-        }
 
         return true;
     }
 
-    static MaestroConfiguration LoadConfiguration(string configurationFilePath)
+    static PluginConfiguration LoadConfiguration(string configurationFilePath)
     {
         var json = File.ReadAllText(configurationFilePath);
-        var maestroConfiguration = JsonConvert.DeserializeObject<MaestroConfiguration>(json);
-        if (maestroConfiguration is null)
+        var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(json);
+        if (configuration is null)
             throw new Exception($"Failed to deserialize {ConfigurationFileName}");
 
-        return maestroConfiguration;
+        return configuration;
     }
 }

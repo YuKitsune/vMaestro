@@ -6,8 +6,9 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TFMS.Core;
-using TFMS.Core.DTOs;
-using TFMS.Core.Model;
+using TFMS.Core.Dtos;
+using TFMS.Core.Dtos.Messages;
+using TFMS.Plugin.Configuration;
 using TFMS.Wpf;
 using vatsys;
 using vatsys.Plugin;
@@ -17,8 +18,8 @@ namespace TFMS.Plugin
     [Export(typeof(IPlugin))]
     public class Plugin : IPlugin, IDisposable
     {
-        public string Name => "TFMS";
-        public static string DisplayName => "TFMS";
+        public const string Name = "Maestro";
+        string IPlugin.Name => "Maestro";
 
         static BaseForm? TFMSWindow;
 
@@ -39,7 +40,7 @@ namespace TFMS.Plugin
             }
             catch (Exception ex)
             {
-                Errors.Add(ex, DisplayName);
+                Errors.Add(ex, Name);
             }
         }
 
@@ -57,14 +58,18 @@ namespace TFMS.Plugin
 
         void ConfigureServices()
         {
-            var configurationProvider = new ProfileConfigurationProvider();
-
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
-                    .AddConfiguration(configurationProvider)
+                    .WithPluginConfigurationSource()
+                    .AddSingleton<IServerConnection, StubServerConnection>() // TODO
                     .AddViewModels()
                     .AddMaestro()
-                    .AddMediatR(c => c.RegisterServicesFromAssemblies([typeof(Sequence).Assembly, typeof(TFMSView).Assembly])) // TODO: CommunityToolkit has a messenger. what if we just used that?
+                    .AddMediatR(c => c.RegisterServicesFromAssemblies([
+                        typeof(Core.Dtos.AssemblyMarker).Assembly,
+                        typeof(Core.AssemblyMarker).Assembly,
+                        typeof(AssemblyMarker).Assembly,
+                        typeof(Wpf.AssemblyMarker).Assembly
+                    ]))
                     .BuildServiceProvider());
         }
 
@@ -73,7 +78,7 @@ namespace TFMS.Plugin
             var menuItem = new CustomToolStripMenuItem(
                 CustomToolStripMenuItemWindowType.Main,
                 CustomToolStripMenuItemCategory.Windows,
-                new ToolStripMenuItem(DisplayName));
+                new ToolStripMenuItem("TFMS"));
 
             menuItem.Item.Click += (_, _) =>
             {
@@ -104,19 +109,22 @@ namespace TFMS.Plugin
             }
             catch (Exception ex)
             {
-                Errors.Add(ex, DisplayName);
+                Errors.Add(ex, Name);
             }
         }
 
         void Network_Connected(object sender, EventArgs e)
         {
-            var notification = new InitializedNotification(FDP2.GetFDRs.Select(ConvertFDRToDTO).ToArray());
-            mediator.Publish(notification);
+            foreach (var fdr in FDP2.GetFDRs)
+            {
+                var notification = CreateNotificationFor(fdr);
+                mediator.Publish(notification);
+            }
         }
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
-            var notification = new FDRUpdatedNotification(ConvertFDRToDTO(updated));
+            var notification = CreateNotificationFor(updated);
             mediator.Publish(notification);
         }
 
@@ -125,8 +133,7 @@ namespace TFMS.Plugin
             if (updated.CoupledFDR is null)
                 return;
 
-            // TODO: Recalculate things if necessary. Maybe add another notification here for that, or just refactor FDRUpdatedNotification to be more generic and handle that scenario.
-            var notification = new FDRUpdatedNotification(ConvertFDRToDTO(updated.CoupledFDR));
+            var notification = CreateNotificationFor(updated.CoupledFDR);
             mediator.Publish(notification);
         }
 
@@ -140,15 +147,16 @@ namespace TFMS.Plugin
             Network_Disconnected(this, new EventArgs());
         }
 
-        public FlightDataRecord ConvertFDRToDTO(FDP2.FDR fdr)
+        public FlightUpdatedNotification CreateNotificationFor(FDP2.FDR fdr)
         {
-            return new FlightDataRecord(
+            return new FlightUpdatedNotification(
                 fdr.Callsign,
+                fdr.AircraftType,
                 fdr.DepAirport,
                 fdr.DesAirport,
                 fdr.ArrivalRunway?.Name,
                 fdr.STAR?.Name,
-                fdr.ParsedRoute.Select(s => new Fix(s.Intersection.Name, new DateTimeOffset(s.ETO, TimeSpan.Zero))).ToArray());
+                fdr.ParsedRoute.Select(s => new FixDTO(s.Intersection.Name, new DateTimeOffset(s.ETO, TimeSpan.Zero))).ToArray());
         }
     }
 }
