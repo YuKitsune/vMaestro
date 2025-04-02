@@ -1,4 +1,4 @@
-# TODO:
+# Roadmap
 
 - [X] Eurocat Look and Feel
     - [X] Pull theme from vatSys
@@ -14,39 +14,36 @@
     - [X] Load configuration from profile
     - [X] Separate configuration access for offline and online modes
 
-- [ ] Data Modelling
-    - [ ] Consider how sequences should be modelled
-    - [ ] Consider internal infrastructure for online and offline modes
-    - [ ] Implement domain models, handlers, tiny types, etc.
-
 - [ ] Temporary feed
     - [ ] Load data from existing Maestro API
 
-- [ ] Load arrivals from vatSys into sequences
-- [ ] Display arrivals on ladder
-- [ ] Ensure ladder re-draws when FDR updates
-- [ ] Refresh ladder on timer
-- [ ] Clock
+- [ ] Ladder configuration
+    - [ ] TMA view
+    - [ ] ENR view
 
-- [ ] Standalone mode
+- [ ] Offline Mode
+    - [ ] Consider how sequences should be modelled
+    - [ ] Implement domain models, handlers, tiny types, etc.
+    - [ ] Publish notifications on FDP updates
     - [ ] Sequencing algorithm
-    - [ ] Automatically determine the sequence locally
 
 - [ ] Online mode
-    - [ ] Load configuration from maestro server
-    - [ ] Master publishes sequence to clients
-    - [ ] Master can manually sequence and control landing rates
-    - [ ] Clients get a read-only view of the sequence
+    - [ ] Connect to Maestro server
+    - [ ] Source configuration from server
+    - [ ] Redirect update notifications to server
+    - [ ] Source sequence information from server
+    - [ ] Allow Flow to modify the sequence
+    - [ ] Authentication
 
 - [ ] MVP
-    - [ ] Rename to Maestro
     - [ ] Fix DPI scaling issue
+    - [ ] Loading indicator
 
 - [ ] Nice to haves
     - [ ] Debugger configuration for vatSys
     - [ ] Arrival list / GlobalOps backup
     - [ ] CSV or XLSX backup
-    - [ ] Training mode
+    - [ ] Sweatbox support
     - [ ] Customisable UI layout
     - [ ] Per-sequence online mode (E.g: YSSY offline, YMML online)
 
