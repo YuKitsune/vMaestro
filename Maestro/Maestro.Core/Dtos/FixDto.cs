@@ -1,5 +1,5 @@
 ﻿namespace Maestro.Core.Dtos;
 
-public record FixDTO(
+public record FixDto(
     string Identifier,
     DateTimeOffset Estimate);

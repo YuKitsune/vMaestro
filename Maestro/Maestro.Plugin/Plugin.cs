@@ -18,12 +18,12 @@ namespace Maestro.Plugin
     [Export(typeof(IPlugin))]
     public class Plugin : IPlugin, IDisposable
     {
-        public const string Name = "Maestro";
-        string IPlugin.Name => "Maestro";
+        const string Name = "Maestro";
+        string IPlugin.Name => Name;
 
-        static BaseForm? MaestroWindow;
+        static BaseForm? _maestroWindow;
 
-        IMediator mediator;
+        IMediator _mediator = null!;
 
         public Plugin()
         {
@@ -33,7 +33,7 @@ namespace Maestro.Plugin
                 ConfigureTheme();
                 AddMenuItem();
 
-                mediator = Ioc.Default.GetRequiredService<IMediator>();
+                _mediator = Ioc.Default.GetRequiredService<IMediator>();
 
                 Network.Connected += Network_Connected;
                 Network.Disconnected += Network_Disconnected;
@@ -88,13 +88,13 @@ namespace Maestro.Plugin
             MMI.AddCustomMenuItem(menuItem);
         }
 
-        private static void ShowMaestro()
+        static void ShowMaestro()
         {
             try
             {
-                if (MaestroWindow == null || MaestroWindow.IsDisposed)
+                if (_maestroWindow == null || _maestroWindow.IsDisposed)
                 {
-                    MaestroWindow = new MaestroWindow
+                    _maestroWindow = new MaestroWindow
                     {
                         Width = 560,
                         Height = 800
@@ -105,7 +105,7 @@ namespace Maestro.Plugin
                 if (mainForm == null)
                     return;
 
-                MMI.InvokeOnGUI(delegate () { MaestroWindow.Show(mainForm); });
+                MMI.InvokeOnGUI(delegate { _maestroWindow.Show(mainForm); });
             }
             catch (Exception ex)
             {
@@ -118,14 +118,14 @@ namespace Maestro.Plugin
             foreach (var fdr in FDP2.GetFDRs)
             {
                 var notification = CreateNotificationFor(fdr);
-                mediator.Publish(notification);
+                _mediator.Publish(notification);
             }
         }
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
             var notification = CreateNotificationFor(updated);
-            mediator.Publish(notification);
+            _mediator.Publish(notification);
         }
 
         public void OnRadarTrackUpdate(RDP.RadarTrack updated)
@@ -134,7 +134,7 @@ namespace Maestro.Plugin
                 return;
 
             var notification = CreateNotificationFor(updated.CoupledFDR);
-            mediator.Publish(notification);
+            _mediator.Publish(notification);
         }
 
         void Network_Disconnected(object sender, EventArgs e)
@@ -144,10 +144,10 @@ namespace Maestro.Plugin
 
         public void Dispose()
         {
-            Network_Disconnected(this, new EventArgs());
+            Network_Disconnected(this, EventArgs.Empty);
         }
 
-        public FlightUpdatedNotification CreateNotificationFor(FDP2.FDR fdr)
+        FlightUpdatedNotification CreateNotificationFor(FDP2.FDR fdr)
         {
             return new FlightUpdatedNotification(
                 fdr.Callsign,
@@ -156,7 +156,7 @@ namespace Maestro.Plugin
                 fdr.DesAirport,
                 fdr.ArrivalRunway?.Name,
                 fdr.STAR?.Name,
-                fdr.ParsedRoute.Select(s => new FixDTO(s.Intersection.Name, new DateTimeOffset(s.ETO, TimeSpan.Zero))).ToArray());
+                fdr.ParsedRoute.Select(s => new FixDto(s.Intersection.Name, new DateTimeOffset(s.ETO, TimeSpan.Zero))).ToArray());
         }
     }
 }

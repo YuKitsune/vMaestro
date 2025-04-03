@@ -11,7 +11,7 @@ public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirpo
 {
     const string ConfigurationFileName = "Maestro.json";
 
-    readonly Lazy<PluginConfiguration> _lazyPluginConfiguration = new Lazy<PluginConfiguration>(GetPluginConfiguration);
+    readonly Lazy<PluginConfiguration> _lazyPluginConfiguration = new(GetPluginConfiguration);
 
     public LogLevel GetLogLevel()
     {
@@ -23,7 +23,7 @@ public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirpo
         return _lazyPluginConfiguration.Value.Logging.OutputPath;
     }
 
-    public AirportConfigurationDTO[] GetAirportConfigurations()
+    public AirportConfigurationDto[] GetAirportConfigurations()
     {
         return _lazyPluginConfiguration.Value.Airports;
     }
@@ -33,26 +33,20 @@ public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirpo
         var assemblyLocation = Assembly.GetExecutingAssembly().Location;
 
         var directory = new FileInfo(assemblyLocation).Directory;
-        while (ContinueSearch(directory))
+        while (directory is not null && ContinueSearch(directory))
         {
             var configFilePath = Path.Combine(directory.FullName, ConfigurationFileName);
-            if (!File.Exists(configFilePath))
-            {
-                directory = directory.Parent;
-                continue;
-            }
-
-            return LoadConfiguration(configFilePath);
+            if (File.Exists(configFilePath))
+                return LoadConfiguration(configFilePath);
+            
+            directory = directory.Parent;
         }
 
         throw new Exception($"Couldn't find {ConfigurationFileName}");
     }
 
-    static bool ContinueSearch(DirectoryInfo? directory)
+    static bool ContinueSearch(DirectoryInfo directory)
     {
-        if (directory is null)
-            return false;
-
         string[] specialFolders =
             [
                 Helpers.GetFilesFolder(),

@@ -1,11 +1,11 @@
 ﻿namespace Maestro.Core.Dtos;
 
-public record FlightDTO(
+public record FlightDto(
     string Callsign,
     string AircraftType,
     string OriginIcao,
     string DestinationIcao,
-    StateDTO State,
+    StateDto State,
     string FeederFix,
     string? AssignedRunway,
     string? AssignedStar,

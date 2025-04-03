@@ -11,7 +11,7 @@ public class FlightUpdatedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider)
     : INotificationHandler<FlightUpdatedNotification>
 {
-    readonly IMediator mediator = mediator;
+    readonly IMediator _mediator = mediator;
     readonly SequenceProvider _sequenceProvider = sequenceProvider;
     readonly IAirportConfigurationProvider _airportConfigurationProvider = airportConfigurationProvider;
     // readonly ILogger<FDRUpdatedNotificationHandler> _logger = logger;
@@ -30,7 +30,7 @@ public class FlightUpdatedNotificationHandler(
                 return;
             }
 
-            sequence = new Sequence(mediator, notification.DestinationIcao, airportConfig.FeederFixes);
+            sequence = new Sequence(_mediator, notification.DestinationIcao, airportConfig.FeederFixes);
             _sequenceProvider.Sequences.Add(sequence);
         }
 
@@ -70,6 +70,6 @@ public class FlightUpdatedNotificationHandler(
             sequence.Add(flight);
         }
 
-        await mediator.Publish(new SequenceModifiedNotification(sequence.ToDTO()));
+        await _mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
     }
 }

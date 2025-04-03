@@ -7,22 +7,17 @@ namespace Maestro.Wpf.Converters;
 [ValueConversion(typeof(TimeSpan), typeof(string))]
 class MinutesConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is TimeSpan timeSpan)
+        return value switch
         {
-            return timeSpan.Minutes.ToString("00");
-        }
-
-        if (value is DateTimeOffset dateTime)
-        {
-            return dateTime.Minute.ToString("00");
-        }
-
-        throw new NotSupportedException();
+            TimeSpan timeSpan => timeSpan.Minutes.ToString("00"),
+            DateTimeOffset dateTime => dateTime.Minute.ToString("00"),
+            _ => throw new NotSupportedException()
+        };
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

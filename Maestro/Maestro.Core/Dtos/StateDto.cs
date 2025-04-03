@@ -1,6 +1,6 @@
 ﻿namespace Maestro.Core.Dtos;
 
-public enum StateDTO
+public enum StateDto
 {
     Unstable,
     Stable,

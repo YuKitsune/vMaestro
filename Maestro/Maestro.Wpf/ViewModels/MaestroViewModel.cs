@@ -3,24 +3,23 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Dtos.Messages;
-using Maestro.Wpf;
 using MediatR;
 
-namespace Maestro.Wpf;
+namespace Maestro.Wpf.ViewModels;
 
 public partial class MaestroViewModel : ObservableObject
 {
     [ObservableProperty]
-    private ObservableCollection<AirportViewModel> _availableAirports = [];
+    ObservableCollection<AirportViewModel> _availableAirports = [];
 
     [ObservableProperty]
-    private AirportViewModel? _selectedAirport;
+    AirportViewModel? _selectedAirport;
 
     [ObservableProperty]
-    private RunwayModeViewModel? _selectedRunwayMode;
+    RunwayModeViewModel? _selectedRunwayMode;
 
     [ObservableProperty]
-    private ViewConfigurationDTO? _selectedView;
+    ViewConfigurationDto? _selectedView;
 
     readonly IMediator _mediator;
 
@@ -50,12 +49,12 @@ public partial class MaestroViewModel : ObservableObject
             return;
         }
 
-        if (SelectedRunwayMode == null || !airportViewModel.RunwayModes.Any(r => r.Identifier == SelectedRunwayMode.Identifier))
+        if (SelectedRunwayMode == null || airportViewModel.RunwayModes.All(r => r.Identifier != SelectedRunwayMode.Identifier))
         {
             SelectedRunwayMode = airportViewModel.RunwayModes.FirstOrDefault();
         }
 
-        if (SelectedView == null || !airportViewModel.Views.Any(s => s.Identifier == SelectedView.Identifier))
+        if (SelectedView == null || airportViewModel.Views.All(s => s.Identifier != SelectedView.Identifier))
         {
             SelectedView = airportViewModel.Views.FirstOrDefault();
         }
@@ -83,7 +82,7 @@ public partial class MaestroViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void SelectView(ViewConfigurationDTO? viewConfiguration)
+    void SelectView(ViewConfigurationDto? viewConfiguration)
     {
         SelectedView = viewConfiguration;
     }

@@ -2,17 +2,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Maestro.Core.Dtos.Configuration;
 
-namespace Maestro.Wpf;
+namespace Maestro.Wpf.ViewModels;
 
-public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, ViewConfigurationDTO[] views) : ObservableObject
+public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, ViewConfigurationDto[] views) : ObservableObject
 {
     public string Identifier => identifier;
 
     [ObservableProperty]
-    private ObservableCollection<RunwayModeViewModel> _runwayModes = new(runwayModes);
+    ObservableCollection<RunwayModeViewModel> _runwayModes = new(runwayModes);
 
     [ObservableProperty]
-    private ObservableCollection<ViewConfigurationDTO> _views = new(views);
+    ObservableCollection<ViewConfigurationDto> _views = new(views);
 }
 
 public class RunwayModeViewModel(string identifier, RunwayViewModel[] runwayModes)
@@ -29,5 +29,5 @@ public partial class RunwayViewModel(string identifier, TimeSpan defaultLandingR
     public TimeSpan DefaultLandingRate => defaultLandingRate;
 
     [ObservableProperty]
-    private TimeSpan _landingRate = defaultLandingRate;
+    TimeSpan _landingRate = defaultLandingRate;
 }

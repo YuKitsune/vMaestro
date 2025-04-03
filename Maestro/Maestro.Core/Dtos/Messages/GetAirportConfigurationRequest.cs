@@ -4,4 +4,4 @@ using MediatR;
 namespace Maestro.Core.Dtos.Messages;
 
 public record GetAirportConfigurationRequest : IRequest<GetAirportConfigurationResponse>;
-public record GetAirportConfigurationResponse(AirportConfigurationDTO[] Airports);
+public record GetAirportConfigurationResponse(AirportConfigurationDto[] Airports);

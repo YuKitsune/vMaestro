@@ -47,13 +47,13 @@ public class BeveledBorder : FrameworkElement
 
     public UIElement? Child
     {
-        get { return (UIElement)GetValue(ChildProperty); }
-        set { SetValue(ChildProperty, value); }
+        get => (UIElement)GetValue(ChildProperty);
+        set => SetValue(ChildProperty, value);
     }
 
     public Thickness BorderThickness
     {
-        get { return (Thickness)GetValue(BorderThicknessProperty); }
+        get => (Thickness)GetValue(BorderThicknessProperty);
         set
         {
             SetValue(BorderThicknessProperty, value);
@@ -61,12 +61,12 @@ public class BeveledBorder : FrameworkElement
         }
     }
 
-    Thickness BorderThicknessDoubled => new Thickness(BorderThickness.Left * 2, BorderThickness.Top * 2, BorderThickness.Right * 2, BorderThickness.Bottom * 2);
+    Thickness BorderThicknessDoubled => new(BorderThickness.Left * 2, BorderThickness.Top * 2, BorderThickness.Right * 2, BorderThickness.Bottom * 2);
 
     public BevelType BevelType
     {
-        get { return (BevelType)GetValue(BevelTypeProperty); }
-        set { SetValue(BevelTypeProperty, value); }
+        get => (BevelType)GetValue(BevelTypeProperty);
+        set => SetValue(BevelTypeProperty, value);
     }
 
     static void OnChildChanged(object sender, DependencyPropertyChangedEventArgs args)
@@ -191,13 +191,13 @@ public class BeveledBorder : FrameworkElement
     {
         var segments = new Point[]
             {
-                new Point(left, top),
-                new Point(right, top),
-                new Point(right - thickness.Right, top + thickness.Top),
-                new Point(left + thickness.Left, top + thickness.Top),
-                new Point(left + thickness.Left, bottom - thickness.Bottom),
-                new Point(left, bottom),
-                new Point(left, top)
+                new(left, top),
+                new(right, top),
+                new(right - thickness.Right, top + thickness.Top),
+                new(left + thickness.Left, top + thickness.Top),
+                new(left + thickness.Left, bottom - thickness.Bottom),
+                new(left, bottom),
+                new(left, top)
             }
             .Select(p => new LineSegment(p, false));
 
@@ -208,13 +208,13 @@ public class BeveledBorder : FrameworkElement
     {
         var segments = new Point[]
             {
-                new Point(right, top),
-                new Point(right, bottom),
-                new Point(left, bottom),
-                new Point(left + thickness.Left, bottom - thickness.Bottom),
-                new Point(right - thickness.Right, bottom - thickness.Bottom),
-                new Point(right - thickness.Right, top + thickness.Bottom),
-                new Point(right, top)
+                new(right, top),
+                new(right, bottom),
+                new(left, bottom),
+                new(left + thickness.Left, bottom - thickness.Bottom),
+                new(right - thickness.Right, bottom - thickness.Bottom),
+                new(right - thickness.Right, top + thickness.Bottom),
+                new(right, top)
             }
             .Select(p => new LineSegment(p, false));
 

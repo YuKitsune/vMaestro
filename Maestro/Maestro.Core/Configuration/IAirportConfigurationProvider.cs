@@ -4,5 +4,5 @@ namespace Maestro.Core.Configuration;
 
 public interface IAirportConfigurationProvider
 {
-    AirportConfigurationDTO[] GetAirportConfigurations();
+    AirportConfigurationDto[] GetAirportConfigurations();
 }

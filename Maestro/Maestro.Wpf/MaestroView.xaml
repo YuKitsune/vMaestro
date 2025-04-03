@@ -7,10 +7,11 @@
              xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
              xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
+             xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
              mc:Ignorable="d"
              Background="{x:Static local:Theme.BackgroundColor}"
              MinWidth="480"
-             d:DataContext="{d:DesignInstance Type=local:MaestroViewModel}"
+             d:DataContext="{d:DesignInstance Type=viewModels:MaestroViewModel}"
              d:DesignHeight="800"
              d:DesignWidth="560">
     <behaviors:Interaction.Triggers>
@@ -263,7 +264,7 @@
             <StackPanel Grid.Column="2" HorizontalAlignment="Left" Margin="12,0,0,0">
 
                 <TextBlock Text="{Binding Path=SelectedView.RightLadderConfiguration.Runways, Converter={StaticResource RunwaysToLadderTitleConverter}}" />
-                <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=SelectedView.RightLadderConfiguration.FeederFixes}">
+                <ItemsControl ItemsSource="{Binding Path=SelectedView.RightLadderConfiguration.FeederFixes}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel Orientation="Horizontal" />

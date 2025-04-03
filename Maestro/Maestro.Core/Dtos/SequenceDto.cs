@@ -1,5 +1,5 @@
 ﻿namespace Maestro.Core.Dtos;
 
-public record SequenceDTO(
+public record SequenceDto(
     string AirportIdentifier,
-    FlightDTO[] Arrivals);
+    FlightDto[] Arrivals);

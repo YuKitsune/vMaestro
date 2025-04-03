@@ -2,4 +2,4 @@
 
 namespace Maestro.Core.Dtos.Messages;
 
-public record SequenceModifiedNotification(SequenceDTO Sequence) : INotification;
+public record SequenceModifiedNotification(SequenceDto Sequence) : INotification;

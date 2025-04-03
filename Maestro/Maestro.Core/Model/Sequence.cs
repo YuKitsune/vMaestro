@@ -5,17 +5,17 @@ namespace Maestro.Core.Model;
 
 public class Sequence(IMediator mediator, string airportIdentifier, string[] feederFixes)
 {
-    readonly IMediator mediator = mediator;
-    readonly List<Flight> arrivals = new();
+    readonly IMediator _mediator = mediator;
+    readonly List<Flight> _arrivals = [];
 
     public string AirportIdentifier { get; } = airportIdentifier;
     public string[] FeederFixes { get; } = feederFixes;
 
-    public IReadOnlyList<Flight> Arrivals => arrivals;
+    public IReadOnlyList<Flight> Arrivals => _arrivals;
 
     public void Add(Flight flight)
     {
-        if (arrivals.Any(c => c.Callsign == flight.Callsign))
+        if (_arrivals.Any(c => c.Callsign == flight.Callsign))
         {
             throw new Exception($"{flight.Callsign} is already in the sequence for {AirportIdentifier}");
         }
@@ -27,8 +27,8 @@ public class Sequence(IMediator mediator, string airportIdentifier, string[] fee
 
         // TODO: Additional validation
 
-        arrivals.Add(flight);
+        _arrivals.Add(flight);
 
-        mediator.Publish(new SequenceModifiedNotification(this.ToDTO()));
+        _mediator.Publish(new SequenceModifiedNotification(this.ToDto()));
     }
 }

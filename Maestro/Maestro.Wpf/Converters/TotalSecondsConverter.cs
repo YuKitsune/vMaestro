@@ -6,13 +6,15 @@ namespace Maestro.Wpf.Converters;
 [ValueConversion(typeof(TimeSpan), typeof(string))]
 class TotalSecondsConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        var timeSpan = (TimeSpan)value;
-        return $"{timeSpan.TotalSeconds}s";
+        if (value is TimeSpan timeSpan)
+            return $"{timeSpan.TotalSeconds}s";
+
+        throw new NotSupportedException();
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

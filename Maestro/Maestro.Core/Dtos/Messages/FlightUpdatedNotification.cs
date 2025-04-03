@@ -9,5 +9,5 @@ public record FlightUpdatedNotification(
     string DestinationIcao,
     string? AssignedRunway,
     string? AssignedStar,
-    FixDTO[] Estimates)
+    FixDto[] Estimates)
     : INotification;

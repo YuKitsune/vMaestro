@@ -3,10 +3,10 @@ using MediatR;
 
 namespace Maestro.Wpf.Handlers;
 
-public class SequenceModifiedNotificationHandler(MaestroViewModel viewModel)
+public class SequenceModifiedNotificationHandler(ViewModels.MaestroViewModel viewModel)
     : INotificationHandler<SequenceModifiedNotification>
 {
-    readonly MaestroViewModel _viewModel = viewModel;
+    readonly ViewModels.MaestroViewModel _viewModel = viewModel;
 
     public Task Handle(SequenceModifiedNotification notification, CancellationToken _)
     {

@@ -4,17 +4,17 @@ namespace Maestro.Core.Model;
 
 public static class SequenceExtensionMethods
 {
-    public static SequenceDTO ToDTO(this Sequence sequence)
+    public static SequenceDto ToDto(this Sequence sequence)
     {
-        return new SequenceDTO(
+        return new SequenceDto(
             sequence.AirportIdentifier,
             sequence.Arrivals.Select(x =>
-                new FlightDTO(
+                new FlightDto(
                     x.Callsign,
                     x.AircraftType,
                     x.OriginIcaoCode,
                     x.DestinationIcaoCode,
-                    x.State.ToDTO(),
+                    x.State.ToDto(),
                     x.FeederFix,
                     x.AssignedRunway,
                     x.AssignedStar,

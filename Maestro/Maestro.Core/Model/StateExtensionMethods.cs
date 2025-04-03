@@ -4,15 +4,15 @@ namespace Maestro.Core.Model;
 
 public static class StateExtensionMethods
 {
-    public static StateDTO ToDTO(this State state)
+    public static StateDto ToDto(this State state)
     {
         return state switch
         {
-            State.Unstable => StateDTO.Unstable,
-            State.Stable => StateDTO.Stable,
-            State.SuperStable => StateDTO.SuperStable,
-            State.Frozen => StateDTO.Frozen,
-            State.Landed => StateDTO.Landed,
+            State.Unstable => StateDto.Unstable,
+            State.Stable => StateDto.Stable,
+            State.SuperStable => StateDto.SuperStable,
+            State.Frozen => StateDto.Frozen,
+            State.Landed => StateDto.Landed,
             _ => throw new ArgumentOutOfRangeException($"Unexpected state: {state}")
         };
     }

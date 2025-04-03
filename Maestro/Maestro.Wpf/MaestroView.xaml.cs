@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Dtos.Configuration;
@@ -20,25 +18,28 @@ public partial class MaestroView : UserControl
     const int TickWidth = 8;
     const int LineThickness = 2;
 
-    readonly DispatcherTimer dispatcherTimer;
+    readonly DispatcherTimer _dispatcherTimer;
 
     public MaestroView()
     {
-        DataContext = Ioc.Default.GetRequiredService<MaestroViewModel>();
+        DataContext = Ioc.Default.GetRequiredService<ViewModels.MaestroViewModel>();
 
         InitializeComponent();
 
-        dispatcherTimer = new DispatcherTimer();
-        dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
-        dispatcherTimer.Tick += TimerTick;
-        dispatcherTimer.Start();
+        _dispatcherTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+
+        _dispatcherTimer.Tick += TimerTick;
+        _dispatcherTimer.Start();
 
         Loaded += ControlLoaded;
         SizeChanged += OnSizeChanged;
         ViewModel.PropertyChanged += PropertyChanged;
     }
 
-    public MaestroViewModel ViewModel => (MaestroViewModel)DataContext;
+    public ViewModels.MaestroViewModel ViewModel => (ViewModels.MaestroViewModel)DataContext;
 
     void TimerTick(object sender, EventArgs args)
     {
@@ -63,7 +64,7 @@ public partial class MaestroView : UserControl
 
     void DrawLadder()
     {
-        this.Dispatcher.Invoke(() =>
+        Dispatcher.Invoke(() =>
         {
             LadderCanvas.Children.Clear();
 
@@ -127,7 +128,8 @@ public partial class MaestroView : UserControl
         {
             return LadderPosition.Left;
         }
-        else if (ViewModel.SelectedView.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
+        
+        if (ViewModel.SelectedView.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
         {
             return LadderPosition.Right;
         }
@@ -135,7 +137,7 @@ public partial class MaestroView : UserControl
         // TODO: Log a warning if we've made it to this point
         throw new Exception($"Flight {aircraft.Callsign} could not be positioned on the ladder");
 
-        bool ShowOnLadder(LadderConfigurationDTO ladderConfiguration)
+        bool ShowOnLadder(LadderConfigurationDto ladderConfiguration)
         {
             var runwayMatches = ladderConfiguration.Runways is null || !ladderConfiguration.Runways.Any() || ladderConfiguration.Runways.Contains(aircraft.Runway);
             var feederFixMatches = ladderConfiguration.FeederFixes is null || !ladderConfiguration.FeederFixes.Any() || ladderConfiguration.FeederFixes.Contains(aircraft.FeederFix);
@@ -149,12 +151,9 @@ public partial class MaestroView : UserControl
         double canvasHeight = LadderCanvas.ActualHeight;
         double canvasWidth = LadderCanvas.ActualWidth;
 
-        var durationToDisplay = TimeSpan.FromMinutes(canvasHeight / MinuteHeight);
-        var ladderCeilingTime = currentTime.Add(durationToDisplay);
-
         var middlePoint = canvasWidth / 2;
-        var ladderLeftPosition = middlePoint - (LadderWidth / 2) - LineThickness;
-        var ladderRightPosition = middlePoint + (LadderWidth / 2) + LineThickness;
+        var ladderLeftPosition = middlePoint - LadderWidth / 2 - LineThickness;
+        var ladderRightPosition = middlePoint + LadderWidth / 2 + LineThickness;
 
         var leftLine = new BeveledLine
         {
@@ -192,10 +191,10 @@ public partial class MaestroView : UserControl
         while (yOffset <= canvasHeight)
         {
             var yPosition = canvasHeight - yOffset;
-            var topPosition = yPosition - (LineThickness / 2);
+            var topPosition = yPosition - LineThickness / 2;
 
-            var leftTickXPosition = ladderLeftPosition - LineThickness - (TickWidth / 2);
-            var rightTickXPosition = ladderRightPosition + LineThickness + (TickWidth / 2);
+            var leftTickXPosition = ladderLeftPosition - LineThickness - TickWidth / 2;
+            var rightTickXPosition = ladderRightPosition + LineThickness + TickWidth / 2;
 
             var leftTick = new BeveledLine
             {
@@ -244,7 +243,7 @@ public partial class MaestroView : UserControl
         }
     }
 
-    RoutedEventHandler PositionOnCanvas(
+    static RoutedEventHandler PositionOnCanvas(
         double? left = null,
         double? top = null,
         double? right = null,
@@ -252,7 +251,7 @@ public partial class MaestroView : UserControl
         double? x = null,
         double? y = null)
     {
-        return (object sender, RoutedEventArgs args) =>
+        return (sender, _) =>
         {
             if (sender is not FrameworkElement element)
                 return;
@@ -271,14 +270,12 @@ public partial class MaestroView : UserControl
 
             if (x.HasValue)
             {
-                var left = x.Value - (element.ActualWidth / 2);
-                Canvas.SetLeft(element, left);
+                Canvas.SetLeft(element, x.Value - element.ActualWidth / 2);
             }
 
             if (y.HasValue)
             {
-                var top = y.Value - (element.ActualHeight / 2);
-                Canvas.SetTop(element, top);
+                Canvas.SetTop(element, y.Value - element.ActualHeight / 2);
             }
         };
     }
@@ -291,7 +288,7 @@ public partial class MaestroView : UserControl
     DateTimeOffset GetNearest5Minutes(DateTimeOffset currentTime)
     {
         // Round up the minutes to the next multiple of 5
-        int minutes = (currentTime.Minute / 5) * 5;
+        int minutes = currentTime.Minute / 5 * 5;
         if (currentTime.Minute % 5 != 0 || currentTime.Second > 0 || currentTime.Millisecond > 0)
         {
             minutes += 5; // Add 5 minutes to round up

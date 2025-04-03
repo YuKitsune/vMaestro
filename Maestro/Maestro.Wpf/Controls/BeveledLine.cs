@@ -1,13 +1,12 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Maestro.Wpf;
 
 namespace Maestro.Wpf.Controls;
 
 public class BeveledLine : FrameworkElement
 {
-    public static DependencyProperty OrientationProperty =
+    public static readonly DependencyProperty OrientationProperty =
         DependencyProperty.Register(
             nameof(Orientation),
             typeof(Orientation),
@@ -17,7 +16,7 @@ public class BeveledLine : FrameworkElement
                 FrameworkPropertyMetadataOptions.AffectsRender,
                 OnOrientationChanged));
 
-    public static DependencyProperty FlippedProperty =
+    public static readonly DependencyProperty FlippedProperty =
         DependencyProperty.Register(
             nameof(Flipped),
             typeof(bool),
@@ -94,11 +93,11 @@ public class BeveledLine : FrameworkElement
     {
         var segments = new Point[]
             {
-                new Point(left, top),
-                new Point(right, top),
-                new Point(right, bottom),
-                new Point(left, bottom),
-                new Point(left, top)
+                new(left, top),
+                new(right, top),
+                new(right, bottom),
+                new(left, bottom),
+                new(left, top)
             }
             .Select(p => new LineSegment(p, false));
 

@@ -21,6 +21,6 @@ public class StubServerConnection : IServerConnection
 
     public Task<TResponse> SendAsync<TPayload, TResponse>(TPayload payload, CancellationToken cancellationToken)
     {
-        return Task.FromResult<TResponse>(default);
+        return Task.FromResult<TResponse>(default!);
     }
 }
