@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Maestro.Core.Dtos.Configuration;
 using Maestro.Wpf.Controls;
 
 namespace Maestro.Wpf;
@@ -80,7 +81,12 @@ public partial class MaestroView : UserControl
 
         foreach (var aircraft in ViewModel.Aircraft)
         {
-            var yOffset = GetYOffsetForTime(currentTime, aircraft.FeederFixTime);
+            var yOffset = ViewModel.SelectedView.LadderReferenceTime switch
+            {
+                LadderReferenceTime.FeederFixTime => GetYOffsetForTime(currentTime, aircraft.FeederFixTime),
+                LadderReferenceTime.LandingTime => GetYOffsetForTime(currentTime, aircraft.LandingTime),
+                _ => throw new ArgumentException($"Unexpected LadderReferenceTime: {ViewModel.SelectedView.LadderReferenceTime}")
+            };
 
             var yPosition = canvasHeight - yOffset;
 
@@ -97,26 +103,44 @@ public partial class MaestroView : UserControl
                 Margin = new Thickness(2,0,2,0)
             };
 
-            if (ViewModel.LeftFeederFixes.Contains(aircraft.FeederFix))
+            var ladderPosition = GetLadderPositionFor(aircraft);
+            aircraftView.Loaded += ladderPosition switch
             {
-                aircraftView.Loaded += PositionOnCanvas(
+                LadderPosition.Left => PositionOnCanvas(
                     left: 0,
                     right: middlePoint - distanceFromMiddle,
-                    y: yPosition);
-            }
-            else if (ViewModel.RightFeederFixes.Contains(aircraft.FeederFix))
-            {
-                aircraftView.Loaded += PositionOnCanvas(
+                    y: yPosition),
+                LadderPosition.Right => PositionOnCanvas(
                     left: middlePoint + distanceFromMiddle,
                     right: canvasWidth,
-                    y: yPosition);
-            }
-            else
-            {
-                continue;
-            }
+                    y: yPosition),
+                _ => throw new ArgumentException($"Unexpected LadderPosition: {ladderPosition}")
+            };
 
             LadderCanvas.Children.Add(aircraftView);
+        }
+    }
+
+    LadderPosition GetLadderPositionFor(AircraftViewModel aircraft)
+    {
+        if (ViewModel.SelectedView.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
+        {
+            return LadderPosition.Left;
+        }
+        else if (ViewModel.SelectedView.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
+        {
+            return LadderPosition.Right;
+        }
+
+        // TODO: Log a warning if we've made it to this point
+        throw new Exception($"Flight {aircraft.Callsign} could not be positioned on the ladder");
+
+        bool ShowOnLadder(LadderConfigurationDTO ladderConfiguration)
+        {
+            var runwayMatches = ladderConfiguration.Runways is null || !ladderConfiguration.Runways.Any() || ladderConfiguration.Runways.Contains(aircraft.Runway);
+            var feederFixMatches = ladderConfiguration.FeederFixes is null || !ladderConfiguration.FeederFixes.Any() || ladderConfiguration.FeederFixes.Contains(aircraft.FeederFix);
+
+            return runwayMatches || feederFixMatches;
         }
     }
 

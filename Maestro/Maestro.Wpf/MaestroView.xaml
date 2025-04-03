@@ -26,8 +26,9 @@
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <converters:TotalSecondsConverter x:Key="TotalSecondsConverter"/>
-            
+            <converters:TotalSecondsConverter x:Key="TotalSecondsConverter" />
+            <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
+
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
 
@@ -186,7 +187,7 @@
             <Button Content="COORD"/>
             <Button Content="DESQ"/>
 
-            <ItemsControl ItemsSource="{Binding SelectedAirport.Sectors}" Name="SectorList">
+            <ItemsControl ItemsSource="{Binding SelectedAirport.Views}" Name="SectorList">
                 <ItemsControl.Resources>
                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
                         <Setter Property="Width" Value="72" />
@@ -199,7 +200,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Command="{Binding Path=DataContext.SelectSectorCommand, ElementName=SectorList}" CommandParameter="{Binding}" Content="{Binding Identifier}" />
+                        <Button Command="{Binding Path=DataContext.SelectViewCommand, ElementName=SectorList}" CommandParameter="{Binding}" Content="{Binding Identifier}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -239,9 +240,9 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Right" Margin="0,0,6,0">
-                <TextBlock TextAlignment="Right">All Runways</TextBlock>
-                <ItemsControl HorizontalAlignment="Right" ItemsSource="{Binding Path=LeftFeederFixes}">
+            <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Right" Margin="0,0,12,0">
+                <TextBlock TextAlignment="Right" Text="{Binding Path=SelectedView.LeftLadderConfiguration.Runways, Converter={StaticResource RunwaysToLadderTitleConverter}}"/>
+                <ItemsControl HorizontalAlignment="Right" ItemsSource="{Binding Path=SelectedView.LeftLadderConfiguration.FeederFixes}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel Orientation="Horizontal" />
@@ -249,7 +250,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" Margin="6,0,0,0"/>
+                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" Margin="12,0,0,0"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -261,8 +262,8 @@
 
             <StackPanel Grid.Column="2" HorizontalAlignment="Left" Margin="12,0,0,0">
 
-                <TextBlock>All Runways</TextBlock>
-                <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=RightFeederFixes}">
+                <TextBlock Text="{Binding Path=SelectedView.RightLadderConfiguration.Runways, Converter={StaticResource RunwaysToLadderTitleConverter}}" />
+                <ItemsControl Grid.Column="2" ItemsSource="{Binding Path=SelectedView.RightLadderConfiguration.FeederFixes}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel Orientation="Horizontal" />

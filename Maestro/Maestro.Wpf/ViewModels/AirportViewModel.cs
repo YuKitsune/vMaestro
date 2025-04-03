@@ -1,9 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Maestro.Core.Dtos.Configuration;
 
 namespace Maestro.Wpf;
 
-public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, SectorViewModel[] sectors) : ObservableObject
+public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, ViewConfigurationDTO[] views) : ObservableObject
 {
     public string Identifier => identifier;
 
@@ -11,7 +12,7 @@ public partial class AirportViewModel(string identifier, RunwayModeViewModel[] r
     private ObservableCollection<RunwayModeViewModel> _runwayModes = new(runwayModes);
 
     [ObservableProperty]
-    private ObservableCollection<SectorViewModel> _sectors = new(sectors);
+    private ObservableCollection<ViewConfigurationDTO> _views = new(views);
 }
 
 public class RunwayModeViewModel(string identifier, RunwayViewModel[] runwayModes)
@@ -29,10 +30,4 @@ public partial class RunwayViewModel(string identifier, TimeSpan defaultLandingR
 
     [ObservableProperty]
     private TimeSpan _landingRate = defaultLandingRate;
-}
-
-public class SectorViewModel(string identifier, string[] feederFixes)
-{
-    public string Identifier => identifier;
-    public string[] FeederFixes => feederFixes;
 }

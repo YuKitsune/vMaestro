@@ -17,15 +17,30 @@
 - [ ] Temporary feed
     - [ ] Load data from existing Maestro API
 
-- [ ] Ladder configuration
-    - [ ] TMA view
-    - [ ] ENR view
+- [X] Ladder configuration
+    - [X] TMA view
+    - [X] ENR view
 
 - [ ] Offline Mode
-    - [ ] Consider how sequences should be modelled
     - [ ] Implement domain models, handlers, tiny types, etc.
+    - [ ] Initialization command
     - [ ] Publish notifications on FDP updates
+    - [ ] Information window
     - [ ] Sequencing algorithm
+    - [ ] Account for GRIB winds
+    - [ ] Runway configuration change
+    - [ ] Unit selector
+    - [ ] Recompute
+    - [ ] Re-assign runway
+    - [ ] Ladder scrolling
+    - [ ] Insert flight
+    - [ ] Insert slot
+    - [ ] Change ETA FF
+    - [ ] Remove from sequence 
+    - [ ] Desequence
+    - [ ] Make Pending
+    - [ ] Zero Delay
+    - [ ] Coordination
 
 - [ ] Online mode
     - [ ] Connect to Maestro server
@@ -35,9 +50,13 @@
     - [ ] Allow Flow to modify the sequence
     - [ ] Authentication
 
+- [ ] Look and feel final pass
+    - [ ] Check border sizes and margins
+    - [ ] Font-based sizing
+    - [ ] Double check colors
+
 - [ ] MVP
     - [ ] Fix DPI scaling issue
-    - [ ] Loading indicator
 
 - [ ] Nice to haves
     - [ ] Debugger configuration for vatSys

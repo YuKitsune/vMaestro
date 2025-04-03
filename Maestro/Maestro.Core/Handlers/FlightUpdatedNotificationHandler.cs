@@ -16,7 +16,7 @@ public class FlightUpdatedNotificationHandler(
     readonly IAirportConfigurationProvider _airportConfigurationProvider = airportConfigurationProvider;
     // readonly ILogger<FDRUpdatedNotificationHandler> _logger = logger;
 
-    public Task Handle(FlightUpdatedNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(FlightUpdatedNotification notification, CancellationToken cancellationToken)
     {
         var sequence = _sequenceProvider.Sequences.FirstOrDefault(s => s.AirportIdentifier == notification.DestinationIcao);
         if (sequence == null)
@@ -27,7 +27,7 @@ public class FlightUpdatedNotificationHandler(
             if (airportConfig is null)
             {
                 // _logger.LogDebug($"Ignoring {notification.FlightDataRecord.Callsign}. No airport config exists for destination.");
-                return Task.CompletedTask;
+                return;
             }
 
             sequence = new Sequence(mediator, notification.DestinationIcao, airportConfig.FeederFixes);
@@ -38,7 +38,7 @@ public class FlightUpdatedNotificationHandler(
         if (feederFix is null)
         {
             // _logger.LogWarning($"Could not find feeder fix for {notification.FlightDataRecord.Callsign} arriving at {notification.FlightDataRecord.DestinationIcaoCode}");
-            return Task.CompletedTask;
+            return;
         }
 
         // TODO: Source landing time from somewhere else
@@ -70,6 +70,6 @@ public class FlightUpdatedNotificationHandler(
             sequence.Add(flight);
         }
 
-        return Task.CompletedTask;
+        await mediator.Publish(new SequenceModifiedNotification(sequence.ToDTO()));
     }
 }

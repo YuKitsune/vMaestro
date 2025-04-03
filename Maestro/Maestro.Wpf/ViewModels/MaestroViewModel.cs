@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Dtos.Messages;
 using Maestro.Wpf;
 using MediatR;
@@ -19,13 +20,7 @@ public partial class MaestroViewModel : ObservableObject
     private RunwayModeViewModel? _selectedRunwayMode;
 
     [ObservableProperty]
-    private SectorViewModel? _selectedSector;
-
-    [ObservableProperty]
-    private string[] _leftFeederFixes = [];
-
-    [ObservableProperty]
-    private string[] _rightFeederFixes = [];
+    private ViewConfigurationDTO? _selectedView;
 
     readonly IMediator _mediator;
 
@@ -51,7 +46,7 @@ public partial class MaestroViewModel : ObservableObject
         if (airportViewModel is null)
         {
             SelectedRunwayMode = null;
-            SelectedSector = null;
+            SelectedView = null;
             return;
         }
 
@@ -60,26 +55,10 @@ public partial class MaestroViewModel : ObservableObject
             SelectedRunwayMode = airportViewModel.RunwayModes.FirstOrDefault();
         }
 
-        if (SelectedSector == null || !airportViewModel.Sectors.Any(s => s.Identifier == SelectedSector.Identifier))
+        if (SelectedView == null || !airportViewModel.Views.Any(s => s.Identifier == SelectedView.Identifier))
         {
-            SelectedSector = airportViewModel.Sectors.FirstOrDefault();
+            SelectedView = airportViewModel.Views.FirstOrDefault();
         }
-    }
-
-    partial void OnSelectedSectorChanged(SectorViewModel? sectorViewModel)
-    {
-        if (sectorViewModel is null)
-        {
-            LeftFeederFixes = [];
-            RightFeederFixes = [];
-            return;
-        }
-
-        double midPoint = (sectorViewModel.FeederFixes.Length + 1) / 2;
-        var middleIndex = (int) Math.Ceiling(midPoint);
-
-        LeftFeederFixes = sectorViewModel.FeederFixes.Take(middleIndex).ToArray();
-        RightFeederFixes = sectorViewModel.FeederFixes.Skip(middleIndex).ToArray();
     }
 
     [RelayCommand]
@@ -99,17 +78,13 @@ public partial class MaestroViewModel : ObservableObject
                     .ToArray()))
                 .ToArray();
 
-            var sectors = airport.Sectors.Select(s =>
-                new SectorViewModel(s.Identifier, s.Fixes))
-                .ToArray();
-
-            AvailableAirports.Add(new AirportViewModel(airport.Identifier, runwayModes, sectors));
+            AvailableAirports.Add(new AirportViewModel(airport.Identifier, runwayModes, airport.Views));
         }
     }
 
     [RelayCommand]
-    void SelectSector(SectorViewModel? sectorViewModel)
+    void SelectView(ViewConfigurationDTO? viewConfiguration)
     {
-        SelectedSector = sectorViewModel;
+        SelectedView = viewConfiguration;
     }
 }
