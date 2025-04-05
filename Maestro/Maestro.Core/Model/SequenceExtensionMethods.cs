@@ -8,16 +8,16 @@ public static class SequenceExtensionMethods
     {
         return new SequenceDto(
             sequence.AirportIdentifier,
-            sequence.Arrivals.Select(x =>
+            sequence.Flights.Select(x =>
                 new FlightDto(
                     x.Callsign,
                     x.AircraftType,
-                    x.OriginIcaoCode,
-                    x.DestinationIcaoCode,
+                    x.OriginIdentifier,
+                    x.DestinationIdentifier,
                     x.State.ToDto(),
-                    x.FeederFix,
-                    x.AssignedRunway,
-                    x.AssignedStar,
+                    x.FeederFixIdentifier,
+                    x.AssignedRunwayIdentifier,
+                    x.AssignedStarIdentifier,
                     x.InitialFeederFixTime,
                     x.EstimatedFeederFixTime,
                     x.ScheduledFeederFixTime,

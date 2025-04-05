@@ -1,4 +1,6 @@
-﻿namespace Maestro.Core.Dtos.Configuration;
+﻿using Maestro.Core.Model;
+
+namespace Maestro.Core.Dtos.Configuration;
 
 public class AirportConfigurationDto(string identifier, RunwayConfigurationDto[] runways, RunwayModeConfigurationDto[] runwayModes, ViewConfigurationDto[] views, string[] feederFixes)
 {

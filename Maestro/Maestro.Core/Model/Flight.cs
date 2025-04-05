@@ -1,50 +1,56 @@
-﻿namespace Maestro.Core.Model;
+﻿
+namespace Maestro.Core.Model;
 
-public class Flight(string callsign, string aircraftType, string origin, string destination, string feederFix, string? runway, string? star, DateTimeOffset initialFeederFixEstimate, DateTimeOffset initialDestinationEstimate)
+public class Flight
 {
-    public string Callsign { get; } = callsign;
-    public string AircraftType { get; } = aircraftType;
-    public string OriginIcaoCode { get; } = origin;
-    public string DestinationIcaoCode { get; } = destination;
+    public required string Callsign { get; init; }
+    public required string AircraftType { get; init; }
+    public required string OriginIdentifier { get; init; }
+    public required string DestinationIdentifier { get; init; }
+    public required string? FeederFixIdentifier { get; set; }
+    public string? AssignedRunwayIdentifier { get; set; }
+    public string? AssignedStarIdentifier { get; set; }
+    public required bool HighPriority { get; init; }
+    public bool NoDelay { get; set; }
 
     public State State { get; } = State.Unstable;
 
-    public string FeederFix { get; private set; } = feederFix;
-    public string? AssignedRunway { get; private set; } = runway;
-    public string? AssignedStar { get; private set; } = star;
+    public DateTimeOffset? InitialFeederFixTime { get; private set; }
+    public DateTimeOffset? EstimatedFeederFixTime { get; private set; } // ETA_FF
+    public DateTimeOffset? ScheduledFeederFixTime { get; private set; } // STA_FF
+    public TimeSpan? TotalDelayToFeederFix => InitialFeederFixTime - ScheduledFeederFixTime;
+    public TimeSpan? RemainingDelayToFeederFix => EstimatedFeederFixTime - ScheduledFeederFixTime;
 
-    // TODO: What can change the initial estimate?
-    public DateTimeOffset InitialFeederFixTime { get; } = initialFeederFixEstimate;
-    public DateTimeOffset EstimatedFeederFixTime { get; private set; } = initialFeederFixEstimate;
-    public DateTimeOffset ScheduledFeederFixTime { get; private set; } = DateTimeOffset.MinValue; // TODO
+    public DateTimeOffset InitialLandingTime { get; private set; }
+    public DateTimeOffset EstimatedLandingTime { get; private set; } // ETA
+    public DateTimeOffset ScheduledLandingTime { get; private set; } // STA
+    public TimeSpan TotalDelayToRunway => InitialLandingTime - ScheduledLandingTime;
+    public TimeSpan RemainingDelayToRunway => EstimatedLandingTime - ScheduledLandingTime;
+    
+    // TODO
+    public DateTimeOffset Activated { get; private set; }
 
-    // TODO: What can change the initial estimate?
-    public DateTimeOffset InitialLandingTime { get; } = initialDestinationEstimate;
-    public DateTimeOffset EstimatedLandingTime { get; private set; } = initialDestinationEstimate;
-    public DateTimeOffset ScheduledLandingTime { get; private set; } = DateTimeOffset.MinValue; // TODO
-
-    /// <summary>
-    ///     Difference between the flight’s initial ETA and its scheduled time over the landing threshold.
-    /// </summary>
-    public TimeSpan TotalDelay => InitialLandingTime - ScheduledLandingTime;
-
-    /// <summary>
-    ///     The amount of delaying action still required to reach the landing threshold at the scheduled time.
-    /// </summary>
-    public TimeSpan RemainingDelay => EstimatedLandingTime - ScheduledLandingTime;
-
-    public void AssignRunway(string runway)
+    public void SetFeederFix(string feederFixIdentifier, DateTimeOffset feederFixEstimate)
     {
-        AssignedRunway = runway;
+        FeederFixIdentifier = feederFixIdentifier;
+        UpdateFeederFixEstimate(feederFixEstimate);
     }
 
     public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate)
     {
         EstimatedFeederFixTime = feederFixEstimate;
+        if (State == State.Unstable)
+        {
+            InitialFeederFixTime = feederFixEstimate;
+        }
     }
 
-    public void UpdateLanidngEstimate(DateTimeOffset landingEstimate)
+    public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
     {
         EstimatedLandingTime = landingEstimate;
+        if (State == State.Unstable)
+        {
+            InitialLandingTime = landingEstimate;
+        }
     }
 }

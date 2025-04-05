@@ -2,4 +2,4 @@
 
 public record SequenceDto(
     string AirportIdentifier,
-    FlightDto[] Arrivals);
+    FlightDto[] Flights);

@@ -124,6 +124,7 @@ namespace Maestro.Plugin
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
+            // TODO: What to do when an aircraft disconnects
             var notification = CreateNotificationFor(updated);
             _mediator.Publish(notification);
         }
@@ -154,9 +155,17 @@ namespace Maestro.Plugin
                 fdr.AircraftType,
                 fdr.DepAirport,
                 fdr.DesAirport,
-                fdr.ArrivalRunway?.Name,
-                fdr.STAR?.Name,
-                fdr.ParsedRoute.Select(s => new FixDto(s.Intersection.Name, new DateTimeOffset(s.ETO, TimeSpan.Zero))).ToArray());
+                fdr.ArrivalRunway is not null
+                    ? fdr.ArrivalRunway.Name
+                    : null,
+                fdr.STAR is not null
+                    ? fdr.STAR.Name
+                    : null,
+                fdr.ParsedRoute.Select(s =>
+                        new FixDto(
+                            s.Intersection.Name,
+                            new DateTimeOffset(s.ETO, TimeSpan.Zero)))
+                    .ToArray());
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Maestro.Core.Dtos.Configuration;
+﻿using Maestro.Core.Model;
+
+namespace Maestro.Core.Dtos.Configuration;
 
 public class LadderConfigurationDto(string[]? feederFixes, string[]? runways)
 {

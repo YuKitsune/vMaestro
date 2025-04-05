@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net48</TargetFramework>
+		<TargetFramework>net472</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
@@ -11,6 +11,7 @@
 	<ItemGroup>
 	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 	  <PackageReference Include="MediatR" Version="12.4.1" />
+	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
 	  <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
 	</ItemGroup>

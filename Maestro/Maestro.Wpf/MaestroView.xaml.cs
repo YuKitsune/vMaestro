@@ -82,12 +82,21 @@ public partial class MaestroView : UserControl
 
         foreach (var aircraft in ViewModel.Aircraft)
         {
-            var yOffset = ViewModel.SelectedView.LadderReferenceTime switch
+            double yOffset;
+            switch (ViewModel.SelectedView.LadderReferenceTime)
             {
-                LadderReferenceTime.FeederFixTime => GetYOffsetForTime(currentTime, aircraft.FeederFixTime),
-                LadderReferenceTime.LandingTime => GetYOffsetForTime(currentTime, aircraft.LandingTime),
-                _ => throw new ArgumentException($"Unexpected LadderReferenceTime: {ViewModel.SelectedView.LadderReferenceTime}")
-            };
+                case LadderReferenceTime.FeederFixTime when aircraft.FeederFixTime.HasValue:
+                    yOffset = GetYOffsetForTime(currentTime, aircraft.FeederFixTime.Value);
+                    break;
+                
+                case LadderReferenceTime.LandingTime:
+                    yOffset = GetYOffsetForTime(currentTime, aircraft.LandingTime);
+                    break;
+
+                // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)
+                default:
+                    continue;
+            }
 
             var yPosition = canvasHeight - yOffset;
 
@@ -139,8 +148,15 @@ public partial class MaestroView : UserControl
 
         bool ShowOnLadder(LadderConfigurationDto ladderConfiguration)
         {
-            var runwayMatches = ladderConfiguration.Runways is null || !ladderConfiguration.Runways.Any() || ladderConfiguration.Runways.Contains(aircraft.Runway);
-            var feederFixMatches = ladderConfiguration.FeederFixes is null || !ladderConfiguration.FeederFixes.Any() || ladderConfiguration.FeederFixes.Contains(aircraft.FeederFix);
+            var runwayMatches = ladderConfiguration.Runways is null ||
+                                !ladderConfiguration.Runways.Any() ||
+                                string.IsNullOrEmpty(aircraft.Runway) ||
+                                ladderConfiguration.Runways.Contains(aircraft.Runway);
+            
+            var feederFixMatches = ladderConfiguration.FeederFixes is null ||
+                                   !ladderConfiguration.FeederFixes.Any() ||
+                                   string.IsNullOrEmpty(aircraft.FeederFix) ||
+                                   ladderConfiguration.FeederFixes.Contains(aircraft.FeederFix);
 
             return runwayMatches || feederFixMatches;
         }

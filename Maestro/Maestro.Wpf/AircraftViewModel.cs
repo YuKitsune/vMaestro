@@ -1,4 +1,6 @@
-﻿namespace Maestro.Wpf;
+﻿using Maestro.Core.Model;
+
+namespace Maestro.Wpf;
 
 public class AircraftViewModel
 {
@@ -6,14 +8,12 @@ public class AircraftViewModel
 
     public DateTimeOffset LandingTime { get; set; } = DateTimeOffset.Now.AddMinutes(15);
 
-    public DateTimeOffset FeederFixTime { get; set; } = DateTime.Now.AddMinutes(5);
+    public DateTimeOffset? FeederFixTime { get; set; } = DateTime.Now.AddMinutes(5);
 
-    public string FeederFix { get; set; } = "RIVET";
-    public string? Runway { get; set; } = "16R";
+    public string? FeederFix { get; set; } = "RIVET";
+    public string? Runway { get; set; } = "34L";
 
     public TimeSpan TotalDelay { get; set; } = TimeSpan.FromMinutes(10);
 
     public TimeSpan RemainingDelay { get; set; } = TimeSpan.FromMinutes(5);
-
-    public bool MaintainProfileSpeed { get; set; }
 }

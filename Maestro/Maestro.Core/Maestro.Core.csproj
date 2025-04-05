@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net48</TargetFramework>
+		<TargetFrameworks>net472;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="MediatR" Version="12.4.1" />
+	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
 	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.3" />
 	  <PackageReference Include="System.Diagnostics.Tools" Version="4.3.0" />

@@ -42,6 +42,10 @@
     - [ ] Zero Delay
     - [ ] Coordination
 
+- [ ] Figure out the extras
+    - [ ] Stagger rate
+    - [ ] Revisit strong ID types
+
 - [ ] Online mode
     - [ ] Connect to Maestro server
     - [ ] Source configuration from server
