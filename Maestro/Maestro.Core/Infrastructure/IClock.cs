@@ -2,12 +2,16 @@
 
 public interface IClock
 {
-    DateTimeOffset ToUtc(DateTime dateTime);
+    DateTimeOffset FromVatSysTime(DateTime dateTime);
     DateTimeOffset UtcNow();
 }
 
 public class SystemClock : IClock
 {
-    public DateTimeOffset ToUtc(DateTime dateTime) => dateTime.ToUniversalTime();
+    public DateTimeOffset FromVatSysTime(DateTime dateTime) => new(
+        dateTime.Year, dateTime.Month, dateTime.Day,
+        dateTime.Hour, dateTime.Minute, dateTime.Second,
+        TimeSpan.Zero);
+    
     public DateTimeOffset UtcNow() => DateTimeOffset.UtcNow;
 }

@@ -1,50 +1,50 @@
-﻿using Maestro.Core.Configuration;
+﻿using System.Runtime.CompilerServices;
+using Maestro.Core.Configuration;
 using MediatR;
 
 namespace Maestro.Core.Model;
 
-public class SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider, IMediator mediator)
+public class SequenceProvider
 {
-    readonly IAirportConfigurationProvider _airportConfigurationProvider = airportConfigurationProvider;
-    readonly IMediator _mediator = mediator;
+    readonly IAirportConfigurationProvider _airportConfigurationProvider;
+    readonly IMediator _mediator;
 
     readonly List<Sequence> _sequences = [];
 
-    public Sequence GetOrCreateSequence(string airportIdentifier)
+    public SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider, IMediator mediator)
     {
-        var sequence = _sequences.SingleOrDefault(x => x.AirportIdentifier == airportIdentifier);
-        if (sequence is not null)
-            return sequence;
+        _airportConfigurationProvider = airportConfigurationProvider;
+        _mediator = mediator;
+        InitializeSequences();
+    }
+    
+    void InitializeSequences()
+    {
+        var airportConfigurations = _airportConfigurationProvider
+            .GetAirportConfigurations();
         
-        var airportConfiguration = _airportConfigurationProvider
-            .GetAirportConfigurations()
-            .SingleOrDefault(x => x.Identifier == airportIdentifier);
-        if (airportConfiguration is null)
-            throw new MaestroException($"No configuration found for airport {airportIdentifier}");
-
-        sequence = new Sequence(
-            airportConfiguration.Identifier,
-            airportConfiguration.RunwayModes.Select(rm =>
-                new RunwayMode
-                {
-                    Identifier = rm.Identifier,
-                    LandingRates = rm.Runways.ToDictionary(
-                        r => r.Identifier,
-                        r => TimeSpan.FromSeconds(r.DefaultLandingRateSeconds))
-                })
-                .ToArray(),
-            airportConfiguration.FeederFixes,
-            _mediator);
+        foreach (var airportConfiguration in airportConfigurations)
+        {
+            var sequence = new Sequence(
+                airportConfiguration.Identifier,
+                airportConfiguration.RunwayModes.Select(rm =>
+                        new RunwayMode
+                        {
+                            Identifier = rm.Identifier,
+                            LandingRates = rm.Runways.ToDictionary(
+                                r => r.Identifier,
+                                r => TimeSpan.FromSeconds(r.DefaultLandingRateSeconds))
+                        })
+                    .ToArray(),
+                airportConfiguration.FeederFixes,
+                _mediator);
         
-        _sequences.Add(sequence);
-        return sequence;
+            _sequences.Add(sequence);
+        }
     }
 
-    public bool TryGetSequence(
-        string airportIdentifier,
-        out Sequence? sequence)
+    public Sequence? TryGetSequence(string airportIdentifier)
     {
-        sequence = _sequences.SingleOrDefault(x => x.AirportIdentifier == airportIdentifier);
-        return sequence is not null;
+        return _sequences.SingleOrDefault(x => x.AirportIdentifier == airportIdentifier);
     }
 }

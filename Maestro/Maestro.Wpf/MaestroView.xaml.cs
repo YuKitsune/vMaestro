@@ -68,7 +68,7 @@ public partial class MaestroView : UserControl
         {
             LadderCanvas.Children.Clear();
 
-            var now = DateTimeOffset.Now;
+            var now = DateTimeOffset.UtcNow;
             DrawSpine(now);
             DrawAircraft(now);
         });
@@ -148,6 +148,7 @@ public partial class MaestroView : UserControl
 
         bool ShowOnLadder(LadderConfigurationDto ladderConfiguration)
         {
+            // TODO: Fix
             var runwayMatches = ladderConfiguration.Runways is null ||
                                 !ladderConfiguration.Runways.Any() ||
                                 string.IsNullOrEmpty(aircraft.Runway) ||
@@ -158,7 +159,7 @@ public partial class MaestroView : UserControl
                                    string.IsNullOrEmpty(aircraft.FeederFix) ||
                                    ladderConfiguration.FeederFixes.Contains(aircraft.FeederFix);
 
-            return runwayMatches || feederFixMatches;
+            return runwayMatches | feederFixMatches;
         }
     }
 

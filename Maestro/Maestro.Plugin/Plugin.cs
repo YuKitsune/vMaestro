@@ -5,7 +5,9 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Dtos;
-using Maestro.Core.Dtos.Messages;
+using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Wpf;
 using MediatR;
@@ -16,7 +18,7 @@ using vatsys.Plugin;
 namespace Maestro.Plugin
 {
     [Export(typeof(IPlugin))]
-    public class Plugin : IPlugin, IDisposable
+    public class Plugin : IPlugin
     {
         const string Name = "Maestro";
         string IPlugin.Name => Name;
@@ -36,7 +38,6 @@ namespace Maestro.Plugin
                 _mediator = Ioc.Default.GetRequiredService<IMediator>();
 
                 Network.Connected += Network_Connected;
-                Network.Disconnected += Network_Disconnected;
             }
             catch (Exception ex)
             {
@@ -117,15 +118,39 @@ namespace Maestro.Plugin
         {
             foreach (var fdr in FDP2.GetFDRs)
             {
-                var notification = CreateNotificationFor(fdr);
-                _mediator.Publish(notification);
+                OnFDRUpdate(fdr);
             }
         }
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
-            // TODO: What to do when an aircraft disconnects
-            var notification = CreateNotificationFor(updated);
+            var clock = Ioc.Default.GetRequiredService<IClock>();
+            
+            // TODO: vatSys estimates will be 00:00 + ETI when the flight is not activated
+            
+            var estimates = updated.ParsedRoute
+                .Skip(updated.ParsedRoute.OverflownIndex)
+                .Select(x => new FixDto(x.Intersection.Name, clock.FromVatSysTime(x.ETO)))
+                .ToArray();
+
+            var notification = new FlightUpdatedNotification(
+                updated.Callsign,
+                updated.AircraftType,
+                updated.DepAirport,
+                updated.DesAirport,
+                updated.ArrivalRunway?.Name,
+                updated.STAR?.Name,
+                updated.CoupledTrack is not null
+                ? new Position
+                {
+                    Altitude = updated.CoupledTrack.CorrectedAltitude,
+                    Latitude = updated.CoupledTrack.LatLong.Latitude,
+                    Longitude = updated.CoupledTrack.LatLong.Longitude,
+                }
+                : null,
+                updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE,
+                estimates);
+            
             _mediator.Publish(notification);
         }
 
@@ -134,38 +159,25 @@ namespace Maestro.Plugin
             if (updated.CoupledFDR is null)
                 return;
 
-            var notification = CreateNotificationFor(updated.CoupledFDR);
+            var clock = Ioc.Default.GetRequiredService<IClock>();
+            
+            var estimates = updated.CoupledFDR.ParsedRoute
+                .Skip(updated.CoupledFDR.ParsedRoute.OverflownIndex)
+                .Select(x => new FixDto(x.Intersection.Name, clock.FromVatSysTime(x.ETO)))
+                .ToArray();
+
+            var notification = new FlightPositionReport(
+                updated.CoupledFDR.Callsign,
+                updated.CoupledFDR.DesAirport,
+                new Position
+                {
+                    Altitude = updated.CorrectedAltitude,
+                    Latitude = updated.LatLong.Latitude,
+                    Longitude = updated.LatLong.Longitude,
+                },
+                estimates);
+            
             _mediator.Publish(notification);
-        }
-
-        void Network_Disconnected(object sender, EventArgs e)
-        {
-            // TODO: Deinit.
-        }
-
-        public void Dispose()
-        {
-            Network_Disconnected(this, EventArgs.Empty);
-        }
-
-        FlightUpdatedNotification CreateNotificationFor(FDP2.FDR fdr)
-        {
-            return new FlightUpdatedNotification(
-                fdr.Callsign,
-                fdr.AircraftType,
-                fdr.DepAirport,
-                fdr.DesAirport,
-                fdr.ArrivalRunway is not null
-                    ? fdr.ArrivalRunway.Name
-                    : null,
-                fdr.STAR is not null
-                    ? fdr.STAR.Name
-                    : null,
-                fdr.ParsedRoute.Select(s =>
-                        new FixDto(
-                            s.Intersection.Name,
-                            new DateTimeOffset(s.ETO, TimeSpan.Zero)))
-                    .ToArray());
         }
     }
 }

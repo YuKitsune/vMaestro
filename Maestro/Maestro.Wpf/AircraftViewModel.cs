@@ -6,9 +6,9 @@ public class AircraftViewModel
 {
     public string Callsign { get; set; } = "QFA123";
 
-    public DateTimeOffset LandingTime { get; set; } = DateTimeOffset.Now.AddMinutes(15);
+    public DateTimeOffset LandingTime { get; set; } = DateTimeOffset.UtcNow.AddMinutes(15);
 
-    public DateTimeOffset? FeederFixTime { get; set; } = DateTime.Now.AddMinutes(5);
+    public DateTimeOffset? FeederFixTime { get; set; } = DateTimeOffset.UtcNow.AddMinutes(5);
 
     public string? FeederFix { get; set; } = "RIVET";
     public string? Runway { get; set; } = "34L";

@@ -1,8 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Dtos;
 using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Dtos.Messages;
+using Maestro.Core.Handlers;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
@@ -58,6 +60,9 @@ public partial class MaestroViewModel : ObservableObject
         {
             SelectedView = airportViewModel.Views.FirstOrDefault();
         }
+
+        var response = _mediator.Send(new GetSequenceRequest(SelectedAirport.Identifier)).GetAwaiter().GetResult();
+        RefreshSequence(response.Sequence);
     }
 
     [RelayCommand]
@@ -85,5 +90,24 @@ public partial class MaestroViewModel : ObservableObject
     void SelectView(ViewConfigurationDto? viewConfiguration)
     {
         SelectedView = viewConfiguration;
+    }
+
+    public void RefreshSequence(SequenceDto sequence)
+    {
+        Aircraft = sequence.Flights.Select(a =>
+                new AircraftViewModel
+                {
+                    Callsign = a.Callsign,
+                    FeederFix = a.FeederFix,
+                    Runway = a.AssignedRunway,
+
+                    // TODO: Figure out which times to use here.
+                    LandingTime = a.EstimatedLandingTime,
+                    FeederFixTime = a.EstimatedFeederFixTime,
+
+                    TotalDelay = a.InitialLandingTime - a.ScheduledLandingTime, // TODO
+                    RemainingDelay = a.EstimatedLandingTime - a.ScheduledLandingTime, // TODO
+                })
+            .ToList();
     }
 }
