@@ -4,7 +4,12 @@ using MediatR;
 
 namespace Maestro.Core.Model;
 
-public class SequenceProvider
+public interface ISequenceProvider
+{
+    Sequence? TryGetSequence(string airportIdentifier);
+}
+
+public class SequenceProvider : ISequenceProvider
 {
     readonly IAirportConfigurationProvider _airportConfigurationProvider;
     readonly IMediator _mediator;
@@ -17,7 +22,7 @@ public class SequenceProvider
         _mediator = mediator;
         InitializeSequences();
     }
-    
+
     void InitializeSequences()
     {
         var airportConfigurations = _airportConfigurationProvider

@@ -6,21 +6,23 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
+// TODO: Consider combining with FlightUpdated
+
 public record FlightPositionReport(
     string Callsign,
     string Destination,
-    Position Position,
+    FlightPosition Position,
     FixDto[] Estimates)
     :  INotification;
 
-public class FlightPositionReportHandler(SequenceProvider sequenceProvider, IMediator mediator, IClock clock)
+public class FlightPositionReportHandler(ISequenceProvider sequenceProvider, IMediator mediator, IClock clock)
     : INotificationHandler<FlightPositionReport>
 {
     public async Task Handle(FlightPositionReport notification, CancellationToken cancellationToken)
     {
-        // TODO: Make configurable
+        // TODO: Make these configurable
         var vsp = 150;
-        var updateRateBeyondRange = TimeSpan.FromMinutes(1); // TODO: What should this be?
+        var updateRateBeyondRange = TimeSpan.FromMinutes(1);
         var updateRateWithinRange = TimeSpan.FromSeconds(30);
         
         var sequence = sequenceProvider.TryGetSequence(notification.Destination);
@@ -31,9 +33,19 @@ public class FlightPositionReportHandler(SequenceProvider sequenceProvider, IMed
         if (flight is null)
             return;
 
-        // TODO: Calculate distance to feeder (Track miles or direct track?)
+        if (!flight.Activated)
+            return;
+        
         // TODO: What if the aircraft isn't planned via a feeder?
-        var distanceToFeeder = 50;
+        var feederFix = notification.Estimates.LastOrDefault(x => x.Identifier == flight.FeederFixIdentifier);
+        if (feederFix is null)
+            return;
+        
+        // TODO: Calculate distance to feeder (Track miles or direct track?)
+        var distanceToFeeder = Calculations.CalculateDistanceNauticalMiles(
+            notification.Position.ToCoordinate(),
+            feederFix.Position);
+
         var updateRate = distanceToFeeder > vsp ? updateRateBeyondRange : updateRateWithinRange;
         var shouldUpdate = !flight.PositionUpdated.HasValue ||
                            clock.UtcNow() - flight.PositionUpdated.Value >= updateRate;
@@ -51,13 +63,15 @@ public class FlightPositionReportHandler(SequenceProvider sequenceProvider, IMed
                 .ToArray(),
             clock);
 
-        // TODO: Is this the right place to provide estimates?
         var feederFixEstimate = flight.Estimates.SingleOrDefault(x => x.FixIdentifier == flight.FeederFixIdentifier);
         if (feederFixEstimate is not null)
         {
             flight.UpdateFeederFixEstimate(feederFixEstimate.Estimate);
         }
         
+        // TODO: Don't calculate ETA here, move it into the sequence.
+        //  ETA should be ETA_FF + STAR ETI if a runway and STAR have been provided.
+        //  Otherwise use the system provided ETA.
         var landingEstimate = flight.Estimates.Last();
         flight.UpdateLandingEstimate(landingEstimate.Estimate);
         

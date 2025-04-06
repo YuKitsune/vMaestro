@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Dtos.Messages;
+﻿using Maestro.Core.Dtos.Configuration;
+using Maestro.Core.Dtos.Messages;
 using MediatR;
 
 namespace Maestro.Core.Model;
@@ -18,18 +19,18 @@ public class Sequence : IAsyncDisposable
     public RunwayMode? NextRunwayMode { get; private set; }
     public DateTimeOffset RunwayModeChangeTime { get; private set; }
     
-    public string[] FeederFixes { get; }
+    public FixConfigurationDto[] FeederFixes { get; }
     
     public IReadOnlyList<Flight> Flights => _flights.AsReadOnly();
     public IReadOnlyList<Flight> Pending => _pending.AsReadOnly();
 
-    CancellationTokenSource recurringTaskCancellationTokenSource = new();
-    Task recurringCalculationTask;
+    CancellationTokenSource? _sequenceTaskCancellationSource;
+    Task? _sequenceTask;
 
     public Sequence(
         string airportIdentifier,
         RunwayMode[] runwayModes,
-        string[] feederFixes,
+        FixConfigurationDto[] feederFixes,
         IMediator mediator)
     {
         _mediator = mediator;
@@ -37,8 +38,26 @@ public class Sequence : IAsyncDisposable
         RunwayModes = runwayModes;
         CurrentRunwayMode = runwayModes.First();
         FeederFixes = feederFixes;
+    }
+
+    public void Start()
+    {
+        if (_sequenceTask != null)
+            throw new MaestroException($"Sequence for {AirportIdentifier} is already running");
+
+        _sequenceTaskCancellationSource = new CancellationTokenSource();
+        _sequenceTask = DoSequence(_sequenceTaskCancellationSource.Token);
+    }
+
+    public async Task Stop()
+    {
+        if (_sequenceTask is null || _sequenceTaskCancellationSource is null)
+            throw new MaestroException($"Sequence for {AirportIdentifier} has not been started");
         
-        recurringCalculationTask = Calculate(recurringTaskCancellationTokenSource.Token);
+        _sequenceTaskCancellationSource.Cancel();
+        await _sequenceTask;
+        _sequenceTask = null;
+        _sequenceTaskCancellationSource = null;
     }
 
     public async Task Add(Flight flight, CancellationToken cancellationToken)
@@ -63,6 +82,28 @@ public class Sequence : IAsyncDisposable
         }
     }
 
+    public async Task AddPending(Flight flight, CancellationToken cancellationToken)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            if (_pending.Any(f => f.Callsign == flight.Callsign))
+                throw new MaestroException($"{flight.Callsign} is already in the Pending list for {AirportIdentifier}.");
+            
+            if (flight.DestinationIdentifier != AirportIdentifier)
+                throw new MaestroException($"{flight.Callsign} cannot be added to the Pending list for {AirportIdentifier} as the destination is {flight.DestinationIdentifier}.");
+            
+            // TODO: Additional validation
+            _pending.Add(flight);
+            
+            await _mediator.Publish(new SequenceModifiedNotification(this.ToDto()), cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
     public async Task<Flight?> TryGetFlight(string callsign, CancellationToken cancellationToken)
     {
         await _semaphore.WaitAsync(cancellationToken);
@@ -76,7 +117,7 @@ public class Sequence : IAsyncDisposable
         }
     }
 
-    async Task Calculate(CancellationToken cancellationToken)
+    async Task DoSequence(CancellationToken cancellationToken)
     {
         // TODO: Make configurable
         var calculationIntervalSeconds = 60;
@@ -89,6 +130,7 @@ public class Sequence : IAsyncDisposable
                 // TODO: Calculate runway and terminal trajectories
                 // TODO: Calculate delay and mode computations
                 // TODO: Optimisation
+                // TODO: Remove completed flights after a certain time
             }
             catch (Exception exception)
             {
@@ -103,9 +145,12 @@ public class Sequence : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await recurringCalculationTask;
-        await CastAndDispose(recurringCalculationTask);
-        await CastAndDispose(recurringTaskCancellationTokenSource);
+        if (_sequenceTask is not null)
+            await CastAndDispose(_sequenceTask);
+        
+        if (_sequenceTaskCancellationSource is not null)
+            await CastAndDispose(_sequenceTaskCancellationSource);
+    
         await CastAndDispose(_semaphore);
 
         return;

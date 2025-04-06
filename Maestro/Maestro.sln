@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maestro.Wpf", "Maestro.Wpf\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maestro.Core", "Maestro.Core\Maestro.Core.csproj", "{E7D94D24-BAED-4B68-A37F-D9F908BF8A0C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maestro.Core.Tests", "Maestro.Core.Tests\Maestro.Core.Tests.csproj", "{606B67EB-3D74-4E4B-B120-D8D9C4378633}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{E7D94D24-BAED-4B68-A37F-D9F908BF8A0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7D94D24-BAED-4B68-A37F-D9F908BF8A0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E7D94D24-BAED-4B68-A37F-D9F908BF8A0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{606B67EB-3D74-4E4B-B120-D8D9C4378633}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{606B67EB-3D74-4E4B-B120-D8D9C4378633}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{606B67EB-3D74-4E4B-B120-D8D9C4378633}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{606B67EB-3D74-4E4B-B120-D8D9C4378633}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Dtos;
+using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
 
@@ -11,7 +12,7 @@ public class Flight
     public required string? FeederFixIdentifier { get; set; }
     public string? AssignedRunwayIdentifier { get; set; }
     public string? AssignedStarIdentifier { get; set; }
-    public required bool HighPriority { get; init; }
+    public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
 
     public State State { get; } = State.Unstable;
@@ -32,8 +33,7 @@ public class Flight
     public DateTimeOffset? ActivatedTime { get; private set; }
     
     public DateTimeOffset? PositionUpdated { get; private set; }
-    
-    public Position LastKnownPosition { get; private set; }
+    public FlightPosition? LastKnownPosition { get; private set; }
     public FixEstimate[] Estimates { get; private set; } = [];
 
     public void SetFeederFix(string feederFixIdentifier, DateTimeOffset feederFixEstimate)
@@ -68,7 +68,7 @@ public class Flight
         ActivatedTime = clock.UtcNow();
     }
 
-    public void UpdatePosition(Position position, FixEstimate[] estimates, IClock clock)
+    public void UpdatePosition(FlightPosition position, FixEstimate[] estimates, IClock clock)
     {
         LastKnownPosition = position;
         Estimates = estimates;

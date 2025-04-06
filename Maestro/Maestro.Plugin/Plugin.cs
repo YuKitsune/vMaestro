@@ -6,14 +6,13 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Dtos;
 using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Wpf;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using vatsys;
 using vatsys.Plugin;
+using Coordinate = Maestro.Core.Dtos.Coordinate;
 
 namespace Maestro.Plugin
 {
@@ -65,12 +64,11 @@ namespace Maestro.Plugin
                     .AddSingleton<IServerConnection, StubServerConnection>() // TODO
                     .AddViewModels()
                     .AddMaestro()
-                    .AddMediatR(c => c.RegisterServicesFromAssemblies([
-                        typeof(Core.Dtos.AssemblyMarker).Assembly,
+                    .AddMediatR(c => c.RegisterServicesFromAssemblies(
                         typeof(Core.AssemblyMarker).Assembly,
                         typeof(AssemblyMarker).Assembly,
                         typeof(Wpf.AssemblyMarker).Assembly
-                    ]))
+                    ))
                     .BuildServiceProvider());
         }
 
@@ -124,14 +122,12 @@ namespace Maestro.Plugin
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
-            var clock = Ioc.Default.GetRequiredService<IClock>();
-            
-            // TODO: vatSys estimates will be 00:00 + ETI when the flight is not activated
-            
             var estimates = updated.ParsedRoute
                 .Skip(updated.ParsedRoute.OverflownIndex)
-                .Select(x => new FixDto(x.Intersection.Name, clock.FromVatSysTime(x.ETO)))
+                .Select(ToFixDto)
                 .ToArray();
+
+            var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
 
             var notification = new FlightUpdatedNotification(
                 updated.Callsign,
@@ -140,15 +136,7 @@ namespace Maestro.Plugin
                 updated.DesAirport,
                 updated.ArrivalRunway?.Name,
                 updated.STAR?.Name,
-                updated.CoupledTrack is not null
-                ? new Position
-                {
-                    Altitude = updated.CoupledTrack.CorrectedAltitude,
-                    Latitude = updated.CoupledTrack.LatLong.Latitude,
-                    Longitude = updated.CoupledTrack.LatLong.Longitude,
-                }
-                : null,
-                updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE,
+                isActivated,
                 estimates);
             
             _mediator.Publish(notification);
@@ -159,25 +147,39 @@ namespace Maestro.Plugin
             if (updated.CoupledFDR is null)
                 return;
 
-            var clock = Ioc.Default.GetRequiredService<IClock>();
-            
             var estimates = updated.CoupledFDR.ParsedRoute
                 .Skip(updated.CoupledFDR.ParsedRoute.OverflownIndex)
-                .Select(x => new FixDto(x.Intersection.Name, clock.FromVatSysTime(x.ETO)))
+                .Select(ToFixDto)
                 .ToArray();
 
             var notification = new FlightPositionReport(
                 updated.CoupledFDR.Callsign,
                 updated.CoupledFDR.DesAirport,
-                new Position
-                {
-                    Altitude = updated.CorrectedAltitude,
-                    Latitude = updated.LatLong.Latitude,
-                    Longitude = updated.LatLong.Longitude,
-                },
+                new FlightPosition(
+                    updated.LatLong.Latitude,
+                    updated.LatLong.Longitude,
+                    updated.CorrectedAltitude),
                 estimates);
             
             _mediator.Publish(notification);
+        }
+
+        static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
+        {
+            return new DateTimeOffset(
+                dateTime.Year, dateTime.Month, dateTime.Day,
+                dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond,
+                TimeSpan.Zero);
+        }
+
+        static FixDto ToFixDto(FDP2.FDR.ExtractedRoute.Segment segment)
+        {
+            return new FixDto(
+                segment.Intersection.Name,
+                new Coordinate(
+                    segment.Intersection.LatLong.Latitude,
+                    segment.Intersection.LatLong.Longitude),
+                ToDateTimeOffset(segment.ETO));
         }
     }
 }

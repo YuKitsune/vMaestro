@@ -13,12 +13,11 @@ public record FlightUpdatedNotification(
     string Destination,
     string? AssignedRunway,
     string? AssignedArrival,
-    Position? Position,
     bool Activated,
     FixDto[] Estimates)
     : INotification;
 
-public class FlightUpdatedHandler(SequenceProvider sequenceProvider, IMediator mediator, IClock clock)
+public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator mediator, IClock clock)
     : INotificationHandler<FlightUpdatedNotification>
 {
     public async Task Handle(FlightUpdatedNotification notification, CancellationToken cancellationToken)
@@ -34,27 +33,25 @@ public class FlightUpdatedHandler(SequenceProvider sequenceProvider, IMediator m
             // TODO: Make configurable
             var flightCreationThreshold = TimeSpan.FromHours(2);
             
-            // TODO: Estimates in vatSys don't seem to be actual estimates if the flight isn't moving (preactive?)
-            var ffEstimate = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.Identifier));
-            var landingEstimate = notification.Estimates.Last();
+            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Any(y => y.Identifier == x.Identifier));
+            var landingEstimate = notification.Estimates.Last().Estimate;
             
-            // Only create flights in Maestro when they're within a specified range
-            if (ffEstimate is not null && ffEstimate.Estimate - clock.UtcNow() <= flightCreationThreshold)
+            // TODO: Verify if this behaviour is correct
+            // Flights not planned via a feeder fix are added to the pending list
+            if (feederFix is null)
             {
-                flight = CreateMaestroFlight(
-                    notification,
-                    ffEstimate,
-                    landingEstimate.Estimate);
-                await sequence.Add(flight, cancellationToken);
+                flight = CreateMaestroFlight(notification, null, landingEstimate);
+                await sequence.AddPending(flight, cancellationToken);
+                return;
             }
-
-            // TODO: What does maestro do for flights not planned via an FF?
-            if (landingEstimate.Estimate - clock.UtcNow() <= flightCreationThreshold)
+            
+            // Only create flights in Maestro when they're within a specified range of the feeder fix
+            if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
             {
                 flight = CreateMaestroFlight(
                     notification,
-                    ffEstimate,
-                    landingEstimate.Estimate);
+                    feederFix,
+                    landingEstimate);
                 await sequence.Add(flight, cancellationToken);
             }
         }
@@ -67,22 +64,10 @@ public class FlightUpdatedHandler(SequenceProvider sequenceProvider, IMediator m
         if (!flight.Activated && notification.Activated)
         {
             flight.Activate(clock);
-            if (notification.Position.HasValue)
-            {
-                flight.UpdatePosition(
-                    notification.Position.Value,
-                    notification.Estimates.Select(x =>
-                            new FixEstimate
-                            {
-                                FixIdentifier = x.Identifier,
-                                Estimate = x.Estimate,
-                            })
-                        .ToArray(),
-                    clock);
-            }
         }
 
-        if (flight is { Activated: true, State: State.Unstable })
+        // TODO: Should this be limited to unstable?
+        if (flight is { Activated: true })
         {
             // TODO: Calculate ETA_FF
             // TODO: Sequence
