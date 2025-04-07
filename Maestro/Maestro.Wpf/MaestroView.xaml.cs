@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Dtos.Configuration;
 using Maestro.Wpf.Controls;
+using Maestro.Wpf.ViewModels;
 
 namespace Maestro.Wpf;
 
@@ -85,12 +86,12 @@ public partial class MaestroView : UserControl
             double yOffset;
             switch (ViewModel.SelectedView.LadderReferenceTime)
             {
-                case LadderReferenceTime.FeederFixTime when aircraft.FeederFixTime.HasValue:
-                    yOffset = GetYOffsetForTime(currentTime, aircraft.FeederFixTime.Value);
+                case LadderReferenceTime.FeederFixTime when aircraft.ScheduledFeederFixTime.HasValue:
+                    yOffset = GetYOffsetForTime(currentTime, aircraft.ScheduledFeederFixTime.Value);
                     break;
                 
                 case LadderReferenceTime.LandingTime:
-                    yOffset = GetYOffsetForTime(currentTime, aircraft.LandingTime);
+                    yOffset = GetYOffsetForTime(currentTime, aircraft.ScheduledLandingTime);
                     break;
 
                 // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)
@@ -110,7 +111,13 @@ public partial class MaestroView : UserControl
             {
                 DataContext = aircraft,
                 Width = width,
-                Margin = new Thickness(2,0,2,0)
+                Margin = new Thickness(2,0,2,0),
+            };
+
+            aircraftView.Click += (_, _) =>
+            {
+                if (ViewModel.ShowInformationWindowCommand.CanExecute(aircraft))
+                    ViewModel.ShowInformationWindowCommand.Execute(aircraft);
             };
 
             var ladderPosition = GetLadderPositionFor(aircraft);
@@ -131,7 +138,7 @@ public partial class MaestroView : UserControl
         }
     }
 
-    LadderPosition GetLadderPositionFor(AircraftViewModel aircraft)
+    LadderPosition GetLadderPositionFor(FlightViewModel flight)
     {
         if (ViewModel.SelectedView.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
         {
@@ -144,20 +151,20 @@ public partial class MaestroView : UserControl
         }
 
         // TODO: Log a warning if we've made it to this point
-        throw new Exception($"Flight {aircraft.Callsign} could not be positioned on the ladder");
+        throw new Exception($"Flight {flight.Callsign} could not be positioned on the ladder");
 
         bool ShowOnLadder(LadderConfigurationDto ladderConfiguration)
         {
             // TODO: Fix
             var runwayMatches = ladderConfiguration.Runways is null ||
                                 !ladderConfiguration.Runways.Any() ||
-                                string.IsNullOrEmpty(aircraft.Runway) ||
-                                ladderConfiguration.Runways.Contains(aircraft.Runway);
+                                string.IsNullOrEmpty(flight.AssignedRunway) ||
+                                ladderConfiguration.Runways.Contains(flight.AssignedRunway);
             
             var feederFixMatches = ladderConfiguration.FeederFixes is null ||
                                    !ladderConfiguration.FeederFixes.Any() ||
-                                   string.IsNullOrEmpty(aircraft.FeederFix) ||
-                                   ladderConfiguration.FeederFixes.Contains(aircraft.FeederFix);
+                                   string.IsNullOrEmpty(flight.FeederFixIdentifier) ||
+                                   ladderConfiguration.FeederFixes.Contains(flight.FeederFixIdentifier);
 
             return runwayMatches | feederFixMatches;
         }

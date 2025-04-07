@@ -7,7 +7,7 @@ using vatsys;
 
 namespace Maestro.Plugin.Configuration;
 
-public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirportConfigurationProvider
+public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirportConfigurationProvider, ISeparationConfigurationProvider
 {
     const string ConfigurationFileName = "Maestro.json";
 
@@ -26,6 +26,11 @@ public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirpo
     public AirportConfigurationDto[] GetAirportConfigurations()
     {
         return _lazyPluginConfiguration.Value.Airports;
+    }
+
+    public SeparationRuleConfiguration[] GetSeparationRules()
+    {
+        return _lazyPluginConfiguration.Value.SeparationRules;
     }
 
     static PluginConfiguration GetPluginConfiguration()

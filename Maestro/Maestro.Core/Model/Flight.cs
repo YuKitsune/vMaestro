@@ -7,9 +7,10 @@ public class Flight
 {
     public required string Callsign { get; init; }
     public required string AircraftType { get; init; }
+    public required WakeCategory WakeCategory { get; init; }
     public required string OriginIdentifier { get; init; }
     public required string DestinationIdentifier { get; init; }
-    public required string? FeederFixIdentifier { get; set; }
+    public string? FeederFixIdentifier { get; set; }
     public string? AssignedRunwayIdentifier { get; set; }
     public string? AssignedStarIdentifier { get; set; }
     public bool HighPriority { get; set; } = false;
@@ -35,6 +36,20 @@ public class Flight
     public DateTimeOffset? PositionUpdated { get; private set; }
     public FlightPosition? LastKnownPosition { get; private set; }
     public FixEstimate[] Estimates { get; private set; } = [];
+    
+    public PositionPrediction[] Trajectory { get; private set; } = Array.Empty<PositionPrediction>();
+    
+    public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
+
+    public void SetRunway(string runwayIdentifier)
+    {
+        AssignedRunwayIdentifier = runwayIdentifier;
+    }
+
+    public void SetFlowControls(FlowControls flowControls)
+    {
+        FlowControls = flowControls;
+    }
 
     public void SetFeederFix(string feederFixIdentifier, DateTimeOffset feederFixEstimate)
     {
@@ -51,6 +66,11 @@ public class Flight
         }
     }
 
+    public void SetFeederFixTime(DateTimeOffset feederFixTime)
+    {
+        ScheduledFeederFixTime = feederFixTime;
+    }
+
     public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
     {
         EstimatedLandingTime = landingEstimate;
@@ -58,6 +78,11 @@ public class Flight
         {
             InitialLandingTime = landingEstimate;
         }
+    }
+
+    public void SetLandingTime(DateTimeOffset feederFixTime)
+    {
+        ScheduledLandingTime = feederFixTime;
     }
 
     public void Activate(IClock clock)
@@ -74,4 +99,23 @@ public class Flight
         Estimates = estimates;
         PositionUpdated = clock.UtcNow();
     }
+}
+
+public class PositionPrediction
+{
+    public Coordinate Position { get; }
+
+    public int Altitude
+    {
+        get;
+        
+    }
+    public TimeSpan Interval { get; }
+}
+
+public enum FlowControls
+{
+    ProfileSpeed,
+    MaxSpeed,
+    S250
 }

@@ -6,8 +6,10 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Dtos;
 using Maestro.Core.Handlers;
+using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Wpf;
+using Maestro.Wpf.Views;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using vatsys;
@@ -69,6 +71,7 @@ namespace Maestro.Plugin
                         typeof(AssemblyMarker).Assembly,
                         typeof(Wpf.AssemblyMarker).Assembly
                     ))
+                    .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
                     .BuildServiceProvider());
         }
 
@@ -85,6 +88,18 @@ namespace Maestro.Plugin
             };
 
             MMI.AddCustomMenuItem(menuItem);
+            
+            var debugMenuItem = new CustomToolStripMenuItem(
+                CustomToolStripMenuItemWindowType.Main,
+                CustomToolStripMenuItemCategory.Windows,
+                new ToolStripMenuItem("Debug TFMS"));
+
+            debugMenuItem.Item.Click += (_, _) =>
+            {
+                MMI.InvokeOnGUI(delegate {  new DebugWindow().Show(); });
+            };
+
+            MMI.AddCustomMenuItem(debugMenuItem);
         }
 
         static void ShowMaestro()
@@ -93,7 +108,7 @@ namespace Maestro.Plugin
             {
                 if (_maestroWindow == null || _maestroWindow.IsDisposed)
                 {
-                    _maestroWindow = new MaestroWindow
+                    _maestroWindow = new VatSysForm(new MaestroView())
                     {
                         Width = 560,
                         Height = 800
@@ -122,6 +137,15 @@ namespace Maestro.Plugin
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
+            var wake = updated.AircraftWake switch
+            {
+                "S" => WakeCategory.SuperHeavy,
+                "H" => WakeCategory.Heavy,
+                "M" => WakeCategory.Medium,
+                "L" => WakeCategory.Light,
+                _ => WakeCategory.Heavy
+            };
+            
             var estimates = updated.ParsedRoute
                 .Skip(updated.ParsedRoute.OverflownIndex)
                 .Select(ToFixDto)
@@ -132,6 +156,7 @@ namespace Maestro.Plugin
             var notification = new FlightUpdatedNotification(
                 updated.Callsign,
                 updated.AircraftType,
+                wake,
                 updated.DepAirport,
                 updated.DesAirport,
                 updated.ArrivalRunway?.Name,
@@ -152,13 +177,21 @@ namespace Maestro.Plugin
                 .Select(ToFixDto)
                 .ToArray();
 
+            var verticalTrack = updated.VerticalSpeed >= RDP.VS_CLIMB
+                ? VerticalTrack.Climbing
+                : updated.VerticalSpeed <= RDP.VS_DESCENT
+                    ? VerticalTrack.Descending
+                    : VerticalTrack.Maintaining;
+
             var notification = new FlightPositionReport(
                 updated.CoupledFDR.Callsign,
                 updated.CoupledFDR.DesAirport,
                 new FlightPosition(
                     updated.LatLong.Latitude,
                     updated.LatLong.Longitude,
-                    updated.CorrectedAltitude),
+                    updated.CorrectedAltitude,
+                    verticalTrack,
+                    updated.GroundSpeed),
                 estimates);
             
             _mediator.Publish(notification);

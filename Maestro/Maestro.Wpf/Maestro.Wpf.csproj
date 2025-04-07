@@ -20,4 +20,12 @@
 	  <ProjectReference Include="..\Maestro.Core\Maestro.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Page Update="Views\InformationView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	    <XamlRuntime>Wpf</XamlRuntime>
+	    <SubType>Designer</SubType>
+	  </Page>
+	</ItemGroup>
+
 </Project>

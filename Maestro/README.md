@@ -22,29 +22,29 @@
     - [X] ENR view
 
 - [ ] Offline Mode
-    - [ ] Implement domain models, handlers, tiny types, etc.
-    - [ ] Initialization command
-    - [ ] Publish notifications on FDP updates
+    - [X] Implement domain models, handlers, tiny types, etc.
+    - [X] Publish notifications on FDP updates
     - [ ] Information window
-    - [ ] Sequencing algorithm
-    - [ ] Account for GRIB winds
-    - [ ] Runway configuration change
-    - [ ] Unit selector
-    - [ ] Recompute
-    - [ ] Re-assign runway
-    - [ ] Ladder scrolling
+    - [ ] Basic sequencing algorithm
+    - [ ] Change runway mode
+    - [ ] Change runway
+    - [ ] Blockout period
     - [ ] Insert flight
     - [ ] Insert slot
     - [ ] Change ETA FF
-    - [ ] Remove from sequence 
-    - [ ] Desequence
-    - [ ] Make Pending
     - [ ] Zero Delay
-    - [ ] Coordination
+    - [ ] Remove from sequence
+    - [ ] Desequence
 
-- [ ] Figure out the extras
-    - [ ] Stagger rate
+- [ ] Extras
     - [ ] Revisit strong ID types
+    - [ ] Ladder scrolling
+    - [ ] Departure list
+    - [ ] Pending flights
+    - [ ] Account for GRIB winds
+    - [ ] Unit selector
+    - [ ] Stagger rate
+    - [ ] Coordination
 
 - [ ] Online mode
     - [ ] Connect to Maestro server

@@ -3,13 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Maestro.Wpf"
+             xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
              xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="16" d:DesignWidth="200">
-    <UserControl.DataContext>
-        <local:AircraftViewModel/>
-    </UserControl.DataContext>
+             d:DataContext="{d:DesignInstance Type=viewModels:FlightViewModel}"
+             d:DesignHeight="16"
+             d:DesignWidth="200">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -23,7 +22,7 @@
 
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid>
+    <Grid MouseDown="UIElement_OnMouseDown">
         <Grid.ColumnDefinitions>
             <ColumnDefinition MaxWidth="40" />
             <ColumnDefinition MaxWidth="40" />
@@ -33,13 +32,13 @@
             <ColumnDefinition MaxWidth="40" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Column="0" Text="{Binding TotalDelay, Converter={StaticResource MinutesConverter}}"/>
-        <TextBlock Grid.Column="1" Text="{Binding RemainingDelay, Converter={StaticResource MinutesConverter}}"/>
+        <TextBlock Grid.Column="0" Text="{Binding CurrentDelay, Converter={StaticResource MinutesConverter}}"/>
+        <TextBlock Grid.Column="1" Text="{Binding InitialDelay, Converter={StaticResource MinutesConverter}}"/>
         <!-- 250kts indicator-->
         <!--<TextBlock Grid.Column="2" Text="+" />-->
         <TextBlock Grid.Column="3" Text="{Binding Callsign}"/>
-        <TextBlock Grid.Column="4" Text="{Binding Runway}"/>
-        <TextBlock Grid.Column="5" Text="{Binding LandingTime, Converter={StaticResource MinutesConverter}}"/>
+        <TextBlock Grid.Column="4" Text="{Binding AssignedRunway}"/>
+        <TextBlock Grid.Column="5" Text="{Binding ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"/>
 
     </Grid>
 </UserControl>

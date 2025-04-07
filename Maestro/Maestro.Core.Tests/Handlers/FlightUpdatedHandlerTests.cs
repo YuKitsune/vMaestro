@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Dtos;
 using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using MediatR;
 using NSubstitute;
@@ -19,6 +20,7 @@ public class FlightUpdatedHandlerTests
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            WakeCategory.Medium,
             "YMML",
             "YSSY",
             "34L",
@@ -29,7 +31,7 @@ public class FlightUpdatedHandlerTests
         var mediator = Substitute.For<IMediator>();
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        var sequence = CreateTestSequence(mediator);
+        var sequence = CreateTestSequence(mediator, clock);
         sequenceProvider.TryGetSequence(Arg.Is("YSSY")).Returns(sequence);
 
 
@@ -54,6 +56,7 @@ public class FlightUpdatedHandlerTests
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            WakeCategory.Medium,
             "YMML",
             "YSSY",
             "34L",
@@ -64,7 +67,7 @@ public class FlightUpdatedHandlerTests
         var mediator = Substitute.For<IMediator>();
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        var sequence = CreateTestSequence(mediator);
+        var sequence = CreateTestSequence(mediator, clock);
         sequenceProvider.TryGetSequence(Arg.Is("YSSY")).Returns(sequence);
 
 
@@ -89,6 +92,7 @@ public class FlightUpdatedHandlerTests
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            WakeCategory.Medium,
             "YMML",
             "YSSY",
             "34L",
@@ -99,7 +103,7 @@ public class FlightUpdatedHandlerTests
         var mediator = Substitute.For<IMediator>();
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        var sequence = CreateTestSequence(mediator);
+        var sequence = CreateTestSequence(mediator, clock);
         sequenceProvider.TryGetSequence(Arg.Is("YSSY")).Returns(sequence);
 
         var handler = new FlightUpdatedHandler(
@@ -125,6 +129,7 @@ public class FlightUpdatedHandlerTests
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            WakeCategory.Medium,
             "YMML",
             "YSSY",
             "34L",
@@ -135,7 +140,7 @@ public class FlightUpdatedHandlerTests
         var mediator = Substitute.For<IMediator>();
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        var sequence = CreateTestSequence(mediator);
+        var sequence = CreateTestSequence(mediator, clock);
         sequenceProvider.TryGetSequence(Arg.Is("YSSY")).Returns(sequence);
 
         var handler = new FlightUpdatedHandler(
@@ -161,6 +166,7 @@ public class FlightUpdatedHandlerTests
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            WakeCategory.Medium,
             "YMML",
             "YSSY",
             "34L",
@@ -171,7 +177,7 @@ public class FlightUpdatedHandlerTests
         var mediator = Substitute.For<IMediator>();
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        var sequence = CreateTestSequence(mediator);
+        var sequence = CreateTestSequence(mediator, clock);
         sequenceProvider.TryGetSequence(Arg.Is("YSSY")).Returns(sequence);
 
         var handler = new FlightUpdatedHandler(
@@ -215,18 +221,35 @@ public class FlightUpdatedHandlerTests
         Assert.Fail("Stub");
     }
 
-    Sequence CreateTestSequence(IMediator mediator)
+    Sequence CreateTestSequence(IMediator mediator, IClock clock)
     {
         return new Sequence(
-            "YSSY",
-            [
-                new RunwayMode
-                {
-                    Identifier = "34",
-                    LandingRates = new Dictionary<string, TimeSpan>()
-                }
-            ],
-            [new FixConfigurationDto { Identifier = "RIVET", Latitude = 0, Longitude = 0 }],
-            mediator);
+            new AirportConfigurationDto(
+                "YSSY",
+                [
+                    new RunwayConfigurationDto("34L", 180),
+                    new RunwayConfigurationDto("34R", 180)
+                ],
+                [
+                    new RunwayModeConfigurationDto(
+                        "34IVA",
+                        TimeSpan.FromSeconds(30),
+                        [
+                            new RunwayConfigurationDto("34L", 180),
+                            new RunwayConfigurationDto("34R", 180)
+                        ],
+                        new Dictionary<string, TimeSpan>
+                            {
+                                {"34L", TimeSpan.FromSeconds(180)},
+                                {"34R", TimeSpan.FromSeconds(180)}
+                            },
+                        [])
+                ],
+                [new ViewConfigurationDto("BIK", null, null, LadderReferenceTime.FeederFixTime)],
+                ["RIVET"]),
+            new FixedSeparationProvider(TimeSpan.FromMinutes(2)),
+            new FixedPerformanceLookup(),
+            mediator,
+            clock);
     }
 }

@@ -10,9 +10,9 @@ public record GetSequenceResponse(SequenceDto Sequence);
 
 public class GetSequenceRequestHandler : IRequestHandler<GetSequenceRequest, GetSequenceResponse>
 {
-    readonly SequenceProvider _sequenceProvider;
+    readonly ISequenceProvider _sequenceProvider;
 
-    public GetSequenceRequestHandler(SequenceProvider sequenceProvider)
+    public GetSequenceRequestHandler(ISequenceProvider sequenceProvider)
     {
         _sequenceProvider = sequenceProvider;
     }

@@ -1,7 +1,112 @@
-﻿namespace Maestro.Core.Tests;
+﻿using Maestro.Core.Dtos;
+using Maestro.Core.Dtos.Configuration;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Model;
+using MediatR;
+using NSubstitute;
+using Shouldly;
+
+namespace Maestro.Core.Tests;
 
 public class SequenceTests
 {
+    public void WhenAFlightIsAdded_ARunwayIsAssigned()
+    {
+        Assert.Fail("Stub");
+    }
+
+    public void WhenAFlightIsAdded_AFeederFixIsAssigned()
+    {
+        Assert.Fail("Stub");
+    }
+
+    public void WhenAFlightIsAdded_EstimatesAreCalculated()
+    {
+        Assert.Fail("Stub");
+    }
+    
+    [Fact]
+    public async Task WhenFlightsAreAdded_TheyAreSequenced()
+    {
+        // Arrange
+        var clock = new FixedClock(DateTimeOffset.Now);
+        var landingRate = TimeSpan.FromMinutes(2);
+        var sequence = CreateSequence(Substitute.For<IMediator>(), clock, landingRate);
+
+        var flight1 = new Flight
+        {
+            Callsign = "QFA1",
+            AircraftType = "B738",
+            WakeCategory = WakeCategory.Medium,
+            OriginIdentifier = "YMML",
+            DestinationIdentifier = "YSSY",
+            FeederFixIdentifier = "RIVET"
+        };
+        flight1.UpdatePosition(
+            new FlightPosition(
+                10,
+                10,
+                34_000,
+                VerticalTrack.Maintaining,
+                450),
+            [new FixEstimate("RIVET", new Coordinate(0, 0), clock.UtcNow().AddMinutes(1))],
+            clock);
+
+        var flight2 = new Flight
+        {
+            Callsign = "QFA2",
+            AircraftType = "B738",
+            WakeCategory = WakeCategory.Medium,
+            OriginIdentifier = "YMML",
+            DestinationIdentifier = "YSSY",
+            FeederFixIdentifier = "RIVET"
+        };
+        flight2.UpdatePosition(
+            new FlightPosition(
+                12,
+                12,
+                34_000,
+                VerticalTrack.Maintaining,
+                450),
+            [new FixEstimate("RIVET", new Coordinate(0, 0), clock.UtcNow().AddMinutes(2))],
+            clock);
+
+        var flight3 = new Flight
+        {
+            Callsign = "QFA3",
+            AircraftType = "B738",
+            WakeCategory = WakeCategory.Medium,
+            OriginIdentifier = "YMML",
+            DestinationIdentifier = "YSSY",
+            FeederFixIdentifier = "RIVET"
+        };
+        flight3.UpdatePosition(
+            new FlightPosition(
+                12,
+                12,
+                34_000,
+                VerticalTrack.Maintaining,
+                450),
+            [new FixEstimate("RIVET", new Coordinate(0, 0), clock.UtcNow().AddMinutes(4))],
+            clock);
+        
+        // Act
+        await sequence.Add(flight1, CancellationToken.None);
+        await sequence.Add(flight2, CancellationToken.None);
+        await sequence.Add(flight3, CancellationToken.None);
+        var result = sequence.ComputeSequence(sequence.Flights);
+
+        // Assert
+        var first = result[0];
+        first.Callsign.ShouldBe("QFA1");
+        first.TotalDelayToRunway.ShouldBe(TimeSpan.Zero);
+        first.TotalDelayToFeederFix.ShouldBe(TimeSpan.Zero);
+            
+        var second = result[1];
+        second.Callsign.ShouldBe("QFA2");
+        second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime + landingRate);
+    }
+    
     public void WhenAFlightIsRecomputed_ControllerInterventionsAreCancelled()
     {
         // ZeroDelay removed
@@ -115,5 +220,37 @@ public class SequenceTests
     public void WhenAssigningARunway_TheSpecifiedRulesAreFollowed()
     {
         Assert.Fail("Stub");
+    }
+
+    Sequence CreateSequence(IMediator mediator, IClock clock, TimeSpan landingRate)
+    {
+        return new Sequence(
+            new AirportConfigurationDto(
+                "YSSY",
+                [
+                    new RunwayConfigurationDto("34L", 180),
+                    new RunwayConfigurationDto("34R", 180)
+                ],
+                [
+                    new RunwayModeConfigurationDto(
+                        "34IVA",
+                        TimeSpan.FromSeconds(30),
+                        [
+                            new RunwayConfigurationDto("34L", 180),
+                            new RunwayConfigurationDto("34R", 180)
+                        ],
+                        new Dictionary<string, TimeSpan>
+                        {
+                            {"34L", TimeSpan.FromSeconds(180)},
+                            {"34R", TimeSpan.FromSeconds(180)}
+                        },
+                        [])
+                ],
+                [new ViewConfigurationDto("BIK", null, null, LadderReferenceTime.FeederFixTime)],
+                ["RIVET"]),
+            new FixedSeparationProvider(landingRate),
+            new FixedPerformanceLookup(),
+            mediator,
+            clock);
     }
 }

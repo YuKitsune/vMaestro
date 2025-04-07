@@ -1,5 +1,7 @@
 ﻿using Maestro.Core.Dtos;
+using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using MediatR;
 using NSubstitute;
@@ -19,12 +21,13 @@ public class FlightPositionReportHandlerTests
         {
             Callsign = "QFA123",
             AircraftType = "B738",
+            WakeCategory = WakeCategory.Medium,
             OriginIdentifier = "YMML",
             DestinationIdentifier = "YSSY",
             FeederFixIdentifier = "RIVET"
         };
 
-        var sequence = CreateSequence(mediator);
+        var sequence = CreateSequence(mediator, clock);
         await sequence.Add(flight, CancellationToken.None);
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
@@ -34,7 +37,7 @@ public class FlightPositionReportHandlerTests
         var notification = new FlightPositionReport(
             "QFA123",
             "YSSY",
-            new FlightPosition(1, 1, 35_000),
+            new FlightPosition(1, 1, 35_000, VerticalTrack.Maintaining, 450),
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(1))]);
 
         var handler = new FlightPositionReportHandler(sequenceProvider, mediator, clock);
@@ -55,6 +58,7 @@ public class FlightPositionReportHandlerTests
         {
             Callsign = "QFA123",
             AircraftType = "B738",
+            WakeCategory = WakeCategory.Medium,
             OriginIdentifier = "YMML",
             DestinationIdentifier = "YSSY",
             FeederFixIdentifier = "RIVET"
@@ -62,7 +66,7 @@ public class FlightPositionReportHandlerTests
         
         flight.Activate(clock);
 
-        var sequence = CreateSequence(mediator);
+        var sequence = CreateSequence(mediator, clock);
         await sequence.Add(flight, CancellationToken.None);
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
@@ -72,7 +76,7 @@ public class FlightPositionReportHandlerTests
         var notification = new FlightPositionReport(
             "QFA123",
             "YSSY",
-            new FlightPosition(50, 50, 35_000),
+            new FlightPosition(50, 50, 35_000, VerticalTrack.Maintaining, 450),
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(3))]);
 
         var handler = new FlightPositionReportHandler(sequenceProvider, mediator, clock);
@@ -91,7 +95,7 @@ public class FlightPositionReportHandlerTests
         clock.SetTime(clock.UtcNow().AddSeconds(45));
         notification = notification with
         {
-            Position = new FlightPosition(49, 49, 25_000)
+            Position = new FlightPosition(49, 49, 25_000, VerticalTrack.Maintaining, 450),
         };
         
         await handler.Handle(notification, CancellationToken.None);
@@ -113,6 +117,7 @@ public class FlightPositionReportHandlerTests
         {
             Callsign = "QFA123",
             AircraftType = "B738",
+            WakeCategory = WakeCategory.Medium,
             OriginIdentifier = "YMML",
             DestinationIdentifier = "YSSY",
             FeederFixIdentifier = "RIVET"
@@ -120,7 +125,7 @@ public class FlightPositionReportHandlerTests
         
         flight.Activate(clock);
 
-        var sequence = CreateSequence(mediator);
+        var sequence = CreateSequence(mediator, clock);
         await sequence.Add(flight, CancellationToken.None);
         
         var sequenceProvider = Substitute.For<ISequenceProvider>();
@@ -130,7 +135,7 @@ public class FlightPositionReportHandlerTests
         var notification = new FlightPositionReport(
             "QFA123",
             "YSSY",
-            new FlightPosition(2, 2, 35_000),
+            new FlightPosition(2, 2, 35_000, VerticalTrack.Maintaining, 450),
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(3))]);
 
         var handler = new FlightPositionReportHandler(sequenceProvider, mediator, clock);
@@ -149,7 +154,7 @@ public class FlightPositionReportHandlerTests
         clock.SetTime(clock.UtcNow().AddSeconds(45));
         notification = notification with
         {
-            Position = new FlightPosition(1, 1, 25_000)
+            Position = new FlightPosition(1, 1, 25_000, VerticalTrack.Maintaining, 450),
         };
         
         await handler.Handle(notification, CancellationToken.None);
@@ -162,25 +167,35 @@ public class FlightPositionReportHandlerTests
         flight.LastKnownPosition.Value.Altitude.ShouldBe(25_000);
     }
 
-    Sequence CreateSequence(IMediator mediator)
+    Sequence CreateSequence(IMediator mediator, IClock clock)
     {
         return new Sequence(
-            "YSSY",
-            [
-                new RunwayMode
-                {
-                    Identifier = "34",
-                    LandingRates = new Dictionary<string, TimeSpan>()
-                }
-            ],
-            [
-                new()
-                {
-                    Identifier = "RIVET",
-                    Latitude = 0,
-                    Longitude = 0
-                }
-            ],
-            mediator);
+            new AirportConfigurationDto(
+                "YSSY",
+                [
+                    new RunwayConfigurationDto("34L", 180),
+                    new RunwayConfigurationDto("34R", 180)
+                ],
+                [
+                    new RunwayModeConfigurationDto(
+                        "34IVA",
+                        TimeSpan.FromSeconds(30),
+                        [
+                            new RunwayConfigurationDto("34L", 180),
+                            new RunwayConfigurationDto("34R", 180)
+                        ],
+                        new Dictionary<string, TimeSpan>
+                        {
+                            {"34L", TimeSpan.FromSeconds(180)},
+                            {"34R", TimeSpan.FromSeconds(180)}
+                        },
+                        [])
+                ],
+                [new ViewConfigurationDto("BIK", null, null, LadderReferenceTime.FeederFixTime)],
+                ["RIVET"]),
+            new FixedSeparationProvider(TimeSpan.FromMinutes(2)),
+            new FixedPerformanceLookup(),
+            mediator,
+            clock);
     }
 }

@@ -12,6 +12,7 @@ public static class SequenceExtensionMethods
                 new FlightDto(
                     x.Callsign,
                     x.AircraftType,
+                    x.WakeCategory,
                     x.OriginIdentifier,
                     x.DestinationIdentifier,
                     x.State.ToDto(),
@@ -23,7 +24,9 @@ public static class SequenceExtensionMethods
                     x.ScheduledFeederFixTime,
                     x.InitialLandingTime,
                     x.EstimatedLandingTime,
-                    x.ScheduledLandingTime))
+                    x.ScheduledLandingTime,
+                    x.TotalDelayToRunway,
+                    x.RemainingDelayToRunway))
             .ToArray());
 
     }

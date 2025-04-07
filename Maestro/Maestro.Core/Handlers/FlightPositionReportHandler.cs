@@ -54,13 +54,7 @@ public class FlightPositionReportHandler(ISequenceProvider sequenceProvider, IMe
 
         flight.UpdatePosition(
             notification.Position,
-            notification.Estimates.Select(x =>
-                    new FixEstimate
-                    {
-                        FixIdentifier = x.Identifier,
-                        Estimate = x.Estimate,
-                    })
-                .ToArray(),
+            notification.Estimates.Select(x => new FixEstimate(x.Identifier, x.Position, x.Estimate)).ToArray(),
             clock);
 
         var feederFixEstimate = flight.Estimates.SingleOrDefault(x => x.FixIdentifier == flight.FeederFixIdentifier);

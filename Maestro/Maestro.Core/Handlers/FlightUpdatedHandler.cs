@@ -9,6 +9,7 @@ namespace Maestro.Core.Handlers;
 public record FlightUpdatedNotification(
     string Callsign,
     string AircraftType,
+    WakeCategory WakeCategory,
     string Origin,
     string Destination,
     string? AssignedRunway,
@@ -33,7 +34,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
             // TODO: Make configurable
             var flightCreationThreshold = TimeSpan.FromHours(2);
             
-            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Any(y => y.Identifier == x.Identifier));
+            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.Identifier));
             var landingEstimate = notification.Estimates.Last().Estimate;
             
             // TODO: Verify if this behaviour is correct
@@ -42,6 +43,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
             {
                 flight = CreateMaestroFlight(notification, null, landingEstimate);
                 await sequence.AddPending(flight, cancellationToken);
+                await mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
                 return;
             }
             
@@ -57,7 +59,10 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
         }
 
         if (flight is null)
+        {
+            await mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
             return;
+        }
 
         // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.
         // It is then updated by regular reports from the TAAATS FDP to the Maestro System.
@@ -88,6 +93,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
         {
             Callsign = notification.Callsign,
             AircraftType = notification.AircraftType,
+            WakeCategory = notification.WakeCategory,
             OriginIdentifier = notification.Origin,
             DestinationIdentifier = notification.Destination,
             AssignedRunwayIdentifier = notification.AssignedRunway,

@@ -26,7 +26,7 @@ public partial class MaestroViewModel : ObservableObject
     readonly IMediator _mediator;
 
     [ObservableProperty]
-    List<AircraftViewModel> _aircraft = [];
+    List<FlightViewModel> _aircraft = [];
 
     public MaestroViewModel(IMediator mediator)
     {
@@ -95,19 +95,32 @@ public partial class MaestroViewModel : ObservableObject
     public void RefreshSequence(SequenceDto sequence)
     {
         Aircraft = sequence.Flights.Select(a =>
-                new AircraftViewModel
-                {
-                    Callsign = a.Callsign,
-                    FeederFix = a.FeederFix,
-                    Runway = a.AssignedRunway,
-
-                    // TODO: Figure out which times to use here.
-                    LandingTime = a.EstimatedLandingTime,
-                    FeederFixTime = a.EstimatedFeederFixTime,
-
-                    TotalDelay = a.InitialLandingTime - a.ScheduledLandingTime, // TODO
-                    RemainingDelay = a.EstimatedLandingTime - a.ScheduledLandingTime, // TODO
-                })
+                new FlightViewModel(
+                    a.Callsign,
+                    a.AircraftType,
+                    a.WakeCategory,
+                    a.Origin,
+                    a.Destination,
+                    -1, // TODO:
+                    a.FeederFix,
+                    a.InitialFeederFixTime,
+                    a.EstimatedFeederFixTime,
+                    a.ScheduledFeederFixTime,
+                    a.AssignedRunway,
+                    -1, // TODO:
+                    a.InitialLandingTime,
+                    a.EstimatedLandingTime,
+                    a.ScheduledLandingTime,
+                    a.InitialDelay,
+                    a.CurrentDelay))
             .ToList();
+    }
+
+    [RelayCommand]
+    async Task ShowInformationWindow(FlightViewModel viewModel)
+    {
+        var request = new OpenInformationWindowRequest(viewModel);
+
+        await _mediator.Send(request);
     }
 }

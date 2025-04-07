@@ -19,8 +19,21 @@ public static class Calculations
         return 2.0 * Math.Asin(Math.Sqrt(num1 + Math.Cos(lat1Radians) * Math.Cos(lat2Radians) * num2)) * 10800.0 / Math.PI;
     }
 
-    public static double DegreesToRadians(double degrees)
+    public static double CalculateTrack(Coordinate point1, Coordinate point2)
     {
-        return degrees * (Math.PI / 180.0);
+        var lat1Radians = DegreesToRadians(point1.Latitude);
+        var lon1Radians = DegreesToRadians(point1.Longitude * -1);
+        var lat2Radians = DegreesToRadians(point2.Latitude);
+        var lon2Radians = DegreesToRadians(point2.Longitude * -1);
+        
+        var trackRads = Math.Atan2(Math.Sin(lon1Radians - lon2Radians) * Math.Cos(lat1Radians), Math.Cos(lat1Radians) * Math.Sin(lat2Radians) - Math.Sin(lat1Radians) * Math.Cos(lat2Radians) * Math.Cos(lon1Radians - lon2Radians)) % (2.0 * Math.PI);
+        if (trackRads < 0.0)
+            trackRads += 2.0 * Math.PI;
+        
+        return RadiansToDegrees(trackRads);
     }
+    
+    public static double DegreesToRadians(double degrees) => degrees / 180.0 * Math.PI;
+
+    public static double RadiansToDegrees(double rads) => rads * 180.0 / Math.PI;
 }

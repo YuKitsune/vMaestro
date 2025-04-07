@@ -1,7 +1,10 @@
-﻿namespace Maestro.Core.Model;
+﻿using Maestro.Core.Dtos;
 
-public class FixEstimate
+namespace Maestro.Core.Model;
+
+public class FixEstimate(string fixIdentifier, Coordinate coordinate, DateTimeOffset estimate)
 {
-    public required string FixIdentifier { get; init; }
-    public required DateTimeOffset Estimate { get; init; }
+    public string FixIdentifier { get; } = fixIdentifier;
+    public Coordinate Coordinate { get; } = coordinate;
+    public DateTimeOffset Estimate { get; } = estimate;
 }
