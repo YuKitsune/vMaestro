@@ -17,7 +17,7 @@ public static class Theme
 
     // TODO: Support live updating font sizes
     public static FontFamily FontFamily { get; set; } = new("Terminus (TTF)");
-    public static double FontSize { get; set; } = 18.0;
+    public static double FontSize { get; set; } = 16.0;
     public static FontWeight FontWeight { get; set; } = FontWeights.Bold;
 
     public static Thickness BeveledBorderThickness = new(2);

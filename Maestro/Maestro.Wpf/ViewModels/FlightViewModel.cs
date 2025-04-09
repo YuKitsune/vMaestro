@@ -4,6 +4,27 @@ namespace Maestro.Wpf.ViewModels;
 
 public class FlightViewModel
 {
+    public FlightViewModel()
+    {
+        Callsign = "QFA1234";
+        AircraftType = "B744";
+        WakeCategory = WakeCategory.Heavy;
+        Origin = "YMML";
+        Destination = "YSSY";
+        NumberToLand = 3;
+        FeederFixIdentifier = "RIVET";
+        InitialFeederFixTime = DateTimeOffset.Now.AddMinutes(1);
+        CurrentFeederFixTime = DateTimeOffset.Now.AddMinutes(2);
+        ScheduledFeederFixTime = DateTimeOffset.Now.AddMinutes(3);
+        AssignedRunway = "34L";
+        NumberToLandOnRunway = 5;
+        InitialLandingTime = DateTimeOffset.Now.AddMinutes(5);
+        CurrentLandingTime = DateTimeOffset.Now.AddMinutes(6);
+        ScheduledLandingTime = DateTimeOffset.Now.AddMinutes(7);
+        InitialDelay = TimeSpan.FromMinutes(2);
+        CurrentDelay = TimeSpan.FromMinutes(1);
+    }
+    
     public FlightViewModel(string callsign, string aircraftType, WakeCategory wakeCategory, string origin, string destination, int numberToLand, string feederFixIdentifier, DateTimeOffset? initialFeederFixTime, DateTimeOffset? currentFeederFixTime, DateTimeOffset? scheduledFeederFixTime, string assignedRunway, int numberToLandOnRunway, DateTimeOffset initialLandingTime, DateTimeOffset currentLandingTime, DateTimeOffset scheduledLandingTime, TimeSpan initialDelay, TimeSpan currentDelay)
     {
         Callsign = callsign;

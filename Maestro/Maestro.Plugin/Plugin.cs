@@ -53,9 +53,9 @@ namespace Maestro.Plugin
             Theme.InteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.InteractiveText).ToWindowsColor());
             Theme.NonInteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.NonInteractiveText).ToWindowsColor());
             Theme.SelectedButtonColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowButtonSelected).ToWindowsColor());
-            Theme.FontFamily = new FontFamily(MMI.ASDMainFont.FontFamily.Name);
-            Theme.FontSize = MMI.ASDMainFont.Size;
-            Theme.FontWeight = MMI.ASDMainFont.Bold ? FontWeights.Bold : FontWeights.Regular;
+            Theme.FontFamily = new FontFamily(MMI.eurofont_xsml.FontFamily.Name);
+            Theme.FontSize = MMI.eurofont_xsml.Size;
+            Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeights.Bold : FontWeights.Regular;
         }
 
         void ConfigureServices()

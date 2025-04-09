@@ -3,11 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:local="clr-namespace:Maestro.Wpf.Views"
         xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
-        xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewModels:DebugViewModel}"
         Title="DebugWindow" Height="450" Width="800">
-    <DataGrid ItemsSource="{Binding Flights}" />
+    <DataGrid ItemsSource="{Binding Flights}" AutoGenerateColumns="True" />
 </Window>

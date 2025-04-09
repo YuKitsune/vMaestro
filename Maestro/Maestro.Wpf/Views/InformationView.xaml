@@ -9,8 +9,6 @@
         mc:Ignorable="d"
         Background="{x:Static local:Theme.BackgroundColor}"
         d:DataContext="{d:DesignInstance Type=viewModels:FlightViewModel}"
-        Height="120"
-        Width="776"
         Padding="4">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -34,14 +32,14 @@
     </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="192"/>
+            <ColumnDefinition Width="168"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         
         <Grid Grid.Column="0" Margin="0,0,8,0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="32" />
-                <RowDefinition Height="80" />
+                <RowDefinition Height="24" />
+                <RowDefinition Height="64" />
             </Grid.RowDefinitions>
             <Border Grid.Row="0">
                 <TextBlock Text="2" TextAlignment="Center" />
@@ -59,7 +57,7 @@
                     </Grid.RowDefinitions>
                     
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Callsign}" />
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding AircraftType}">
+                    <TextBlock Grid.Column="1" Grid.Row="0">
                         <Run Text="{Binding AircraftType, Mode=OneWay}"/>/<Run Text="{Binding WakeCategory, Mode=OneWay, Converter={StaticResource WakeCategoryConverter}}" />
                     </TextBlock>
                     <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding Origin}" />
@@ -70,13 +68,13 @@
         
         <Grid Grid.Column="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="192" />
-                <ColumnDefinition Width="192" />
-                <ColumnDefinition Width="192" />
+                <ColumnDefinition Width="168" />
+                <ColumnDefinition Width="168" />
+                <ColumnDefinition Width="168" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="32" />
-                <RowDefinition Height="80" />
+                <RowDefinition Height="24" />
+                <RowDefinition Height="64" />
             </Grid.RowDefinitions>
             
             <Border Grid.Column="0" Grid.Row="0">
@@ -146,6 +144,10 @@
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
                     
                     <TextBlock Grid.Column="0">
                         <Run Text="{Binding InitialDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>min
