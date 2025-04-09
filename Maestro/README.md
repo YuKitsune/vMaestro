@@ -24,7 +24,7 @@
 - [ ] Offline Mode
     - [X] Implement domain models, handlers, tiny types, etc.
     - [X] Publish notifications on FDP updates
-    - [ ] Information window
+    - [X] Information window
     - [ ] Basic sequencing algorithm
     - [ ] Change runway mode
     - [ ] Change runway
@@ -56,11 +56,12 @@
 
 - [ ] Look and feel final pass
     - [ ] Check border sizes and margins
-    - [ ] Font-based sizing
+    - [ ] Check font sizing
+    - [ ] Size elements based on font width and height
     - [ ] Double check colors
 
-- [ ] MVP
-    - [ ] Fix DPI scaling issue
+- [X] MVP
+    - [X] Fix DPI scaling issue
 
 - [ ] Nice to haves
     - [ ] Debugger configuration for vatSys
