@@ -15,6 +15,7 @@ public record FlightUpdatedNotification(
     string? AssignedRunway,
     string? AssignedArrival,
     bool Activated,
+    FlightPosition? Position,
     FixDto[] Estimates)
     : INotification;
 
@@ -42,38 +43,56 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
             if (feederFix is null)
             {
                 flight = CreateMaestroFlight(notification, null, landingEstimate);
+                
+                // TODO: Revisit flight plan activation
+                flight.Activate(clock);
+                
                 await sequence.AddPending(flight, cancellationToken);
-                await mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
-                return;
             }
-            
             // Only create flights in Maestro when they're within a specified range of the feeder fix
-            if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
+            else if (feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
             {
                 flight = CreateMaestroFlight(
                     notification,
                     feederFix,
                     landingEstimate);
+                
+                // TODO: Revisit flight plan activation
+                flight.Activate(clock);
+                
                 await sequence.Add(flight, cancellationToken);
             }
         }
 
         if (flight is null)
         {
-            await mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
             return;
         }
 
+        // TODO: Revisit flight plan activation
         // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.
         // It is then updated by regular reports from the TAAATS FDP to the Maestro System.
-        if (!flight.Activated && notification.Activated)
-        {
-            flight.Activate(clock);
-        }
+        // if (!flight.Activated && notification.Activated)
+        // {
+        //     flight.Activate(clock);
+        // }
 
-        // TODO: Should this be limited to unstable?
         if (flight is { Activated: true })
         {
+            if (notification.Position.HasValue)
+            {
+                await mediator.Publish(
+                    new FlightPositionReport(
+                        flight.Callsign,
+                        flight.DestinationIdentifier,
+                        notification.Position.Value,
+                        notification.Estimates),
+                    cancellationToken);
+            }
+            
+            SetState(flight);
+            
+            // TODO: Should this be limited to unstable?
             // TODO: Calculate ETA_FF
             // TODO: Sequence
             // TODO: Schedule
@@ -82,6 +101,37 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
         }
         
         await mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
+    }
+
+    void SetState(Flight flight)
+    {
+        // TODO: Make configurable
+        var stableThreshold = TimeSpan.FromMinutes(25);
+        var frozenThreshold = TimeSpan.FromMinutes(15);
+        var minUnstableTime = TimeSpan.FromSeconds(180);
+
+        var timeActive = clock.UtcNow() - flight.ActivatedTime;
+        var timeToFeeder = flight.EstimatedFeederFixTime - clock.UtcNow();
+        var timeToLanding = flight.EstimatedLandingTime - clock.UtcNow();
+
+        switch (flight.State)
+        {
+            case State.Unstable when timeToFeeder <= stableThreshold && timeActive > minUnstableTime:
+                flight.SetState(State.Stable);
+                break;
+        
+            case State.Stable when flight.InitialFeederFixTime < clock.UtcNow():
+                flight.SetState(State.SuperStable);
+                break;
+        
+            case State.SuperStable when timeToLanding <= frozenThreshold:
+                flight.SetState(State.Frozen);
+                break;
+        
+            case State.Frozen when flight.ScheduledLandingTime < clock.UtcNow():
+                flight.SetState(State.Landed);
+                break;
+        }
     }
 
     Flight CreateMaestroFlight(
@@ -107,7 +157,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
             
             InitialLandingTime = landingEstimate,
             EstimatedLandingTime = landingEstimate,
-            ScheduledLandingTime = landingEstimate,
+            ScheduledLandingTime = landingEstimate
         };
     }
 }

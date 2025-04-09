@@ -16,7 +16,9 @@ public class Flight
     public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
 
-    public State State { get; } = State.Unstable;
+    public State State { get; private set; } = State.Unstable;
+
+    public bool PositionIsFixed => State is not State.Unstable or State.Stable;
 
     public DateTimeOffset? InitialFeederFixTime { get; set; }
     public DateTimeOffset? EstimatedFeederFixTime { get; set; } // ETA_FF
@@ -40,6 +42,12 @@ public class Flight
     public PositionPrediction[] Trajectory { get; private set; } = Array.Empty<PositionPrediction>();
     
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
+
+    public void SetState(State state)
+    {
+        // TODO: Prevent invalid state changes
+        State = state;
+    }
 
     public void SetRunway(string runwayIdentifier)
     {

@@ -8,7 +8,7 @@ public record FlightDto(
     WakeCategory WakeCategory,
     string Origin,
     string Destination,
-    StateDto State,
+    State State,
     string? FeederFix,
     string? AssignedRunway,
     string? AssignedStar,

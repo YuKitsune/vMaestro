@@ -137,6 +137,22 @@ namespace Maestro.Plugin
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
+            PublishFlightUpdatedEvent(updated);
+        }
+
+        public void OnRadarTrackUpdate(RDP.RadarTrack updated)
+        {
+            if (updated.CoupledFDR is null)
+                return;
+            
+            // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to 
+            // fire for all flights when initially connecting to the network.
+            // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
+            PublishFlightUpdatedEvent(updated.CoupledFDR);
+        }
+
+        void PublishFlightUpdatedEvent(FDP2.FDR updated)
+        {
             var wake = updated.AircraftWake switch
             {
                 "S" => WakeCategory.SuperHeavy,
@@ -151,7 +167,30 @@ namespace Maestro.Plugin
                 .Select(ToFixDto)
                 .ToArray();
 
+            // TODO: Is there any point in tracking preactive flight plans?
+            //  Real Maestro does, but it might not be necessary for our purposes.
+            //  Revisit this when looking into the pending list.
             var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
+            if (!isActivated)
+                return;
+
+            FlightPosition? position = null;
+            if (updated.CoupledTrack is not null)
+            {
+                var track = updated.CoupledTrack;
+                var verticalTrack = track.VerticalSpeed >= RDP.VS_CLIMB
+                    ? VerticalTrack.Climbing
+                    : track.VerticalSpeed <= RDP.VS_DESCENT
+                        ? VerticalTrack.Descending
+                        : VerticalTrack.Maintaining;
+
+                position = new FlightPosition(
+                    track.LatLong.Latitude,
+                    track.LatLong.Longitude,
+                    track.CorrectedAltitude,
+                    verticalTrack,
+                    track.GroundSpeed);
+            }
 
             var notification = new FlightUpdatedNotification(
                 updated.Callsign,
@@ -162,36 +201,7 @@ namespace Maestro.Plugin
                 updated.ArrivalRunway?.Name,
                 updated.STAR?.Name,
                 isActivated,
-                estimates);
-            
-            _mediator.Publish(notification);
-        }
-
-        public void OnRadarTrackUpdate(RDP.RadarTrack updated)
-        {
-            if (updated.CoupledFDR is null)
-                return;
-
-            var estimates = updated.CoupledFDR.ParsedRoute
-                .Skip(updated.CoupledFDR.ParsedRoute.OverflownIndex)
-                .Select(ToFixDto)
-                .ToArray();
-
-            var verticalTrack = updated.VerticalSpeed >= RDP.VS_CLIMB
-                ? VerticalTrack.Climbing
-                : updated.VerticalSpeed <= RDP.VS_DESCENT
-                    ? VerticalTrack.Descending
-                    : VerticalTrack.Maintaining;
-
-            var notification = new FlightPositionReport(
-                updated.CoupledFDR.Callsign,
-                updated.CoupledFDR.DesAirport,
-                new FlightPosition(
-                    updated.LatLong.Latitude,
-                    updated.LatLong.Longitude,
-                    updated.CorrectedAltitude,
-                    verticalTrack,
-                    updated.GroundSpeed),
+                position,
                 estimates);
             
             _mediator.Publish(notification);

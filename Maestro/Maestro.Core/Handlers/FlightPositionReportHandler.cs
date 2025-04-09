@@ -6,8 +6,6 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-// TODO: Consider combining with FlightUpdated
-
 public record FlightPositionReport(
     string Callsign,
     string Destination,

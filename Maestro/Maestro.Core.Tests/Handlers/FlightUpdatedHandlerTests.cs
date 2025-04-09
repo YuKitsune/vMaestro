@@ -26,6 +26,7 @@ public class FlightUpdatedHandlerTests
             "34L",
             "RIVET1",
             false,
+            null,
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(3))]);
 
         var mediator = Substitute.For<IMediator>();
@@ -62,6 +63,7 @@ public class FlightUpdatedHandlerTests
             "34L",
             "RIVET1",
             true,
+            null,
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(3))]);
 
         var mediator = Substitute.For<IMediator>();
@@ -98,6 +100,7 @@ public class FlightUpdatedHandlerTests
             "34L",
             "RIVET1",
             false,
+            null,
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(1))]);
 
         var mediator = Substitute.For<IMediator>();
@@ -135,6 +138,7 @@ public class FlightUpdatedHandlerTests
             "34L",
             "RIVET1",
             true,
+            null,
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(1))]);
 
         var mediator = Substitute.For<IMediator>();
@@ -172,6 +176,7 @@ public class FlightUpdatedHandlerTests
             "34L",
             "RIVET1",
             false,
+            null,
             [new FixDto("RIVET", new Coordinate(0, 0), clock.UtcNow().AddHours(1))]);
 
         var mediator = Substitute.For<IMediator>();

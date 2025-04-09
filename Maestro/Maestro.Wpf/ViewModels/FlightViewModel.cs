@@ -11,6 +11,7 @@ public class FlightViewModel
         WakeCategory = WakeCategory.Heavy;
         Origin = "YMML";
         Destination = "YSSY";
+        State = State.Unstable;
         NumberToLand = 3;
         FeederFixIdentifier = "RIVET";
         InitialFeederFixTime = DateTimeOffset.Now.AddMinutes(1);
@@ -25,13 +26,14 @@ public class FlightViewModel
         CurrentDelay = TimeSpan.FromMinutes(1);
     }
     
-    public FlightViewModel(string callsign, string aircraftType, WakeCategory wakeCategory, string origin, string destination, int numberToLand, string feederFixIdentifier, DateTimeOffset? initialFeederFixTime, DateTimeOffset? currentFeederFixTime, DateTimeOffset? scheduledFeederFixTime, string assignedRunway, int numberToLandOnRunway, DateTimeOffset initialLandingTime, DateTimeOffset currentLandingTime, DateTimeOffset scheduledLandingTime, TimeSpan initialDelay, TimeSpan currentDelay)
+    public FlightViewModel(string callsign, string aircraftType, WakeCategory wakeCategory, string origin, string destination, State state, int numberToLand, string feederFixIdentifier, DateTimeOffset? initialFeederFixTime, DateTimeOffset? currentFeederFixTime, DateTimeOffset? scheduledFeederFixTime, string assignedRunway, int numberToLandOnRunway, DateTimeOffset initialLandingTime, DateTimeOffset currentLandingTime, DateTimeOffset scheduledLandingTime, TimeSpan initialDelay, TimeSpan currentDelay)
     {
         Callsign = callsign;
         AircraftType = aircraftType;
         WakeCategory = wakeCategory;
         Origin = origin;
         Destination = destination;
+        State = state;
         NumberToLand = numberToLand;
         FeederFixIdentifier = feederFixIdentifier;
         InitialFeederFixTime = initialFeederFixTime;
@@ -51,6 +53,7 @@ public class FlightViewModel
     public WakeCategory WakeCategory { get; }
     public string Origin { get; }
     public string Destination { get; }
+    public State State { get; } = State.Unstable;
 
     public int NumberToLand { get; }
     

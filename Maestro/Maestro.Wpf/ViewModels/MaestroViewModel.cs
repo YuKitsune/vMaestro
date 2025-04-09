@@ -101,6 +101,7 @@ public partial class MaestroViewModel : ObservableObject
                     a.WakeCategory,
                     a.Origin,
                     a.Destination,
+                    a.State,
                     -1, // TODO:
                     a.FeederFix,
                     a.InitialFeederFixTime,

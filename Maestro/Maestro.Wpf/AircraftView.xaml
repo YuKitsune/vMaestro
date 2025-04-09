@@ -16,6 +16,8 @@
             </ResourceDictionary.MergedDictionaries>
 
             <converters:MinutesConverter x:Key="MinutesConverter"/>
+            <converters:StateToColorConverter x:Key="StateToColorConverter"/>
+            <converters:DelayToColorConverter x:Key="DelayToColorConverter"/>
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}">
                 <Setter Property="TextAlignment" Value="Right" />
             </Style>
@@ -32,11 +34,22 @@
             <ColumnDefinition MaxWidth="40" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Column="0" Text="{Binding CurrentDelay, Converter={StaticResource MinutesConverter}}"/>
-        <TextBlock Grid.Column="1" Text="{Binding InitialDelay, Converter={StaticResource MinutesConverter}}"/>
+        <TextBlock 
+            Grid.Column="0"
+            Text="{Binding CurrentDelay, Converter={StaticResource MinutesConverter}}"
+            Foreground="{Binding CurrentDelay, Converter={StaticResource DelayToColorConverter}}" />
+        <TextBlock
+            Grid.Column="1"
+            Text="{Binding InitialDelay, Converter={StaticResource MinutesConverter}}"
+            Foreground="{Binding InitialDelay, Converter={StaticResource DelayToColorConverter}}" />
+        
         <!-- 250kts indicator-->
         <!--<TextBlock Grid.Column="2" Text="+" />-->
-        <TextBlock Grid.Column="3" Text="{Binding Callsign}"/>
+        <TextBlock
+            Grid.Column="3"
+            Text="{Binding Callsign}"
+            Foreground="{Binding State, Converter={StaticResource StateToColorConverter}}"/>
+        
         <TextBlock Grid.Column="4" Text="{Binding AssignedRunway}"/>
         <TextBlock Grid.Column="5" Text="{Binding ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"/>
 

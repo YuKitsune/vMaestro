@@ -15,7 +15,7 @@ public static class SequenceExtensionMethods
                     x.WakeCategory,
                     x.OriginIdentifier,
                     x.DestinationIdentifier,
-                    x.State.ToDto(),
+                    x.State,
                     x.FeederFixIdentifier,
                     x.AssignedRunwayIdentifier,
                     x.AssignedStarIdentifier,

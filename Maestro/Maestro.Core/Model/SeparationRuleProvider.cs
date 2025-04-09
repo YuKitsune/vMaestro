@@ -18,7 +18,7 @@ public class SeparationRuleProvider(
         var leaderPerformance = performanceLookup.GetPerformanceDataFor(leader.AircraftType);
         var trailerPerformance = performanceLookup.GetPerformanceDataFor(trailer.AircraftType);
 
-        if (leader.AssignedRunwayIdentifier != trailer.AssignedRunwayIdentifier)
+        if (leader.AssignedRunwayIdentifier is null || leader.AssignedRunwayIdentifier != trailer.AssignedRunwayIdentifier)
         {
             var staggerRate = runwayMode.StaggerRate;
             return staggerRate.TotalSeconds < 30

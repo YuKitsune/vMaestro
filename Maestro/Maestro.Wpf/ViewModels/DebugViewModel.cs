@@ -20,6 +20,7 @@ public partial class DebugViewModel : ObservableObject, INotificationHandler<Seq
                     a.WakeCategory,
                     a.Origin,
                     a.Destination,
+                    a.State,
                     -1, // TODO:
                     a.FeederFix,
                     a.InitialFeederFixTime,

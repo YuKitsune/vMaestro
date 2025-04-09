@@ -14,10 +14,12 @@ public class Sequence : IAsyncDisposable
     readonly IPerformanceLookup _performanceLookup;
     readonly IClock _clock;
     
+    readonly List<BlockoutPeriod> _blockoutPeriods = new();
     readonly List<Flight> _pending = new();
     readonly List<Flight> _flights = new();
-    readonly List<BlockoutPeriod> _blockoutPeriods = new();
+    
     readonly SemaphoreSlim _semaphore = new(1, 1);
+    
     CancellationTokenSource? _sequenceTaskCancellationSource;
     Task? _sequenceTask;
     
@@ -74,14 +76,54 @@ public class Sequence : IAsyncDisposable
             if (flight.DestinationIdentifier != AirportIdentifier)
                 throw new MaestroException($"{flight.Callsign} cannot be added to the sequence for {AirportIdentifier} as the destination is {flight.DestinationIdentifier}.");
             
+            if (!flight.Activated)
+                throw new MaestroException($"{flight.Callsign} cannot be sequenced as it is not activated.");
+            
             // TODO: Additional validation
-            _flights.Add(flight);
+            AddByEstimate(flight);
             
             await _mediator.Publish(new SequenceModifiedNotification(this.ToDto()), cancellationToken);
         }
         finally
         {
             _semaphore.Release();
+        }
+    }
+
+    void AddByEstimate(Flight flight)
+    {
+        if (_flights.Count == 0)
+        {
+            _flights.Add(flight);
+            return;
+        }
+        
+        // TODO: Account for runway mode changes if necessary
+        var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
+        _flights.Insert(index, flight);
+    }
+
+    void RepositionByEstimate(Flight flight)
+    {
+        if (_flights.Count == 0)
+        {
+            _flights.Add(flight);
+            return;
+        }
+        
+        // TODO: Account for runway mode changes if necessary
+        var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
+
+        var currentIndex = _flights.IndexOf(flight);
+        if (currentIndex == -1)
+        {
+            _flights.Insert(index, flight);
+        }
+        else if (currentIndex != index)
+        {
+            if (index > currentIndex) index--;
+            _flights.Remove(flight);
+            _flights.Insert(index, flight);
         }
     }
 
