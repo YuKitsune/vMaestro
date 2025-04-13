@@ -5,7 +5,7 @@ namespace Maestro.Core.Model;
 
 public interface ISeparationRuleProvider
 {
-    TimeSpan GetRequiredSpacing(Flight leader, Flight trailer, RunwayModeConfigurationDto runwayMode);
+    TimeSpan GetRequiredSpacing(Flight leader, Flight trailer);
 }
 
 public class SeparationRuleProvider(
@@ -13,22 +13,10 @@ public class SeparationRuleProvider(
     ISeparationConfigurationProvider separationConfigurationProvider)
     : ISeparationRuleProvider
 {
-    public TimeSpan GetRequiredSpacing(Flight leader, Flight trailer, RunwayModeConfigurationDto runwayMode)
+    public TimeSpan GetRequiredSpacing(Flight leader, Flight trailer)
     {
         var leaderPerformance = performanceLookup.GetPerformanceDataFor(leader.AircraftType);
         var trailerPerformance = performanceLookup.GetPerformanceDataFor(trailer.AircraftType);
-
-        if (leader.AssignedRunwayIdentifier is null || leader.AssignedRunwayIdentifier != trailer.AssignedRunwayIdentifier)
-        {
-            var staggerRate = runwayMode.StaggerRate;
-            return staggerRate.TotalSeconds < 30
-                ? TimeSpan.FromSeconds(30)
-                : staggerRate;
-        }
-
-        var rate = runwayMode.LandingRates[leader.AssignedRunwayIdentifier];
-        if (rate.TotalSeconds < 30)
-            rate = TimeSpan.FromSeconds(30);
 
         // TODO: Account for trailing aircraft with a higher approach speed
         // double speed = CalculateGroundSpeedAtPosition(trailer.FDR, airport.Position);
@@ -46,13 +34,15 @@ public class SeparationRuleProvider(
             // if (minInterval < rate)
             //     continue;
 
-            if ((rule.WakeCategoryLeader == leaderPerformance.WakeCategory ||
+            if ((rule.WakeCategoryLeader == leaderPerformance?.WakeCategory ||
                  rule.AircraftTypeCodesLeader.Contains(leader.AircraftType)) &&
-                (rule.WakeCategoryFollower == trailerPerformance.WakeCategory ||
+                (rule.WakeCategoryFollower == trailerPerformance?.WakeCategory ||
                  rule.AircraftTypeCodesFollower.Contains(trailer.AircraftType)))
                 return rule.Interval;
         }
 
-        return rate;
+        // TODO: Make this configurable
+        // Default to 2 minutes
+        return TimeSpan.FromMinutes(2);
     }
 }

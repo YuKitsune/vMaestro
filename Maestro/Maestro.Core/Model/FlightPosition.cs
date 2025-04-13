@@ -1,19 +1,15 @@
-﻿namespace Maestro.Core.Dtos;
+﻿namespace Maestro.Core.Model;
 
-public readonly struct FlightPosition(
-    double latitude,
-    double longitude,
+public class FlightPosition(
+    Coordinate coordinate,
     int altitude,
     VerticalTrack verticalTrack,
     double groundSpeed)
 {
-    public double Latitude => latitude;
-    public double Longitude => longitude;
+    public Coordinate Coordinate => coordinate;
     public int Altitude => altitude;
     public VerticalTrack VerticalTrack => verticalTrack;
     public double GroundSpeed => groundSpeed;
-    
-    public Coordinate ToCoordinate() => new(Longitude, Latitude);
 }
 
 public enum VerticalTrack

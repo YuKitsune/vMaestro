@@ -1,4 +1,4 @@
-﻿using Maestro.Core.Dtos.Messages;
+﻿using Maestro.Core.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.Handlers;

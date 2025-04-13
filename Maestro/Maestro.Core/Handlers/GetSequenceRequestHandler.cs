@@ -6,23 +6,17 @@ namespace Maestro.Core.Handlers;
 
 public record GetSequenceRequest(string AirportIdentifier) : IRequest<GetSequenceResponse>;
 
-public record GetSequenceResponse(SequenceDto Sequence);
+public record GetSequenceResponse(Sequence Sequence);
 
-public class GetSequenceRequestHandler : IRequestHandler<GetSequenceRequest, GetSequenceResponse>
+public class GetSequenceRequestHandler(ISequenceProvider sequenceProvider)
+    : IRequestHandler<GetSequenceRequest, GetSequenceResponse>
 {
-    readonly ISequenceProvider _sequenceProvider;
-
-    public GetSequenceRequestHandler(ISequenceProvider sequenceProvider)
-    {
-        _sequenceProvider = sequenceProvider;
-    }
-
     public Task<GetSequenceResponse> Handle(GetSequenceRequest request, CancellationToken cancellationToken)
     {
-        var sequence = _sequenceProvider.TryGetSequence(request.AirportIdentifier);
+        var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
         if (sequence is null)
             throw new MaestroException($"No sequence defined for {request.AirportIdentifier}");
         
-        return Task.FromResult(new GetSequenceResponse(sequence.ToDto()));
+        return Task.FromResult(new GetSequenceResponse(sequence));
     }
 }

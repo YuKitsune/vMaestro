@@ -1,7 +1,6 @@
-﻿using Maestro.Core.Dtos;
-using Maestro.Core.Dtos.Configuration;
-using Maestro.Core.Dtos.Messages;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using MediatR;
 
 namespace Maestro.Core.Model;
@@ -9,9 +8,9 @@ namespace Maestro.Core.Model;
 public class Sequence : IAsyncDisposable
 {
     readonly IMediator _mediator;
-    readonly AirportConfigurationDto _airportConfiguration;
-    readonly ISeparationRuleProvider _separationRuleProvider;
-    readonly IPerformanceLookup _performanceLookup;
+    readonly AirportConfiguration _airportConfiguration;
+    readonly IScheduler _scheduler;
+    readonly IEstimateProvider _estimateProvider;
     readonly IClock _clock;
     
     readonly List<BlockoutPeriod> _blockoutPeriods = new();
@@ -25,22 +24,22 @@ public class Sequence : IAsyncDisposable
     
     public string AirportIdentifier => _airportConfiguration.Identifier;
     public string[] FeederFixes => _airportConfiguration.FeederFixes;
-    
+
     public IReadOnlyList<Flight> Flights => _flights.AsReadOnly();
-    public RunwayModeConfigurationDto CurrentRunwayMode { get; }
+
+    public RunwayModeConfiguration CurrentRunwayMode { get; }
 
     public Sequence(
-        AirportConfigurationDto airportConfiguration,
-        ISeparationRuleProvider separationRuleProvider,
-        IPerformanceLookup performanceLookup,
+        AirportConfiguration airportConfiguration,
         IMediator mediator,
-        IClock clock)
+        IClock clock,
+        IEstimateProvider estimateProvider, IScheduler scheduler)
     {
         _airportConfiguration = airportConfiguration;
-        _separationRuleProvider = separationRuleProvider;
-        _performanceLookup = performanceLookup;
         _mediator = mediator;
         _clock = clock;
+        _estimateProvider = estimateProvider;
+        _scheduler = scheduler;
 
         CurrentRunwayMode = airportConfiguration.RunwayModes.First();
     }
@@ -80,9 +79,23 @@ public class Sequence : IAsyncDisposable
                 throw new MaestroException($"{flight.Callsign} cannot be sequenced as it is not activated.");
             
             // TODO: Additional validation
-            AddByEstimate(flight);
+
+            AssignFeeder(flight);
+            CalculateEstimates(flight);
+            AssignRunway(flight);
             
-            await _mediator.Publish(new SequenceModifiedNotification(this.ToDto()), cancellationToken);
+            // Add the flight based on it's estimate
+            if (_flights.Count == 0)
+            {
+                _flights.Add(flight);
+                return;
+            }
+            
+            // TODO: Account for runway mode changes if necessary
+            var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
+            _flights.Insert(index, flight);
+            
+            await _mediator.Publish(new SequenceModifiedNotification(this), cancellationToken);
         }
         finally
         {
@@ -90,40 +103,35 @@ public class Sequence : IAsyncDisposable
         }
     }
 
-    void AddByEstimate(Flight flight)
+    public async Task RepositionByEstimate(Flight flight, CancellationToken cancellationToken)
     {
-        if (_flights.Count == 0)
-        {
-            _flights.Add(flight);
-            return;
-        }
-        
-        // TODO: Account for runway mode changes if necessary
-        var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
-        _flights.Insert(index, flight);
-    }
+        await _semaphore.WaitAsync(cancellationToken);
 
-    void RepositionByEstimate(Flight flight)
-    {
-        if (_flights.Count == 0)
+        try
         {
-            _flights.Add(flight);
-            return;
-        }
-        
-        // TODO: Account for runway mode changes if necessary
-        var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
+            if (_flights.Count == 0)
+            {
+                _flights.Add(flight);
+                return;
+            }
 
-        var currentIndex = _flights.IndexOf(flight);
-        if (currentIndex == -1)
-        {
-            _flights.Insert(index, flight);
+            // TODO: Account for runway mode changes if necessary
+            var index = _flights.FindLastIndex(f =>
+                !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
+
+            var currentIndex = _flights.IndexOf(flight);
+            if (currentIndex == -1)
+            {
+                _flights.Insert(index, flight);
+            }
+            else if (currentIndex != index)
+            {
+                if (index > currentIndex) index--;
+            }
         }
-        else if (currentIndex != index)
+        finally
         {
-            if (index > currentIndex) index--;
-            _flights.Remove(flight);
-            _flights.Insert(index, flight);
+            _semaphore.Release();
         }
     }
 
@@ -141,7 +149,7 @@ public class Sequence : IAsyncDisposable
             // TODO: Additional validation
             _pending.Add(flight);
             
-            await _mediator.Publish(new SequenceModifiedNotification(this.ToDto()), cancellationToken);
+            await _mediator.Publish(new SequenceModifiedNotification(this), cancellationToken);
         }
         finally
         {
@@ -171,17 +179,21 @@ public class Sequence : IAsyncDisposable
         {
             try
             {
-                // TODO: Calculate ETA_FF
-                // TODO: Calculate runway and terminal trajectories
-                // TODO: Calculate delay and mode computations
-                // TODO: Optimisation
                 // TODO: Remove completed flights after a certain time
 
                 await _semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    // BUG: Flights on the ground at other airports are being put in the front of the sequence
-                    var flights = ComputeSequence(_flights);
+                    foreach (var flight in _flights)
+                    {
+                        CalculateEstimates(flight);
+                    }
+                    
+                    var flights = _scheduler.ScheduleFlights(
+                        _flights,
+                        _blockoutPeriods.ToArray(),
+                        CurrentRunwayMode);
+                    
                     _flights.Clear();
                     _flights.AddRange(flights);
                 }
@@ -190,7 +202,7 @@ public class Sequence : IAsyncDisposable
                     _semaphore.Release();
                 }
             
-                await _mediator.Publish(new SequenceModifiedNotification(this.ToDto()), cancellationToken);
+                await _mediator.Publish(new SequenceModifiedNotification(this), cancellationToken);
             }
             catch (Exception exception)
             {
@@ -203,272 +215,324 @@ public class Sequence : IAsyncDisposable
         }
     }
 
-    BlockoutPeriod? FindBlockoutPeriodAt(DateTimeOffset dateTimeOffset, string runway)
-    {
-        return _blockoutPeriods.FirstOrDefault(bp => bp.RunwayIdentifier == runway && bp.StartTime < dateTimeOffset && bp.EndTime > dateTimeOffset);
-    }
-
-    public Flight[] ComputeSequence(IReadOnlyList<Flight> flights)
-    {
-        var sequence = new List<Flight>();
-        // var maxDelayPass = new List<Flight>();
-        var frozenPass = new List<Flight>();
-        
-        foreach (var flight in flights)
-        {
-            switch (flight.State)
-            {
-                case State.Frozen:
-                case State.SuperStable:
-                    frozenPass.Add(flight);
-                    break;
-                
-                case State.Stable:
-                case State.Unstable:
-                    if (sequence.Count == 0)
-                    {
-                        BlockoutPeriod? blockoutPeriod = null;
-                        if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-                            blockoutPeriod = FindBlockoutPeriodAt(
-                                flight.EstimatedLandingTime,
-                                flight.AssignedRunwayIdentifier);
-                        
-                        if (blockoutPeriod is null)
-                        {
-                            flight.SetFlowControls(FlowControls.ProfileSpeed);
-
-                            CalculateEstimates(flight);
-                            
-                            if (flight.EstimatedFeederFixTime.HasValue)
-                                flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
-                            
-                            flight.SetLandingTime(flight.EstimatedLandingTime);
-                        }
-                        else
-                        {
-                            // Set the landing time to the end of the blockout period
-                            
-                            if (flight.EstimatedFeederFixTime.HasValue)
-                            {
-                                // TODO: Calculate STAR ETI
-                                var feederFixTime = blockoutPeriod.EndTime -
-                                                    (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value);
-                                flight.SetFeederFixTime(feederFixTime);
-                            }
-                            
-                            flight.SetLandingTime(blockoutPeriod.EndTime);
-                        }
-                    }
-                    else
-                    {
-                        var leadingFlight = sequence.Last();
-                        var landingTime = leadingFlight.ScheduledLandingTime + _separationRuleProvider.GetRequiredSpacing(leadingFlight, flight, CurrentRunwayMode);
-                        
-                        BlockoutPeriod? blockoutPeriod = null;
-                        if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-                            blockoutPeriod = FindBlockoutPeriodAt(
-                                flight.EstimatedLandingTime,
-                                flight.AssignedRunwayIdentifier);
-                        
-                        // Inside blockout period, push back landing time
-                        var earliestLandingTime = blockoutPeriod?.EndTime ?? landingTime;
-                        if (blockoutPeriod is not null)
-                        {
-                            // TODO: Re-calculate runway assignment when the runway mode is going to change
-                            AssignFeeder(flight);
-                            AssignRunway(flight);
-                            CalculateEstimates(flight);
-                        }
-
-                        // Don't speed the flight up to make the earliest landing time
-                        if (earliestLandingTime < flight.EstimatedLandingTime)
-                        {
-                            if (flight.EstimatedFeederFixTime.HasValue)
-                                flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
-                            
-                            flight.SetLandingTime(flight.EstimatedLandingTime);
-                            flight.SetFlowControls(FlowControls.ProfileSpeed);
-                            CalculateEstimates(flight);
-                            break;
-                        }
-
-                        // if (flight.MaxDelay < TimeSpan.MaxValue && flight.EstimatedLandingTime != earliestLandingTime)//insert these after first pass
-                        // {
-                        //     maxDelayPass.Add(flight);
-                        //     break;
-                        // }
-
-                        // If we're here, there is a delay
-                        var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-                        if (performanceData.IsJet)
-                        {
-                            flight.SetFlowControls(FlowControls.S250);
-                            CalculateEstimates(flight);
-                        }
-                        
-                        if (flight.EstimatedFeederFixTime.HasValue)
-                            flight.SetFeederFixTime(landingTime + (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
-                        
-                        flight.SetLandingTime(landingTime);
-                    }
-                            
-                    sequence.Add(flight);
-                    break;
-            }
-        }
-        
-        // foreach (var flight in maxDelayPass.OrderBy(f => f.EstimatedLandingTime).ThenBy(f => f.TotalDelayToRunway))
-        // {
-        //     var i = sequence.FindLastIndex(f =>
-        //         flight.ScheduledLandingTime + GetRequiredSpacing(f, flight) - flight.EstimatedLandingTime < flight.MaxDelay + GetRequiredSpacing(f, flight)) + 1;
-        //     sequence.Insert(i, flight);
-        //     
-        //     flight.SetLandingTime(flight.EstimatedLandingTime);
-        //     if (flight.EstimatedFeederFixTime.HasValue)
-        //         flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
-        //     
-        //     DoSequencePass(i, sequence);
-        // }
-
-        // TODO: Confirm what this does
-        foreach (var flight in frozenPass.OrderBy(f => f.ScheduledLandingTime))
-        {
-            var orderedTimes = flights.OrderBy(k => k.ScheduledLandingTime).ToList();
-            
-            // var i = sequence.FindLastIndex(f => (f.State > Flight.States.Stable && sequenceTimes[f][0] < flight.STA) || (sequenceTimes[f][0] + GetRequiredSpacing(airport, f, flight) < flight.STA)) + 1;
-            var leader = orderedTimes.FindLast(k => 
-                (k.State > State.Stable && k.ScheduledLandingTime < flight.ScheduledLandingTime) ||
-                (k.ScheduledLandingTime + _separationRuleProvider.GetRequiredSpacing(k, flight, CurrentRunwayMode) < flight.ScheduledLandingTime));
-            
-            var i = 0;
-            if (leader is not null)
-                i = sequence.IndexOf(leader) + 1;
-            
-            sequence.Insert(i, flight);
-            // sequenceTimes.Add(flight, new DateTime[2] { flight.STA, flight.STA_FF });
-            
-            DoSequencePass(i, sequence);
-        }
-
-        return sequence.ToArray();
-    }
-
-    void DoSequencePass(int position, List<Flight> sequence)
-    {
-        for (var i = position; i < sequence.Count; i++)
-        {
-            var flight = sequence[i];
-            
-            // Do not alter STA for anything SuperStable or beyond
-            if (flight.State > State.Stable)
-                continue;
-
-            if (i == 0)
-            {
-                var landingTime = flight.EstimatedLandingTime;
-                
-                BlockoutPeriod? blockoutPeriod = null;
-                if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-                    blockoutPeriod = FindBlockoutPeriodAt(
-                        flight.EstimatedLandingTime,
-                        flight.AssignedRunwayIdentifier);
-                
-                if (blockoutPeriod is not null)
-                {
-                    // TODO:
-                    // if (f.ModeProcessed != airport.FutureMode)
-                    // {
-                    //     AssignFeeder(airport, f);
-                    //     AssignRunway(airport, f);
-                    //     CalculateEstimates(airport, f);
-                    // }
-                    
-                    AssignFeeder(flight);
-                    AssignRunway(flight);
-                    CalculateEstimates(flight);
-                    
-                    landingTime = blockoutPeriod.EndTime;
-                }
-
-                if (landingTime == flight.EstimatedLandingTime)
-                {
-                    flight.SetLandingTime(landingTime);
-                    
-                    if (flight.EstimatedFeederFixTime.HasValue)
-                        flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
-                }
-                else
-                {
-                    var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-                    if (performanceData.IsJet)
-                    {
-                        flight.SetFlowControls(FlowControls.S250);
-                        CalculateEstimates(flight);
-                    }
-                    
-                    flight.SetLandingTime(landingTime);
-                    
-                    if (flight.EstimatedFeederFixTime.HasValue)
-                        flight.SetFeederFixTime(landingTime + (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
-                }
-            }
-            else
-            {
-                var leader = sequence[i - 1];
-                
-                var landingTime = leader.EstimatedLandingTime + _separationRuleProvider.GetRequiredSpacing(leader, flight, CurrentRunwayMode);
-                
-                BlockoutPeriod? blockoutPeriod = null;
-                if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-                    blockoutPeriod = FindBlockoutPeriodAt(
-                        flight.EstimatedLandingTime,
-                        flight.AssignedRunwayIdentifier);
-                
-                if (blockoutPeriod is not null)
-                {
-                    // TODO:
-                    // if (f.ModeProcessed != airport.FutureMode)
-                    // {
-                    //     AssignFeeder(airport, f);
-                    //     AssignRunway(airport, f);
-                    //     CalculateEstimates(airport, f);
-                    // }
-                    
-                    AssignFeeder(flight);
-                    AssignRunway(flight);
-                    CalculateEstimates(flight);
-                    
-                    landingTime = blockoutPeriod.EndTime;
-                }
-
-                if (landingTime <= flight.EstimatedLandingTime)
-                {
-                    flight.SetLandingTime(landingTime);
-                    
-                    if (flight.EstimatedFeederFixTime.HasValue)
-                        flight.SetFeederFixTime(landingTime + (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
-                    
-                    // There are no more changes to process if this time is just ETA.
-                    if (i != 1)
-                        break;
-                }
-                else
-                {
-                    var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-                    if (performanceData.IsJet)
-                    {
-                        flight.SetFlowControls(FlowControls.S250);
-                        CalculateEstimates(flight);
-                    }
-                    
-                    flight.SetLandingTime(landingTime);
-                    
-                    if (flight.EstimatedFeederFixTime.HasValue)
-                        flight.SetFeederFixTime(landingTime + (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
-                }
-            }
-        }
-    }
+    // public Flight[] ComputeSequence_OLD(IReadOnlyList<Flight> flights)
+    // {
+    //     var sequence = new List<Flight>();
+    //     // var maxDelayPass = new List<Flight>();
+    //     var frozenPass = new List<Flight>();
+    //     
+    //     foreach (var flight in flights)
+    //     {
+    //         switch (flight.State)
+    //         {
+    //             case State.Frozen:
+    //             case State.SuperStable:
+    //                 frozenPass.Add(flight);
+    //                 break;
+    //             
+    //             case State.Stable:
+    //             case State.Unstable:
+    //                 if (sequence.Count == 0)
+    //                 {
+    //                     BlockoutPeriod? blockoutPeriod = null;
+    //                     if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+    //                         blockoutPeriod = FindBlockoutPeriodAt(
+    //                             flight.EstimatedLandingTime,
+    //                             flight.AssignedRunwayIdentifier);
+    //                     
+    //                     if (blockoutPeriod is null)
+    //                     {
+    //                         flight.SetFlowControls(FlowControls.ProfileSpeed);
+    //
+    //                         CalculateEstimates(flight);
+    //                         
+    //                         if (flight.EstimatedFeederFixTime.HasValue)
+    //                             flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
+    //                         
+    //                         flight.SetLandingTime(flight.EstimatedLandingTime);
+    //                     }
+    //                     else
+    //                     {
+    //                         // Set the landing time to the end of the blockout period
+    //                         if (flight.EstimatedFeederFixTime.HasValue)
+    //                         {
+    //                             // TODO: Calculate STAR ETI
+    //                             var feederFixTime = blockoutPeriod.EndTime -
+    //                                                 (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value);
+    //                             flight.SetFeederFixTime(feederFixTime);
+    //                         }
+    //                         
+    //                         flight.SetLandingTime(blockoutPeriod.EndTime);
+    //                     }
+    //                 }
+    //                 else
+    //                 {
+    //                     var leadingFlight = sequence.Last();
+    //                     var landingTime = leadingFlight.ScheduledLandingTime + _separationRuleProvider.GetRequiredSpacing(leadingFlight, flight, CurrentRunwayMode);
+    //                     
+    //                     BlockoutPeriod? blockoutPeriod = null;
+    //                     if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+    //                         blockoutPeriod = FindBlockoutPeriodAt(
+    //                             flight.EstimatedLandingTime,
+    //                             flight.AssignedRunwayIdentifier);
+    //                     
+    //                     // Inside blockout period, push back landing time
+    //                     var earliestLandingTime = blockoutPeriod?.EndTime ?? landingTime;
+    //                     if (blockoutPeriod is not null)
+    //                     {
+    //                         // TODO: Re-calculate runway assignment when the runway mode is going to change
+    //                         AssignFeeder(flight);
+    //                         AssignRunway(flight);
+    //                         CalculateEstimates(flight);
+    //                     }
+    //
+    //                     // Don't speed the flight up to make the earliest landing time
+    //                     if (earliestLandingTime < flight.EstimatedLandingTime)
+    //                     {
+    //                         if (flight.EstimatedFeederFixTime.HasValue)
+    //                             flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
+    //                         
+    //                         flight.SetLandingTime(flight.EstimatedLandingTime);
+    //                         flight.SetFlowControls(FlowControls.ProfileSpeed);
+    //                         CalculateEstimates(flight);
+    //                         break;
+    //                     }
+    //
+    //                     // if (flight.MaxDelay < TimeSpan.MaxValue && flight.EstimatedLandingTime != earliestLandingTime)//insert these after first pass
+    //                     // {
+    //                     //     maxDelayPass.Add(flight);
+    //                     //     break;
+    //                     // }
+    //
+    //                     // If we're here, there is a delay
+    //                     var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+    //                     if (performanceData is not null && performanceData.IsJet)
+    //                     {
+    //                         flight.SetFlowControls(FlowControls.S250);
+    //                         CalculateEstimates(flight);
+    //                     }
+    //
+    //                     // Get STA_FF from STAR ETI
+    //                     if (flight.FeederFixIdentifier is not null &&
+    //                         flight.AssignedStarIdentifier is not null &&
+    //                         flight.AssignedRunwayIdentifier is not null)
+    //                     {
+    //                         var arrivalInterval = _arrivalLookup.GetArrivalInterval(
+    //                             flight.DestinationIdentifier,
+    //                             flight.AssignedStarIdentifier,
+    //                             flight.AssignedRunwayIdentifier);
+    //
+    //                         if (arrivalInterval is not null)
+    //                         {
+    //                             var feederFixTime = landingTime - arrivalInterval.Value;
+    //                             flight.SetFeederFixTime(feederFixTime);
+    //                         }
+    //                     }
+    //                     else
+    //                     {
+    //                         if (flight.EstimatedFeederFixTime.HasValue)
+    //                             flight.SetFeederFixTime(landingTime - (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
+    //                     }
+    //                     
+    //                     flight.SetLandingTime(landingTime);
+    //                 }
+    //                         
+    //                 sequence.Add(flight);
+    //                 break;
+    //         }
+    //     }
+    //     
+    //     // foreach (var flight in maxDelayPass.OrderBy(f => f.EstimatedLandingTime).ThenBy(f => f.TotalDelayToRunway))
+    //     // {
+    //     //     var i = sequence.FindLastIndex(f =>
+    //     //         flight.ScheduledLandingTime + GetRequiredSpacing(f, flight) - flight.EstimatedLandingTime < flight.MaxDelay + GetRequiredSpacing(f, flight)) + 1;
+    //     //     sequence.Insert(i, flight);
+    //     //     
+    //     //     flight.SetLandingTime(flight.EstimatedLandingTime);
+    //     //     if (flight.EstimatedFeederFixTime.HasValue)
+    //     //         flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
+    //     //     
+    //     //     DoSequencePass(i, sequence);
+    //     // }
+    //
+    //     // TODO: Confirm what this does
+    //     foreach (var flight in frozenPass.OrderBy(f => f.ScheduledLandingTime))
+    //     {
+    //         var orderedTimes = flights.OrderBy(k => k.ScheduledLandingTime).ToList();
+    //         
+    //         // var i = sequence.FindLastIndex(f => (f.State > Flight.States.Stable && sequenceTimes[f][0] < flight.STA) || (sequenceTimes[f][0] + GetRequiredSpacing(airport, f, flight) < flight.STA)) + 1;
+    //         var leader = orderedTimes.FindLast(k => 
+    //             (k.State > State.Stable && k.ScheduledLandingTime < flight.ScheduledLandingTime) ||
+    //             (k.ScheduledLandingTime + _separationRuleProvider.GetRequiredSpacing(k, flight, CurrentRunwayMode) < flight.ScheduledLandingTime));
+    //         
+    //         var i = 0;
+    //         if (leader is not null)
+    //             i = sequence.IndexOf(leader) + 1;
+    //         
+    //         sequence.Insert(i, flight);
+    //         // sequenceTimes.Add(flight, new DateTime[2] { flight.STA, flight.STA_FF });
+    //         
+    //         DoSequencePass(i, sequence);
+    //     }
+    //
+    //     return sequence.ToArray();
+    // }
+    //
+    // void DoSequencePass(int position, List<Flight> sequence)
+    // {
+    //     for (var i = position; i < sequence.Count; i++)
+    //     {
+    //         var flight = sequence[i];
+    //         
+    //         // Do not alter STA for anything SuperStable or beyond
+    //         if (flight.State > State.Stable)
+    //             continue;
+    //
+    //         if (i == 0)
+    //         {
+    //             var landingTime = flight.EstimatedLandingTime;
+    //             
+    //             BlockoutPeriod? blockoutPeriod = null;
+    //             if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+    //                 blockoutPeriod = FindBlockoutPeriodAt(
+    //                     flight.EstimatedLandingTime,
+    //                     flight.AssignedRunwayIdentifier);
+    //             
+    //             if (blockoutPeriod is not null)
+    //             {
+    //                 // TODO:
+    //                 // if (f.ModeProcessed != airport.FutureMode)
+    //                 // {
+    //                 //     AssignFeeder(airport, f);
+    //                 //     AssignRunway(airport, f);
+    //                 //     CalculateEstimates(airport, f);
+    //                 // }
+    //                 
+    //                 AssignFeeder(flight);
+    //                 AssignRunway(flight);
+    //                 CalculateEstimates(flight);
+    //                 
+    //                 landingTime = blockoutPeriod.EndTime;
+    //             }
+    //
+    //             if (landingTime == flight.EstimatedLandingTime)
+    //             {
+    //                 flight.SetLandingTime(landingTime);
+    //                 
+    //                 if (flight.EstimatedFeederFixTime.HasValue)
+    //                     flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
+    //             }
+    //             else
+    //             {
+    //                 var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+    //                 if (performanceData is not null && performanceData.IsJet)
+    //                 {
+    //                     flight.SetFlowControls(FlowControls.S250);
+    //                     CalculateEstimates(flight);
+    //                 }
+    //
+    //                 // Get STA_FF from STAR ETI
+    //                 if (flight.FeederFixIdentifier is not null &&
+    //                     flight.AssignedStarIdentifier is not null &&
+    //                     flight.AssignedRunwayIdentifier is not null)
+    //                 {
+    //                     var arrivalInterval = _arrivalLookup.GetArrivalInterval(
+    //                         flight.DestinationIdentifier,
+    //                         flight.AssignedStarIdentifier,
+    //                         flight.AssignedRunwayIdentifier);
+    //
+    //                     if (arrivalInterval is not null)
+    //                     {
+    //                         var feederFixTime = landingTime - arrivalInterval.Value;
+    //                         flight.SetFeederFixTime(feederFixTime);
+    //                     }
+    //                 }
+    //                 else
+    //                 {
+    //                     if (flight.EstimatedFeederFixTime.HasValue)
+    //                         flight.SetFeederFixTime(landingTime - (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
+    //                 }
+    //                     
+    //                 flight.SetLandingTime(landingTime);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             var leader = sequence[i - 1];
+    //             
+    //             var landingTime = leader.EstimatedLandingTime + _separationRuleProvider.GetRequiredSpacing(leader, flight, CurrentRunwayMode);
+    //             
+    //             BlockoutPeriod? blockoutPeriod = null;
+    //             if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+    //                 blockoutPeriod = FindBlockoutPeriodAt(
+    //                     flight.EstimatedLandingTime,
+    //                     flight.AssignedRunwayIdentifier);
+    //             
+    //             if (blockoutPeriod is not null)
+    //             {
+    //                 // TODO:
+    //                 // if (f.ModeProcessed != airport.FutureMode)
+    //                 // {
+    //                 //     AssignFeeder(airport, f);
+    //                 //     AssignRunway(airport, f);
+    //                 //     CalculateEstimates(airport, f);
+    //                 // }
+    //                 
+    //                 AssignFeeder(flight);
+    //                 AssignRunway(flight);
+    //                 CalculateEstimates(flight);
+    //                 
+    //                 landingTime = blockoutPeriod.EndTime;
+    //             }
+    //
+    //             if (landingTime <= flight.EstimatedLandingTime)
+    //             {
+    //                 flight.SetLandingTime(landingTime);
+    //                 
+    //                 if (flight.EstimatedFeederFixTime.HasValue)
+    //                     flight.SetFeederFixTime(landingTime + (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
+    //                 
+    //                 // There are no more changes to process if this time is just ETA.
+    //                 if (i != 1)
+    //                     break;
+    //             }
+    //             else
+    //             {
+    //                 // If we're here, there is a delay
+    //                 var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+    //                 if (performanceData is not null && performanceData.IsJet)
+    //                 {
+    //                     flight.SetFlowControls(FlowControls.S250);
+    //                     CalculateEstimates(flight);
+    //                 }
+    //
+    //                 // Get STA_FF from STAR ETI
+    //                 if (flight.FeederFixIdentifier is not null &&
+    //                     flight.AssignedStarIdentifier is not null &&
+    //                     flight.AssignedRunwayIdentifier is not null)
+    //                 {
+    //                     var arrivalInterval = _arrivalLookup.GetArrivalInterval(
+    //                         flight.DestinationIdentifier,
+    //                         flight.AssignedStarIdentifier,
+    //                         flight.AssignedRunwayIdentifier);
+    //
+    //                     if (arrivalInterval is not null)
+    //                     {
+    //                         var feederFixTime = landingTime - arrivalInterval.Value;
+    //                         flight.SetFeederFixTime(feederFixTime);
+    //                     }
+    //                 }
+    //                 else
+    //                 {
+    //                     if (flight.EstimatedFeederFixTime.HasValue)
+    //                         flight.SetFeederFixTime(landingTime - (flight.EstimatedLandingTime - flight.EstimatedFeederFixTime.Value));
+    //                 }
+    //                     
+    //                 flight.SetLandingTime(landingTime);
+    //             }
+    //         }
+    //     }
+    // }
 
     void AssignFeeder(Flight flight)
     {
@@ -477,217 +541,25 @@ public class Sequence : IAsyncDisposable
             flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate);
     }
 
-    void AssignRunway(Flight flight)
+    void AssignRunway(Flight _)
     {
+        // TODO: Implement automatic runway assignment
         // TODO: Account for runway mode changes
-        var runwayMode = CurrentRunwayMode;
-        
-        // TODO: Account for manual runway selection
-        // if (flight.ManualRunway)
-        //     return;
-        
-        var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        var candidates = new List<RunwayAssignmentRuleDto>();
-        
-        foreach (var runwayAssignmentRule in runwayMode.AssignmentRules)
-        {
-            var typeMatch = performanceData.IsJet == runwayAssignmentRule.Jets
-                            || !performanceData.IsJet == runwayAssignmentRule.NonJets;
-            
-            var wakeMatch = (runwayAssignmentRule.Heavy && performanceData.WakeCategory is WakeCategory.Heavy or WakeCategory.SuperHeavy)
-                || (runwayAssignmentRule.Medium && performanceData.WakeCategory is WakeCategory.Medium)
-                || (runwayAssignmentRule.Light && performanceData.WakeCategory is WakeCategory.Light)
-                || runwayAssignmentRule is not { Heavy: true, Medium: true, Light: true };
-
-            var feederMatch = false;
-            if (runwayAssignmentRule.FeederFixes.Any() && !string.IsNullOrEmpty(flight.FeederFixIdentifier))
-                feederMatch = runwayAssignmentRule.FeederFixes.Contains(flight.FeederFixIdentifier);
-            
-            if (typeMatch && feederMatch && wakeMatch)
-                candidates.Add(runwayAssignmentRule);
-        }
-
-        if (!candidates.Any())
-            return;
-
-        if (candidates.Count == 1)
-        {
-            flight.SetRunway(candidates.Single().RunwayIdentifier);
-            return;
-        }
-        
-        // Try assigning the highest priority
-        var topPriority = candidates.Min(c => c.Priority);
-        candidates.RemoveAll(r => r.Priority != topPriority);
-        if (candidates.Count == 1)
-        {
-            flight.SetRunway(candidates.Single().RunwayIdentifier);
-            return;
-        }
-        
-        // Defer to runway direction
-        if (string.IsNullOrEmpty(flight.FeederFixIdentifier) && flight.LastKnownPosition.HasValue)
-        {
-            if (flight.Estimates.Length == 0)
-            {
-                flight.SetRunway(candidates.First().RunwayIdentifier);
-                return;
-            }
-
-            var airportCoords = flight.Estimates.Last().Coordinate;
-            
-            var track = Calculations.CalculateTrack(flight.LastKnownPosition.Value.ToCoordinate(), airportCoords);
-            
-            var delta = double.MaxValue;
-            var winner = candidates.First();
-            foreach(var rule in candidates)
-            {
-                // Approximate the runway heading using the first two digits
-                if (rule.RunwayIdentifier.Length < 2 ||
-                    !int.TryParse(rule.RunwayIdentifier.Substring(0, 2), out var approximateRunwayHeading))
-                    continue;
-                
-                approximateRunwayHeading *= 10;
-                double test = Math.Abs(track - approximateRunwayHeading);
-                if (test < delta)
-                {
-                    delta = test;
-                    winner = rule;
-                }
-            }
-            
-            flight.SetRunway(winner.RunwayIdentifier);
-        }
-
-        // Defer to track miles
-        var distanceWinner = candidates.First();
-        var shortest = int.MaxValue;
-        foreach (var rule in candidates)
-        {
-            var trackMiles = GetTrackMilesToRunway(flight.AssignedStarIdentifier, flight.AssignedRunwayIdentifier);
-
-            if (trackMiles <= 0)
-                continue;
-            
-            if (trackMiles < shortest)
-            {
-                distanceWinner = rule;
-                shortest = trackMiles;
-            }
-        }
-
-        flight.SetRunway(distanceWinner.RunwayIdentifier);
     }
 
     void CalculateEstimates(Flight flight)
     {
-        if (flight.Estimates.Length == 0 ||
-            (flight.State > State.Stable && flight.ScheduledLandingTime < _clock.UtcNow()) ||
+        if ((flight.State > State.Stable && flight.ScheduledLandingTime < _clock.UtcNow()) ||
             flight.State == State.Frozen)
             return;
 
-        FixEstimate? feederFix = null;
-        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
-            feederFix = flight.Estimates.FirstOrDefault(f => f.FixIdentifier == flight.FeederFixIdentifier);
-
-        if (feederFix is null)
-        {
-            // Use system estimate for landing time if no feeder fix exists
-            flight.UpdateLandingEstimate(flight.Estimates.Last().Estimate);
-        }
-        else
-        {
-            // When a feeder fix does exist, calculate the landing time based on ETA_FF + STAR ETI
-            
-            var feederFixEstimate = DateTimeOffset.MaxValue;
-            if (feederFix.Estimate != DateTimeOffset.MaxValue)
-            {
-                // Use system estimate if available for ETA_FF
-                feederFixEstimate = feederFix.Estimate;
-            }
-            else if (flight.LastKnownPosition is not null && flight.LastKnownPosition.Value.VerticalTrack != VerticalTrack.Climbing && flight.LastKnownPosition.Value.GroundSpeed > 60)
-            {
-                // Otherwise, calculate ETA_FF using the last known position and speed
-                var dist = Calculations.CalculateDistanceNauticalMiles(flight.LastKnownPosition.Value.ToCoordinate(), feederFix.Coordinate);
-
-                var radar = DateTime.UtcNow + TimeSpan.FromHours(dist / flight.LastKnownPosition.Value.GroundSpeed);
-
-                if (dist < 50 || feederFixEstimate == DateTime.MaxValue)
-                {
-                    feederFixEstimate = radar;
-                }
-                else if (dist < 120)
-                {
-                    var delta = feederFixEstimate - radar;
-                    feederFixEstimate = radar + TimeSpan.FromMinutes(delta.TotalMinutes / 2.0);// take average
-                }
-            }
-
-            // Calculate STAR ETI based on track miles and aircraft trajectory and performance
-            var trackMiles = 0;
-            if (!string.IsNullOrEmpty(flight.AssignedStarIdentifier) && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-            {
-                trackMiles = GetTrackMilesToRunway(flight.AssignedRunwayIdentifier, flight.AssignedRunwayIdentifier);
-            }
-            
-            flight.UpdateFeederFixEstimate(feederFixEstimate);
-            
-            // Use system estimate for landing time if no trajectory data exists
-            if (trackMiles <= 0 || flight.Trajectory.Length == 0 || feederFixEstimate == DateTime.MaxValue)
-            {
-                flight.UpdateLandingEstimate(flight.Estimates.Last().Estimate);
-                return;
-            }
-            
-            var performanceData = _performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-            var maxDescentSpeed = performanceData.GetDescentSpeedAt(20000);
-
-            var takeDistance = 0d;
-            var i = 1;
-            var eet = TimeSpan.Zero;
-            while (takeDistance < trackMiles && i < flight.Trajectory.Length)
-            {
-                var lastPos = flight.Trajectory[flight.Trajectory.Length - i];
-                var nextPos = flight.Trajectory[flight.Trajectory.Length - (++i)];
-
-                takeDistance += Calculations.CalculateDistanceNauticalMiles(lastPos.Position, nextPos.Position);
-                eet = eet.Add(lastPos.Interval);
-
-                if (!performanceData.IsJet)
-                    continue;
-
-                switch(flight.FlowControls)
-                {
-                    case FlowControls.MaxSpeed:
-                        if(lastPos.Altitude > 6000)//increase speeds to cancel 250 knot restriction
-                        {
-                            var profileSpeed = performanceData.GetDescentSpeedAt(lastPos.Altitude);
-                            if(maxDescentSpeed > profileSpeed)
-                            {
-                                var ratio = maxDescentSpeed / profileSpeed;
-                                var seconds = lastPos.Interval.TotalSeconds - (lastPos.Interval.TotalSeconds * ratio);
-                                eet = eet.Add(TimeSpan.FromSeconds(seconds)); // remove the difference
-                            }
-                        }
-                        break;
-                    
-                    case FlowControls.S250:
-                        if(lastPos.Altitude > 10000)
-                        {
-                            var profileSpeed = performanceData.GetDescentSpeedAt(lastPos.Altitude);
-                            if(profileSpeed > 250)
-                            {
-                                var ratio = profileSpeed / 250.0;
-                                var seconds = (lastPos.Interval.TotalSeconds * ratio) - lastPos.Interval.TotalSeconds;
-                                eet = eet.Add(TimeSpan.FromSeconds(seconds));
-                            }
-                        }
-                        break;
-                }
-            }
-
-            flight.UpdateLandingEstimate(feederFixEstimate + eet);
-        }
+        var feederFixEstimate = _estimateProvider.GetFeederFixEstimate(flight);
+        if (feederFixEstimate is not null)
+            flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
+        
+        var landingEstimate = _estimateProvider.GetLandingEstimate(flight);
+        if (landingEstimate is not null)
+            flight.UpdateLandingEstimate(landingEstimate.Value);
     }
 
     public async ValueTask DisposeAsync()
@@ -709,10 +581,5 @@ public class Sequence : IAsyncDisposable
             else
                 resource.Dispose();
         }
-    }
-
-    int GetTrackMilesToRunway(string arrivalIdentifier, string runwayIdentifier)
-    {
-        throw new NotImplementedException();
     }
 }

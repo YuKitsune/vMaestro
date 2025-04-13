@@ -1,6 +1,4 @@
-﻿using Maestro.Core.Dtos;
-using Maestro.Core.Dtos.Messages;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using MediatR;
 
@@ -10,10 +8,14 @@ public record FlightPositionReport(
     string Callsign,
     string Destination,
     FlightPosition Position,
-    FixDto[] Estimates)
+    FixEstimate[] Estimates)
     :  INotification;
 
-public class FlightPositionReportHandler(ISequenceProvider sequenceProvider, IMediator mediator, IClock clock)
+public class FlightPositionReportHandler(
+    ISequenceProvider sequenceProvider,
+    IFixLookup fixLookup,
+    IMediator mediator,
+    IClock clock)
     : INotificationHandler<FlightPositionReport>
 {
     public async Task Handle(FlightPositionReport notification, CancellationToken cancellationToken)
@@ -35,14 +37,14 @@ public class FlightPositionReportHandler(ISequenceProvider sequenceProvider, IMe
             return;
         
         // TODO: What if the aircraft isn't planned via a feeder?
-        var feederFix = notification.Estimates.LastOrDefault(x => x.Identifier == flight.FeederFixIdentifier);
+        var feederFix = fixLookup.FindFix(flight.FeederFixIdentifier);
         if (feederFix is null)
             return;
         
         // TODO: Calculate distance to feeder (Track miles or direct track?)
         var distanceToFeeder = Calculations.CalculateDistanceNauticalMiles(
-            notification.Position.ToCoordinate(),
-            feederFix.Position);
+            notification.Position.Coordinate,
+            feederFix.Coordinate);
 
         var updateRate = distanceToFeeder > vsp ? updateRateBeyondRange : updateRateWithinRange;
         var shouldUpdate = !flight.PositionUpdated.HasValue ||
@@ -52,21 +54,7 @@ public class FlightPositionReportHandler(ISequenceProvider sequenceProvider, IMe
 
         flight.UpdatePosition(
             notification.Position,
-            notification.Estimates.Select(x => new FixEstimate(x.Identifier, x.Position, x.Estimate)).ToArray(),
+            notification.Estimates.ToArray(),
             clock);
-
-        var feederFixEstimate = flight.Estimates.SingleOrDefault(x => x.FixIdentifier == flight.FeederFixIdentifier);
-        if (feederFixEstimate is not null)
-        {
-            flight.UpdateFeederFixEstimate(feederFixEstimate.Estimate);
-        }
-        
-        // TODO: Don't calculate ETA here, move it into the sequence.
-        //  ETA should be ETA_FF + STAR ETI if a runway and STAR have been provided.
-        //  Otherwise use the system provided ETA.
-        var landingEstimate = flight.Estimates.Last();
-        flight.UpdateLandingEstimate(landingEstimate.Estimate);
-        
-        await mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
     }
 }

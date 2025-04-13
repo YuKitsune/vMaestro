@@ -4,5 +4,5 @@ namespace Maestro.Core.Configuration;
 
 public interface ISeparationConfigurationProvider
 {
-    public SeparationRuleConfiguration[] GetSeparationRules();
+    public SeparationRule[] GetSeparationRules();
 }

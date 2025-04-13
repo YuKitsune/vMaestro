@@ -18,7 +18,7 @@ public class Flight
 
     public State State { get; private set; } = State.Unstable;
 
-    public bool PositionIsFixed => State is not State.Unstable or State.Stable;
+    public bool PositionIsFixed => State is not State.Unstable and not State.Stable;
 
     public DateTimeOffset? InitialFeederFixTime { get; set; }
     public DateTimeOffset? EstimatedFeederFixTime { get; set; } // ETA_FF
@@ -38,8 +38,6 @@ public class Flight
     public DateTimeOffset? PositionUpdated { get; private set; }
     public FlightPosition? LastKnownPosition { get; private set; }
     public FixEstimate[] Estimates { get; private set; } = [];
-    
-    public PositionPrediction[] Trajectory { get; private set; } = Array.Empty<PositionPrediction>();
     
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
 
@@ -109,21 +107,8 @@ public class Flight
     }
 }
 
-public class PositionPrediction
-{
-    public Coordinate Position { get; }
-
-    public int Altitude
-    {
-        get;
-        
-    }
-    public TimeSpan Interval { get; }
-}
-
 public enum FlowControls
 {
     ProfileSpeed,
-    MaxSpeed,
     S250
 }

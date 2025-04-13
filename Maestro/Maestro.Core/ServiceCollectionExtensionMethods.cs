@@ -9,9 +9,11 @@ public static class ServiceCollectionExtensionMethods
     public static IServiceCollection AddMaestro(this IServiceCollection services)
     {
         return services
+            .AddSingleton<IArrivalLookup, ArrivalLookup>()
+            .AddSingleton<IEstimateProvider, EstimateProvider>()
             .AddSingleton<ISeparationRuleProvider, SeparationRuleProvider>()
             .AddSingleton<ISequenceProvider, SequenceProvider>()
-            .AddSingleton<IPerformanceLookup, PerformanceLookup>()
+            .AddSingleton<IScheduler, Scheduler>()
             .AddSingleton<IClock, SystemClock>();
     }
 }

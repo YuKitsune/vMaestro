@@ -1,6 +1,6 @@
-﻿namespace Maestro.Core.Dtos.Configuration;
+﻿namespace Maestro.Core.Configuration;
 
-public class RunwayAssignmentRuleDto(
+public class RunwayAssignmentRule(
     string name,
     string runwayIdentifier,
     bool jets,

@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensionMethods
     {
         return services
             .AddSingleton<ILoggingConfigurationProvider, PluginConfigurationProvider>()
+            .AddSingleton<IEstimateConfiguration, PluginConfigurationProvider>()
             .AddSingleton<IAirportConfigurationProvider, PluginConfigurationProvider>()
             .AddSingleton<ISeparationConfigurationProvider, PluginConfigurationProvider>();
     }

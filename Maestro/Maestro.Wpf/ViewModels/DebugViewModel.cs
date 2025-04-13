@@ -1,6 +1,5 @@
-﻿using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-using Maestro.Core.Dtos.Messages;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Maestro.Core.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
@@ -18,21 +17,21 @@ public partial class DebugViewModel : ObservableObject, INotificationHandler<Seq
                     a.Callsign,
                     a.AircraftType,
                     a.WakeCategory,
-                    a.Origin,
-                    a.Destination,
+                    a.OriginIdentifier,
+                    a.DestinationIdentifier,
                     a.State,
                     -1, // TODO:
-                    a.FeederFix,
+                    a.FeederFixIdentifier,
                     a.InitialFeederFixTime,
                     a.EstimatedFeederFixTime,
                     a.ScheduledFeederFixTime,
-                    a.AssignedRunway,
+                    a.AssignedRunwayIdentifier,
                     -1, // TODO:
                     a.InitialLandingTime,
                     a.EstimatedLandingTime,
                     a.ScheduledLandingTime,
-                    a.InitialDelay,
-                    a.CurrentDelay))
+                    a.TotalDelayToRunway,
+                    a.RemainingDelayToRunway))
             .ToList();
         
         return Task.CompletedTask;

@@ -4,7 +4,6 @@ using System.Windows.Forms;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
-using Maestro.Core.Dtos;
 using Maestro.Core.Handlers;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
@@ -14,7 +13,14 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using vatsys;
 using vatsys.Plugin;
-using Coordinate = Maestro.Core.Dtos.Coordinate;
+using Coordinate = Maestro.Core.Model.Coordinate;
+
+// TODO When you come back:
+//  - Clean up the sequencing algorithm and ensure the basics are implemented
+//  - Extract the sequencing algorithm into a separate component and test the damn thing
+//  - Logging!!!
+//  - Cover use cases from roadmap with unit tests
+//  - Ask group chat about how exactly the STAR ETI calculations should work (current ground speed??? They're gonna slow down though...)
 
 namespace Maestro.Plugin
 {
@@ -71,6 +77,8 @@ namespace Maestro.Plugin
                         typeof(AssemblyMarker).Assembly,
                         typeof(Wpf.AssemblyMarker).Assembly
                     ))
+                    .AddSingleton<IFixLookup, VatsysFixLookup>()
+                    .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
                     .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
                     .BuildServiceProvider());
         }
@@ -164,7 +172,7 @@ namespace Maestro.Plugin
             
             var estimates = updated.ParsedRoute
                 .Skip(updated.ParsedRoute.OverflownIndex)
-                .Select(ToFixDto)
+                .Select(ToEstimate)
                 .ToArray();
 
             // TODO: Is there any point in tracking preactive flight plans?
@@ -185,8 +193,7 @@ namespace Maestro.Plugin
                         : VerticalTrack.Maintaining;
 
                 position = new FlightPosition(
-                    track.LatLong.Latitude,
-                    track.LatLong.Longitude,
+                    new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
                     track.CorrectedAltitude,
                     verticalTrack,
                     track.GroundSpeed);
@@ -215,13 +222,10 @@ namespace Maestro.Plugin
                 TimeSpan.Zero);
         }
 
-        static FixDto ToFixDto(FDP2.FDR.ExtractedRoute.Segment segment)
+        static FixEstimate ToEstimate(FDP2.FDR.ExtractedRoute.Segment segment)
         {
-            return new FixDto(
+            return new FixEstimate(
                 segment.Intersection.Name,
-                new Coordinate(
-                    segment.Intersection.LatLong.Latitude,
-                    segment.Intersection.LatLong.Longitude),
                 ToDateTimeOffset(segment.ETO));
         }
     }

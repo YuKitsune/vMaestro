@@ -1,6 +1,5 @@
-﻿using Maestro.Core.Dtos;
-using Maestro.Core.Dtos.Messages;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
 
@@ -16,10 +15,14 @@ public record FlightUpdatedNotification(
     string? AssignedArrival,
     bool Activated,
     FlightPosition? Position,
-    FixDto[] Estimates)
+    FixEstimate[] Estimates)
     : INotification;
 
-public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator mediator, IClock clock)
+public class FlightUpdatedHandler(
+    ISequenceProvider sequenceProvider,
+    IEstimateProvider estimateProvider,
+    IMediator mediator,
+    IClock clock)
     : INotificationHandler<FlightUpdatedNotification>
 {
     public async Task Handle(FlightUpdatedNotification notification, CancellationToken cancellationToken)
@@ -29,13 +32,13 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
             return;
         
         var flight = await sequence.TryGetFlight(notification.Callsign, cancellationToken);
-
+        var flightWasCreated = false;
         if (flight is null)
         {
             // TODO: Make configurable
             var flightCreationThreshold = TimeSpan.FromHours(2);
             
-            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.Identifier));
+            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
             var landingEstimate = notification.Estimates.Last().Estimate;
             
             // TODO: Verify if this behaviour is correct
@@ -48,6 +51,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
                 flight.Activate(clock);
                 
                 await sequence.AddPending(flight, cancellationToken);
+                flightWasCreated = true;
             }
             // Only create flights in Maestro when they're within a specified range of the feeder fix
             else if (feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
@@ -61,6 +65,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
                 flight.Activate(clock);
                 
                 await sequence.Add(flight, cancellationToken);
+                flightWasCreated = true;
             }
         }
 
@@ -68,7 +73,11 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
         {
             return;
         }
-
+        
+        // TODO: This should be automatically determined
+        flight.AssignedRunwayIdentifier = notification.AssignedRunway;
+        flight.AssignedStarIdentifier = notification.AssignedArrival;
+        
         // TODO: Revisit flight plan activation
         // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.
         // It is then updated by regular reports from the TAAATS FDP to the Maestro System.
@@ -79,13 +88,13 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
 
         if (flight is { Activated: true })
         {
-            if (notification.Position.HasValue)
+            if (notification.Position is not null)
             {
                 await mediator.Publish(
                     new FlightPositionReport(
                         flight.Callsign,
                         flight.DestinationIdentifier,
-                        notification.Position.Value,
+                        notification.Position,
                         notification.Estimates),
                     cancellationToken);
             }
@@ -93,14 +102,27 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
             SetState(flight);
             
             // TODO: Should this be limited to unstable?
-            // TODO: Calculate ETA_FF
-            // TODO: Sequence
+            
+            // Calculate estimates
+            var feederFixEstimate = estimateProvider.GetFeederFixEstimate(flight);
+            if (feederFixEstimate is not null)
+                flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
+            
+            var landingEstimate = estimateProvider.GetLandingEstimate(flight);
+            if (landingEstimate is not null)
+                flight.UpdateLandingEstimate(landingEstimate.Value);
+            
+            // Reposition in sequence if necessary
+            if (!flightWasCreated && !flight.PositionIsFixed)
+                await sequence.RepositionByEstimate(flight, cancellationToken);
+            
             // TODO: Schedule
             // TODO: Calculate STA and STA_FF
+            
             // TODO: Optimise
         }
         
-        await mediator.Publish(new SequenceModifiedNotification(sequence.ToDto()), cancellationToken);
+        await mediator.Publish(new SequenceModifiedNotification(sequence), cancellationToken);
     }
 
     void SetState(Flight flight)
@@ -136,7 +158,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
 
     Flight CreateMaestroFlight(
         FlightUpdatedNotification notification,
-        FixDto? feederFixEstimate,
+        FixEstimate? feederFixEstimate,
         DateTimeOffset landingEstimate)
     {
         return new Flight
@@ -150,7 +172,7 @@ public class FlightUpdatedHandler(ISequenceProvider sequenceProvider, IMediator 
             AssignedStarIdentifier = notification.AssignedArrival,
             HighPriority = feederFixEstimate is null,
             
-            FeederFixIdentifier = feederFixEstimate?.Identifier,
+            FeederFixIdentifier = feederFixEstimate?.FixIdentifier,
             InitialFeederFixTime = feederFixEstimate?.Estimate,
             EstimatedFeederFixTime = feederFixEstimate?.Estimate,
             ScheduledFeederFixTime = feederFixEstimate?.Estimate,

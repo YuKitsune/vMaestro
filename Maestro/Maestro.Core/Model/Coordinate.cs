@@ -1,4 +1,4 @@
-﻿namespace Maestro.Core.Dtos;
+﻿namespace Maestro.Core.Model;
 
 public readonly struct Coordinate(double latitude, double longitude)
 {

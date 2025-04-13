@@ -7,7 +7,11 @@ using vatsys;
 
 namespace Maestro.Plugin.Configuration;
 
-public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirportConfigurationProvider, ISeparationConfigurationProvider
+public class PluginConfigurationProvider :
+    ILoggingConfigurationProvider,
+    IEstimateConfiguration,
+    IAirportConfigurationProvider,
+    ISeparationConfigurationProvider
 {
     const string ConfigurationFileName = "Maestro.json";
 
@@ -23,12 +27,22 @@ public class PluginConfigurationProvider : ILoggingConfigurationProvider, IAirpo
         return _lazyPluginConfiguration.Value.Logging.OutputPath;
     }
 
-    public AirportConfigurationDto[] GetAirportConfigurations()
+    public FeederFixEstimateSource FeederFixEstimateSource()
+    {
+        return _lazyPluginConfiguration.Value.FeederFixEstimateSource;
+    }
+
+    public LandingEstimateSource LandingEstimateSource()
+    {
+        return _lazyPluginConfiguration.Value.LandingEstimateSource;
+    }
+
+    public AirportConfiguration[] GetAirportConfigurations()
     {
         return _lazyPluginConfiguration.Value.Airports;
     }
 
-    public SeparationRuleConfiguration[] GetSeparationRules()
+    public SeparationRule[] GetSeparationRules()
     {
         return _lazyPluginConfiguration.Value.SeparationRules;
     }

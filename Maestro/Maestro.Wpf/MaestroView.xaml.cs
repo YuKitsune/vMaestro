@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Maestro.Core.Configuration;
 using Maestro.Core.Dtos.Configuration;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.ViewModels;
@@ -153,7 +154,7 @@ public partial class MaestroView : UserControl
         // TODO: Log a warning if we've made it to this point
         throw new Exception($"Flight {flight.Callsign} could not be positioned on the ladder");
 
-        bool ShowOnLadder(LadderConfigurationDto ladderConfiguration)
+        bool ShowOnLadder(LadderConfiguration ladderConfiguration)
         {
             // TODO: Fix
             var runwayMatches = ladderConfiguration.Runways is null ||

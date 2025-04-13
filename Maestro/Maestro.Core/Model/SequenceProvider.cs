@@ -13,7 +13,8 @@ public class SequenceProvider : ISequenceProvider
 {
     readonly IAirportConfigurationProvider _airportConfigurationProvider;
     readonly ISeparationRuleProvider _separationRuleProvider;
-    readonly IPerformanceLookup _performanceLookup;
+    readonly IScheduler _scheduler;
+    readonly IEstimateProvider _estimateProvider;
     readonly IMediator _mediator;
     readonly IClock _clock;
 
@@ -22,16 +23,17 @@ public class SequenceProvider : ISequenceProvider
     public SequenceProvider(
         IAirportConfigurationProvider airportConfigurationProvider,
         ISeparationRuleProvider separationRuleProvider,
-        IPerformanceLookup performanceLookup,
         IMediator mediator,
-        IClock clock)
+        IClock clock,
+        IEstimateProvider estimateProvider, IScheduler scheduler)
     {
         _airportConfigurationProvider = airportConfigurationProvider;
         _separationRuleProvider = separationRuleProvider;
-        _performanceLookup = performanceLookup;
         _mediator = mediator;
         _clock = clock;
-        
+        _estimateProvider = estimateProvider;
+        _scheduler = scheduler;
+
         InitializeSequences();
     }
 
@@ -44,10 +46,10 @@ public class SequenceProvider : ISequenceProvider
         {
             var sequence = new Sequence(
                 airportConfiguration,
-                _separationRuleProvider,
-                _performanceLookup,
                 _mediator,
-                _clock);
+                _clock,
+                _estimateProvider,
+                _scheduler);
             
             sequence.Start();
         

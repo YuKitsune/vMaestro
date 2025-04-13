@@ -1,10 +1,12 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Configuration;
 using Maestro.Core.Dtos;
 using Maestro.Core.Dtos.Configuration;
-using Maestro.Core.Dtos.Messages;
 using Maestro.Core.Handlers;
+using Maestro.Core.Messages;
+using Maestro.Core.Model;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
@@ -21,7 +23,7 @@ public partial class MaestroViewModel : ObservableObject
     RunwayModeViewModel? _selectedRunwayMode;
 
     [ObservableProperty]
-    ViewConfigurationDto? _selectedView;
+    ViewConfiguration? _selectedView;
 
     readonly IMediator _mediator;
 
@@ -87,33 +89,33 @@ public partial class MaestroViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void SelectView(ViewConfigurationDto? viewConfiguration)
+    void SelectView(ViewConfiguration? viewConfiguration)
     {
         SelectedView = viewConfiguration;
     }
 
-    public void RefreshSequence(SequenceDto sequence)
+    public void RefreshSequence(Sequence sequence)
     {
         Aircraft = sequence.Flights.Select(a =>
                 new FlightViewModel(
                     a.Callsign,
                     a.AircraftType,
                     a.WakeCategory,
-                    a.Origin,
-                    a.Destination,
+                    a.OriginIdentifier,
+                    a.DestinationIdentifier,
                     a.State,
                     -1, // TODO:
-                    a.FeederFix,
+                    a.FeederFixIdentifier,
                     a.InitialFeederFixTime,
                     a.EstimatedFeederFixTime,
                     a.ScheduledFeederFixTime,
-                    a.AssignedRunway,
+                    a.AssignedRunwayIdentifier,
                     -1, // TODO:
                     a.InitialLandingTime,
                     a.EstimatedLandingTime,
                     a.ScheduledLandingTime,
-                    a.InitialDelay,
-                    a.CurrentDelay))
+                    a.TotalDelayToRunway,
+                    a.RemainingDelayToRunway))
             .ToList();
     }
 

@@ -1,11 +1,12 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Maestro.Core.Configuration;
 using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Model;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, ViewConfigurationDto[] views) : ObservableObject
+public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, ViewConfiguration[] views) : ObservableObject
 {
     public string Identifier => identifier;
 
@@ -13,7 +14,7 @@ public partial class AirportViewModel(string identifier, RunwayModeViewModel[] r
     ObservableCollection<RunwayModeViewModel> _runwayModes = new(runwayModes);
 
     [ObservableProperty]
-    ObservableCollection<ViewConfigurationDto> _views = new(views);
+    ObservableCollection<ViewConfiguration> _views = new(views);
 }
 
 public class RunwayModeViewModel(string identifier, RunwayViewModel[] runwayModes)

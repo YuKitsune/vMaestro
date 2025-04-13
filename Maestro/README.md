@@ -21,29 +21,30 @@
     - [X] TMA view
     - [X] ENR view
 
-- [ ] Offline Mode
+- [ ] Offline Mode (MVP)
     - [X] Implement domain models, handlers, tiny types, etc.
     - [X] Publish notifications on FDP updates
     - [X] Information window
     - [ ] Basic sequencing algorithm
     - [ ] Change runway mode
-    - [ ] Change runway
-    - [ ] Blockout period
-    - [ ] Insert flight
-    - [ ] Insert slot
+    - [ ] Change runway rates
     - [ ] Change ETA FF
-    - [ ] Zero Delay
+    - [ ] Insert flight
     - [ ] Remove from sequence
     - [ ] Desequence
+    - [ ] Automatic runway assignment
 
 - [ ] Extras
-    - [ ] Revisit strong ID types
     - [ ] Ladder scrolling
+    - [ ] Revisit strong ID types
+    - [ ] Calculate STA and ETA based on STAR distance and ground speed
+    - [ ] Account for GRIB winds
+    - [ ] Blockout periods
+    - [ ] Insert slot
+    - [ ] Zero Delay
     - [ ] Departure list
     - [ ] Pending flights
-    - [ ] Account for GRIB winds
     - [ ] Unit selector
-    - [ ] Stagger rate
     - [ ] Coordination
 
 - [ ] Online mode
