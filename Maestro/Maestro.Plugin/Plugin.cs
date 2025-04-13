@@ -16,11 +16,12 @@ using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO When you come back:
-//  - Clean up the sequencing algorithm and ensure the basics are implemented
-//  - Extract the sequencing algorithm into a separate component and test the damn thing
-//  - Logging!!!
-//  - Cover use cases from roadmap with unit tests
-//  - Ask group chat about how exactly the STAR ETI calculations should work (current ground speed??? They're gonna slow down though...)
+//  - Refactor sequencing algorithm to avoid the dodgy estimate problem (look at PHP)
+//  - Single flight recompute
+//  - Implement logging
+//  - Fix debug window
+//  - Revisit automatic runway assignment
+//  - Ask group chat about how exactly the STAR ETI calculations should work (current ground speed? What about when they slow down?)
 
 namespace Maestro.Plugin
 {
