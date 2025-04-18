@@ -5,10 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
              xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
+             xmlns:wpf="clr-namespace:Maestro.Wpf"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:FlightViewModel}"
              d:DesignHeight="16"
-             d:DesignWidth="200">
+             d:DesignWidth="250">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -18,40 +19,63 @@
             <converters:MinutesConverter x:Key="MinutesConverter"/>
             <converters:StateToColorConverter x:Key="StateToColorConverter"/>
             <converters:DelayToColorConverter x:Key="DelayToColorConverter"/>
+            
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}">
-                <Setter Property="TextAlignment" Value="Right" />
+                <Setter Property="TextAlignment" Value="Left" />
+                
+                <Style.Triggers>
+                    <DataTrigger
+                        Binding="{Binding LadderPosition, RelativeSource={RelativeSource AncestorType={x:Type wpf:AircraftView}}}"
+                        Value="Left">
+
+                        <Setter Property="TextAlignment" Value="Right"/>
+                            
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            
+            <Style TargetType="{x:Type StackPanel}">
+                <Setter Property="FlowDirection" Value="LeftToRight" />
+                
+                <Style.Triggers>
+                    <DataTrigger
+                        Binding="{Binding LadderPosition, RelativeSource={RelativeSource AncestorType={x:Type wpf:AircraftView}}}"
+                        Value="Left">
+
+                        <Setter Property="FlowDirection" Value="RightToLeft"/>
+                        
+                    </DataTrigger>
+                </Style.Triggers>
             </Style>
 
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid MouseDown="UIElement_OnMouseDown">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition MaxWidth="40" />
-            <ColumnDefinition MaxWidth="40" />
-            <ColumnDefinition MinWidth="5" />
-            <ColumnDefinition Width="*" MinWidth="56" />
-            <ColumnDefinition MaxWidth="40" />
-            <ColumnDefinition MaxWidth="40" />
-        </Grid.ColumnDefinitions>
+    <StackPanel Orientation="Horizontal">
+        
+        <TextBlock 
+            Text="{Binding ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"
+            Width="24"/>
+        
+        <TextBlock 
+            Text="{Binding AssignedRunway}"
+            Width="32"/>
+        
+        <TextBlock
+            Text="{Binding Callsign}"
+            Foreground="{Binding State, Converter={StaticResource StateToColorConverter}}"
+            Width="88"/>
+        
+        <!-- TODO: 250kts indicator-->
+        
+        <TextBlock
+            Text="{Binding InitialDelay, Converter={StaticResource MinutesConverter}}"
+            Foreground="{Binding InitialDelay, Converter={StaticResource DelayToColorConverter}}"
+            Width="32" />
 
         <TextBlock 
-            Grid.Column="0"
             Text="{Binding CurrentDelay, Converter={StaticResource MinutesConverter}}"
-            Foreground="{Binding CurrentDelay, Converter={StaticResource DelayToColorConverter}}" />
-        <TextBlock
-            Grid.Column="1"
-            Text="{Binding InitialDelay, Converter={StaticResource MinutesConverter}}"
-            Foreground="{Binding InitialDelay, Converter={StaticResource DelayToColorConverter}}" />
+            Foreground="{Binding CurrentDelay, Converter={StaticResource DelayToColorConverter}}"
+            Width="32"/>
         
-        <!-- 250kts indicator-->
-        <!--<TextBlock Grid.Column="2" Text="+" />-->
-        <TextBlock
-            Grid.Column="3"
-            Text="{Binding Callsign}"
-            Foreground="{Binding State, Converter={StaticResource StateToColorConverter}}"/>
-        
-        <TextBlock Grid.Column="4" Text="{Binding AssignedRunway}"/>
-        <TextBlock Grid.Column="5" Text="{Binding ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"/>
-
-    </Grid>
+    </StackPanel>
 </UserControl>

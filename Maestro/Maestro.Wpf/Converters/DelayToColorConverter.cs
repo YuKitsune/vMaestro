@@ -14,10 +14,10 @@ public class DelayToColorConverter : IValueConverter
 
         // TODO: Make these thresholds configurable
         
-        if (timeSpan.TotalMinutes <= 1)
+        if (timeSpan.TotalMinutes <= -1)
             return Theme.Expedite;
         
-        if (timeSpan.TotalMinutes is > 1 or > -1)
+        if (timeSpan.TotalMinutes is < 1 or > -1)
             return Theme.NoDelay;
         
         if (timeSpan.TotalMinutes >= 1)

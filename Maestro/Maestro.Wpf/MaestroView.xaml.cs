@@ -108,11 +108,14 @@ public partial class MaestroView : UserControl
             var distanceFromMiddle = (LadderWidth / 2) + (LineThickness * 2) + TickWidth;
             var width = middlePoint - distanceFromMiddle;
 
+            var ladderPosition = GetLadderPositionFor(aircraft);
+
             var aircraftView = new AircraftView
             {
                 DataContext = aircraft,
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
+                LadderPosition = ladderPosition
             };
 
             aircraftView.Click += (_, _) =>
@@ -120,8 +123,7 @@ public partial class MaestroView : UserControl
                 if (ViewModel.ShowInformationWindowCommand.CanExecute(aircraft))
                     ViewModel.ShowInformationWindowCommand.Execute(aircraft);
             };
-
-            var ladderPosition = GetLadderPositionFor(aircraft);
+            
             aircraftView.Loaded += ladderPosition switch
             {
                 LadderPosition.Left => PositionOnCanvas(
@@ -146,7 +148,7 @@ public partial class MaestroView : UserControl
             return LadderPosition.Left;
         }
         
-        if (ViewModel.SelectedView.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
+        if (ViewModel.SelectedView.RightLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.RightLadderConfiguration))
         {
             return LadderPosition.Right;
         }
@@ -156,7 +158,6 @@ public partial class MaestroView : UserControl
 
         bool ShowOnLadder(LadderConfiguration ladderConfiguration)
         {
-            // TODO: Fix
             var runwayMatches = ladderConfiguration.Runways is null ||
                                 !ladderConfiguration.Runways.Any() ||
                                 string.IsNullOrEmpty(flight.AssignedRunway) ||
@@ -167,7 +168,7 @@ public partial class MaestroView : UserControl
                                    string.IsNullOrEmpty(flight.FeederFixIdentifier) ||
                                    ladderConfiguration.FeederFixes.Contains(flight.FeederFixIdentifier);
 
-            return runwayMatches | feederFixMatches;
+            return runwayMatches && feederFixMatches;
         }
     }
 
