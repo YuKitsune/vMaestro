@@ -11,7 +11,9 @@ public class FlightBuilder(string callsign)
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
+    DateTimeOffset feederFixTime = default;
     DateTimeOffset landingEstimate = DateTimeOffset.Now;
+    DateTimeOffset landingTime = default;
 
     string _assignedRunway = "34L";
 
@@ -23,9 +25,21 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithFeederFixTime(DateTimeOffset time)
+    {
+        feederFixTime = time;
+        return this;
+    }
+
     public FlightBuilder WithLandingEstimate(DateTimeOffset estimate)
     {
         landingEstimate = estimate;
+        return this;
+    }
+
+    public FlightBuilder WithLandingTime(DateTimeOffset time)
+    {
+        landingTime = time;
         return this;
     }
 
@@ -55,7 +69,15 @@ public class FlightBuilder(string callsign)
         };
         
         flight.UpdateFeederFixEstimate(feederFixEstimate);
+        
+        if (feederFixTime != default)
+            flight.SetFeederFixTime(feederFixTime);
+        
         flight.UpdateLandingEstimate(landingEstimate);
+        
+        if (landingTime != default)
+            flight.SetLandingTime(landingTime);
+        
         flight.SetState(_state);
 
         return flight;

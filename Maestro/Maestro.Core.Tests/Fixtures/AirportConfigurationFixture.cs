@@ -30,7 +30,6 @@ public class AirportConfigurationFixture
                 new RunwayModeConfiguration
                 {
                     Identifier = "34IVA",
-                    StaggerRateSeconds = 30,
                     Runways =
                     [
                         new RunwayConfiguration

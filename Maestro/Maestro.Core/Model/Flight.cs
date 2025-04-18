@@ -40,6 +40,8 @@ public class Flight
     public FixEstimate[] Estimates { get; private set; } = [];
     
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
+    
+    public bool HasBeenScheduled { get; private set; }
 
     public void SetState(State state)
     {
@@ -88,6 +90,7 @@ public class Flight
 
     public void SetLandingTime(DateTimeOffset feederFixTime)
     {
+        HasBeenScheduled = true;
         ScheduledLandingTime = feederFixTime;
     }
 
