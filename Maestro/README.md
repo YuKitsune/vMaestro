@@ -16,6 +16,7 @@
 
 - [ ] Temporary feed
     - [ ] Load data from existing Maestro API
+    - [ ] Publish estimates to existing Maestro API
 
 - [X] Ladder configuration
     - [X] TMA view
@@ -25,14 +26,16 @@
     - [X] Implement domain models, handlers, tiny types, etc.
     - [X] Publish notifications on FDP updates
     - [X] Information window
-    - [ ] Basic sequencing algorithm
+    - [X] Basic sequencing algorithm
     - [ ] Change runway mode
     - [ ] Change runway rates
     - [ ] Change ETA FF
     - [ ] Insert flight
     - [ ] Remove from sequence
     - [ ] Desequence
+    - [ ] Recompute
     - [ ] Automatic runway assignment
+    - [ ] Persist to sqlite database on disk
 
 - [ ] Extras
     - [ ] Ladder scrolling
@@ -41,7 +44,7 @@
     - [ ] Account for GRIB winds
     - [ ] Blockout periods
     - [ ] Insert slot
-    - [ ] Zero Delay
+    - [ ] Zero Delay and priority flights
     - [ ] Departure list
     - [ ] Pending flights
     - [ ] Unit selector
@@ -61,9 +64,6 @@
     - [ ] Size elements based on font width and height
     - [ ] Double check colors
 
-- [X] MVP
-    - [X] Fix DPI scaling issue
-
 - [ ] Nice to haves
     - [ ] Debugger configuration for vatSys
     - [ ] Arrival list / GlobalOps backup
@@ -72,8 +72,17 @@
     - [ ] Customisable UI layout
     - [ ] Per-sequence online mode (E.g: YSSY offline, YMML online)
 
-Need to figure out:
+# Questions
+
 - When is the initial FF and landing time set? Is it ever reset?
 - Does the ladder switch from using the estimated times to scheduled times?
     - Are the scheduled times set from the beginning and constantly re-calculated?
-    
+- Do flight labels overlap on the ladder IRL?
+- Do we need to consider feeder fix intervals as well as landing rates?
+
+# Current Bugs
+
+List of bugs I've noticed in the sim. Need to build test cases to replicate the scenarios. 
+
+- Flights in the sim sometimes speed up and throw off the calculations.
+    - Idea: Should we re-calculate the delay if the flight speeds up and there are no flights in front?
