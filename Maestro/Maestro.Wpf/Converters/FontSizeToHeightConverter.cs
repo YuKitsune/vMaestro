@@ -8,7 +8,10 @@ public class FontSizeToHeightConverter : IValueConverter
 
     public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
-        return (double) value * ScaleFactor;
+        if (value is not double size)
+            throw new NotSupportedException();
+        
+        return size * ScaleFactor;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)

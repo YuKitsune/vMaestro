@@ -26,10 +26,10 @@ public class RunwayModeViewModel(string identifier, RunwayViewModel[] runwayMode
 
 public partial class RunwayViewModel(string identifier, TimeSpan defaultLandingRate) : ObservableObject
 {
-    public string Identifier => identifier;
-
-    public TimeSpan DefaultLandingRate => defaultLandingRate;
-
     [ObservableProperty]
     TimeSpan _landingRate = defaultLandingRate;
+    
+    public string Identifier { get; } = identifier;
+
+    public TimeSpan DefaultLandingRate { get; } = defaultLandingRate;
 }

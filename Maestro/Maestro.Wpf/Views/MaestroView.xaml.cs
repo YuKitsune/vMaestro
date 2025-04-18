@@ -4,16 +4,15 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
-using Maestro.Core.Dtos.Configuration;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.ViewModels;
 
-namespace Maestro.Wpf;
+namespace Maestro.Wpf.Views;
 
 /// <summary>
 /// Interaction logic for MaestroView.xaml
 /// </summary>
-public partial class MaestroView : UserControl
+public partial class MaestroView
 {
     const int MinuteHeight = 12;
     const int LadderWidth = 24;
@@ -24,7 +23,7 @@ public partial class MaestroView : UserControl
 
     public MaestroView()
     {
-        DataContext = Ioc.Default.GetRequiredService<ViewModels.MaestroViewModel>();
+        DataContext = Ioc.Default.GetRequiredService<MaestroViewModel>();
 
         InitializeComponent();
 
@@ -41,7 +40,7 @@ public partial class MaestroView : UserControl
         ViewModel.PropertyChanged += PropertyChanged;
     }
 
-    public ViewModels.MaestroViewModel ViewModel => (ViewModels.MaestroViewModel)DataContext;
+    public MaestroViewModel ViewModel => (MaestroViewModel)DataContext;
 
     void TimerTick(object sender, EventArgs args)
     {
@@ -71,16 +70,19 @@ public partial class MaestroView : UserControl
             LadderCanvas.Children.Clear();
 
             var now = DateTimeOffset.UtcNow;
-            DrawSpine(now);
+            DrawLadder(now);
             DrawAircraft(now);
         });
     }
 
     void DrawAircraft(DateTimeOffset currentTime)
     {
-        double canvasHeight = LadderCanvas.ActualHeight;
-        double canvasWidth = LadderCanvas.ActualWidth;
+        var canvasHeight = LadderCanvas.ActualHeight;
+        var canvasWidth = LadderCanvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
+
+        if (ViewModel.SelectedView is null)
+            return;
 
         foreach (var aircraft in ViewModel.Aircraft)
         {
@@ -105,12 +107,12 @@ public partial class MaestroView : UserControl
             if (yOffset < 0 || yOffset >= canvasHeight)
                 continue;
 
-            var distanceFromMiddle = (LadderWidth / 2) + (LineThickness * 2) + TickWidth;
+            const int distanceFromMiddle = (LadderWidth / 2) + (LineThickness * 2) + TickWidth;
             var width = middlePoint - distanceFromMiddle;
 
             var ladderPosition = GetLadderPositionFor(aircraft);
 
-            var aircraftView = new AircraftView
+            var flightLabel = new FlightLabelView
             {
                 DataContext = aircraft,
                 Width = width,
@@ -118,13 +120,13 @@ public partial class MaestroView : UserControl
                 LadderPosition = ladderPosition
             };
 
-            aircraftView.Click += (_, _) =>
+            flightLabel.Click += (_, _) =>
             {
                 if (ViewModel.ShowInformationWindowCommand.CanExecute(aircraft))
                     ViewModel.ShowInformationWindowCommand.Execute(aircraft);
             };
             
-            aircraftView.Loaded += ladderPosition switch
+            flightLabel.Loaded += ladderPosition switch
             {
                 LadderPosition.Left => PositionOnCanvas(
                     left: 0,
@@ -137,18 +139,18 @@ public partial class MaestroView : UserControl
                 _ => throw new ArgumentException($"Unexpected LadderPosition: {ladderPosition}")
             };
 
-            LadderCanvas.Children.Add(aircraftView);
+            LadderCanvas.Children.Add(flightLabel);
         }
     }
 
     LadderPosition GetLadderPositionFor(FlightViewModel flight)
     {
-        if (ViewModel.SelectedView.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
+        if (ViewModel.SelectedView?.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
         {
             return LadderPosition.Left;
         }
         
-        if (ViewModel.SelectedView.RightLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.RightLadderConfiguration))
+        if (ViewModel.SelectedView?.RightLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.RightLadderConfiguration))
         {
             return LadderPosition.Right;
         }
@@ -172,10 +174,10 @@ public partial class MaestroView : UserControl
         }
     }
 
-    void DrawSpine(DateTimeOffset currentTime)
+    void DrawLadder(DateTimeOffset currentTime)
     {
-        double canvasHeight = LadderCanvas.ActualHeight;
-        double canvasWidth = LadderCanvas.ActualWidth;
+        var canvasHeight = LadderCanvas.ActualHeight;
+        var canvasWidth = LadderCanvas.ActualWidth;
 
         var middlePoint = canvasWidth / 2;
         var ladderLeftPosition = middlePoint - LadderWidth / 2 - LineThickness;
@@ -212,12 +214,12 @@ public partial class MaestroView : UserControl
 
         LadderCanvas.Children.Add(rightLine);
 
+        // Draw a tick for every minute
         var nextMinute = currentTime.Add(new TimeSpan(0, 0, 60 - currentTime.Second));
         var yOffset = GetYOffsetForTime(currentTime, nextMinute);
         while (yOffset <= canvasHeight)
         {
             var yPosition = canvasHeight - yOffset;
-            var topPosition = yPosition - LineThickness / 2;
 
             var leftTickXPosition = ladderLeftPosition - LineThickness - TickWidth / 2;
             var rightTickXPosition = ladderRightPosition + LineThickness + TickWidth / 2;
@@ -248,6 +250,7 @@ public partial class MaestroView : UserControl
             yOffset += MinuteHeight;
         }
 
+        // At each 5-minute interval, draw text with 2-digit minutes
         var nextTime = GetNearest5Minutes(currentTime);
         yOffset = GetYOffsetForTime(currentTime, nextTime);
         while (yOffset <= canvasHeight)
@@ -314,13 +317,13 @@ public partial class MaestroView : UserControl
     DateTimeOffset GetNearest5Minutes(DateTimeOffset currentTime)
     {
         // Round up the minutes to the next multiple of 5
-        int minutes = currentTime.Minute / 5 * 5;
+        var minutes = currentTime.Minute / 5 * 5;
         if (currentTime.Minute % 5 != 0 || currentTime.Second > 0 || currentTime.Millisecond > 0)
         {
             minutes += 5; // Add 5 minutes to round up
         }
 
-        // If we added 5 minutes and it goes beyond 60 minutes, reset to 0 and increment the hour
+        // If we added 5 minutes, and it goes beyond 60 minutes, reset to 0 and increment the hour
         if (minutes >= 60)
         {
             minutes = 0;
@@ -328,7 +331,15 @@ public partial class MaestroView : UserControl
         }
 
         // Create the new DateTime with the rounded-up minute
-        var nextInterval = new DateTimeOffset(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, minutes, 0, currentTime.Offset);
+        var nextInterval = new DateTimeOffset(
+            currentTime.Year,
+            currentTime.Month,
+            currentTime.Day,
+            currentTime.Hour,
+            minutes,
+            0,
+            currentTime.Offset);
+        
         return nextInterval;
     }
 }
