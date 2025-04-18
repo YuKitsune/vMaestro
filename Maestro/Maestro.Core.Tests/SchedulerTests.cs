@@ -3,6 +3,8 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Shouldly;
 
@@ -42,7 +44,7 @@ public class SchedulerTests
             .GetRequiredSpacing(Arg.Any<Flight>(), Arg.Any<Flight>())
             .Returns(_minimumTimeBetweenArrivals);
 
-        _scheduler = new Scheduler(separationRuleProvider);
+        _scheduler = new Scheduler(separationRuleProvider, new Logger<Scheduler>(NullLoggerFactory.Instance));
     }
 
     [Fact]

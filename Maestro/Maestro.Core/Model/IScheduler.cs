@@ -1,4 +1,6 @@
-﻿using Maestro.Core.Configuration;
+﻿using System.Diagnostics;
+using Maestro.Core.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Model;
 
@@ -13,10 +15,12 @@ public interface IScheduler
 public class Scheduler : IScheduler
 {
     readonly ISeparationRuleProvider _separationRuleProvider;
+    readonly ILogger<Scheduler> _logger;
 
-    public Scheduler(ISeparationRuleProvider separationRuleProvider)
+    public Scheduler(ISeparationRuleProvider separationRuleProvider, ILogger<Scheduler> logger)
     {
         _separationRuleProvider = separationRuleProvider;
+        _logger = logger;
     }
 
     public IEnumerable<Flight> ScheduleFlights(
@@ -24,6 +28,8 @@ public class Scheduler : IScheduler
         BlockoutPeriod[] blockoutPeriods,
         RunwayModeConfiguration currentRunwayMode)
     {
+        _logger.LogInformation("Scheduling {Count} flights", flights.Count);
+        
         var sequence = flights.Where(f => !CanSchedule(f)).ToList();
         
         foreach (var flight in flights.OrderBy(f => f.ScheduledLandingTime))
@@ -33,7 +39,10 @@ public class Scheduler : IScheduler
             
             // Do not apply any more processing to superstable or frozen flights
             if (!CanSchedule(flight))
+            {
+                _logger.LogDebug("{Callsign} is {State}. No processing required.", flight.Callsign, flight.State);
                 continue;
+            }
             
             // TODO: Account for runway mode changes
             var runwayMode = currentRunwayMode;
@@ -48,7 +57,12 @@ public class Scheduler : IScheduler
                 f.Callsign != flight.Callsign &&
                 f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
                 f.ScheduledLandingTime >= trailingConflictPeriod.StartTime &&
-                f.ScheduledLandingTime < trailingConflictPeriod.EndTime);
+                f.ScheduledLandingTime < trailingConflictPeriod.EndTime)
+                .ToArray();
+            
+            _logger.LogInformation("{Count} trailing flights are now in conflict. Recomputing landing times.", trailingFlights.Length);
+            
+            // TODO: This needs to cascade backwards. Add a test.
             foreach (var trailingFlight in trailingFlights)
             {
                 ComputeLandingTime(trailingFlight, landingRate);
@@ -59,6 +73,8 @@ public class Scheduler : IScheduler
 
         void ComputeLandingTime(Flight flight, TimeSpan landingRate)
         {
+            _logger.LogInformation("Computing {Callsign}...", flight.Callsign);
+            
             BlockoutPeriod? blockoutPeriod = null;
             if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
                 blockoutPeriod = blockoutPeriods.FirstOrDefault(bp => bp.RunwayIdentifier == flight.AssignedRunwayIdentifier && bp.StartTime < flight.EstimatedLandingTime && bp.EndTime > flight.EstimatedLandingTime);;
@@ -66,6 +82,11 @@ public class Scheduler : IScheduler
             DateTimeOffset? earliestAvailableLandingTime = null;
             if (blockoutPeriod is not null)
                 earliestAvailableLandingTime = blockoutPeriod.EndTime;
+
+            if (blockoutPeriod is not null)
+            {
+                _logger.LogInformation("Blockout period exists, earliest landing time for {Callsign} is {Time}", flight.Callsign, earliestAvailableLandingTime);
+            }
             
             // Avoid delaying priority flights behind others
             // TODO: Move conflicting flights behind this one
@@ -96,6 +117,8 @@ public class Scheduler : IScheduler
                 earliestAvailableLandingTime = earliestAvailableLandingTime is null
                     ? slotAfterLeader
                     : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
+                
+                _logger.LogInformation("Last SuperStable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastSuperStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
             }
             
             // New flights (not yet scheduled) can go in front of stable flights if they have an earlier estimate
@@ -106,9 +129,13 @@ public class Scheduler : IScheduler
                 earliestAvailableLandingTime = earliestAvailableLandingTime is null
                     ? slotAfterLeader
                     : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
+                
+                _logger.LogInformation("Last Stable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
             }
             
             var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
+                
+            _logger.LogInformation("Earliest available landing time for {Callsign} is {Time}. Current estimate is {Estimate}.", flight.Callsign, earliestAvailableLandingTime, flight.EstimatedLandingTime);
             
             // Keep working backwards until there are no conflicts
             while (true)
@@ -121,9 +148,14 @@ public class Scheduler : IScheduler
                 
                 if (leader is null)
                     break;
+                
+                var newLandingTime = leader.ScheduledLandingTime.Add(landingRate);
+                _logger.LogInformation("Conflict found with {LeaderCallsign} landing at {LeaderLandingTime} ({Duration} ahead). Delaying to {NewLandingTime}.", leader.Callsign, leader.ScheduledLandingTime, leader.ScheduledLandingTime - scheduledLandingTime, newLandingTime);
 
-                scheduledLandingTime = leader.ScheduledLandingTime.Add(landingRate);
+                scheduledLandingTime = newLandingTime;
             }
+            
+            _logger.LogInformation("{Callsign} clear of conflict. Total delay {Duration}.", flight.Callsign, scheduledLandingTime - flight.EstimatedLandingTime);
             
             if (flight.EstimatedFeederFixTime is not null)
             {
@@ -157,6 +189,7 @@ public class Scheduler : IScheduler
     }
 }
 
+[DebuggerDisplay("{StartTime} - {EndTime}")]
 public struct Period
 {
     public Period(DateTimeOffset startTime, DateTimeOffset endTime)

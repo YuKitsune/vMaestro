@@ -1,10 +1,12 @@
-﻿using Maestro.Core.Configuration;
+﻿using System.Diagnostics;
+using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using MediatR;
 
 namespace Maestro.Core.Model;
 
+[DebuggerDisplay("{AirportIdentifier}")]
 public class Sequence : IAsyncDisposable
 {
     readonly IMediator _mediator;

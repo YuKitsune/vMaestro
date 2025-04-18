@@ -2,6 +2,7 @@
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Handlers;
 
@@ -22,11 +23,14 @@ public class FlightUpdatedHandler(
     ISequenceProvider sequenceProvider,
     IEstimateProvider estimateProvider,
     IMediator mediator,
-    IClock clock)
+    IClock clock,
+    ILogger<FlightUpdatedHandler> logger)
     : INotificationHandler<FlightUpdatedNotification>
 {
     public async Task Handle(FlightUpdatedNotification notification, CancellationToken cancellationToken)
     {
+        logger.LogDebug("Received update for {Callsign}", notification.Callsign);
+        
         var sequence = sequenceProvider.TryGetSequence(notification.Destination);
         if (sequence is null)
             return;

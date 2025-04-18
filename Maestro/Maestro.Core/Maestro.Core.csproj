@@ -10,8 +10,8 @@
 	<ItemGroup>
 	  <PackageReference Include="MediatR" Version="12.4.1" />
 	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
-	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.3" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
 	  <PackageReference Include="System.Diagnostics.Tools" Version="4.3.0" />
 	  <PackageReference Include="System.Net.WebSockets" Version="4.3.0" />
 	</ItemGroup>

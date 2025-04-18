@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Handlers;
 
@@ -15,11 +16,14 @@ public class FlightPositionReportHandler(
     ISequenceProvider sequenceProvider,
     IFixLookup fixLookup,
     IMediator mediator,
-    IClock clock)
+    IClock clock,
+    ILogger<FlightPositionReportHandler> logger)
     : INotificationHandler<FlightPositionReport>
 {
     public async Task Handle(FlightPositionReport notification, CancellationToken cancellationToken)
     {
+        logger.LogDebug("Received position report for {Callsign}", notification.Callsign);
+        
         // TODO: Make these configurable
         var vsp = 150;
         var updateRateBeyondRange = TimeSpan.FromMinutes(1);
@@ -51,6 +55,8 @@ public class FlightPositionReportHandler(
                            clock.UtcNow() - flight.PositionUpdated.Value >= updateRate;
         if (!shouldUpdate)
             return;
+        
+        logger.LogDebug("Updating position for {Callsign}", notification.Callsign);
 
         flight.UpdatePosition(
             notification.Position,

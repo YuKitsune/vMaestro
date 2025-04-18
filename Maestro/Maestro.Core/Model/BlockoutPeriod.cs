@@ -1,5 +1,8 @@
-﻿namespace Maestro.Core.Model;
+﻿using System.Diagnostics;
 
+namespace Maestro.Core.Model;
+
+[DebuggerDisplay("{RunwayIdentifier}: {StartTime} - {EndTime}")]
 public class BlockoutPeriod
 {
     public required DateTimeOffset StartTime { get; init; }

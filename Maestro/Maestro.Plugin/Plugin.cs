@@ -15,18 +15,16 @@ using vatsys;
 using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 
-// TODO When you come back:
-//  - Refactor sequencing algorithm to avoid the dodgy estimate problem (look at PHP)
-//  - Single flight recompute
-//  - Implement logging
+// TODO:
 //  - Fix debug window
+//  - Single flight recompute
 //  - Revisit automatic runway assignment
 //  - Ask group chat about how exactly the STAR ETI calculations should work (current ground speed? What about when they slow down?)
 
 namespace Maestro.Plugin
 {
     [Export(typeof(IPlugin))]
-    public class Plugin : IPlugin
+    public class Plugin : IPlugin, IDisposable
     {
         const string Name = "Maestro";
         string IPlugin.Name => Name;
@@ -34,6 +32,8 @@ namespace Maestro.Plugin
         static BaseForm? _maestroWindow;
 
         IMediator _mediator = null!;
+
+        StreamWriter _logFileWriter;
 
         public Plugin()
         {
@@ -81,7 +81,13 @@ namespace Maestro.Plugin
                     .AddSingleton<IFixLookup, VatsysFixLookup>()
                     .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
                     .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
+                    .AddLogging()
+                    .AddSingleton<LoggingConfigurator>()
                     .BuildServiceProvider());
+            
+            // Configure log provider
+            var configurator = Ioc.Default.GetRequiredService<LoggingConfigurator>();
+            configurator.ConfigureLogging();
         }
 
         void AddMenuItem()
@@ -228,6 +234,12 @@ namespace Maestro.Plugin
             return new FixEstimate(
                 segment.Intersection.Name,
                 ToDateTimeOffset(segment.ETO));
+        }
+
+        public void Dispose()
+        {
+            _logFileWriter.Flush();
+            _logFileWriter.Dispose();
         }
     }
 }
