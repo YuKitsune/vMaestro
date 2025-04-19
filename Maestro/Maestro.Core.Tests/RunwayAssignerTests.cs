@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Model;
 using NSubstitute;
 using Shouldly;

@@ -11,7 +11,6 @@ public static class ServiceCollectionExtensionMethods
         return services
             .AddSingleton<IArrivalLookup, ArrivalLookup>()
             .AddSingleton<IEstimateProvider, EstimateProvider>()
-            .AddSingleton<ISeparationRuleProvider, SeparationRuleProvider>()
             .AddSingleton<ISequenceProvider, SequenceProvider>()
             .AddSingleton<IScheduler, Scheduler>()
             .AddSingleton<IClock, SystemClock>();

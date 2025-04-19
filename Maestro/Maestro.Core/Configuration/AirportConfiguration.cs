@@ -1,6 +1,4 @@
-﻿using Maestro.Core.Dtos.Configuration;
-
-namespace Maestro.Core.Configuration;
+﻿namespace Maestro.Core.Configuration;
 
 public class AirportConfiguration
 {

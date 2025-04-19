@@ -12,7 +12,6 @@ public interface ISequenceProvider
 public class SequenceProvider : ISequenceProvider
 {
     readonly IAirportConfigurationProvider _airportConfigurationProvider;
-    readonly ISeparationRuleProvider _separationRuleProvider;
     readonly IScheduler _scheduler;
     readonly IEstimateProvider _estimateProvider;
     readonly IMediator _mediator;
@@ -22,13 +21,11 @@ public class SequenceProvider : ISequenceProvider
 
     public SequenceProvider(
         IAirportConfigurationProvider airportConfigurationProvider,
-        ISeparationRuleProvider separationRuleProvider,
         IMediator mediator,
         IClock clock,
         IEstimateProvider estimateProvider, IScheduler scheduler)
     {
         _airportConfigurationProvider = airportConfigurationProvider;
-        _separationRuleProvider = separationRuleProvider;
         _mediator = mediator;
         _clock = clock;
         _estimateProvider = estimateProvider;

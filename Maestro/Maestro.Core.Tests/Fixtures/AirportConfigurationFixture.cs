@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Tests.Fixtures;
 
 [assembly: AssemblyFixture(typeof(AirportConfigurationFixture))]

@@ -12,7 +12,6 @@ namespace Maestro.Core.Tests;
 
 public class SchedulerTests
 {
-    static TimeSpan _minimumTimeBetweenArrivals = TimeSpan.FromMinutes(1);
     static TimeSpan _landingRate = TimeSpan.FromSeconds(180);
     static IClock _clock = new FixedClock(DateTimeOffset.Now);
     
@@ -38,13 +37,8 @@ public class SchedulerTests
                 }
             ]
         };
-        
-        var separationRuleProvider = Substitute.For<ISeparationRuleProvider>();
-        separationRuleProvider
-            .GetRequiredSpacing(Arg.Any<Flight>(), Arg.Any<Flight>())
-            .Returns(_minimumTimeBetweenArrivals);
 
-        _scheduler = new Scheduler(separationRuleProvider, new Logger<Scheduler>(NullLoggerFactory.Instance));
+        _scheduler = new Scheduler(new Logger<Scheduler>(NullLoggerFactory.Instance));
     }
 
     [Fact]

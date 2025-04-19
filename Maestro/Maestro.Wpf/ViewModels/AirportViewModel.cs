@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Maestro.Core.Configuration;
-using Maestro.Core.Dtos.Configuration;
 using Maestro.Core.Model;
 
 namespace Maestro.Wpf.ViewModels;

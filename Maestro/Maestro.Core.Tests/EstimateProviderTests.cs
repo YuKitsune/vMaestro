@@ -58,8 +58,8 @@ public class EstimateProviderTests
     [Fact]
     public void GetFeederFixEstimate_UsingSystemEstimate()
     {
-        var config = Substitute.For<IEstimateConfiguration>();
-        config.FeederFixEstimateSource().Returns(FeederFixEstimateSource.SystemEstimate);
+        var config = Substitute.For<IMaestroConfiguration>();
+        config.FeederFixEstimateSource.Returns(FeederFixEstimateSource.SystemEstimate);
 
         var estimateProvider = new EstimateProvider(config, _arrivalLookup, _fixLookup, _clock);
         var estimate = estimateProvider.GetFeederFixEstimate(_flight);
@@ -70,8 +70,8 @@ public class EstimateProviderTests
     [Fact]
     public void GetFeederFixEstimate_UsingTrajectory()
     {
-        var config = Substitute.For<IEstimateConfiguration>();
-        config.FeederFixEstimateSource().Returns(FeederFixEstimateSource.Trajectory);
+        var config = Substitute.For<IMaestroConfiguration>();
+        config.FeederFixEstimateSource.Returns(FeederFixEstimateSource.Trajectory);
 
         var estimateProvider = new EstimateProvider(config, _arrivalLookup, _fixLookup, _clock);
         var estimate = estimateProvider.GetFeederFixEstimate(_flight);
@@ -84,8 +84,8 @@ public class EstimateProviderTests
     [Fact]
     public void GetLandingEstimate_UsingSystemEstimate()
     {
-        var config = Substitute.For<IEstimateConfiguration>();
-        config.LandingEstimateSource().Returns(LandingEstimateSource.SystemEstimate);
+        var config = Substitute.For<IMaestroConfiguration>();
+        config.LandingEstimateSource.Returns(LandingEstimateSource.SystemEstimate);
 
         var estimateProvider = new EstimateProvider(config, _arrivalLookup, _fixLookup, _clock);
         var estimate = estimateProvider.GetLandingEstimate(_flight);
@@ -96,8 +96,8 @@ public class EstimateProviderTests
     [Fact]
     public void GetLandingEstimate_UsingPresetInterval()
     {
-        var estimateConfiguration = Substitute.For<IEstimateConfiguration>();
-        estimateConfiguration.LandingEstimateSource().Returns(LandingEstimateSource.PresetInterval);
+        var estimateConfiguration = Substitute.For<IMaestroConfiguration>();
+        estimateConfiguration.LandingEstimateSource.Returns(LandingEstimateSource.PresetInterval);
         
         var estimateProvider = new EstimateProvider(
             estimateConfiguration,

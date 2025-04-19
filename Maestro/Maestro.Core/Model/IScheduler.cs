@@ -14,12 +14,10 @@ public interface IScheduler
 
 public class Scheduler : IScheduler
 {
-    readonly ISeparationRuleProvider _separationRuleProvider;
     readonly ILogger<Scheduler> _logger;
 
-    public Scheduler(ISeparationRuleProvider separationRuleProvider, ILogger<Scheduler> logger)
+    public Scheduler(ILogger<Scheduler> logger)
     {
-        _separationRuleProvider = separationRuleProvider;
         _logger = logger;
     }
 

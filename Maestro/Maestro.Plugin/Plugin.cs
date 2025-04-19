@@ -7,9 +7,11 @@ using Maestro.Core;
 using Maestro.Core.Handlers;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
+using Maestro.Plugin.Logging;
 using Maestro.Wpf;
 using Maestro.Wpf.Views;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using vatsys;
 using vatsys.Plugin;
@@ -24,7 +26,7 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 namespace Maestro.Plugin
 {
     [Export(typeof(IPlugin))]
-    public class Plugin : IPlugin, IDisposable
+    public class Plugin : IPlugin
     {
         const string Name = "Maestro";
         string IPlugin.Name => Name;
@@ -33,12 +35,11 @@ namespace Maestro.Plugin
 
         IMediator _mediator = null!;
 
-        StreamWriter _logFileWriter;
-
         public Plugin()
         {
             try
             {
+                
                 ConfigureServices();
                 ConfigureTheme();
                 AddMenuItem();
@@ -67,9 +68,11 @@ namespace Maestro.Plugin
 
         void ConfigureServices()
         {
+            var configuration = ConfigureConfiguration();
+            
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
-                    .WithPluginConfigurationSource()
+                    .AddConfiguration(configuration)
                     .AddSingleton<IServerConnection, StubServerConnection>() // TODO
                     .AddViewModels()
                     .AddMaestro()
@@ -88,6 +91,45 @@ namespace Maestro.Plugin
             // Configure log provider
             var configurator = Ioc.Default.GetRequiredService<LoggingConfigurator>();
             configurator.ConfigureLogging();
+        }
+
+        IConfiguration ConfigureConfiguration()
+        {
+            const string configFileName = "Maestro.json";
+            var profileDirectory = FindProfileDirectory();
+            
+            var configFilePath = Path.Combine(profileDirectory, configFileName);
+
+            if (!File.Exists(configFilePath))
+                throw new MaestroException($"Unable to locate {configFileName}.");
+            
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(profileDirectory)
+                .AddJsonFile(configFilePath, optional: false, reloadOnChange: true)
+                .Build();
+
+            return configuration;
+        }
+
+        string FindProfileDirectory()
+        {
+            var vatsysFilesDirectory = Helpers.GetFilesFolder();
+            var profilesDirectory = Path.Combine(vatsysFilesDirectory, "Profiles");
+            var profileDirectories = Directory.GetDirectories(profilesDirectory);
+            
+            foreach (var profileDirectory in profileDirectories)
+            {
+                var profileXmlFile = Path.Combine(profileDirectory, "Profile.xml");
+                if (!File.Exists(profileXmlFile))
+                    continue;
+                
+                var profileXml = File.ReadAllText(profileXmlFile);
+
+                if (profileXml.Contains($"Profile Name=\"{Profile.Name}\""))
+                    return profileDirectory;
+            }
+
+            throw new MaestroException($"Unable to locate profile directory for {Profile.Name}. Maestro configuration cannot be loaded.");
         }
 
         void AddMenuItem()
@@ -234,12 +276,6 @@ namespace Maestro.Plugin
             return new FixEstimate(
                 segment.Intersection.Name,
                 ToDateTimeOffset(segment.ETO));
-        }
-
-        public void Dispose()
-        {
-            _logFileWriter.Flush();
-            _logFileWriter.Dispose();
         }
     }
 }

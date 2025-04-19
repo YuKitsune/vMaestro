@@ -1,13 +1,4 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Dtos;
-using Maestro.Core.Dtos.Configuration;
-using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
-using Maestro.Core.Tests.Fixtures;
-using MediatR;
-using NSubstitute;
-using Shouldly;
+﻿using Maestro.Core.Tests.Fixtures;
 
 namespace Maestro.Core.Tests;
 

@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Dtos.Configuration;
 
 namespace Maestro.Core.Model;
 

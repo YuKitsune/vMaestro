@@ -1,5 +1,4 @@
-﻿using Maestro.Core.Dtos;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 using Shouldly;
 
 namespace Maestro.Core.Tests;

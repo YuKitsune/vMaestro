@@ -9,12 +9,12 @@ public interface IEstimateProvider
     DateTimeOffset? GetLandingEstimate(Flight flight);
 }
 
-public class EstimateProvider(IEstimateConfiguration configuration, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock) : IEstimateProvider
+public class EstimateProvider(IMaestroConfiguration configuration, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock) : IEstimateProvider
 {
     public DateTimeOffset? GetFeederFixEstimate(Flight flight)
     {
         var systemEstimate = flight.Estimates.LastOrDefault(f => f.FixIdentifier == flight.FeederFixIdentifier)?.Estimate;
-        if (configuration.FeederFixEstimateSource() == FeederFixEstimateSource.SystemEstimate)
+        if (configuration.FeederFixEstimateSource == FeederFixEstimateSource.SystemEstimate)
             return systemEstimate;
         
         if (string.IsNullOrEmpty(flight.FeederFixIdentifier) || flight.LastKnownPosition is null)
@@ -35,7 +35,7 @@ public class EstimateProvider(IEstimateConfiguration configuration, IArrivalLook
     public DateTimeOffset? GetLandingEstimate(Flight flight)
     {
         var systemEstimate = flight.Estimates.LastOrDefault()?.Estimate;
-        if (configuration.LandingEstimateSource() == LandingEstimateSource.SystemEstimate)
+        if (configuration.LandingEstimateSource == LandingEstimateSource.SystemEstimate)
             return systemEstimate;
 
         // We need ETA_FF, an assigned runway, and STAR in order to calculate the landing time using any of the other methods.
