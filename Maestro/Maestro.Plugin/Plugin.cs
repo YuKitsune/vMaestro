@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
+using System.Xml.Linq;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Handlers;
@@ -124,12 +125,21 @@ namespace Maestro.Plugin
                     continue;
                 
                 var profileXml = File.ReadAllText(profileXmlFile);
+                var fullProfileName = ExtractFullName(profileXml);
 
-                if (profileXml.Contains($"Profile Name=\"{Profile.Name}\""))
+                // Profile.Name is FullName Version and Revision combined
+                if (Profile.Name.StartsWith(fullProfileName))
                     return profileDirectory;
             }
 
             throw new MaestroException($"Unable to locate profile directory for {Profile.Name}. Maestro configuration cannot be loaded.");
+            
+            string ExtractFullName(string xmlContent)
+            {
+                var doc = XDocument.Parse(xmlContent);
+                var profileElement = doc.Element("Profile");
+                return profileElement?.Attribute("FullName")?.Value ?? string.Empty;
+            }
         }
 
         void AddMenuItem()
