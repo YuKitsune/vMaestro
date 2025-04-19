@@ -7,6 +7,7 @@ public static class ServiceCollectionExtensionMethods
     public static IServiceCollection AddViewModels(this IServiceCollection serviceCollection)
     {
         return serviceCollection
-            .AddSingleton<ViewModels.MaestroViewModel>();
+            .AddSingleton<ViewModels.MaestroViewModel>()
+            .AddSingleton<ViewModels.DebugViewModel>();
     }
 }
