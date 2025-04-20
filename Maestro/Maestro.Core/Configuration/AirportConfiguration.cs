@@ -8,4 +8,5 @@ public class AirportConfiguration
     public required RunwayModeConfiguration[] RunwayModes { get; init; }
     public required ArrivalConfiguration[] Arrivals { get; init; }
     public required ViewConfiguration[] Views { get; init; }
+    public required RunwayAssignmentRule[] RunwayAssignmentRules { get; init; }
 }

@@ -78,10 +78,6 @@ public class FlightUpdatedHandler(
             return;
         }
         
-        // TODO: This should be automatically determined
-        flight.AssignedRunwayIdentifier = notification.AssignedRunway;
-        flight.AssignedStarIdentifier = notification.AssignedArrival;
-        
         // TODO: Revisit flight plan activation
         // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.
         // It is then updated by regular reports from the TAAATS FDP to the Maestro System.
@@ -89,6 +85,10 @@ public class FlightUpdatedHandler(
         // {
         //     flight.Activate(clock);
         // }
+        
+        // Update flight details
+        flight.AssignedRunwayIdentifier ??= notification.AssignedRunway;
+        flight.AssignedStarIdentifier = notification.AssignedArrival;
 
         if (flight is { Activated: true })
         {

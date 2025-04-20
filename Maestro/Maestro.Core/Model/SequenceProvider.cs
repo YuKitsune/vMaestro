@@ -16,6 +16,7 @@ public class SequenceProvider : ISequenceProvider
     readonly IEstimateProvider _estimateProvider;
     readonly IMediator _mediator;
     readonly IClock _clock;
+    readonly IRunwayAssigner _runwayAssigner;
 
     readonly List<Sequence> _sequences = [];
 
@@ -23,13 +24,16 @@ public class SequenceProvider : ISequenceProvider
         IAirportConfigurationProvider airportConfigurationProvider,
         IMediator mediator,
         IClock clock,
-        IEstimateProvider estimateProvider, IScheduler scheduler)
+        IEstimateProvider estimateProvider,
+        IScheduler scheduler,
+        IRunwayAssigner runwayAssigner)
     {
         _airportConfigurationProvider = airportConfigurationProvider;
         _mediator = mediator;
         _clock = clock;
         _estimateProvider = estimateProvider;
         _scheduler = scheduler;
+        _runwayAssigner = runwayAssigner;
 
         InitializeSequences();
     }
@@ -46,7 +50,8 @@ public class SequenceProvider : ISequenceProvider
                 _mediator,
                 _clock,
                 _estimateProvider,
-                _scheduler);
+                _scheduler,
+                _runwayAssigner);
             
             sequence.Start();
         

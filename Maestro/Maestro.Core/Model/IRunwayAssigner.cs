@@ -2,9 +2,6 @@
 
 namespace Maestro.Core.Model;
 
-// TODO: Reimplement this at a later date.
-//  This is currently unused.
-
 public interface IRunwayAssigner
 {
     string[] FindBestRunways(
@@ -13,50 +10,32 @@ public interface IRunwayAssigner
         RunwayAssignmentRule[] rules);
 }
 
-public class RunwayAssigner : IRunwayAssigner
+public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssigner
 {
-    readonly IPerformanceLookup _performanceLookup;
-
-    public RunwayAssigner(IPerformanceLookup performanceLookup)
-    {
-        _performanceLookup = performanceLookup;
-    }
-
     public string[] FindBestRunways(
         string aircraftType,
         string feederFixIdentifier,
         RunwayAssignmentRule[] rules)
     {
-        var performanceData = _performanceLookup.GetPerformanceDataFor(aircraftType);
+        var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
         if (performanceData is null)
             return [];
         
         var candidates = new List<RunwayAssignmentRule>();
         foreach (var runwayAssignmentRule in rules)
         {
-            var typeMatch = performanceData.IsJet == runwayAssignmentRule.Jets
-                            || !performanceData.IsJet == runwayAssignmentRule.NonJets;
-            
-            var wakeMatch = (runwayAssignmentRule.Heavy && performanceData.WakeCategory is WakeCategory.Heavy or WakeCategory.SuperHeavy)
-                || (runwayAssignmentRule.Medium && performanceData.WakeCategory is WakeCategory.Medium)
-                || (runwayAssignmentRule.Light && performanceData.WakeCategory is WakeCategory.Light);
+            var wakeMatch = runwayAssignmentRule.WakeCategories.Contains(performanceData.WakeCategory);
 
             var feederMatch = runwayAssignmentRule.FeederFixes.Any()
                               && !string.IsNullOrEmpty(feederFixIdentifier)
                               && runwayAssignmentRule.FeederFixes.Contains(feederFixIdentifier);
             
-            if (typeMatch && feederMatch && wakeMatch)
+            if (feederMatch && wakeMatch)
                 candidates.Add(runwayAssignmentRule);
         }
-
-        if (!candidates.Any())
-            return [];
-
-        if (candidates.Count == 1)
-            return [candidates.Single().RunwayIdentifier];
         
         return candidates.OrderBy(c => c.Priority)
-            .Select(c => c.RunwayIdentifier)
+            .SelectMany(c => c.Runways)
             .Distinct()
             .ToArray();
 

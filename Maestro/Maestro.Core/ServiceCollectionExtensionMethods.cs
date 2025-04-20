@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<IEstimateProvider, EstimateProvider>()
             .AddSingleton<ISequenceProvider, SequenceProvider>()
             .AddSingleton<IScheduler, Scheduler>()
+            .AddSingleton<IRunwayAssigner, RunwayAssigner>()
             .AddSingleton<IClock, SystemClock>();
     }
 }

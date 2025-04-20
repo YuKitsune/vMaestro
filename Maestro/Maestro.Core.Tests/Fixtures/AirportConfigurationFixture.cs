@@ -67,6 +67,7 @@ public class AirportConfigurationFixture
                     LadderReferenceTime = LadderReferenceTime.FeederFixTime
                 }
             ],
-            FeederFixes = ["RIVET"]
+            FeederFixes = ["RIVET"],
+            RunwayAssignmentRules = []
         };
 }

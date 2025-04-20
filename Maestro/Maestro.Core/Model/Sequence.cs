@@ -13,6 +13,7 @@ public class Sequence : IAsyncDisposable
     readonly AirportConfiguration _airportConfiguration;
     readonly IScheduler _scheduler;
     readonly IEstimateProvider _estimateProvider;
+    readonly IRunwayAssigner _runwayAssigner;
     readonly IClock _clock;
     
     readonly List<BlockoutPeriod> _blockoutPeriods = new();
@@ -35,13 +36,15 @@ public class Sequence : IAsyncDisposable
         AirportConfiguration airportConfiguration,
         IMediator mediator,
         IClock clock,
-        IEstimateProvider estimateProvider, IScheduler scheduler)
+        IEstimateProvider estimateProvider,
+        IScheduler scheduler, IRunwayAssigner runwayAssigner)
     {
         _airportConfiguration = airportConfiguration;
         _mediator = mediator;
         _clock = clock;
         _estimateProvider = estimateProvider;
         _scheduler = scheduler;
+        _runwayAssigner = runwayAssigner;
 
         CurrentRunwayMode = airportConfiguration.RunwayModes.First();
     }
@@ -82,9 +85,12 @@ public class Sequence : IAsyncDisposable
             
             // TODO: Additional validation
 
+            // TODO: Calculate runway mode at landing time
+            var runwayMode = CurrentRunwayMode;
+            
             AssignFeeder(flight);
+            AssignRunway(flight, runwayMode);
             CalculateEstimates(flight);
-            AssignRunway(flight);
             
             // Add the flight based on it's estimate
             if (_flights.Count == 0)
@@ -543,10 +549,40 @@ public class Sequence : IAsyncDisposable
             flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate);
     }
 
-    void AssignRunway(Flight _)
+    void AssignRunway(Flight flight, RunwayModeConfiguration runwayMode)
     {
-        // TODO: Implement automatic runway assignment
-        // TODO: Account for runway mode changes
+        // TODO: Override on recompute
+        if (flight.AssignedRunwayIdentifier is not null)
+            return;
+
+        var defaultRunway = runwayMode.Runways.First().Identifier;
+
+        if (flight.FeederFixIdentifier is null)
+        {
+            flight.SetRunway(defaultRunway);
+            return;
+        }
+        
+        var possibleRunways = _runwayAssigner.FindBestRunways(
+            flight.AircraftType,
+            flight.FeederFixIdentifier,
+            _airportConfiguration.RunwayAssignmentRules);
+
+        var runwaysInMode = possibleRunways
+            .Where(r => runwayMode.Runways.Any(r2 => r2.Identifier == r))
+            .ToArray();
+        
+        // No runways found, use the default one
+        if (!runwaysInMode.Any())
+        {
+            flight.SetRunway(defaultRunway);
+            return;
+        }
+
+        // TODO: Use lower priorities depending on traffic load.
+        //  How could we go about this? Probe for shortest delay? Round-robin?
+        var topPriority = runwaysInMode.First();
+        flight.SetRunway(topPriority);
     }
 
     void CalculateEstimates(Flight flight)

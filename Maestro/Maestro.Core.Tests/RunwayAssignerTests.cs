@@ -24,45 +24,34 @@ public class RunwayAssignerTests
         _assignmentRules =
         [
             new RunwayAssignmentRule(
-                "34R",
-                "34R",
-                jets: true,
-                nonJets: true,
-                heavy: false,
-                medium: true,
-                light: true,
-                feederFixes: ["BOREE", "YAKKA", "MARLN"],
-                priority: 1),
+                0,
+                ["RIVET", "AKMIR", "BOREE", "MEPIL", "MARLN"],
+                [WakeCategory.Heavy, WakeCategory.SuperHeavy],
+                ["34L", "16R", "07", "25"]),
+            
             new RunwayAssignmentRule(
-                "34R",
-                "34R",
-                jets: true,
-                nonJets: true,
-                heavy: true,
-                medium: true,
-                light: true,
-                feederFixes: ["RIVET", "WELSH"],
-                priority: 2),
+                1,
+                ["RIVET", "AKMIR"],
+                [WakeCategory.Light, WakeCategory.Medium],
+                ["34L", "16R", "07", "25"]),
+            
             new RunwayAssignmentRule(
-                "34L",
-                "34L",
-                jets: true,
-                nonJets: true,
-                heavy: true,
-                medium: true,
-                light: false,
-                feederFixes: ["RIVET", "WELSH"],
-                priority: 1),
+                2,
+                ["RIVET", "AKMIR"],
+                [WakeCategory.Light, WakeCategory.Medium],
+                ["34R", "16L"]),
+            
             new RunwayAssignmentRule(
-                "34L",
-                "34L",
-                jets: true,
-                nonJets: true,
-                heavy: true,
-                medium: true,
-                light: false,
-                feederFixes: ["BOREE", "YAKKA", "MARLN"],
-                priority: 2)
+                1,
+                ["BOREE", "MEPIL", "MARLN"],
+                [WakeCategory.Light, WakeCategory.Medium],
+                ["34R", "16L", "07", "25"]),
+            
+            new RunwayAssignmentRule(
+                2,
+                ["BOREE", "MEPIL", "MARLN"],
+                [WakeCategory.Light, WakeCategory.Medium],
+                ["34L", "16R"]),
         ];
     }
     
@@ -74,19 +63,19 @@ public class RunwayAssignerTests
     }
 
     [Fact]
-    public void ReturnsSingleMatch()
+    public void WhenOneRuleMatches_ReturnsRunwaysInOrderOfPriority()
     {
-        var result = _runwayAssigner.FindBestRunways("C172", "BOREE", _assignmentRules);
-        result.ShouldBe(["34R"]);
+        var result = _runwayAssigner.FindBestRunways("B744", "BOREE", _assignmentRules);
+        result.ShouldBe(["34L", "16R", "07", "25"]);
     }
 
     [Fact]
-    public void ReturnsMatchesInOrderOrPriority_WhenMultipleMatches()
+    public void WhenMultipleRulesMatche_ReturnsRunwaysInOrderOfPriority()
     {
         var result1 = _runwayAssigner.FindBestRunways("B738", "BOREE", _assignmentRules);
-        result1.ShouldBe(["34R", "34L"]);
+        result1.ShouldBe(["34R", "16L", "07", "25", "34L", "16R"]);
         
         var result2 = _runwayAssigner.FindBestRunways("B738", "RIVET", _assignmentRules);
-        result2.ShouldBe(["34L", "34R"]);
+        result2.ShouldBe(["34L", "16R", "07", "25", "34R", "16L"]);
     }
 }

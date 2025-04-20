@@ -1,23 +1,15 @@
-﻿namespace Maestro.Core.Configuration;
+﻿using Maestro.Core.Model;
+
+namespace Maestro.Core.Configuration;
 
 public class RunwayAssignmentRule(
-    string name,
-    string runwayIdentifier,
-    bool jets,
-    bool nonJets,
-    bool heavy,
-    bool medium,
-    bool light,
+    int priority,
     string[] feederFixes,
-    int priority)
+    WakeCategory[] wakeCategories,
+    string[] runways)
 {
-    public string Name { get; } = name;
-    public string RunwayIdentifier { get; } = runwayIdentifier;
-    public bool Jets { get; } = jets;
-    public bool NonJets { get; } = nonJets;
-    public bool Heavy { get; } = heavy;
-    public bool Medium { get; } = medium;
-    public bool Light { get; } = light;
-    public string[] FeederFixes { get; } = feederFixes;
     public int Priority { get; } = priority;
+    public string[] FeederFixes { get; } = feederFixes;
+    public WakeCategory[] WakeCategories { get; } = wakeCategories;
+    public string[] Runways { get; } = runways;
 }
