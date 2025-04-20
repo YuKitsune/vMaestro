@@ -20,7 +20,6 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
 //  - Single flight recompute
-//  - Revisit automatic runway assignment
 //  - Ask group chat about how exactly the STAR ETI calculations should work (current ground speed? What about when they slow down?)
 
 namespace Maestro.Plugin
