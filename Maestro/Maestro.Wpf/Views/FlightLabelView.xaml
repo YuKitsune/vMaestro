@@ -86,7 +86,7 @@
                 <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
                 <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}"/>
                 <MenuItem Header="Change Runway">
-                    <ItemsControl ItemsSource="{Binding SelectedRunwayMode.Runways}">
+                    <ItemsControl ItemsSource="{Binding RunwayModeViewModel.Runways}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <MenuItem Header="{Binding Identifier}" Command="{Binding ChangeRunwayCommand}" CommandParameter="{Binding Identifier}" />
