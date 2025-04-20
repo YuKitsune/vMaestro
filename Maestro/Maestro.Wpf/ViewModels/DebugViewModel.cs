@@ -4,14 +4,11 @@ using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class DebugViewModel : ObservableObject, INotificationHandler<SequenceModifiedNotification>
+public class HandleSequenceModified(DebugViewModel debugViewModel) : INotificationHandler<SequenceModifiedNotification>
 {
-    [ObservableProperty]
-    List<FlightViewModel> _flights = [];
-    
     public Task Handle(SequenceModifiedNotification notification, CancellationToken cancellationToken)
     {
-        Flights = notification.Sequence.Flights
+        debugViewModel.Flights = notification.Sequence.Flights
             .Select(a =>
                 new FlightViewModel(
                     a.Callsign,
@@ -36,4 +33,10 @@ public partial class DebugViewModel : ObservableObject, INotificationHandler<Seq
         
         return Task.CompletedTask;
     }
+}
+
+public partial class DebugViewModel : ObservableObject
+{
+    [ObservableProperty]
+    List<FlightViewModel> _flights = [];
 }
