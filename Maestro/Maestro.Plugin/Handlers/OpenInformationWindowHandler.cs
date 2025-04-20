@@ -13,7 +13,11 @@ public class OpenInformationWindowHandler(GuiInvoker guiInvoker)
         guiInvoker.InvokeOnUiThread(mainForm =>
         {
             var child = new InformationView(request.ViewModel);
-            var form = new VatSysForm(child);
+            var form = new VatSysForm(
+                title: request.ViewModel.Callsign,
+                child,
+                shrinkToContent: true);
+            
             form.Show(mainForm);
         });
         

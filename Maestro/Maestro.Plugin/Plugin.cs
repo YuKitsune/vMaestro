@@ -175,7 +175,10 @@ namespace Maestro.Plugin
             {
                 if (_maestroWindow == null || _maestroWindow.IsDisposed)
                 {
-                    _maestroWindow = new VatSysForm(new MaestroView())
+                    _maestroWindow = new VatSysForm(
+                        title: "TFMS",
+                        new MaestroView(),
+                        shrinkToContent: false)
                     {
                         Width = 560,
                         Height = 800

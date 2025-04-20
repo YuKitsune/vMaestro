@@ -7,8 +7,10 @@
         xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
         xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
         mc:Ignorable="d"
-        Background="{x:Static local:Theme.BackgroundColor}"
         d:DataContext="{d:DesignInstance Type=viewModels:FlightViewModel}"
+        Background="{x:Static local:Theme.BackgroundColor}"
+        Width="Auto"
+        Height="Auto"
         Padding="4">
     <UserControl.Resources>
         <ResourceDictionary>
