@@ -19,7 +19,6 @@ using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
-//  - Fix debug window
 //  - Single flight recompute
 //  - Revisit automatic runway assignment
 //  - Ask group chat about how exactly the STAR ETI calculations should work (current ground speed? What about when they slow down?)
