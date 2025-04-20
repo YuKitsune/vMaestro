@@ -116,12 +116,4 @@ public partial class MaestroViewModel : ObservableObject
                     a.RemainingDelayToRunway))
             .ToList();
     }
-
-    [RelayCommand]
-    async Task ShowInformationWindow(FlightViewModel viewModel)
-    {
-        var request = new OpenInformationWindowRequest(viewModel);
-
-        await _mediator.Send(request);
-    }
 }

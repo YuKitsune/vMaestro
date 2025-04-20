@@ -7,6 +7,7 @@
 
     <converters:FontSizeToHeightConverter x:Key="FontSizeToHeightConverter"/>
     <converters:FontSizeToLineHeightConverter x:Key="FontSizeToLineHeightConverter"/>
+    <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
     <Style TargetType="Window">
         <Setter Property="UseLayoutRounding" Value="True" />
@@ -213,6 +214,70 @@
                             <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}"/>
                         </Trigger>
 
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Context Menu -->
+    <Style TargetType="{x:Type ContextMenu}">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="HasDropShadow" Value="False"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <StackPanel IsItemsHost="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Context Menu Item -->
+    <Style TargetType="{x:Type MenuItem}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type MenuItem}">
+                    <Button Style="{StaticResource ButtonBaseStyle}" HorizontalContentAlignment="Stretch">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <ContentPresenter 
+                                Grid.Column="0"
+                                HorizontalAlignment="Stretch"
+                                ContentSource="Header" />
+                        
+                            <controls:Chevron
+                                Grid.Column="1"
+                                Direction="Right"
+                                HorizontalAlignment="Right"
+                                HorizontalContentAlignment="Right"
+                                Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HasItems, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        
+                            <!-- Popup for submenu items -->
+                            <Popup
+                                Grid.Column="1"
+                                Placement="Right"
+                                IsOpen="{TemplateBinding IsSubmenuOpen}"
+                                Focusable="False">
+                                <StackPanel IsItemsHost="True" />
+                            </Popup>
+                        </Grid>
+                    </Button>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="IsSubmenuOpen" Value="True"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -7,7 +7,7 @@
              xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
              xmlns:views="clr-namespace:Maestro.Wpf.Views"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=viewModels:FlightViewModel}"
+             d:DataContext="{d:DesignInstance Type=viewModels:FlightLabelViewModel}"
              d:DesignHeight="16"
              d:DesignWidth="250">
     <UserControl.Resources>
@@ -50,32 +50,65 @@
 
         </ResourceDictionary>
     </UserControl.Resources>
-    <StackPanel Orientation="Horizontal">
+    <Border>
         
-        <TextBlock 
-            Text="{Binding ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"
-            Width="24"/>
+        <StackPanel Orientation="Horizontal">
         
-        <TextBlock 
-            Text="{Binding AssignedRunway}"
-            Width="32"/>
+            <TextBlock 
+                Text="{Binding FlightViewModel.ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"
+                Width="24"/>
         
-        <TextBlock
-            Text="{Binding Callsign}"
-            Foreground="{Binding State, Converter={StaticResource StateToColorConverter}}"
-            Width="88"/>
+            <TextBlock 
+                Text="{Binding FlightViewModel.AssignedRunway}"
+                Width="32"/>
         
-        <!-- TODO: 250kts indicator-->
+            <TextBlock
+                Text="{Binding FlightViewModel.Callsign}"
+                Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
+                Width="88"/>
         
-        <TextBlock
-            Text="{Binding InitialDelay, Converter={StaticResource MinutesConverter}}"
-            Foreground="{Binding InitialDelay, Converter={StaticResource DelayToColorConverter}}"
-            Width="32" />
+            <!-- TODO: 250kts indicator-->
+        
+            <TextBlock
+                Text="{Binding FlightViewModel.InitialDelay, Converter={StaticResource MinutesConverter}}"
+                Foreground="{Binding FlightViewModel.InitialDelay, Converter={StaticResource DelayToColorConverter}}"
+                Width="32" />
 
-        <TextBlock 
-            Text="{Binding CurrentDelay, Converter={StaticResource MinutesConverter}}"
-            Foreground="{Binding CurrentDelay, Converter={StaticResource DelayToColorConverter}}"
-            Width="32"/>
+            <TextBlock 
+                Text="{Binding FlightViewModel.CurrentDelay, Converter={StaticResource MinutesConverter}}"
+                Foreground="{Binding FlightViewModel.CurrentDelay, Converter={StaticResource DelayToColorConverter}}"
+                Width="32"/>
         
-    </StackPanel>
+        </StackPanel>
+        
+        <Border.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
+                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}"/>
+                <MenuItem Header="Change Runway">
+                    <ItemsControl ItemsSource="{Binding SelectedRunwayMode.Runways}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <MenuItem Header="{Binding Identifier}" Command="{Binding ChangeRunwayCommand}" CommandParameter="{Binding Identifier}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </MenuItem>
+                <MenuItem Header="Insert Flight" >
+                    <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" />
+                    <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}" />
+                </MenuItem>
+                <MenuItem Header="Insert Slot" >
+                    <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>
+                    <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
+                </MenuItem>
+                <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" />
+                <MenuItem Header="Remove" Command="{Binding RemoveCommand}"/>
+                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}"/>
+                <MenuItem Header="Make Pending" Command="{Binding MakePendingCommand}"/>
+                <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}"/>
+                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}"/>
+            </ContextMenu>
+        </Border.ContextMenu>
+    </Border>
 </UserControl>

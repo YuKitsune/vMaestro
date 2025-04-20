@@ -1,8 +1,9 @@
-﻿using Maestro.Core.Model;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Maestro.Core.Model;
 
 namespace Maestro.Wpf.ViewModels;
 
-public class FlightViewModel
+public partial class FlightViewModel : ObservableObject
 {
     public FlightViewModel()
     {
@@ -26,7 +27,25 @@ public class FlightViewModel
         CurrentDelay = TimeSpan.FromMinutes(1);
     }
     
-    public FlightViewModel(string callsign, string aircraftType, WakeCategory wakeCategory, string origin, string destination, State state, int numberToLand, string feederFixIdentifier, DateTimeOffset? initialFeederFixTime, DateTimeOffset? currentFeederFixTime, DateTimeOffset? scheduledFeederFixTime, string assignedRunway, int numberToLandOnRunway, DateTimeOffset initialLandingTime, DateTimeOffset currentLandingTime, DateTimeOffset scheduledLandingTime, TimeSpan initialDelay, TimeSpan currentDelay)
+    public FlightViewModel(
+        string callsign,
+        string aircraftType,
+        WakeCategory wakeCategory,
+        string origin,
+        string destination,
+        State state,
+        int numberToLand,
+        string feederFixIdentifier,
+        DateTimeOffset? initialFeederFixTime,
+        DateTimeOffset? currentFeederFixTime,
+        DateTimeOffset? scheduledFeederFixTime,
+        string assignedRunway,
+        int numberToLandOnRunway,
+        DateTimeOffset initialLandingTime,
+        DateTimeOffset currentLandingTime,
+        DateTimeOffset scheduledLandingTime,
+        TimeSpan initialDelay,
+        TimeSpan currentDelay)
     {
         Callsign = callsign;
         AircraftType = aircraftType;
@@ -53,7 +72,7 @@ public class FlightViewModel
     public WakeCategory WakeCategory { get; }
     public string Origin { get; }
     public string Destination { get; }
-    public State State { get; } = State.Unstable;
+    public State State { get; }
 
     public int NumberToLand { get; }
     

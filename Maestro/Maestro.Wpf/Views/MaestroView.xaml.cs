@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.ViewModels;
+using MediatR;
 
 namespace Maestro.Wpf.Views;
 
@@ -81,7 +82,7 @@ public partial class MaestroView
         var canvasWidth = LadderCanvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
 
-        if (ViewModel.SelectedView is null)
+        if (ViewModel.SelectedRunwayMode is null || ViewModel.SelectedView is null)
             return;
 
         foreach (var aircraft in ViewModel.Aircraft)
@@ -114,16 +115,13 @@ public partial class MaestroView
 
             var flightLabel = new FlightLabelView
             {
-                DataContext = aircraft,
+                DataContext = new FlightLabelViewModel(
+                    Ioc.Default.GetRequiredService<IMediator>(),
+                    aircraft,
+                    ViewModel.SelectedRunwayMode),
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
                 LadderPosition = ladderPosition
-            };
-
-            flightLabel.Click += (_, _) =>
-            {
-                if (ViewModel.ShowInformationWindowCommand.CanExecute(aircraft))
-                    ViewModel.ShowInformationWindowCommand.Execute(aircraft);
             };
             
             flightLabel.Loaded += ladderPosition switch
