@@ -27,6 +27,7 @@
     - [X] Publish notifications on FDP updates
     - [X] Information window
     - [X] Basic sequencing algorithm
+    - [X] Automatic runway assignment
     - [ ] Change runway mode
     - [ ] Change runway rates
     - [ ] Change ETA FF
@@ -34,7 +35,6 @@
     - [ ] Remove from sequence
     - [ ] Desequence
     - [ ] Recompute
-    - [ ] Automatic runway assignment
     - [ ] Persist to sqlite database on disk
 
 - [ ] Extras
