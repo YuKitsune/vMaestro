@@ -1,7 +1,7 @@
 ﻿namespace Maestro.Core.Configuration;
 
-public class LadderConfiguration(string[]? feederFixes, string[]? runways)
+public class LadderConfiguration
 {
-    public string[]? FeederFixes { get; } = feederFixes;
-    public string[]? Runways { get; } = runways;
+    public required string[] FeederFixes { get; init; }
+    public required string[] Runways { get; init; }
 }
