@@ -250,6 +250,11 @@ namespace Maestro.Plugin
             if (!isActivated)
                 return;
 
+            // Don't track flights that are on the ground
+            // TODO: MAESTRO is capable of sequencing flights on the ground. Need to revisit this.
+            if (updated.CoupledTrack is null || updated.CoupledTrack.OnGround)
+                return;
+
             FlightPosition? position = null;
             if (updated.CoupledTrack is not null)
             {
