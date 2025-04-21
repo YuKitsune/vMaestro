@@ -75,6 +75,9 @@ public class Flight
 
     public void SetFeederFixTime(DateTimeOffset feederFixTime)
     {
+        if (EstimatedLandingTime > feederFixTime)
+            throw new MaestroException($"Cannot schedule {Callsign} to cross feeder fix at {feederFixTime} as it's estimated feeder fix time is {EstimatedFeederFixTime}.");
+        
         ScheduledFeederFixTime = feederFixTime;
     }
 
@@ -87,10 +90,13 @@ public class Flight
         }
     }
 
-    public void SetLandingTime(DateTimeOffset feederFixTime)
+    public void SetLandingTime(DateTimeOffset landingTime)
     {
+        if (EstimatedLandingTime > landingTime)
+            throw new MaestroException($"Cannot schedule {Callsign} to land at {landingTime} as it's estimated landing time is {EstimatedLandingTime}.");
+        
         HasBeenScheduled = true;
-        ScheduledLandingTime = feederFixTime;
+        ScheduledLandingTime = landingTime;
     }
 
     public void Activate(IClock clock)
