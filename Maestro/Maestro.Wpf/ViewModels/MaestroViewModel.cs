@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
@@ -11,6 +12,9 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class MaestroViewModel : ObservableObject
 {
+    readonly IMediator _mediator;
+    readonly IClock _clock;
+    
     [ObservableProperty]
     ObservableCollection<AirportViewModel> _availableAirports = [];
 
@@ -23,14 +27,13 @@ public partial class MaestroViewModel : ObservableObject
     [ObservableProperty]
     ViewConfiguration? _selectedView;
 
-    readonly IMediator _mediator;
-
     [ObservableProperty]
     List<FlightViewModel> _aircraft = [];
 
-    public MaestroViewModel(IMediator mediator)
+    public MaestroViewModel(IMediator mediator, IClock clock)
     {
         _mediator = mediator;
+        _clock = clock;
     }
 
     partial void OnAvailableAirportsChanged(ObservableCollection<AirportViewModel> availableAirports)
@@ -115,5 +118,20 @@ public partial class MaestroViewModel : ObservableObject
                     a.TotalDelay,
                     a.RemainingDelay))
             .ToList();
+    }
+
+    partial void OnSelectedRunwayModeChanged(RunwayModeViewModel? runwayMode)
+    {
+        if (SelectedAirport is null || runwayMode is null)
+            return;
+        
+        // TODO: Ask if runways should be re-assigned
+        _mediator.Send(
+            new ChangeRunwayModeRequest(
+                SelectedAirport.Identifier,
+                runwayMode.Identifier,
+                _clock.UtcNow(),
+                false));
+
     }
 }
