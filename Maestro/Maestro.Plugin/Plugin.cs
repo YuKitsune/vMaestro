@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Handlers;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Logging;
@@ -38,7 +39,6 @@ namespace Maestro.Plugin
         {
             try
             {
-                
                 ConfigureServices();
                 ConfigureTheme();
                 AddMenuItem();
@@ -46,6 +46,7 @@ namespace Maestro.Plugin
                 _mediator = Ioc.Default.GetRequiredService<IMediator>();
 
                 Network.Connected += Network_Connected;
+                Network.Disconnected += Network_Disconnected;
             }
             catch (Exception ex)
             {
@@ -197,10 +198,17 @@ namespace Maestro.Plugin
 
         void Network_Connected(object sender, EventArgs e)
         {
+            // TODO: Load sequence from local storage
+            
             foreach (var fdr in FDP2.GetFDRs)
             {
                 OnFDRUpdate(fdr);
             }
+        }
+
+        void Network_Disconnected(object sender, EventArgs e)
+        {
+            _mediator.Send(new ShutdownRequest());
         }
 
         public void OnFDRUpdate(FDP2.FDR updated)

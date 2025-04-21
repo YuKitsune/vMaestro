@@ -30,7 +30,7 @@ public class Sequence : IAsyncDisposable
 
     public IReadOnlyList<Flight> Flights => _flights.AsReadOnly();
 
-    public RunwayModeConfiguration CurrentRunwayMode { get; }
+    public RunwayModeConfiguration CurrentRunwayMode { get; private set; }
 
     public Sequence(
         AirportConfiguration airportConfiguration,
@@ -58,7 +58,7 @@ public class Sequence : IAsyncDisposable
         _sequenceTask = DoSequence(_sequenceTaskCancellationSource.Token);
     }
 
-    public async Task Stop()
+    public async Task Stop(CancellationToken cancellationToken)
     {
         if (_sequenceTask is null || _sequenceTaskCancellationSource is null)
             throw new MaestroException($"Sequence for {AirportIdentifier} has not been started");
@@ -67,6 +67,10 @@ public class Sequence : IAsyncDisposable
         await _sequenceTask;
         _sequenceTask = null;
         _sequenceTaskCancellationSource = null;
+        
+        _blockoutPeriods.Clear();
+        _flights.Clear();
+        _pending.Clear();
     }
 
     public async Task Add(Flight flight, CancellationToken cancellationToken)
@@ -178,10 +182,15 @@ public class Sequence : IAsyncDisposable
         }
     }
 
+    public void ChangeRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
+    {
+        CurrentRunwayMode = runwayModeConfiguration;
+    }
+
     async Task DoSequence(CancellationToken cancellationToken)
     {
         // TODO: Make configurable
-        var calculationIntervalSeconds = 10;
+        var calculationIntervalSeconds = 60;
         
         while (!cancellationToken.IsCancellationRequested)
         {
