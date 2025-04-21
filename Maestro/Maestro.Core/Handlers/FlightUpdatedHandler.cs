@@ -110,17 +110,37 @@ public class FlightUpdatedHandler(
             // Calculate estimates
             var feederFixEstimate = estimateProvider.GetFeederFixEstimate(flight);
             if (feederFixEstimate is not null)
+            {
+                var totalDifference = (feederFixEstimate - flight.EstimatedFeederFixTime!.Value).Value.Duration();
+                if (totalDifference.TotalSeconds >= 1)
+                {
+                    logger.LogInformation("{Callsign} ETA FF was {OriginalEstimate} and is now {NewEstimate} ({Difference})",
+                        flight.Callsign, flight.EstimatedFeederFixTime, feederFixEstimate,  totalDifference);
+                }
+                
                 flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
+            }
             
             var landingEstimate = estimateProvider.GetLandingEstimate(flight);
             if (landingEstimate is not null)
+            {
+                var totalDifference = (landingEstimate - flight.EstimatedLandingTime).Value.Duration();
+                if (totalDifference.TotalSeconds >= 1)
+                {
+                    logger.LogInformation(
+                        "{Callsign} ETA was {OriginalEstimate} and is now {NewEstimate} ({Difference})",
+                        flight.Callsign, flight.EstimatedFeederFixTime, feederFixEstimate, totalDifference);
+                }
+
                 flight.UpdateLandingEstimate(landingEstimate.Value);
+            }
             
             // Reposition in sequence if necessary
             if (!flightWasCreated && !flight.PositionIsFixed)
                 await sequence.RepositionByEstimate(flight, cancellationToken);
             
             // TODO: Schedule
+            
             // TODO: Calculate STA and STA_FF
             
             // TODO: Optimise
@@ -157,7 +177,13 @@ public class FlightUpdatedHandler(
             case State.Frozen when flight.ScheduledLandingTime < clock.UtcNow():
                 flight.SetState(State.Landed);
                 break;
+            
+            // No change required
+            default:
+                return;
         }
+        
+        logger.LogInformation("{Callsign} is now {State}", flight.Callsign, flight.State);
     }
 
     Flight CreateMaestroFlight(

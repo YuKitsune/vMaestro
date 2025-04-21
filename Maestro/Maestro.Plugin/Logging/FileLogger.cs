@@ -1,13 +1,17 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Maestro.Core.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace Maestro.Plugin.Logging;
 
 public class FileLogger(
     string categoryName,
     LogLevel level,
-    StreamWriter logFileWriter)
+    StreamWriter logFileWriter,
+    IClock clock)
     : ILogger
 {
+    readonly string _categoryName = categoryName.Split('.').Last();
+    
     public IDisposable BeginScope<TState>(TState state)
     {
         return null;
@@ -28,9 +32,10 @@ public class FileLogger(
         if (!IsEnabled(logLevel))
             return;
 
+        var time = clock.UtcNow();
         var message = formatter(state, exception);
 
-        logFileWriter.WriteLine($"[{logLevel}] [{categoryName}] {message}");
+        logFileWriter.WriteLine($"{time:HH:mm:ss} [{logLevel}] [{_categoryName}] {message}");
         logFileWriter.Flush();
     }
 }

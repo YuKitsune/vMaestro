@@ -1,14 +1,15 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Infrastructure;
 using Microsoft.Extensions.Logging;
 
 namespace Maestro.Plugin.Logging;
 
-public class LoggingConfigurator(ILoggerFactory loggerFactory, ILoggingConfiguration loggingConfiguration)
+public class LoggingConfigurator(ILoggerFactory loggerFactory, ILoggingConfiguration loggingConfiguration, IClock clock)
 {
     public void ConfigureLogging()
     {
         var logFileWriter = GetLogFileWriter();
-        var provider = new FileLoggerProvider(loggingConfiguration.LogLevel, logFileWriter);
+        var provider = new FileLoggerProvider(loggingConfiguration.LogLevel, logFileWriter, clock);
         loggerFactory.AddProvider(provider);
     }
 
@@ -17,7 +18,16 @@ public class LoggingConfigurator(ILoggerFactory loggerFactory, ILoggingConfigura
         // TODO: Trim log file so that it doesn't get too big
         
         var outputPath = loggingConfiguration.OutputPath;
-        var writer = new StreamWriter(outputPath, append: true);
+        var fileStream = new FileStream(
+            outputPath,
+            FileMode.Create,
+            FileAccess.Write,
+            FileShare.ReadWrite,
+            bufferSize: 4096,
+            FileOptions.WriteThrough);
+        
+        var writer = new StreamWriter(fileStream);
+        writer.AutoFlush = true;
         return writer;
     }
 }

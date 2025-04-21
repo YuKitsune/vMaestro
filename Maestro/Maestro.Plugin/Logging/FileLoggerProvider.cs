@@ -1,12 +1,13 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Maestro.Core.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace Maestro.Plugin.Logging;
 
-public class FileLoggerProvider(LogLevel logLevel, StreamWriter logFileWriter) : ILoggerProvider
+public class FileLoggerProvider(LogLevel logLevel, StreamWriter logFileWriter, IClock clock) : ILoggerProvider
 {
     public ILogger CreateLogger(string categoryName)
     {
-        return new FileLogger(categoryName, logLevel, logFileWriter);
+        return new FileLogger(categoryName, logLevel, logFileWriter, clock);
     }
 
     public void Dispose()
