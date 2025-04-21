@@ -24,14 +24,12 @@ public class Flight
     public DateTimeOffset? InitialFeederFixTime { get; set; }
     public DateTimeOffset? EstimatedFeederFixTime { get; set; } // ETA_FF
     public DateTimeOffset? ScheduledFeederFixTime { get; set; } // STA_FF
-    public TimeSpan? TotalDelayToFeederFix => InitialFeederFixTime - ScheduledFeederFixTime;
-    public TimeSpan? RemainingDelayToFeederFix => EstimatedFeederFixTime - ScheduledFeederFixTime;
 
     public DateTimeOffset InitialLandingTime { get; set; }
     public DateTimeOffset EstimatedLandingTime { get; set; } // ETA
     public DateTimeOffset ScheduledLandingTime { get; set; } // STA
-    public TimeSpan TotalDelayToRunway => InitialLandingTime - ScheduledLandingTime;
-    public TimeSpan RemainingDelayToRunway => EstimatedLandingTime - ScheduledLandingTime;
+    public TimeSpan TotalDelay => ScheduledLandingTime - InitialLandingTime;
+    public TimeSpan RemainingDelay => ScheduledLandingTime - EstimatedLandingTime;
     
     public bool Activated => ActivatedTime.HasValue;
     public DateTimeOffset? ActivatedTime { get; private set; }

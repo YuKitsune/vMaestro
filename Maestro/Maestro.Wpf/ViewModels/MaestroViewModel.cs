@@ -112,8 +112,8 @@ public partial class MaestroViewModel : ObservableObject
                     a.InitialLandingTime,
                     a.EstimatedLandingTime,
                     a.ScheduledLandingTime,
-                    a.TotalDelayToRunway,
-                    a.RemainingDelayToRunway))
+                    a.TotalDelay,
+                    a.RemainingDelay))
             .ToList();
     }
 }

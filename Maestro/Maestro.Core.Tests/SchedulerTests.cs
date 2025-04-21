@@ -59,6 +59,8 @@ public class SchedulerTests
         var scheduledFlight = result.ShouldHaveSingleItem();
         scheduledFlight.ScheduledFeederFixTime.ShouldBe(scheduledFlight.EstimatedFeederFixTime);
         scheduledFlight.ScheduledLandingTime.ShouldBe(scheduledFlight.EstimatedLandingTime);
+        scheduledFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+        scheduledFlight.RemainingDelay.ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]
@@ -89,6 +91,7 @@ public class SchedulerTests
         var scheduledFlight = result.ShouldHaveSingleItem();
         scheduledFlight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
         scheduledFlight.ScheduledLandingTime.ShouldBe(endTime);
+        scheduledFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
     }
 
     [Fact]
@@ -126,11 +129,13 @@ public class SchedulerTests
         first.Callsign.ShouldBe("QFA1");
         first.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
         first.ScheduledLandingTime.ShouldBe(endTime);
+        first.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
         var second = result.Last();
         second.Callsign.ShouldBe("QFA2");
         second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
         second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
+        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(3).Add(_landingRate));
     }
 
     [Fact]
@@ -170,11 +175,13 @@ public class SchedulerTests
         first.Callsign.ShouldBe("QFA2");
         first.ScheduledFeederFixTime.ShouldBe(secondFlight.EstimatedFeederFixTime);
         first.ScheduledLandingTime.ShouldBe(secondFlight.EstimatedLandingTime);
+        first.TotalDelay.ShouldBe(TimeSpan.Zero);
 
         var second = result.Last();
         second.Callsign.ShouldBe("QFA1");
         second.ScheduledFeederFixTime.ShouldBe(secondFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
         second.ScheduledLandingTime.ShouldBe(secondFlight.ScheduledLandingTime.Add(_landingRate));
+        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
     }
 
     // TODO: Stable flights cannot change position unless a new flight is added with an earlier estimate
@@ -201,9 +208,11 @@ public class SchedulerTests
         // Sanity check
         firstFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
         firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
+        firstFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
         
         secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime.Value.Add(_landingRate));
         secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime.Add(_landingRate));
+        secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
         
         // Update the ETA for the second flight so that it should be earlier than the first one
         firstFlight.SetState(State.Stable);
@@ -224,12 +233,14 @@ public class SchedulerTests
         first.Callsign.ShouldBe("QFA1");
         first.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
         first.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
+        first.TotalDelay.ShouldBe(TimeSpan.Zero);
 
         // Second flight should be delayed
         var second = result.Last();
         second.Callsign.ShouldBe("QFA2");
         second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
         second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
+        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
     }
     
     [Theory]
@@ -273,11 +284,13 @@ public class SchedulerTests
         first.Callsign.ShouldBe("QFA1");
         first.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
         first.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
+        first.TotalDelay.ShouldBe(TimeSpan.Zero);
 
         var second = result.Last();
         second.Callsign.ShouldBe("QFA2");
         second.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
         second.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
+        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
     }
 
     [Fact]

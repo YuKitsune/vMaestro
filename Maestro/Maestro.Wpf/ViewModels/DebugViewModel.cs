@@ -27,8 +27,8 @@ public class HandleSequenceModified(DebugViewModel debugViewModel) : INotificati
                     a.InitialLandingTime,
                     a.EstimatedLandingTime,
                     a.ScheduledLandingTime,
-                    a.TotalDelayToRunway,
-                    a.RemainingDelayToRunway))
+                    a.TotalDelay,
+                    a.RemainingDelay))
             .ToList();
         
         return Task.CompletedTask;
