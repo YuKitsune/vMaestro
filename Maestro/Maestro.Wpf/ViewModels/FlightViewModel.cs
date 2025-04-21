@@ -24,7 +24,7 @@ public partial class FlightViewModel : ObservableObject
         CurrentLandingTime = DateTimeOffset.Now.AddMinutes(6);
         ScheduledLandingTime = DateTimeOffset.Now.AddMinutes(7);
         InitialDelay = TimeSpan.FromMinutes(2);
-        CurrentDelay = TimeSpan.FromMinutes(1);
+        CurrentDelay = TimeSpan.FromMinutes(4);
     }
     
     public FlightViewModel(

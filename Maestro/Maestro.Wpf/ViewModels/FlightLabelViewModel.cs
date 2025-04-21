@@ -15,6 +15,13 @@ public partial class FlightLabelViewModel(
     public FlightViewModel FlightViewModel { get; } = flightViewModel;
     public RunwayModeViewModel RunwayModeViewModel { get; } = runwayModeViewModel;
 
+    public FlightLabelViewModel() : this(
+        null!,
+        new FlightViewModel(),
+        new RunwayModeViewModel("34", [new RunwayViewModel("34L", TimeSpan.Zero)]))
+    {
+    }
+
     [RelayCommand]
     void ShowInformationWindow()
     {

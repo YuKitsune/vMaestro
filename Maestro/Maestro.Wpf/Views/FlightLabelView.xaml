@@ -20,29 +20,18 @@
             <converters:StateToColorConverter x:Key="StateToColorConverter"/>
             <converters:DelayToColorConverter x:Key="DelayToColorConverter"/>
             
-            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}">
-                <Setter Property="TextAlignment" Value="Left" />
-                
-                <Style.Triggers>
-                    <DataTrigger
-                        Binding="{Binding LadderPosition, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}}"
-                        Value="Left">
-
-                        <Setter Property="TextAlignment" Value="Right"/>
-                            
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
             
             <Style TargetType="{x:Type StackPanel}">
+
                 <Setter Property="FlowDirection" Value="LeftToRight" />
                 
                 <Style.Triggers>
                     <DataTrigger
                         Binding="{Binding LadderPosition, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}}"
                         Value="Left">
-
-                        <Setter Property="FlowDirection" Value="RightToLeft"/>
+                        
+                        <Setter Property="FlowDirection" Value="RightToLeft" />
                         
                     </DataTrigger>
                 </Style.Triggers>
@@ -51,16 +40,15 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <Border>
-        
         <StackPanel Orientation="Horizontal">
         
             <TextBlock 
                 Text="{Binding FlightViewModel.ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"
-                Width="24"/>
+                Width="24" />
         
             <TextBlock 
                 Text="{Binding FlightViewModel.AssignedRunway}"
-                Width="32"/>
+                Width="32" />
         
             <TextBlock
                 Text="{Binding FlightViewModel.Callsign}"
@@ -72,42 +60,47 @@
             <TextBlock
                 Text="{Binding FlightViewModel.InitialDelay, Converter={StaticResource MinutesConverter}}"
                 Foreground="{Binding FlightViewModel.InitialDelay, Converter={StaticResource DelayToColorConverter}}"
-                Width="32" />
+                Width="32" 
+                FlowDirection="LeftToRight" />
 
             <TextBlock 
                 Text="{Binding FlightViewModel.CurrentDelay, Converter={StaticResource MinutesConverter}}"
                 Foreground="{Binding FlightViewModel.CurrentDelay, Converter={StaticResource DelayToColorConverter}}"
-                Width="32"/>
+                Width="32"
+                FlowDirection="LeftToRight" />
         
         </StackPanel>
         
         <Border.ContextMenu>
             <ContextMenu>
                 <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
-                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}"/>
+                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" IsEnabled="False"/>
                 <MenuItem Header="Change Runway">
                     <ItemsControl ItemsSource="{Binding RunwayModeViewModel.Runways}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <MenuItem Header="{Binding Identifier}" Command="{Binding ChangeRunwayCommand}" CommandParameter="{Binding Identifier}" />
+                                <MenuItem
+                                    Header="{Binding Identifier}"
+                                    Command="{Binding Path=ChangeRunwayCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type viewModels:FlightLabelViewModel}}}"
+                                    CommandParameter="{Binding Identifier}" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </MenuItem>
-                <MenuItem Header="Insert Flight" >
+                <MenuItem Header="Insert Flight" IsEnabled="False">
                     <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" />
                     <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}" />
                 </MenuItem>
-                <MenuItem Header="Insert Slot" >
+                <MenuItem Header="Insert Slot" IsEnabled="False">
                     <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>
                     <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
                 </MenuItem>
-                <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" />
-                <MenuItem Header="Remove" Command="{Binding RemoveCommand}"/>
-                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}"/>
-                <MenuItem Header="Make Pending" Command="{Binding MakePendingCommand}"/>
-                <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}"/>
-                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}"/>
+                <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" IsEnabled="False" />
+                <MenuItem Header="Remove" Command="{Binding RemoveCommand}" IsEnabled="False" />
+                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" IsEnabled="False" />
+                <MenuItem Header="Make Pending" Command="{Binding MakePendingCommand}" IsEnabled="False" />
+                <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}" IsEnabled="False" />
+                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" IsEnabled="False" />
             </ContextMenu>
         </Border.ContextMenu>
     </Border>
