@@ -16,11 +16,11 @@ public partial class AirportViewModel(string identifier, RunwayModeViewModel[] r
     ObservableCollection<ViewConfiguration> _views = new(views);
 }
 
-public class RunwayModeViewModel(string identifier, RunwayViewModel[] runwayModes)
+public class RunwayModeViewModel(string identifier, RunwayViewModel[] runways)
 {
     public string Identifier => identifier;
 
-    public RunwayViewModel[] Runways => runwayModes;
+    public RunwayViewModel[] Runways => runways;
 }
 
 public partial class RunwayViewModel(string identifier, TimeSpan defaultLandingRate) : ObservableObject

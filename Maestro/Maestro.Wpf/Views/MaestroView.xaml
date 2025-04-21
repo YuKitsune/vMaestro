@@ -166,7 +166,7 @@
                     Orientation="Vertical" />
 
                 <!-- Setup Button -->
-                <Button Grid.Column="8" Content="SETUP" />
+                <Button Grid.Column="8" Content="SETUP" IsEnabled="False" />
             </Grid>
 
         </controls:BeveledBorder>
@@ -184,9 +184,9 @@
                 </Style>
             </StackPanel.Resources>
             
-            <Button IsEnabled="False" Content="DEPS"/>
-            <Button Content="COORD"/>
-            <Button Content="DESQ"/>
+            <Button Content="DEPS" IsEnabled="False" />
+            <Button Content="COORD" IsEnabled="False" />
+            <Button Content="DESQ" IsEnabled="False" />
 
             <ItemsControl ItemsSource="{Binding SelectedAirport.Views}" Name="SectorList">
                 <ItemsControl.Resources>
