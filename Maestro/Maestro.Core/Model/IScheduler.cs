@@ -6,165 +6,69 @@ namespace Maestro.Core.Model;
 
 public interface IScheduler
 {
-    IEnumerable<Flight> ScheduleFlights(
-        IReadOnlyList<Flight> flights,
-        BlockoutPeriod[] blockoutPeriods,
-        RunwayModeConfiguration currentRunwayMode);
+    void Schedule(Sequence sequence, Flight flight);
 }
 
-public class Scheduler(ILogger<Scheduler> logger) : IScheduler
+public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> logger) : IScheduler
 {
-    public IEnumerable<Flight> ScheduleFlights(
-        IReadOnlyList<Flight> flights,
-        BlockoutPeriod[] blockoutPeriods,
-        RunwayModeConfiguration currentRunwayMode)
+    public void Schedule(Sequence sequence, Flight flight)
     {
-        logger.LogInformation("Scheduling {Count} flights", flights.Count);
-        
-        var sequence = flights.Where(f => !CanSchedule(f)).ToList();
-        
-        foreach (var flight in flights.OrderBy(f => f.ScheduledLandingTime))
-        {
-            // TODO: Runway and terminal trajectories
-            // TODO: Optimisation
-            
-            // Do not apply any more processing to superstable or frozen flights
-            if (!CanSchedule(flight))
-            {
-                logger.LogDebug("{Callsign} is {State}. No processing required.", flight.Callsign, flight.State);
-                continue;
-            }
-            
-            // TODO: Account for runway mode changes
-            var runwayMode = currentRunwayMode;
-            var landingRate = GetLandingRate(flight, runwayMode);
-            
-            ComputeLandingTime(flight, landingRate);
-            sequence.Add(flight);
-            
-            // If there are any flights behind this one, then we need to push them back
-            var trailingConflictPeriod = new Period(flight.ScheduledLandingTime, flight.ScheduledLandingTime.Add(landingRate));
-            var trailingFlights = sequence.Where(f =>
-                f.Callsign != flight.Callsign &&
-                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
-                f.ScheduledLandingTime >= trailingConflictPeriod.StartTime &&
-                f.ScheduledLandingTime < trailingConflictPeriod.EndTime)
-                .ToArray();
+        ScheduleInternal(sequence, flight, force: false);
+    }
 
-            if (trailingFlights.Length != 0)
-            {
-                logger.LogInformation("{Count} trailing flights are in conflict. Recomputing landing times.", trailingFlights.Length);
-            
-                // TODO: This needs to cascade backwards. Add a test.
-                foreach (var trailingFlight in trailingFlights)
-                {
-                    ComputeLandingTime(trailingFlight, landingRate);
-                }
-            }
+    void ScheduleInternal(Sequence sequence, Flight flight, bool force)
+    {
+        // TODO: Runway and terminal trajectories
+        // TODO: Optimisation
+        
+        // Do not apply any more processing to superstable or frozen flights
+        if (!force && !CanSchedule(flight))
+        {
+            logger.LogDebug("{Callsign} is {State}. No processing required.", flight.Callsign, flight.State);
+            return;
         }
         
-        return sequence.ToArray();
-
-        void ComputeLandingTime(Flight flight, TimeSpan landingRate)
+        var currentFlightIndex = Array.FindIndex(sequence.Flights, f => f.Callsign == flight.Callsign);
+        
+        // TODO: Account for runway mode changes
+        var runwayMode = sequence.CurrentRunwayMode;
+        var landingRate = GetLandingRate(flight, runwayMode);
+        
+        ComputeLandingTime(sequence, flight, currentFlightIndex, landingRate);
+        
+        var trailingFlight = sequence.Flights
+            .Skip(currentFlightIndex + 1)
+            .FirstOrDefault(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
+        if (trailingFlight is null)
         {
-            logger.LogInformation("Computing {Callsign}...", flight.Callsign);
-            
-            BlockoutPeriod? blockoutPeriod = null;
-            if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-                blockoutPeriod = blockoutPeriods.FirstOrDefault(bp => bp.RunwayIdentifier == flight.AssignedRunwayIdentifier && bp.StartTime < flight.EstimatedLandingTime && bp.EndTime > flight.EstimatedLandingTime);;
-
-            DateTimeOffset? earliestAvailableLandingTime = null;
-            if (blockoutPeriod is not null)
-                earliestAvailableLandingTime = blockoutPeriod.EndTime;
-
-            if (blockoutPeriod is not null)
-            {
-                logger.LogDebug("Blockout period exists, earliest landing time for {Callsign} is {Time}", flight.Callsign, earliestAvailableLandingTime);
-            }
-            
-            // Avoid delaying priority flights behind others
-            // TODO: Move conflicting flights behind this one
-            // if (flight.NoDelay || flight.HighPriority)
-            // {
-            //     var naturalLandingTime = flight.EstimatedLandingTime;
-            //     var landingTime = earliestAvailableLandingTime is not null && flight.EstimatedLandingTime < earliestAvailableLandingTime
-            //         ? earliestAvailableLandingTime.Value
-            //         : flight.EstimatedLandingTime;
-            //
-            //     if (flight.EstimatedFeederFixTime is not null)
-            //     {
-            //         var delay = landingTime - naturalLandingTime;
-            //         var feederFixTime = flight.EstimatedFeederFixTime.Value + delay;
-            //         flight.SetFeederFixTime(feederFixTime);
-            //     }
-            //     
-            //     flight.SetLandingTime(landingTime);
-            //     sequence.Add(flight);
-            //     continue;
-            // }
-            
-            // Flights cannot be scheduled in front of superstable flights
-            var lastSuperStableFlight = sequence.LastOrDefault(f => f.Callsign != flight.Callsign && f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier && f.PositionIsFixed);
-            if (lastSuperStableFlight is not null)
-            {
-                var slotAfterLeader = lastSuperStableFlight.ScheduledLandingTime.Add(landingRate);
-                earliestAvailableLandingTime = earliestAvailableLandingTime is null
-                    ? slotAfterLeader
-                    : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
-                
-                logger.LogDebug("Last SuperStable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastSuperStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
-            }
-            
-            // New flights (not yet scheduled) can go in front of stable flights if they have an earlier estimate
-            var lastStableFlight = sequence.LastOrDefault(f => f.Callsign != flight.Callsign && f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier && f.State is State.Stable);
-            if (flight.HasBeenScheduled && lastStableFlight is not null)
-            {
-                var slotAfterLeader = lastStableFlight.ScheduledLandingTime.Add(landingRate);
-                earliestAvailableLandingTime = earliestAvailableLandingTime is null
-                    ? slotAfterLeader
-                    : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
-                
-                logger.LogDebug("Last Stable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
-            }
-            
-            var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
-                
-            logger.LogInformation("Earliest available landing time for {Callsign} is {Time}. Current estimate is {Estimate}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
-            
-            // Keep working backwards until there are no conflicts
-            while (true)
-            {
-                var conflictPeriod = new Period(scheduledLandingTime.Subtract(landingRate), scheduledLandingTime);
-            
-                var leader = sequence
-                    .OrderBy(f => f.ScheduledLandingTime)
-                    .LastOrDefault(f => f.Callsign != flight.Callsign && f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier && f.ScheduledLandingTime > conflictPeriod.StartTime && f.ScheduledLandingTime <= conflictPeriod.EndTime);
-                
-                if (leader is null)
-                    break;
-                
-                var newLandingTime = leader.ScheduledLandingTime.Add(landingRate);
-                logger.LogInformation("Conflict found with {LeaderCallsign} landing at {LeaderLandingTime} ({Duration} ahead). Delaying to {NewLandingTime}.", leader.Callsign, leader.ScheduledLandingTime, leader.ScheduledLandingTime - scheduledLandingTime, newLandingTime);
-
-                scheduledLandingTime = newLandingTime;
-            }
-            
-            logger.LogInformation("{Callsign} clear of conflict. Total delay {Duration}.", flight.Callsign, scheduledLandingTime - flight.EstimatedLandingTime);
-            
-            if (flight.EstimatedFeederFixTime is not null)
-            {
-                var delay = scheduledLandingTime - flight.EstimatedLandingTime;
-                var feederFixTime = flight.EstimatedFeederFixTime.Value + delay;
-                flight.SetFeederFixTime(feederFixTime);
-            }
-            
-            flight.SetLandingTime(scheduledLandingTime);
-
-            if (flight.EstimatedLandingTime > scheduledLandingTime)
-            {
-                logger.LogWarning("Flight was scheduled to land at {ScheduledLandingTime} earlier than the estimated landing time of {EstimatedLandingTime}", scheduledLandingTime, flight.EstimatedLandingTime);
-            }
+            // Nobody behind us, nothing to do
+            return;
         }
+        
+        // If the flight behind us is too close, we need to re-calculate it
+        // TODO: Add a test to see if we can reduce the delay if a preceding flight moves or disappears
+        var timeToTrailer = trailingFlight.ScheduledLandingTime - flight.ScheduledLandingTime;
+        if (timeToTrailer < TimeSpan.Zero)
+        {
+            // The flight that _was_ behind us in the sequence is now in front of us
+            // TODO: Can we ignore them?
+            return;
+        }
+        
+        if (timeToTrailer < landingRate)
+        {
+            ScheduleInternal(sequence, trailingFlight, force: true);
+        }
+    }
+
+    bool CanSchedule(Flight flight)
+    {
+        // If it hasn't been scheduled before, then we need to schedule it
+        if (!flight.HasBeenScheduled)
+            return true;
+        
+        // Do not schedule stable, superstable, or frozen flights
+        return !flight.PositionIsFixed && flight.State != State.Stable;
     }
 
     TimeSpan GetLandingRate(Flight flight, RunwayModeConfiguration runwayMode)
@@ -177,14 +81,118 @@ public class Scheduler(ILogger<Scheduler> logger) : IScheduler
         return TimeSpan.FromSeconds(60);
     }
 
-    bool CanSchedule(Flight flight)
+    void ComputeLandingTime(Sequence sequence, Flight flight, int currentFlightIndex, TimeSpan landingRate)
     {
-        // If it hasn't been scheduled before, then we need to schedule it
-        if (!flight.HasBeenScheduled)
-            return true;
+        logger.LogInformation("Computing {Callsign}...", flight.Callsign);
         
-        // Do not schedule stable, superstable, or frozen flights
-        return !flight.PositionIsFixed && flight.State != State.Stable;
+        BlockoutPeriod? blockoutPeriod = null;
+        if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+            blockoutPeriod = sequence.BlockoutPeriods.FirstOrDefault(bp => bp.RunwayIdentifier == flight.AssignedRunwayIdentifier && bp.StartTime < flight.EstimatedLandingTime && bp.EndTime > flight.EstimatedLandingTime);;
+
+        DateTimeOffset? earliestAvailableLandingTime = null;
+        if (blockoutPeriod is not null)
+            earliestAvailableLandingTime = blockoutPeriod.EndTime;
+
+        if (blockoutPeriod is not null)
+        {
+            logger.LogDebug("Blockout period exists, earliest landing time for {Callsign} is {Time}", flight.Callsign, earliestAvailableLandingTime);
+        }
+        
+        // Avoid delaying priority flights behind others
+        // TODO: Move conflicting flights behind this one
+        // if (flight.NoDelay || flight.HighPriority)
+        // {
+        //     var naturalLandingTime = flight.EstimatedLandingTime;
+        //     var landingTime = earliestAvailableLandingTime is not null && flight.EstimatedLandingTime < earliestAvailableLandingTime
+        //         ? earliestAvailableLandingTime.Value
+        //         : flight.EstimatedLandingTime;
+        //
+        //     if (flight.EstimatedFeederFixTime is not null)
+        //     {
+        //         var delay = landingTime - naturalLandingTime;
+        //         var feederFixTime = flight.EstimatedFeederFixTime.Value + delay;
+        //         flight.SetFeederFixTime(feederFixTime);
+        //     }
+        //     
+        //     flight.SetLandingTime(landingTime);
+        //     sequence.Add(flight);
+        //     continue;
+        // }
+        
+        // Flights cannot be scheduled in front of superstable flights
+        var lastSuperStableFlight = sequence.Flights.LastOrDefault(f =>
+            f.Callsign != flight.Callsign &&
+            f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
+            f.PositionIsFixed);
+        if (lastSuperStableFlight is not null)
+        {
+            var slotAfterLeader = lastSuperStableFlight.ScheduledLandingTime.Add(landingRate);
+            earliestAvailableLandingTime = earliestAvailableLandingTime is null
+                ? slotAfterLeader
+                : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
+            
+            logger.LogDebug("Last SuperStable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastSuperStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
+        }
+        
+        // New flights (not yet scheduled) can go in front of stable flights if they have an earlier estimate
+        var lastStableFlight = sequence.Flights.LastOrDefault(f =>
+            f.Callsign != flight.Callsign &&
+            f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
+            f.State is State.Stable);
+        if (flight.HasBeenScheduled && lastStableFlight is not null)
+        {
+            var slotAfterLeader = lastStableFlight.ScheduledLandingTime.Add(landingRate);
+            earliestAvailableLandingTime = earliestAvailableLandingTime is null
+                ? slotAfterLeader
+                : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
+            
+            logger.LogDebug("Last Stable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
+        }
+        
+        var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
+            
+        logger.LogInformation("Earliest available landing time for {Callsign} is {Time}. Current estimate is {Estimate}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
+        
+        // Ensure sufficient spacing between the current flight and the one in front
+        var leader = sequence.Flights
+            .Take(currentFlightIndex)
+            .LastOrDefault(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
+        if (leader is not null)
+        {
+            var timeToLeader = scheduledLandingTime - leader.ScheduledLandingTime;
+            if (timeToLeader < landingRate)
+            {
+                var newLandingTime = leader.ScheduledLandingTime.Add(landingRate);
+                logger.LogInformation(
+                    "Conflict found with {LeaderCallsign} landing at {LeaderLandingTime} ({Duration} ahead). Delaying to {NewLandingTime}.",
+                    leader.Callsign,
+                    leader.ScheduledLandingTime,
+                    leader.ScheduledLandingTime - scheduledLandingTime,
+                    newLandingTime);
+
+                scheduledLandingTime = newLandingTime;
+            }
+        }
+        
+        if (flight.EstimatedFeederFixTime is not null)
+        {
+            var delay = scheduledLandingTime - flight.EstimatedLandingTime;
+            var feederFixTime = flight.EstimatedFeederFixTime.Value + delay;
+            flight.SetFeederFixTime(feederFixTime);
+        }
+        
+        flight.SetLandingTime(scheduledLandingTime);
+        
+        var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+        if (performance is not null && performance.IsJet && flight.EstimatedLandingTime < scheduledLandingTime)
+        {
+            flight.SetFlowControls(FlowControls.S250);
+        }
+
+        if (flight.EstimatedLandingTime > scheduledLandingTime)
+        {
+            logger.LogWarning("Flight was scheduled to land at {ScheduledLandingTime} earlier than the estimated landing time of {EstimatedLandingTime}", scheduledLandingTime, flight.EstimatedLandingTime);
+        }
     }
 }
 
@@ -213,12 +221,12 @@ public static class DateTimeOffsetExtensionMethods
 {
     public static bool IsBefore(this DateTimeOffset left, DateTimeOffset right)
     {
-        return left <= right;
+        return left < right;
     }
 
     public static bool IsAfter(this DateTimeOffset left, DateTimeOffset right)
     {
-        return left >= right;
+        return left > right;
     }
 
     public static bool IsWithin(this DateTimeOffset left, TimeSpan tolerance, DateTimeOffset referencePoint)

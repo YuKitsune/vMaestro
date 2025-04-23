@@ -6,41 +6,68 @@ namespace Maestro.Core.Model;
 [DebuggerDisplay("{Callsign} {ScheduledLandingTime}")]
 public class Flight
 {
-    public required string Callsign { get; init; }
-    public required string AircraftType { get; init; }
-    public required WakeCategory WakeCategory { get; init; }
-    public required string OriginIdentifier { get; init; }
-    public required string DestinationIdentifier { get; init; }
-    public string? FeederFixIdentifier { get; set; }
-    public string? AssignedRunwayIdentifier { get; set; }
-    public string? AssignedStarIdentifier { get; set; }
+    public Flight(
+        string callsign,
+        string aircraftType,
+        WakeCategory wakeCategory,
+        string originIdentifier,
+        string destinationIdentifier,
+        string assignedRunwayIdentifier,
+        FixEstimate? feederFixEstimate,
+        DateTimeOffset initialLandingTime)
+    {
+        Callsign = callsign;
+        AircraftType = aircraftType;
+        WakeCategory = wakeCategory;
+        OriginIdentifier = originIdentifier;
+        DestinationIdentifier = destinationIdentifier;
+        AssignedRunwayIdentifier = assignedRunwayIdentifier;
+
+        FeederFixIdentifier = feederFixEstimate?.FixIdentifier;
+        InitialFeederFixTime = feederFixEstimate?.Estimate;
+        EstimatedFeederFixTime = feederFixEstimate?.Estimate;
+        ScheduledFeederFixTime = feederFixEstimate?.Estimate;
+        
+        InitialLandingTime = initialLandingTime;
+        EstimatedLandingTime = initialLandingTime;
+        ScheduledLandingTime = initialLandingTime;
+    }
+
+    public string Callsign { get; private set; }
+    public string AircraftType { get; private set; }
+    public WakeCategory WakeCategory { get; private set; }
+    public string OriginIdentifier { get; private set; }
+    public string DestinationIdentifier { get; private set; }
+    public string AssignedRunwayIdentifier { get; private set; }
+    public string? AssignedStarIdentifier { get; private set; }
     public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
 
     public State State { get; private set; } = State.Unstable;
-
     public bool PositionIsFixed => State is not State.Unstable and not State.Stable;
 
-    public DateTimeOffset? InitialFeederFixTime { get; set; }
-    public DateTimeOffset? EstimatedFeederFixTime { get; set; } // ETA_FF
-    public DateTimeOffset? ScheduledFeederFixTime { get; set; } // STA_FF
+    public string? FeederFixIdentifier { get; private set; }
+    public DateTimeOffset? InitialFeederFixTime { get; private set; }
+    public DateTimeOffset? EstimatedFeederFixTime { get; private set; } // ETA_FF
+    public DateTimeOffset? ScheduledFeederFixTime { get; private set; } // STA_FF
 
-    public DateTimeOffset InitialLandingTime { get; set; }
-    public DateTimeOffset EstimatedLandingTime { get; set; } // ETA
-    public DateTimeOffset ScheduledLandingTime { get; set; } // STA
+    public DateTimeOffset InitialLandingTime { get; private set; }
+    public DateTimeOffset EstimatedLandingTime { get; private set; } // ETA
+    public DateTimeOffset ScheduledLandingTime { get; private set; } // STA
     public TimeSpan TotalDelay => ScheduledLandingTime - InitialLandingTime;
     public TimeSpan RemainingDelay => ScheduledLandingTime - EstimatedLandingTime;
     
     public bool Activated => ActivatedTime.HasValue;
     public DateTimeOffset? ActivatedTime { get; private set; }
     
-    public DateTimeOffset? PositionUpdated { get; private set; }
     public FlightPosition? LastKnownPosition { get; private set; }
     public FixEstimate[] Estimates { get; private set; } = [];
     
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
     
     public bool HasBeenScheduled { get; private set; }
+    
+    public DateTimeOffset LastSeen { get; private set; }
 
     public void SetState(State state)
     {
@@ -51,6 +78,11 @@ public class Flight
     public void SetRunway(string runwayIdentifier)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
+    }
+
+    public void SetArrival(string arrivalIdentifier)
+    {
+        AssignedStarIdentifier = arrivalIdentifier;
     }
 
     public void SetFlowControls(FlowControls flowControls)
@@ -75,9 +107,6 @@ public class Flight
 
     public void SetFeederFixTime(DateTimeOffset feederFixTime)
     {
-        if (EstimatedLandingTime > feederFixTime)
-            throw new MaestroException($"Cannot schedule {Callsign} to cross feeder fix at {feederFixTime} as it's estimated feeder fix time is {EstimatedFeederFixTime}.");
-        
         ScheduledFeederFixTime = feederFixTime;
     }
 
@@ -92,9 +121,6 @@ public class Flight
 
     public void SetLandingTime(DateTimeOffset landingTime)
     {
-        if (EstimatedLandingTime > landingTime)
-            throw new MaestroException($"Cannot schedule {Callsign} to land at {landingTime} as it's estimated landing time is {EstimatedLandingTime}.");
-        
         HasBeenScheduled = true;
         ScheduledLandingTime = landingTime;
     }
@@ -107,11 +133,15 @@ public class Flight
         ActivatedTime = clock.UtcNow();
     }
 
-    public void UpdatePosition(FlightPosition position, FixEstimate[] estimates, IClock clock)
+    public void UpdatePosition(FlightPosition position, FixEstimate[] estimates)
     {
         LastKnownPosition = position;
         Estimates = estimates;
-        PositionUpdated = clock.UtcNow();
+    }
+
+    public void UpdateLastSeen(IClock clock)
+    {
+        LastSeen = clock.UtcNow();
     }
 }
 

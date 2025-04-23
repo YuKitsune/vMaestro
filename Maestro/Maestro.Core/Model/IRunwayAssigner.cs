@@ -7,7 +7,7 @@ public interface IRunwayAssigner
     string[] FindBestRunways(
         string aircraftType,
         string feederFixIdentifier,
-        RunwayAssignmentRule[] rules);
+        IReadOnlyCollection<RunwayAssignmentRule> rules);
 }
 
 public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssigner
@@ -15,7 +15,7 @@ public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssig
     public string[] FindBestRunways(
         string aircraftType,
         string feederFixIdentifier,
-        RunwayAssignmentRule[] rules)
+        IReadOnlyCollection<RunwayAssignmentRule> rules)
     {
         var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
         if (performanceData is null)

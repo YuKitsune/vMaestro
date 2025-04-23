@@ -20,8 +20,10 @@ using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
-//  - Single flight recompute
-//  - Ask group chat about how exactly the STAR ETI calculations should work (current ground speed? What about when they slow down?)
+//  - On sweatbox, flights in the front of the queue kept getting pushed back unnecessarily.
+//  - Fix runway change button
+//  - Remove SequenceChangedEvent, replace with flight changed
+//  - Optimise ladder drawing code
 
 namespace Maestro.Plugin
 {

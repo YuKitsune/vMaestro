@@ -4,7 +4,6 @@ namespace Maestro.Core.Tests.Builders;
 
 public class FlightBuilder(string callsign)
 {
-    string _callsign = callsign;
     string _aircraftType = "B738";
     WakeCategory _wakeCategory = WakeCategory.Medium;
     string _origin = "YMML";
@@ -57,26 +56,27 @@ public class FlightBuilder(string callsign)
     
     public Flight Build()
     {
-        var flight = new Flight
-        {
-            Callsign = _callsign,
-            AircraftType = _aircraftType,
-            WakeCategory = _wakeCategory,
-            OriginIdentifier = _origin,
-            DestinationIdentifier = _destination,
-            FeederFixIdentifier = _feederFixIdentifier,
-            AssignedRunwayIdentifier = _assignedRunway
-        };
-        
-        flight.UpdateFeederFixEstimate(feederFixEstimate);
+        var feederFix = !string.IsNullOrEmpty(_feederFixIdentifier)
+            ? new FixEstimate(_feederFixIdentifier, feederFixEstimate)
+            : null;
+
+        var flight = new Flight(
+            callsign,
+            _aircraftType,
+            _wakeCategory,
+            _origin,
+            _destination,
+            _assignedRunway,
+            feederFix,
+            landingEstimate);
         
         if (feederFixTime != default)
             flight.SetFeederFixTime(feederFixTime);
         
-        flight.UpdateLandingEstimate(landingEstimate);
-        
         if (landingTime != default)
             flight.SetLandingTime(landingTime);
+        
+        flight.Activate(new FixedClock(DateTimeOffset.Now));
         
         flight.SetState(_state);
 

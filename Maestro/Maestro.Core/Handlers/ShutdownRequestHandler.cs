@@ -20,7 +20,8 @@ public class ShutdownRequestHandler(
             if (sequence is null)
                 continue;
 
-            await sequence.Stop(cancellationToken);
+            // TODO:
+            // await sequence.Stop(cancellationToken);
             
             await mediator.Publish(new SequenceModifiedNotification(sequence), cancellationToken);
         }

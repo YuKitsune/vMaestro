@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Tests.Builders;
 using NSubstitute;
 using Shouldly;
 
@@ -9,7 +10,6 @@ namespace Maestro.Core.Tests;
 public class EstimateProviderTests
 {
     readonly Flight _flight;
-    
     readonly IClock _clock;
     readonly IArrivalLookup _arrivalLookup;
     readonly IFixLookup _fixLookup;
@@ -27,18 +27,8 @@ public class EstimateProviderTests
 
         _fixLookup = Substitute.For<IFixLookup>();
         _fixLookup.FindFix(Arg.Is("RIVET")).Returns(new Fix("RIVET", new Coordinate(0, 0)));
-        
-        _flight = new Flight
-        {
-            Callsign = "QFA123",
-            AircraftType = "B738",
-            WakeCategory = WakeCategory.Medium,
-            OriginIdentifier = "YMML",
-            DestinationIdentifier = "YSSY",
-            FeederFixIdentifier = "RIVET",
-            AssignedRunwayIdentifier = "34L",
-            AssignedStarIdentifier = "RIVET4"
-        };
+
+        _flight = new FlightBuilder("QFA123").Build();
 
         _flight.UpdatePosition(
             new FlightPosition(
@@ -49,8 +39,7 @@ public class EstimateProviderTests
             [
                 new FixEstimate("RIVET", _feederFixSystemEstimate),
                 new FixEstimate("TESAT", _landingSystemEstimate)
-            ],
-            _clock);
+            ]);
         
         _flight.UpdateFeederFixEstimate(_feederFixSystemEstimate);
     }

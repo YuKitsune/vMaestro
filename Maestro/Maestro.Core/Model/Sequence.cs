@@ -1,20 +1,12 @@
 ﻿using System.Diagnostics;
 using Maestro.Core.Configuration;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
-using MediatR;
 
 namespace Maestro.Core.Model;
 
 [DebuggerDisplay("{AirportIdentifier}")]
-public class Sequence : IAsyncDisposable
+public class Sequence
 {
-    readonly IMediator _mediator;
     readonly AirportConfiguration _airportConfiguration;
-    readonly IScheduler _scheduler;
-    readonly IEstimateProvider _estimateProvider;
-    readonly IRunwayAssigner _runwayAssigner;
-    readonly IClock _clock;
     
     readonly List<BlockoutPeriod> _blockoutPeriods = new();
     readonly List<Flight> _pending = new();
@@ -22,55 +14,18 @@ public class Sequence : IAsyncDisposable
     
     readonly SemaphoreSlim _semaphore = new(1, 1);
     
-    CancellationTokenSource? _sequenceTaskCancellationSource;
-    Task? _sequenceTask;
-    
     public string AirportIdentifier => _airportConfiguration.Identifier;
     public string[] FeederFixes => _airportConfiguration.FeederFixes;
 
-    public IReadOnlyList<Flight> Flights => _flights.AsReadOnly();
-
+    public IReadOnlyList<BlockoutPeriod> BlockoutPeriods => _blockoutPeriods;
+    public Flight[] Flights => _flights.ToArray();
     public RunwayModeConfiguration CurrentRunwayMode { get; private set; }
+    public IReadOnlyList<RunwayAssignmentRule> RunwayAssignmentRules => _airportConfiguration.RunwayAssignmentRules;
 
-    public Sequence(
-        AirportConfiguration airportConfiguration,
-        IMediator mediator,
-        IClock clock,
-        IEstimateProvider estimateProvider,
-        IScheduler scheduler, IRunwayAssigner runwayAssigner)
+    public Sequence(AirportConfiguration airportConfiguration)
     {
         _airportConfiguration = airportConfiguration;
-        _mediator = mediator;
-        _clock = clock;
-        _estimateProvider = estimateProvider;
-        _scheduler = scheduler;
-        _runwayAssigner = runwayAssigner;
-
         CurrentRunwayMode = airportConfiguration.RunwayModes.First();
-    }
-
-    public void Start()
-    {
-        if (_sequenceTask != null)
-            throw new MaestroException($"Sequence for {AirportIdentifier} is already running");
-
-        _sequenceTaskCancellationSource = new CancellationTokenSource();
-        _sequenceTask = DoSequence(_sequenceTaskCancellationSource.Token);
-    }
-
-    public async Task Stop(CancellationToken cancellationToken)
-    {
-        if (_sequenceTask is null || _sequenceTaskCancellationSource is null)
-            throw new MaestroException($"Sequence for {AirportIdentifier} has not been started");
-        
-        _sequenceTaskCancellationSource.Cancel();
-        await _sequenceTask;
-        _sequenceTask = null;
-        _sequenceTaskCancellationSource = null;
-        
-        _blockoutPeriods.Clear();
-        _flights.Clear();
-        _pending.Clear();
     }
 
     public async Task Add(Flight flight, CancellationToken cancellationToken)
@@ -88,13 +43,6 @@ public class Sequence : IAsyncDisposable
                 throw new MaestroException($"{flight.Callsign} cannot be sequenced as it is not activated.");
             
             // TODO: Additional validation
-
-            // TODO: Calculate runway mode at landing time
-            var runwayMode = CurrentRunwayMode;
-            
-            AssignFeeder(flight);
-            AssignRunway(flight, runwayMode);
-            CalculateEstimates(flight);
             
             // Add the flight based on it's estimate
             if (_flights.Count == 0)
@@ -104,10 +52,8 @@ public class Sequence : IAsyncDisposable
             }
             
             // TODO: Account for runway mode changes if necessary
-            var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
+            var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.ScheduledLandingTime <= flight.ScheduledLandingTime) + 1;
             _flights.Insert(index, flight);
-            
-            await _mediator.Publish(new SequenceModifiedNotification(this), cancellationToken);
         }
         finally
         {
@@ -115,31 +61,17 @@ public class Sequence : IAsyncDisposable
         }
     }
 
-    public async Task RepositionByEstimate(Flight flight, CancellationToken cancellationToken)
+    public async Task RepositionByLandingTime(Flight flight, CancellationToken cancellationToken)
     {
         await _semaphore.WaitAsync(cancellationToken);
 
         try
         {
-            if (_flights.Count == 0)
-            {
-                _flights.Add(flight);
-                return;
-            }
-
+            _flights.Remove(flight);
+            
             // TODO: Account for runway mode changes if necessary
-            var index = _flights.FindLastIndex(f =>
-                !f.PositionIsFixed && f.EstimatedLandingTime < flight.EstimatedLandingTime) + 1;
-
-            var currentIndex = _flights.IndexOf(flight);
-            if (currentIndex == -1)
-            {
-                _flights.Insert(index, flight);
-            }
-            else if (currentIndex != index)
-            {
-                if (index > currentIndex) index--;
-            }
+            var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.ScheduledLandingTime <= flight.ScheduledLandingTime) + 1;
+            _flights.Insert(index, flight);
         }
         finally
         {
@@ -160,8 +92,20 @@ public class Sequence : IAsyncDisposable
             
             // TODO: Additional validation
             _pending.Add(flight);
-            
-            await _mediator.Publish(new SequenceModifiedNotification(this), cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public async Task AddBlockout(BlockoutPeriod blockoutPeriod, CancellationToken cancellationToken)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            // TODO: Prevent overlaps
+            _blockoutPeriods.Add(blockoutPeriod);
         }
         finally
         {
@@ -185,51 +129,6 @@ public class Sequence : IAsyncDisposable
     public void ChangeRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
     {
         CurrentRunwayMode = runwayModeConfiguration;
-    }
-
-    async Task DoSequence(CancellationToken cancellationToken)
-    {
-        // TODO: Make configurable
-        var calculationIntervalSeconds = 60;
-        
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
-            {
-                // TODO: Remove completed flights after a certain time
-
-                await _semaphore.WaitAsync(cancellationToken);
-                try
-                {
-                    foreach (var flight in _flights)
-                    {
-                        CalculateEstimates(flight);
-                    }
-                    
-                    var flights = _scheduler.ScheduleFlights(
-                        _flights,
-                        _blockoutPeriods.ToArray(),
-                        CurrentRunwayMode);
-                    
-                    _flights.Clear();
-                    _flights.AddRange(flights);
-                }
-                finally
-                {
-                    _semaphore.Release();
-                }
-            
-                await _mediator.Publish(new SequenceModifiedNotification(this), cancellationToken);
-            }
-            catch (Exception exception)
-            {
-                // TODO: Log
-            }
-            finally
-            {
-                await Task.Delay(TimeSpan.FromSeconds(calculationIntervalSeconds), cancellationToken);
-            }
-        }
     }
 
     // public Flight[] ComputeSequence_OLD(IReadOnlyList<Flight> flights)
@@ -550,83 +449,4 @@ public class Sequence : IAsyncDisposable
     //         }
     //     }
     // }
-
-    void AssignFeeder(Flight flight)
-    {
-        var feederFix = flight.Estimates.LastOrDefault(f => FeederFixes.Contains(f.FixIdentifier));
-        if (feederFix is not null)
-            flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate);
-    }
-
-    void AssignRunway(Flight flight, RunwayModeConfiguration runwayMode)
-    {
-        // TODO: Override on recompute
-        if (flight.AssignedRunwayIdentifier is not null)
-            return;
-
-        var defaultRunway = runwayMode.Runways.First().Identifier;
-
-        if (flight.FeederFixIdentifier is null)
-        {
-            flight.SetRunway(defaultRunway);
-            return;
-        }
-        
-        var possibleRunways = _runwayAssigner.FindBestRunways(
-            flight.AircraftType,
-            flight.FeederFixIdentifier,
-            _airportConfiguration.RunwayAssignmentRules);
-
-        var runwaysInMode = possibleRunways
-            .Where(r => runwayMode.Runways.Any(r2 => r2.Identifier == r))
-            .ToArray();
-        
-        // No runways found, use the default one
-        if (!runwaysInMode.Any())
-        {
-            flight.SetRunway(defaultRunway);
-            return;
-        }
-
-        // TODO: Use lower priorities depending on traffic load.
-        //  How could we go about this? Probe for shortest delay? Round-robin?
-        var topPriority = runwaysInMode.First();
-        flight.SetRunway(topPriority);
-    }
-
-    void CalculateEstimates(Flight flight)
-    {
-        if ((flight.State > State.Stable && flight.ScheduledLandingTime < _clock.UtcNow()) ||
-            flight.State == State.Frozen)
-            return;
-
-        var feederFixEstimate = _estimateProvider.GetFeederFixEstimate(flight);
-        if (feederFixEstimate is not null)
-            flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
-        
-        var landingEstimate = _estimateProvider.GetLandingEstimate(flight);
-        if (landingEstimate is not null)
-            flight.UpdateLandingEstimate(landingEstimate.Value);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_sequenceTask is not null)
-            await CastAndDispose(_sequenceTask);
-        
-        if (_sequenceTaskCancellationSource is not null)
-            await CastAndDispose(_sequenceTaskCancellationSource);
-    
-        await CastAndDispose(_semaphore);
-
-        return;
-
-        static async ValueTask CastAndDispose(IDisposable resource)
-        {
-            if (resource is IAsyncDisposable resourceAsyncDisposable)
-                await resourceAsyncDisposable.DisposeAsync();
-            else
-                resource.Dispose();
-        }
-    }
 }

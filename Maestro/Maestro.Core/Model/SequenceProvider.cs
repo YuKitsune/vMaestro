@@ -1,6 +1,4 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Infrastructure;
-using MediatR;
 
 namespace Maestro.Core.Model;
 
@@ -12,29 +10,12 @@ public interface ISequenceProvider
 public class SequenceProvider : ISequenceProvider
 {
     readonly IAirportConfigurationProvider _airportConfigurationProvider;
-    readonly IScheduler _scheduler;
-    readonly IEstimateProvider _estimateProvider;
-    readonly IMediator _mediator;
-    readonly IClock _clock;
-    readonly IRunwayAssigner _runwayAssigner;
 
     readonly List<Sequence> _sequences = [];
 
-    public SequenceProvider(
-        IAirportConfigurationProvider airportConfigurationProvider,
-        IMediator mediator,
-        IClock clock,
-        IEstimateProvider estimateProvider,
-        IScheduler scheduler,
-        IRunwayAssigner runwayAssigner)
+    public SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider)
     {
         _airportConfigurationProvider = airportConfigurationProvider;
-        _mediator = mediator;
-        _clock = clock;
-        _estimateProvider = estimateProvider;
-        _scheduler = scheduler;
-        _runwayAssigner = runwayAssigner;
-
         InitializeSequences();
     }
 
@@ -45,16 +26,7 @@ public class SequenceProvider : ISequenceProvider
         
         foreach (var airportConfiguration in airportConfigurations)
         {
-            var sequence = new Sequence(
-                airportConfiguration,
-                _mediator,
-                _clock,
-                _estimateProvider,
-                _scheduler,
-                _runwayAssigner);
-            
-            sequence.Start();
-        
+            var sequence = new Sequence(airportConfiguration);
             _sequences.Add(sequence);
         }
     }

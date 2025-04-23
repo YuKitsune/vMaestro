@@ -1,8 +1,7 @@
-﻿using System.Runtime.CompilerServices;
-using Maestro.Core.Configuration;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
+using Maestro.Core.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -15,56 +14,43 @@ public class SchedulerTests
     static TimeSpan _landingRate = TimeSpan.FromSeconds(180);
     static IClock _clock = new FixedClock(DateTimeOffset.Now);
     
-    readonly RunwayModeConfiguration _runwayModeConfiguration;
+    readonly AirportConfigurationFixture _airportConfigurationFixture;
     readonly IScheduler _scheduler;
 
-    public SchedulerTests()
+    public SchedulerTests(AirportConfigurationFixture airportConfigurationFixture)
     {
-        _runwayModeConfiguration = new RunwayModeConfiguration
-        {
-            Identifier = "34IVA",
-            Runways =
-            [
-                new RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    DefaultLandingRateSeconds = (int) _landingRate.TotalSeconds
-                },
-                new RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    DefaultLandingRateSeconds = (int) _landingRate.TotalSeconds
-                }
-            ]
-        };
+        _airportConfigurationFixture = airportConfigurationFixture;
+        
+        var lookup = Substitute.For<IPerformanceLookup>();
+        lookup.GetPerformanceDataFor(Arg.Any<string>()).Returns(new AircraftPerformanceData { IsJet = true, WakeCategory = WakeCategory.Medium });
 
-        _scheduler = new Scheduler(new Logger<Scheduler>(NullLoggerFactory.Instance));
+        _scheduler = new Scheduler(lookup, new Logger<Scheduler>(NullLoggerFactory.Instance));
     }
 
     [Fact]
-    public void SingleFlight_IsNotDelayed()
+    public async Task SingleFlight_IsNotDelayed()
     {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .Build();
+
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(flight, CancellationToken.None);
+        
         // Act
-        var result = _scheduler.ScheduleFlights(
-            [
-                new FlightBuilder("QFA1")
-                    .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-                    .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-                    .Build()
-            ],
-            [],
-            _runwayModeConfiguration);
+        _scheduler.Schedule(sequence, flight);
         
         // Assert
-        var scheduledFlight = result.ShouldHaveSingleItem();
-        scheduledFlight.ScheduledFeederFixTime.ShouldBe(scheduledFlight.EstimatedFeederFixTime);
-        scheduledFlight.ScheduledLandingTime.ShouldBe(scheduledFlight.EstimatedLandingTime);
-        scheduledFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
-        scheduledFlight.RemainingDelay.ShouldBe(TimeSpan.Zero);
+        flight.ScheduledFeederFixTime.ShouldBe(flight.EstimatedFeederFixTime);
+        flight.ScheduledLandingTime.ShouldBe(flight.EstimatedLandingTime);
+        flight.TotalDelay.ShouldBe(TimeSpan.Zero);
+        flight.RemainingDelay.ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]
-    public void SingleFlight_DuringBlockout_IsDelayed()
+    public async Task SingleFlight_DuringBlockout_IsDelayed()
     {
         // Arrange
         var endTime = _clock.UtcNow().AddMinutes(25);
@@ -74,28 +60,29 @@ public class SchedulerTests
             StartTime = _clock.UtcNow().AddMinutes(5),
             EndTime = endTime,
         };
+
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+        
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.AddBlockout(blockout, CancellationToken.None);
+        await sequence.Add(flight, CancellationToken.None);
         
         // Act
-        var result = _scheduler.ScheduleFlights(
-            [
-                new FlightBuilder("QFA1")
-                    .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-                    .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-                    .WithRunway("34L")
-                    .Build()
-            ],
-            [blockout],
-            _runwayModeConfiguration);
+        _scheduler.Schedule(sequence, flight);
         
         // Assert
-        var scheduledFlight = result.ShouldHaveSingleItem();
-        scheduledFlight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
-        scheduledFlight.ScheduledLandingTime.ShouldBe(endTime);
-        scheduledFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
+        flight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
+        flight.ScheduledLandingTime.ShouldBe(endTime);
+        flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
     }
 
     [Fact]
-    public void MultipleFlights_DuringBlockout_AreDelayed()
+    public async Task MultipleFlights_DuringBlockout_AreDelayed()
     {
         // Arrange
         var endTime = _clock.UtcNow().AddMinutes(25);
@@ -105,44 +92,47 @@ public class SchedulerTests
             StartTime = _clock.UtcNow().AddMinutes(5),
             EndTime = endTime,
         };
-        
-        // Act
-        var result = _scheduler.ScheduleFlights(
-            [
-                new FlightBuilder("QFA1")
-                    .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-                    .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-                    .WithRunway("34L")
-                    .Build(),
-                new FlightBuilder("QFA2")
-                    .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(12))
-                    .WithLandingEstimate(_clock.UtcNow().AddMinutes(22))
-                    .WithRunway("34L")
-                    .Build()
-            ],
-            [blockout],
-            _runwayModeConfiguration)
-            .ToArray();
 
-        // Assert
-        var first = result.First();
-        first.Callsign.ShouldBe("QFA1");
-        first.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
-        first.ScheduledLandingTime.ShouldBe(endTime);
-        first.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
-
-        var second = result.Last();
-        second.Callsign.ShouldBe("QFA2");
-        second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
-        second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
-        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(3).Add(_landingRate));
-    }
-
-    [Fact]
-    public void NewFlight_EarlierThanStable_StableFlightIsDelayed()
-    {
-        // Arrange
         var firstFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+
+        var secondFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(12))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(22))
+            .WithRunway("34L")
+            .Build();
+        
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.AddBlockout(blockout, CancellationToken.None);
+        await sequence.Add(firstFlight, CancellationToken.None);
+        await sequence.Add(secondFlight, CancellationToken.None);
+        
+        // Act
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
+
+        // Assert
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+        
+        firstFlight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
+        firstFlight.ScheduledLandingTime.ShouldBe(endTime);
+        firstFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
+
+        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
+        secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(3).Add(_landingRate));
+    }
+
+    [Fact]
+    public async Task NewFlight_EarlierThanStable_StableFlightIsDelayed()
+    {
+        // Arrange
+        var stableFlight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithFeederFixTime(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
@@ -151,43 +141,44 @@ public class SchedulerTests
             .WithState(State.Stable)
             .Build();
         
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(stableFlight, CancellationToken.None);
+        
         // First pass
-        _scheduler.ScheduleFlights([firstFlight], [], _runwayModeConfiguration);
+        _scheduler.Schedule(sequence, stableFlight);
         
         // New flight added with an earlier ETA
-        var secondFlight = new FlightBuilder("QFA2")
+        var unstableFlight = new FlightBuilder("QFA2")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(9))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
         
+        await sequence.Add(unstableFlight, CancellationToken.None);
+        
         // Act
-        var result = _scheduler.ScheduleFlights(
-            [firstFlight, secondFlight],
-            [],
-            _runwayModeConfiguration)
-            .OrderBy(f => f.ScheduledLandingTime)
-            .ToArray();
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
         
         // Assert
-        var first = result.First();
-        first.Callsign.ShouldBe("QFA2");
-        first.ScheduledFeederFixTime.ShouldBe(secondFlight.EstimatedFeederFixTime);
-        first.ScheduledLandingTime.ShouldBe(secondFlight.EstimatedLandingTime);
-        first.TotalDelay.ShouldBe(TimeSpan.Zero);
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
+        
+        unstableFlight.ScheduledFeederFixTime.ShouldBe(unstableFlight.EstimatedFeederFixTime);
+        unstableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.EstimatedLandingTime);
+        unstableFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
 
-        var second = result.Last();
-        second.Callsign.ShouldBe("QFA1");
-        second.ScheduledFeederFixTime.ShouldBe(secondFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
-        second.ScheduledLandingTime.ShouldBe(secondFlight.ScheduledLandingTime.Add(_landingRate));
-        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
+        stableFlight.ScheduledFeederFixTime.ShouldBe(unstableFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        stableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.ScheduledLandingTime.Add(_landingRate));
+        stableFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
     }
 
     // TODO: Stable flights cannot change position unless a new flight is added with an earlier estimate
     
     [Fact]
-    public void UnstableFlight_WithNewEstimates_EarlierThanStable_UnstableFlightIsDelayed()
+    public async Task UnstableFlight_WithNewEstimates_EarlierThanStable_UnstableFlightIsDelayed()
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
@@ -202,8 +193,15 @@ public class SchedulerTests
             .WithRunway("34L")
             .Build();
         
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(firstFlight, CancellationToken.None);
+        await sequence.Add(secondFlight, CancellationToken.None);
+        
         // First pass
-        _scheduler.ScheduleFlights([firstFlight, secondFlight], [], _runwayModeConfiguration);
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
         
         // Sanity check
         firstFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
@@ -220,27 +218,23 @@ public class SchedulerTests
         secondFlight.UpdateLandingEstimate(firstFlight.EstimatedLandingTime.Add(TimeSpan.FromMinutes(-1)));
         
         // Act
-        var result = _scheduler.ScheduleFlights(
-                [firstFlight, secondFlight],
-                [],
-                _runwayModeConfiguration)
-            .OrderBy(f => f.ScheduledFeederFixTime)
-            .ToArray();
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
         
         // Assert
         // First flight should not be delayed
-        var first = result.First();
-        first.Callsign.ShouldBe("QFA1");
-        first.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
-        first.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
-        first.TotalDelay.ShouldBe(TimeSpan.Zero);
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+        
+        firstFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
+        firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
+        firstFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
 
         // Second flight should be delayed
-        var second = result.Last();
-        second.Callsign.ShouldBe("QFA2");
-        second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
-        second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
-        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
+        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
+        secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
     }
     
     [Theory]
@@ -250,7 +244,7 @@ public class SchedulerTests
     [InlineData(State.Frozen, State.Stable)]
     [InlineData(State.Landed, State.Unstable)]
     [InlineData(State.Landed, State.Stable)]
-    public void NewFlight_EarlierThanSuperStable_NewFlightIsDelayed(State existingState, State newFlightState)
+    public async Task NewFlight_EarlierThanSuperStable_NewFlightIsDelayed(State existingState, State newFlightState)
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
@@ -259,8 +253,11 @@ public class SchedulerTests
             .WithRunway("34L")
             .Build();
         
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(firstFlight, CancellationToken.None);
+        
         // First pass
-        _scheduler.ScheduleFlights([firstFlight], [], _runwayModeConfiguration);
+        _scheduler.Schedule(sequence, firstFlight);
         firstFlight.SetState(existingState);
         
         // New flight added with an earlier ETA
@@ -271,30 +268,28 @@ public class SchedulerTests
             .WithState(newFlightState)
             .Build();
         
+        await sequence.Add(secondFlight, CancellationToken.None);
+        
         // Act
-        var result = _scheduler.ScheduleFlights(
-                [firstFlight, secondFlight],
-                [],
-                _runwayModeConfiguration)
-            .OrderBy(f => f.ScheduledFeederFixTime)
-            .ToArray();
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
         
         // Assert
-        var first = result.First();
-        first.Callsign.ShouldBe("QFA1");
-        first.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
-        first.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
-        first.TotalDelay.ShouldBe(TimeSpan.Zero);
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+        
+        firstFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
+        firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
+        firstFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
 
-        var second = result.Last();
-        second.Callsign.ShouldBe("QFA2");
-        second.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
-        second.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
-        second.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
+        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
+        secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
     }
 
     [Fact]
-    public void MultipleFlights_SameRunway_SeparatedByRunwayRate()
+    public async Task MultipleFlights_SameRunway_SeparatedByRunwayRate()
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
@@ -315,34 +310,34 @@ public class SchedulerTests
             .WithRunway("34L")
             .Build();
         
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(first, CancellationToken.None);
+        await sequence.Add(second, CancellationToken.None);
+        await sequence.Add(third, CancellationToken.None);
+        
         // Act
-        var result = _scheduler.ScheduleFlights(
-                [first, second, third],
-                [],
-                _runwayModeConfiguration)
-            .OrderBy(f => f.ScheduledFeederFixTime)
-            .ToArray();
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
+        
+        // Assert
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
         
         // First result shouldn't have any delay
-        var firstResult = result.First();
-        firstResult.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
-        firstResult.ScheduledLandingTime.ShouldBe(first.EstimatedLandingTime);
-
-        // Remaining results should each be separated by lanidng rate
-        var lastFeederFixTime = first.ScheduledFeederFixTime;
-        var lastLandingTime = first.ScheduledLandingTime;
-        foreach (var flight in result.Skip(1))
-        {
-            flight.ScheduledFeederFixTime.ShouldBe(lastFeederFixTime.Value.Add(_landingRate));
-            flight.ScheduledLandingTime.ShouldBe(lastLandingTime.Add(_landingRate));
-
-            lastFeederFixTime = flight.ScheduledFeederFixTime;
-            lastLandingTime = flight.ScheduledLandingTime;
-        }
+        first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
+        first.ScheduledLandingTime.ShouldBe(first.EstimatedLandingTime);
+        
+        // Remaining results should each be separated by landing rate
+        second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
+        second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
+        
+        third.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime.Value.Add(_landingRate));
+        third.ScheduledLandingTime.ShouldBe(second.ScheduledLandingTime.Add(_landingRate));
     }
 
     [Fact]
-    public void MultipleFlights_DifferentRunway_NotSeparated()
+    public async Task MultipleFlights_DifferentRunway_NotSeparated()
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
@@ -351,32 +346,34 @@ public class SchedulerTests
             .WithRunway("34L")
             .Build();
         
-        var second = new FlightBuilder("QFA1")
+        var second = new FlightBuilder("QFA2")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34R")
             .Build();
         
-        // Act
-        var result = _scheduler.ScheduleFlights(
-                [first, second],
-                [],
-                _runwayModeConfiguration)
-            .OrderBy(f => f.ScheduledFeederFixTime)
-            .ToArray();
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(first, CancellationToken.None);
+        await sequence.Add(second, CancellationToken.None);
         
-        // First result shouldn't have any delay
-        var firstResult = result.First();
-        firstResult.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
-        firstResult.ScheduledLandingTime.ShouldBe(first.EstimatedLandingTime);
-
-        var secondResult = result.Last();
-        secondResult.ScheduledFeederFixTime.ShouldBe(second.EstimatedFeederFixTime);
-        secondResult.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
+        // Act
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
+        
+        // Assert
+        first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
+        first.ScheduledLandingTime.ShouldBe(first.EstimatedLandingTime);
+        first.TotalDelay.ShouldBe(TimeSpan.Zero);
+        
+        second.ScheduledFeederFixTime.ShouldBe(second.EstimatedFeederFixTime);
+        second.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
+        second.TotalDelay.ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]
-    public void MultipleFlights_WithNoConflicts_ShouldNotBeDelayed()
+    public async Task MultipleFlights_WithNoConflicts_ShouldNotBeDelayed()
     {
         // Arrange
         var farAwayFlight = new FlightBuilder("QFA1")
@@ -395,25 +392,28 @@ public class SchedulerTests
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(5))
             .WithRunway("34L")
             .Build();
+
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(farAwayFlight, CancellationToken.None);
+        await sequence.Add(closeFlight, CancellationToken.None);
+        await sequence.Add(veryCloseFlight, CancellationToken.None);
         
         // Act
-        var result = _scheduler.ScheduleFlights(
-                [farAwayFlight, veryCloseFlight, closeFlight],
-                [],
-                _runwayModeConfiguration)
-            .ToArray();
+        foreach (var flight in sequence.Flights)
+        {
+            _scheduler.Schedule(sequence, flight);
+        }
         
-        var firstResult = result.Single(f => f.Callsign == "QFA1");
-        firstResult.ScheduledFeederFixTime.ShouldBe(farAwayFlight.EstimatedFeederFixTime);
-        firstResult.ScheduledLandingTime.ShouldBe(farAwayFlight.EstimatedLandingTime);
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA3", "QFA2", "QFA1"]);
+
+        farAwayFlight.ScheduledFeederFixTime.ShouldBe(farAwayFlight.EstimatedFeederFixTime);
+        farAwayFlight.ScheduledLandingTime.ShouldBe(farAwayFlight.EstimatedLandingTime);
         
-        var secondResult = result.Single(f => f.Callsign == "QFA2");
-        secondResult.ScheduledFeederFixTime.ShouldBe(closeFlight.EstimatedFeederFixTime);
-        secondResult.ScheduledLandingTime.ShouldBe(closeFlight.EstimatedLandingTime);
+        closeFlight.ScheduledFeederFixTime.ShouldBe(closeFlight.EstimatedFeederFixTime);
+        closeFlight.ScheduledLandingTime.ShouldBe(closeFlight.EstimatedLandingTime);
         
-        var thirdResult = result.Single(f => f.Callsign == "QFA3");
-        thirdResult.ScheduledFeederFixTime.ShouldBe(veryCloseFlight.EstimatedFeederFixTime);
-        thirdResult.ScheduledLandingTime.ShouldBe(veryCloseFlight.EstimatedLandingTime);
+        veryCloseFlight.ScheduledFeederFixTime.ShouldBe(veryCloseFlight.EstimatedFeederFixTime);
+        veryCloseFlight.ScheduledLandingTime.ShouldBe(veryCloseFlight.EstimatedLandingTime);
     }
     
     // TODO: Scheduled times should not be earlier than the estimate
