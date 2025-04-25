@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Handlers;
 
-public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, ILogger<RecomputeRequestHandler> logger)
+public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger<RecomputeRequestHandler> logger)
     : IRequestHandler<ChangeRunwayRequest, ChangeRunwayResponse>
 {
     public async Task<ChangeRunwayResponse> Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
@@ -24,9 +24,9 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, ILog
             return new ChangeRunwayResponse();
         }
         
-        flight.SetRunway(request.RunwayIdentifier);
+        flight.SetRunway(request.RunwayIdentifier, true);
         
-        // TODO: Publish something to notify that the runway has changed.
+        await mediator.Send(new RecomputeRequest(flight.DestinationIdentifier, flight.Callsign), cancellationToken);
         
         return new ChangeRunwayResponse();
     }

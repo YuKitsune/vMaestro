@@ -81,7 +81,7 @@
                             <DataTemplate>
                                 <MenuItem
                                     Header="{Binding Identifier}"
-                                    Command="{Binding Path=ChangeRunwayCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type viewModels:FlightLabelViewModel}}}"
+                                    Command="{Binding Path=DataContext.ChangeRunwayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                     CommandParameter="{Binding Identifier}" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

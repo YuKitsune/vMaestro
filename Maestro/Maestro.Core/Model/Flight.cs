@@ -39,6 +39,7 @@ public class Flight
     public string OriginIdentifier { get; private set; }
     public string DestinationIdentifier { get; private set; }
     public string AssignedRunwayIdentifier { get; private set; }
+    public bool RunwayManuallyAssigned { get; private set; }
     public string? AssignedStarIdentifier { get; private set; }
     public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
@@ -75,12 +76,13 @@ public class Flight
         State = state;
     }
 
-    public void SetRunway(string runwayIdentifier)
+    public void SetRunway(string runwayIdentifier, bool manual)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
+        RunwayManuallyAssigned = manual;
     }
 
-    public void SetArrival(string arrivalIdentifier)
+    public void SetArrival(string? arrivalIdentifier)
     {
         AssignedStarIdentifier = arrivalIdentifier;
     }
