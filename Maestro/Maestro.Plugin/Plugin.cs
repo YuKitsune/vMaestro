@@ -210,7 +210,7 @@ namespace Maestro.Plugin
 
         void Network_Disconnected(object sender, EventArgs e)
         {
-            _mediator.Send(new ShutdownRequest());
+            // _mediator.Send(new ShutdownRequest());
         }
 
         public void OnFDRUpdate(FDP2.FDR updated)
