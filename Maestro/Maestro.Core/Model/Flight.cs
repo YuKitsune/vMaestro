@@ -3,8 +3,36 @@ using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
 
+public sealed class FlightComparer : IComparer<Flight>
+{
+    public static FlightComparer Instance { get; } = new();
+    
+    public int Compare(Flight? left, Flight? right)
+    {
+        if (left is null)
+            return -1;
+            
+        if (right is null)
+            return 1;
+        
+        // Compare by state descending
+        var stateComparison = right.State.CompareTo(left.State);
+        if (stateComparison != 0)
+            return stateComparison;
+
+        // Compare unstable flights by ETA
+        if (left.State == State.Unstable)
+        {
+            return left.EstimatedLandingTime.CompareTo(right.EstimatedLandingTime);
+        }
+
+        // Compare stable flights by STA
+        return left.ScheduledLandingTime.CompareTo(right.ScheduledLandingTime);
+    }
+}
+
 [DebuggerDisplay("{Callsign} {ScheduledLandingTime}")]
-public class Flight
+public class Flight : IEquatable<Flight>, IComparable<Flight>
 {
     public Flight(
         string callsign,
@@ -144,6 +172,16 @@ public class Flight
     public void UpdateLastSeen(IClock clock)
     {
         LastSeen = clock.UtcNow();
+    }
+    
+    public int CompareTo(Flight? other)
+    {
+        return FlightComparer.Instance.Compare(this, other);
+    }
+
+    public bool Equals(Flight? other)
+    {
+        return other is not null && (ReferenceEquals(this, other) || Callsign == other.Callsign); 
     }
 }
 

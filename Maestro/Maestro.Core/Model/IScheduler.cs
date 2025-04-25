@@ -134,24 +134,9 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             logger.LogDebug("Last SuperStable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastSuperStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
         }
         
-        // New flights (not yet scheduled) can go in front of stable flights if they have an earlier estimate
-        var lastStableFlight = sequence.Flights.LastOrDefault(f =>
-            f.Callsign != flight.Callsign &&
-            f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
-            f.State is State.Stable);
-        if (flight.HasBeenScheduled && lastStableFlight is not null)
-        {
-            var slotAfterLeader = lastStableFlight.ScheduledLandingTime.Add(landingRate);
-            earliestAvailableLandingTime = earliestAvailableLandingTime is null
-                ? slotAfterLeader
-                : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
-            
-            logger.LogDebug("Last Stable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
-        }
-        
         var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
             
-        logger.LogInformation("Earliest available landing time for {Callsign} is {Time}. Current estimate is {Estimate}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
+        logger.LogDebug("Earliest available landing time for {Callsign} is {Time}. Current estimate is {Estimate}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
         
         // Ensure sufficient spacing between the current flight and the one in front
         var leader = sequence.Flights
@@ -162,15 +147,14 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             var timeToLeader = scheduledLandingTime - leader.ScheduledLandingTime;
             if (timeToLeader < landingRate)
             {
-                var newLandingTime = leader.ScheduledLandingTime.Add(landingRate);
+                scheduledLandingTime = leader.ScheduledLandingTime.Add(landingRate);
+                
                 logger.LogInformation(
-                    "Conflict found with {LeaderCallsign} landing at {LeaderLandingTime} ({Duration} ahead). Delaying to {NewLandingTime}.",
+                    "Delaying {Callsign} to {NewLandingTime} for spacing with {LeaderCallsign} landing at {LeaderLandingTime}.",
+                    flight.Callsign,
+                    scheduledLandingTime,
                     leader.Callsign,
-                    leader.ScheduledLandingTime,
-                    leader.ScheduledLandingTime - scheduledLandingTime,
-                    newLandingTime);
-
-                scheduledLandingTime = newLandingTime;
+                    leader.ScheduledLandingTime);
             }
         }
         
@@ -188,7 +172,17 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         {
             flight.SetFlowControls(FlowControls.S250);
         }
+        else
+        {
+            flight.SetFlowControls(FlowControls.ProfileSpeed);
+        }
 
+        logger.LogInformation(
+            "{Callsign} scheduled landing time now {NewLandingTime}. Total delay {Delay}.",
+            flight.Callsign,
+            scheduledLandingTime,
+            flight.ScheduledLandingTime - flight.InitialLandingTime);
+        
         if (flight.EstimatedLandingTime > scheduledLandingTime)
         {
             logger.LogWarning("Flight was scheduled to land at {ScheduledLandingTime} earlier than the estimated landing time of {EstimatedLandingTime}", scheduledLandingTime, flight.EstimatedLandingTime);

@@ -28,7 +28,10 @@ public class EstimateProviderTests
         _fixLookup = Substitute.For<IFixLookup>();
         _fixLookup.FindFix(Arg.Is("RIVET")).Returns(new Fix("RIVET", new Coordinate(0, 0)));
 
-        _flight = new FlightBuilder("QFA123").Build();
+        _flight = new FlightBuilder("QFA123")
+            .WithRunway("34L")
+            .WithArrival("RIVET4")
+            .Build();
 
         _flight.UpdatePosition(
             new FlightPosition(

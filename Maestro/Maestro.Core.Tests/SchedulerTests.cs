@@ -117,7 +117,7 @@ public class SchedulerTests
         }
 
         // Assert
-        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
         
         firstFlight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
         firstFlight.ScheduledLandingTime.ShouldBe(endTime);
@@ -164,7 +164,7 @@ public class SchedulerTests
         }
         
         // Assert
-        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
         
         unstableFlight.ScheduledFeederFixTime.ShouldBe(unstableFlight.EstimatedFeederFixTime);
         unstableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.EstimatedLandingTime);
@@ -225,7 +225,7 @@ public class SchedulerTests
         
         // Assert
         // First flight should not be delayed
-        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
         
         firstFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
         firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
@@ -277,7 +277,7 @@ public class SchedulerTests
         }
         
         // Assert
-        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
         
         firstFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
         firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
@@ -322,7 +322,7 @@ public class SchedulerTests
         }
         
         // Assert
-        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
         
         // First result shouldn't have any delay
         first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
@@ -404,7 +404,7 @@ public class SchedulerTests
             _scheduler.Schedule(sequence, flight);
         }
         
-        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA3", "QFA2", "QFA1"]);
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA3", "QFA2", "QFA1"]);
 
         farAwayFlight.ScheduledFeederFixTime.ShouldBe(farAwayFlight.EstimatedFeederFixTime);
         farAwayFlight.ScheduledLandingTime.ShouldBe(farAwayFlight.EstimatedLandingTime);

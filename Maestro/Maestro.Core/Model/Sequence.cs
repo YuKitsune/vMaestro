@@ -3,6 +3,23 @@ using Maestro.Core.Configuration;
 
 namespace Maestro.Core.Model;
 
+public sealed class SequenceLock(SemaphoreSlim semaphore)
+{
+    public async Task<IDisposable> AcquireAsync(CancellationToken cancellationToken = default)
+    {
+        await semaphore.WaitAsync(cancellationToken);
+        return new Releaser(semaphore);
+    }
+
+    class Releaser(SemaphoreSlim semaphore) : IDisposable
+    {
+        public void Dispose()
+        {
+            semaphore.Release();
+        }
+    }
+}
+
 [DebuggerDisplay("{AirportIdentifier}")]
 public class Sequence
 {
@@ -12,7 +29,7 @@ public class Sequence
     readonly List<Flight> _pending = new();
     readonly List<Flight> _flights = new();
     
-    readonly SemaphoreSlim _semaphore = new(1, 1);
+    readonly SequenceLock _sequenceLock = new(new SemaphoreSlim(1, 1));
     
     public string AirportIdentifier => _airportConfiguration.Identifier;
     public string[] FeederFixes => _airportConfiguration.FeederFixes;
@@ -22,6 +39,8 @@ public class Sequence
     public RunwayModeConfiguration CurrentRunwayMode { get; private set; }
     public IReadOnlyList<RunwayAssignmentRule> RunwayAssignmentRules => _airportConfiguration.RunwayAssignmentRules;
 
+    public SequenceLock Lock => _sequenceLock;
+
     public Sequence(AirportConfiguration airportConfiguration)
     {
         _airportConfiguration = airportConfiguration;
@@ -30,8 +49,7 @@ public class Sequence
 
     public async Task Add(Flight flight, CancellationToken cancellationToken)
     {
-        await _semaphore.WaitAsync(cancellationToken);
-        try
+        using (await Lock.AcquireAsync(cancellationToken))
         {
             if (_flights.Any(f => f.Callsign == flight.Callsign))
                 throw new MaestroException($"{flight.Callsign} is already in the sequence for {AirportIdentifier}.");
@@ -44,45 +62,21 @@ public class Sequence
             
             // TODO: Additional validation
             
-            // Add the flight based on it's estimate
-            if (_flights.Count == 0)
-            {
-                _flights.Add(flight);
-                return;
-            }
-            
-            // TODO: Account for runway mode changes if necessary
-            var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.ScheduledLandingTime <= flight.ScheduledLandingTime) + 1;
-            _flights.Insert(index, flight);
-        }
-        finally
-        {
-            _semaphore.Release();
+            _flights.Add(flight);
         }
     }
 
-    public async Task RepositionByLandingTime(Flight flight, CancellationToken cancellationToken)
+    public async Task Sort(CancellationToken cancellationToken)
     {
-        await _semaphore.WaitAsync(cancellationToken);
-
-        try
+        using (await Lock.AcquireAsync(cancellationToken))
         {
-            _flights.Remove(flight);
-            
-            // TODO: Account for runway mode changes if necessary
-            var index = _flights.FindLastIndex(f => !f.PositionIsFixed && f.ScheduledLandingTime <= flight.ScheduledLandingTime) + 1;
-            _flights.Insert(index, flight);
-        }
-        finally
-        {
-            _semaphore.Release();
+            _flights.Sort(FlightComparer.Instance);
         }
     }
 
     public async Task AddPending(Flight flight, CancellationToken cancellationToken)
     {
-        await _semaphore.WaitAsync(cancellationToken);
-        try
+        using (await Lock.AcquireAsync(cancellationToken))
         {
             if (_pending.Any(f => f.Callsign == flight.Callsign))
                 throw new MaestroException($"{flight.Callsign} is already in the Pending list for {AirportIdentifier}.");
@@ -93,36 +87,22 @@ public class Sequence
             // TODO: Additional validation
             _pending.Add(flight);
         }
-        finally
-        {
-            _semaphore.Release();
-        }
     }
 
     public async Task AddBlockout(BlockoutPeriod blockoutPeriod, CancellationToken cancellationToken)
     {
-        await _semaphore.WaitAsync(cancellationToken);
-        try
+        using (await Lock.AcquireAsync(cancellationToken))
         {
             // TODO: Prevent overlaps
             _blockoutPeriods.Add(blockoutPeriod);
-        }
-        finally
-        {
-            _semaphore.Release();
         }
     }
 
     public async Task<Flight?> TryGetFlight(string callsign, CancellationToken cancellationToken)
     {
-        await _semaphore.WaitAsync(cancellationToken);
-        try
+        using (await Lock.AcquireAsync(cancellationToken))
         {
             return _flights.FirstOrDefault(f => f.Callsign == callsign);
-        }
-        finally
-        {
-            _semaphore.Release();
         }
     }
 

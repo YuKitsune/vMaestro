@@ -25,6 +25,7 @@ public partial class FlightViewModel : ObservableObject
         ScheduledLandingTime = DateTimeOffset.Now.AddMinutes(7);
         InitialDelay = TimeSpan.FromMinutes(2);
         CurrentDelay = TimeSpan.FromMinutes(4);
+        FlowControls = FlowControls.S250;
     }
     
     public FlightViewModel(
@@ -45,7 +46,8 @@ public partial class FlightViewModel : ObservableObject
         DateTimeOffset currentLandingTime,
         DateTimeOffset scheduledLandingTime,
         TimeSpan initialDelay,
-        TimeSpan currentDelay)
+        TimeSpan currentDelay,
+        FlowControls flowControls)
     {
         Callsign = callsign;
         AircraftType = aircraftType;
@@ -65,6 +67,7 @@ public partial class FlightViewModel : ObservableObject
         ScheduledLandingTime = scheduledLandingTime;
         InitialDelay = initialDelay;
         CurrentDelay = currentDelay;
+        FlowControls = flowControls;
     }
 
     public string Callsign { get; }
@@ -90,4 +93,6 @@ public partial class FlightViewModel : ObservableObject
     
     public TimeSpan InitialDelay { get; }
     public TimeSpan CurrentDelay { get; }
+    
+    public FlowControls FlowControls { get; }
 }

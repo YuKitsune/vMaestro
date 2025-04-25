@@ -14,6 +14,7 @@ public class FlightBuilder(string callsign)
     DateTimeOffset landingEstimate = DateTimeOffset.Now;
     DateTimeOffset landingTime = default;
 
+    string _assignedArrival = "RIVET4";
     string _assignedRunway = "34L";
 
     State _state = State.Unstable;
@@ -48,6 +49,12 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithArrival(string arrivalIdentifier)
+    {
+        _assignedArrival = arrivalIdentifier;
+        return this;
+    }
+
     public FlightBuilder WithState(State state)
     {
         _state = state;
@@ -69,6 +76,8 @@ public class FlightBuilder(string callsign)
             _assignedRunway,
             feederFix,
             landingEstimate);
+        
+        flight.SetArrival(_assignedArrival);
         
         if (feederFixTime != default)
             flight.SetFeederFixTime(feederFixTime);
