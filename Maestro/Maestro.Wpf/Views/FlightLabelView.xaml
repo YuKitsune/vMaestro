@@ -53,9 +53,24 @@
             <TextBlock
                 Text="{Binding FlightViewModel.Callsign}"
                 Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
-                Width="88"/>
-        
-            <!-- TODO: 250kts indicator-->
+                Width="80"/>
+            
+            <TextBlock
+                Text="+"
+                Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
+                Width="24">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Hidden"/>
+
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding FlightViewModel.FlowControls}" Value="S250">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
         
             <TextBlock
                 Text="{Binding FlightViewModel.InitialDelay, Converter={StaticResource MinutesConverter}}"
@@ -74,7 +89,7 @@
         <Border.ContextMenu>
             <ContextMenu>
                 <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
-                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" IsEnabled="False"/>
+                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" />
                 <MenuItem Header="Change Runway">
                     <ItemsControl ItemsSource="{Binding RunwayModeViewModel.Runways}">
                         <ItemsControl.ItemTemplate>
