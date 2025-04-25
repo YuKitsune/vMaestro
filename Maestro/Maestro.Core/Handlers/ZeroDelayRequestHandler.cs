@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Handlers;
 
-public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, ILogger<RecomputeRequestHandler> logger)
+public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger<RecomputeRequestHandler> logger)
     : IRequestHandler<ZeroDelayRequest, ZeroDelayResponse>
 {
     public async Task<ZeroDelayResponse> Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
@@ -24,6 +24,9 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, ILogger
             return new ZeroDelayResponse();
         }
 
-        throw new NotImplementedException("Make Pending not yet implemented.");
+        flight.NoDelay = true;
+        
+        await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken); 
+        return new ZeroDelayResponse();
     }
 }

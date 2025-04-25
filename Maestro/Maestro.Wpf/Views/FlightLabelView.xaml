@@ -114,7 +114,7 @@
                 <MenuItem Header="Remove" Command="{Binding RemoveCommand}" IsEnabled="False" />
                 <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" IsEnabled="False" />
                 <MenuItem Header="Make Pending" Command="{Binding MakePendingCommand}" IsEnabled="False" />
-                <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}" IsEnabled="False" />
+                <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}" />
                 <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" IsEnabled="False" />
             </ContextMenu>
         </Border.ContextMenu>
