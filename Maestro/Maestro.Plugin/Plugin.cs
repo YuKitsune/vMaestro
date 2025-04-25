@@ -6,7 +6,6 @@ using System.Xml.Linq;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Handlers;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Logging;
@@ -20,10 +19,15 @@ using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
-//  - On sweatbox, flights in the front of the queue kept getting pushed back unnecessarily.
-//  - Fix runway change button
-//  - Remove SequenceChangedEvent, replace with flight changed
+//  - What's next?
+//      - Refactor estimate calculations
+//      - Track miles, speed, and GRIB winds
+//      - Projected trajectories?
+//      - BRL method vs system estimates
 //  - Optimise ladder drawing code
+//  - landing delay vs FF delay?
+//      - Does the 2 minute rule still apply to the feeder fix?
+//      - What to do with flights with different landing times but same feeder fix time?
 
 namespace Maestro.Plugin
 {
