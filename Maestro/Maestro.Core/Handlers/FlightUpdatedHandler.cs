@@ -45,9 +45,11 @@ public class FlightUpdatedHandler(
             // TODO: Make configurable
             var flightCreationThreshold = TimeSpan.FromHours(2);
             
+            // Use system estimates initially. We will refine them later.
             var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
             var landingEstimate = notification.Estimates.Last().Estimate;
 
+            // Prefer the runway assigned in vatSys
             var runway = notification.AssignedRunway is not null
                 ? notification.AssignedRunway!
                 : FindBestRunway(
@@ -96,7 +98,10 @@ public class FlightUpdatedHandler(
         {
             var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight, notification.Position);
             if (!shouldUpdate)
+            {
+                logger.LogDebug("Skipping update for {Callsign}", notification.Callsign);
                 return;
+            }
         }
         
         flight.UpdateLastSeen(clock);
@@ -110,31 +115,33 @@ public class FlightUpdatedHandler(
         // }
         
         // Update flight details
-        // flight.AssignedRunwayIdentifier ??= notification.AssignedRunway;
         flight.SetArrival(notification.AssignedArrival);
 
-        if (flight.Activated)
+        // Do not process inactive flights
+        if (!flight.Activated)
+            return;
+
+        if (notification.Position is not null)
         {
-            if (notification.Position is not null)
-            {
-                await mediator.Publish(
-                    new FlightPositionReport(
-                        flight.Callsign,
-                        flight.DestinationIdentifier,
-                        notification.Position,
-                        notification.Estimates),
-                    cancellationToken);
-            }
-            
-            CalculateEstimates(flight);
-            scheduler.Schedule(sequence, flight);
-            
-            // TODO: Optimise
-            
-            SetState(flight);
+            flight.UpdatePosition(
+                notification.Position,
+                notification.Estimates.ToArray());
         }
+
+        // Compute ETA and ETA_FF
+        CalculateEstimates(flight);
         
-        await mediator.Publish(new SequenceModifiedNotification(sequence), cancellationToken);
+        // Allocate a position in the sequence
+        await sequence.Sort(cancellationToken);
+        
+        // Factor runway time separation requirements
+        scheduler.Schedule(sequence, flight);
+
+        // TODO: Optimise
+
+        SetState(flight);
+
+        await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
     }
 
     string FindBestRunway(string feederFixIdentifier, string aircraftType, RunwayModeConfiguration runwayMode, IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)
@@ -210,7 +217,7 @@ public class FlightUpdatedHandler(
                 logger.LogInformation("{Callsign} ETA FF was {OriginalEstimate} and is now {NewEstimate} ({Difference})",
                     flight.Callsign, flight.EstimatedFeederFixTime, feederFixEstimate,  totalDifference);
             }
-                
+            
             flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
         }
             

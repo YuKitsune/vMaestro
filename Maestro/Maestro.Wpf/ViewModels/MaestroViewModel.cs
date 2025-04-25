@@ -65,7 +65,10 @@ public partial class MaestroViewModel : ObservableObject
         }
 
         var response = _mediator.Send(new GetSequenceRequest(SelectedAirport.Identifier)).GetAwaiter().GetResult();
-        RefreshSequence(response.Sequence);
+        foreach (var flight in response.Sequence.Flights)
+        {
+            UpdateFlight(flight);
+        }
     }
 
     [RelayCommand]
@@ -95,29 +98,42 @@ public partial class MaestroViewModel : ObservableObject
         SelectedView = viewConfiguration;
     }
 
-    public void RefreshSequence(Sequence sequence)
+    public void UpdateFlight(Flight flight)
     {
-        Aircraft = sequence.Flights.Select(a =>
-                new FlightViewModel(
-                    a.Callsign,
-                    a.AircraftType,
-                    a.WakeCategory,
-                    a.OriginIdentifier,
-                    a.DestinationIdentifier,
-                    a.State,
-                    -1, // TODO:
-                    a.FeederFixIdentifier,
-                    a.InitialFeederFixTime,
-                    a.EstimatedFeederFixTime,
-                    a.ScheduledFeederFixTime,
-                    a.AssignedRunwayIdentifier,
-                    -1, // TODO:
-                    a.InitialLandingTime,
-                    a.EstimatedLandingTime,
-                    a.ScheduledLandingTime,
-                    a.TotalDelay,
-                    a.RemainingDelay))
-            .ToList();
+        var aircraft = Aircraft.ToList();
+        
+        var index = aircraft.FindIndex(f => f.Callsign == flight.Callsign);
+        var viewModel = new FlightViewModel(
+            flight.Callsign,
+            flight.AircraftType,
+            flight.WakeCategory,
+            flight.OriginIdentifier,
+            flight.DestinationIdentifier,
+            flight.State,
+            -1, // TODO:
+            flight.FeederFixIdentifier,
+            flight.InitialFeederFixTime,
+            flight.EstimatedFeederFixTime,
+            flight.ScheduledFeederFixTime,
+            flight.AssignedRunwayIdentifier,
+            -1, // TODO:
+            flight.InitialLandingTime,
+            flight.EstimatedLandingTime,
+            flight.ScheduledLandingTime,
+            flight.TotalDelay,
+            flight.RemainingDelay,
+            flight.FlowControls);
+        
+        if (index != -1)
+        {
+            aircraft[index] = viewModel;
+        }
+        else
+        {
+            aircraft.Add(viewModel);
+        }
+
+        Aircraft = aircraft;
     }
 
     partial void OnSelectedRunwayModeChanged(RunwayModeViewModel? runwayMode)
@@ -132,6 +148,5 @@ public partial class MaestroViewModel : ObservableObject
                 runwayMode.Identifier,
                 _clock.UtcNow(),
                 false));
-
     }
 }

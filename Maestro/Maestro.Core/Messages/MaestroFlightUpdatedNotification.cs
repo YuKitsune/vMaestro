@@ -3,4 +3,4 @@ using MediatR;
 
 namespace Maestro.Core.Messages;
 
-public record SequenceModifiedNotification(Sequence Sequence) : INotification;
+public record MaestroFlightUpdatedNotification(Flight Flight) : INotification;
