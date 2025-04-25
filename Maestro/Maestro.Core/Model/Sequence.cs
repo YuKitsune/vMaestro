@@ -63,6 +63,7 @@ public class Sequence
             // TODO: Additional validation
             
             _flights.Add(flight);
+            _flights.Sort();
         }
     }
 

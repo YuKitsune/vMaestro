@@ -83,8 +83,6 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
 
     void ComputeLandingTime(Sequence sequence, Flight flight, int currentFlightIndex, TimeSpan landingRate)
     {
-        logger.LogInformation("Computing {Callsign}...", flight.Callsign);
-        
         BlockoutPeriod? blockoutPeriod = null;
         if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
             blockoutPeriod = sequence.BlockoutPeriods.FirstOrDefault(bp => bp.RunwayIdentifier == flight.AssignedRunwayIdentifier && bp.StartTime < flight.EstimatedLandingTime && bp.EndTime > flight.EstimatedLandingTime);;
@@ -95,7 +93,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
 
         if (blockoutPeriod is not null)
         {
-            logger.LogDebug("Blockout period exists, earliest landing time for {Callsign} is {Time}", flight.Callsign, earliestAvailableLandingTime);
+            logger.LogDebug("Blockout period exists, earliest landing time for {Callsign} is {Time:hh:mm:ss}", flight.Callsign, earliestAvailableLandingTime);
         }
         
         // Avoid delaying priority flights behind others
@@ -131,12 +129,12 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
                 ? slotAfterLeader
                 : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
             
-            logger.LogDebug("Last SuperStable flight is {LeaderCallsign} at {Time}. Earliest slot time is now {Earliest}", lastSuperStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
+            logger.LogDebug("Last SuperStable flight is {LeaderCallsign} at {Time:hh:mm:ss}. Earliest slot time is now {Earliest:hh:mm:ss}", lastSuperStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
         }
         
         var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
             
-        logger.LogDebug("Earliest available landing time for {Callsign} is {Time}. Current estimate is {Estimate}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
+        logger.LogDebug("Earliest available landing time for {Callsign} is {Time:hh:mm:ss}. Current estimate is {Estimate:hh:mm:ss}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
         
         // Ensure sufficient spacing between the current flight and the one in front
         var leader = sequence.Flights
@@ -150,7 +148,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
                 scheduledLandingTime = leader.ScheduledLandingTime.Add(landingRate);
                 
                 logger.LogInformation(
-                    "Delaying {Callsign} to {NewLandingTime} for spacing with {LeaderCallsign} landing at {LeaderLandingTime}.",
+                    "Delaying {Callsign} to {NewLandingTime:hh:mm:ss} for spacing with {LeaderCallsign} landing at {LeaderLandingTime:hh:mm:ss}.",
                     flight.Callsign,
                     scheduledLandingTime,
                     leader.Callsign,
@@ -178,7 +176,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         }
 
         logger.LogInformation(
-            "{Callsign} scheduled landing time now {NewLandingTime}. Total delay {Delay}.",
+            "{Callsign} scheduled landing time now {NewLandingTime:hh:mm:ss}. Total delay {Delay}.",
             flight.Callsign,
             scheduledLandingTime,
             flight.ScheduledLandingTime - flight.InitialLandingTime);

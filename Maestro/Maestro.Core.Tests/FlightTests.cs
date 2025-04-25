@@ -151,7 +151,7 @@ public class FlightTests
             .Build();
         
         var unstableFlight2 = new FlightBuilder("QFA10")
-            .WithLandingEstimate(referenceTime)
+            .WithLandingEstimate(referenceTime.AddMinutes(5))
             .WithLandingTime(referenceTime.AddMinutes(40))
             .WithState(State.Unstable)
             .Build();
@@ -185,5 +185,81 @@ public class FlightTests
                 "QFA9",
                 "QFA10"
             ]);
+    }
+    
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    [InlineData(State.Landed)]
+    public void WhenOrderingFlights_TheyAreOrderedByScheduledLandingTime(State state)
+    {
+        // Arrange
+        var referenceTime = new DateTimeOffset(2025, 05, 25, 00, 00, 00, TimeSpan.Zero);
+
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime.AddMinutes(20))
+            .WithState(state)
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime.AddMinutes(10))
+            .WithState(state)
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime.AddMinutes(15))
+            .WithState(state)
+            .Build();
+
+        // Act
+        var sorted = new SortedSet<Flight> { flight1, flight2, flight3 };
+
+        // Assert
+        sorted.Select(f => f.Callsign).ShouldBe(["QFA2", "QFA3", "QFA1"]);
+    }
+    
+    [Fact]
+    public void WhenOrderingFlightsWithSameTime_TheyAreOrderedByStatePriority()
+    {
+        var referenceTime = new DateTimeOffset(2025, 05, 25, 00, 00, 00, TimeSpan.Zero);
+
+        var unstable = new FlightBuilder("QFA1")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime)
+            .WithState(State.Unstable)
+            .Build();
+
+        var landed = new FlightBuilder("QFA2")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime)
+            .WithState(State.Landed)
+            .Build();
+
+        var frozen = new FlightBuilder("QFA3")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime)
+            .WithState(State.Frozen)
+            .Build();
+
+        var superStable = new FlightBuilder("QFA4")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime)
+            .WithState(State.SuperStable)
+            .Build();
+
+        var stable = new FlightBuilder("QFA5")
+            .WithLandingEstimate(referenceTime)
+            .WithLandingTime(referenceTime)
+            .WithState(State.Stable)
+            .Build();
+
+        var sorted = new SortedSet<Flight> { unstable, frozen, superStable, stable, landed };
+
+        // Order should follow: Landed, Frozen, SuperStable, Stable, Unstable
+        sorted.Select(f => f.Callsign).ShouldBe(["QFA2", "QFA3", "QFA4", "QFA5", "QFA1"]);
     }
 }

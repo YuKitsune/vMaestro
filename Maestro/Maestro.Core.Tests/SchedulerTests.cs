@@ -174,8 +174,6 @@ public class SchedulerTests
         stableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.ScheduledLandingTime.Add(_landingRate));
         stableFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
     }
-
-    // TODO: Stable flights cannot change position unless a new flight is added with an earlier estimate
     
     [Fact]
     public async Task UnstableFlight_WithNewEstimates_EarlierThanStable_UnstableFlightIsDelayed()

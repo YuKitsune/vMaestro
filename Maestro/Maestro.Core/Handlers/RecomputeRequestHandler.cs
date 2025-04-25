@@ -31,6 +31,8 @@ public class RecomputeRequestHandler(
             return new RecomputeResponse();
         }
         
+        logger.LogInformation("Recomputing {Callsign}", request.Callsign);
+        
         // Compute estimates
         var feederFix = flight.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
         if (feederFix is not null)
