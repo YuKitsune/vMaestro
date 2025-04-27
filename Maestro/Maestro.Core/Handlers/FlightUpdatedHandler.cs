@@ -137,7 +137,7 @@ public class FlightUpdatedHandler(
         // Factor runway time separation requirements
         scheduler.Schedule(sequence, flight);
 
-        // TODO: Optimise
+        // TODO: Optimise runway selection
 
         SetState(flight);
 
@@ -180,27 +180,33 @@ public class FlightUpdatedHandler(
         var timeToFeeder = flight.EstimatedFeederFixTime - clock.UtcNow();
         var timeToLanding = flight.EstimatedLandingTime - clock.UtcNow();
 
-        switch (flight.State)
+        // Keep the flight unstable until it's passed the minimum unstable time
+        if (timeActive < minUnstableTime)
         {
-            case State.Unstable when timeToFeeder <= stableThreshold && timeActive > minUnstableTime:
-                flight.SetState(State.Stable);
-                break;
+            flight.SetState(State.Unstable);
+            return;
+        }
         
-            case State.Stable when flight.InitialFeederFixTime < clock.UtcNow():
-                flight.SetState(State.SuperStable);
-                break;
-        
-            case State.SuperStable when timeToLanding <= frozenThreshold:
-                flight.SetState(State.Frozen);
-                break;
-        
-            case State.Frozen when flight.ScheduledLandingTime < clock.UtcNow():
-                flight.SetState(State.Landed);
-                break;
-            
+        if (flight.ScheduledLandingTime <= clock.UtcNow())
+        {
+            flight.SetState(State.Landed);
+        }
+        else if (timeToLanding <= frozenThreshold)
+        {
+            flight.SetState(State.Frozen);
+        }
+        else if (flight.InitialFeederFixTime <= clock.UtcNow())
+        {
+            flight.SetState(State.SuperStable);
+        }
+        else if (timeToFeeder <= stableThreshold)
+        {
+            flight.SetState(State.Stable);
+        }
+        else
+        {
             // No change required
-            default:
-                return;
+            return;
         }
         
         logger.LogInformation("{Callsign} is now {State}", flight.Callsign, flight.State);

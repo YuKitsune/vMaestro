@@ -413,6 +413,53 @@ public class SchedulerTests
         veryCloseFlight.ScheduledFeederFixTime.ShouldBe(veryCloseFlight.EstimatedFeederFixTime);
         veryCloseFlight.ScheduledLandingTime.ShouldBe(veryCloseFlight.EstimatedLandingTime);
     }
-    
-    // TODO: Scheduled times should not be earlier than the estimate
+
+    [Fact]
+    public async Task WhenReroutedToAnotherFix_EstimatesAreStillCalculatedToFeederFix()
+    {
+        // TODO:
+        //  Create a flight
+        //  Schedule
+        //  Reroute to another feeder fix
+        //  Check estimates are calculated based on trajectory to previous FF
+        Assert.Fail("Stub");
+    }
+
+    [Fact]
+    public async Task WhenUnstableFlightIsRecomputed_ItsPositionInSequenceChanges()
+    {
+        // TODO:
+        //  Create two flights with separate ETA_FF 
+        //  Swap ETA_FF so second flight is now in front (leap frog)
+        //  Check both flights receive no delay and position in sequence is updated
+        Assert.Fail("Stub");
+    }
+
+    [Fact]
+    public async Task SuperStableFlights_DoNotChangePositionInSequence()
+    {
+        // TODO:
+        //  Create multiple flights with separate ETA_FF 
+        //  Jumble ETAs (leap frog)
+        //  Check delays are updated and position in sequence is unchanged
+        Assert.Fail("Stub");
+    }
+
+    [Fact]
+    public async Task PriorityFlights_AreNotDelayed()
+    {
+        Assert.Fail("Stub");
+    }
+
+    [Fact]
+    public async Task ZeroDelayFlights_AreNotDelayed()
+    {
+        Assert.Fail("Stub");
+    }
+
+    [Fact]
+    public async Task LandedFlights_CanBeReInsertedIntoTheSequence()
+    {
+        Assert.Fail("Stub");
+    }
 }

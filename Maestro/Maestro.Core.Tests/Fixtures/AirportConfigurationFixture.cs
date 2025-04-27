@@ -55,6 +55,16 @@ public class AirportConfigurationFixture
                         { "34L", 16 },
                         { "34R", 20 },
                     }
+                },
+                new ArrivalConfiguration
+                {
+                    ArrivalIdentifier = "ODALE7",
+                    FeederFix = "WELSH",
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        { "34L", 16 },
+                        { "34R", 20 },
+                    }
                 }
             ],
             Views =
@@ -67,7 +77,7 @@ public class AirportConfigurationFixture
                     LadderReferenceTime = LadderReferenceTime.FeederFixTime
                 }
             ],
-            FeederFixes = ["RIVET"],
+            FeederFixes = ["RIVET", "WELSH"],
             RunwayAssignmentRules = []
         };
 }

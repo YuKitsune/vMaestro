@@ -19,7 +19,6 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
     void ScheduleInternal(Sequence sequence, Flight flight, bool force)
     {
         // TODO: Runway and terminal trajectories
-        // TODO: Optimisation
         
         // Do not apply any more processing to superstable or frozen flights
         if (!force && !CanSchedule(flight))

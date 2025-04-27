@@ -19,6 +19,12 @@ public class FlightBuilder(string callsign)
 
     State _state = State.Unstable;
 
+    public FlightBuilder WithFeederFix(string feederFixIdentifier)
+    {
+        _feederFixIdentifier = feederFixIdentifier;
+        return this;
+    }
+    
     public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate)
     {
         feederFixEstimate = estimate;
