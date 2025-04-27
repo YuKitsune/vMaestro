@@ -1,0 +1,237 @@
+{
+  "Logging": {
+    "LogLevel": "Information",
+    "OutputPath": "MaestroLog.txt"
+  },
+  "Maestro": {
+    "ServerUri": "https://maestro.vatpac.org",
+    "FeederFixEstimateSource": "Trajectory",
+    "LandingEstimateSource": "PresetInterval"
+  },
+  "Airports": [
+    {
+      "Identifier": "YSSY",
+      "FeederFixes": ["RIVET", "AKMIR", "BOREE", "MEPIL", "MARLN"],
+      "Runways": [
+        { "Identifier": "16L" },
+        { "Identifier": "34L" },
+        { "Identifier": "07" },
+        { "Identifier": "16R" },
+        { "Identifier": "34R" },
+        { "Identifier": "25" }
+      ],
+      "RunwayModes": [
+        {
+          "Identifier": "34IVA",
+          "Runways": [
+            { "Identifier": "34L", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "34R", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "34I",
+          "Runways": [
+            { "Identifier": "34L", "DefaultLandingRateSeconds": 210 },
+            { "Identifier": "34R", "DefaultLandingRateSeconds": 210 }
+          ]
+        },
+        {
+          "Identifier": "16IVA",
+          "Runways": [
+            { "Identifier": "16R", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "16L", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "16I",
+          "Runways": [
+            { "Identifier": "16R", "DefaultLandingRateSeconds": 210 },
+            { "Identifier": "16L", "DefaultLandingRateSeconds": 210 }
+          ]
+        },
+        {
+          "Identifier": "25I",
+          "Runways": [
+            { "Identifier": "25", "DefaultLandingRateSeconds": 210 }
+          ]
+        },
+        {
+          "Identifier": "07I",
+          "Runways": [
+            { "Identifier": "07", "DefaultLandingRateSeconds": 210 }
+          ]
+        },
+        {
+          "Identifier": "SODPROPS",
+          "Runways": [
+            { "Identifier": "34L", "DefaultLandingRateSeconds": 300 }
+          ]
+        }
+      ],
+      "Arrivals": [
+        {
+          "ArrivalIdentifier": "ODALE7",
+          "FeederFix": "AKMIR",
+          "RunwayIntervals": {
+            "34L": 20,
+            "34R": 23,
+            "16L": 22,
+            "16R": 19,
+            "07": 9,
+            "25": 20
+          }
+        },
+        {
+          "ArrivalIdentifier": "RIVET4",
+          "FeederFix": "RIVET",
+          "RunwayIntervals": {
+            "34L": 16,
+            "34R": 20,
+            "16L": 20,
+            "16R": 17,
+            "07": 11,
+            "25": 17
+          }
+        },
+        {
+          "ArrivalIdentifier": "MARLN5",
+          "FeederFix": "MARLN",
+          "RunwayIntervals": {
+            "34L": 16,
+            "34R": 16,
+            "16L": 18,
+            "16R": 20,
+            "07": 15,
+            "25": 14
+          }
+        },
+        {
+          "ArrivalIdentifier": "MEPIL3",
+          "FeederFix": "MEPIL",
+          "RunwayIntervals": {
+            "34L": 14,
+            "34R": 13,
+            "16L": 9,
+            "16R": 9,
+            "07": 11,
+            "25": 10
+          }
+        },
+        {
+          "ArrivalIdentifier": "BORE4A",
+          "FeederFix": "BOREE",
+          "RunwayIntervals": {
+            "34L": 20,
+            "34R": 20,
+            "16L": 11,
+            "16R": 11,
+            "07": 15,
+            "25": 15
+          }
+        },
+        {
+          "ArrivalIdentifier": "BORE4P",
+          "FeederFix": "BOREE",
+          "RunwayIntervals": {
+            "16R": 11
+          }
+        }
+      ],
+      "Views": [
+        {
+          "Identifier": "BIK/GLB",
+          "LadderReferenceTime": "FeederFixTime",
+          "LeftLadderConfiguration": {
+            "FeederFixes": ["RIVET"],
+            "Runways": []
+          },
+          "RightLadderConfiguration": {
+            "FeederFixes": ["AKMIR"],
+            "Runways": []
+          }
+        },
+        {
+          "Identifier": "ARL",
+          "LadderReferenceTime": "FeederFixTime",
+          "LeftLadderConfiguration": {
+            "FeederFixes": ["BOREE"],
+            "Runways": []
+          },
+          "RightLadderConfiguration": {
+            "FeederFixes": ["MEPIL"],
+            "Runways": []
+          }
+        },
+        {
+          "Identifier": "OCN",
+          "LadderReferenceTime": "FeederFixTime",
+          "LeftLadderConfiguration": {
+            "FeederFixes": ["MARLN"],
+            "Runways": []
+          },
+          "RightLadderConfiguration": {
+            "FeederFixes": [],
+            "Runways": []
+          }
+        },
+        {
+          "Identifier": "ALL",
+          "LadderReferenceTime": "FeederFixTime",
+          "LeftLadderConfiguration": {
+            "FeederFixes": ["RIVET", "AKMIR", "BOREE"],
+            "Runways": []
+          },
+          "RightLadderConfiguration": {
+            "FeederFixes": ["MEPIL", "MARLN"],
+            "Runways": []
+          }
+        },
+        {
+          "Identifier": "RWY",
+          "LadderReferenceTime": "LandingTime",
+          "LeftLadderConfiguration": {
+            "FeederFixes": [],
+            "Runways": ["34L", "16R", "07"]
+          },
+          "RightLadderConfiguration": {
+            "FeederFixes": [],
+            "Runways": ["34R", "16L", "25"]
+          }
+        }
+      ],
+      "RunwayAssignmentRules": [
+        {
+          "Priority": 0,
+          "FeederFixes": ["RIVET", "AKMIR", "BOREE", "MEPIL", "MARLN"],
+          "WakeCategories": ["Heavy", "SuperHeavy"],
+          "Runways": ["34L", "16R", "07", "25"]
+        },
+        {
+          "Priority": 1,
+          "FeederFixes": ["RIVET", "AKMIR"],
+          "WakeCategories": ["Light", "Medium"],
+          "Runways": ["34L", "16R", "07", "25"]
+        },
+        {
+          "Priority": 2,
+          "FeederFixes": ["RIVET", "AKMIR"],
+          "WakeCategories": ["Light", "Medium"],
+          "Runways": ["34R", "16L"]
+        },
+        {
+          "Priority": 1,
+          "FeederFixes": ["BOREE", "MEPIL", "MARLN"],
+          "WakeCategories": ["Light", "Medium"],
+          "Runways": ["34R", "16L", "07", "25"]
+        },
+        {
+          "Priority": 2,
+          "FeederFixes": ["BOREE", "MEPIL", "MARLN"],
+          "WakeCategories": ["Light", "Medium"],
+          "Runways": ["34L", "16R"]
+        }
+      ]
+    }
+  ],
+  "SeparationRules": []
+}
