@@ -70,7 +70,7 @@ public class RunwayAssignerTests
     }
 
     [Fact]
-    public void WhenMultipleRulesMatche_ReturnsRunwaysInOrderOfPriority()
+    public void WhenMultipleRulesMatches_ReturnsRunwaysInOrderOfPriority()
     {
         var result1 = _runwayAssigner.FindBestRunways("B738", "BOREE", _assignmentRules);
         result1.ShouldBe(["34R", "16L", "07", "25", "34L", "16R"]);
