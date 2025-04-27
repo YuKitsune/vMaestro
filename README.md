@@ -46,11 +46,17 @@ The Debug window always moves to the back of the stack when moving your mouse cu
     - [ ] Change runway rates
     - [ ] Insert flight
 
+- [ ] Internal System Tasks
+    - [ ] Remove flights after landing (STA + configurable time)
+    - [ ] Remove flights after disconnecting
+
 - [ ] Sequencing Algorithm Refinement
-    - [ ] Factor GRIB winds into estimate calculations.
-    - [ ] Use FF and STAR suffix for ETI rather than STAR.
+    - [ ] Factor GRIB winds into estimate calculations
+    - [ ] Use FF and STAR suffix for ETI
     - [ ] Separate enroute and TMA delays
     - [ ] Consider separation at the feeder fix
+    - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
+    - [ ] Apply optimisations (i.e. runway selection)
 
 - [ ] Online Mode
     - [ ] Run sequencing code in a standalone server
@@ -63,7 +69,6 @@ The Debug window always moves to the back of the stack when moving your mouse cu
 
 - [ ] Extras
     - [ ] Ladder scrolling
-    - [ ] Calculate STA and ETA based on STAR distance and speed
     - [ ] Account for GRIB winds
     - [ ] Blockout periods
     - [ ] Insert slot
