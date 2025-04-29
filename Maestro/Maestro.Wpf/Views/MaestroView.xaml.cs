@@ -112,6 +112,8 @@ public partial class MaestroView
             var width = middlePoint - distanceFromMiddle;
 
             var ladderPosition = GetLadderPositionFor(aircraft);
+            if (ladderPosition is null)
+                continue;
 
             var flightLabel = new FlightLabelView
             {
@@ -121,7 +123,7 @@ public partial class MaestroView
                     ViewModel.SelectedRunwayMode),
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
-                LadderPosition = ladderPosition
+                LadderPosition = ladderPosition.Value
             };
             
             flightLabel.Loaded += ladderPosition switch
@@ -141,7 +143,7 @@ public partial class MaestroView
         }
     }
 
-    LadderPosition GetLadderPositionFor(FlightViewModel flight)
+    LadderPosition? GetLadderPositionFor(FlightViewModel flight)
     {
         if (ViewModel.SelectedView?.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
         {
@@ -154,7 +156,7 @@ public partial class MaestroView
         }
 
         // TODO: Log a warning if we've made it to this point
-        throw new Exception($"Flight {flight.Callsign} could not be positioned on the ladder");
+        return null;
 
         bool ShowOnLadder(LadderConfiguration ladderConfiguration)
         {
