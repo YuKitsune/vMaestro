@@ -204,11 +204,18 @@ namespace Maestro.Plugin
 
         void Network_Connected(object sender, EventArgs e)
         {
-            // TODO: Load sequence from local storage
-            
-            foreach (var fdr in FDP2.GetFDRs)
+            try
             {
-                OnFDRUpdate(fdr);
+                // TODO: Load sequence from local storage
+                
+                foreach (var fdr in FDP2.GetFDRs)
+                {
+                    OnFDRUpdate(fdr);
+                }
+            }
+            catch (Exception ex)
+            {
+                Errors.Add(ex, Name);
             }
         }
 
@@ -219,18 +226,32 @@ namespace Maestro.Plugin
 
         public void OnFDRUpdate(FDP2.FDR updated)
         {
-            PublishFlightUpdatedEvent(updated);
+            try
+            {
+                PublishFlightUpdatedEvent(updated);
+            }
+            catch (Exception ex)
+            {
+                Errors.Add(ex, Name);
+            }
         }
 
         public void OnRadarTrackUpdate(RDP.RadarTrack updated)
         {
-            if (updated.CoupledFDR is null)
-                return;
-            
-            // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to 
-            // fire for all flights when initially connecting to the network.
-            // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
-            PublishFlightUpdatedEvent(updated.CoupledFDR);
+            try
+            {
+                if (updated.CoupledFDR is null)
+                    return;
+
+                // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to 
+                // fire for all flights when initially connecting to the network.
+                // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
+                PublishFlightUpdatedEvent(updated.CoupledFDR);
+            }
+            catch (Exception ex)
+            {
+                Errors.Add(ex, Name);
+            }
         }
 
         void PublishFlightUpdatedEvent(FDP2.FDR updated)
@@ -257,7 +278,7 @@ namespace Maestro.Plugin
                 return;
 
             // Don't track flights that are on the ground
-            // TODO: MAESTRO is capable of sequencing flights on the ground. Need to revisit this.
+            // TODO: Maestro is capable of sequencing flights on the ground. Need to revisit this.
             if (updated.CoupledTrack is null || updated.CoupledTrack.OnGround)
                 return;
 
