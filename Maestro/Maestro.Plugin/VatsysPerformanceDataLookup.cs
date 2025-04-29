@@ -17,7 +17,7 @@ public class VatsysPerformanceDataLookup : IPerformanceLookup
             "L" => WakeCategory.Light,
             "M" => WakeCategory.Medium,
             "H" => WakeCategory.Heavy,
-            "S" => WakeCategory.SuperHeavy,
+            "J" => WakeCategory.SuperHeavy,
             _ => WakeCategory.Heavy
         };
 

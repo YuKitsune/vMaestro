@@ -16,7 +16,7 @@ public class WakeCategoryConverter : IValueConverter
                 WakeCategory.Light => "L",
                 WakeCategory.Medium => "M",
                 WakeCategory.Heavy => "H",
-                WakeCategory.SuperHeavy => "S",
+                WakeCategory.SuperHeavy => "J",
                 _ => throw new ArgumentOutOfRangeException()
             };
         }

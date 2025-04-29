@@ -237,7 +237,7 @@ namespace Maestro.Plugin
         {
             var wake = updated.AircraftWake switch
             {
-                "S" => WakeCategory.SuperHeavy,
+                "J" => WakeCategory.SuperHeavy,
                 "H" => WakeCategory.Heavy,
                 "M" => WakeCategory.Medium,
                 "L" => WakeCategory.Light,
