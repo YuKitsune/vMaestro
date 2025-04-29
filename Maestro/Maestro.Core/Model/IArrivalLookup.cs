@@ -4,12 +4,12 @@ namespace Maestro.Core.Model;
 
 public interface IArrivalLookup
 {
-    public TimeSpan? GetArrivalInterval(string airportIdentifier, string arrivalIdentifier, string runwayIdentifier);
+    public TimeSpan? GetArrivalInterval(string airportIdentifier, string feederFixIdentifier, string runwayIdentifier);
 }
 
 public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider) : IArrivalLookup
 {
-    public TimeSpan? GetArrivalInterval(string airportIdentifier, string arrivalIdentifier, string runwayIdentifier)
+    public TimeSpan? GetArrivalInterval(string airportIdentifier, string feederFixIdentifier, string runwayIdentifier)
     {
         var airportConfiguration = airportConfigurationProvider
             .GetAirportConfigurations()
@@ -17,7 +17,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         if (airportConfiguration is null)
             return null;
         
-        var arrivalConfiguration = airportConfiguration.Arrivals.SingleOrDefault(x => x.ArrivalIdentifier == arrivalIdentifier);
+        var arrivalConfiguration = airportConfiguration.Arrivals.SingleOrDefault(x => x.FeederFix == feederFixIdentifier);
         if (arrivalConfiguration is null)
             return null;
 

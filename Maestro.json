@@ -6,7 +6,6 @@
   "Maestro": {
     "ServerUri": "https://maestro.vatpac.org",
     "FeederFixEstimateSource": "Trajectory",
-    "LandingEstimateSource": "PresetInterval"
   },
   "Airports": [
     {
@@ -70,7 +69,6 @@
       ],
       "Arrivals": [
         {
-          "ArrivalIdentifier": "ODALE7",
           "FeederFix": "AKMIR",
           "RunwayIntervals": {
             "34L": 20,
@@ -82,7 +80,6 @@
           }
         },
         {
-          "ArrivalIdentifier": "RIVET4",
           "FeederFix": "RIVET",
           "RunwayIntervals": {
             "34L": 16,
@@ -94,7 +91,6 @@
           }
         },
         {
-          "ArrivalIdentifier": "MARLN5",
           "FeederFix": "MARLN",
           "RunwayIntervals": {
             "34L": 16,
@@ -106,7 +102,6 @@
           }
         },
         {
-          "ArrivalIdentifier": "MEPIL3",
           "FeederFix": "MEPIL",
           "RunwayIntervals": {
             "34L": 14,
@@ -118,7 +113,6 @@
           }
         },
         {
-          "ArrivalIdentifier": "BORE4A",
           "FeederFix": "BOREE",
           "RunwayIntervals": {
             "34L": 20,
@@ -127,13 +121,6 @@
             "16R": 11,
             "07": 15,
             "25": 15
-          }
-        },
-        {
-          "ArrivalIdentifier": "BORE4P",
-          "FeederFix": "BOREE",
-          "RunwayIntervals": {
-            "16R": 11
           }
         }
       ],

@@ -48,7 +48,6 @@ public class AirportConfigurationFixture
             [
                 new ArrivalConfiguration
                 {
-                    ArrivalIdentifier = "RIVET4",
                     FeederFix = "RIVET",
                     RunwayIntervals = new Dictionary<string, int>
                     {
@@ -58,8 +57,7 @@ public class AirportConfigurationFixture
                 },
                 new ArrivalConfiguration
                 {
-                    ArrivalIdentifier = "ODALE7",
-                    FeederFix = "WELSH",
+                    FeederFix = "AKMIR",
                     RunwayIntervals = new Dictionary<string, int>
                     {
                         { "34L", 16 },
@@ -77,7 +75,7 @@ public class AirportConfigurationFixture
                     ViewMode = ViewMode.Enroute
                 }
             ],
-            FeederFixes = ["RIVET", "WELSH"],
+            FeederFixes = ["RIVET", "AKMIR"],
             RunwayAssignmentRules = []
         };
 }

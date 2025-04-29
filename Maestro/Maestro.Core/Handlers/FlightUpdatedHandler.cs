@@ -14,7 +14,6 @@ public record FlightUpdatedNotification(
     string Origin,
     string Destination,
     string? AssignedRunway,
-    string? AssignedArrival,
     bool Activated,
     FlightPosition? Position,
     FixEstimate[] Estimates)
@@ -114,9 +113,6 @@ public class FlightUpdatedHandler(
         //     flight.Activate(clock);
         // }
         
-        // Update flight details
-        flight.SetArrival(notification.AssignedArrival);
-
         // Do not process inactive flights
         if (!flight.Activated)
             return;
@@ -261,9 +257,6 @@ public class FlightUpdatedHandler(
         if (feederFixEstimate is null)
             flight.HighPriority = true;
         
-        if (!string.IsNullOrEmpty(notification.AssignedArrival))
-            flight.SetArrival(notification.AssignedArrival!);
-
         return flight;
     }
 }

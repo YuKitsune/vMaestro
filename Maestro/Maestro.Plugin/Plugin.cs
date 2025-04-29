@@ -285,7 +285,6 @@ namespace Maestro.Plugin
                 updated.DepAirport,
                 updated.DesAirport,
                 updated.ArrivalRunway?.Name,
-                updated.STAR?.Name,
                 isActivated,
                 position,
                 estimates);

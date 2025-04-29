@@ -67,7 +67,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public string DestinationIdentifier { get; private set; }
     public string AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
-    public string? AssignedStarIdentifier { get; private set; }
     public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
 
@@ -107,11 +106,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         AssignedRunwayIdentifier = runwayIdentifier;
         RunwayManuallyAssigned = manual;
-    }
-
-    public void SetArrival(string? arrivalIdentifier)
-    {
-        AssignedStarIdentifier = arrivalIdentifier;
     }
 
     public void SetFlowControls(FlowControls flowControls)

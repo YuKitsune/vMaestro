@@ -35,20 +35,16 @@ public class EstimateProvider(IMaestroConfiguration configuration, IArrivalLooku
     public DateTimeOffset? GetLandingEstimate(Flight flight)
     {
         var systemEstimate = flight.Estimates.LastOrDefault()?.Estimate;
-        if (configuration.LandingEstimateSource == LandingEstimateSource.SystemEstimate)
-            return systemEstimate;
 
-        // We need ETA_FF, an assigned runway, and STAR in order to calculate the landing time using any of the other methods.
-        // If we don't have those at this point, defer to the system estimate.
+        // We need FF, ETA_FF, and an assigned runway in order to calculate the landing time using intervals.
+        // If we don't have those, defer to the system estimate.
         if (flight.FeederFixIdentifier is null || 
-            flight.EstimatedFeederFixTime is null ||
-            flight.AssignedRunwayIdentifier is null ||
-            flight.AssignedStarIdentifier is null)
+            flight.EstimatedFeederFixTime is null)
             return systemEstimate;
         
         var intervalToRunway = arrivalLookup.GetArrivalInterval(
             flight.DestinationIdentifier,
-            flight.AssignedStarIdentifier,
+            flight.FeederFixIdentifier,
             flight.AssignedRunwayIdentifier);
         if (intervalToRunway is null)
             return systemEstimate;

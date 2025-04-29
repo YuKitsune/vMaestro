@@ -22,7 +22,7 @@ public class EstimateProviderTests
         _clock = new FixedClock(_currentTime);
         
         _arrivalLookup = Substitute.For<IArrivalLookup>();
-        _arrivalLookup.GetArrivalInterval(Arg.Is("YSSY"), Arg.Is("RIVET4"), Arg.Is("34L"))
+        _arrivalLookup.GetArrivalInterval(Arg.Is("YSSY"), Arg.Is("RIVET"), Arg.Is("34L"))
             .Returns(TimeSpan.FromMinutes(12));
 
         _fixLookup = Substitute.For<IFixLookup>();
@@ -30,7 +30,7 @@ public class EstimateProviderTests
 
         _flight = new FlightBuilder("QFA123")
             .WithRunway("34L")
-            .WithArrival("RIVET4")
+            .WithFeederFix("RIVET")
             .Build();
 
         _flight.UpdatePosition(
@@ -74,22 +74,36 @@ public class EstimateProviderTests
     }
 
     [Fact]
-    public void GetLandingEstimate_UsingSystemEstimate()
+    public void GetLandingEstimate_WithoutIntervals_UsesSystemEstimate()
     {
         var config = Substitute.For<IMaestroConfiguration>();
-        config.LandingEstimateSource.Returns(LandingEstimateSource.SystemEstimate);
+
+        var flight = new FlightBuilder("QFA2")
+            .WithFeederFix("BOREE")
+            .WithRunway("34R")
+            .Build();
+
+        flight.UpdatePosition(
+            new FlightPosition(
+                new Coordinate(1, 0),
+                25000,
+                VerticalTrack.Maintaining,
+                60), // 60 kts = 1 degree of latitude per hour
+            [
+                new FixEstimate("BOREE", _feederFixSystemEstimate),
+                new FixEstimate("TESAT", _landingSystemEstimate)
+            ]);
 
         var estimateProvider = new EstimateProvider(config, _arrivalLookup, _fixLookup, _clock);
-        var estimate = estimateProvider.GetLandingEstimate(_flight);
+        var estimate = estimateProvider.GetLandingEstimate(flight);
         
         estimate.ShouldBe(_landingSystemEstimate);
     }
 
     [Fact]
-    public void GetLandingEstimate_UsingPresetInterval()
+    public void GetLandingEstimate_WithIntervals_UsesPresetInterval()
     {
         var estimateConfiguration = Substitute.For<IMaestroConfiguration>();
-        estimateConfiguration.LandingEstimateSource.Returns(LandingEstimateSource.PresetInterval);
         
         var estimateProvider = new EstimateProvider(
             estimateConfiguration,

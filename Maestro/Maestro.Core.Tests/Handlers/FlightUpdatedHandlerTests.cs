@@ -26,7 +26,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             false,
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(3))]);
@@ -54,7 +53,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             true,
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(3))]);
@@ -82,7 +80,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             false,
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(1))]);
@@ -112,7 +109,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             true,
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(1))]);
@@ -142,7 +138,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             false,
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(1))]);
@@ -222,7 +217,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             true,
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(2))]);
@@ -256,7 +250,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             true,
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))]);
@@ -289,7 +282,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             true,
             null,
             [
@@ -325,7 +317,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             true,
             null,
             [
@@ -361,7 +352,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YMML",
             "YSSY",
             "34L",
-            "RIVET1",
             true,
             null,
             [
