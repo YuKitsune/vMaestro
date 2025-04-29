@@ -88,13 +88,13 @@ public partial class MaestroView
         foreach (var aircraft in ViewModel.Aircraft)
         {
             double yOffset;
-            switch (ViewModel.SelectedView.LadderReferenceTime)
+            switch (ViewModel.SelectedView.ViewMode)
             {
-                case LadderReferenceTime.FeederFixTime when aircraft.ScheduledFeederFixTime.HasValue:
+                case ViewMode.Enroute when aircraft.ScheduledFeederFixTime.HasValue:
                     yOffset = GetYOffsetForTime(currentTime, aircraft.ScheduledFeederFixTime.Value);
                     break;
                 
-                case LadderReferenceTime.LandingTime:
+                case ViewMode.Approach when aircraft.ScheduledFeederFixTime.HasValue:
                     yOffset = GetYOffsetForTime(currentTime, aircraft.ScheduledLandingTime);
                     break;
 
@@ -145,33 +145,26 @@ public partial class MaestroView
 
     LadderPosition? GetLadderPositionFor(FlightViewModel flight)
     {
-        if (ViewModel.SelectedView?.LeftLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.LeftLadderConfiguration))
+        if (ViewModel.SelectedView is null)
+            return null;
+
+        var searchTerm = ViewModel.SelectedView.ViewMode switch
         {
+            ViewMode.Enroute => flight.FeederFixIdentifier,
+            ViewMode.Approach => flight.AssignedRunway,
+            _ => throw new ArgumentOutOfRangeException($"Unexpected LadderReferenceTime: {ViewModel.SelectedView.ViewMode}")
+        };
+
+        if (string.IsNullOrEmpty(searchTerm))
+            return null;
+
+        if (ViewModel.SelectedView.LeftLadder.Contains(searchTerm))
             return LadderPosition.Left;
-        }
         
-        if (ViewModel.SelectedView?.RightLadderConfiguration is not null && ShowOnLadder(ViewModel.SelectedView.RightLadderConfiguration))
-        {
+        if (ViewModel.SelectedView.RightLadder.Contains(searchTerm))
             return LadderPosition.Right;
-        }
 
-        // TODO: Log a warning if we've made it to this point
         return null;
-
-        bool ShowOnLadder(LadderConfiguration ladderConfiguration)
-        {
-            var runwayMatches = ladderConfiguration.Runways is null ||
-                                !ladderConfiguration.Runways.Any() ||
-                                string.IsNullOrEmpty(flight.AssignedRunway) ||
-                                ladderConfiguration.Runways.Contains(flight.AssignedRunway);
-            
-            var feederFixMatches = ladderConfiguration.FeederFixes is null ||
-                                   !ladderConfiguration.FeederFixes.Any() ||
-                                   string.IsNullOrEmpty(flight.FeederFixIdentifier) ||
-                                   ladderConfiguration.FeederFixes.Contains(flight.FeederFixIdentifier);
-
-            return runwayMatches && feederFixMatches;
-        }
     }
 
     void DrawLadder(DateTimeOffset currentTime)

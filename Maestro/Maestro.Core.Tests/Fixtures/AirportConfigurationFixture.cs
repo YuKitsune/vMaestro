@@ -72,9 +72,9 @@ public class AirportConfigurationFixture
                 new ViewConfiguration
                 {
                     Identifier = "BIK",
-                    LeftLadderConfiguration = null,
-                    RightLadderConfiguration = null,
-                    LadderReferenceTime = LadderReferenceTime.FeederFixTime
+                    LeftLadder = [],
+                    RightLadder = [],
+                    ViewMode = ViewMode.Enroute
                 }
             ],
             FeederFixes = ["RIVET", "WELSH"],

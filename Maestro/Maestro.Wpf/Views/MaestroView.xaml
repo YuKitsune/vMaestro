@@ -29,6 +29,7 @@
 
             <converters:TotalSecondsConverter x:Key="TotalSecondsConverter" />
             <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
+            <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
@@ -242,19 +243,32 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Right" Margin="0,0,12,0">
-                <TextBlock TextAlignment="Right" Text="{Binding Path=SelectedView.LeftLadderConfiguration.Runways, Converter={StaticResource RunwaysToLadderTitleConverter}}"/>
-                <ItemsControl HorizontalAlignment="Right" ItemsSource="{Binding Path=SelectedView.LeftLadderConfiguration.FeederFixes}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" Margin="12,0,0,0"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                
+                <TextBlock TextAlignment="Right">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                            <Setter Property="Text" Value="{Binding Path=SelectedView.LeftLadder, Converter={StaticResource RunwaysToLadderTitleConverter}}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedView.ViewMode}" Value="Enroute">
+                                    <Setter Property="Text" Value="All Runways"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                
+                <TextBlock TextAlignment="Right">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                            <Setter Property="Text" Value="{Binding Path=SelectedView.LeftLadder, Converter={StaticResource FeederFixesToLadderTitleConverter}}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedView.ViewMode}" Value="Approach">
+                                    <Setter Property="Text" Value="All Feeders"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </StackPanel>
 
             <controls:BeveledBorder Grid.Column="1" BevelType="Outline" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
@@ -262,20 +276,33 @@
             </controls:BeveledBorder>
 
             <StackPanel Grid.Column="2" HorizontalAlignment="Left" Margin="12,0,0,0">
-
-                <TextBlock Text="{Binding Path=SelectedView.RightLadderConfiguration.Runways, Converter={StaticResource RunwaysToLadderTitleConverter}}" />
-                <ItemsControl ItemsSource="{Binding Path=SelectedView.RightLadderConfiguration.FeederFixes}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" Style="{StaticResource TextBaseStyle}" Margin="0,0,12,0"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                
+                <TextBlock TextAlignment="Left">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                            <Setter Property="Text" Value="{Binding Path=SelectedView.RightLadder, Converter={StaticResource RunwaysToLadderTitleConverter}}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedView.ViewMode}" Value="Enroute">
+                                    <Setter Property="Text" Value="All Runways"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                
+                <TextBlock TextAlignment="Left">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                            <Setter Property="Text" Value="{Binding Path=SelectedView.RightLadder, Converter={StaticResource FeederFixesToLadderTitleConverter}}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedView.ViewMode}" Value="Approach">
+                                    <Setter Property="Text" Value="All Feeders"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                
             </StackPanel>
         </Grid>
     </Grid>

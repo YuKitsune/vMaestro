@@ -140,63 +140,33 @@
       "Views": [
         {
           "Identifier": "BIK/GLB",
-          "LadderReferenceTime": "FeederFixTime",
-          "LeftLadderConfiguration": {
-            "FeederFixes": ["RIVET"],
-            "Runways": []
-          },
-          "RightLadderConfiguration": {
-            "FeederFixes": ["AKMIR"],
-            "Runways": []
-          }
+          "ViewMode": "Enroute",
+          "LeftLadder": ["RIVET"],
+          "RightLadder": ["AKMIR"]
         },
         {
           "Identifier": "ARL",
-          "LadderReferenceTime": "FeederFixTime",
-          "LeftLadderConfiguration": {
-            "FeederFixes": ["BOREE"],
-            "Runways": []
-          },
-          "RightLadderConfiguration": {
-            "FeederFixes": ["MEPIL"],
-            "Runways": []
-          }
+          "ViewMode": "Enroute",
+          "LeftLadder": ["BOREE"],
+          "RightLadder": ["MEPIL"]
         },
         {
           "Identifier": "OCN",
-          "LadderReferenceTime": "FeederFixTime",
-          "LeftLadderConfiguration": {
-            "FeederFixes": ["MARLN"],
-            "Runways": []
-          },
-          "RightLadderConfiguration": {
-            "FeederFixes": [],
-            "Runways": []
-          }
+          "ViewMode": "Enroute",
+          "LeftLadder": ["MARLN"],
+          "RightLadder": []
         },
         {
           "Identifier": "ALL",
-          "LadderReferenceTime": "FeederFixTime",
-          "LeftLadderConfiguration": {
-            "FeederFixes": ["RIVET", "AKMIR", "BOREE"],
-            "Runways": []
-          },
-          "RightLadderConfiguration": {
-            "FeederFixes": ["MEPIL", "MARLN"],
-            "Runways": []
-          }
+          "ViewMode": "Enroute",
+          "LeftLadder": ["RIVET", "AKMIR", "BOREE"],
+          "RightLadder": ["MEPIL", "MARLN"]
         },
         {
           "Identifier": "RWY",
-          "LadderReferenceTime": "LandingTime",
-          "LeftLadderConfiguration": {
-            "FeederFixes": [],
-            "Runways": ["34L", "16R", "07"]
-          },
-          "RightLadderConfiguration": {
-            "FeederFixes": [],
-            "Runways": ["34R", "16L", "25"]
-          }
+          "ViewMode": "Approach",
+          "LeftLadder": ["34L", "16R", "07"],
+          "RightLadder": ["34R", "16L", "25"]
         }
       ],
       "RunwayAssignmentRules": [
