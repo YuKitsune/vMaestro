@@ -1,4 +1,4 @@
-> *Warning*
+> **Warning**
 > This project is under active development and is not ready for active use on the VATSIM network.
 
 # Installation
