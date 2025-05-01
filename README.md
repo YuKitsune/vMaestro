@@ -1,7 +1,6 @@
 > *Warning*
 > This project is under active development and is not ready for active use on the VATSIM network.
 
-
 # Installation
 
 The project files are configured to output the build artifacts to the Australian vatSys profile.
@@ -13,7 +12,7 @@ If you have a large screen resolution, you may need to run the `dpiaware-fix.bat
 
 After a flight has been stablised, the estimates move forwards causing the flight to show a negative delay. Recompute doesn't appear to fix it.
 
-Switching from one view to another can sometimes cause vatSys to crash.
+Flights in the front of the queue will occasionally move backwards in the queue for seemingly no reason.
 
 The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
 
@@ -38,7 +37,7 @@ The Debug window always moves to the back of the stack when moving your mouse cu
     - [X] Information window
     - [X] Basic sequencing algorithm
     - [X] Automatic runway assignment
-    - [ ] Recompute
+    - [X] Recompute
     - [ ] Remove from sequence
     - [ ] Desequence
     - [ ] Change ETA FF

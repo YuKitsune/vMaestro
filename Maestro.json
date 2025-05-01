@@ -5,7 +5,7 @@
   },
   "Maestro": {
     "ServerUri": "https://maestro.vatpac.org",
-    "FeederFixEstimateSource": "Trajectory",
+    "FeederFixEstimateSource": "Trajectory"
   },
   "Airports": [
     {
