@@ -20,14 +20,13 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
 //  - What's next?
-//      - Refactor estimate calculations
-//      - Track miles, speed, and GRIB winds
-//      - Projected trajectories?
-//      - BRL method vs system estimates
-//  - Optimise ladder drawing code
-//  - landing delay vs FF delay?
-//      - Does the 2 minute rule still apply to the feeder fix?
-//      - What to do with flights with different landing times but same feeder fix time?
+//      - Consider separating TMA and ENR delay
+//      - Desequence and remove flights from sequence
+//      - Manual ETA_FF
+//      - Change runway mode and rates
+//      - Architecture decision record
+//      - Insert flights and pending list
+//      - Revisit estimate calculations
 
 namespace Maestro.Plugin
 {
