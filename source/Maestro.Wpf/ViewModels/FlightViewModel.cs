@@ -1,9 +1,8 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class FlightViewModel : ObservableObject
+public class FlightViewModel
 {
     public FlightViewModel()
     {
@@ -36,7 +35,7 @@ public partial class FlightViewModel : ObservableObject
         string destination,
         State state,
         int numberToLand,
-        string feederFixIdentifier,
+        string? feederFixIdentifier,
         DateTimeOffset? initialFeederFixTime,
         DateTimeOffset? currentFeederFixTime,
         DateTimeOffset? scheduledFeederFixTime,
@@ -79,7 +78,7 @@ public partial class FlightViewModel : ObservableObject
 
     public int NumberToLand { get; }
     
-    public string FeederFixIdentifier { get; }
+    public string? FeederFixIdentifier { get; }
     public DateTimeOffset? InitialFeederFixTime { get; }
     public DateTimeOffset? CurrentFeederFixTime { get; }
     public DateTimeOffset? ScheduledFeederFixTime { get; }

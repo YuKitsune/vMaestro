@@ -64,7 +64,7 @@ public partial class MaestroViewModel : ObservableObject
             SelectedView = airportViewModel.Views.FirstOrDefault();
         }
 
-        var response = _mediator.Send(new GetSequenceRequest(SelectedAirport.Identifier)).GetAwaiter().GetResult();
+        var response = _mediator.Send(new GetSequenceRequest(airportViewModel.Identifier)).GetAwaiter().GetResult();
         foreach (var flight in response.Sequence.Flights)
         {
             UpdateFlight(flight);

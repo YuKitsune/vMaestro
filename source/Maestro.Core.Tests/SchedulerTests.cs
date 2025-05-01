@@ -123,7 +123,7 @@ public class SchedulerTests
         firstFlight.ScheduledLandingTime.ShouldBe(endTime);
         firstFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
-        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime!.Value.Add(_landingRate));
         secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
         secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(3).Add(_landingRate));
     }
@@ -170,7 +170,7 @@ public class SchedulerTests
         unstableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.EstimatedLandingTime);
         unstableFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
 
-        stableFlight.ScheduledFeederFixTime.ShouldBe(unstableFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        stableFlight.ScheduledFeederFixTime.ShouldBe(unstableFlight.ScheduledFeederFixTime!.Value.Add(_landingRate));
         stableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.ScheduledLandingTime.Add(_landingRate));
         stableFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
     }
@@ -206,7 +206,7 @@ public class SchedulerTests
         firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
         firstFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
         
-        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime.Value.Add(_landingRate));
+        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime!.Value.Add(_landingRate));
         secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime.Add(_landingRate));
         secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
         
@@ -230,7 +230,7 @@ public class SchedulerTests
         firstFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
 
         // Second flight should be delayed
-        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime!.Value.Add(_landingRate));
         secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
         secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
     }
@@ -281,7 +281,7 @@ public class SchedulerTests
         firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
         firstFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
 
-        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime.Value.Add(_landingRate));
+        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime!.Value.Add(_landingRate));
         secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
         secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(4));
     }
@@ -327,10 +327,10 @@ public class SchedulerTests
         first.ScheduledLandingTime.ShouldBe(first.EstimatedLandingTime);
         
         // Remaining results should each be separated by landing rate
-        second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
+        second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime!.Value.Add(_landingRate));
         second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
         
-        third.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime.Value.Add(_landingRate));
+        third.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime!.Value.Add(_landingRate));
         third.ScheduledLandingTime.ShouldBe(second.ScheduledLandingTime.Add(_landingRate));
     }
 
@@ -423,6 +423,7 @@ public class SchedulerTests
         //  Reroute to another feeder fix
         //  Check estimates are calculated based on trajectory to previous FF
         Assert.Fail("Stub");
+        await Task.CompletedTask;
     }
 
     [Fact]
@@ -433,6 +434,7 @@ public class SchedulerTests
         //  Swap ETA_FF so second flight is now in front (leap frog)
         //  Check both flights receive no delay and position in sequence is updated
         Assert.Fail("Stub");
+        await Task.CompletedTask;
     }
 
     [Fact]
@@ -443,23 +445,27 @@ public class SchedulerTests
         //  Jumble ETAs (leap frog)
         //  Check delays are updated and position in sequence is unchanged
         Assert.Fail("Stub");
+        await Task.CompletedTask;
     }
 
     [Fact]
     public async Task PriorityFlights_AreNotDelayed()
     {
         Assert.Fail("Stub");
+        await Task.CompletedTask;
     }
 
     [Fact]
     public async Task ZeroDelayFlights_AreNotDelayed()
     {
         Assert.Fail("Stub");
+        await Task.CompletedTask;
     }
 
     [Fact]
     public async Task LandedFlights_CanBeReInsertedIntoTheSequence()
     {
         Assert.Fail("Stub");
+        await Task.CompletedTask;
     }
 }
