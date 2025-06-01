@@ -10,6 +10,9 @@ public class LoggingConfigurator(ILoggerFactory loggerFactory, ILoggingConfigura
     
     public void ConfigureLogging()
     {
+        if (!Directory.Exists(loggingConfiguration.OutputDirectory))
+            Directory.CreateDirectory(loggingConfiguration.OutputDirectory);
+        
         DeleteOldLogFiles();
         var logFileWriter = GetLogFileWriter();
         var provider = new FileLoggerProvider(loggingConfiguration.LogLevel, logFileWriter, clock);
