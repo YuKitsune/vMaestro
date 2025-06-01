@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
 using Microsoft.Extensions.Logging;
 
 namespace Maestro.Plugin.Logging;
@@ -11,6 +12,7 @@ public class FileLogger(
     : ILogger
 {
     readonly string _categoryName = categoryName.Split('.').Last();
+    readonly SemaphoreSlim _semaphore = new(1, 1);
     
     public IDisposable BeginScope<TState>(TState state) where TState : notnull
     {
@@ -35,7 +37,10 @@ public class FileLogger(
         var time = clock.UtcNow();
         var message = formatter(state, exception);
 
-        logFileWriter.WriteLine($"{time:HH:mm:ss} [{logLevel}] [{_categoryName}] {message}");
-        logFileWriter.Flush();
+        using (_semaphore.Lock())
+        {
+            logFileWriter.WriteLine($"{time:HH:mm:ss} [{logLevel}] [{_categoryName}] {message}");
+            logFileWriter.Flush();
+        }
     }
 }
