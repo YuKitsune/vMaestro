@@ -68,6 +68,7 @@ public class Sequence
         }
     }
 
+    // TODO: We need to call this pretty dang often. We should inline it somewhere.
     public async Task Sort(CancellationToken cancellationToken)
     {
         using (await Lock.AcquireAsync(cancellationToken))
