@@ -1,7 +1,8 @@
 {
   "Logging": {
     "LogLevel": "Information",
-    "OutputPath": "MaestroLog.txt"
+    "OutputDirectory": "MaestroLogs",
+    "MaxFileAgeDays": 7
   },
   "Maestro": {
     "ServerUri": "https://maestro.vatpac.org",

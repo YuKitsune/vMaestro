@@ -6,8 +6,11 @@ namespace Maestro.Plugin.Logging;
 
 public class LoggingConfigurator(ILoggerFactory loggerFactory, ILoggingConfiguration loggingConfiguration, IClock clock)
 {
+    const string LogFilePrefix = "MaestroLog";
+    
     public void ConfigureLogging()
     {
+        DeleteOldLogFiles();
         var logFileWriter = GetLogFileWriter();
         var provider = new FileLoggerProvider(loggingConfiguration.LogLevel, logFileWriter, clock);
         loggerFactory.AddProvider(provider);
@@ -15,19 +18,30 @@ public class LoggingConfigurator(ILoggerFactory loggerFactory, ILoggingConfigura
 
     StreamWriter GetLogFileWriter()
     {
-        // TODO: Trim log file so that it doesn't get too big
+        var now = clock.UtcNow().ToLocalTime();
+        var logFileName = $"{LogFilePrefix}.{now:yyyy-MM-dd}.txt";
+        var outputPath = Path.Combine(loggingConfiguration.OutputDirectory, logFileName);
         
-        var outputPath = loggingConfiguration.OutputPath;
-        var fileStream = new FileStream(
-            outputPath,
-            FileMode.Create,
-            FileAccess.Write,
-            FileShare.ReadWrite,
-            bufferSize: 4096,
-            FileOptions.WriteThrough);
+        var fileStream = File.Exists(outputPath)
+            ? File.OpenWrite(outputPath)
+            : File.Create(outputPath);
         
         var writer = new StreamWriter(fileStream);
-        writer.AutoFlush = true;
         return writer;
+    }
+
+    void DeleteOldLogFiles()
+    {
+        var now = clock.UtcNow().ToLocalTime();
+        var files = Directory.GetFiles(loggingConfiguration.OutputDirectory, $"{LogFilePrefix}*.txt");
+        foreach (var file in files)
+        {
+            var lastWriteDate = File.GetLastWriteTime(file);
+            var timeSinceLastWrite = now - lastWriteDate;
+            if (timeSinceLastWrite.TotalDays > loggingConfiguration.MaxFileAgeDays)
+            {
+                File.Delete(file);
+            }
+        }
     }
 }
