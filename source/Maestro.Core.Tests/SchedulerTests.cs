@@ -448,6 +448,146 @@ public class SchedulerTests
         await Task.CompletedTask;
     }
 
+    [Theory]
+    [InlineData(State.Desequenced)]
+    [InlineData(State.Removed)]
+    public async Task WhenAFlightIsNotSequencable_ItDoesNotAffectOtherFlights(State state)
+    {
+        // Arrange
+        var first = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+        
+        var second = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+        
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(first, CancellationToken.None);
+        await sequence.Add(second, CancellationToken.None);
+        
+        // First pass, normal sequence
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Sanity check, first flight is not delayed
+        first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
+        first.ScheduledLandingTime.ShouldBe(first.EstimatedLandingTime);
+        
+        // Second result should now be delayed
+        second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
+        second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
+        
+        // Act
+        first.Desequence();
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Assert
+        
+        // Second flight shouldn't have any delay
+        second.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime);
+        second.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
+    }
+
+    [Fact]
+    public async Task WhenADesequencedFlightIsResumed_TheSequenceIsRecomputed()
+    {
+        // Arrange
+        var first = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+        
+        var second = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+        
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(first, CancellationToken.None);
+        await sequence.Add(second, CancellationToken.None);
+        
+        // First pass, normal sequence
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Desequence the first flight and recompute the sequence
+        first.Desequence();
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Sanity check, second flight should no longer have a delay
+        second.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime);
+        second.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
+        
+        // Act
+        first.Resume();
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Assert
+        
+        // First result shouldn't have any delay
+        first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
+        first.ScheduledLandingTime.ShouldBe(first.EstimatedLandingTime);
+        
+        // Second result should now be delayed again
+        second.ScheduledFeederFixTime.ShouldBe(first.ScheduledFeederFixTime.Value.Add(_landingRate));
+        second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
+    }
+
+    [Fact]
+    public async Task WhenADesequencedFlightIsResumed_InFrontOfAStableFlight_ResumedFlightIsSequencedBehindStableFlight()
+    {
+        // Arrange
+        var first = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+        
+        var second = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+        
+        var sequence = new Sequence(_airportConfigurationFixture.Instance);
+        await sequence.Add(first, CancellationToken.None);
+        await sequence.Add(second, CancellationToken.None);
+        
+        // First pass, normal sequence
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Desequence the first flight and recompute the sequence
+        first.Desequence();
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Act
+        // Stabilize the second flight and resume the first one
+        second.SetState(State.Stable);
+        first.Resume();
+        await _scheduler.Schedule(sequence, CancellationToken.None);
+        
+        // Assert
+        // No delay for the second flight since it was stabilized first
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
+        second.ScheduledFeederFixTime.ShouldBe(second.EstimatedFeederFixTime);
+        second.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
+        
+        // First flight (resumed) should now be behind
+        first.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime.Value.Add(_landingRate));
+        first.ScheduledLandingTime.ShouldBe(second.ScheduledLandingTime.Add(_landingRate));
+    }
+
     [Fact]
     public async Task PriorityFlights_AreNotDelayed()
     {

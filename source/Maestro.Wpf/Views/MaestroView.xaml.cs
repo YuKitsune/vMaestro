@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
+using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.ViewModels;
 using MediatR;
@@ -85,7 +86,7 @@ public partial class MaestroView
         if (ViewModel.SelectedRunwayMode is null || ViewModel.SelectedView is null)
             return;
 
-        foreach (var aircraft in ViewModel.Aircraft)
+        foreach (var aircraft in ViewModel.Aircraft.Where(f => f.State is not State.Desequenced and not State.Removed))
         {
             double yOffset;
             switch (ViewModel.SelectedView.ViewMode)

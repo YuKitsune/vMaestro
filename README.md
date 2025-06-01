@@ -16,6 +16,8 @@ Flights in the front of the queue will occasionally move backwards in the queue 
 
 The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
 
+When a button is enabled, it's appearance is still disabled, but it is still interactable.
+
 # Roadmap
 
 - [X] Eurocat Look and Feel
@@ -39,7 +41,7 @@ The Debug window always moves to the back of the stack when moving your mouse cu
     - [X] Automatic runway assignment
     - [X] Recompute
     - [ ] Remove from sequence
-    - [ ] Desequence
+    - [X] Desequence
     - [ ] Change ETA FF
     - [ ] Change runway mode
     - [ ] Change runway rates

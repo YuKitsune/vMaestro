@@ -111,8 +111,8 @@
                     <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
                 </MenuItem>
                 <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" IsEnabled="False" />
-                <MenuItem Header="Remove" Command="{Binding RemoveCommand}" IsEnabled="False" />
-                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" IsEnabled="False" />
+                <MenuItem Header="Remove" Command="{Binding RemoveCommand}" />
+                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" />
                 <MenuItem Header="Make Pending" Command="{Binding MakePendingCommand}" IsEnabled="False" />
                 <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}" />
                 <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" IsEnabled="False" />

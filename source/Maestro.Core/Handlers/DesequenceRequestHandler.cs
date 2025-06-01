@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Handlers;
 
-public class DesequenceRequestHandler(ISequenceProvider sequenceProvider, ILogger<RecomputeRequestHandler> logger)
+public class DesequenceRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger<RecomputeRequestHandler> logger)
     : IRequestHandler<DesequenceRequest, DesequenceResponse>
 {
     public async Task<DesequenceResponse> Handle(DesequenceRequest request, CancellationToken cancellationToken)
@@ -16,14 +16,20 @@ public class DesequenceRequestHandler(ISequenceProvider sequenceProvider, ILogge
             logger.LogWarning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
             return new DesequenceResponse();
         }
-        
+
         var flight = await sequence.TryGetFlight(request.Callsign, cancellationToken);
-        if (flight == null)
+        if (flight is null)
         {
             logger.LogWarning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
             return new DesequenceResponse();
         }
 
-        throw new NotImplementedException("Desequence not yet implemented.");
+        flight.Desequence();
+        
+        await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
+        
+        // TODO: Re-calculate sequence
+        
+        return new DesequenceResponse();
     }
 }

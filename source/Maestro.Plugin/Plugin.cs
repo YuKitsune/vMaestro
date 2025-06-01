@@ -38,7 +38,7 @@ namespace Maestro.Plugin
 
         static BaseForm? _maestroWindow;
 
-        IMediator _mediator = null!;
+        readonly IMediator _mediator = null!;
 
         public Plugin()
         {

@@ -6,11 +6,27 @@ namespace Maestro.Core.Model;
 
 public interface IScheduler
 {
+    Task Schedule(Sequence sequence, CancellationToken cancellationToken);
     void Schedule(Sequence sequence, Flight flight);
 }
 
 public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> logger) : IScheduler
 {
+    public async Task Schedule(Sequence sequence, CancellationToken cancellationToken)
+    {
+        await sequence.Sort(cancellationToken);
+        using (await sequence.Lock.AcquireAsync(cancellationToken))
+        {
+            var flights = sequence.SequencableFlights.ToList();
+            flights.Sort();
+            
+            foreach (var flight in flights)
+            {
+                Schedule(sequence, flight);
+            }
+        }
+    }
+    
     public void Schedule(Sequence sequence, Flight flight)
     {
         ScheduleInternal(sequence, flight, force: false);
@@ -27,7 +43,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             return;
         }
         
-        var currentFlightIndex = Array.FindIndex(sequence.Flights, f => f.Callsign == flight.Callsign);
+        var currentFlightIndex = Array.FindIndex(sequence.SequencableFlights, f => f.Callsign == flight.Callsign);
         
         // TODO: Account for runway mode changes
         var runwayMode = sequence.CurrentRunwayMode;
@@ -35,7 +51,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         
         ComputeLandingTime(sequence, flight, currentFlightIndex, landingRate);
         
-        var trailingFlight = sequence.Flights
+        var trailingFlight = sequence.SequencableFlights
             .Skip(currentFlightIndex + 1)
             .FirstOrDefault(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
         if (trailingFlight is null)
@@ -117,7 +133,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         // }
         
         // Flights cannot be scheduled in front of superstable flights
-        var lastSuperStableFlight = sequence.Flights.LastOrDefault(f =>
+        var lastSuperStableFlight = sequence.SequencableFlights.LastOrDefault(f =>
             f.Callsign != flight.Callsign &&
             f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
             f.PositionIsFixed);
@@ -136,7 +152,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         logger.LogDebug("Earliest available landing time for {Callsign} is {Time:hh:mm:ss}. Current estimate is {Estimate:hh:mm:ss}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
         
         // Ensure sufficient spacing between the current flight and the one in front
-        var leader = sequence.Flights
+        var leader = sequence.SequencableFlights
             .Take(currentFlightIndex)
             .LastOrDefault(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
         if (leader is not null)

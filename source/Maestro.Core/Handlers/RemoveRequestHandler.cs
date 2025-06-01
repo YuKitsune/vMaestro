@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Handlers;
 
-public class RemoveRequestHandler(ISequenceProvider sequenceProvider, ILogger<RecomputeRequestHandler> logger)
+public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger<RecomputeRequestHandler> logger)
     : IRequestHandler<RemoveRequest, RemoveResponse>
 {
     public async Task<RemoveResponse> Handle(RemoveRequest request, CancellationToken cancellationToken)
@@ -23,7 +23,13 @@ public class RemoveRequestHandler(ISequenceProvider sequenceProvider, ILogger<Re
             logger.LogWarning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
             return new RemoveResponse();
         }
-
-        throw new NotImplementedException("Remove not yet implemented.");
+        
+        flight.Remove();
+        
+        await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
+        
+        // TODO: Re-calculate sequence
+        
+        return new RemoveResponse();
     }
 }

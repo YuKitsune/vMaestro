@@ -36,6 +36,7 @@ public class Sequence
 
     public IReadOnlyList<BlockoutPeriod> BlockoutPeriods => _blockoutPeriods;
     public Flight[] Flights => _flights.ToArray();
+    public Flight[] SequencableFlights => _flights.Where(f => f.ShouldSequence).ToArray();
     public RunwayModeConfiguration CurrentRunwayMode { get; private set; }
     public IReadOnlyList<RunwayAssignmentRule> RunwayAssignmentRules => _airportConfiguration.RunwayAssignmentRules;
 
@@ -110,6 +111,18 @@ public class Sequence
     public void ChangeRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
     {
         CurrentRunwayMode = runwayModeConfiguration;
+    }
+
+    public async Task Recompute(IScheduler scheduler, CancellationToken cancellationToken)
+    {
+        using (await Lock.AcquireAsync(cancellationToken))
+        {
+            _flights.Sort();
+            foreach (var flight in _flights)
+            {
+                scheduler.Schedule(this, flight);
+            }
+        }
     }
 
     // public Flight[] ComputeSequence_OLD(IReadOnlyList<Flight> flights)

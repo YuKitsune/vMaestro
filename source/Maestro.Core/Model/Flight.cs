@@ -98,9 +98,29 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void SetState(State state)
     {
+        if (State == State.Removed && state is not State.Removed)
+            throw new MaestroException("Cannot change state as flight has been removed.");
+        
         // TODO: Prevent invalid state changes
         State = state;
     }
+
+    public void Resume()
+    {
+        State = State.Unstable;
+    }
+
+    public void Desequence()
+    {
+        State = State.Desequenced;
+    }
+
+    public void Remove()
+    {
+        State = State.Removed;
+    }
+    
+    public bool ShouldSequence => State != State.Desequenced && State != State.Removed;
 
     public void SetRunway(string runwayIdentifier, bool manual)
     {

@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Shouldly;
 
@@ -261,5 +262,21 @@ public class FlightTests
 
         // Order should follow: Landed, Frozen, SuperStable, Stable, Unstable
         sorted.Select(f => f.Callsign).ShouldBe(["QFA2", "QFA3", "QFA4", "QFA5", "QFA1"]);
+    }
+
+    [Fact]
+    public void WhenAFlightHasBeenRemoved_ItCannotBeResumed()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithState(State.Stable)
+            .Build();
+        
+        // Act
+        flight.Remove();
+        
+        // Assert
+        var action = () => flight.SetState(State.Stable);
+        action.ShouldThrow<MaestroException>();
     }
 }

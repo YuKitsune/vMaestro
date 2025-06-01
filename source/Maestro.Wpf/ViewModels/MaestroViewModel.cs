@@ -6,6 +6,7 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Wpf.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
@@ -19,6 +20,7 @@ public partial class MaestroViewModel : ObservableObject
     ObservableCollection<AirportViewModel> _availableAirports = [];
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenDesequencedWindowCommand))]
     AirportViewModel? _selectedAirport;
 
     [ObservableProperty]
@@ -28,7 +30,10 @@ public partial class MaestroViewModel : ObservableObject
     ViewConfiguration? _selectedView;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Desequenced))]
     List<FlightViewModel> _aircraft = [];
+    
+    public string[] Desequenced => Aircraft.Where(f => f.State == State.Desequenced).Select(airport => airport.Callsign).ToArray();
 
     public MaestroViewModel(IMediator mediator, IClock clock)
     {
@@ -97,6 +102,10 @@ public partial class MaestroViewModel : ObservableObject
     {
         SelectedView = viewConfiguration;
     }
+    
+    [RelayCommand(CanExecute = nameof(CanOpenDesequencedWindow))]
+    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(SelectedAirport!.Identifier, Desequenced));
+    bool CanOpenDesequencedWindow() => SelectedAirport is not null;
 
     public void UpdateFlight(Flight flight)
     {
