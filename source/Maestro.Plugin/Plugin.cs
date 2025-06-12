@@ -263,10 +263,14 @@ namespace Maestro.Plugin
                 "L" => WakeCategory.Light,
                 _ => WakeCategory.Heavy
             };
-            
+
             var estimates = updated.ParsedRoute
-                .Skip(updated.ParsedRoute.OverflownIndex)
-                .Select(ToEstimate)
+                .Select((s, i) => new FixEstimate(
+                    s.Intersection.Name,
+                    ToDateTimeOffset(s.ETO),
+                    i <= updated.ParsedRoute.OverflownIndex // If this fix has been overflown, then use the ATO
+                        ? ToDateTimeOffset(s.ATO)
+                        : null))
                 .ToArray();
 
             // TODO: Is there any point in tracking preactive flight plans?
@@ -318,13 +322,6 @@ namespace Maestro.Plugin
                 dateTime.Year, dateTime.Month, dateTime.Day,
                 dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond,
                 TimeSpan.Zero);
-        }
-
-        static FixEstimate ToEstimate(FDP2.FDR.ExtractedRoute.Segment segment)
-        {
-            return new FixEstimate(
-                segment.Intersection.Name,
-                ToDateTimeOffset(segment.ETO));
         }
     }
 }

@@ -30,7 +30,6 @@ public sealed class FlightComparer : IComparer<Flight>
     }
 }
 
-[DebuggerDisplay("{Callsign} {ScheduledLandingTime}")]
 public class Flight : IEquatable<Flight>, IComparable<Flight>
 {
     public Flight(
@@ -69,6 +68,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public bool RunwayManuallyAssigned { get; private set; }
     public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
+    public bool NeedsRecompute { get; set; }
 
     public State State { get; private set; } = State.Unstable;
     public bool PositionIsFixed => State is not State.Unstable and not State.Stable;
@@ -77,6 +77,8 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset? InitialFeederFixTime { get; private set; }
     public DateTimeOffset? EstimatedFeederFixTime { get; private set; } // ETA_FF
     public DateTimeOffset? ScheduledFeederFixTime { get; private set; } // STA_FF
+    public DateTimeOffset? ActualFeederFixTime { get; private set; }
+    public bool HasPassedFeederFix => ActualFeederFixTime is not null;
 
     public DateTimeOffset InitialLandingTime { get; private set; }
     public DateTimeOffset EstimatedLandingTime { get; private set; } // ETA
@@ -86,9 +88,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     
     public bool Activated => ActivatedTime.HasValue;
     public DateTimeOffset? ActivatedTime { get; private set; }
-    
-    public FlightPosition? LastKnownPosition { get; private set; }
-    public FixEstimate[] Estimates { get; private set; } = [];
     
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
     
@@ -133,14 +132,26 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         FlowControls = flowControls;
     }
 
-    public void SetFeederFix(string feederFixIdentifier, DateTimeOffset feederFixEstimate)
+    public void SetFeederFix(
+        string feederFixIdentifier,
+        DateTimeOffset feederFixEstimate,
+        DateTimeOffset? actualFeederFixTime = null)
     {
         FeederFixIdentifier = feederFixIdentifier;
-        UpdateFeederFixEstimate(feederFixEstimate);
+        EstimatedFeederFixTime = feederFixEstimate;
+        ScheduledFeederFixTime = null;
+        ActualFeederFixTime = actualFeederFixTime;
     }
 
     public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate)
     {
+        if (string.IsNullOrEmpty(FeederFixIdentifier))
+            throw new MaestroException("No feeder fix has been set");
+
+        if (HasPassedFeederFix)
+            throw new MaestroException(
+                "Cannot update feeder fix estimate because the flight has already passed the feeder fix");
+        
         EstimatedFeederFixTime = feederFixEstimate;
         if (State == State.Unstable)
         {
@@ -150,7 +161,25 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void SetFeederFixTime(DateTimeOffset feederFixTime)
     {
+        if (string.IsNullOrEmpty(FeederFixIdentifier))
+            throw new MaestroException("No feeder fix has been set");
+
+        if (HasPassedFeederFix)
+            throw new MaestroException(
+                "Cannot update feeder fix time because the flight has already passed the feeder fix");
+        
         ScheduledFeederFixTime = feederFixTime;
+    }
+
+    public void PassedFeederFix(DateTimeOffset feederFixTime)
+    {
+        if (string.IsNullOrEmpty(FeederFixIdentifier))
+            throw new MaestroException("No feeder fix has been set");
+
+        if (HasPassedFeederFix)
+            throw new MaestroException("Flight has already passed the feeder fix");
+        
+        ActualFeederFixTime = feederFixTime;
     }
 
     public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
@@ -176,12 +205,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         ActivatedTime = clock.UtcNow();
     }
 
-    public void UpdatePosition(FlightPosition position, FixEstimate[] estimates)
-    {
-        LastKnownPosition = position;
-        Estimates = estimates;
-    }
-
     public void UpdateLastSeen(IClock clock)
     {
         LastSeen = clock.UtcNow();
@@ -195,6 +218,11 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public bool Equals(Flight? other)
     {
         return other is not null && (ReferenceEquals(this, other) || Callsign == other.Callsign); 
+    }
+
+    public override string ToString()
+    {
+        return $"{Callsign}; {State}; FF {FeederFixIdentifier}; ETA_FF {EstimatedFeederFixTime:HH:mm}; STA_FF {ScheduledFeederFixTime:HH:mm}; ATO_FF {ActualFeederFixTime:HH:mm}; ETA {EstimatedLandingTime:HH:mm}; STA {ScheduledLandingTime:HH:mm}";
     }
 }
 

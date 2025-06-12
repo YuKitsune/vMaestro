@@ -5,38 +5,36 @@ namespace Maestro.Core.Model;
 
 public interface IEstimateProvider
 {
-    DateTimeOffset? GetFeederFixEstimate(Flight flight);
-    DateTimeOffset? GetLandingEstimate(Flight flight);
+    DateTimeOffset? GetFeederFixEstimate(string? feederFixIdentifier, DateTimeOffset? systemEstimate, FlightPosition? flightPosition);
+    DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate);
 }
 
-public class EstimateProvider(IMaestroConfiguration configuration, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock) : IEstimateProvider
+public class EstimateProvider(IMaestroConfiguration configuration, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock)
+    : IEstimateProvider
 {
-    public DateTimeOffset? GetFeederFixEstimate(Flight flight)
+    public DateTimeOffset? GetFeederFixEstimate(string? feederFixIdentifier, DateTimeOffset? systemEstimate, FlightPosition? flightPosition)
     {
-        var systemEstimate = flight.Estimates.LastOrDefault(f => f.FixIdentifier == flight.FeederFixIdentifier)?.Estimate;
-        if (configuration.FeederFixEstimateSource == FeederFixEstimateSource.SystemEstimate)
+        if (configuration.FeederFixEstimateSource == FeederFixEstimateSource.SystemEstimate ||
+            string.IsNullOrEmpty(feederFixIdentifier) ||
+            flightPosition is null)
             return systemEstimate;
-        
-        if (string.IsNullOrEmpty(flight.FeederFixIdentifier) || flight.LastKnownPosition is null)
-            return null;
-        
-        var feederFix = fixLookup.FindFix(flight.FeederFixIdentifier!);
+
+        var feederFix = fixLookup.FindFix(feederFixIdentifier!);
         if (feederFix is null)
-            return null;
-        
+            return systemEstimate;
+
+        // BRL method
         var distance = Calculations.CalculateDistanceNauticalMiles(
-            flight.LastKnownPosition.Coordinate,
+            flightPosition.Coordinate,
             feederFix.Coordinate);
         
-        var estimate = clock.UtcNow() + TimeSpan.FromHours(distance / flight.LastKnownPosition.GroundSpeed);
+        var estimate = clock.UtcNow() + TimeSpan.FromHours(distance / flightPosition.GroundSpeed);
         return estimate;
     }
 
-    public DateTimeOffset? GetLandingEstimate(Flight flight)
+    public DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate)
     {
-        var systemEstimate = flight.Estimates.LastOrDefault()?.Estimate;
-
-        // We need FF, ETA_FF, and an assigned runway in order to calculate the landing time using intervals.
+        // We need ETA_FF in order to calculate the landing time using intervals.
         // If we don't have those, defer to the system estimate.
         if (flight.FeederFixIdentifier is null || 
             flight.EstimatedFeederFixTime is null)
@@ -49,7 +47,11 @@ public class EstimateProvider(IMaestroConfiguration configuration, IArrivalLooku
         if (intervalToRunway is null)
             return systemEstimate;
 
-        var landingEstimateFromInterval = flight.EstimatedFeederFixTime.Value.Add(intervalToRunway.Value);
+        var feederFixTime = flight.HasPassedFeederFix
+            ? flight.ActualFeederFixTime!.Value
+            : flight.EstimatedFeederFixTime!.Value;
+        var landingEstimateFromInterval = feederFixTime.Add(intervalToRunway.Value);
+
         return landingEstimateFromInterval;
 
         // TODO: Calculate landing estimate based on flight trajectory

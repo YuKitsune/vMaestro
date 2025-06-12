@@ -117,15 +117,35 @@ public class FlightUpdatedHandler(
         if (!flight.Activated)
             return;
 
-        if (notification.Position is not null)
+        if (flight.NeedsRecompute)
         {
-            flight.UpdatePosition(
-                notification.Position,
-                notification.Estimates.ToArray());
-        }
+            logger.LogInformation("Reocmputing {Callsign}", flight.Callsign);
+            
+            // Reset the feeder fix in case of a reroute
+            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
+            if (feederFix is not null)
+                flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
+        
+            flight.HighPriority = feederFix is null;
+            flight.NoDelay = false;
+            
+            // Re-assign runway if it has not been manually assigned
+            if (!flight.RunwayManuallyAssigned)
+            {
+                var runway = FindBestRunway(
+                    feederFix?.FixIdentifier ?? string.Empty,
+                    flight.AircraftType,
+                    sequence.CurrentRunwayMode,
+                    sequence.RunwayAssignmentRules);
+            
+                flight.SetRunway(runway, false);
+            }
 
+            flight.NeedsRecompute = false;
+        }
+        
         // Compute ETA and ETA_FF
-        CalculateEstimates(flight);
+        CalculateEstimates(flight, notification);
         
         // Allocate a position in the sequence
         await sequence.Sort(cancellationToken);
@@ -138,6 +158,7 @@ public class FlightUpdatedHandler(
         SetState(flight);
 
         await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
+        logger.LogDebug("Flight Updated: {Flight}", flight);
     }
 
     string FindBestRunway(string feederFixIdentifier, string aircraftType, RunwayModeConfiguration runwayMode, IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)
@@ -208,33 +229,32 @@ public class FlightUpdatedHandler(
         logger.LogInformation("{Callsign} is now {State}", flight.Callsign, flight.State);
     }
 
-    void CalculateEstimates(Flight flight)
+    void CalculateEstimates(Flight flight, FlightUpdatedNotification notification)
     {
-        var feederFixEstimate = estimateProvider.GetFeederFixEstimate(flight);
-        if (feederFixEstimate is not null)
+        var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
+        if (feederFixSystemEstimate?.ActualTimeOver is not null)
         {
-            var totalDifference = (feederFixEstimate - flight.EstimatedFeederFixTime!.Value).Value.Duration();
-            if (totalDifference.TotalSeconds >= 1)
-            {
-                logger.LogInformation("{Callsign} ETA FF was {OriginalEstimate} and is now {NewEstimate} ({Difference})",
-                    flight.Callsign, flight.EstimatedFeederFixTime, feederFixEstimate,  totalDifference);
-            }
-            
-            flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
+            flight.PassedFeederFix(feederFixSystemEstimate.ActualTimeOver.Value);
         }
-            
-        var landingEstimate = estimateProvider.GetLandingEstimate(flight);
-        if (landingEstimate is not null)
-        {
-            var totalDifference = (landingEstimate - flight.EstimatedLandingTime).Value.Duration();
-            if (totalDifference.TotalSeconds >= 1)
-            {
-                logger.LogInformation(
-                    "{Callsign} ETA was {OriginalEstimate} and is now {NewEstimate} ({Difference})",
-                    flight.Callsign, flight.EstimatedFeederFixTime, feederFixEstimate, totalDifference);
-            }
 
-            flight.UpdateLandingEstimate(landingEstimate.Value);
+        // Don't update ETA_FF once passed FF
+        if (!flight.HasPassedFeederFix)
+        {
+            var calculatedFeederFixEstimate = estimateProvider.GetFeederFixEstimate(
+                flight.FeederFixIdentifier,
+                feederFixSystemEstimate?.Estimate,
+                notification.Position);
+            if (calculatedFeederFixEstimate is not null)
+            {
+                flight.UpdateFeederFixEstimate(calculatedFeederFixEstimate.Value);
+            }
+        }
+
+        var landingSystemEstimate = notification.Estimates.LastOrDefault();
+        var calculatedLandingEstimate = estimateProvider.GetLandingEstimate(flight, landingSystemEstimate?.Estimate);
+        if (calculatedLandingEstimate is not null)
+        {
+            flight.UpdateLandingEstimate(calculatedLandingEstimate.Value);
         }
     }
 

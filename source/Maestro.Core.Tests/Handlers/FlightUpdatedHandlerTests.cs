@@ -1,6 +1,8 @@
 ﻿using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -371,6 +373,97 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         // Assert
         var flight = sequence.Flights.ShouldHaveSingleItem();
         flight.State.ShouldBe(State.Landed);
+    }
+
+    [Fact]
+    public async Task WhenAFlightNeedsRecomputing_AndItHasBeenRerouted_TheFeederFixIsUpdated()
+    {
+        // Arrange
+        var clock = new FixedClock(DateTimeOffset.UtcNow);
+        var sequence = new Sequence(airportConfigurationFixture.Instance);
+        
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .Build();
+        
+        await sequence.Add(flight, CancellationToken.None);
+        
+        // Change the feeder fix (emulate a re-route)
+        var newEtaFf = DateTimeOffset.Now.AddMinutes(5);
+        var notification = new FlightUpdatedNotification(
+            "QFA1",
+            "B738",
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            "34L",
+            true,
+            null,
+            [
+                new FixEstimate("AKMIR", newEtaFf),
+                new FixEstimate("YSSY", newEtaFf.AddMinutes(10))
+            ]);
+
+        var handler = GetHandler(sequence, clock);
+        
+        // Act
+        flight.NeedsRecompute = true;
+        await handler.Handle(notification, CancellationToken.None);
+        
+        // Assert
+        flight.FeederFixIdentifier.ShouldBe("AKMIR");
+        flight.EstimatedFeederFixTime.ShouldBe(newEtaFf);
+        flight.NeedsRecompute.ShouldBe(false);
+    }
+
+    // TODO: Verify this behavior is desired.
+    [Fact]
+    public async Task WhenAFlightNeedsRecomputing_AndARunwayHasBeenManuallyAssigned_ItIsNotOverridden()
+    {
+        // Arrange
+        var clock = new FixedClock(DateTimeOffset.UtcNow);
+        var sequence = new Sequence(airportConfigurationFixture.Instance);
+        
+        var flight = new FlightBuilder("QFA1")
+            .WithRunway("34L")
+            .Build();
+        
+        await sequence.Add(flight, CancellationToken.None);
+        
+        // Change the runway
+        flight.SetRunway("34R", manual: true);
+        
+        var notification = new FlightUpdatedNotification(
+            "QFA1",
+            "B738",
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            "34R",
+            true,
+            null,
+            [
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(5)),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(10))
+            ]);
+
+        var handler = GetHandler(sequence, clock);
+        
+        // Act
+        flight.NeedsRecompute = true;
+        await handler.Handle(notification, CancellationToken.None);
+        
+        // Assert
+        flight.AssignedRunwayIdentifier.ShouldBe("34R");
+        flight.RunwayManuallyAssigned.ShouldBe(true);
+        flight.NeedsRecompute.ShouldBe(false);
+    }
+
+    [Fact]
+    public async Task WhenAFlightNeedsRecomputing_AndACustomFeederFixEstimateWasProvided_ItIsOverridden()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Stub");
     }
 
     FlightUpdatedHandler GetHandler(Sequence sequence, IClock clock)

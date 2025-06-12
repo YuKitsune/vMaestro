@@ -198,7 +198,8 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         
         if (flight.EstimatedLandingTime > scheduledLandingTime)
         {
-            logger.LogWarning("Flight was scheduled to land at {ScheduledLandingTime} earlier than the estimated landing time of {EstimatedLandingTime}", scheduledLandingTime, flight.EstimatedLandingTime);
+            var diff = scheduledLandingTime - flight.EstimatedLandingTime;
+            logger.LogWarning("{Callsign} was scheduled to land {Difference} earlier than the estimated landing time of {EstimatedLandingTime}", flight.Callsign, diff, flight.EstimatedLandingTime);
         }
     }
 }

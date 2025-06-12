@@ -11,10 +11,13 @@ public class FlightBuilder(string callsign)
     string _feederFixIdentifier = "RIVET";
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
     DateTimeOffset feederFixTime = default;
+    DateTimeOffset passedFeederFix = default;
+    
     DateTimeOffset landingEstimate = DateTimeOffset.Now;
     DateTimeOffset landingTime = default;
 
     string _assignedRunway = "34L";
+    bool _manualRunway = false;
 
     State _state = State.Unstable;
 
@@ -36,6 +39,12 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder PassedFeederFixAt(DateTimeOffset time)
+    {
+        passedFeederFix = time;
+        return this;
+    }
+
     public FlightBuilder WithLandingEstimate(DateTimeOffset estimate)
     {
         landingEstimate = estimate;
@@ -48,9 +57,10 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithRunway(string runway)
+    public FlightBuilder WithRunway(string runway, bool manual = false)
     {
         _assignedRunway = runway;
+        _manualRunway = manual;
         return this;
     }
 
@@ -79,8 +89,13 @@ public class FlightBuilder(string callsign)
         if (feederFixTime != default)
             flight.SetFeederFixTime(feederFixTime);
         
+        if (passedFeederFix != default)
+            flight.PassedFeederFix(passedFeederFix);
+        
         if (landingTime != default)
             flight.SetLandingTime(landingTime);
+        
+        flight.SetRunway(_assignedRunway, _manualRunway);
         
         flight.Activate(new FixedClock(DateTimeOffset.Now));
         
