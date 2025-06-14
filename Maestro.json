@@ -5,13 +5,15 @@
     "MaxFileAgeDays": 7
   },
   "Maestro": {
-    "ServerUri": "https://maestro.vatpac.org",
-    "FeederFixEstimateSource": "Trajectory"
+    "FeederFixEstimateSource": "Trajectory",
+    "Reclassifications": [
+      { "AircraftType": "DH8D", "NewClassification": "Jet" }
+    ]
   },
   "Airports": [
     {
       "Identifier": "YSSY",
-      "FeederFixes": ["RIVET", "AKMIR", "BOREE", "MEPIL", "MARLN"],
+      "FeederFixes": ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
       "Runways": [
         { "Identifier": "16L" },
         { "Identifier": "34L" },
@@ -70,58 +72,133 @@
       ],
       "Arrivals": [
         {
-          "FeederFix": "AKMIR",
+          "FeederFix": "BOREE",
+          "ArrivalRegex": "BOREE\\d[AP]",
+          "AircraftType": "Jet",
           "RunwayIntervals": {
-            "34L": 20,
-            "34R": 23,
-            "16L": 22,
-            "16R": 19,
-            "07": 9,
-            "25": 20
-          }
-        },
-        {
-          "FeederFix": "RIVET",
-          "RunwayIntervals": {
-            "34L": 16,
-            "34R": 20,
-            "16L": 20,
-            "16R": 17,
-            "07": 11,
-            "25": 17
-          }
-        },
-        {
-          "FeederFix": "MARLN",
-          "RunwayIntervals": {
-            "34L": 16,
-            "34R": 16,
-            "16L": 18,
-            "16R": 20,
+            "34L": 17,
+            "34R": 17,
+            "16L": 11,
+            "16R": 11,
             "07": 15,
             "25": 14
           }
         },
         {
-          "FeederFix": "MEPIL",
-          "RunwayIntervals": {
-            "34L": 14,
-            "34R": 13,
-            "16L": 9,
-            "16R": 9,
-            "07": 11,
-            "25": 10
-          }
-        },
-        {
           "FeederFix": "BOREE",
+          "ArrivalRegex": "BOREE\\d[AP]",
+          "AircraftType": "NonJet",
           "RunwayIntervals": {
             "34L": 20,
             "34R": 20,
-            "16L": 11,
+            "16L": 12,
+            "16R": 12,
+            "07": 17,
+            "25": 16
+          }
+        },
+        {
+          "FeederFix": "YAKKA",
+          "ArrivalRegex": "MEPIL\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "34L": 18,
+            "34R": 18,
+            "16L": 12,
             "16R": 11,
             "07": 15,
             "25": 15
+          }
+        },
+        {
+          "FeederFix": "YAKKA",
+          "ArrivalRegex": "MEPIL\\d",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "34L": 20,
+            "34R": 20,
+            "16L": 13,
+            "16R": 13,
+            "07": 17,
+            "25": 16
+          }
+        },
+        {
+          "FeederFix": "MARLN",
+          "ArrivalRegex": "MARLN\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "34L": 18,
+            "34R": 15,
+            "16L": 17,
+            "16R": 17,
+            "07": 16,
+            "25": 12
+          }
+        },
+        {
+          "FeederFix": "MARLN",
+          "ArrivalRegex": "MARLN\\d",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "34L": 20,
+            "34R": 17,
+            "16L": 19,
+            "16R": 20,
+            "07": 18,
+            "25": 13
+          }
+        },
+        {
+          "FeederFix": "RIVET",
+          "ArrivalRegex": "RIVET\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "34L": 15,
+            "34R": 18,
+            "16L": 18,
+            "16R": 15,
+            "07": 11,
+            "25": 16
+          }
+        },
+        {
+          "FeederFix": "RIVET",
+          "ArrivalRegex": "RIVET\\d",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "34L": 17,
+            "34R": 20,
+            "16L": 20,
+            "16R": 17,
+            "07": 12,
+            "25": 18
+          }
+        },
+        {
+          "FeederFix": "WELSH",
+          "ArrivalRegex": "ODALE\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "34L": 16,
+            "34R": 18,
+            "16L": 18,
+            "16R": 16,
+            "07": 11,
+            "25": 17
+          }
+        },
+        {
+          "FeederFix": "WELSH",
+          "ArrivalRegex": "ODALE\\d",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "34L": 18,
+            "34R": 20,
+            "16L": 21,
+            "16R": 18,
+            "07": 13,
+            "25": 19
           }
         }
       ],
@@ -130,13 +207,13 @@
           "Identifier": "BIK/GLB",
           "ViewMode": "Enroute",
           "LeftLadder": ["RIVET"],
-          "RightLadder": ["AKMIR"]
+          "RightLadder": ["WELSH"]
         },
         {
           "Identifier": "ARL",
           "ViewMode": "Enroute",
           "LeftLadder": ["BOREE"],
-          "RightLadder": ["MEPIL"]
+          "RightLadder": ["YAKKA"]
         },
         {
           "Identifier": "OCN",
@@ -147,8 +224,8 @@
         {
           "Identifier": "ALL",
           "ViewMode": "Enroute",
-          "LeftLadder": ["RIVET", "AKMIR", "BOREE"],
-          "RightLadder": ["MEPIL", "MARLN"]
+          "LeftLadder": ["RIVET", "WELSH", "BOREE"],
+          "RightLadder": ["YAKKA", "MARLN"]
         },
         {
           "Identifier": "RWY",
@@ -160,19 +237,19 @@
       "RunwayAssignmentRules": [
         {
           "Priority": 0,
-          "FeederFixes": ["RIVET", "AKMIR", "BOREE", "MEPIL", "MARLN"],
+          "FeederFixes": ["RIVET", "WELSH", "BOREE", "MEPIL", "MARLN"],
           "WakeCategories": ["Heavy", "SuperHeavy"],
           "Runways": ["34L", "16R", "07", "25"]
         },
         {
           "Priority": 1,
-          "FeederFixes": ["RIVET", "AKMIR"],
+          "FeederFixes": ["RIVET", "WELSH"],
           "WakeCategories": ["Light", "Medium"],
           "Runways": ["34L", "16R", "07", "25"]
         },
         {
           "Priority": 2,
-          "FeederFixes": ["RIVET", "AKMIR"],
+          "FeederFixes": ["RIVET", "WELSH"],
           "WakeCategories": ["Light", "Medium"],
           "Runways": ["34R", "16L"]
         },
@@ -187,6 +264,515 @@
           "FeederFixes": ["BOREE", "MEPIL", "MARLN"],
           "WakeCategories": ["Light", "Medium"],
           "Runways": ["34L", "16R"]
+        }
+      ]
+    },
+    {
+      "Identifier": "YBBN",
+      "FeederFixes": ["BLAKA", "GOMOL", "ENLIP", "MORBI", "SMOKA", "TEBOT", "UGTUG", "WOODY"],
+      "Runways": [
+        { "Identifier": "01L" },
+        { "Identifier": "01R" },
+        { "Identifier": "19L" },
+        { "Identifier": "19R" }
+      ],
+      "RunwayModes": [
+        {
+          "Identifier": "19",
+          "Runways": [
+            { "Identifier": "19L", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "19R", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "01",
+          "Runways": [
+            { "Identifier": "01L", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "01R", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "SODPROPS",
+          "Runways": [
+            { "Identifier": "19R", "DefaultLandingRateSeconds": 300 }
+          ]
+        },
+        {
+          "Identifier": "RECIP",
+          "Runways": [
+            { "Identifier": "19L", "DefaultLandingRateSeconds": 240 },
+            { "Identifier": "19R", "DefaultLandingRateSeconds": 240 }
+          ]
+        }
+      ],
+      "Arrivals": [
+        {
+          "FeederFix": "BLAKA",
+          "ArrivalRegex": "BLAK\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 13,
+            "01R": 13,
+            "19L": 19,
+            "19R": 21
+          }
+        },
+        {
+          "FeederFix": "BLAKA",
+          "ArrivalRegex": "BLAK\\dA",
+          "AircraftType": "NonNet",
+          "RunwayIntervals": {
+            "01L": 15,
+            "01R": 15,
+            "19L": 22,
+            "19R": 24
+          }
+        },
+        {
+          "FeederFix": "BLAKA",
+          "ArrivalRegex": "BLAK\\dX",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01R": 12,
+            "19L": 16
+          }
+        },
+        {
+          "FeederFix": "BLAKA",
+          "ArrivalRegex": "BLAK\\dX",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01R": 14,
+            "19L": 18
+          }
+        },
+        {
+          "FeederFix": "BLAKA",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "19R": 19
+          }
+        },
+        {
+          "FeederFix": "BLAKA",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "19R": 22
+          }
+        },
+        {
+          "FeederFix": "ENLIP",
+          "ArrivalRegex": "ENLI\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 11,
+            "01R": 11,
+            "19L": 20,
+            "19R": 18
+          }
+        },
+        {
+          "FeederFix": "ENLIP",
+          "ArrivalRegex": "ENLI\\dA",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 13,
+            "01R": 13,
+            "19L": 23,
+            "19R": 20
+          }
+        },
+        {
+          "FeederFix": "ENLIP",
+          "ArrivalRegex": "ENLI\\dX",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "19L": 16,
+            "19R": 16
+          }
+        },
+        {
+          "FeederFix": "ENLIP",
+          "ArrivalRegex": "ENLI\\dX",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "19L": 19,
+            "19R": 18
+          }
+        },
+        {
+          "FeederFix": "ENLIP",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "19R": 20
+          }
+        },
+        {
+          "FeederFix": "ENLIP",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "19R": 23
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "GOMO\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 14,
+            "01R": 14,
+            "19L": 18,
+            "19R": 20
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "GOMO\\dA",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 16,
+            "01R": 15,
+            "19L": 21,
+            "19R": 23
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "GOMO\\dV",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01R": 13,
+            "19L": 15
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "GOMO\\dV",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01R": 14,
+            "19L": 17
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "GOMO\\dX",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01R": 12,
+            "19L": 16
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "GOMO\\dX",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01R": 14,
+            "19L": 18
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "19R": 19
+          }
+        },
+        {
+          "FeederFix": "GOMOL",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "19R": 21
+          }
+        },
+        {
+          "FeederFix": "MORBI",
+          "ArrivalRegex": "MORB\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 16,
+            "01R": 15,
+            "19L": 13,
+            "19R": 12
+          }
+        },
+        {
+          "FeederFix": "MORBI",
+          "ArrivalRegex": "MORB\\dA",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 18,
+            "01R": 17,
+            "19L": 14,
+            "19R": 14
+          }
+        },
+        {
+          "FeederFix": "MORBI",
+          "ArrivalRegex": "MORB\\dV",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 13,
+            "19R": 11
+          }
+        },
+        {
+          "FeederFix": "MORBI",
+          "ArrivalRegex": "MORB\\dV",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 14,
+            "19R": 12
+          }
+        },
+        {
+          "FeederFix": "SMOKA",
+          "ArrivalRegex": "SMOK\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 15,
+            "01R": 14,
+            "19L": 13,
+            "19R": 13
+          }
+        },
+        {
+          "FeederFix": "SMOKA",
+          "ArrivalRegex": "SMOK\\dA",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 17,
+            "01R": 16,
+            "19L": 15,
+            "19R": 15
+          }
+        },
+        {
+          "FeederFix": "SMOKA",
+          "ArrivalRegex": "SMOK\\dM",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01R": 12
+          }
+        },
+        {
+          "FeederFix": "SMOKA",
+          "ArrivalRegex": "SMOK\\dM",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01R": 13
+          }
+        },
+        {
+          "FeederFix": "SMOKA",
+          "ArrivalRegex": "SMOK\\dX",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 13,
+            "19R": 11
+          }
+        },
+        {
+          "FeederFix": "SMOKA",
+          "ArrivalRegex": "SMOK\\dX",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 14,
+            "19R": 13
+          }
+        },
+        {
+          "FeederFix": "TEBOT",
+          "ArrivalRegex": "TEBO\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 18,
+            "01R": 18,
+            "19L": 11,
+            "19R": 11
+          }
+        },
+        {
+          "FeederFix": "TEBOT",
+          "ArrivalRegex": "TEBO\\dA",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 20,
+            "01R": 21,
+            "19L": 12,
+            "19R": 13
+          }
+        },
+        {
+          "FeederFix": "TEBOT",
+          "ArrivalRegex": "TEBO\\dX",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01R": 15
+          }
+        },
+        {
+          "FeederFix": "TEBOT",
+          "ArrivalRegex": "TEBO\\dX",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01R": 17
+          }
+        },
+        {
+          "FeederFix": "UGTUG",
+          "ArrivalRegex": "UGTU\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 15,
+            "01R": 15,
+            "19L": 13,
+            "19R": 14
+          }
+        },
+        {
+          "FeederFix": "UGTUG",
+          "ArrivalRegex": "UGTU\\dA",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 17,
+            "01R": 17,
+            "19L": 15,
+            "19R": 16
+          }
+        },
+        {
+          "FeederFix": "UGTUG",
+          "ArrivalRegex": "UGTU\\dX",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01R": 13,
+            "19L": 12
+          }
+        },
+        {
+          "FeederFix": "UGTUG",
+          "ArrivalRegex": "UGTU\\dX",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01R": 14,
+            "19L": 13
+          }
+        },
+        {
+          "FeederFix": "UGTUG",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "19R": 14
+          }
+        },
+        {
+          "FeederFix": "UGTUG",
+          "ArrivalRegex": "ISPON\\d",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "19R": 15
+          }
+        },
+        {
+          "FeederFix": "WOODY",
+          "ArrivalRegex": "WOOD\\dA",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 14,
+            "01R": 13,
+            "19L": 15,
+            "19R": 15
+          }
+        },
+        {
+          "FeederFix": "WOODY",
+          "ArrivalRegex": "WOOD\\dA",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 16,
+            "01R": 15,
+            "19L": 17,
+            "19R": 16
+          }
+        },
+        {
+          "FeederFix": "WOODY",
+          "ArrivalRegex": "WOOD\\dV",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "01L": 11,
+            "19R": 12
+          }
+        },
+        {
+          "FeederFix": "WOODY",
+          "ArrivalRegex": "WOOD\\dV",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "01L": 13,
+            "19R": 14
+          }
+        }
+      ],
+      "Views": [
+        {
+          "Identifier": "INL",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["BLAKA"],
+          "RightLadder": ["GOMOL"]
+        },
+        {
+          "Identifier": "DOS",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["ENLIP"],
+          "RightLadder": ["WOODY"]
+        },
+        {
+          "Identifier": "BUR",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["MORBI"],
+          "RightLadder": ["SMOKA"]
+        },
+        {
+          "Identifier": "SDY",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["TEBOT"],
+          "RightLadder": ["UGTUG"] 
+        },
+        {
+          "Identifier": "ALL",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["BLAKA", "ENLIP", "GOMOL", "MORBI"],
+          "RightLadder": ["SMOKA", "TEBOT", "UGTUG", "WOODY"] 
+        },
+        {
+          "Identifier": "RWY",
+          "ViewMode": "Approach",
+          "LeftLadder": ["01L", "19R"],
+          "RightLadder": ["01R", "19L"] 
+        }
+      ],
+      "RunwayAssignmentRules": [
+        {
+          "Priority": 0,
+          "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"],
+          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
+          "Runways": ["01R", "19L"]
+        },
+        {
+          "Priority": 1,
+          "FeederFixes": ["ENLIP", "WOODY", "MORBI", "SMOKA"],
+          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
+          "Runways": ["01L", "19R"]
         }
       ]
     }

@@ -10,12 +10,13 @@ public enum FeederFixEstimateSource
 
 public interface IMaestroConfiguration
 {
-    Uri ServerUri { get; }
     FeederFixEstimateSource FeederFixEstimateSource { get; }
+    AircraftTypeReclassification[] Reclassifications { get; }
+    
 }
 
 public class MaestroConfiguration(IConfigurationSection configurationSection) : IMaestroConfiguration
 {
-    public Uri ServerUri => configurationSection.GetValue<Uri>("ServerUri")!;
     public FeederFixEstimateSource FeederFixEstimateSource => configurationSection.GetValue<FeederFixEstimateSource>("FeederFixEstimateSource");
+    public AircraftTypeReclassification[] Reclassifications => configurationSection.GetValue<AircraftTypeReclassification[]>("Reclassifications") ?? [];
 }

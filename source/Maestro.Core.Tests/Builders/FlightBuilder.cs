@@ -16,6 +16,7 @@ public class FlightBuilder(string callsign)
     DateTimeOffset landingEstimate = DateTimeOffset.Now;
     DateTimeOffset landingTime = default;
 
+    string _assignedArrival = "RIVET4";
     string _assignedRunway = "34L";
     bool _manualRunway = false;
 
@@ -57,6 +58,12 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithArrival(string arrivalIdentifier)
+    {
+        _assignedArrival = arrivalIdentifier;
+        return this;
+    }
+
     public FlightBuilder WithRunway(string runway, bool manual = false)
     {
         _assignedRunway = runway;
@@ -94,7 +101,8 @@ public class FlightBuilder(string callsign)
         
         if (landingTime != default)
             flight.SetLandingTime(landingTime);
-        
+
+        flight.SetArrival(_assignedArrival);
         flight.SetRunway(_assignedRunway, _manualRunway);
         
         flight.Activate(new FixedClock(DateTimeOffset.Now));

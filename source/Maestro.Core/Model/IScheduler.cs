@@ -181,7 +181,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         flight.SetLandingTime(scheduledLandingTime);
         
         var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (performance is not null && performance.IsJet && flight.EstimatedLandingTime < scheduledLandingTime)
+        if (performance is not null && performance.Type == AircraftType.Jet && flight.EstimatedLandingTime < scheduledLandingTime)
         {
             flight.SetFlowControls(FlowControls.S250);
         }

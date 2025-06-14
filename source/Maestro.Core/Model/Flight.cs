@@ -64,6 +64,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public WakeCategory WakeCategory { get; private set; }
     public string OriginIdentifier { get; private set; }
     public string DestinationIdentifier { get; private set; }
+    public string? AssignedArrivalIdentifier { get; private set; }
     public string AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
     public bool HighPriority { get; set; } = false;
@@ -121,6 +122,11 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     
     public bool ShouldSequence => State != State.Desequenced && State != State.Removed;
 
+    public void SetArrival(string? arrivalIdentifier)
+    {
+        AssignedArrivalIdentifier = arrivalIdentifier;
+    }
+    
     public void SetRunway(string runwayIdentifier, bool manual)
     {
         AssignedRunwayIdentifier = runwayIdentifier;

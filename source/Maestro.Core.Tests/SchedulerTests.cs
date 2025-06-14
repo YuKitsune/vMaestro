@@ -22,7 +22,7 @@ public class SchedulerTests
         _airportConfigurationFixture = airportConfigurationFixture;
         
         var lookup = Substitute.For<IPerformanceLookup>();
-        lookup.GetPerformanceDataFor(Arg.Any<string>()).Returns(new AircraftPerformanceData { IsJet = true, WakeCategory = WakeCategory.Medium });
+        lookup.GetPerformanceDataFor(Arg.Any<string>()).Returns(new AircraftPerformanceData { Type = AircraftType.Jet, WakeCategory = WakeCategory.Medium });
 
         _scheduler = new Scheduler(lookup, new Logger<Scheduler>(NullLoggerFactory.Instance));
     }

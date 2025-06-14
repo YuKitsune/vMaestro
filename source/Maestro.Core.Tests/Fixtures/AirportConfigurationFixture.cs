@@ -1,4 +1,6 @@
-﻿using Maestro.Core.Configuration;
+﻿using System.Text.RegularExpressions;
+using Maestro.Core.Configuration;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
 
 [assembly: AssemblyFixture(typeof(AirportConfigurationFixture))]
@@ -49,6 +51,8 @@ public class AirportConfigurationFixture
                 new ArrivalConfiguration
                 {
                     FeederFix = "RIVET",
+                    ArrivalRegex = new Regex(@"RIVET\d"),
+                    AircraftType = AircraftType.Jet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
                         { "34L", 16 },
@@ -58,6 +62,8 @@ public class AirportConfigurationFixture
                 new ArrivalConfiguration
                 {
                     FeederFix = "AKMIR",
+                    ArrivalRegex = new Regex(@"ODALE\d"),
+                    AircraftType = AircraftType.Jet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
                         { "34L", 16 },

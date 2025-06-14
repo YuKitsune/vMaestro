@@ -13,6 +13,7 @@ public record FlightUpdatedNotification(
     WakeCategory WakeCategory,
     string Origin,
     string Destination,
+    string? AssignedArrival,
     string? AssignedRunway,
     bool Activated,
     FlightPosition? Position,
@@ -104,6 +105,7 @@ public class FlightUpdatedHandler(
         }
         
         flight.UpdateLastSeen(clock);
+        flight.SetArrival(notification.AssignedArrival);
         
         // TODO: Revisit flight plan activation
         // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.

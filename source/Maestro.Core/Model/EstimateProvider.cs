@@ -9,7 +9,7 @@ public interface IEstimateProvider
     DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate);
 }
 
-public class EstimateProvider(IMaestroConfiguration configuration, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock)
+public class EstimateProvider(IMaestroConfiguration configuration, IPerformanceLookup performanceLookup, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock)
     : IEstimateProvider
 {
     public DateTimeOffset? GetFeederFixEstimate(string? feederFixIdentifier, DateTimeOffset? systemEstimate, FlightPosition? flightPosition)
@@ -39,11 +39,14 @@ public class EstimateProvider(IMaestroConfiguration configuration, IArrivalLooku
         if (flight.FeederFixIdentifier is null || 
             flight.EstimatedFeederFixTime is null)
             return systemEstimate;
-        
+
+        var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
         var intervalToRunway = arrivalLookup.GetArrivalInterval(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
-            flight.AssignedRunwayIdentifier);
+            flight.AssignedArrivalIdentifier,
+            flight.AssignedRunwayIdentifier,
+            aircraftPerformance?.Type ?? AircraftType.Jet);
         if (intervalToRunway is null)
             return systemEstimate;
 

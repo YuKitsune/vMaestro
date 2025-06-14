@@ -308,6 +308,7 @@ namespace Maestro.Plugin
                 wake,
                 updated.DepAirport,
                 updated.DesAirport,
+                updated.STAR?.Name,
                 updated.ArrivalRunway?.Name,
                 isActivated,
                 position,

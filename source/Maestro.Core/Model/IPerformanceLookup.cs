@@ -9,7 +9,7 @@ public class AircraftPerformanceData
 {
     public WakeCategory WakeCategory { get; init; }
         
-    public bool IsJet { get; set; }
+    public AircraftType Type { get; init; }
 }
 
 public enum WakeCategory

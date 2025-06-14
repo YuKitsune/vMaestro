@@ -10,6 +10,7 @@ namespace Maestro.Core.Tests;
 public class EstimateProviderTests
 {
     readonly IClock _clock;
+    readonly IPerformanceLookup _performanceLookup;
     readonly IArrivalLookup _arrivalLookup;
     readonly IFixLookup _fixLookup;
     readonly DateTimeOffset _currentTime = new(2025, 04, 12, 12, 00, 00, TimeSpan.Zero);
@@ -19,11 +20,15 @@ public class EstimateProviderTests
     {
         _clock = new FixedClock(_currentTime);
         
+        _performanceLookup = Substitute.For<IPerformanceLookup>();
+        
         _arrivalLookup = Substitute.For<IArrivalLookup>();
         _arrivalLookup.GetArrivalInterval(
                 Arg.Is("YSSY"),
                 Arg.Is("RIVET"),
-                Arg.Is("34L"))
+                Arg.Is("RIVET4"),
+                Arg.Is("34L"),
+                Arg.Is(AircraftType.Jet))
             .Returns(_arrivalInterval);
 
         _fixLookup = Substitute.For<IFixLookup>();
@@ -36,7 +41,7 @@ public class EstimateProviderTests
         // Arrange
         var config = Substitute.For<IMaestroConfiguration>();
         config.FeederFixEstimateSource.Returns(FeederFixEstimateSource.SystemEstimate);
-        var estimateProvider = new EstimateProvider(config, _arrivalLookup, _fixLookup, _clock);
+        var estimateProvider = new EstimateProvider(config, _performanceLookup, _arrivalLookup, _fixLookup, _clock);
         
         // Act
         var systemEstimate = _currentTime.AddMinutes(5);
@@ -56,7 +61,7 @@ public class EstimateProviderTests
         var config = Substitute.For<IMaestroConfiguration>();
         config.FeederFixEstimateSource.Returns(FeederFixEstimateSource.Trajectory);
 
-        var estimateProvider = new EstimateProvider(config, _arrivalLookup, _fixLookup, _clock);
+        var estimateProvider = new EstimateProvider(config, _performanceLookup, _arrivalLookup, _fixLookup, _clock);
         
         // Act
         var systemEstimate = _currentTime.AddMinutes(65);
@@ -88,7 +93,7 @@ public class EstimateProviderTests
             .WithRunway("34R")
             .Build();
 
-        var estimateProvider = new EstimateProvider(config, _arrivalLookup, _fixLookup, _clock);
+        var estimateProvider = new EstimateProvider(config, _performanceLookup, _arrivalLookup, _fixLookup, _clock);
         
         // Act
         var systemEstimate = _currentTime.AddMinutes(15);
@@ -103,9 +108,9 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateConfiguration = Substitute.For<IMaestroConfiguration>();
-        
         var estimateProvider = new EstimateProvider(
             estimateConfiguration,
+            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);
@@ -134,9 +139,9 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateConfiguration = Substitute.For<IMaestroConfiguration>();
-        
         var estimateProvider = new EstimateProvider(
             estimateConfiguration,
+            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);

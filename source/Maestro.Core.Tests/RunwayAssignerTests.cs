@@ -13,11 +13,11 @@ public class RunwayAssignerTests
     public RunwayAssignerTests()
     {
         var lookup = Substitute.For<IPerformanceLookup>();
-        lookup.GetPerformanceDataFor(Arg.Is("C172")).Returns(new AircraftPerformanceData { IsJet = false, WakeCategory = WakeCategory.Light });
-        lookup.GetPerformanceDataFor(Arg.Is("DH8D")).Returns(new AircraftPerformanceData { IsJet = false, WakeCategory = WakeCategory.Medium });
-        lookup.GetPerformanceDataFor(Arg.Is("B738")).Returns(new AircraftPerformanceData { IsJet = true, WakeCategory = WakeCategory.Medium });
-        lookup.GetPerformanceDataFor(Arg.Is("B744")).Returns(new AircraftPerformanceData { IsJet = true, WakeCategory = WakeCategory.Heavy });
-        lookup.GetPerformanceDataFor(Arg.Is("A388")).Returns(new AircraftPerformanceData { IsJet = true, WakeCategory = WakeCategory.SuperHeavy });
+        lookup.GetPerformanceDataFor(Arg.Is("C172")).Returns(new AircraftPerformanceData { Type = AircraftType.NonJet, WakeCategory = WakeCategory.Light });
+        lookup.GetPerformanceDataFor(Arg.Is("DH8D")).Returns(new AircraftPerformanceData { Type = AircraftType.NonJet, WakeCategory = WakeCategory.Medium });
+        lookup.GetPerformanceDataFor(Arg.Is("B738")).Returns(new AircraftPerformanceData { Type = AircraftType.Jet, WakeCategory = WakeCategory.Medium });
+        lookup.GetPerformanceDataFor(Arg.Is("B744")).Returns(new AircraftPerformanceData { Type = AircraftType.Jet, WakeCategory = WakeCategory.Heavy });
+        lookup.GetPerformanceDataFor(Arg.Is("A388")).Returns(new AircraftPerformanceData { Type = AircraftType.Jet, WakeCategory = WakeCategory.SuperHeavy });
         
         _runwayAssigner = new RunwayAssigner(lookup);
 
