@@ -124,7 +124,7 @@ public class FlightUpdatedHandler(
 
         if (flight.NeedsRecompute)
         {
-            logger.LogInformation("Reocmputing {Callsign}", flight.Callsign);
+            logger.LogInformation("Recomputing {Callsign}", flight.Callsign);
             
             // Reset the feeder fix in case of a reroute
             var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
@@ -163,7 +163,7 @@ public class FlightUpdatedHandler(
         SetState(flight);
 
         await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
-        logger.LogDebug("Flight Updated: {Flight}", flight);
+        logger.LogDebug("Flight updated: {Flight}", flight);
     }
 
     string FindBestRunway(string feederFixIdentifier, string aircraftType, RunwayModeConfiguration runwayMode, IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)

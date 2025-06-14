@@ -145,7 +145,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         FeederFixIdentifier = feederFixIdentifier;
         EstimatedFeederFixTime = feederFixEstimate;
-        ScheduledFeederFixTime = null;
+        ScheduledFeederFixTime = feederFixEstimate;
         ActualFeederFixTime = actualFeederFixTime;
     }
 
