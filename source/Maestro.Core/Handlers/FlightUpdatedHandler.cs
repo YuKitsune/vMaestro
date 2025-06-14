@@ -113,8 +113,11 @@ public class FlightUpdatedHandler(
         //     flight.Activate(clock);
         // }
         
-        // Do not process inactive flights
-        if (!flight.Activated)
+        // Exit early if the flight should not be processed
+        if (!flight.Activated ||
+            flight.State == State.Desequenced ||
+            flight.State == State.Removed ||
+            flight.State == State.Landed)
             return;
 
         if (flight.NeedsRecompute)
