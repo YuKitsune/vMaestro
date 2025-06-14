@@ -3,20 +3,21 @@
 
 # Installation
 
-The project files are configured to output the build artifacts to the Australian vatSys profile.
+If you're building the project from source, the project files are configured to output the build artifacts to the Australian vatSys profile.
 Building the project should automatically install the plugin for you.
 
+Otherwise, place the plugin files into your vatSys plugins directory (`%documents%\vatSys Files\Profiles\Australia\Plugins\Maestro`).
+You will also need to copy the `Maestro.json` file into your profile directory (`%documents%\vatSys Files\Profiles\Australia`).
 If you have a large screen resolution, you may need to run the `dpiaware-fix.bat` file to disable DPI awareness for vatSys.
 
-# Known Bugs 
+Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
-After a flight has been stablised, the estimates move forwards causing the flight to show a negative delay. Recompute doesn't appear to fix it.
+# Known Issues 
 
-Flights in the front of the queue will occasionally move backwards in the queue for seemingly no reason.
-
-The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
-
-When a button is enabled, it's appearance is still disabled, but it is still interactable.
+- Flights in the front of the queue will occasionally move backwards in the queue.
+- Flights that are far away will be sequenced to land shortly after a much earlier flight, resulting in a negative delay.
+- The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
+- When a button is enabled, it's appearance is still disabled, but it is still interactable.
 
 # Roadmap
 
@@ -40,7 +41,7 @@ When a button is enabled, it's appearance is still disabled, but it is still int
     - [X] Basic sequencing algorithm
     - [X] Automatic runway assignment
     - [X] Recompute
-    - [ ] Remove from sequence
+    - [X] Remove from sequence
     - [X] Desequence
     - [ ] Change ETA FF
     - [ ] Change runway mode
