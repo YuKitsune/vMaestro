@@ -10,7 +10,7 @@ public class TimeConverter : IValueConverter
     {
         if (value is DateTimeOffset dateTimeOffset)
         {
-            return dateTimeOffset.ToString("hh:mm");
+            return dateTimeOffset.ToString("HH:mm");
         }
         
         throw new NotSupportedException();

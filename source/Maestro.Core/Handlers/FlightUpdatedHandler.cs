@@ -86,6 +86,7 @@ public class FlightUpdatedHandler(
                 flight.Activate(clock);
                 
                 await sequence.Add(flight, cancellationToken);
+                logger.LogDebug("{Callsign} created", notification.Callsign);
             }
         }
 
@@ -99,7 +100,7 @@ public class FlightUpdatedHandler(
             var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight, notification.Position);
             if (!shouldUpdate)
             {
-                logger.LogDebug("Skipping update for {Callsign}", notification.Callsign);
+                logger.LogTrace("Rate limiting {Callsign}", notification.Callsign);
                 return;
             }
         }
@@ -120,7 +121,14 @@ public class FlightUpdatedHandler(
             flight.State == State.Desequenced ||
             flight.State == State.Removed ||
             flight.State == State.Landed)
+        {
+            if (!flight.Activated)
+                logger.LogDebug("{Callsign} is not activated. No additional processing required.", notification.Callsign);
+            else
+                logger.LogDebug("{Callsign} is {State}. No additional processing required.", notification.Callsign, flight.State);
+            
             return;
+        }
 
         if (flight.NeedsRecompute)
         {
@@ -240,6 +248,11 @@ public class FlightUpdatedHandler(
         if (!flight.HasPassedFeederFix && feederFixSystemEstimate?.ActualTimeOver is not null)
         {
             flight.PassedFeederFix(feederFixSystemEstimate.ActualTimeOver.Value);
+            logger.LogInformation(
+                "{Callsign} passed {FeederFix} at {ActualTimeOver}",
+                flight.Callsign,
+                flight.FeederFixIdentifier,
+                feederFixSystemEstimate.ActualTimeOver);
         }
 
         // Don't update ETA_FF once passed FF
@@ -251,7 +264,13 @@ public class FlightUpdatedHandler(
                 notification.Position);
             if (calculatedFeederFixEstimate is not null)
             {
+                var diff = flight.EstimatedFeederFixTime - calculatedFeederFixEstimate;
                 flight.UpdateFeederFixEstimate(calculatedFeederFixEstimate.Value);
+                logger.LogDebug(
+                    "{Callsign} ETA_FF now {FeederFixEstimate} (diff {Difference})",
+                    flight.Callsign,
+                    flight.EstimatedFeederFixTime,
+                    diff);
             }
         }
 
@@ -259,7 +278,13 @@ public class FlightUpdatedHandler(
         var calculatedLandingEstimate = estimateProvider.GetLandingEstimate(flight, landingSystemEstimate?.Estimate);
         if (calculatedLandingEstimate is not null)
         {
+            var diff = flight.EstimatedLandingTime - calculatedLandingEstimate;
             flight.UpdateLandingEstimate(calculatedLandingEstimate.Value);
+            logger.LogDebug(
+                "{Callsign} ETA now {LandingEstimate} (diff {Difference})",
+                flight.Callsign,
+                flight.EstimatedLandingTime,
+                diff);
         }
     }
 

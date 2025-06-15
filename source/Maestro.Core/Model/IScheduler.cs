@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Model;
@@ -43,6 +44,8 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             return;
         }
         
+        using var _ = logger.BeginScope("Scheduling {Callsign}.", flight.Callsign);
+        
         var currentFlightIndex = Array.FindIndex(sequence.SequencableFlights, f => f.Callsign == flight.Callsign);
         
         // TODO: Account for runway mode changes
@@ -60,11 +63,21 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             return;
         }
         
+        logger.LogDebug(
+            "Trailing flight is {Callsign} with ETA {LandingEstimate:HH:mm}.",
+            trailingFlight.Callsign,
+            trailingFlight.EstimatedLandingTime);
+        
         // If the flight behind us is too close, we need to re-calculate it
         // TODO: Add a test to see if we can reduce the delay if a preceding flight moves or disappears
         var timeToTrailer = trailingFlight.ScheduledLandingTime - flight.ScheduledLandingTime;
         if (timeToTrailer < TimeSpan.Zero)
         {
+            logger.LogWarning(
+                "{Callsign} is behind in the sequence but their landing estimate is {Interval} ahead.",
+                trailingFlight.Callsign,
+                timeToTrailer.Negate().ToString("hh:mm"));
+            
             // The flight that _was_ behind us in the sequence is now in front of us
             // TODO: Can we ignore them?
             return;
@@ -108,7 +121,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
 
         if (blockoutPeriod is not null)
         {
-            logger.LogDebug("Blockout period exists, earliest landing time for {Callsign} is {Time:hh:mm:ss}", flight.Callsign, earliestAvailableLandingTime);
+            logger.LogDebug("Blockout period exists, earliest landing time for {Callsign} is {Time:HH:mm}", flight.Callsign, earliestAvailableLandingTime);
         }
         
         // Avoid delaying priority flights behind others
@@ -144,14 +157,23 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
                 ? slotAfterLeader
                 : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
             
-            logger.LogDebug("Last SuperStable flight is {LeaderCallsign} at {Time:hh:mm:ss}. Earliest slot time is now {Earliest:hh:mm:ss}", lastSuperStableFlight.Callsign, slotAfterLeader, earliestAvailableLandingTime);
+            logger.LogDebug(
+                "Last SuperStable flight is {LeaderCallsign} at {Time:HH:mm}. Earliest slot time is now {Earliest:HH:mm}",
+                lastSuperStableFlight.Callsign,
+                slotAfterLeader,
+                earliestAvailableLandingTime);
         }
         
         var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
             
-        logger.LogDebug("Earliest available landing time for {Callsign} is {Time:hh:mm:ss}. Current estimate is {Estimate:hh:mm:ss}.", flight.Callsign, scheduledLandingTime, flight.EstimatedLandingTime);
+        logger.LogDebug(
+            "Earliest available landing time for {Callsign} is {Time:HH:mm}. Current estimate is {Estimate:HH:mm}.",
+            flight.Callsign,
+            scheduledLandingTime,
+            flight.EstimatedLandingTime);
         
         // Ensure sufficient spacing between the current flight and the one in front
+        // BUG: I think there is a concurrency issue here. The leading flight could sometimes has an ETA later than us.
         var leader = sequence.SequencableFlights
             .Take(currentFlightIndex)
             .LastOrDefault(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
@@ -163,7 +185,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
                 scheduledLandingTime = leader.ScheduledLandingTime.Add(landingRate);
                 
                 logger.LogInformation(
-                    "Delaying {Callsign} to {NewLandingTime:hh:mm:ss} for spacing with {LeaderCallsign} landing at {LeaderLandingTime:hh:mm:ss}.",
+                    "Delaying {Callsign} to {NewLandingTime:HH:mm} for spacing with {LeaderCallsign} landing at {LeaderLandingTime:HH:mm}.",
                     flight.Callsign,
                     scheduledLandingTime,
                     leader.Callsign,
@@ -176,6 +198,12 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             var delay = scheduledLandingTime - flight.EstimatedLandingTime;
             var feederFixTime = flight.EstimatedFeederFixTime.Value + delay;
             flight.SetFeederFixTime(feederFixTime);
+                
+            logger.LogDebug(
+                "{Callsign} STA_FF now {ScheduledFeederFixTime:HH:mm} (Delay {Delay}).",
+                flight.Callsign,
+                feederFixTime,
+                delay.ToString("[-]hh:mm"));
         }
         
         flight.SetLandingTime(scheduledLandingTime);
@@ -191,76 +219,19 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         }
 
         logger.LogInformation(
-            "{Callsign} scheduled landing time now {NewLandingTime:hh:mm:ss}. Total delay {Delay}.",
+            "{Callsign} STA now {NewLandingTime:HH:mm}. Total delay {Delay}.",
             flight.Callsign,
             scheduledLandingTime,
-            flight.ScheduledLandingTime - flight.InitialLandingTime);
+            (flight.ScheduledLandingTime - flight.InitialLandingTime).ToString("[-]hh:mm"));
         
         if (flight.EstimatedLandingTime > scheduledLandingTime)
         {
             var diff = scheduledLandingTime - flight.EstimatedLandingTime;
-            logger.LogWarning("{Callsign} was scheduled to land {Difference} earlier than the estimated landing time of {EstimatedLandingTime}", flight.Callsign, diff, flight.EstimatedLandingTime);
+            logger.LogWarning(
+                "{Callsign} was scheduled to land {Difference} earlier than the estimated landing time of {EstimatedLandingTime:HH:mm}",
+                flight.Callsign,
+                diff.ToString("[-]hh:mm"),
+                flight.EstimatedLandingTime);
         }
-    }
-}
-
-[DebuggerDisplay("{StartTime} - {EndTime}")]
-public struct Period
-{
-    public Period(DateTimeOffset startTime, DateTimeOffset endTime)
-    {
-        if (endTime < startTime)
-            throw new ArgumentException("EndTime cannot be earlier than startTime");
-            
-        StartTime = startTime;
-        EndTime = endTime;
-    }
-        
-    public DateTimeOffset StartTime { get; }
-    public DateTimeOffset EndTime { get; }
-
-    public bool Contains(DateTimeOffset dateTime)
-    {
-        return dateTime >= StartTime && dateTime <= EndTime;
-    }
-}
-
-public static class DateTimeOffsetExtensionMethods
-{
-    public static bool IsBefore(this DateTimeOffset left, DateTimeOffset right)
-    {
-        return left < right;
-    }
-
-    public static bool IsAfter(this DateTimeOffset left, DateTimeOffset right)
-    {
-        return left > right;
-    }
-
-    public static bool IsWithin(this DateTimeOffset left, TimeSpan tolerance, DateTimeOffset referencePoint)
-    {
-        var start = tolerance.Ticks >= 0
-            ? referencePoint.Subtract(tolerance)
-            : referencePoint.Add(tolerance);
-        
-        var end = tolerance.Ticks >= 0
-            ? referencePoint.Add(tolerance)
-            : referencePoint.Subtract(tolerance);
-        
-        var period = new Period(start, end);
-        return period.Contains(left);
-    }
-}
-
-public static class DateTimeOffsetHelpers
-{
-    public static DateTimeOffset Earliest(DateTimeOffset left, DateTimeOffset right)
-    {
-        return left.IsBefore(right) ? left : right;
-    }
-    
-    public static DateTimeOffset Latest(DateTimeOffset left, DateTimeOffset right)
-    {
-        return left.IsAfter(right) ? left : right;
     }
 }
