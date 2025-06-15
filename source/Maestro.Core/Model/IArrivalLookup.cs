@@ -1,5 +1,5 @@
 ﻿using Maestro.Core.Configuration;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Maestro.Core.Model;
 
@@ -13,7 +13,7 @@ public interface IArrivalLookup
         AircraftType aircraftType);
 }
 
-public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger<ArrivalLookup> logger)
+public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
     : IArrivalLookup
 {
     public TimeSpan? GetArrivalInterval(
@@ -44,7 +44,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         if (foundArrivalConfigurations.Length > 1)
         {
             // TODO: Show vatSys error
-            logger.LogWarning(
+            logger.Warning(
                 "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; STAR = {ArrivalIdentifier}; Type = {Type}",
                 airportIdentifier,
                 feederFixIdentifier,

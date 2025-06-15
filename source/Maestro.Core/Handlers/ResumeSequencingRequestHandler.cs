@@ -1,11 +1,11 @@
 ﻿using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger<RecomputeRequestHandler> logger)
+public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger logger)
     : IRequestHandler<ResumeSequencingRequest, ResumeSequencingResponse>
 {
     public async Task<ResumeSequencingResponse> Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
@@ -13,14 +13,14 @@ public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, 
         var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
         if (sequence == null)
         {
-            logger.LogWarning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
+            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
             return new ResumeSequencingResponse();
         }
 
         var flight = await sequence.TryGetFlight(request.Callsign, cancellationToken);
         if (flight is null)
         {
-            logger.LogWarning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
+            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
             return new ResumeSequencingResponse();
         }
         

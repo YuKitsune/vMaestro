@@ -2,9 +2,8 @@
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests;
@@ -24,7 +23,7 @@ public class SchedulerTests
         var lookup = Substitute.For<IPerformanceLookup>();
         lookup.GetPerformanceDataFor(Arg.Any<string>()).Returns(new AircraftPerformanceData { Type = AircraftType.Jet, WakeCategory = WakeCategory.Medium });
 
-        _scheduler = new Scheduler(lookup, new Logger<Scheduler>(NullLoggerFactory.Instance));
+        _scheduler = new Scheduler(lookup, Substitute.For<ILogger>());
     }
 
     [Fact]

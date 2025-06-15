@@ -1,7 +1,6 @@
-﻿using System.Diagnostics;
-using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Maestro.Core.Model;
 
@@ -11,7 +10,7 @@ public interface IScheduler
     void Schedule(Sequence sequence, Flight flight);
 }
 
-public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> logger) : IScheduler
+public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : IScheduler
 {
     public async Task Schedule(Sequence sequence, CancellationToken cancellationToken)
     {
@@ -40,11 +39,11 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         // Do not apply any more processing to superstable or frozen flights
         if (!force && !CanSchedule(flight))
         {
-            logger.LogDebug("{Callsign} is {State}. No processing required.", flight.Callsign, flight.State);
+            logger.Debug("{Callsign} is {State}. No processing required.", flight.Callsign, flight.State);
             return;
         }
         
-        using var _ = logger.BeginScope("Scheduling {Callsign}.", flight.Callsign);
+        logger.Information("Scheduling {Callsign}.", flight.Callsign);
         
         var currentFlightIndex = Array.FindIndex(sequence.SequencableFlights, f => f.Callsign == flight.Callsign);
         
@@ -63,7 +62,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             return;
         }
         
-        logger.LogDebug(
+        logger.Debug(
             "Trailing flight is {Callsign} with ETA {LandingEstimate:HH:mm}.",
             trailingFlight.Callsign,
             trailingFlight.EstimatedLandingTime);
@@ -73,10 +72,10 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         var timeToTrailer = trailingFlight.ScheduledLandingTime - flight.ScheduledLandingTime;
         if (timeToTrailer < TimeSpan.Zero)
         {
-            logger.LogWarning(
+            logger.Warning(
                 "{Callsign} is behind in the sequence but their landing estimate is {Interval} ahead.",
                 trailingFlight.Callsign,
-                timeToTrailer.Negate().ToString("hh:mm"));
+                timeToTrailer.Duration().ToHoursAndMinutesString());
             
             // The flight that _was_ behind us in the sequence is now in front of us
             // TODO: Can we ignore them?
@@ -121,7 +120,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
 
         if (blockoutPeriod is not null)
         {
-            logger.LogDebug("Blockout period exists, earliest landing time for {Callsign} is {Time:HH:mm}", flight.Callsign, earliestAvailableLandingTime);
+            logger.Debug("Blockout period exists, earliest landing time for {Callsign} is {Time:HH:mm}", flight.Callsign, earliestAvailableLandingTime);
         }
         
         // Avoid delaying priority flights behind others
@@ -157,7 +156,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
                 ? slotAfterLeader
                 : DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, slotAfterLeader);
             
-            logger.LogDebug(
+            logger.Debug(
                 "Last SuperStable flight is {LeaderCallsign} at {Time:HH:mm}. Earliest slot time is now {Earliest:HH:mm}",
                 lastSuperStableFlight.Callsign,
                 slotAfterLeader,
@@ -166,7 +165,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
         
         var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
             
-        logger.LogDebug(
+        logger.Debug(
             "Earliest available landing time for {Callsign} is {Time:HH:mm}. Current estimate is {Estimate:HH:mm}.",
             flight.Callsign,
             scheduledLandingTime,
@@ -184,7 +183,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             {
                 scheduledLandingTime = leader.ScheduledLandingTime.Add(landingRate);
                 
-                logger.LogInformation(
+                logger.Information(
                     "Delaying {Callsign} to {NewLandingTime:HH:mm} for spacing with {LeaderCallsign} landing at {LeaderLandingTime:HH:mm}.",
                     flight.Callsign,
                     scheduledLandingTime,
@@ -199,11 +198,11 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             var feederFixTime = flight.EstimatedFeederFixTime.Value + delay;
             flight.SetFeederFixTime(feederFixTime);
                 
-            logger.LogDebug(
+            logger.Debug(
                 "{Callsign} STA_FF now {ScheduledFeederFixTime:HH:mm} (Delay {Delay}).",
                 flight.Callsign,
                 feederFixTime,
-                delay.ToString("[-]hh:mm"));
+                delay.ToHoursAndMinutesString());
         }
         
         flight.SetLandingTime(scheduledLandingTime);
@@ -218,19 +217,19 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger<Scheduler> 
             flight.SetFlowControls(FlowControls.ProfileSpeed);
         }
 
-        logger.LogInformation(
+        logger.Information(
             "{Callsign} STA now {NewLandingTime:HH:mm}. Total delay {Delay}.",
             flight.Callsign,
             scheduledLandingTime,
-            (flight.ScheduledLandingTime - flight.InitialLandingTime).ToString("[-]hh:mm"));
+            (flight.ScheduledLandingTime - flight.InitialLandingTime).ToHoursAndMinutesString());
         
         if (flight.EstimatedLandingTime > scheduledLandingTime)
         {
             var diff = scheduledLandingTime - flight.EstimatedLandingTime;
-            logger.LogWarning(
+            logger.Warning(
                 "{Callsign} was scheduled to land {Difference} earlier than the estimated landing time of {EstimatedLandingTime:HH:mm}",
                 flight.Callsign,
-                diff.ToString("[-]hh:mm"),
+                diff.ToHoursAndMinutesString(),
                 flight.EstimatedLandingTime);
         }
     }

@@ -1,7 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using MediatR;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
@@ -9,7 +9,7 @@ public record ChangeRunwayModeResponse;
 
 public record ChangeRunwayModeRequest(string AirportIdentifier, string RunwayModeIdentifier, DateTimeOffset StartTime, bool ReAssignRunways) : IRequest<ChangeRunwayModeResponse>;
 
-public class ChangeRunwayModeRequestHandler(ISequenceProvider sequenceProvider, IAirportConfigurationProvider airportConfigurationProvider, ILogger<RecomputeRequestHandler> logger)
+public class ChangeRunwayModeRequestHandler(ISequenceProvider sequenceProvider, IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
     : IRequestHandler<ChangeRunwayModeRequest, ChangeRunwayModeResponse>
 {
     public async Task<ChangeRunwayModeResponse> Handle(ChangeRunwayModeRequest request, CancellationToken cancellationToken)
@@ -19,14 +19,14 @@ public class ChangeRunwayModeRequestHandler(ISequenceProvider sequenceProvider, 
         var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
         if (sequence == null)
         {
-            logger.LogWarning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
+            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
             return new ChangeRunwayModeResponse();
         }
         
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().SingleOrDefault(c => c.Identifier == request.AirportIdentifier);
         if (airportConfiguration == null)
         {
-            logger.LogWarning("Airport configuration not found for {AirportIdentifier}.", request.AirportIdentifier);
+            logger.Warning("Airport configuration not found for {AirportIdentifier}.", request.AirportIdentifier);
             return new ChangeRunwayModeResponse();
         }
         
@@ -34,7 +34,7 @@ public class ChangeRunwayModeRequestHandler(ISequenceProvider sequenceProvider, 
         var runwayMode = airportConfiguration.RunwayModes.SingleOrDefault(r => r.Identifier == request.RunwayModeIdentifier);
         if (runwayMode == null)
         {
-            logger.LogWarning("Runway Mode {RunwayModeIdentifier} not found for {AirportIdentifier}.", request.RunwayModeIdentifier, request.AirportIdentifier);
+            logger.Warning("Runway Mode {RunwayModeIdentifier} not found for {AirportIdentifier}.", request.RunwayModeIdentifier, request.AirportIdentifier);
             return new ChangeRunwayModeResponse();
         }
         

@@ -8,12 +8,12 @@ using Maestro.Core;
 using Maestro.Core.Handlers;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
-using Maestro.Plugin.Logging;
 using Maestro.Wpf;
 using Maestro.Wpf.Views;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Serilog;
 using vatsys;
 using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
@@ -74,6 +74,12 @@ namespace Maestro.Plugin
         void ConfigureServices()
         {
             var configuration = ConfigureConfiguration();
+
+            var logFileName = Path.Combine(configuration.Logging.OutputDirectory, "Maestro.log");
+            var logger = new LoggerConfiguration()
+                .WriteTo.File(logFileName, rollingInterval: RollingInterval.Day)
+                .MinimumLevel.Is(configuration.Logging.LogLevel)
+                .CreateLogger();
             
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
@@ -89,13 +95,8 @@ namespace Maestro.Plugin
                     .AddSingleton<IFixLookup, VatsysFixLookup>()
                     .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
                     .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
-                    .AddLogging()
-                    .AddSingleton<LoggingConfigurator>()
+                    .AddSingleton<ILogger>(logger)
                     .BuildServiceProvider());
-            
-            // Configure log provider
-            var configurator = Ioc.Default.GetRequiredService<LoggingConfigurator>();
-            configurator.ConfigureLogging();
         }
 
         PluginConfiguration ConfigureConfiguration()
@@ -268,7 +269,7 @@ namespace Maestro.Plugin
                     s.Intersection.Name,
                     ToDateTimeOffset(s.ETO),
                     i <= updated.ParsedRoute.OverflownIndex // If this fix has been overflown, then use the ATO
-                        ? ToDateTimeOffset(s.ATO)
+                        ? ToDateTimeOffset(s.ATO) // BUG: If a flight has passed FF before we connect to the network, this will be MaxValue. ATO is unknown.
                         : null))
                 .ToArray();
 

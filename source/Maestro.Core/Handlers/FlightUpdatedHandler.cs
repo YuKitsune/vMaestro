@@ -1,9 +1,10 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
@@ -28,150 +29,164 @@ public class FlightUpdatedHandler(
     IScheduler scheduler,
     IMediator mediator,
     IClock clock,
-    ILogger<FlightUpdatedHandler> logger)
+    ILogger logger)
     : INotificationHandler<FlightUpdatedNotification>
 {
     public async Task Handle(FlightUpdatedNotification notification, CancellationToken cancellationToken)
     {
-        logger.LogDebug("Received update for {Callsign}", notification.Callsign);
-        
-        var sequence = sequenceProvider.TryGetSequence(notification.Destination);
-        if (sequence is null)
-            return;
-        
-        var flight = await sequence.TryGetFlight(notification.Callsign, cancellationToken);
-        if (flight is null)
+        try
         {
-            // TODO: Make configurable
-            var flightCreationThreshold = TimeSpan.FromHours(2);
-            
-            // Use system estimates initially. We will refine them later.
-            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
-            var landingEstimate = notification.Estimates.Last().Estimate;
+            logger.Verbose("Received update for {Callsign}", notification.Callsign);
 
-            // Prefer the runway assigned in vatSys
-            var runway = notification.AssignedRunway is not null
-                ? notification.AssignedRunway!
-                : FindBestRunway(
-                    feederFix?.FixIdentifier ?? string.Empty,
-                    notification.AircraftType,
-                    sequence.CurrentRunwayMode,
-                    sequence.RunwayAssignmentRules);
-            
-            // TODO: Verify if this behaviour is correct
-            // Flights not planned via a feeder fix are added to the pending list
-            if (feederFix is null)
+            var sequence = sequenceProvider.TryGetSequence(notification.Destination);
+            if (sequence is null)
+                return;
+
+            var flight = await sequence.TryGetFlight(notification.Callsign, cancellationToken);
+            if (flight is null)
             {
-                flight = CreateMaestroFlight(
-                    notification,
-                    runway,
-                    null,
-                    landingEstimate);
-                
-                // TODO: Revisit flight plan activation
-                flight.Activate(clock);
-                
-                await sequence.AddPending(flight, cancellationToken);
+                // TODO: Make configurable
+                var flightCreationThreshold = TimeSpan.FromHours(2);
+
+                // Use system estimates initially. We will refine them later.
+                var feederFix =
+                    notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
+                var landingEstimate = notification.Estimates.Last().Estimate;
+
+                // Prefer the runway assigned in vatSys
+                var runway = notification.AssignedRunway is not null
+                    ? notification.AssignedRunway!
+                    : FindBestRunway(
+                        feederFix?.FixIdentifier ?? string.Empty,
+                        notification.AircraftType,
+                        sequence.CurrentRunwayMode,
+                        sequence.RunwayAssignmentRules);
+
+                // TODO: Verify if this behaviour is correct
+                // Flights not planned via a feeder fix are added to the pending list
+                if (feederFix is null)
+                {
+                    flight = CreateMaestroFlight(
+                        notification,
+                        runway,
+                        null,
+                        landingEstimate);
+
+                    // TODO: Revisit flight plan activation
+                    flight.Activate(clock);
+
+                    await sequence.AddPending(flight, cancellationToken);
+                    logger.Information("{Callsign} created (pending)", notification.Callsign);
+                }
+                // Only create flights in Maestro when they're within a specified range of the feeder fix
+                else if (feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
+                {
+                    flight = CreateMaestroFlight(
+                        notification,
+                        runway,
+                        feederFix,
+                        landingEstimate);
+
+                    // TODO: Revisit flight plan activation
+                    flight.Activate(clock);
+
+                    await sequence.Add(flight, cancellationToken);
+                    logger.Information("{Callsign} created", notification.Callsign);
+                }
             }
-            // Only create flights in Maestro when they're within a specified range of the feeder fix
-            else if (feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
+
+            if (flight is null)
+                return;
+
+            // Only apply rate limiting if a position is available
+            // When no position is available (i.e. Not coupled to a radar track), we accept all updates
+            if (notification.Position is not null)
             {
-                flight = CreateMaestroFlight(
-                    notification,
-                    runway,
-                    feederFix,
-                    landingEstimate);
-                
-                // TODO: Revisit flight plan activation
-                flight.Activate(clock);
-                
-                await sequence.Add(flight, cancellationToken);
-                logger.LogDebug("{Callsign} created", notification.Callsign);
+                var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight, notification.Position);
+                if (!shouldUpdate)
+                {
+                    logger.Verbose("Rate limiting {Callsign}", notification.Callsign);
+                    return;
+                }
             }
-        }
+            
+            logger.Debug("Updating {Callsign}", notification.Callsign);
 
-        if (flight is null)
-            return;
+            flight.UpdateLastSeen(clock);
+            flight.SetArrival(notification.AssignedArrival);
 
-        // Only apply rate limiting if a position is available
-        // When no position is available (i.e. Not coupled to a radar track), we accept all updates
-        if (notification.Position is not null)
-        {
-            var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight, notification.Position);
-            if (!shouldUpdate)
+            // TODO: Revisit flight plan activation
+            // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.
+            // It is then updated by regular reports from the TAAATS FDP to the Maestro System.
+            // if (!flight.Activated && notification.Activated)
+            // {
+            //     flight.Activate(clock);
+            // }
+
+            // Exit early if the flight should not be processed
+            if (!flight.Activated ||
+                flight.State == State.Desequenced ||
+                flight.State == State.Removed ||
+                flight.State == State.Landed)
             {
-                logger.LogTrace("Rate limiting {Callsign}", notification.Callsign);
+                if (!flight.Activated)
+                    logger.Debug("{Callsign} is not activated. No additional processing required.",
+                        notification.Callsign);
+                else
+                    logger.Debug("{Callsign} is {State}. No additional processing required.", notification.Callsign,
+                        flight.State);
+
                 return;
             }
-        }
-        
-        flight.UpdateLastSeen(clock);
-        flight.SetArrival(notification.AssignedArrival);
-        
-        // TODO: Revisit flight plan activation
-        // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.
-        // It is then updated by regular reports from the TAAATS FDP to the Maestro System.
-        // if (!flight.Activated && notification.Activated)
-        // {
-        //     flight.Activate(clock);
-        // }
-        
-        // Exit early if the flight should not be processed
-        if (!flight.Activated ||
-            flight.State == State.Desequenced ||
-            flight.State == State.Removed ||
-            flight.State == State.Landed)
-        {
-            if (!flight.Activated)
-                logger.LogDebug("{Callsign} is not activated. No additional processing required.", notification.Callsign);
-            else
-                logger.LogDebug("{Callsign} is {State}. No additional processing required.", notification.Callsign, flight.State);
-            
-            return;
-        }
 
-        if (flight.NeedsRecompute)
-        {
-            logger.LogInformation("Recomputing {Callsign}", flight.Callsign);
-            
-            // Reset the feeder fix in case of a reroute
-            var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
-            if (feederFix is not null)
-                flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
-        
-            flight.HighPriority = feederFix is null;
-            flight.NoDelay = false;
-            
-            // Re-assign runway if it has not been manually assigned
-            if (!flight.RunwayManuallyAssigned)
+            if (flight.NeedsRecompute)
             {
-                var runway = FindBestRunway(
-                    feederFix?.FixIdentifier ?? string.Empty,
-                    flight.AircraftType,
-                    sequence.CurrentRunwayMode,
-                    sequence.RunwayAssignmentRules);
-            
-                flight.SetRunway(runway, false);
+                logger.Information("Recomputing {Callsign}", flight.Callsign);
+
+                // Reset the feeder fix in case of a reroute
+                var feederFix =
+                    notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
+                if (feederFix is not null)
+                    flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
+
+                flight.HighPriority = feederFix is null;
+                flight.NoDelay = false;
+
+                // Re-assign runway if it has not been manually assigned
+                if (!flight.RunwayManuallyAssigned)
+                {
+                    var runway = FindBestRunway(
+                        feederFix?.FixIdentifier ?? string.Empty,
+                        flight.AircraftType,
+                        sequence.CurrentRunwayMode,
+                        sequence.RunwayAssignmentRules);
+
+                    flight.SetRunway(runway, false);
+                }
+
+                flight.NeedsRecompute = false;
             }
 
-            flight.NeedsRecompute = false;
+            // Compute ETA and ETA_FF
+            CalculateEstimates(flight, notification);
+
+            // Allocate a position in the sequence
+            await sequence.Sort(cancellationToken);
+
+            // Factor runway time separation requirements
+            scheduler.Schedule(sequence, flight);
+
+            // TODO: Optimise runway selection
+
+            SetState(flight);
+
+            await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
+            logger.Debug("Flight updated: {Flight}", flight);
         }
-        
-        // Compute ETA and ETA_FF
-        CalculateEstimates(flight, notification);
-        
-        // Allocate a position in the sequence
-        await sequence.Sort(cancellationToken);
-        
-        // Factor runway time separation requirements
-        scheduler.Schedule(sequence, flight);
-
-        // TODO: Optimise runway selection
-
-        SetState(flight);
-
-        await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
-        logger.LogDebug("Flight updated: {Flight}", flight);
+        catch (Exception exception)
+        {
+            logger.Error(exception, "Error updating {Callsign}", notification.Callsign);
+        }
     }
 
     string FindBestRunway(string feederFixIdentifier, string aircraftType, RunwayModeConfiguration runwayMode, IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)
@@ -239,7 +254,7 @@ public class FlightUpdatedHandler(
             return;
         }
         
-        logger.LogInformation("{Callsign} is now {State}", flight.Callsign, flight.State);
+        logger.Information("{Callsign} is now {State}", flight.Callsign, flight.State);
     }
 
     void CalculateEstimates(Flight flight, FlightUpdatedNotification notification)
@@ -248,7 +263,7 @@ public class FlightUpdatedHandler(
         if (!flight.HasPassedFeederFix && feederFixSystemEstimate?.ActualTimeOver is not null)
         {
             flight.PassedFeederFix(feederFixSystemEstimate.ActualTimeOver.Value);
-            logger.LogInformation(
+            logger.Information(
                 "{Callsign} passed {FeederFix} at {ActualTimeOver}",
                 flight.Callsign,
                 flight.FeederFixIdentifier,
@@ -262,15 +277,15 @@ public class FlightUpdatedHandler(
                 flight.FeederFixIdentifier,
                 feederFixSystemEstimate?.Estimate,
                 notification.Position);
-            if (calculatedFeederFixEstimate is not null)
+            if (calculatedFeederFixEstimate is not null && flight.EstimatedFeederFixTime is not null)
             {
-                var diff = flight.EstimatedFeederFixTime - calculatedFeederFixEstimate;
+                var diff = flight.EstimatedFeederFixTime.Value - calculatedFeederFixEstimate.Value;
                 flight.UpdateFeederFixEstimate(calculatedFeederFixEstimate.Value);
-                logger.LogDebug(
+                logger.Debug(
                     "{Callsign} ETA_FF now {FeederFixEstimate} (diff {Difference})",
                     flight.Callsign,
                     flight.EstimatedFeederFixTime,
-                    diff);
+                    diff.ToHoursAndMinutesString());
             }
         }
 
@@ -278,13 +293,13 @@ public class FlightUpdatedHandler(
         var calculatedLandingEstimate = estimateProvider.GetLandingEstimate(flight, landingSystemEstimate?.Estimate);
         if (calculatedLandingEstimate is not null)
         {
-            var diff = flight.EstimatedLandingTime - calculatedLandingEstimate;
+            var diff = flight.EstimatedLandingTime - calculatedLandingEstimate.Value;
             flight.UpdateLandingEstimate(calculatedLandingEstimate.Value);
-            logger.LogDebug(
+            logger.Debug(
                 "{Callsign} ETA now {LandingEstimate} (diff {Difference})",
                 flight.Callsign,
                 flight.EstimatedLandingTime,
-                diff);
+                diff.ToHoursAndMinutesString());
         }
     }
 

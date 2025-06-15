@@ -1,13 +1,12 @@
 ﻿using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using MediatR;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Serilog;
+using Serilog.Core;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -488,7 +487,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var estimateProvider = Substitute.For<IEstimateProvider>();
         var scheduler = Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
-        var logger = new Logger<FlightUpdatedHandler>(NullLoggerFactory.Instance);
         
         return new FlightUpdatedHandler(
             sequenceProvider,
@@ -498,6 +496,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             scheduler,
             mediator,
             clock,
-            logger);
+            Substitute.For<ILogger>());
     }
 }

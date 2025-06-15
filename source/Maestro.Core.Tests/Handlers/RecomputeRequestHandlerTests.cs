@@ -4,9 +4,8 @@ using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using MediatR;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -41,11 +40,10 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         sequenceProvider.TryGetSequence(Arg.Is("YSSY")).ReturnsForAnyArgs(sequence);
         
         var mediator = Substitute.For<IMediator>();
-        var logger = new Logger<RecomputeRequestHandler>(NullLoggerFactory.Instance);
         
         return new RecomputeRequestHandler(
             sequenceProvider,
             mediator,
-            logger);
+            Substitute.For<ILogger>());
     }
 }

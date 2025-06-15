@@ -4,8 +4,8 @@ using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using MediatR;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -32,7 +32,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             sequenceProvider,
             mediator,
-            new NullLogger<RecomputeRequestHandler>());
+            Substitute.For<ILogger>());
 
         var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
         

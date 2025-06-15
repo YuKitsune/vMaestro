@@ -1,11 +1,11 @@
 ﻿using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger<RecomputeRequestHandler> logger)
+public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger logger)
     : IRequestHandler<ChangeRunwayRequest, ChangeRunwayResponse>
 {
     public async Task<ChangeRunwayResponse> Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
@@ -13,14 +13,14 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IMed
         var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
         if (sequence == null)
         {
-            logger.LogWarning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
+            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
             return new ChangeRunwayResponse();
         }
         
         var flight = await sequence.TryGetFlight(request.Callsign, cancellationToken);
         if (flight == null)
         {
-            logger.LogWarning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
+            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
             return new ChangeRunwayResponse();
         }
         
