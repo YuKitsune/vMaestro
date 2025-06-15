@@ -14,10 +14,16 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
 # Known Issues 
 
-- Flights in the front of the queue will occasionally move backwards in the queue.
+- Flights in the front of the queue can sometimes move backwards in the queue.
 - Flights that are far away will be sequenced to land shortly after a much earlier flight, resulting in a negative delay.
+    - I have a hunch this is because the ETAs are changing mid-way through scheduling, so the sequence isn't being re-ordered.
 - The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
 - When a button is enabled, it's appearance is still disabled, but it is still interactable.
+- The ladder occasionally stop updating.
+- Desequence window can be re-opened multiple times.
+- Diversions result in weird behaviour.
+- Flights appear to be stablised twice.
+- Q: Should times from vatSys be rounded to the nearest 30 secs?
 
 # Roadmap
 
@@ -43,18 +49,18 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [X] Recompute
     - [X] Remove from sequence
     - [X] Desequence
-    - [ ] Change ETA FF
     - [ ] Change runway mode
     - [ ] Change runway rates
     - [ ] Insert flight
+    - [ ] Change ETA FF
 
 - [ ] Internal System Tasks
     - [ ] Remove flights after landing (STA + configurable time)
     - [ ] Remove flights after disconnecting
 
 - [ ] Sequencing Algorithm Refinement
-    - [ ] Factor GRIB winds into estimate calculations
-    - [ ] Use FF and STAR suffix for ETI
+    - [ ] Factor GRIB winds into estimate calculations (If required)
+    - [X] Use FF and STAR suffix for ETI
     - [ ] Separate enroute and TMA delays
     - [ ] Consider separation at the feeder fix
     - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
