@@ -25,9 +25,12 @@ public class LoggingConfigurator(ILoggerFactory loggerFactory, ILoggingConfigura
         var logFileName = $"{LogFilePrefix}.{now:yyyy-MM-dd}.txt";
         var outputPath = Path.Combine(loggingConfiguration.OutputDirectory, logFileName);
         
-        var fileStream = File.Exists(outputPath)
-            ? File.OpenWrite(outputPath)
-            : File.Create(outputPath);
+        var fileStream = new FileStream(
+            outputPath,
+            FileMode.OpenOrCreate,
+            FileAccess.Write,
+            FileShare.Read,
+            bufferSize: 4096);
         
         var writer = new StreamWriter(fileStream);
         return writer;
