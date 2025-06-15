@@ -13,14 +13,14 @@ if not defined installDir (
 
 set "exePath=%installDir%bin\vatSys.exe"
 if not exist "%exePath%" (
-    echo Executable not found: %exePath%
+    echo Executable not found: "%exePath%"
     exit /b 1
 )
 
 :: Override DPI awareness
 reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "%exePath%" /t REG_SZ /d "DPIUNAWARE" /f
 
-echo DPI Awareness set to DPIUNAWARE for %exePath%
+echo DPI Awareness set to DPIUNAWARE for "%exePath%"
 echo.
 echo Press any key to exit...
 pause >nul
