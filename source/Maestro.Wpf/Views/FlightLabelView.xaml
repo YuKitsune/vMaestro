@@ -6,6 +6,7 @@
              xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
              xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
              xmlns:views="clr-namespace:Maestro.Wpf.Views"
+             xmlns:configuration="clr-namespace:Maestro.Core.Configuration;assembly=Maestro.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:FlightLabelViewModel}"
              d:DesignHeight="16"
@@ -19,6 +20,7 @@
             <converters:MinutesConverter x:Key="MinutesConverter"/>
             <converters:StateToColorConverter x:Key="StateToColorConverter"/>
             <converters:DelayToColorConverter x:Key="DelayToColorConverter"/>
+            <converters:ViewModeToVisibilityConverter x:Key="ViewModeToVisibilityConverter"/>
             
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
             
@@ -44,7 +46,13 @@
         
             <TextBlock 
                 Text="{Binding FlightViewModel.ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"
-                Width="24" />
+                Width="24"
+                Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Enroute}}"/>
+        
+            <TextBlock 
+                Text="{Binding FlightViewModel.ScheduledFeederFixTime, Converter={StaticResource MinutesConverter}}"
+                Width="24"
+                Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Approach}}"/>
         
             <TextBlock 
                 Text="{Binding FlightViewModel.AssignedRunway}"

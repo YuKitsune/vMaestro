@@ -14,11 +14,22 @@ public partial class FlightLabelView : UserControl
         nameof(LadderPosition),
         typeof(LadderPosition),
         typeof(FlightLabelView));
+    
+    public static readonly DependencyProperty ViewModeProperty = DependencyProperty.Register(
+        nameof(ViewMode),
+        typeof(ViewMode),
+        typeof(FlightLabelView));
 
     public LadderPosition LadderPosition
     {
         get => (LadderPosition)GetValue(LadderPositionProperty);
         set => SetValue(LadderPositionProperty, value);
+    }
+
+    public ViewMode ViewMode
+    {
+        get => (ViewMode)GetValue(ViewModeProperty);
+        set => SetValue(ViewModeProperty, value);
     }
     
     public FlightLabelView()

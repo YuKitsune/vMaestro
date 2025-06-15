@@ -47,7 +47,7 @@ public partial class MaestroView
     void TimerTick(object sender, EventArgs args)
     {
         ClockText.Text = DateTimeOffset.UtcNow.ToString("HH:mm:ss");
-        InvalidateVisual();
+        DrawLadder();
     }
 
     void ControlLoaded(object sender, RoutedEventArgs e)
@@ -124,7 +124,8 @@ public partial class MaestroView
                     ViewModel.SelectedRunwayMode),
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
-                LadderPosition = ladderPosition.Value
+                LadderPosition = ladderPosition.Value,
+                ViewMode = ViewModel.SelectedView.ViewMode
             };
             
             flightLabel.Loaded += ladderPosition switch
