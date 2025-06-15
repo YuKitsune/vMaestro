@@ -237,7 +237,7 @@ public class FlightUpdatedHandler(
     void CalculateEstimates(Flight flight, FlightUpdatedNotification notification)
     {
         var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
-        if (feederFixSystemEstimate?.ActualTimeOver is not null)
+        if (!flight.HasPassedFeederFix && feederFixSystemEstimate?.ActualTimeOver is not null)
         {
             flight.PassedFeederFix(feederFixSystemEstimate.ActualTimeOver.Value);
         }
