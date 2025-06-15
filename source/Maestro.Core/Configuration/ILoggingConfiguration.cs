@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace Maestro.Core.Configuration;
 
@@ -10,9 +9,9 @@ public interface ILoggingConfiguration
     int MaxFileAgeDays { get; }
 }
 
-public class LoggingConfiguration(IConfigurationSection loggingConfigurationSection) : ILoggingConfiguration
+public class LoggingConfiguration : ILoggingConfiguration
 {
-    public LogLevel LogLevel => loggingConfigurationSection.GetValue<LogLevel>("LogLevel");
-    public string OutputDirectory => loggingConfigurationSection.GetValue<string>("OutputDirectory")!;
-    public int MaxFileAgeDays => loggingConfigurationSection.GetValue<int>("MaxFileAgeDays");
+    public required LogLevel LogLevel { get; init; }
+    public required string OutputDirectory { get; init; }
+    public required int MaxFileAgeDays { get; init; }
 }

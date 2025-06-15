@@ -45,7 +45,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         {
             // TODO: Show vatSys error
             logger.LogWarning(
-                "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; STAR = {ArrivalIdentifier}; Type = {AircraftType}",
+                "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; STAR = {ArrivalIdentifier}; Type = {Type}",
                 airportIdentifier,
                 feederFixIdentifier,
                 runwayIdentifier,

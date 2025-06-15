@@ -12,8 +12,8 @@ using Maestro.Plugin.Logging;
 using Maestro.Wpf;
 using Maestro.Wpf.Views;
 using MediatR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using vatsys;
 using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
@@ -98,7 +98,7 @@ namespace Maestro.Plugin
             configurator.ConfigureLogging();
         }
 
-        IConfiguration ConfigureConfiguration()
+        PluginConfiguration ConfigureConfiguration()
         {
             const string configFileName = "Maestro.json";
             var profileDirectory = FindProfileDirectory();
@@ -108,10 +108,9 @@ namespace Maestro.Plugin
             if (!File.Exists(configFilePath))
                 throw new MaestroException($"Unable to locate {configFileName}.");
             
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(profileDirectory)
-                .AddJsonFile(configFilePath, optional: false, reloadOnChange: true)
-                .Build();
+            var configurationJson = File.ReadAllText(configFilePath);
+            var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
+            // TODO: Reloadable configuration would be cool
 
             return configuration;
         }

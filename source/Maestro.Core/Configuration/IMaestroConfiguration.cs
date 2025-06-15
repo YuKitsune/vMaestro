@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Maestro.Core.Configuration;
+﻿namespace Maestro.Core.Configuration;
 
 public enum FeederFixEstimateSource
 {
@@ -12,11 +10,10 @@ public interface IMaestroConfiguration
 {
     FeederFixEstimateSource FeederFixEstimateSource { get; }
     AircraftTypeReclassification[] Reclassifications { get; }
-    
 }
 
-public class MaestroConfiguration(IConfigurationSection configurationSection) : IMaestroConfiguration
+public class MaestroConfiguration : IMaestroConfiguration
 {
-    public FeederFixEstimateSource FeederFixEstimateSource => configurationSection.GetValue<FeederFixEstimateSource>("FeederFixEstimateSource");
-    public AircraftTypeReclassification[] Reclassifications => configurationSection.GetValue<AircraftTypeReclassification[]>("Reclassifications") ?? [];
+    public required FeederFixEstimateSource FeederFixEstimateSource { get; init; }
+    public required AircraftTypeReclassification[] Reclassifications { get; init; }
 }
