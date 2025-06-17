@@ -5,11 +5,16 @@ public static class SemaphoreSlimExtensionMethods
     public static IDisposable Lock(this SemaphoreSlim semaphoreSlim)
     {
         semaphoreSlim.Wait();
-        return new Disposable(() => semaphoreSlim.Release());
+        return new Releaser(semaphoreSlim);
+    }
+    public static async Task<IDisposable> LockAsync(this SemaphoreSlim semaphoreSlim, CancellationToken cancellationToken = default)
+    {
+        await semaphoreSlim.WaitAsync(cancellationToken);
+        return new Releaser(semaphoreSlim);
     }
 
-    class Disposable(Action action) : IDisposable
+    class Releaser(SemaphoreSlim semaphoreSlim) : IDisposable
     {
-        public void Dispose() => action();
+        public void Dispose() => semaphoreSlim.Release();
     }
 }

@@ -3,23 +3,6 @@ using Maestro.Core.Configuration;
 
 namespace Maestro.Core.Model;
 
-public sealed class SequenceLock(SemaphoreSlim semaphore)
-{
-    public async Task<IDisposable> AcquireAsync(CancellationToken cancellationToken = default)
-    {
-        await semaphore.WaitAsync(cancellationToken);
-        return new Releaser(semaphore);
-    }
-
-    class Releaser(SemaphoreSlim semaphore) : IDisposable
-    {
-        public void Dispose()
-        {
-            semaphore.Release();
-        }
-    }
-}
-
 [DebuggerDisplay("{AirportIdentifier}")]
 public class Sequence
 {
@@ -28,8 +11,6 @@ public class Sequence
     readonly List<BlockoutPeriod> _blockoutPeriods = new();
     readonly List<Flight> _pending = new();
     readonly List<Flight> _flights = new();
-    
-    readonly SequenceLock _sequenceLock = new(new SemaphoreSlim(1, 1));
     
     public string AirportIdentifier => _airportConfiguration.Identifier;
     public string[] FeederFixes => _airportConfiguration.FeederFixes;
@@ -40,73 +21,62 @@ public class Sequence
     public RunwayModeConfiguration CurrentRunwayMode { get; private set; }
     public IReadOnlyList<RunwayAssignmentRule> RunwayAssignmentRules => _airportConfiguration.RunwayAssignmentRules;
 
-    public SequenceLock Lock => _sequenceLock;
-
     public Sequence(AirportConfiguration airportConfiguration)
     {
         _airportConfiguration = airportConfiguration;
         CurrentRunwayMode = airportConfiguration.RunwayModes.First();
     }
 
-    public async Task Add(Flight flight, CancellationToken cancellationToken)
+    public void Add(Flight flight)
     {
-        using (await Lock.AcquireAsync(cancellationToken))
-        {
-            if (_flights.Any(f => f.Callsign == flight.Callsign))
-                throw new MaestroException($"{flight.Callsign} is already in the sequence for {AirportIdentifier}.");
-            
-            if (flight.DestinationIdentifier != AirportIdentifier)
-                throw new MaestroException($"{flight.Callsign} cannot be added to the sequence for {AirportIdentifier} as the destination is {flight.DestinationIdentifier}.");
-            
-            if (!flight.Activated)
-                throw new MaestroException($"{flight.Callsign} cannot be sequenced as it is not activated.");
-            
-            // TODO: Additional validation
-            
-            _flights.Add(flight);
-            _flights.Sort();
-        }
+        if (_flights.Any(f => f.Callsign == flight.Callsign))
+            throw new MaestroException($"{flight.Callsign} is already in the sequence for {AirportIdentifier}.");
+        
+        if (flight.DestinationIdentifier != AirportIdentifier)
+            throw new MaestroException($"{flight.Callsign} cannot be added to the sequence for {AirportIdentifier} as the destination is {flight.DestinationIdentifier}.");
+        
+        if (!flight.Activated)
+            throw new MaestroException($"{flight.Callsign} cannot be sequenced as it is not activated.");
+        
+        // TODO: Additional validation
+        
+        _flights.Add(flight);
+        _flights.Sort(FlightComparer.Instance);
     }
 
-    // TODO: We need to call this pretty dang often. We should inline it somewhere.
-    public async Task Sort(CancellationToken cancellationToken)
+    public void Schedule(IScheduler scheduler)
     {
-        using (await Lock.AcquireAsync(cancellationToken))
+        _flights.Sort(FlightComparer.Instance);
+
+        foreach (var flight in SequencableFlights)
         {
-            _flights.Sort(FlightComparer.Instance);
+            scheduler.Schedule(this, flight);
         }
+
+        _flights.Sort(FlightComparer.Instance);
     }
 
-    public async Task AddPending(Flight flight, CancellationToken cancellationToken)
+    public void AddPending(Flight flight)
     {
-        using (await Lock.AcquireAsync(cancellationToken))
-        {
-            if (_pending.Any(f => f.Callsign == flight.Callsign))
-                throw new MaestroException($"{flight.Callsign} is already in the Pending list for {AirportIdentifier}.");
-            
-            if (flight.DestinationIdentifier != AirportIdentifier)
-                throw new MaestroException($"{flight.Callsign} cannot be added to the Pending list for {AirportIdentifier} as the destination is {flight.DestinationIdentifier}.");
-            
-            // TODO: Additional validation
-            _pending.Add(flight);
-        }
+        if (_pending.Any(f => f.Callsign == flight.Callsign))
+            throw new MaestroException($"{flight.Callsign} is already in the Pending list for {AirportIdentifier}.");
+        
+        if (flight.DestinationIdentifier != AirportIdentifier)
+            throw new MaestroException($"{flight.Callsign} cannot be added to the Pending list for {AirportIdentifier} as the destination is {flight.DestinationIdentifier}.");
+        
+        // TODO: Additional validation
+        _pending.Add(flight);
     }
 
-    public async Task AddBlockout(BlockoutPeriod blockoutPeriod, CancellationToken cancellationToken)
+    public void AddBlockout(BlockoutPeriod blockoutPeriod)
     {
-        using (await Lock.AcquireAsync(cancellationToken))
-        {
-            // TODO: Prevent overlaps
-            _blockoutPeriods.Add(blockoutPeriod);
-        }
+        // TODO: Prevent overlaps
+        _blockoutPeriods.Add(blockoutPeriod);
     }
 
-    public async Task<Flight?> TryGetFlight(string callsign, CancellationToken cancellationToken)
+    public Flight? TryGetFlight(string callsign)
     {
-        using (await Lock.AcquireAsync(cancellationToken))
-        {
-            return _flights.FirstOrDefault(f => f.Callsign == callsign);
-        }
+        return _flights.FirstOrDefault(f => f.Callsign == callsign);
     }
 
     public void ChangeRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
@@ -114,16 +84,16 @@ public class Sequence
         CurrentRunwayMode = runwayModeConfiguration;
     }
 
-    public async Task Recompute(IScheduler scheduler, CancellationToken cancellationToken)
+    public int NumberInSequence(Flight flight)
     {
-        using (await Lock.AcquireAsync(cancellationToken))
-        {
-            _flights.Sort();
-            foreach (var flight in _flights)
-            {
-                scheduler.Schedule(this, flight);
-            }
-        }
+        return _flights.IndexOf(flight) + 1;
+    }
+
+    public int NumberForRunway(Flight flight)
+    {
+        return _flights.Where(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier)
+            .ToList()
+            .IndexOf(flight) + 1;
     }
 
     // public Flight[] ComputeSequence_OLD(IReadOnlyList<Flight> flights)

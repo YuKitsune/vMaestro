@@ -45,12 +45,12 @@
         <StackPanel Orientation="Horizontal">
         
             <TextBlock 
-                Text="{Binding FlightViewModel.ScheduledLandingTime, Converter={StaticResource MinutesConverter}}"
+                Text="{Binding FlightViewModel.LandingTime, Converter={StaticResource MinutesConverter}}"
                 Width="24"
                 Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Enroute}}"/>
         
             <TextBlock 
-                Text="{Binding FlightViewModel.ScheduledFeederFixTime, Converter={StaticResource MinutesConverter}}"
+                Text="{Binding FlightViewModel.FeederFixTime, Converter={StaticResource MinutesConverter}}"
                 Width="24"
                 Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Approach}}"/>
         
@@ -87,8 +87,8 @@
                 FlowDirection="LeftToRight" />
 
             <TextBlock 
-                Text="{Binding FlightViewModel.CurrentDelay, Converter={StaticResource MinutesConverter}}"
-                Foreground="{Binding FlightViewModel.CurrentDelay, Converter={StaticResource DelayToColorConverter}}"
+                Text="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource MinutesConverter}}"
+                Foreground="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource DelayToColorConverter}}"
                 Width="32"
                 FlowDirection="LeftToRight" />
         

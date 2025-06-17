@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Handlers;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Wpf;
@@ -206,6 +207,8 @@ namespace Maestro.Plugin
             try
             {
                 // TODO: Load sequence from local storage
+                
+                _mediator.Send(new StartSequencingAllRequest());
                 
                 foreach (var fdr in FDP2.GetFDRs)
                 {

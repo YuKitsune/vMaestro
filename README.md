@@ -24,6 +24,8 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 - Diversions result in weird behaviour.
 - Flights appear to be stablised twice.
 - Q: Should times from vatSys be rounded to the nearest 30 secs?
+- Stable flights don't seem to get updated ETAs.
+- Recompute, ETA_FF and STA_FF update, but STA doesn't.
 
 # Roadmap
 

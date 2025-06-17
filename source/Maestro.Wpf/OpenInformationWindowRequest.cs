@@ -3,9 +3,9 @@ using MediatR;
 
 namespace Maestro.Wpf;
 
-public class OpenInformationWindowRequest(FlightViewModel viewModel) : IRequest<OpenInformationWindowResponse>
+public class OpenInformationWindowRequest(FlightViewModel flight) : IRequest<OpenInformationWindowResponse>
 {
-    public FlightViewModel ViewModel { get; } = viewModel;
+    public FlightViewModel Flight { get; } = flight;
 }
 
 public record OpenInformationWindowResponse;

@@ -6,27 +6,11 @@ namespace Maestro.Core.Model;
 
 public interface IScheduler
 {
-    Task Schedule(Sequence sequence, CancellationToken cancellationToken);
     void Schedule(Sequence sequence, Flight flight);
 }
 
 public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : IScheduler
 {
-    public async Task Schedule(Sequence sequence, CancellationToken cancellationToken)
-    {
-        await sequence.Sort(cancellationToken);
-        using (await sequence.Lock.AcquireAsync(cancellationToken))
-        {
-            var flights = sequence.SequencableFlights.ToList();
-            flights.Sort();
-            
-            foreach (var flight in flights)
-            {
-                Schedule(sequence, flight);
-            }
-        }
-    }
-    
     public void Schedule(Sequence sequence, Flight flight)
     {
         ScheduleInternal(sequence, flight, force: false);
@@ -192,7 +176,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : I
             }
         }
         
-        if (flight.EstimatedFeederFixTime is not null)
+        if (flight.EstimatedFeederFixTime is not null && !flight.HasPassedFeederFix)
         {
             var delay = scheduledLandingTime - flight.EstimatedLandingTime;
             var feederFixTime = flight.EstimatedFeederFixTime.Value + delay;

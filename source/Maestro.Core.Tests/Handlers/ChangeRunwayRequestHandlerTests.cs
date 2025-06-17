@@ -3,6 +3,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
+using Maestro.Core.Tests.Mocks;
 using MediatR;
 using NSubstitute;
 using Serilog;
@@ -22,10 +23,11 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34L")
             .Build();
 
-        await sequence.Add(flight, CancellationToken.None);
+        sequence.Add(flight);
 
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.TryGetSequence(Arg.Is("YSSY")).Returns(sequence);
+        sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
+            .Returns(new TestExclusiveSequence(sequence));
         
         var mediator = Substitute.For<IMediator>();
 

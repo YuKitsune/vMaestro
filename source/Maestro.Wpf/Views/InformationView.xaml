@@ -62,8 +62,8 @@
                     <TextBlock Grid.Column="1" Grid.Row="0">
                         <Run Text="{Binding AircraftType, Mode=OneWay}"/>/<Run Text="{Binding WakeCategory, Mode=OneWay, Converter={StaticResource WakeCategoryConverter}}" />
                     </TextBlock>
-                    <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding Origin}" />
-                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Destination}" />
+                    <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding OriginIdentifier}" />
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding DestinationIdentifier}" />
                 </Grid>
             </Border>
         </Grid>
@@ -97,11 +97,11 @@
                     </Grid.RowDefinitions>
                     
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="ETA-FF"/>
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialFeederFixTime, Converter={StaticResource TimeConverter}}"/>
-                    <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding CurrentFeederFixTime, Converter={StaticResource TimeConverter}}"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialFeederFixEstimate, Converter={StaticResource TimeConverter}}"/>
+                    <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding FeederFixEstimate, Converter={StaticResource TimeConverter}}"/>
                     
                     <TextBlock Grid.Column="0" Grid.Row="1" Text="STA-FF"/>
-                    <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding ScheduledFeederFixTime, Converter={StaticResource TimeConverter}}"/>
+                    <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding FeederFixTime, Converter={StaticResource TimeConverter}}"/>
                     
                 </Grid>
             </Border>
@@ -126,11 +126,11 @@
                     </Grid.RowDefinitions>
                     
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="ETA"/>
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialLandingTime, Converter={StaticResource TimeConverter}}"/>
-                    <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding CurrentLandingTime, Converter={StaticResource TimeConverter}}"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialLandingEstimate, Converter={StaticResource TimeConverter}}"/>
+                    <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding LandingEstimate, Converter={StaticResource TimeConverter}}"/>
                     
                     <TextBlock Grid.Column="0" Grid.Row="1" Text="STA"/>
-                    <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding ScheduledLandingTime, Converter={StaticResource TimeConverter}}"/>
+                    <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding LandingTime, Converter={StaticResource TimeConverter}}"/>
                     
                 </Grid>
             </Border>
@@ -155,7 +155,7 @@
                         <Run Text="{Binding InitialDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>min
                     </TextBlock>
                     <TextBlock Grid.Column="1">
-                        <Run Text="{Binding CurrentDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>min
+                        <Run Text="{Binding RemainingDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>min
                     </TextBlock>
                     
                 </Grid>

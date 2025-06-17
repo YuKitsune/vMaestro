@@ -3,10 +3,10 @@ using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
+using Maestro.Core.Tests.Mocks;
 using MediatR;
 using NSubstitute;
 using Serilog;
-using Serilog.Core;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -395,7 +395,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithFeederFix("RIVET")
             .Build();
         
-        await sequence.Add(flight, CancellationToken.None);
+        sequence.Add(flight);
         
         // Change the feeder fix (emulate a re-route)
         var newEtaFf = DateTimeOffset.Now.AddMinutes(5);
@@ -438,7 +438,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
         
-        await sequence.Add(flight, CancellationToken.None);
+        sequence.Add(flight);
         
         // Change the runway
         flight.SetRunway("34R", manual: true);
@@ -480,12 +480,12 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     FlightUpdatedHandler GetHandler(Sequence sequence, IClock clock)
     {
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.TryGetSequence(Arg.Is("YSSY")).Returns(sequence);
+        sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
+            .Returns(new TestExclusiveSequence(sequence));
         
         var runwayAssigner = Substitute.For<IRunwayAssigner>();
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
         var estimateProvider = Substitute.For<IEstimateProvider>();
-        var scheduler = Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
         
         return new FlightUpdatedHandler(
@@ -493,7 +493,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             runwayAssigner,
             rateLimiter,
             estimateProvider,
-            scheduler,
             mediator,
             clock,
             Substitute.For<ILogger>());

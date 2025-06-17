@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.ViewModels;
@@ -74,6 +75,7 @@ public partial class MaestroView
             var now = DateTimeOffset.UtcNow;
             DrawLadder(now);
             DrawAircraft(now);
+            InvalidateVisual();
         });
     }
 
@@ -86,17 +88,17 @@ public partial class MaestroView
         if (ViewModel.SelectedRunwayMode is null || ViewModel.SelectedView is null)
             return;
 
-        foreach (var aircraft in ViewModel.Aircraft.Where(f => f.State is not State.Desequenced and not State.Removed))
+        foreach (var flight in ViewModel.Flights.Where(f => f.State is not State.Desequenced and not State.Removed))
         {
             double yOffset;
             switch (ViewModel.SelectedView.ViewMode)
             {
-                case ViewMode.Enroute when aircraft.ScheduledFeederFixTime.HasValue:
-                    yOffset = GetYOffsetForTime(currentTime, aircraft.ScheduledFeederFixTime.Value);
+                case ViewMode.Enroute when flight.FeederFixTime.HasValue:
+                    yOffset = GetYOffsetForTime(currentTime, flight.FeederFixTime.Value);
                     break;
                 
-                case ViewMode.Approach when aircraft.ScheduledFeederFixTime.HasValue:
-                    yOffset = GetYOffsetForTime(currentTime, aircraft.ScheduledLandingTime);
+                case ViewMode.Approach:
+                    yOffset = GetYOffsetForTime(currentTime, flight.LandingTime);
                     break;
 
                 // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)
@@ -112,7 +114,7 @@ public partial class MaestroView
             const int distanceFromMiddle = (LadderWidth / 2) + (LineThickness * 2) + TickWidth;
             var width = middlePoint - distanceFromMiddle;
 
-            var ladderPosition = GetLadderPositionFor(aircraft);
+            var ladderPosition = GetLadderPositionFor(flight);
             if (ladderPosition is null)
                 continue;
 
@@ -120,7 +122,7 @@ public partial class MaestroView
             {
                 DataContext = new FlightLabelViewModel(
                     Ioc.Default.GetRequiredService<IMediator>(),
-                    aircraft,
+                    flight,
                     ViewModel.SelectedRunwayMode),
                 Width = width,
                 Margin = new Thickness(2,0,2,0),

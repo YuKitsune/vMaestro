@@ -10,14 +10,9 @@ public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, 
 {
     public async Task<ResumeSequencingResponse> Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
     {
-        var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
-        if (sequence == null)
-        {
-            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-            return new ResumeSequencingResponse();
-        }
+        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
-        var flight = await sequence.TryGetFlight(request.Callsign, cancellationToken);
+        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
         if (flight is null)
         {
             logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);

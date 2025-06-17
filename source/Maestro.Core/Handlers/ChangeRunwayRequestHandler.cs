@@ -10,14 +10,9 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IMed
 {
     public async Task<ChangeRunwayResponse> Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
     {
-        var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
-        if (sequence == null)
-        {
-            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-            return new ChangeRunwayResponse();
-        }
+        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
         
-        var flight = await sequence.TryGetFlight(request.Callsign, cancellationToken);
+        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);

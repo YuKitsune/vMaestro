@@ -31,9 +31,9 @@ public partial class MaestroViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Desequenced))]
-    List<FlightViewModel> _aircraft = [];
+    List<FlightViewModel> _flights = [];
     
-    public string[] Desequenced => Aircraft.Where(f => f.State == State.Desequenced).Select(airport => airport.Callsign).ToArray();
+    public string[] Desequenced => Flights.Where(f => f.State == State.Desequenced).Select(airport => airport.Callsign).ToArray();
 
     public MaestroViewModel(IMediator mediator, IClock clock)
     {
@@ -107,42 +107,21 @@ public partial class MaestroViewModel : ObservableObject
     void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(SelectedAirport!.Identifier, Desequenced));
     bool CanOpenDesequencedWindow() => SelectedAirport is not null;
 
-    public void UpdateFlight(Flight flight)
+    public void UpdateFlight(FlightMessage flight)
     {
-        var aircraft = Aircraft.ToList();
-        
-        var index = aircraft.FindIndex(f => f.Callsign == flight.Callsign);
-        var viewModel = new FlightViewModel(
-            flight.Callsign,
-            flight.AircraftType,
-            flight.WakeCategory,
-            flight.OriginIdentifier,
-            flight.DestinationIdentifier,
-            flight.State,
-            -1, // TODO:
-            flight.FeederFixIdentifier,
-            flight.InitialFeederFixTime,
-            flight.EstimatedFeederFixTime,
-            flight.ScheduledFeederFixTime,
-            flight.AssignedRunwayIdentifier,
-            -1, // TODO:
-            flight.InitialLandingTime,
-            flight.EstimatedLandingTime,
-            flight.ScheduledLandingTime,
-            flight.TotalDelay,
-            flight.RemainingDelay,
-            flight.FlowControls);
-        
+        var flights = Flights.ToList();
+        var index = flights.FindIndex(f => f.Callsign == flight.Callsign);
+        var viewModel = new FlightViewModel(flight);
         if (index != -1)
         {
-            aircraft[index] = viewModel;
+            flights[index] = viewModel;
         }
         else
         {
-            aircraft.Add(viewModel);
+            flights.Add(viewModel);
         }
 
-        Aircraft = aircraft;
+        Flights = flights;
     }
 
     partial void OnSelectedRunwayModeChanged(RunwayModeViewModel? runwayMode)

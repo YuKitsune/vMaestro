@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Scheduling;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maestro.Core;
@@ -14,6 +15,7 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<IEstimateProvider, EstimateProvider>()
             .AddSingleton<ISequenceProvider, SequenceProvider>()
             .AddSingleton<IScheduler, Scheduler>()
+            .AddSingleton<SchedulerBackgroundService>()
             .AddSingleton<IRunwayAssigner, RunwayAssigner>()
             .AddSingleton<IClock, SystemClock>();
     }

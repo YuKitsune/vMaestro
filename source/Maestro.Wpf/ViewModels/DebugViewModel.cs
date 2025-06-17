@@ -10,26 +10,7 @@ public class HandleSequenceModified(DebugViewModel debugViewModel) : INotificati
     {
         var flights = debugViewModel.Flights.ToList();
         var index = flights.FindIndex(f => f.Callsign == notification.Flight.Callsign);
-        var viewModel = new FlightViewModel(
-            notification.Flight.Callsign,
-            notification.Flight.AircraftType,
-            notification.Flight.WakeCategory,
-            notification.Flight.OriginIdentifier,
-            notification.Flight.DestinationIdentifier,
-            notification.Flight.State,
-            -1, // TODO:
-            notification.Flight.FeederFixIdentifier,
-            notification.Flight.InitialFeederFixTime,
-            notification.Flight.EstimatedFeederFixTime,
-            notification.Flight.ScheduledFeederFixTime,
-            notification.Flight.AssignedRunwayIdentifier,
-            -1, // TODO:
-            notification.Flight.InitialLandingTime,
-            notification.Flight.EstimatedLandingTime,
-            notification.Flight.ScheduledLandingTime,
-            notification.Flight.TotalDelay,
-            notification.Flight.RemainingDelay,
-            notification.Flight.FlowControls);
+        var viewModel = new FlightViewModel(notification.Flight);
         
         if (index != -1)
         {

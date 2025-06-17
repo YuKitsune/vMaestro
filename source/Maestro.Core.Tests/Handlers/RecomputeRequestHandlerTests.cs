@@ -3,6 +3,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
+using Maestro.Core.Tests.Mocks;
 using MediatR;
 using NSubstitute;
 using Serilog;
@@ -22,7 +23,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithFeederFix("RIVET")
             .Build();
         
-        await sequence.Add(flight, CancellationToken.None);
+        sequence.Add(flight);
         
         var handler = GetRequestHandler(sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -37,7 +38,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     RecomputeRequestHandler GetRequestHandler(Sequence sequence)
     {
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.TryGetSequence(Arg.Is("YSSY")).ReturnsForAnyArgs(sequence);
+        sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
+            .ReturnsForAnyArgs(new TestExclusiveSequence(sequence));
         
         var mediator = Substitute.For<IMediator>();
         

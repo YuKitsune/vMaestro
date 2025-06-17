@@ -1,6 +1,5 @@
-﻿using Maestro.Core.Model;
-using MediatR;
+﻿using MediatR;
 
 namespace Maestro.Core.Messages;
 
-public record MaestroFlightUpdatedNotification(Flight Flight) : INotification;
+public record MaestroFlightUpdatedNotification(FlightMessage Flight) : INotification;

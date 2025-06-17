@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Core.Extensions;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
 using Serilog;
@@ -10,14 +11,9 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IMediat
 {
     public async Task<ZeroDelayResponse> Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
     {
-        var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
-        if (sequence == null)
-        {
-            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-            return new ZeroDelayResponse();
-        }
+        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
         
-        var flight = await sequence.TryGetFlight(request.Callsign, cancellationToken);
+        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
@@ -26,7 +22,10 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IMediat
 
         flight.NoDelay = true;
         
-        await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken); 
+        await mediator.Publish(
+            new MaestroFlightUpdatedNotification(flight.ToMessage(lockedSequence.Sequence)),
+            cancellationToken);
+        
         return new ZeroDelayResponse();
     }
 }

@@ -26,7 +26,6 @@ public class FlightUpdatedHandler(
     IRunwayAssigner runwayAssigner,
     IFlightUpdateRateLimiter rateLimiter,
     IEstimateProvider estimateProvider,
-    IScheduler scheduler,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -36,13 +35,15 @@ public class FlightUpdatedHandler(
     {
         try
         {
-            logger.Verbose("Received update for {Callsign}", notification.Callsign);
-
-            var sequence = sequenceProvider.TryGetSequence(notification.Destination);
-            if (sequence is null)
+            if (!sequenceProvider.CanSequenceFor(notification.Destination))
                 return;
 
-            var flight = await sequence.TryGetFlight(notification.Callsign, cancellationToken);
+            logger.Verbose("Received update for {Callsign}", notification.Callsign);
+
+            using var lockedSequence = await sequenceProvider.GetSequence(notification.Destination, cancellationToken);
+            var sequence = lockedSequence.Sequence;
+            
+            var flight = sequence.TryGetFlight(notification.Callsign);
             if (flight is null)
             {
                 // TODO: Make configurable
@@ -75,7 +76,7 @@ public class FlightUpdatedHandler(
                     // TODO: Revisit flight plan activation
                     flight.Activate(clock);
 
-                    await sequence.AddPending(flight, cancellationToken);
+                    sequence.AddPending(flight);
                     logger.Information("{Callsign} created (pending)", notification.Callsign);
                 }
                 // Only create flights in Maestro when they're within a specified range of the feeder fix
@@ -90,7 +91,7 @@ public class FlightUpdatedHandler(
                     // TODO: Revisit flight plan activation
                     flight.Activate(clock);
 
-                    await sequence.Add(flight, cancellationToken);
+                    sequence.Add(flight);
                     logger.Information("{Callsign} created", notification.Callsign);
                 }
             }
@@ -170,17 +171,11 @@ public class FlightUpdatedHandler(
             // Compute ETA and ETA_FF
             CalculateEstimates(flight, notification);
 
-            // Allocate a position in the sequence
-            await sequence.Sort(cancellationToken);
-
-            // Factor runway time separation requirements
-            scheduler.Schedule(sequence, flight);
-
             // TODO: Optimise runway selection
 
             SetState(flight);
 
-            await mediator.Publish(new MaestroFlightUpdatedNotification(flight), cancellationToken);
+            await mediator.Publish(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), cancellationToken);
             logger.Debug("Flight updated: {Flight}", flight);
         }
         catch (Exception exception)
@@ -286,6 +281,9 @@ public class FlightUpdatedHandler(
                     flight.Callsign,
                     flight.EstimatedFeederFixTime,
                     diff.ToHoursAndMinutesString());
+                
+                if (diff.Duration() > TimeSpan.FromMinutes(2)) 
+                    logger.Warning("{Callsign} ETA_FF has changed by more than 2 minutes", flight.Callsign);
             }
         }
 
@@ -300,6 +298,9 @@ public class FlightUpdatedHandler(
                 flight.Callsign,
                 flight.EstimatedLandingTime,
                 diff.ToHoursAndMinutesString());
+                
+            if (diff.Duration() > TimeSpan.FromMinutes(2)) 
+                logger.Warning("{Callsign} ETA has changed by more than 2 minutes", flight.Callsign);
         }
     }
 

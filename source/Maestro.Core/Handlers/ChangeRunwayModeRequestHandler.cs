@@ -16,12 +16,7 @@ public class ChangeRunwayModeRequestHandler(ISequenceProvider sequenceProvider, 
     {
         await Task.CompletedTask;
         
-        var sequence = sequenceProvider.TryGetSequence(request.AirportIdentifier);
-        if (sequence == null)
-        {
-            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-            return new ChangeRunwayModeResponse();
-        }
+        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
         
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().SingleOrDefault(c => c.Identifier == request.AirportIdentifier);
         if (airportConfiguration == null)
@@ -38,7 +33,7 @@ public class ChangeRunwayModeRequestHandler(ISequenceProvider sequenceProvider, 
             return new ChangeRunwayModeResponse();
         }
         
-        sequence.ChangeRunwayMode(runwayMode);
+        lockedSequence.Sequence.ChangeRunwayMode(runwayMode);
 
         if (request.ReAssignRunways)
         {

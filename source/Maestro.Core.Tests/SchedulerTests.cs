@@ -27,7 +27,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task SingleFlight_IsNotDelayed()
+    public void SingleFlight_IsNotDelayed()
     {
         // Arrange
         var flight = new FlightBuilder("QFA1")
@@ -36,7 +36,7 @@ public class SchedulerTests
             .Build();
 
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(flight, CancellationToken.None);
+        sequence.Add(flight);
         
         // Act
         _scheduler.Schedule(sequence, flight);
@@ -49,7 +49,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task SingleFlight_DuringBlockout_IsDelayed()
+    public void SingleFlight_DuringBlockout_IsDelayed()
     {
         // Arrange
         var endTime = _clock.UtcNow().AddMinutes(25);
@@ -68,8 +68,8 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.AddBlockout(blockout, CancellationToken.None);
-        await sequence.Add(flight, CancellationToken.None);
+        sequence.AddBlockout(blockout);
+        sequence.Add(flight);
         
         // Act
         _scheduler.Schedule(sequence, flight);
@@ -81,7 +81,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task MultipleFlights_DuringBlockout_AreDelayed()
+    public void MultipleFlights_DuringBlockout_AreDelayed()
     {
         // Arrange
         var endTime = _clock.UtcNow().AddMinutes(25);
@@ -105,9 +105,9 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.AddBlockout(blockout, CancellationToken.None);
-        await sequence.Add(firstFlight, CancellationToken.None);
-        await sequence.Add(secondFlight, CancellationToken.None);
+        sequence.AddBlockout(blockout);
+        sequence.Add(firstFlight);
+        sequence.Add(secondFlight);
         
         // Act
         foreach (var flight in sequence.Flights)
@@ -128,7 +128,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task NewFlight_EarlierThanStable_StableFlightIsDelayed()
+    public void NewFlight_EarlierThanStable_StableFlightIsDelayed()
     {
         // Arrange
         var stableFlight = new FlightBuilder("QFA1")
@@ -141,7 +141,7 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(stableFlight, CancellationToken.None);
+        sequence.Add(stableFlight);
         
         // First pass
         _scheduler.Schedule(sequence, stableFlight);
@@ -154,7 +154,7 @@ public class SchedulerTests
             .WithState(State.Unstable)
             .Build();
         
-        await sequence.Add(unstableFlight, CancellationToken.None);
+        sequence.Add(unstableFlight);
         
         // Act
         foreach (var flight in sequence.Flights)
@@ -175,7 +175,7 @@ public class SchedulerTests
     }
     
     [Fact]
-    public async Task UnstableFlight_WithNewEstimates_EarlierThanStable_UnstableFlightIsDelayed()
+    public void UnstableFlight_WithNewEstimates_EarlierThanStable_UnstableFlightIsDelayed()
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
@@ -191,8 +191,8 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(firstFlight, CancellationToken.None);
-        await sequence.Add(secondFlight, CancellationToken.None);
+        sequence.Add(firstFlight);
+        sequence.Add(secondFlight);
         
         // First pass
         foreach (var flight in sequence.Flights)
@@ -241,7 +241,7 @@ public class SchedulerTests
     [InlineData(State.Frozen, State.Stable)]
     [InlineData(State.Landed, State.Unstable)]
     [InlineData(State.Landed, State.Stable)]
-    public async Task NewFlight_EarlierThanSuperStable_NewFlightIsDelayed(State existingState, State newFlightState)
+    public void NewFlight_EarlierThanSuperStable_NewFlightIsDelayed(State existingState, State newFlightState)
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
@@ -251,7 +251,7 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(firstFlight, CancellationToken.None);
+        sequence.Add(firstFlight);
         
         // First pass
         _scheduler.Schedule(sequence, firstFlight);
@@ -265,7 +265,7 @@ public class SchedulerTests
             .WithState(newFlightState)
             .Build();
         
-        await sequence.Add(secondFlight, CancellationToken.None);
+        sequence.Add(secondFlight);
         
         // Act
         foreach (var flight in sequence.Flights)
@@ -286,7 +286,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task MultipleFlights_SameRunway_SeparatedByRunwayRate()
+    public void MultipleFlights_SameRunway_SeparatedByRunwayRate()
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
@@ -308,9 +308,9 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(first, CancellationToken.None);
-        await sequence.Add(second, CancellationToken.None);
-        await sequence.Add(third, CancellationToken.None);
+        sequence.Add(first);
+        sequence.Add(second);
+        sequence.Add(third);
         
         // Act
         foreach (var flight in sequence.Flights)
@@ -334,7 +334,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task MultipleFlights_DifferentRunway_NotSeparated()
+    public void MultipleFlights_DifferentRunway_NotSeparated()
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
@@ -350,8 +350,8 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(first, CancellationToken.None);
-        await sequence.Add(second, CancellationToken.None);
+        sequence.Add(first);
+        sequence.Add(second);
         
         // Act
         foreach (var flight in sequence.Flights)
@@ -370,7 +370,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task MultipleFlights_WithNoConflicts_ShouldNotBeDelayed()
+    public void MultipleFlights_WithNoConflicts_ShouldNotBeDelayed()
     {
         // Arrange
         var farAwayFlight = new FlightBuilder("QFA1")
@@ -391,9 +391,9 @@ public class SchedulerTests
             .Build();
 
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(farAwayFlight, CancellationToken.None);
-        await sequence.Add(closeFlight, CancellationToken.None);
-        await sequence.Add(veryCloseFlight, CancellationToken.None);
+        sequence.Add(farAwayFlight);
+        sequence.Add(closeFlight);
+        sequence.Add(veryCloseFlight);
         
         // Act
         foreach (var flight in sequence.Flights)
@@ -414,7 +414,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task WhenReroutedToAnotherFix_EstimatesAreStillCalculatedToFeederFix()
+    public void WhenReroutedToAnotherFix_EstimatesAreStillCalculatedToFeederFix()
     {
         // TODO:
         //  Create a flight
@@ -422,35 +422,32 @@ public class SchedulerTests
         //  Reroute to another feeder fix
         //  Check estimates are calculated based on trajectory to previous FF
         Assert.Fail("Stub");
-        await Task.CompletedTask;
     }
 
     [Fact]
-    public async Task WhenUnstableFlightIsRecomputed_ItsPositionInSequenceChanges()
+    public void WhenUnstableFlightIsRecomputed_ItsPositionInSequenceChanges()
     {
         // TODO:
         //  Create two flights with separate ETA_FF 
         //  Swap ETA_FF so second flight is now in front (leap frog)
         //  Check both flights receive no delay and position in sequence is updated
         Assert.Fail("Stub");
-        await Task.CompletedTask;
     }
 
     [Fact]
-    public async Task SuperStableFlights_DoNotChangePositionInSequence()
+    public void SuperStableFlights_DoNotChangePositionInSequence()
     {
         // TODO:
         //  Create multiple flights with separate ETA_FF 
         //  Jumble ETAs (leap frog)
         //  Check delays are updated and position in sequence is unchanged
         Assert.Fail("Stub");
-        await Task.CompletedTask;
     }
 
     [Theory]
     [InlineData(State.Desequenced)]
     [InlineData(State.Removed)]
-    public async Task WhenAFlightIsNotSequencable_ItDoesNotAffectOtherFlights(State state)
+    public void WhenAFlightIsNotSequencable_ItDoesNotAffectOtherFlights(State state)
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
@@ -468,11 +465,11 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(first, CancellationToken.None);
-        await sequence.Add(second, CancellationToken.None);
+        sequence.Add(first);
+        sequence.Add(second);
         
         // First pass, normal sequence
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Sanity check, first flight is not delayed
         first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
@@ -484,7 +481,7 @@ public class SchedulerTests
         
         // Act
         first.Desequence();
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Assert
         
@@ -494,7 +491,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task WhenADesequencedFlightIsResumed_TheSequenceIsRecomputed()
+    public void WhenADesequencedFlightIsResumed_TheSequenceIsRecomputed()
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
@@ -512,15 +509,15 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(first, CancellationToken.None);
-        await sequence.Add(second, CancellationToken.None);
+        sequence.Add(first);
+        sequence.Add(second);
         
         // First pass, normal sequence
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Desequence the first flight and recompute the sequence
         first.Desequence();
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Sanity check, second flight should no longer have a delay
         second.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime);
@@ -528,7 +525,7 @@ public class SchedulerTests
         
         // Act
         first.Resume();
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Assert
         
@@ -542,7 +539,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task WhenADesequencedFlightIsResumed_InFrontOfAStableFlight_ResumedFlightIsSequencedBehindStableFlight()
+    public void WhenADesequencedFlightIsResumed_InFrontOfAStableFlight_ResumedFlightIsSequencedBehindStableFlight()
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
@@ -560,21 +557,21 @@ public class SchedulerTests
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        await sequence.Add(first, CancellationToken.None);
-        await sequence.Add(second, CancellationToken.None);
+        sequence.Add(first);
+        sequence.Add(second);
         
         // First pass, normal sequence
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Desequence the first flight and recompute the sequence
         first.Desequence();
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Act
         // Stabilize the second flight and resume the first one
         second.SetState(State.Stable);
         first.Resume();
-        await _scheduler.Schedule(sequence, CancellationToken.None);
+        sequence.Schedule(_scheduler);
         
         // Assert
         // No delay for the second flight since it was stabilized first
@@ -588,23 +585,20 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task PriorityFlights_AreNotDelayed()
+    public void PriorityFlights_AreNotDelayed()
     {
         Assert.Fail("Stub");
-        await Task.CompletedTask;
     }
 
     [Fact]
-    public async Task ZeroDelayFlights_AreNotDelayed()
+    public void ZeroDelayFlights_AreNotDelayed()
     {
         Assert.Fail("Stub");
-        await Task.CompletedTask;
     }
 
     [Fact]
-    public async Task LandedFlights_CanBeReInsertedIntoTheSequence()
+    public void LandedFlights_CanBeReInsertedIntoTheSequence()
     {
         Assert.Fail("Stub");
-        await Task.CompletedTask;
     }
 }

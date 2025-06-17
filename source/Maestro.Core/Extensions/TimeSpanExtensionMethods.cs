@@ -8,14 +8,17 @@ public static class TimeSpanExtensionMethods
     {
         var sb = new StringBuilder();
 
-        if (timeSpan.TotalSeconds > 0)
+        if (timeSpan < TimeSpan.Zero)
         {
             sb.Append("-");
         }
+
+        var absolute = timeSpan.Duration();
         
-        sb.Append(timeSpan.TotalMinutes.ToString("00"));
-        sb.Append(":");
-        sb.Append(timeSpan.Seconds.ToString("00"));
+        sb.Append(absolute.TotalMinutes.ToString("0"));
+        sb.Append("m ");
+        sb.Append(absolute.Seconds.ToString("00"));
+        sb.Append("s");
 
         return sb.ToString();
     }
