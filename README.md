@@ -22,10 +22,12 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 - The ladder occasionally stop updating.
 - Desequence window can be re-opened multiple times.
 - Diversions result in weird behaviour.
-- Flights appear to be stablised twice.
+- Flights appear to be stablised twice in the logs.
 - Q: Should times from vatSys be rounded to the nearest 30 secs?
 - Stable flights don't seem to get updated ETAs.
 - Recompute, ETA_FF and STA_FF update, but STA doesn't.
+- Flights sometimes get sequenced ahead of their estimate
+- Lanidng time cannot be determined for flights past FF if the flight was added to the sequence passed the FF
 
 # Roadmap
 
