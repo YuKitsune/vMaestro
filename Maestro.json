@@ -73,7 +73,7 @@
       "Arrivals": [
         {
           "FeederFix": "BOREE",
-          "ArrivalRegex": "/BOREE\\d[AP]/",
+          "ArrivalRegex": "/BORE\\d[AP]/",
           "AircraftType": "Jet",
           "RunwayIntervals": {
             "34L": 17,
@@ -86,7 +86,7 @@
         },
         {
           "FeederFix": "BOREE",
-          "ArrivalRegex": "/BOREE\\d[AP]/",
+          "ArrivalRegex": "/BORE\\d[AP]/",
           "AircraftType": "NonJet",
           "RunwayIntervals": {
             "34L": 20,
@@ -204,7 +204,7 @@
       ],
       "Views": [
         {
-          "Identifier": "BIK/GLB",
+          "Identifier": "GUN/BIK",
           "ViewMode": "Enroute",
           "LeftLadder": ["RIVET"],
           "RightLadder": ["WELSH"]
@@ -222,10 +222,16 @@
           "RightLadder": []
         },
         {
+          "Identifier": "ARL/OCN",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["BOREE", "YAKKA"],
+          "RightLadder": ["MARLN"]
+        },
+        {
           "Identifier": "ALL",
           "ViewMode": "Enroute",
-          "LeftLadder": ["RIVET", "WELSH", "BOREE"],
-          "RightLadder": ["YAKKA", "MARLN"]
+          "LeftLadder": ["RIVET", "WELSH"],
+          "RightLadder": ["YAKKA", "MARLN", "BOREE"]
         },
         {
           "Identifier": "RWY",
@@ -264,6 +270,312 @@
           "FeederFixes": ["BOREE", "MEPIL", "MARLN"],
           "WakeCategories": ["Light", "Medium"],
           "Runways": ["34L", "16R"]
+        }
+      ]
+    },
+    {
+      "Identifier": "YMML",
+      "FeederFixes": ["ARBEY", "BOYSE", "BOYSE/V", "BOOIN", "BOOIN/V", "RAZZI/AV", "RAZZI/M", "PORTS", "ALAXO", "ALAXO/V", "ALAXO/P"],
+      "Runways": [
+        { "Identifier": "09" },
+        { "Identifier": "16" },
+        { "Identifier": "27" },
+        { "Identifier": "34" }
+      ],
+      "RunwayModes": [
+        {
+          "Identifier": "09",
+          "Runways": [
+            { "Identifier": "09", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "16",
+          "Runways": [
+            { "Identifier": "16", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "27",
+          "Runways": [
+            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "34",
+          "Runways": [
+            { "Identifier": "34", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "LAHSO",
+          "Runways": [
+            { "Identifier": "34", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "34/27",
+          "Runways": [
+            { "Identifier": "34", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "34/09",
+          "Runways": [
+            { "Identifier": "34", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "09", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "16/27",
+          "Runways": [
+            { "Identifier": "16", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "16/09",
+          "Runways": [
+            { "Identifier": "16", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "09", "DefaultLandingRateSeconds": 180 }
+          ]
+        }
+      ],
+      "Arrivals": [
+        {
+          "FeederFix": "ARBEY",
+          "ArrivalRegex": "/ARBE\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "09": 11,
+            "16": 9,
+            "27": 12,
+            "34": 13
+          }
+        },
+        {
+          "FeederFix": "ARBEY",
+          "ArrivalRegex": "/ARBE\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "09": 12,
+            "16": 10,
+            "27": 14,
+            "34": 15
+          }
+        },
+        {
+          "FeederFix": "BOOIN",
+          "ArrivalRegex": "/BOIN\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "09": 15,
+            "16": 12,
+            "27": 10,
+            "34": 13
+          }
+        },
+        {
+            "FeederFix": "BOOIN/V",
+            "ArrivalRegex": "/BOIN\\dA/",
+            "AircraftType": "Jet",
+            "RunwayIntervals": {
+              "34": 12
+            }
+        },
+        {
+          "FeederFix": "BOOIN",
+          "ArrivalRegex": "/BOIN\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "09": 17,
+            "16": 14,
+            "27": 11,
+            "34": 15
+          }
+        },
+        {
+            "FeederFix": "BOOIN",
+            "ArrivalRegex": "/BOIN\\dV/",
+            "AircraftType": "NonJet",
+            "RunwayIntervals": {
+              "34": 14
+            }
+        },
+        {
+          "FeederFix": "BOYSE",
+          "ArrivalRegex": "/BOYS\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "09": 18,
+            "16": 15,
+            "27": 13,
+            "34": 16
+          }
+        },
+        {
+          "FeederFix": "BOYSE",
+          "ArrivalRegex": "/BOYS\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "34": 14
+          }
+        },
+        {
+          "FeederFix": "RAZZI",
+          "ArrivalRegex": "/RAZI\\d[AV]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "09": 16,
+            "16": 13,
+            "27": 9,
+            "34": 10
+          }
+        },
+        {
+          "FeederFix": "RAZZI",
+          "ArrivalRegex": "/RAZI\\d[AV]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "09": 18,
+            "16": 15,
+            "27": 10,
+            "34": 11
+          }
+        },
+        {
+          "FeederFix": "RAZZI",
+          "ArrivalRegex": "/RAZI\\dM/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "16": 11
+          }
+        },
+        {
+          "FeederFix": "RAZZI",
+          "ArrivalRegex": "/RAZI\\dM/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "16": 13
+          }
+        },
+        {
+          "FeederFix": "PORTS",
+          "ArrivalRegex": "/PORT\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "09": 11,
+            "34": 7
+          }
+        },
+        {
+          "FeederFix": "PORTS",
+          "ArrivalRegex": "/PORT\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "09": 12,
+            "34": 8
+          }
+        },
+        {
+          "FeederFix": "ALAXO",
+          "ArrivalRegex": "/ALAX\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "09": 11,
+            "16": 17,
+            "27": 15,
+            "34": 12
+          }
+        },
+        {
+          "FeederFix": "ALAXO",
+          "ArrivalRegex": "/ALAX\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "09": 12,
+            "16": 19,
+            "27": 17,
+            "34": 14
+          }
+        },
+        {
+          "FeederFix": "ALAXO",
+          "ArrivalRegex": "/ALAX\\dP/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "16": 15
+          }
+        },
+        {
+          "FeederFix": "ALAXO",
+          "ArrivalRegex": "/ALAX\\dP/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "16": 17
+          }
+        }
+      ],
+      "Views": [
+        {
+          "Identifier": "BLA/ELW",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["BOOIN"],
+          "RightLadder": ["BOYSE"]
+        },
+        {
+          "Identifier": "MUN/YWE",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["ARBEY"],
+          "RightLadder": ["ALAXO"]
+        },
+        {
+          "Identifier": "HUO/WON",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["RAZZI"],
+          "RightLadder": ["PORTS"]
+        },
+        {
+          "Identifier": "ALL",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["ARBEY", "ALAXO", "PORTS"],
+          "RightLadder": ["BOOIN", "BOYSE", "RAZZI/AV"]
+        },
+        {
+          "Identifier": "RWY",
+          "ViewMode": "Approach",
+          "LeftLadder": ["16", "34"],
+          "RightLadder": ["09", "27"]
+        }
+      ],
+      "RunwayAssignmentRules": [
+        {
+          "Priority": 0,
+          "FeederFixes": ["ARBEY", "BOOIN", "ALAXO"],
+          "WakeCategories": ["SuperHeavy"],
+          "Runways": ["09", "16", "27", "34"]
+        },
+        {
+          "Priority": 0,
+          "FeederFixes": ["ARBEY", "ALAXO", "BOYSE", "BOOIN", "PORTS"],
+          "WakeCategories": ["Light", "Medium", "Heavy"],
+          "Runways": ["09", "16", "27", "34"]
+        },
+        {
+          "Priority": 1,
+          "FeederFixes": ["BOYSE", "BOOIN"],
+          "ArrivalRegex":"/.*\\dV/",
+          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
+          "Runways": ["34"]
+        },
+        {
+          "Priority": 2,
+          "FeederFixes": ["RAZZI", "ALAXO"],
+          "ArrivalRegex":"/.*\\d[MP]/",
+          "WakeCategories": ["Light", "Medium", "Heavy"],
+          "Runways": ["16"]
         }
       ]
     },
@@ -684,7 +996,7 @@
         },
         {
           "FeederFix": "WOODY",
-          "ArrivalRegex": "/WOOD\\dA/",
+          "ArrivalRegex": "/WODY\\dA/",
           "AircraftType": "Jet",
           "RunwayIntervals": {
             "01L": 14,
@@ -695,7 +1007,7 @@
         },
         {
           "FeederFix": "WOODY",
-          "ArrivalRegex": "/WOOD\\dA/",
+          "ArrivalRegex": "/WODY\\dA/",
           "AircraftType": "NonJet",
           "RunwayIntervals": {
             "01L": 16,
@@ -706,7 +1018,7 @@
         },
         {
           "FeederFix": "WOODY",
-          "ArrivalRegex": "/WOOD\\dV/",
+          "ArrivalRegex": "/WODY\\dV/",
           "AircraftType": "Jet",
           "RunwayIntervals": {
             "01L": 11,
@@ -715,7 +1027,7 @@
         },
         {
           "FeederFix": "WOODY",
-          "ArrivalRegex": "/WOOD\\dV/",
+          "ArrivalRegex": "/WODY\\dV/",
           "AircraftType": "NonJet",
           "RunwayIntervals": {
             "01L": 13,
@@ -774,6 +1086,408 @@
           "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
           "Runways": ["01L", "19R"]
         }
+      ]
+    },
+    {
+      "Identifier": "YPPH",
+      "FeederFixes": ["KAGMI", "JULIM", "KABLI", "SOLUS", "DAYLR", "LAVEX", "SAPKO"],
+      "Runways": [
+        { "Identifier": "03" },
+        { "Identifier": "06" },
+        { "Identifier": "21" },
+        { "Identifier": "24" }
+      ],
+      "RunwayModes": [
+        {
+          "Identifier": "SW PLN",
+          "Runways": [
+            { "Identifier": "21", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "24", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "NE PLN",
+          "Runways": [
+            { "Identifier": "03", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "06",
+          "Runways": [
+            { "Identifier": "06", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "21",
+          "Runways": [
+            { "Identifier": "21", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "24",
+          "Runways": [
+            { "Identifier": "24", "DefaultLandingRateSeconds": 180 }
+          ]
+        }
+      ],
+      "Arrivals": [
+        {
+          "FeederFix": "KAGMI",
+          "ArrivalRegex": "/IPMO\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 17,
+            "06": 14,
+            "21": 15,
+            "24": 17
+          }
+        },
+        {
+          "FeederFix": "KAGMI",
+          "ArrivalRegex": "/IPMO\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 19,
+            "06": 16,
+            "21": 17,
+            "24": 20
+          }
+        },
+        {
+          "FeederFix": "JULIM",
+          "ArrivalRegex": "/JULI\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 17,
+            "06": 19,
+            "21": 10,
+            "24": 10
+          }
+        },
+        {
+          "FeederFix": "JULIM",
+          "ArrivalRegex": "/JULI\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 18,
+            "06": 20,
+            "21": 16,
+            "24": 15
+          }
+        },
+        {
+          "FeederFix": "JULIM",
+          "ArrivalRegex": "/JULI\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 15,
+            "06": 16
+          }
+        },
+        {
+          "FeederFix": "JULIM",
+          "ArrivalRegex": "/JULI\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 15,
+            "06": 16
+          }
+        },
+        {
+          "FeederFix": "JULIM",
+          "ArrivalRegex": "/JULI\\dX/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 15
+          }
+        },
+        {
+          "FeederFix": "JULIM",
+          "ArrivalRegex": "/JULI\\dX/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 15
+          }
+        },
+        {
+          "FeederFix": "KABLI",
+          "ArrivalRegex": "/KABL\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 15,
+            "06": 16,
+            "21": 15,
+            "24": 15
+          }
+        },
+        {
+          "FeederFix": "KABLI",
+          "ArrivalRegex": "/KABL\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 20,
+            "06": 22,
+            "21": 11,
+            "24": 11
+          }
+        },
+        {
+          "FeederFix": "KABLI",
+          "ArrivalRegex": "/KABL\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 13,
+            "06": 14
+          }
+        },
+        {
+          "FeederFix": "KABLI",
+          "ArrivalRegex": "/KABL\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 17,
+            "06": 18
+          }
+        },
+        {
+          "FeederFix": "KABLI",
+          "ArrivalRegex": "/KABL\\dX/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 13
+          }
+        },
+        {
+          "FeederFix": "KABLI",
+          "ArrivalRegex": "/KABL\\dX/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 17
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dA/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 11,
+            "06": 12,
+            "21": 14,
+            "24": 12
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 12,
+            "06": 14,
+            "21": 16,
+            "24": 14
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 10,
+            "06": 11
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 12,
+            "06": 13
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dX/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "03": 10
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dX/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 11
+          }
+        },
+        {
+          "FeederFix": "DAYLR",
+          "ArrivalRegex": "/DAYL\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 13,
+            "06": 15
+          }
+        },
+        {
+          "FeederFix": "DAYLR",
+          "ArrivalRegex": "/DAYL\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 12,
+            "06": 13
+          }
+        },
+        {
+          "FeederFix": "DAYLR",
+          "ArrivalRegex": "/DAYL\\dX/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 11
+          }
+        },
+        {
+          "FeederFix": "LAVEX",
+          "ArrivalRegex": "/LAVE\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 18,
+            "06": 20,
+            "21": 16,
+            "24": 15
+          }
+        },
+        {
+          "FeederFix": "LAVEX",
+          "ArrivalRegex": "/LAVE\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 15,
+            "06": 16
+          }
+        },
+        {
+          "FeederFix": "LAVEX",
+          "ArrivalRegex": "/LAVE\\dX/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 15
+          }
+        },
+        {
+          "FeederFix": "SAPKO",
+          "ArrivalRegex": "/SAPK\\dA/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 20,
+            "06": 22,
+            "21": 11,
+            "24": 11
+          }
+        },
+        {
+          "FeederFix": "SAPKO",
+          "ArrivalRegex": "/SAPK\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 17,
+            "06": 18
+          }
+        },
+        {
+          "FeederFix": "SAPKO",
+          "ArrivalRegex": "/SAPK\\dX/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "03": 17
+          }
+        }
+      ],
+      "Views": [
+        {
+          "Identifier": "PIY",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["JULIM", "SAPKO"],
+          "RightLadder": ["KABLI", "DAYLR", "LAVEX"]
+        },
+        {
+          "Identifier": "LEA",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["KAGMI"],
+          "RightLadder": []
+        },
+        {
+          "Identifier": "JAR",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["SOLUS"],
+          "RightLadder": []
+        },
+        {
+          "Identifier": "ALL/HYD",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["JULIM", "SAPKO", "KAGMI", "SOLUS"],
+          "RightLadder": ["KABLI", "DAYLR", "LAVEX"]
+        },
+        {
+          "Identifier": "RWY",
+          "ViewMode": "Approach",
+          "LeftLadder": ["03", "21"],
+          "RightLadder": ["06", "24"]
+        }
+      ],
+      "RunwayAssignmentRules": [
+        {
+          "Priority": 0,
+          "FeederFixes": ["JULIM", "KAGMI"],
+          "WakeCategories": ["Medium", "Heavy"],
+          "Runways": ["21", "03"]
+        },
+        {
+          "Priority": 0,
+          "FeederFixes": ["KABLI", "SOLUS"],
+          "WakeCategories": ["Medium", "Heavy"],
+          "Runways": ["24", "03"]
+        },
+        {
+          "Priority": 0,
+          "FeederFixes": ["LAVEX", "SAPKO", "SOLUS"],
+          "WakeCategories": ["Light", "Medium"],
+          "Runways": ["21"]
+        },
+        {
+          "Priority": 0,
+          "FeederFixes": ["KAGMI", "JULIM", "KABLI"],
+          "WakeCategories": ["SuperHeavy"],
+          "Runways": ["21", "03"]
+        },
+        {
+          "Priority": 0,
+          "FeederFixes": ["DAYLR"],
+          "WakeCategories": ["Light", "Medium"],
+          "Runways": ["03", "06"]
+        },
+        {
+          "Priority": 1,
+          "FeederFixes": ["KAGMI", "JULIM", "KABLI", "LAVEX", "SAPKO", "SOLUS"],
+          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
+          "Runways": ["03", "06", "21", "24"]
+        },
+        {
+          "Priority": 1,
+          "FeederFixes": ["KABLI", "JULIM", "LAVEX", "SAPKO", "SOLUS"],
+          "ArrivalRegex": "/.*\\dX/",
+          "WakeCategories": ["Light", "Medium", "Heavy"],
+          "Runways": ["03"]
+        },
+        {
+          "Priority": 2,
+          "FeederFixes": ["JULIM", "KABLI", "DAYLR", "LAVEX", "SAPKO"],
+          "ArrivalRegex": "/.*\\dV/",
+          "WakeCategories": ["Light", "Medium", "Heavy"],
+          "Runways": ["03", "06"]
+        }
+
       ]
     }
   ],
