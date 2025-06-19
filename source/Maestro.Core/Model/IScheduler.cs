@@ -147,16 +147,12 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : I
                 earliestAvailableLandingTime);
         }
         
-        var scheduledLandingTime = earliestAvailableLandingTime ?? flight.EstimatedLandingTime;
-            
-        logger.Debug(
-            "Earliest available landing time for {Callsign} is {Time:HH:mm}. Current estimate is {Estimate:HH:mm}.",
-            flight.Callsign,
-            scheduledLandingTime,
-            flight.EstimatedLandingTime);
+        // Do not schedule flights to land earlier than their estimate
+        var scheduledLandingTime = earliestAvailableLandingTime is not null
+            ? DateTimeOffsetHelpers.Latest(earliestAvailableLandingTime.Value, flight.EstimatedLandingTime)
+            : flight.EstimatedLandingTime;
         
         // Ensure sufficient spacing between the current flight and the one in front
-        // BUG: I think there is a concurrency issue here. The leading flight could sometimes has an ETA later than us.
         var leader = sequence.SequencableFlights
             .Take(currentFlightIndex)
             .LastOrDefault(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);

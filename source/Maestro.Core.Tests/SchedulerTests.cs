@@ -293,18 +293,21 @@ public class SchedulerTests
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
+            .WithState(State.SuperStable)
             .Build();
         
         var second = new FlightBuilder("QFA2")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
+            .WithState(State.Stable)
             .Build();
         
         var third = new FlightBuilder("QFA3")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
+            .WithState(State.Unstable)
             .Build();
         
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
@@ -377,17 +380,20 @@ public class SchedulerTests
             .WithFeederFixEstimate(_clock.UtcNow().AddHours(10))
             .WithLandingEstimate(_clock.UtcNow().AddHours(20))
             .WithRunway("34L")
+            .WithState(State.Unstable)
             .Build();
         
         var closeFlight = new FlightBuilder("QFA2")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
+            .WithState(State.Stable)
             .Build();
         
         var veryCloseFlight = new FlightBuilder("QFA3")
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(5))
             .WithRunway("34L")
+            .WithState(State.SuperStable)
             .Build();
 
         var sequence = new Sequence(_airportConfigurationFixture.Instance);
