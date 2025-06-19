@@ -51,9 +51,12 @@ public class EstimateProvider(IMaestroConfiguration configuration, IPerformanceL
             return systemEstimate;
 
         var feederFixTime = flight.HasPassedFeederFix
-            ? flight.ActualFeederFixTime!.Value
-            : flight.EstimatedFeederFixTime!.Value;
-        var landingEstimateFromInterval = feederFixTime.Add(intervalToRunway.Value);
+            ? flight.ActualFeederFixTime == DateTime.MaxValue // vatSys uses MaxValue if the flight has passed the FF but the specific time is not known (I.e: Controller connected after flight passed FF)
+                ? systemEstimate // Defer to system estimate if ATO_FF is unavailable
+                : flight.ActualFeederFixTime // Prefer ATO_FF if available
+            : flight.EstimatedFeederFixTime; // Use ETA_FF if not passed FF
+
+        var landingEstimateFromInterval = feederFixTime?.Add(intervalToRunway.Value);
 
         return landingEstimateFromInterval;
 
