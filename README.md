@@ -15,8 +15,6 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 # Known Issues 
 
 - Flights in the front of the queue can sometimes move backwards in the queue.
-- Flights that are far away will be sequenced to land shortly after a much earlier flight, resulting in a negative delay.
-    - I have a hunch this is because the ETAs are changing mid-way through scheduling, so the sequence isn't being re-ordered.
 - The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
 - When a button is enabled, it's appearance is still disabled, but it is still interactable.
 - The ladder occasionally stop updating.
@@ -28,6 +26,9 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 - Recompute, ETA_FF and STA_FF update, but STA doesn't.
 - Flights sometimes get sequenced ahead of their estimate
 - Lanidng time cannot be determined for flights past FF if the flight was added to the sequence passed the FF
+- Resuming a desequenced flight does not work
+- Desequence window does not re-draw
+- Information window does not re-draw
 
 # Roadmap
 
