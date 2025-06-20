@@ -10,9 +10,10 @@ namespace Maestro.Core.Tests.Fixtures;
 public class AirportConfigurationFixture
 {
     public AirportConfiguration Instance =>
-        new AirportConfiguration
+        new()
         {
             Identifier = "YSSY",
+            MinimumRadarEstimateRange = 200,
             Runways =
             [
                 new RunwayConfiguration

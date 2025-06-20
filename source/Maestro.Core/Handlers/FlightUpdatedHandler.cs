@@ -266,11 +266,11 @@ public class FlightUpdatedHandler(
         }
 
         // Don't update ETA_FF once passed FF
-        if (!flight.HasPassedFeederFix)
+        if (feederFixSystemEstimate is not null && !flight.HasPassedFeederFix)
         {
             var calculatedFeederFixEstimate = estimateProvider.GetFeederFixEstimate(
-                flight.FeederFixIdentifier,
-                feederFixSystemEstimate?.Estimate,
+                flight.FeederFixIdentifier!,
+                feederFixSystemEstimate!.Estimate,
                 notification.Position);
             if (calculatedFeederFixEstimate is not null && flight.EstimatedFeederFixTime is not null)
             {

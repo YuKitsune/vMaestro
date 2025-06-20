@@ -1,35 +1,50 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
 
 public interface IEstimateProvider
 {
-    DateTimeOffset? GetFeederFixEstimate(string? feederFixIdentifier, DateTimeOffset? systemEstimate, FlightPosition? flightPosition);
+    DateTimeOffset? GetFeederFixEstimate(string feederFixIdentifier, DateTimeOffset systemEstimate, FlightPosition? flightPosition);
     DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate);
 }
 
-public class EstimateProvider(IMaestroConfiguration configuration, IPerformanceLookup performanceLookup, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock)
+public class EstimateProvider(
+    AirportConfiguration airportConfiguration,
+    IPerformanceLookup performanceLookup,
+    IArrivalLookup arrivalLookup,
+    IFixLookup fixLookup,
+    IClock clock)
     : IEstimateProvider
 {
-    public DateTimeOffset? GetFeederFixEstimate(string? feederFixIdentifier, DateTimeOffset? systemEstimate, FlightPosition? flightPosition)
+    public DateTimeOffset? GetFeederFixEstimate(
+        string feederFixIdentifier,
+        DateTimeOffset systemEstimate,
+        FlightPosition? flightPosition)
     {
-        if (configuration.FeederFixEstimateSource == FeederFixEstimateSource.SystemEstimate ||
-            string.IsNullOrEmpty(feederFixIdentifier) ||
-            flightPosition is null)
+        if (flightPosition is null)
             return systemEstimate;
 
-        var feederFix = fixLookup.FindFix(feederFixIdentifier!);
+        var feederFix = fixLookup.FindFix(feederFixIdentifier);
         if (feederFix is null)
             return systemEstimate;
 
-        // BRL method
         var distance = Calculations.CalculateDistanceNauticalMiles(
             flightPosition.Coordinate,
             feederFix.Coordinate);
+
+        // Prefer system estimate beyond the specified range
+        if (distance > airportConfiguration.MinimumRadarEstimateRange)
+            return systemEstimate;
+
+        // For flights within range, average the radar estimate (BRL) and the system estimate
+        var radarEstimate = clock.UtcNow() + TimeSpan.FromHours(distance / flightPosition.GroundSpeed);
+        var difference = (radarEstimate - systemEstimate).Duration();
+        var average = DateTimeOffsetHelpers.Earliest(radarEstimate, systemEstimate)
+            .Add(TimeSpan.FromSeconds(difference.TotalSeconds / 2));
         
-        var estimate = clock.UtcNow() + TimeSpan.FromHours(distance / flightPosition.GroundSpeed);
-        return estimate;
+        return average;
     }
 
     public DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate)

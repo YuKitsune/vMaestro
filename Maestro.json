@@ -5,7 +5,6 @@
     "MaxFileAgeDays": 7
   },
   "Maestro": {
-    "FeederFixEstimateSource": "Trajectory",
     "Reclassifications": [
       { "AircraftType": "DH8D", "NewClassification": "Jet" }
     ]
@@ -13,6 +12,7 @@
   "Airports": [
     {
       "Identifier": "YSSY",
+      "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
       "Runways": [
         { "Identifier": "16L" },
@@ -269,6 +269,7 @@
     },
     {
       "Identifier": "YBBN",
+      "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["BLAKA", "GOMOL", "ENLIP", "MORBI", "SMOKA", "TEBOT", "UGTUG", "WOODY"],
       "Runways": [
         { "Identifier": "01L" },
