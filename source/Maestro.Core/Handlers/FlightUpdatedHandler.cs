@@ -26,6 +26,7 @@ public class FlightUpdatedHandler(
     IRunwayAssigner runwayAssigner,
     IFlightUpdateRateLimiter rateLimiter,
     IEstimateProvider estimateProvider,
+    IScheduler scheduler,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -42,10 +43,13 @@ public class FlightUpdatedHandler(
 
             using var lockedSequence = await sequenceProvider.GetSequence(notification.Destination, cancellationToken);
             var sequence = lockedSequence.Sequence;
-            
+
+            bool isNew = false;
             var flight = sequence.TryGetFlight(notification.Callsign);
             if (flight is null)
             {
+                isNew = true;
+                
                 // TODO: Make configurable
                 var flightCreationThreshold = TimeSpan.FromHours(2);
 
@@ -172,6 +176,12 @@ public class FlightUpdatedHandler(
             CalculateEstimates(flight, notification);
 
             // TODO: Optimise runway selection
+
+            // Schedule the flight if we just added it
+            if (isNew)
+            {
+                scheduler.Schedule(sequence, flight);
+            }
 
             SetState(flight);
 

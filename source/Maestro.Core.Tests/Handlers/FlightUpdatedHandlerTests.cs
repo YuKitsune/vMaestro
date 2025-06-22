@@ -14,6 +14,35 @@ namespace Maestro.Core.Tests.Handlers;
 public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfigurationFixture)
 {
     [Fact]
+    public async Task WhenANewFlightIsAdded_ItIsSequenced()
+    {
+        // Arrange
+        var sequence = new Sequence(airportConfigurationFixture.Instance);
+        var clock = new FixedClock(DateTimeOffset.UtcNow);
+        
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            "RIVET4",
+            "34L",
+            false,
+            null,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
+        
+        var scheduler = Substitute.For<IScheduler>();
+        var handler = GetHandler(sequence, clock, scheduler);
+        
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+        
+        // Assert
+        scheduler.Received(1).Schedule(sequence, Arg.Is<Flight>(f => f.Callsign == notification.Callsign));
+    }
+    
+    [Fact]
     public async Task WhenANewFlightIsUpdated_AndOutOfRangeOfFeederFix_TheFlightIsNotTracked()
     {
         // Arrange
@@ -477,15 +506,17 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         Assert.Fail("Stub");
     }
 
-    FlightUpdatedHandler GetHandler(Sequence sequence, IClock clock)
+    FlightUpdatedHandler GetHandler(Sequence sequence, IClock clock, IScheduler? scheduler = null)
     {
         var sequenceProvider = Substitute.For<ISequenceProvider>();
+        sequenceProvider.CanSequenceFor(Arg.Is("YSSY")).Returns(true);
         sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
             .Returns(new TestExclusiveSequence(sequence));
         
         var runwayAssigner = Substitute.For<IRunwayAssigner>();
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
         var estimateProvider = Substitute.For<IEstimateProvider>();
+        scheduler ??= Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
         
         return new FlightUpdatedHandler(
@@ -493,6 +524,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             runwayAssigner,
             rateLimiter,
             estimateProvider,
+            scheduler,
             mediator,
             clock,
             Substitute.For<ILogger>());
