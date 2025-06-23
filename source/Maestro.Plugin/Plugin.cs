@@ -98,7 +98,8 @@ namespace Maestro.Plugin
                 .WriteTo.File(
                     path: logFileName,
                     rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: configuration.Logging.MaxFileAgeDays)
+                    retainedFileCountLimit: configuration.Logging.MaxFileAgeDays,
+                    outputTemplate: "{Timestamp:u} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .MinimumLevel.Is(configuration.Logging.LogLevel)
                 .CreateLogger();
             
