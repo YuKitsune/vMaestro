@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.Composition;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
@@ -56,6 +57,16 @@ namespace Maestro.Plugin
                 AddMenuItem();
 
                 _mediator = Ioc.Default.GetRequiredService<IMediator>();
+                _logger = Ioc.Default.GetRequiredService<ILogger>();
+                
+                var executingAssembly = Assembly.GetExecutingAssembly();
+                var version = executingAssembly
+                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                    .InformationalVersion ?? string.Empty;
+#if RELEASE
+                version = version.Split('+').First();
+#endif
+                _logger.Information("{PluginName} {Version} initialized.", Name, version);
 
                 Network.Connected += Network_Connected;
                 Network.Disconnected += Network_Disconnected;
