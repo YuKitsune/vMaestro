@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Handlers;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -515,6 +516,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         
         var runwayAssigner = Substitute.For<IRunwayAssigner>();
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
+        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         var estimateProvider = Substitute.For<IEstimateProvider>();
         scheduler ??= Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
@@ -523,6 +525,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             sequenceProvider,
             runwayAssigner,
             rateLimiter,
+            airportConfigurationProvider,
             estimateProvider,
             scheduler,
             mediator,

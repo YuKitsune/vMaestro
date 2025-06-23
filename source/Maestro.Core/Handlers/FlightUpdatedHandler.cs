@@ -25,6 +25,7 @@ public class FlightUpdatedHandler(
     ISequenceProvider sequenceProvider,
     IRunwayAssigner runwayAssigner,
     IFlightUpdateRateLimiter rateLimiter,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
     IScheduler scheduler,
     IMediator mediator,
@@ -173,7 +174,8 @@ public class FlightUpdatedHandler(
             }
 
             // Compute ETA and ETA_FF
-            CalculateEstimates(flight, notification);
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().Single(a => a.Identifier == flight.DestinationIdentifier);
+            CalculateEstimates(flight, notification, airportConfiguration);
 
             // TODO: Optimise runway selection
 
@@ -262,7 +264,7 @@ public class FlightUpdatedHandler(
         logger.Information("{Callsign} is now {State}", flight.Callsign, flight.State);
     }
 
-    void CalculateEstimates(Flight flight, FlightUpdatedNotification notification)
+    void CalculateEstimates(Flight flight, FlightUpdatedNotification notification, AirportConfiguration airportConfiguration)
     {
         var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
         if (!flight.HasPassedFeederFix && feederFixSystemEstimate?.ActualTimeOver is not null)
@@ -279,6 +281,7 @@ public class FlightUpdatedHandler(
         if (feederFixSystemEstimate is not null && !flight.HasPassedFeederFix)
         {
             var calculatedFeederFixEstimate = estimateProvider.GetFeederFixEstimate(
+                airportConfiguration,
                 flight.FeederFixIdentifier!,
                 feederFixSystemEstimate!.Estimate,
                 notification.Position);

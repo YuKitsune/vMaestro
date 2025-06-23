@@ -6,12 +6,11 @@ namespace Maestro.Core.Model;
 
 public interface IEstimateProvider
 {
-    DateTimeOffset? GetFeederFixEstimate(string feederFixIdentifier, DateTimeOffset systemEstimate, FlightPosition? flightPosition);
+    DateTimeOffset? GetFeederFixEstimate(AirportConfiguration airportConfiguration, string feederFixIdentifier, DateTimeOffset systemEstimate, FlightPosition? flightPosition);
     DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate);
 }
 
 public class EstimateProvider(
-    AirportConfiguration airportConfiguration,
     IPerformanceLookup performanceLookup,
     IArrivalLookup arrivalLookup,
     IFixLookup fixLookup,
@@ -19,6 +18,7 @@ public class EstimateProvider(
     : IEstimateProvider
 {
     public DateTimeOffset? GetFeederFixEstimate(
+        AirportConfiguration airportConfiguration,
         string feederFixIdentifier,
         DateTimeOffset systemEstimate,
         FlightPosition? flightPosition)

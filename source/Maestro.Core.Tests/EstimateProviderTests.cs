@@ -44,7 +44,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _airportConfigurationFixture.Instance,
             _performanceLookup,
             _arrivalLookup,
             _fixLookup,
@@ -53,6 +52,7 @@ public class EstimateProviderTests
         // Act
         var systemEstimate = _currentTime.AddMinutes(5);
         var estimate = estimateProvider.GetFeederFixEstimate(
+            _airportConfigurationFixture.Instance,
             "RIVET",
             systemEstimate,
             null);
@@ -66,7 +66,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _airportConfigurationFixture.Instance,
             _performanceLookup,
             _arrivalLookup,
             _fixLookup,
@@ -81,6 +80,7 @@ public class EstimateProviderTests
             60);
 
         var estimate = estimateProvider.GetFeederFixEstimate(
+            _airportConfigurationFixture.Instance,
             "RIVET",
             systemEstimate,
             position);
@@ -102,7 +102,6 @@ public class EstimateProviderTests
             .Build();
 
         var estimateProvider = new EstimateProvider(
-            _airportConfigurationFixture.Instance,
             _performanceLookup,
             _arrivalLookup,
             _fixLookup,
@@ -121,7 +120,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _airportConfigurationFixture.Instance,
             _performanceLookup,
             _arrivalLookup,
             _fixLookup,
@@ -151,7 +149,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _airportConfigurationFixture.Instance,
             _performanceLookup,
             _arrivalLookup,
             _fixLookup,
