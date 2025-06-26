@@ -1089,6 +1089,517 @@
       ]
     },
     {
+      "Identifier": "YPAD",
+      "FeederFixes": ["AGROS", "ATNAR", "BEVSO", "DRINA", "ELROX", "ERITH", "INTOG", "KAKLU", "KLAVA", "MARGO"],
+      "Runways": [
+        { "Identifier": "05" },
+        { "Identifier": "12" },
+        { "Identifier": "23" },
+        { "Identifier": "30" }
+      ],
+      "RunwayModes": [
+        {
+          "Identifier": "23/12",
+          "Runways": [
+            { "Identifier": "23", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "12", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "05/12",
+          "Runways": [
+            { "Identifier": "05", "DefaultLandingRateSeconds": 180 },
+            { "Identifier": "12", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "23",
+          "Runways": [
+            { "Identifier": "23", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "05",
+          "Runways": [
+            { "Identifier": "05", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "12",
+          "Runways": [
+            { "Identifier": "12", "DefaultLandingRateSeconds": 180 }
+          ]
+        },
+        {
+          "Identifier": "30",
+          "Runways": [
+            { "Identifier": "30", "DefaultLandingRateSeconds": 180 }
+          ]
+        }
+      ],
+      "Arrivals": [
+        {
+          "FeederFix": "ATNAR",
+          "ArrivalRegex": "/ATNA\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 13,
+            "23": 16
+          }
+        },
+        {
+          "FeederFix": "ATNAR",
+          "ArrivalRegex": "/ATNA\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 14,
+            "23": 19
+          }
+        },
+        {
+          "FeederFix": "ATNAR",
+          "ArrivalRegex": "ATANA\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 12,
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "ATNAR",
+          "ArrivalRegex": "ATANA\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 14,
+            "23": 16
+          }
+        },
+        {
+          "FeederFix": "ATNAR",
+          "ArrivalRegex": "/ATNA\\dW/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 12
+          }
+        },
+        {
+          "FeederFix": "ATNAR",
+          "ArrivalRegex": "/ATNA\\dW/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 14
+          }
+        },
+        {
+          "FeederFix": "INTOG",
+          "ArrivalRegex": "//ATPIP\\d/",
+          "AircraftType": "NonJet",
+           "RunwayIntervals":{
+            "05": 15,
+            "12": 19,
+            "23": 15,
+            "30": 14
+          }
+        },
+        {
+          "FeederFix": "BEVSO",
+          "ArrivalRegex": "BEVSO\\d/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 19,
+            "12": 17,
+            "23": 14,
+            "30": 18
+          }
+        },
+        {
+          "FeederFix": "AGROS",
+          "ArrivalRegex": "BUGS\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 15,
+            "23": 16
+          }
+        },
+        {
+          "FeederFix": "AGROS",
+          "ArrivalRegex": "BUGS\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 16,
+            "23": 18
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "BUGS\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 18,
+            "23": 19
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "BUGS\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 17,
+            "23": 17
+          }
+        },
+        {
+          "FeederFix": "MARGO",
+          "ArrivalRegex": "BUGS\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 14,
+            "23": 15
+          }
+        },
+        {
+          "FeederFix": "MARGO",
+          "ArrivalRegex": "BUGS\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 15,
+            "23": 17
+          }
+        },
+        {
+          "FeederFix": "AGROS",
+          "ArrivalRegex": "BUGS\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 14,
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "AGROS",
+          "ArrivalRegex": "BUGS\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 16,
+            "23": 15
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "BUGS\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 15,
+            "23": 15
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "BUGS\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 17,
+            "23": 17
+          }
+        },
+        {
+          "FeederFix": "MARGO",
+          "ArrivalRegex": "BUGS\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 13,
+            "23": 13
+          }
+        },
+        {
+          "FeederFix": "MARGO",
+          "ArrivalRegex": "BUGS\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 15,
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "AGROS",
+          "ArrivalRegex": "BUGS\\dW/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 14
+          }
+        },
+        {
+          "FeederFix": "AGROS",
+          "ArrivalRegex": "BUGS\\dW/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 16
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "BUGS\\dW/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 15
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "BUGS\\dW/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 17
+          }
+        },
+        {
+          "FeederFix": "MARGO",
+          "ArrivalRegex": "BUGS\\dW/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 13
+          }
+        },
+        {
+          "FeederFix": "MARGO",
+          "ArrivalRegex": "BUGS\\dW/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 15
+          }
+        },
+        {
+          "FeederFix": "DRINA",
+          "ArrivalRegex": "/DRIN\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "DRINA",
+          "ArrivalRegex": "/DRIN\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "23": 16
+          }
+        },
+        {
+          "FeederFix": "DRINA",
+          "ArrivalRegex": "/DRIN\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "23": 13
+          }
+        },
+        {
+          "FeederFix": "DRINA",
+          "ArrivalRegex": "/DRIN\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "23": 15
+          }
+        },
+        {
+          "FeederFix": "ELROX",
+          "ArrivalRegex": "/ELRO\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 11,
+            "12": 12,
+            "23": 13
+          }
+        },
+        {
+          "FeederFix": "ATNAR",
+          "ArrivalRegex": "/GULF\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 13,
+            "12": 13,
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "INTOG",
+          "ArrivalRegex": "/INTO\\d[VXZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals":{
+            "05": 14
+          }
+        },
+        {
+          "FeederFix": "INTOG",
+          "ArrivalRegex": "/INTO\\d[VX]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 16
+          }
+        },
+        {
+          "FeederFix": "INTOG",
+          "ArrivalRegex": "/INTO\\dZ/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 16
+          }
+        },
+        {
+          "FeederFix": "KAKLU",
+          "ArrivalRegex": "/KAKL\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 16,
+            "23": 12
+          }
+        },
+        {
+          "FeederFix": "KAKLU",
+          "ArrivalRegex": "/KAKL\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 18,
+            "23": 13
+          }
+        },
+        {
+          "FeederFix": "KAKLU",
+          "ArrivalRegex": "/KAKL\\d[VX]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "05": 17
+          }
+        },
+        {
+          "FeederFix": "KAKLU",
+          "ArrivalRegex": "/KAKL\\d[VX]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 15
+          }
+        },
+        {
+          "FeederFix": "AGROS",
+          "ArrivalRegex": "/PAMY\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 14,
+            "12": 13,
+            "23": 13
+          }
+        },
+        {
+          "FeederFix": "MARGO",
+          "ArrivalRegex": "/PAMY\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 13,
+            "12": 12,
+            "23": 12
+          }
+        },
+        {
+          "FeederFix": "ERITH",
+          "ArrivalRegex": "/RAYN\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "23": 13
+          }
+        },
+        {
+          "FeederFix": "ERITH",
+          "ArrivalRegex": "/RYAN\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "/RAYN\\d[AZ]/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "23": 13
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "/RYAN\\d[AZ]/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "/RAYN\\dV/",
+          "AircraftType": "Jet",
+          "RunwayIntervals": {
+            "23": 12
+          }
+        },
+        {
+          "FeederFix": "KLAVA",
+          "ArrivalRegex": "/RYAN\\dV/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "23": 14
+          }
+        },
+        {
+          "FeederFix": "KAKLU",
+          "ArrivalRegex": "/SURGN\\d/",
+          "AircraftType": "NonJet",
+          "RunwayIntervals": {
+            "05": 13,
+            "12": 17,
+            "23": 13,
+            "30": 14
+          }
+        }
+      ],
+      "Views": [
+        {
+          "Identifier": "AUG",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["AGROS", "MARGO"],
+          "RightLadder": ["ATNAR", "KLAVA", "ELROX"]
+        },
+        {
+          "Identifier": "TBD",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["INTOG", "BEVSO"],
+          "RightLadder": ["KAKLU"]
+        },
+        {
+          "Identifier": "ALL",
+          "ViewMode": "Enroute",
+          "LeftLadder": ["AGROS", "MARGO", "ATNAR", "KLAVA", "ELROX"],
+          "RightLadder": ["INTOG", "BEVSO", "KAKLU"]
+        },
+        {
+          "Identifier": "RWY",
+          "ViewMode": "Approach",
+          "LeftLadder": ["05", "23"],
+          "RightLadder": ["12", "30"]
+        }
+      ],
+      "RunwayAssignmentRules": [
+        {
+          "Priority": 0,
+          "FeederFixes": ["AGROS", "ATNAR", "BEVSO", "DRINA", "ELROX", "ERITH", "INTOG", "KAKLU", "KLAVA", "MARGO"],
+          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
+          "Runways": ["05", "23"]
+        },
+        {
+          "Priority": 1,
+            "FeederFixes": ["INTOG", "BEVSO", "ELROX", "ATNAR", "AGROS", "MARGO", "KAKLU"],
+          "WakeCategories": ["Light", "Medium"],
+          "Runways": ["12", "30"]
+        }
+      ]
+    },
+    {
       "Identifier": "YPPH",
       "FeederFixes": ["KAGMI", "JULIM", "KABLI", "SOLUS", "DAYLR", "LAVEX", "SAPKO"],
       "Runways": [
