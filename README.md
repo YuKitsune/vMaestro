@@ -68,10 +68,6 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [ ] Insert flight
     - [ ] Change ETA FF
 
-- [ ] Internal System Tasks
-    - [ ] Remove flights after landing (STA + configurable time)
-    - [ ] Remove flights after disconnecting
-
 - [ ] Sequencing Algorithm Refinement
     - [ ] Factor GRIB winds into estimate calculations (If required)
     - [X] Use FF and STAR suffix for ETI
