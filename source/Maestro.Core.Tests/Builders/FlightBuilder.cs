@@ -21,6 +21,8 @@ public class FlightBuilder(string callsign)
     bool _manualRunway = false;
 
     State _state = State.Unstable;
+    
+    DateTimeOffset _lastSeen = DateTimeOffset.Now;
 
     public FlightBuilder WithFeederFix(string feederFixIdentifier)
     {
@@ -76,6 +78,12 @@ public class FlightBuilder(string callsign)
         _state = state;
         return this;
     }
+
+    public FlightBuilder WithLastSeen(DateTimeOffset lastSeen)
+    {
+        _lastSeen = lastSeen;
+        return this;
+    }
     
     public Flight Build()
     {
@@ -106,6 +114,8 @@ public class FlightBuilder(string callsign)
         flight.SetRunway(_assignedRunway, _manualRunway);
         
         flight.Activate(new FixedClock(DateTimeOffset.Now));
+        
+        flight.UpdateLastSeen(new FixedClock(_lastSeen));
         
         flight.SetState(_state);
 

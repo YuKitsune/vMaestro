@@ -96,6 +96,25 @@ public class Sequence
             .IndexOf(flight) + 1;
     }
 
+    /// <summary>
+    ///     Completely un-tracks the provided <paramref name="flight"/>.
+    /// </summary>
+    /// <returns>
+    ///     <c>true</c> if the flight was deleted. <c>false</c> otherwise.
+    /// </returns>
+    /// <remarks>
+    ///     If an FDR update is published for this flight, it can be tracked again.
+    ///     To remove a flight from the sequence and prevent it from being tracked, use
+    ///     <see cref="Flight"/>.<see cref="Flight.Remove()"/>.
+    /// </remarks>
+    public bool Delete(Flight flight)
+    {
+        var result = _flights.Remove(flight);
+        _flights.Sort(FlightComparer.Instance);
+
+        return result;
+    }
+
     // public Flight[] ComputeSequence_OLD(IReadOnlyList<Flight> flights)
     // {
     //     var sequence = new List<Flight>();

@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Xml.Linq;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -22,7 +23,6 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
 //  - What's next?
-//      - ArrivalConfiguration rework
 //      - Merge new arrival configs
 //      - Runway mode and TMA configuration changes
 //      - Insert flights and pending list
@@ -90,16 +90,7 @@ namespace Maestro.Plugin
         void ConfigureServices()
         {
             var configuration = ConfigureConfiguration();
-
-            var logFileName = Path.Combine(Helpers.GetFilesFolder(), "maestro_log.txt");
-            var logger = new LoggerConfiguration()
-                .WriteTo.File(
-                    path: logFileName,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: configuration.Logging.MaxFileAgeDays,
-                    outputTemplate: "{Timestamp:u} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-                .MinimumLevel.Is(configuration.Logging.LogLevel)
-                .CreateLogger();
+            var logger = ConfigureLogger(configuration.Logging);
             
             Ioc.Default.ConfigureServices(
                 new ServiceCollection()
@@ -115,7 +106,7 @@ namespace Maestro.Plugin
                     .AddSingleton<IFixLookup, VatsysFixLookup>()
                     .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
                     .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
-                    .AddSingleton<ILogger>(logger)
+                    .AddSingleton(logger)
                     .BuildServiceProvider());
         }
 
@@ -134,6 +125,21 @@ namespace Maestro.Plugin
             // TODO: Reloadable configuration would be cool
 
             return configuration;
+        }
+
+        ILogger ConfigureLogger(ILoggingConfiguration loggingConfiguration)
+        {
+            var logFileName = Path.Combine(Helpers.GetFilesFolder(), "maestro_log.txt");
+            var logger = new LoggerConfiguration()
+                .WriteTo.File(
+                    path: logFileName,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: loggingConfiguration.MaxFileAgeDays,
+                    outputTemplate: "{Timestamp:u} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .MinimumLevel.Is(loggingConfiguration.LogLevel)
+                .CreateLogger();
+
+            return logger;
         }
 
         string FindProfileDirectory()

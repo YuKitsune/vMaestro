@@ -83,7 +83,7 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 - [ ] Online Mode
     - [ ] Run sequencing code in a standalone server
     - [ ] Connect to Maestro server via WebSocket
-    - [ ] Source airport configuration from server
+    - [ ] Source configuration from server
     - [ ] Redirect notifications and requests to server
     - [ ] Source sequence information from server
     - [ ] Allow Flow to modify the sequence
@@ -98,7 +98,7 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [ ] Departure list
     - [ ] Pending flights
     - [ ] Unit selector
-    - [ ] Coordination
+    - [ ] Coordination window
     - [ ] Revisit strong ID types
 
 - [ ] Fault Tolerance
