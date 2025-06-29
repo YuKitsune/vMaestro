@@ -74,7 +74,8 @@
         {
           "FeederFix": "BOREE",
           "ArrivalRegex": "/BORE\\d[AP]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "34L": 17,
             "34R": 17,
@@ -87,7 +88,7 @@
         {
           "FeederFix": "BOREE",
           "ArrivalRegex": "/BORE\\d[AP]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "34L": 20,
             "34R": 20,
@@ -100,7 +101,8 @@
         {
           "FeederFix": "YAKKA",
           "ArrivalRegex": "/MEPIL\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "34L": 18,
             "34R": 18,
@@ -113,7 +115,7 @@
         {
           "FeederFix": "YAKKA",
           "ArrivalRegex": "/MEPIL\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "34L": 20,
             "34R": 20,
@@ -126,7 +128,8 @@
         {
           "FeederFix": "MARLN",
           "ArrivalRegex": "/MARLN\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "34L": 18,
             "34R": 15,
@@ -139,7 +142,7 @@
         {
           "FeederFix": "MARLN",
           "ArrivalRegex": "/MARLN\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "34L": 20,
             "34R": 17,
@@ -152,7 +155,8 @@
         {
           "FeederFix": "RIVET",
           "ArrivalRegex": "/RIVET\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "34L": 15,
             "34R": 18,
@@ -165,7 +169,7 @@
         {
           "FeederFix": "RIVET",
           "ArrivalRegex": "/RIVET\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "34L": 17,
             "34R": 20,
@@ -178,7 +182,8 @@
         {
           "FeederFix": "WELSH",
           "ArrivalRegex": "/ODALE\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "34L": 16,
             "34R": 18,
@@ -191,7 +196,7 @@
         {
           "FeederFix": "WELSH",
           "ArrivalRegex": "/ODALE\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "34L": 18,
             "34R": 20,
@@ -347,7 +352,8 @@
         {
           "FeederFix": "ARBEY",
           "ArrivalRegex": "/ARBE\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "09": 11,
             "16": 9,
@@ -358,7 +364,7 @@
         {
           "FeederFix": "ARBEY",
           "ArrivalRegex": "/ARBE\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "09": 12,
             "16": 10,
@@ -369,7 +375,8 @@
         {
           "FeederFix": "BOOIN",
           "ArrivalRegex": "/BOIN\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "09": 15,
             "16": 12,
@@ -380,7 +387,8 @@
         {
             "FeederFix": "BOOIN",
             "ArrivalRegex": "/BOIN\\dV/",
-            "AircraftType": "Jet",
+            "Category": "Jet",
+            "AdditionalAircraftTypes": ["DH8D"],
             "RunwayIntervals": {
               "34": 12
             }
@@ -388,7 +396,7 @@
         {
           "FeederFix": "BOOIN",
           "ArrivalRegex": "/BOIN\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "09": 17,
             "16": 14,
@@ -399,7 +407,7 @@
         {
             "FeederFix": "BOOIN",
             "ArrivalRegex": "/BOIN\\dV/",
-            "AircraftType": "NonJet",
+            "Category": "NonJet",
             "RunwayIntervals": {
               "34": 14
             }
@@ -407,7 +415,7 @@
         {
           "FeederFix": "BOYSE",
           "ArrivalRegex": "/BOYS\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "09": 18,
             "16": 15,
@@ -418,7 +426,7 @@
         {
           "FeederFix": "BOYSE",
           "ArrivalRegex": "/BOYS\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "34": 14
           }
@@ -426,7 +434,8 @@
         {
           "FeederFix": "RAZZI",
           "ArrivalRegex": "/RAZI\\d[AV]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "09": 16,
             "16": 13,
@@ -437,7 +446,7 @@
         {
           "FeederFix": "RAZZI",
           "ArrivalRegex": "/RAZI\\d[AV]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "09": 18,
             "16": 15,
@@ -448,7 +457,8 @@
         {
           "FeederFix": "RAZZI",
           "ArrivalRegex": "/RAZI\\dM/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "16": 11
           }
@@ -456,7 +466,7 @@
         {
           "FeederFix": "RAZZI",
           "ArrivalRegex": "/RAZI\\dM/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "16": 13
           }
@@ -464,7 +474,8 @@
         {
           "FeederFix": "PORTS",
           "ArrivalRegex": "/PORT\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "09": 11,
             "34": 7
@@ -473,7 +484,7 @@
         {
           "FeederFix": "PORTS",
           "ArrivalRegex": "/PORT\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "09": 12,
             "34": 8
@@ -482,7 +493,8 @@
         {
           "FeederFix": "ALAXO",
           "ArrivalRegex": "/ALAX\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "09": 11,
             "16": 17,
@@ -493,7 +505,7 @@
         {
           "FeederFix": "ALAXO",
           "ArrivalRegex": "/ALAX\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "09": 12,
             "16": 19,
@@ -504,7 +516,8 @@
         {
           "FeederFix": "ALAXO",
           "ArrivalRegex": "/ALAX\\dP/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "16": 15
           }
@@ -512,7 +525,7 @@
         {
           "FeederFix": "ALAXO",
           "ArrivalRegex": "/ALAX\\dP/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "16": 17
           }
@@ -619,7 +632,8 @@
         {
           "FeederFix": "BLAKA",
           "ArrivalRegex": "/BLAK\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 13,
             "01R": 13,
@@ -630,7 +644,7 @@
         {
           "FeederFix": "BLAKA",
           "ArrivalRegex": "/BLAK\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 15,
             "01R": 15,
@@ -641,7 +655,8 @@
         {
           "FeederFix": "BLAKA",
           "ArrivalRegex": "/BLAK\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01R": 12,
             "19L": 16
@@ -650,7 +665,7 @@
         {
           "FeederFix": "BLAKA",
           "ArrivalRegex": "/BLAK\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01R": 14,
             "19L": 18
@@ -659,7 +674,8 @@
         {
           "FeederFix": "BLAKA",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "19R": 19
           }
@@ -667,7 +683,8 @@
         {
           "FeederFix": "BLAKA",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "19R": 22
           }
@@ -675,7 +692,8 @@
         {
           "FeederFix": "ENLIP",
           "ArrivalRegex": "/ENLI\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 11,
             "01R": 11,
@@ -686,7 +704,7 @@
         {
           "FeederFix": "ENLIP",
           "ArrivalRegex": "/ENLI\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 13,
             "01R": 13,
@@ -697,7 +715,8 @@
         {
           "FeederFix": "ENLIP",
           "ArrivalRegex": "/ENLI\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "19L": 16,
             "19R": 16
@@ -706,7 +725,7 @@
         {
           "FeederFix": "ENLIP",
           "ArrivalRegex": "/ENLI\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "19L": 19,
             "19R": 18
@@ -715,7 +734,8 @@
         {
           "FeederFix": "ENLIP",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "19R": 20
           }
@@ -723,7 +743,7 @@
         {
           "FeederFix": "ENLIP",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "19R": 23
           }
@@ -731,7 +751,8 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/GOMO\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 14,
             "01R": 14,
@@ -742,7 +763,7 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/GOMO\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 16,
             "01R": 15,
@@ -753,7 +774,8 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/GOMO\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01R": 13,
             "19L": 15
@@ -762,7 +784,7 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/GOMO\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01R": 14,
             "19L": 17
@@ -771,7 +793,8 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/GOMO\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01R": 12,
             "19L": 16
@@ -780,7 +803,7 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/GOMO\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01R": 14,
             "19L": 18
@@ -789,7 +812,8 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "19R": 19
           }
@@ -797,7 +821,7 @@
         {
           "FeederFix": "GOMOL",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "19R": 21
           }
@@ -805,7 +829,8 @@
         {
           "FeederFix": "MORBI",
           "ArrivalRegex": "/MORB\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 16,
             "01R": 15,
@@ -816,7 +841,7 @@
         {
           "FeederFix": "MORBI",
           "ArrivalRegex": "/MORB\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 18,
             "01R": 17,
@@ -827,7 +852,8 @@
         {
           "FeederFix": "MORBI",
           "ArrivalRegex": "/MORB\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 13,
             "19R": 11
@@ -836,7 +862,7 @@
         {
           "FeederFix": "MORBI",
           "ArrivalRegex": "/MORB\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 14,
             "19R": 12
@@ -845,7 +871,8 @@
         {
           "FeederFix": "SMOKA",
           "ArrivalRegex": "/SMOK\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 15,
             "01R": 14,
@@ -856,7 +883,7 @@
         {
           "FeederFix": "SMOKA",
           "ArrivalRegex": "/SMOK\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 17,
             "01R": 16,
@@ -867,7 +894,8 @@
         {
           "FeederFix": "SMOKA",
           "ArrivalRegex": "/SMOK\\dM/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01R": 12
           }
@@ -875,7 +903,7 @@
         {
           "FeederFix": "SMOKA",
           "ArrivalRegex": "/SMOK\\dM/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01R": 13
           }
@@ -883,7 +911,8 @@
         {
           "FeederFix": "SMOKA",
           "ArrivalRegex": "/SMOK\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 13,
             "19R": 11
@@ -892,7 +921,7 @@
         {
           "FeederFix": "SMOKA",
           "ArrivalRegex": "/SMOK\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 14,
             "19R": 13
@@ -901,7 +930,8 @@
         {
           "FeederFix": "TEBOT",
           "ArrivalRegex": "/TEBO\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 18,
             "01R": 18,
@@ -912,7 +942,7 @@
         {
           "FeederFix": "TEBOT",
           "ArrivalRegex": "/TEBO\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 20,
             "01R": 21,
@@ -923,7 +953,8 @@
         {
           "FeederFix": "TEBOT",
           "ArrivalRegex": "/TEBO\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01R": 15
           }
@@ -931,7 +962,7 @@
         {
           "FeederFix": "TEBOT",
           "ArrivalRegex": "/TEBO\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01R": 17
           }
@@ -939,7 +970,8 @@
         {
           "FeederFix": "UGTUG",
           "ArrivalRegex": "/UGTU\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 15,
             "01R": 15,
@@ -950,7 +982,7 @@
         {
           "FeederFix": "UGTUG",
           "ArrivalRegex": "/UGTU\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 17,
             "01R": 17,
@@ -961,7 +993,8 @@
         {
           "FeederFix": "UGTUG",
           "ArrivalRegex": "/UGTU\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01R": 13,
             "19L": 12
@@ -970,7 +1003,7 @@
         {
           "FeederFix": "UGTUG",
           "ArrivalRegex": "/UGTU\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01R": 14,
             "19L": 13
@@ -979,7 +1012,8 @@
         {
           "FeederFix": "UGTUG",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "19R": 14
           }
@@ -987,7 +1021,7 @@
         {
           "FeederFix": "UGTUG",
           "ArrivalRegex": "/ISPON\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "19R": 15
           }
@@ -995,7 +1029,8 @@
         {
           "FeederFix": "WOODY",
           "ArrivalRegex": "/WODY\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 14,
             "01R": 13,
@@ -1006,7 +1041,7 @@
         {
           "FeederFix": "WOODY",
           "ArrivalRegex": "/WODY\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 16,
             "01R": 15,
@@ -1017,7 +1052,8 @@
         {
           "FeederFix": "WOODY",
           "ArrivalRegex": "/WODY\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "01L": 11,
             "19R": 12
@@ -1026,7 +1062,7 @@
         {
           "FeederFix": "WOODY",
           "ArrivalRegex": "/WODY\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "01L": 13,
             "19R": 14
@@ -1139,7 +1175,8 @@
         {
           "FeederFix": "ATNAR",
           "ArrivalRegex": "/ATNA\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 13,
             "23": 16
@@ -1148,7 +1185,7 @@
         {
           "FeederFix": "ATNAR",
           "ArrivalRegex": "/ATNA\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 14,
             "23": 19
@@ -1157,7 +1194,8 @@
         {
           "FeederFix": "ATNAR",
           "ArrivalRegex": "ATANA\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 12,
             "23": 14
@@ -1166,7 +1204,7 @@
         {
           "FeederFix": "ATNAR",
           "ArrivalRegex": "ATANA\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 14,
             "23": 16
@@ -1175,7 +1213,8 @@
         {
           "FeederFix": "ATNAR",
           "ArrivalRegex": "/ATNA\\dW/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 12
           }
@@ -1183,7 +1222,7 @@
         {
           "FeederFix": "ATNAR",
           "ArrivalRegex": "/ATNA\\dW/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 14
           }
@@ -1191,7 +1230,7 @@
         {
           "FeederFix": "INTOG",
           "ArrivalRegex": "//ATPIP\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
            "RunwayIntervals":{
             "05": 15,
             "12": 19,
@@ -1202,7 +1241,7 @@
         {
           "FeederFix": "BEVSO",
           "ArrivalRegex": "BEVSO\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 19,
             "12": 17,
@@ -1213,7 +1252,8 @@
         {
           "FeederFix": "AGROS",
           "ArrivalRegex": "BUGS\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 15,
             "23": 16
@@ -1222,7 +1262,7 @@
         {
           "FeederFix": "AGROS",
           "ArrivalRegex": "BUGS\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 16,
             "23": 18
@@ -1231,7 +1271,8 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "BUGS\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 18,
             "23": 19
@@ -1240,7 +1281,7 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "BUGS\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 17,
             "23": 17
@@ -1249,7 +1290,8 @@
         {
           "FeederFix": "MARGO",
           "ArrivalRegex": "BUGS\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 14,
             "23": 15
@@ -1258,7 +1300,7 @@
         {
           "FeederFix": "MARGO",
           "ArrivalRegex": "BUGS\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 15,
             "23": 17
@@ -1267,7 +1309,8 @@
         {
           "FeederFix": "AGROS",
           "ArrivalRegex": "BUGS\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 14,
             "23": 14
@@ -1276,7 +1319,7 @@
         {
           "FeederFix": "AGROS",
           "ArrivalRegex": "BUGS\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 16,
             "23": 15
@@ -1285,7 +1328,8 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "BUGS\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 15,
             "23": 15
@@ -1294,7 +1338,7 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "BUGS\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 17,
             "23": 17
@@ -1303,7 +1347,8 @@
         {
           "FeederFix": "MARGO",
           "ArrivalRegex": "BUGS\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 13,
             "23": 13
@@ -1312,7 +1357,7 @@
         {
           "FeederFix": "MARGO",
           "ArrivalRegex": "BUGS\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 15,
             "23": 14
@@ -1321,7 +1366,8 @@
         {
           "FeederFix": "AGROS",
           "ArrivalRegex": "BUGS\\dW/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 14
           }
@@ -1329,7 +1375,7 @@
         {
           "FeederFix": "AGROS",
           "ArrivalRegex": "BUGS\\dW/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 16
           }
@@ -1337,7 +1383,8 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "BUGS\\dW/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 15
           }
@@ -1345,7 +1392,7 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "BUGS\\dW/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 17
           }
@@ -1353,7 +1400,8 @@
         {
           "FeederFix": "MARGO",
           "ArrivalRegex": "BUGS\\dW/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 13
           }
@@ -1361,7 +1409,7 @@
         {
           "FeederFix": "MARGO",
           "ArrivalRegex": "BUGS\\dW/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 15
           }
@@ -1369,7 +1417,8 @@
         {
           "FeederFix": "DRINA",
           "ArrivalRegex": "/DRIN\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "23": 14
           }
@@ -1377,7 +1426,7 @@
         {
           "FeederFix": "DRINA",
           "ArrivalRegex": "/DRIN\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "23": 16
           }
@@ -1385,7 +1434,8 @@
         {
           "FeederFix": "DRINA",
           "ArrivalRegex": "/DRIN\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "23": 13
           }
@@ -1393,7 +1443,7 @@
         {
           "FeederFix": "DRINA",
           "ArrivalRegex": "/DRIN\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "23": 15
           }
@@ -1401,7 +1451,7 @@
         {
           "FeederFix": "ELROX",
           "ArrivalRegex": "/ELRO\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 11,
             "12": 12,
@@ -1411,7 +1461,7 @@
         {
           "FeederFix": "ATNAR",
           "ArrivalRegex": "/GULF\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 13,
             "12": 13,
@@ -1421,7 +1471,8 @@
         {
           "FeederFix": "INTOG",
           "ArrivalRegex": "/INTO\\d[VXZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals":{
             "05": 14
           }
@@ -1429,7 +1480,7 @@
         {
           "FeederFix": "INTOG",
           "ArrivalRegex": "/INTO\\d[VX]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 16
           }
@@ -1437,7 +1488,7 @@
         {
           "FeederFix": "INTOG",
           "ArrivalRegex": "/INTO\\dZ/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 16
           }
@@ -1445,7 +1496,8 @@
         {
           "FeederFix": "KAKLU",
           "ArrivalRegex": "/KAKL\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 16,
             "23": 12
@@ -1454,7 +1506,7 @@
         {
           "FeederFix": "KAKLU",
           "ArrivalRegex": "/KAKL\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 18,
             "23": 13
@@ -1463,7 +1515,8 @@
         {
           "FeederFix": "KAKLU",
           "ArrivalRegex": "/KAKL\\d[VX]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "05": 17
           }
@@ -1471,7 +1524,7 @@
         {
           "FeederFix": "KAKLU",
           "ArrivalRegex": "/KAKL\\d[VX]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 15
           }
@@ -1479,7 +1532,7 @@
         {
           "FeederFix": "AGROS",
           "ArrivalRegex": "/PAMY\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 14,
             "12": 13,
@@ -1489,7 +1542,7 @@
         {
           "FeederFix": "MARGO",
           "ArrivalRegex": "/PAMY\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 13,
             "12": 12,
@@ -1499,7 +1552,8 @@
         {
           "FeederFix": "ERITH",
           "ArrivalRegex": "/RAYN\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "23": 13
           }
@@ -1507,7 +1561,7 @@
         {
           "FeederFix": "ERITH",
           "ArrivalRegex": "/RYAN\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "23": 14
           }
@@ -1515,7 +1569,8 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "/RAYN\\d[AZ]/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "23": 13
           }
@@ -1523,7 +1578,7 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "/RYAN\\d[AZ]/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "23": 14
           }
@@ -1531,7 +1586,8 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "/RAYN\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "23": 12
           }
@@ -1539,7 +1595,7 @@
         {
           "FeederFix": "KLAVA",
           "ArrivalRegex": "/RYAN\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "23": 14
           }
@@ -1547,7 +1603,7 @@
         {
           "FeederFix": "KAKLU",
           "ArrivalRegex": "/SURGN\\d/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "05": 13,
             "12": 17,
@@ -1643,7 +1699,8 @@
         {
           "FeederFix": "KAGMI",
           "ArrivalRegex": "/IPMO\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 17,
             "06": 14,
@@ -1654,7 +1711,7 @@
         {
           "FeederFix": "KAGMI",
           "ArrivalRegex": "/IPMO\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 19,
             "06": 16,
@@ -1665,7 +1722,8 @@
         {
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 17,
             "06": 19,
@@ -1676,7 +1734,7 @@
         {
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 18,
             "06": 20,
@@ -1687,7 +1745,8 @@
         {
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 15,
             "06": 16
@@ -1696,7 +1755,7 @@
         {
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 15,
             "06": 16
@@ -1705,7 +1764,8 @@
         {
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 15
           }
@@ -1713,7 +1773,7 @@
         {
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 15
           }
@@ -1721,7 +1781,8 @@
         {
           "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 15,
             "06": 16,
@@ -1732,7 +1793,7 @@
         {
           "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 20,
             "06": 22,
@@ -1743,7 +1804,8 @@
         {
           "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 13,
             "06": 14
@@ -1752,7 +1814,7 @@
         {
           "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 17,
             "06": 18
@@ -1761,7 +1823,8 @@
         {
           "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 13
           }
@@ -1769,7 +1832,7 @@
         {
           "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 17
           }
@@ -1777,7 +1840,8 @@
         {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dA/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 11,
             "06": 12,
@@ -1788,7 +1852,7 @@
         {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 12,
             "06": 14,
@@ -1799,7 +1863,8 @@
         {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dV/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 10,
             "06": 11
@@ -1808,7 +1873,7 @@
         {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 12,
             "06": 13
@@ -1817,7 +1882,8 @@
         {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dX/",
-          "AircraftType": "Jet",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 10
           }
@@ -1825,7 +1891,7 @@
         {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 11
           }
@@ -1833,7 +1899,7 @@
         {
           "FeederFix": "DAYLR",
           "ArrivalRegex": "/DAYL\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 13,
             "06": 15
@@ -1842,7 +1908,7 @@
         {
           "FeederFix": "DAYLR",
           "ArrivalRegex": "/DAYL\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 12,
             "06": 13
@@ -1851,7 +1917,7 @@
         {
           "FeederFix": "DAYLR",
           "ArrivalRegex": "/DAYL\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 11
           }
@@ -1859,7 +1925,7 @@
         {
           "FeederFix": "LAVEX",
           "ArrivalRegex": "/LAVE\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 18,
             "06": 20,
@@ -1870,7 +1936,7 @@
         {
           "FeederFix": "LAVEX",
           "ArrivalRegex": "/LAVE\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 15,
             "06": 16
@@ -1879,7 +1945,7 @@
         {
           "FeederFix": "LAVEX",
           "ArrivalRegex": "/LAVE\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 15
           }
@@ -1887,7 +1953,7 @@
         {
           "FeederFix": "SAPKO",
           "ArrivalRegex": "/SAPK\\dA/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 20,
             "06": 22,
@@ -1898,7 +1964,7 @@
         {
           "FeederFix": "SAPKO",
           "ArrivalRegex": "/SAPK\\dV/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 17,
             "06": 18
@@ -1907,7 +1973,7 @@
         {
           "FeederFix": "SAPKO",
           "ArrivalRegex": "/SAPK\\dX/",
-          "AircraftType": "NonJet",
+          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 17
           }
