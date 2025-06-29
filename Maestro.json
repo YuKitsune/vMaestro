@@ -275,7 +275,7 @@
     },
     {
       "Identifier": "YMML",
-      "FeederFixes": ["ARBEY", "BOYSE", "BOYSE/V", "BOOIN", "BOOIN/V", "RAZZI/AV", "RAZZI/M", "PORTS", "ALAXO", "ALAXO/V", "ALAXO/P"],
+      "FeederFixes": ["ARBEY", "BOYSE", "BOYSE", "BOOIN", "BOOIN", "RAZZI", "RAZZI", "PORTS", "ALAXO", "ALAXO", "ALAXO"],
       "Runways": [
         { "Identifier": "09" },
         { "Identifier": "16" },
@@ -378,8 +378,8 @@
           }
         },
         {
-            "FeederFix": "BOOIN/V",
-            "ArrivalRegex": "/BOIN\\dA/",
+            "FeederFix": "BOOIN",
+            "ArrivalRegex": "/BOIN\\dV/",
             "AircraftType": "Jet",
             "RunwayIntervals": {
               "34": 12
