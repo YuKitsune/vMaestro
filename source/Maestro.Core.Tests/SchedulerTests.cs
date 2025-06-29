@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -21,7 +22,13 @@ public class SchedulerTests
         _airportConfigurationFixture = airportConfigurationFixture;
         
         var lookup = Substitute.For<IPerformanceLookup>();
-        lookup.GetPerformanceDataFor(Arg.Any<string>()).Returns(new AircraftPerformanceData { Type = AircraftType.Jet, WakeCategory = WakeCategory.Medium });
+        lookup.GetPerformanceDataFor(Arg.Any<string>()).Returns(x =>
+            new AircraftPerformanceData
+            {
+                Type = x.ArgAt<string>(0), 
+                AircraftCategory = AircraftCategory.Jet, 
+                WakeCategory = WakeCategory.Medium
+            });
 
         _scheduler = new Scheduler(lookup, Substitute.For<ILogger>());
     }

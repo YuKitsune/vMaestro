@@ -25,6 +25,13 @@ public class EstimateProviderTests
         _airportConfigurationFixture = airportConfigurationFixture;
         
         _performanceLookup = Substitute.For<IPerformanceLookup>();
+        _performanceLookup.GetPerformanceDataFor(Arg.Is("B738"))
+            .Returns(new AircraftPerformanceData
+            {
+                Type = "B738",
+                AircraftCategory = AircraftCategory.Jet,
+                WakeCategory = WakeCategory.Medium,
+            });
         
         _arrivalLookup = Substitute.For<IArrivalLookup>();
         _arrivalLookup.GetArrivalInterval(
@@ -32,7 +39,7 @@ public class EstimateProviderTests
                 Arg.Is("RIVET"),
                 Arg.Is("RIVET4"),
                 Arg.Is("34L"),
-                Arg.Is(AircraftType.Jet))
+                Arg.Any<AircraftPerformanceData>())
             .Returns(_arrivalInterval);
 
         _fixLookup = Substitute.For<IFixLookup>();
