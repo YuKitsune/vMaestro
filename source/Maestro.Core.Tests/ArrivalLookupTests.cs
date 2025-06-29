@@ -46,7 +46,7 @@ public class ArrivalLookupTests
                     }
                 },
 
-                // B STAR, All other props
+                // B STAR, Props only
                 new ArrivalConfiguration
                 {
                     FeederFix = "ABCDE",
@@ -56,6 +56,48 @@ public class ArrivalLookupTests
                     {
                         {
                             "01", 12
+                        }
+                    }
+                },
+
+                // C STAR, Jets only
+                new ArrivalConfiguration
+                {
+                    FeederFix = "ABCDE",
+                    ArrivalRegex = new Regex("ABC\\dC"),
+                    Category = AircraftCategory.Jet,
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        {
+                            "01", 13
+                        }
+                    }
+                },
+
+                // C STAR, DH8D only
+                new ArrivalConfiguration
+                {
+                    FeederFix = "ABCDE",
+                    ArrivalRegex = new Regex("ABC\\dC"),
+                    AircraftType = "DH8D",
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        {
+                            "01", 14
+                        }
+                    }
+                },
+
+                // C STAR, Non-jet only
+                new ArrivalConfiguration
+                {
+                    FeederFix = "ABCDE",
+                    ArrivalRegex = new Regex("ABC\\dC"),
+                    Category = AircraftCategory.NonJet,
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        {
+                            "01", 15
                         }
                     }
                 }
@@ -164,5 +206,56 @@ public class ArrivalLookupTests
         // Assert
         jetInterval.ShouldBe(TimeSpan.FromMinutes(11));
         nonJetInterval.ShouldBe(TimeSpan.FromMinutes(12));
+    }
+
+    [Fact]
+    public void WhenSpecificAircraftTypeIsSpecified_CorrectIntervalIsReturned()
+    {
+        // Arrange
+        var arrivalLookup = new ArrivalLookup(
+            _airportConfigurationProvider,
+            Substitute.For<ILogger>());
+        
+        // Act
+        var jetInterval = arrivalLookup.GetArrivalInterval(
+            "YZZZ",
+            "ABCDE",
+            "ABC1C",
+            "01",
+            new AircraftPerformanceData
+            {
+                Type = "B738",
+                AircraftCategory = AircraftCategory.Jet,
+                WakeCategory = WakeCategory.Medium
+            });
+        
+        var dash8Interval = arrivalLookup.GetArrivalInterval(
+            "YZZZ",
+            "ABCDE",
+            "ABC1C",
+            "01",
+            new AircraftPerformanceData
+            {
+                Type = "DH8D",
+                AircraftCategory = AircraftCategory.NonJet,
+                WakeCategory = WakeCategory.Medium
+            });
+        
+        var nonJetInterval = arrivalLookup.GetArrivalInterval(
+            "YZZZ",
+            "ABCDE",
+            "ABC1C",
+            "01",
+            new AircraftPerformanceData
+            {
+                Type = "SF34",
+                AircraftCategory = AircraftCategory.NonJet,
+                WakeCategory = WakeCategory.Medium
+            });
+
+        // Assert
+        jetInterval.ShouldBe(TimeSpan.FromMinutes(13));
+        dash8Interval.ShouldBe(TimeSpan.FromMinutes(14));
+        nonJetInterval.ShouldBe(TimeSpan.FromMinutes(15));
     }
 }

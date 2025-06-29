@@ -32,6 +32,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         var foundArrivalConfigurations = airportConfiguration.Arrivals
             .Where(x => x.FeederFix == feederFixIdentifier)
             .Where(x =>
+                (string.IsNullOrEmpty(x.AircraftType) || x.AircraftType == aircraftPerformanceData.Type) &&
                 (x.AdditionalAircraftTypes.Contains(aircraftPerformanceData.Type) || x.Category is null || x.Category == aircraftPerformanceData.AircraftCategory) &&
                 (string.IsNullOrEmpty(arrivalIdentifier) || x.ArrivalRegex.IsMatch(arrivalIdentifier)))
             .ToArray();
