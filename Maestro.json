@@ -566,14 +566,12 @@
         {
           "Priority": 1,
           "FeederFixes": ["BOYSE", "BOOIN"],
-          "ArrivalRegex":"/.*\\dV/",
           "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
           "Runways": ["34"]
         },
         {
           "Priority": 2,
           "FeederFixes": ["RAZZI", "ALAXO"],
-          "ArrivalRegex":"/.*\\d[MP]/",
           "WakeCategories": ["Light", "Medium", "Heavy"],
           "Runways": ["16"]
         }
@@ -1987,14 +1985,12 @@
         {
           "Priority": 1,
           "FeederFixes": ["KABLI", "JULIM", "LAVEX", "SAPKO", "SOLUS"],
-          "ArrivalRegex": "/.*\\dX/",
           "WakeCategories": ["Light", "Medium", "Heavy"],
           "Runways": ["03"]
         },
         {
           "Priority": 2,
           "FeederFixes": ["JULIM", "KABLI", "DAYLR", "LAVEX", "SAPKO"],
-          "ArrivalRegex": "/.*\\dV/",
           "WakeCategories": ["Light", "Medium", "Heavy"],
           "Runways": ["03", "06"]
         }
