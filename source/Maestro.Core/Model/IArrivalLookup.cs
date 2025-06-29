@@ -10,7 +10,7 @@ public interface IArrivalLookup
         string feederFixIdentifier,
         string? arrivalIdentifier,
         string runwayIdentifier,
-        AircraftType aircraftType);
+        AircraftPerformanceData aircraftPerformanceData);
 }
 
 public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
@@ -21,7 +21,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         string feederFixIdentifier,
         string? arrivalIdentifier,
         string runwayIdentifier,
-        AircraftType aircraftType)
+        AircraftPerformanceData aircraftPerformanceData)
     {
         var airportConfiguration = airportConfigurationProvider
             .GetAirportConfigurations()
@@ -30,11 +30,11 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
             return null;
 
         var foundArrivalConfigurations = airportConfiguration.Arrivals
+            .Where(x => x.FeederFix == feederFixIdentifier)
             .Where(x =>
-                x.FeederFix == feederFixIdentifier &&
-                x.AircraftType == aircraftType &&
+                (string.IsNullOrEmpty(x.AircraftType) || x.AircraftType == aircraftPerformanceData.Type) &&
+                (x.AdditionalAircraftTypes.Contains(aircraftPerformanceData.Type) || x.Category is null || x.Category == aircraftPerformanceData.AircraftCategory) &&
                 (string.IsNullOrEmpty(arrivalIdentifier) || x.ArrivalRegex.IsMatch(arrivalIdentifier)))
-            .Where(x => x.RunwayIntervals.ContainsKey(runwayIdentifier))
             .ToArray();
         
         // No matches, nothing to do
@@ -50,7 +50,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
                 feederFixIdentifier,
                 runwayIdentifier,
                 arrivalIdentifier,
-                aircraftType);
+                aircraftPerformanceData.Type);
         }
         
         return TimeSpan.FromMinutes(foundArrivalConfigurations.First().RunwayIntervals[runwayIdentifier]);

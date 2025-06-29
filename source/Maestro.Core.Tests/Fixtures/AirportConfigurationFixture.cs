@@ -10,9 +10,10 @@ namespace Maestro.Core.Tests.Fixtures;
 public class AirportConfigurationFixture
 {
     public AirportConfiguration Instance =>
-        new AirportConfiguration
+        new()
         {
             Identifier = "YSSY",
+            MinimumRadarEstimateRange = 200,
             Runways =
             [
                 new RunwayConfiguration
@@ -52,7 +53,7 @@ public class AirportConfigurationFixture
                 {
                     FeederFix = "RIVET",
                     ArrivalRegex = new Regex(@"RIVET\d"),
-                    AircraftType = AircraftType.Jet,
+                    Category = AircraftCategory.Jet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
                         { "34L", 16 },
@@ -63,7 +64,7 @@ public class AirportConfigurationFixture
                 {
                     FeederFix = "AKMIR",
                     ArrivalRegex = new Regex(@"ODALE\d"),
-                    AircraftType = AircraftType.Jet,
+                    Category = AircraftCategory.Jet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
                         { "34L", 16 },

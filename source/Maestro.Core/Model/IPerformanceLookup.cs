@@ -7,9 +7,10 @@ public interface IPerformanceLookup
 
 public class AircraftPerformanceData
 {
-    public WakeCategory WakeCategory { get; init; }
+    public required string Type { get; init; }
+    public required WakeCategory WakeCategory { get; init; }
         
-    public AircraftType Type { get; init; }
+    public required AircraftCategory AircraftCategory { get; init; }
 }
 
 public enum WakeCategory
@@ -18,4 +19,10 @@ public enum WakeCategory
     Medium,
     Heavy,
     SuperHeavy
+}
+
+public enum AircraftCategory
+{
+    Jet,
+    NonJet
 }

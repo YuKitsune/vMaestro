@@ -5,7 +5,6 @@ namespace Maestro.Core.Configuration;
 public interface ILoggingConfiguration
 {
     LogEventLevel LogLevel { get; }
-    string OutputDirectory { get; }
     int MaxFileAgeDays { get; }
 }
 

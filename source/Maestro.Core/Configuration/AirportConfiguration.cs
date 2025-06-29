@@ -3,6 +3,7 @@
 public class AirportConfiguration
 {
     public required string Identifier { get; init; }
+    public required double MinimumRadarEstimateRange { get; init; } = 150;
     public required string[] FeederFixes { get; init; }
     public required RunwayConfiguration[] Runways { get; init; }
     public required RunwayModeConfiguration[] RunwayModes { get; init; }

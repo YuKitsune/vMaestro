@@ -1,10 +1,9 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 using vatsys;
 
 namespace Maestro.Plugin;
 
-public class VatsysPerformanceDataLookup(IMaestroConfiguration maestroConfiguration) : IPerformanceLookup
+public class VatsysPerformanceDataLookup : IPerformanceLookup
 {
     public AircraftPerformanceData? GetPerformanceDataFor(string aircraftType)
     {
@@ -22,19 +21,13 @@ public class VatsysPerformanceDataLookup(IMaestroConfiguration maestroConfigurat
             _ => WakeCategory.Heavy
         };
 
-        var type = performanceData.IsJet
-            ? AircraftType.Jet
-            : AircraftType.NonJet;
-        var reclassification = maestroConfiguration.Reclassifications.FirstOrDefault(r => r.AircraftType == aircraftType);
-        if (reclassification is not null)
-        {
-            type = reclassification.NewClassification;
-        }
-
         return new AircraftPerformanceData
         {
+            Type = aircraftType,
             WakeCategory = wakeCategory,
-            Type = type
+            AircraftCategory = performanceData.IsJet
+                ? AircraftCategory.Jet
+                : AircraftCategory.NonJet
         };
     }
 }
