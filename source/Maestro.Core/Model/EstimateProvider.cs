@@ -49,6 +49,8 @@ public class EstimateProvider(
 
     public DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate)
     {
+        // TODO: logging
+        
         // We need ETA_FF in order to calculate the landing time using intervals.
         // If we don't have those, defer to the system estimate.
         if (flight.FeederFixIdentifier is null || 
@@ -56,12 +58,15 @@ public class EstimateProvider(
             return systemEstimate;
 
         var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+        if (aircraftPerformance is null)
+            return systemEstimate;
+        
         var intervalToRunway = arrivalLookup.GetArrivalInterval(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
             flight.AssignedArrivalIdentifier,
             flight.AssignedRunwayIdentifier,
-            aircraftPerformance?.Type ?? AircraftType.Jet);
+            aircraftPerformance);
         if (intervalToRunway is null)
             return systemEstimate;
 

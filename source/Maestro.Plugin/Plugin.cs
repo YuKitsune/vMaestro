@@ -22,13 +22,11 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
 //  - What's next?
-//      - Consider separating TMA and ENR delay
-//      - Desequence and remove flights from sequence
-//      - Manual ETA_FF
-//      - Change runway mode and rates
-//      - Architecture decision record
+//      - ArrivalConfiguration rework
+//      - Merge new arrival configs
+//      - Runway mode and TMA configuration changes
 //      - Insert flights and pending list
-//      - Revisit estimate calculations
+//      - Manual ETA_FF
 
 namespace Maestro.Plugin
 {

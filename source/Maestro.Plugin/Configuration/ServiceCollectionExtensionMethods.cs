@@ -9,7 +9,6 @@ public static class ServiceCollectionExtensionMethods
     {
         return services
             .AddSingleton<ILoggingConfiguration>(pluginConfiguration.Logging)
-            .AddSingleton<IMaestroConfiguration>(pluginConfiguration.Maestro)
             .AddSingleton<IAirportConfigurationProvider>(new AirportConfigurationProvider(pluginConfiguration.Airports));
     }
 }
