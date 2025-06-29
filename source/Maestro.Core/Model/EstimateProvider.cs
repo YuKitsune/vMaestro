@@ -1,39 +1,56 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
 
 public interface IEstimateProvider
 {
-    DateTimeOffset? GetFeederFixEstimate(string? feederFixIdentifier, DateTimeOffset? systemEstimate, FlightPosition? flightPosition);
+    DateTimeOffset? GetFeederFixEstimate(AirportConfiguration airportConfiguration, string feederFixIdentifier, DateTimeOffset systemEstimate, FlightPosition? flightPosition);
     DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate);
 }
 
-public class EstimateProvider(IMaestroConfiguration configuration, IPerformanceLookup performanceLookup, IArrivalLookup arrivalLookup, IFixLookup fixLookup, IClock clock)
+public class EstimateProvider(
+    IPerformanceLookup performanceLookup,
+    IArrivalLookup arrivalLookup,
+    IFixLookup fixLookup,
+    IClock clock)
     : IEstimateProvider
 {
-    public DateTimeOffset? GetFeederFixEstimate(string? feederFixIdentifier, DateTimeOffset? systemEstimate, FlightPosition? flightPosition)
+    public DateTimeOffset? GetFeederFixEstimate(
+        AirportConfiguration airportConfiguration,
+        string feederFixIdentifier,
+        DateTimeOffset systemEstimate,
+        FlightPosition? flightPosition)
     {
-        if (configuration.FeederFixEstimateSource == FeederFixEstimateSource.SystemEstimate ||
-            string.IsNullOrEmpty(feederFixIdentifier) ||
-            flightPosition is null)
+        if (flightPosition is null)
             return systemEstimate;
 
-        var feederFix = fixLookup.FindFix(feederFixIdentifier!);
+        var feederFix = fixLookup.FindFix(feederFixIdentifier);
         if (feederFix is null)
             return systemEstimate;
 
-        // BRL method
         var distance = Calculations.CalculateDistanceNauticalMiles(
             flightPosition.Coordinate,
             feederFix.Coordinate);
+
+        // Prefer system estimate beyond the specified range
+        if (distance > airportConfiguration.MinimumRadarEstimateRange)
+            return systemEstimate;
+
+        // For flights within range, average the radar estimate (BRL) and the system estimate
+        var radarEstimate = clock.UtcNow() + TimeSpan.FromHours(distance / flightPosition.GroundSpeed);
+        var difference = (radarEstimate - systemEstimate).Duration();
+        var average = DateTimeOffsetHelpers.Earliest(radarEstimate, systemEstimate)
+            .Add(TimeSpan.FromSeconds(difference.TotalSeconds / 2));
         
-        var estimate = clock.UtcNow() + TimeSpan.FromHours(distance / flightPosition.GroundSpeed);
-        return estimate;
+        return average;
     }
 
     public DateTimeOffset? GetLandingEstimate(Flight flight, DateTimeOffset? systemEstimate)
     {
+        // TODO: logging
+        
         // We need ETA_FF in order to calculate the landing time using intervals.
         // If we don't have those, defer to the system estimate.
         if (flight.FeederFixIdentifier is null || 
@@ -41,19 +58,25 @@ public class EstimateProvider(IMaestroConfiguration configuration, IPerformanceL
             return systemEstimate;
 
         var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+        if (aircraftPerformance is null)
+            return systemEstimate;
+        
         var intervalToRunway = arrivalLookup.GetArrivalInterval(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
             flight.AssignedArrivalIdentifier,
             flight.AssignedRunwayIdentifier,
-            aircraftPerformance?.Type ?? AircraftType.Jet);
+            aircraftPerformance);
         if (intervalToRunway is null)
             return systemEstimate;
 
         var feederFixTime = flight.HasPassedFeederFix
-            ? flight.ActualFeederFixTime!.Value
-            : flight.EstimatedFeederFixTime!.Value;
-        var landingEstimateFromInterval = feederFixTime.Add(intervalToRunway.Value);
+            ? flight.ActualFeederFixTime == DateTime.MaxValue // vatSys uses MaxValue if the flight has passed the FF but the specific time is not known (I.e: Controller connected after flight passed FF)
+                ? systemEstimate // Defer to system estimate if ATO_FF is unavailable
+                : flight.ActualFeederFixTime // Prefer ATO_FF if available
+            : flight.EstimatedFeederFixTime; // Use ETA_FF if not passed FF
+
+        var landingEstimateFromInterval = feederFixTime?.Add(intervalToRunway.Value);
 
         return landingEstimateFromInterval;
 

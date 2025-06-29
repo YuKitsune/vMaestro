@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.Composition;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
@@ -21,25 +22,29 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
 //  - What's next?
-//      - Consider separating TMA and ENR delay
-//      - Desequence and remove flights from sequence
-//      - Manual ETA_FF
-//      - Change runway mode and rates
-//      - Architecture decision record
+//      - ArrivalConfiguration rework
+//      - Merge new arrival configs
+//      - Runway mode and TMA configuration changes
 //      - Insert flights and pending list
-//      - Revisit estimate calculations
+//      - Manual ETA_FF
 
 namespace Maestro.Plugin
 {
     [Export(typeof(IPlugin))]
     public class Plugin : IPlugin
     {
+#if DEBUG
+        const string Name = "Maestro - Debug";
+#else
         const string Name = "Maestro";
+#endif
+
         string IPlugin.Name => Name;
 
         static BaseForm? _maestroWindow;
 
         readonly IMediator _mediator = null!;
+        readonly ILogger _logger = null!;
 
         public Plugin()
         {
@@ -50,6 +55,16 @@ namespace Maestro.Plugin
                 AddMenuItem();
 
                 _mediator = Ioc.Default.GetRequiredService<IMediator>();
+                _logger = Ioc.Default.GetRequiredService<ILogger>();
+                
+                var executingAssembly = Assembly.GetExecutingAssembly();
+                var version = executingAssembly
+                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                    .InformationalVersion ?? string.Empty;
+#if RELEASE
+                version = version.Split('+').First();
+#endif
+                _logger.Information("{PluginName} {Version} initialized.", Name, version);
 
                 Network.Connected += Network_Connected;
                 Network.Disconnected += Network_Disconnected;
@@ -76,9 +91,13 @@ namespace Maestro.Plugin
         {
             var configuration = ConfigureConfiguration();
 
-            var logFileName = Path.Combine(configuration.Logging.OutputDirectory, "Maestro.log");
+            var logFileName = Path.Combine(Helpers.GetFilesFolder(), "maestro_log.txt");
             var logger = new LoggerConfiguration()
-                .WriteTo.File(logFileName, rollingInterval: RollingInterval.Day)
+                .WriteTo.File(
+                    path: logFileName,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: configuration.Logging.MaxFileAgeDays,
+                    outputTemplate: "{Timestamp:u} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .MinimumLevel.Is(configuration.Logging.LogLevel)
                 .CreateLogger();
             

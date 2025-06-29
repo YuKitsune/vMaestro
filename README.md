@@ -1,4 +1,18 @@
-> **Warning**
+<h1 align="center">
+  vMaestro 
+</h1>
+
+<h3 align="center">
+  A vatSys plugin emulating the Maestro Traffic Flow Management System.
+
+  [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yukitsune/vmaestro/CI.yml?branch=main)](https://github.com/YuKitsune/vMaestro/actions/workflows/CI.yml)
+  [![License](https://img.shields.io/github/license/YuKitsune/vMaestro)](https://github.com/YuKitsune/vMaestro/blob/main/LICENSE)
+  [![Latest Release](https://img.shields.io/github/v/release/YuKitsune/vMaestro?include_prereleases)](https://github.com/YuKitsune/vMaestro/releases)
+
+  <img src="./docs/README-screenshot.png" width="320" />
+</h3>
+
+> [!WARNING]
 > This project is under active development and is not ready for active use on the VATSIM network.
 
 # Installation
@@ -14,20 +28,16 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
 # Known Issues 
 
-- Flights in the front of the queue can sometimes move backwards in the queue.
-- Flights that are far away will be sequenced to land shortly after a much earlier flight, resulting in a negative delay.
-    - I have a hunch this is because the ETAs are changing mid-way through scheduling, so the sequence isn't being re-ordered.
+- Desequence and Information windows do not re-draw
 - The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
 - When a button is enabled, it's appearance is still disabled, but it is still interactable.
 - The ladder occasionally stop updating.
 - Desequence window can be re-opened multiple times.
 - Diversions result in weird behaviour.
-- Flights appear to be stablised twice in the logs.
-- Q: Should times from vatSys be rounded to the nearest 30 secs?
 - Stable flights don't seem to get updated ETAs.
 - Recompute, ETA_FF and STA_FF update, but STA doesn't.
-- Flights sometimes get sequenced ahead of their estimate
-- Lanidng time cannot be determined for flights past FF if the flight was added to the sequence passed the FF
+- Resuming a desequenced flight does not work
+- Q: Should times from vatSys be rounded to the nearest 30 secs?
 
 # Roadmap
 
