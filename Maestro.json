@@ -556,7 +556,7 @@
           "Identifier": "ALL",
           "ViewMode": "Enroute",
           "LeftLadder": ["ARBEY", "ALAXO", "PORTS"],
-          "RightLadder": ["BOOIN", "BOYSE", "RAZZI/AV"]
+          "RightLadder": ["BOOIN", "BOYSE", "RAZZI"]
         },
         {
           "Identifier": "RWY",
