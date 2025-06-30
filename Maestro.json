@@ -1703,7 +1703,6 @@
           "FeederFix": "KAGMI",
           "ArrivalRegex": "/IPMO\\dA/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 17,
             "06": 14,
@@ -1712,21 +1711,9 @@
           }
         },
         {
-          "FeederFix": "KAGMI",
-          "ArrivalRegex": "/IPMO\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "03": 19,
-            "06": 16,
-            "21": 17,
-            "24": 20
-          }
-        },
-        {
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dA/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 17,
             "06": 19,
@@ -1736,29 +1723,8 @@
         },
         {
           "FeederFix": "JULIM",
-          "ArrivalRegex": "/JULI\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "03": 18,
-            "06": 20,
-            "21": 16,
-            "24": 15
-          }
-        },
-        {
-          "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dV/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "03": 15,
-            "06": 16
-          }
-        },
-        {
-          "FeederFix": "JULIM",
-          "ArrivalRegex": "/JULI\\dV/",
-          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 15,
             "06": 16
@@ -1768,15 +1734,6 @@
           "FeederFix": "JULIM",
           "ArrivalRegex": "/JULI\\dX/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "03": 15
-          }
-        },
-        {
-          "FeederFix": "JULIM",
-          "ArrivalRegex": "/JULI\\dX/",
-          "Category": "NonJet",
           "RunwayIntervals": {
             "03": 15
           }
@@ -1785,7 +1742,6 @@
           "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dA/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 15,
             "06": 16,
@@ -1795,20 +1751,8 @@
         },
         {
           "FeederFix": "KABLI",
-          "ArrivalRegex": "/KABL\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "03": 20,
-            "06": 22,
-            "21": 11,
-            "24": 11
-          }
-        },
-        {
-          "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dV/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 13,
             "06": 14
@@ -1816,35 +1760,16 @@
         },
         {
           "FeederFix": "KABLI",
-          "ArrivalRegex": "/KABL\\dV/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "03": 17,
-            "06": 18
-          }
-        },
-        {
-          "FeederFix": "KABLI",
           "ArrivalRegex": "/KABL\\dX/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 13
-          }
-        },
-        {
-          "FeederFix": "KABLI",
-          "ArrivalRegex": "/KABL\\dX/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "03": 17
           }
         },
         {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dA/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 11,
             "06": 12,
@@ -1854,20 +1779,8 @@
         },
         {
           "FeederFix": "SOLUS",
-          "ArrivalRegex": "/SOLU\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "03": 12,
-            "06": 14,
-            "21": 16,
-            "24": 14
-          }
-        },
-        {
-          "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dV/",
           "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
             "03": 10,
             "06": 11
@@ -1875,28 +1788,131 @@
         },
         {
           "FeederFix": "SOLUS",
-          "ArrivalRegex": "/SOLU\\dV/",
-          "Category": "NonJet",
+          "ArrivalRegex": "/SOLU\\dX/",
+          "Category": "Jet",
+          "RunwayIntervals": {
+            "03": 10
+          }
+        },
+        {
+          "FeederFix": "DAYLR",
+          "ArrivalRegex": "/DAYL\\dA/",
+          "AircraftType": "DH8D",
           "RunwayIntervals": {
             "03": 12,
             "06": 13
           }
         },
         {
-          "FeederFix": "SOLUS",
-          "ArrivalRegex": "/SOLU\\dX/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
+          "FeederFix": "DAYLR",
+          "ArrivalRegex": "/DAYL\\dV/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 10,
+            "06": 11
+          }
+        },
+        {
+          "FeederFix": "DAYLR",
+          "ArrivalRegex": "/DAYL\\dX/",
+          "AircraftType": "DH8D",
           "RunwayIntervals": {
             "03": 10
           }
         },
         {
+          "FeederFix": "KAGMI",
+          "ArrivalRegex": "/IPMO\\dA/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 17,
+            "06": 14,
+            "21": 15,
+            "24": 17
+          }
+        },
+        {
+          "FeederFix": "LAVEX",
+          "ArrivalRegex": "/LAVE\\dA/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 16,
+            "06": 17,
+            "21": 14,
+            "24": 13
+          }
+        },
+        {
+          "FeederFix": "LAVEX",
+          "ArrivalRegex": "/LAVE\\dV/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 14,
+            "06": 14
+          }
+        },
+        {
+          "FeederFix": "LAVEX",
+          "ArrivalRegex": "/LAVE\\dX/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 13
+          }
+        },
+        {
+          "FeederFix": "SAPKO",
+          "ArrivalRegex": "/SAPK\\dA/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 18,
+            "06": 19,
+            "21": 10,
+            "24": 10
+          }
+        },
+        {
+          "FeederFix": "SAPKO",
+          "ArrivalRegex": "/SAPK\\dV/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 15,
+            "06": 16
+          }
+        },
+        {
+          "FeederFix": "SAPKO",
+          "ArrivalRegex": "/SAPK\\dX/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 15
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dA/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 11,
+            "06": 12,
+            "21": 14,
+            "24": 12
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dV/",
+          "AircraftType": "DH8D",
+          "RunwayIntervals": {
+            "03": 10,
+            "06": 11
+          }
+        },
+        {
           "FeederFix": "SOLUS",
           "ArrivalRegex": "/SOLU\\dX/",
-          "Category": "NonJet",
+          "AircraftType": "DH8D",
           "RunwayIntervals": {
-            "03": 11
+            "03": 10
           }
         },
         {
@@ -1923,6 +1939,17 @@
           "Category": "NonJet",
           "RunwayIntervals": {
             "03": 11
+          }
+        },
+        {
+          "FeederFix": "KAGMI",
+          "ArrivalRegex": "/IPMO\\dA/",
+          "Category": "NonJet",
+          "RunwayIntervals": {
+            "03": 19,
+            "06": 16,
+            "21": 17,
+            "24": 20
           }
         },
         {
@@ -1979,6 +2006,35 @@
           "Category": "NonJet",
           "RunwayIntervals": {
             "03": 17
+          }
+        },
+
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dA/",
+          "Category": "NonJet",
+          "RunwayIntervals": {
+            "03": 12,
+            "06": 14,
+            "21": 16,
+            "24": 14
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dV/",
+          "Category": "NonJet",
+          "RunwayIntervals": {
+            "03": 12,
+            "06": 13
+          }
+        },
+        {
+          "FeederFix": "SOLUS",
+          "ArrivalRegex": "/SOLU\\dX/",
+          "Category": "NonJet",
+          "RunwayIntervals": {
+            "03": 11
           }
         }
       ],
