@@ -282,7 +282,7 @@
     },
     {
       "Identifier": "YMML",
-      "FeederFixes": ["ARBEY", "BOYSE", "BOYSE", "BOOIN", "BOOIN", "RAZZI", "RAZZI", "PORTS", "ALAXO", "ALAXO", "ALAXO"],
+      "FeederFixes": ["ARBEY", "BOYSE", "BOOIN", "RAZZI", "PORTS", "ALAXO"],
       "Runways": [
         { "Identifier": "09" },
         { "Identifier": "16" },
