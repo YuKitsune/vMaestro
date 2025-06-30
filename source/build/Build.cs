@@ -23,9 +23,10 @@ class Build : NukeBuild
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
     
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
-    AbsolutePath OutputDirectory => IsLocalBuild
+    AbsolutePath OutputDirectory => Configuration == Configuration.Debug
         ? GetDebugOutputPath()
         : RootDirectory / ".dist";
+    AbsolutePath BuildOutputDirectory => OutputDirectory / "MaestroPlugin";
     AbsolutePath ZipPath => OutputDirectory / $"Maestro.{GitVersion.FullSemVer}.zip";
     AbsolutePath ChecksumPath => OutputDirectory / $"Maestro.{GitVersion.FullSemVer}.zip.sha256";
     
@@ -47,12 +48,12 @@ class Build : NukeBuild
                 "Building version {Version} with configuration {Configuration} to {OutputDirectory}",
                 GitVersion,
                 Configuration,
-                OutputDirectory);
+                BuildOutputDirectory);
             
             DotNetTasks.DotNetBuild(s => s
                 .SetProjectFile(PluginProjectPath)
                 .SetConfiguration(Configuration)
-                .SetOutputDirectory(OutputDirectory)
+                .SetOutputDirectory(BuildOutputDirectory)
                 .SetVersion(GitVersion.FullSemVer)
                 .SetProperty("BuildMetadata", GitVersion.BuildMetaData));
         });
@@ -64,11 +65,13 @@ class Build : NukeBuild
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
             var readmeFile = RootDirectory / "README.md";
-            var changelogFile = RootDirectory / "CHANGELOG.md";
+            var configFile = RootDirectory / "Maestro.json";
+            // var changelogFile = RootDirectory / "CHANGELOG.md";
             
             dpiAwareFixScript.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
             readmeFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
-            changelogFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
+            configFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
+            // changelogFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
             
             Log.Information("Packaging {OutputDirectory} to {ZipPath}", OutputDirectory, ZipPath);
             OutputDirectory.ZipTo(ZipPath);
