@@ -19,17 +19,17 @@ public class AirportConfigurationFixture
                 new RunwayConfiguration
                 {
                     Identifier = "34L",
-                    DefaultLandingRateSeconds = 180
+                    LandingRateSeconds = 180
                 },
                 new RunwayConfiguration
                 {
                     Identifier = "34R",
-                    DefaultLandingRateSeconds = 180
+                    LandingRateSeconds = 180
                 }
             ],
             RunwayModes =
             [
-                new RunwayModeConfiguration
+                new RunwayMode
                 {
                     Identifier = "34IVA",
                     Runways =
@@ -37,12 +37,12 @@ public class AirportConfigurationFixture
                         new RunwayConfiguration
                         {
                             Identifier = "34L",
-                            DefaultLandingRateSeconds = 180
+                            LandingRateSeconds = 180
                         },
                         new RunwayConfiguration
                         {
                             Identifier = "34R",
-                            DefaultLandingRateSeconds = 180
+                            LandingRateSeconds = 180
                         }
                     ]
                 }

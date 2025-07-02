@@ -31,8 +31,7 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : I
         
         var currentFlightIndex = Array.FindIndex(sequence.SequencableFlights, f => f.Callsign == flight.Callsign);
         
-        // TODO: Account for runway mode changes
-        var runwayMode = sequence.CurrentRunwayMode;
+        var runwayMode = sequence.GetRunwayModeAt(flight.EstimatedLandingTime);
         var landingRate = GetLandingRate(flight, runwayMode);
         
         ComputeLandingTime(sequence, flight, currentFlightIndex, landingRate);
@@ -82,11 +81,11 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : I
         return !flight.PositionIsFixed && flight.State != State.Stable;
     }
 
-    TimeSpan GetLandingRate(Flight flight, RunwayModeConfiguration runwayMode)
+    TimeSpan GetLandingRate(Flight flight, RunwayMode runwayMode)
     {
         var runwayConfiguration = runwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
         if (runwayConfiguration is not null)
-            return TimeSpan.FromSeconds(runwayConfiguration.DefaultLandingRateSeconds);
+            return TimeSpan.FromSeconds(runwayConfiguration.LandingRateSeconds);
         
         // TODO: Configurable default
         return TimeSpan.FromSeconds(60);
@@ -185,6 +184,9 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : I
                 delay.ToHoursAndMinutesString());
         }
         
+        // BUG: Need to check if this flight is pushed back into a blockout period.
+        //  If so, re-calculate based on blockout period.
+        //  Can this be done first? (Probe the leader, check the time between leader STA and blockout)
         flight.SetLandingTime(scheduledLandingTime);
         
         var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);

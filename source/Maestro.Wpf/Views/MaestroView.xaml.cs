@@ -85,7 +85,7 @@ public partial class MaestroView
         var canvasWidth = LadderCanvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
 
-        if (ViewModel.SelectedRunwayMode is null || ViewModel.SelectedView is null)
+        if (ViewModel.CurrentRunwayMode is null || ViewModel.SelectedView is null)
             return;
 
         foreach (var flight in ViewModel.Flights.Where(f => f.State is not State.Desequenced and not State.Removed))
@@ -123,7 +123,7 @@ public partial class MaestroView
                 DataContext = new FlightLabelViewModel(
                     Ioc.Default.GetRequiredService<IMediator>(),
                     flight,
-                    ViewModel.SelectedRunwayMode),
+                    ViewModel.CurrentRunwayMode),
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
                 LadderPosition = ladderPosition.Value,

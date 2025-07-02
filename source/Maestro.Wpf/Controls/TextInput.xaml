@@ -1,0 +1,52 @@
+﻿<UserControl x:Class="Maestro.Wpf.Controls.TextInput"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Maestro.Wpf"
+             xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
+             mc:Ignorable="d"
+             d:DesignWidth="64"
+             Height="24"
+             Background="{x:Static local:Theme.BackgroundColor}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            
+            <Style x:Key="TextBoxStyle" TargetType="TextBox">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="TextWrapping" Value="NoWrap"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+                <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}"/>
+                <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}"/>
+                <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+
+                <Style.Triggers>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+                        <Setter Property="Opacity" Value="1"/>
+                    </Trigger>
+                </Style.Triggers>
+                
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+            <TextBox x:Name="InputBox"
+                     Style="{StaticResource TextBoxStyle}"
+                     PreviewTextInput="InputBox_PreviewTextInput"
+                     TextChanged="InputBox_TextChanged"
+                     Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                     IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                     MaxLength="{Binding MaxCharacters, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        </controls:BeveledBorder>
+    </Grid>
+</UserControl>

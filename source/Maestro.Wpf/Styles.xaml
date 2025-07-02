@@ -110,6 +110,37 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+    
+    <!-- TextBox -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="TextWrapping" Value="NoWrap"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}"/>
+        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}"/>
+        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+                        <ScrollViewer x:Name="PART_ContentHost" />
+                    </controls:BeveledBorder>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+                <Setter Property="Opacity" Value="1"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 
     <!-- ComboBox Button -->
     <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">

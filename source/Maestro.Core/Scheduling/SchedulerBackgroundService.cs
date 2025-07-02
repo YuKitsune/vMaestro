@@ -1,10 +1,13 @@
 ﻿using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Scheduling;
 
-public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, IScheduler scheduler, ILogger logger)
+public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, IMediator mediator, IScheduler scheduler, IClock clock, ILogger logger)
 {
     readonly SemaphoreSlim _semaphore = new(1, 1);
     readonly IDictionary<string, (Task, CancellationTokenSource)> _sequences = new Dictionary<string, (Task, CancellationTokenSource)>();
@@ -20,7 +23,14 @@ public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, ISch
             
             var taskLogger = logger.ForContext("Sequence", airportIdentifier);
             var cancellationTokenSource = new CancellationTokenSource();
-            var task = DoSequence(airportIdentifier, sequenceProvider, scheduler, taskLogger, cancellationTokenSource.Token);
+            var task = DoSequence(
+                airportIdentifier,
+                sequenceProvider,
+                mediator,
+                scheduler,
+                clock,
+                taskLogger,
+                cancellationTokenSource.Token);
             
             _sequences.Add(airportIdentifier, (task, cancellationTokenSource));
             
@@ -51,7 +61,9 @@ public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, ISch
     static async Task DoSequence(
         string airportIdentifier,
         ISequenceProvider sequenceProvider,
+        IMediator mediator,
         IScheduler scheduler,
+        IClock clock,
         ILogger logger,
         CancellationToken cancellationToken)
     {
@@ -63,6 +75,25 @@ public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, ISch
                 using var lockedSequence = await sequenceProvider.GetSequence(airportIdentifier, cancellationToken);
                 logger.Debug("Lock on {AirportIdentifier} acquired", airportIdentifier);
 
+                if (lockedSequence.Sequence.NextRunwayMode is not null &&
+                    lockedSequence.Sequence.RunwayModeChangeTime <= clock.UtcNow())
+                {
+                    var nextRunwayMode = lockedSequence.Sequence.NextRunwayMode;
+                    lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode);
+                    logger.Information(
+                        "Runway mode for {AirportIdentifier} changed to {RunwayModeIdentifier}",
+                        airportIdentifier,
+                        nextRunwayMode.Identifier);
+                    
+                    await mediator.Publish(
+                        new RunwayModeChangedNotification(
+                            airportIdentifier,
+                            nextRunwayMode.ToMessage(),
+                            null,
+                            default),
+                        cancellationToken);
+                }
+                
                 logger.Information("Scheduling {AirportIdentifier}", airportIdentifier);
                 lockedSequence.Sequence.Schedule(scheduler);
                 logger.Debug("Completed scheduling {AirportIdentifier}", airportIdentifier);

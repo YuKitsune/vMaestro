@@ -65,7 +65,7 @@ public class FlightUpdatedHandler(
                     : FindBestRunway(
                         feederFix?.FixIdentifier ?? string.Empty,
                         notification.AircraftType,
-                        sequence.CurrentRunwayMode,
+                        sequence.GetRunwayModeAt(landingEstimate),
                         sequence.RunwayAssignmentRules);
 
                 // TODO: Verify if this behaviour is correct
@@ -164,7 +164,7 @@ public class FlightUpdatedHandler(
                     var runway = FindBestRunway(
                         feederFix?.FixIdentifier ?? string.Empty,
                         flight.AircraftType,
-                        sequence.CurrentRunwayMode,
+                        sequence.GetRunwayModeAt(flight.EstimatedLandingTime), // TODO: STA?
                         sequence.RunwayAssignmentRules);
 
                     flight.SetRunway(runway, false);
@@ -196,9 +196,9 @@ public class FlightUpdatedHandler(
         }
     }
 
-    string FindBestRunway(string feederFixIdentifier, string aircraftType, RunwayModeConfiguration runwayMode, IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)
+    string FindBestRunway(string feederFixIdentifier, string aircraftType, RunwayMode terminal, IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)
     {
-        var defaultRunway = runwayMode.Runways.First().Identifier;
+        var defaultRunway = terminal.Runways.First().Identifier;
         if (string.IsNullOrEmpty(feederFixIdentifier))
             return defaultRunway;
         
@@ -208,7 +208,7 @@ public class FlightUpdatedHandler(
             assignmentRules);
 
         var runwaysInMode = possibleRunways
-            .Where(r => runwayMode.Runways.Any(r2 => r2.Identifier == r))
+            .Where(r => terminal.Runways.Any(r2 => r2.Identifier == r))
             .ToArray();
         
         // No runways found, use the default one

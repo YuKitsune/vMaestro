@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 
 namespace Maestro.Core.Model;
 
@@ -18,7 +19,9 @@ public class Sequence
     public IReadOnlyList<BlockoutPeriod> BlockoutPeriods => _blockoutPeriods;
     public Flight[] Flights => _flights.ToArray();
     public Flight[] SequencableFlights => _flights.Where(f => f.ShouldSequence).ToArray();
-    public RunwayModeConfiguration CurrentRunwayMode { get; private set; }
+    public RunwayMode CurrentRunwayMode { get; private set; }
+    public RunwayMode? NextRunwayMode { get; private set; }
+    public DateTimeOffset RunwayModeChangeTime { get; private set; }
     public IReadOnlyList<RunwayAssignmentRule> RunwayAssignmentRules => _airportConfiguration.RunwayAssignmentRules;
 
     public Sequence(AirportConfiguration airportConfiguration)
@@ -79,9 +82,35 @@ public class Sequence
         return _flights.FirstOrDefault(f => f.Callsign == callsign);
     }
 
-    public void ChangeRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
+    /// <summary>
+    ///     Changes the runway mode with an immediate effect.
+    /// </summary>
+    public void ChangeRunwayMode(RunwayMode runwayMode)
     {
-        CurrentRunwayMode = runwayModeConfiguration;
+        CurrentRunwayMode = runwayMode;
+        NextRunwayMode = null;
+        RunwayModeChangeTime = default;
+    }
+
+    /// <summary>
+    ///     Schedules a runway mode change for some time in the future.
+    /// </summary>
+    public void ChangeRunwayMode(
+        RunwayMode runwayMode,
+        DateTimeOffset changeTime)
+    {
+        NextRunwayMode = runwayMode;
+        RunwayModeChangeTime = changeTime;
+    }
+
+    public RunwayMode GetRunwayModeAt(DateTimeOffset targetTime)
+    {
+        if (NextRunwayMode is not null && RunwayModeChangeTime.IsSameOrBefore(targetTime))
+        {
+            return NextRunwayMode;
+        }
+
+        return CurrentRunwayMode;
     }
 
     public int NumberInSequence(Flight flight)

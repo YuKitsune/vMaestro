@@ -82,7 +82,11 @@ public class SequenceProvider : ISequenceProvider
 
         return new SequenceMessage
         {
-            Flights = pair.Sequence.Flights.Select(f => f.ToMessage(pair.Sequence)).ToArray()
+            Flights = pair.Sequence.Flights.Select(f => f.ToMessage(pair.Sequence))
+                .ToArray(),
+            CurrentRunwayMode = pair.Sequence.CurrentRunwayMode.ToMessage(),
+            NextRunwayMode = pair.Sequence.NextRunwayMode?.ToMessage(),
+            RunwayModeChangeTime = pair.Sequence.RunwayModeChangeTime
         };
     }
 

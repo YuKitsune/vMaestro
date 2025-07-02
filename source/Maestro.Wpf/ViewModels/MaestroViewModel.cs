@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Messages;
@@ -14,7 +13,6 @@ namespace Maestro.Wpf.ViewModels;
 public partial class MaestroViewModel : ObservableObject
 {
     readonly IMediator _mediator;
-    readonly IClock _clock;
     
     [ObservableProperty]
     ObservableCollection<AirportViewModel> _availableAirports = [];
@@ -24,7 +22,13 @@ public partial class MaestroViewModel : ObservableObject
     AirportViewModel? _selectedAirport;
 
     [ObservableProperty]
-    RunwayModeViewModel? _selectedRunwayMode;
+    [NotifyPropertyChangedFor(nameof(TerminalConfiguration))]
+    RunwayModeViewModel? _currentRunwayMode;
+    
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TerminalConfiguration))]
+    [NotifyPropertyChangedFor(nameof(RunwayChangeIsPlanned))]
+    RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
     ViewConfiguration? _selectedView;
@@ -32,13 +36,28 @@ public partial class MaestroViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Desequenced))]
     List<FlightViewModel> _flights = [];
-    
+
+    public string TerminalConfiguration
+    {
+        get
+        {
+            if (CurrentRunwayMode is null)
+                return "NONE";
+
+            if (NextRunwayMode is not null)
+                return $"{CurrentRunwayMode.Identifier} → {NextRunwayMode.Identifier}";
+
+            return CurrentRunwayMode.Identifier;
+        }
+    }
+
+    public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
+
     public string[] Desequenced => Flights.Where(f => f.State == State.Desequenced).Select(airport => airport.Callsign).ToArray();
 
-    public MaestroViewModel(IMediator mediator, IClock clock)
+    public MaestroViewModel(IMediator mediator)
     {
         _mediator = mediator;
-        _clock = clock;
     }
 
     partial void OnAvailableAirportsChanged(ObservableCollection<AirportViewModel> availableAirports)
@@ -54,16 +73,18 @@ public partial class MaestroViewModel : ObservableObject
     {
         if (airportViewModel is null)
         {
-            SelectedRunwayMode = null;
+            CurrentRunwayMode = null;
             SelectedView = null;
             return;
         }
 
-        if (SelectedRunwayMode == null || airportViewModel.RunwayModes.All(r => r.Identifier != SelectedRunwayMode.Identifier))
+        // TODO: Select active runway mode
+        if (CurrentRunwayMode == null || airportViewModel.RunwayModes.All(r => r.Identifier != CurrentRunwayMode.Identifier))
         {
-            SelectedRunwayMode = airportViewModel.RunwayModes.FirstOrDefault();
+            CurrentRunwayMode = airportViewModel.RunwayModes.FirstOrDefault();
         }
 
+        // TODO: Remember selected airport
         if (SelectedView == null || airportViewModel.Views.All(s => s.Identifier != SelectedView.Identifier))
         {
             SelectedView = airportViewModel.Views.FirstOrDefault();
@@ -89,12 +110,21 @@ public partial class MaestroViewModel : ObservableObject
                 new RunwayModeViewModel(
                     rm.Identifier,
                     rm.Runways.Select(r =>
-                        new RunwayViewModel(r.Identifier, TimeSpan.FromSeconds(r.DefaultLandingRateSeconds)))
+                        new RunwayViewModel(r.Identifier, r.LandingRateSeconds))
                     .ToArray()))
                 .ToArray();
 
             AvailableAirports.Add(new AirportViewModel(airport.Identifier, runwayModes, airport.Views));
         }
+    }
+
+    [RelayCommand]
+    void OpenTerminalConfiguration()
+    {
+        if (SelectedAirport is null)
+            return;
+        
+        _mediator.Send(new OpenTerminalConfigurationRequest(SelectedAirport.Identifier));
     }
 
     [RelayCommand]
@@ -122,19 +152,5 @@ public partial class MaestroViewModel : ObservableObject
         }
 
         Flights = flights;
-    }
-
-    partial void OnSelectedRunwayModeChanged(RunwayModeViewModel? runwayMode)
-    {
-        if (SelectedAirport is null || runwayMode is null)
-            return;
-        
-        // TODO: Ask if runways should be re-assigned
-        _mediator.Send(
-            new ChangeRunwayModeRequest(
-                SelectedAirport.Identifier,
-                runwayMode.Identifier,
-                _clock.UtcNow(),
-                false));
     }
 }

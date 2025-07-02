@@ -18,7 +18,7 @@ public partial class FlightLabelViewModel(
     public FlightLabelViewModel() : this(
         null!,
         new FlightViewModel(),
-        new RunwayModeViewModel("34", [new RunwayViewModel("34L", TimeSpan.Zero)]))
+        new RunwayModeViewModel("34", [new RunwayViewModel("34L", 180)]))
     {
     }
 

@@ -27,7 +27,6 @@
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <converters:TotalSecondsConverter x:Key="TotalSecondsConverter" />
             <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
             <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
             <converters:HasItemsConverter x:Key="HasItemsConverter" />
@@ -89,7 +88,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="56" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="72" />
+                    <ColumnDefinition MinWidth="72" Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -119,18 +118,27 @@
                 <controls:BeveledLine Grid.Column="3" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
 
                 <!-- Runway Selector -->
-                <ComboBox
+                <Button 
                     Grid.Column="4"
                     Padding="5"
-                    ItemsSource="{Binding Path=SelectedAirport.RunwayModes}"
-                    SelectedItem="{Binding Path=SelectedRunwayMode}"
-                    DisplayMemberPath="Identifier" />
+                    Content="{Binding TerminalConfiguration}"
+                    Command="{Binding OpenTerminalConfigurationCommand}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding RunwayChangeIsPlanned}">
+                                    <Setter Property="Foreground" Value="White" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
 
                 <controls:BeveledLine Grid.Column="5" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
 
                 <!-- Runway Intervals -->
                 <controls:BeveledBorder Grid.Column="6" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Raised">
-                    <ItemsControl ItemsSource="{Binding Path=SelectedRunwayMode.Runways}" VerticalAlignment="Center" Margin="2">
+                    <ItemsControl ItemsSource="{Binding Path=CurrentRunwayMode.Runways}" VerticalAlignment="Center" Margin="2">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel />
@@ -146,7 +154,7 @@
                                     <TextBlock x:Name="Separator" Text=" - " />
                                     <TextBlock Text="{Binding Identifier}"/>
                                     <TextBlock>:</TextBlock>
-                                    <TextBlock Text="{Binding LandingRate, Converter={StaticResource TotalSecondsConverter}}"/>
+                                    <TextBlock Text="{Binding LandingRateSeconds}"/>
                                 </StackPanel>
 
                                 <DataTemplate.Triggers>
