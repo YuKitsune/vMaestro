@@ -76,6 +76,12 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
     - [ ] Apply optimisations (i.e. runway selection)
 
+- [ ] Terminal Configuration Refinement
+    - [ ] Runway(s) to be used
+    - [ ] Time of effect
+    - [ ] STARs used in system calculations
+    - [ ] Restrictions to be applied (E.g: B747 configured for certain runways only)
+
 - [ ] Online Mode
     - [ ] Run sequencing code in a standalone server
     - [ ] Connect to Maestro server via WebSocket
