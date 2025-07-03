@@ -1,6 +1,6 @@
-﻿using System.Windows.Media;
-using System.Windows;
-using System.Windows.Markup;
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Maestro.Wpf.Controls;
 
@@ -11,29 +11,16 @@ public enum BevelType
     Outline
 }
 
-[ContentProperty(nameof(Child))]
-public class BeveledBorder : FrameworkElement
+public class BeveledBorder : Decorator
 {
-    public static readonly DependencyProperty ChildProperty =
-        DependencyProperty.RegisterAttached(
-            nameof(Child),
-            typeof(UIElement),
-            typeof(BeveledBorder),
-            new FrameworkPropertyMetadata(
-                null,
-                FrameworkPropertyMetadataOptions.AffectsParentMeasure |
-                FrameworkPropertyMetadataOptions.AffectsMeasure |
-                FrameworkPropertyMetadataOptions.AffectsParentArrange |
-                FrameworkPropertyMetadataOptions.AffectsArrange |
-                FrameworkPropertyMetadataOptions.AffectsRender,
-                OnChildChanged));
-
     public static readonly DependencyProperty BorderThicknessProperty =
         DependencyProperty.Register(
             nameof(BorderThickness),
             typeof(Thickness),
             typeof(BeveledBorder),
-            new UIPropertyMetadata(new Thickness(0)));
+            new FrameworkPropertyMetadata(
+                new Thickness(0),
+                FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure));
 
     public static readonly DependencyProperty BevelTypeProperty =
         DependencyProperty.Register(
@@ -41,27 +28,14 @@ public class BeveledBorder : FrameworkElement
             typeof(BevelType),
             typeof(BeveledBorder),
             new FrameworkPropertyMetadata(
-                BevelType.Raised, 
-                FrameworkPropertyMetadataOptions.AffectsRender,
-                OnBevelTypeChanged));
-
-    public UIElement? Child
-    {
-        get => (UIElement)GetValue(ChildProperty);
-        set => SetValue(ChildProperty, value);
-    }
+                BevelType.Raised,
+                FrameworkPropertyMetadataOptions.AffectsRender));
 
     public Thickness BorderThickness
     {
         get => (Thickness)GetValue(BorderThicknessProperty);
-        set
-        {
-            SetValue(BorderThicknessProperty, value);
-            InvalidateVisual();
-        }
+        set => SetValue(BorderThicknessProperty, value);
     }
-
-    Thickness BorderThicknessDoubled => new(BorderThickness.Left * 2, BorderThickness.Top * 2, BorderThickness.Right * 2, BorderThickness.Bottom * 2);
 
     public BevelType BevelType
     {
@@ -69,47 +43,19 @@ public class BeveledBorder : FrameworkElement
         set => SetValue(BevelTypeProperty, value);
     }
 
-    static void OnChildChanged(object sender, DependencyPropertyChangedEventArgs args)
-    {
-        if (sender is not BeveledBorder beveledBorder)
-            return;
+    private Thickness BorderThicknessDoubled =>
+        new Thickness(BorderThickness.Left * 2, BorderThickness.Top * 2, BorderThickness.Right * 2,
+            BorderThickness.Bottom * 2);
 
-        if (args.OldValue is UIElement oldChild)
-        {
-            beveledBorder.RemoveVisualChild(oldChild);
-            beveledBorder.RemoveLogicalChild(oldChild);
-        }
-
-        if (args.NewValue is UIElement newChild)
-        {
-            beveledBorder.AddVisualChild(newChild);
-            beveledBorder.AddLogicalChild(newChild);
-        }
-
-        beveledBorder.InvalidateVisual();
-    }
-
-    static void OnBevelTypeChanged(object sender, DependencyPropertyChangedEventArgs args)
-    {
-        if (sender is not BeveledBorder beveledBorder)
-            return;
-
-        beveledBorder.InvalidateVisual();
-    }
-
-    protected override int VisualChildrenCount => Child is not null ? 1 : 0 ;
-
-    protected override Visual GetVisualChild(int index) => index == 0 && Child is not null ? Child : throw new ArgumentOutOfRangeException();
-
-    protected override Size MeasureOverride(Size availableSize)
+    protected override Size MeasureOverride(Size constraint)
     {
         if (Child != null)
         {
             var thickness = BevelType == BevelType.Outline ? BorderThicknessDoubled : BorderThickness;
 
             var availableChildSize = new Size(
-                Math.Max(availableSize.Width - thickness.Left - thickness.Right, 0),
-                Math.Max(availableSize.Height - thickness.Top - thickness.Bottom, 0));
+                Math.Max(constraint.Width - thickness.Left - thickness.Right, 0),
+                Math.Max(constraint.Height - thickness.Top - thickness.Bottom, 0));
 
             Child.Measure(availableChildSize);
 
@@ -121,102 +67,101 @@ public class BeveledBorder : FrameworkElement
         return new Size(0, 0);
     }
 
-    protected override Size ArrangeOverride(Size finalSize)
+    protected override Size ArrangeOverride(Size arrangeSize)
     {
-        // Arrange the child control, taking padding into account
         if (Child != null)
         {
             var thickness = BevelType == BevelType.Outline ? BorderThicknessDoubled : BorderThickness;
             var childRect = new Rect(
                 thickness.Left,
                 thickness.Top,
-                finalSize.Width - thickness.Left - thickness.Right,
-                finalSize.Height - thickness.Top - thickness.Bottom);
+                arrangeSize.Width - thickness.Left - thickness.Right,
+                arrangeSize.Height - thickness.Top - thickness.Bottom);
 
             Child.Arrange(childRect);
         }
 
-        return finalSize;
+        return arrangeSize;
     }
 
-    protected override void OnRender(DrawingContext drawingContext)
+    protected override void OnRender(DrawingContext dc)
     {
         switch (BevelType)
         {
             case BevelType.Raised:
             case BevelType.Sunken:
-                {
-                    var topLeftBrush = BevelType == BevelType.Raised ? Theme.LightBrush : Theme.DarkBrush;
-                    var topLeftPen = new Pen(topLeftBrush, 0);
-                    var topLeftGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
-                    drawingContext.DrawGeometry(topLeftBrush, topLeftPen, topLeftGeometry);
-
-                    var bottomRightBrush = BevelType == BevelType.Raised ? Theme.DarkBrush : Theme.LightBrush;
-                    var bottomRightPen = new Pen(bottomRightBrush, 0);
-                    var bottomRightGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
-                    drawingContext.DrawGeometry(bottomRightBrush, bottomRightPen, bottomRightGeometry);
-                    break;
-                }
+                DrawBevel(dc, BevelType == BevelType.Raised);
+                break;
 
             case BevelType.Outline:
-                {
-                    var topLeftOuterBrush = Theme.LightBrush;
-                    var topLeftOuterPen = new Pen(topLeftOuterBrush, 0);
-                    var topLeftOuterGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
-                    drawingContext.DrawGeometry(topLeftOuterBrush, topLeftOuterPen, topLeftOuterGeometry);
-
-                    var bottomRightOuterBrush = Theme.DarkBrush;
-                    var bottomRightOuterPen = new Pen(bottomRightOuterBrush, 0);
-                    var bottomRightOuterGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
-                    drawingContext.DrawGeometry(bottomRightOuterBrush, bottomRightOuterPen, bottomRightOuterGeometry);
-
-                    var topLeftInnerBrush = Theme.DarkBrush;
-                    var topLeftInnerPen = new Pen(topLeftInnerBrush, 0);
-                    var topLeftInnerGeometry = GetTopLeftGeometry(BorderThickness.Left, BorderThickness.Top, ActualWidth - BorderThickness.Right, ActualHeight - BorderThickness.Bottom, BorderThickness);
-                    drawingContext.DrawGeometry(topLeftInnerBrush, topLeftInnerPen, topLeftInnerGeometry);
-
-                    var bottomRightInnerBrush = Theme.LightBrush;
-                    var bottomRightInnerPen = new Pen(bottomRightInnerBrush, 0);
-                    var bottomRightInnerGeometry = GetBottomRightGeometry(BorderThickness.Left, BorderThickness.Top, ActualWidth - BorderThickness.Right, ActualHeight - BorderThickness.Bottom, BorderThickness);
-                    drawingContext.DrawGeometry(bottomRightInnerBrush, bottomRightInnerPen, bottomRightInnerGeometry);
-                    break;
-                }
+                DrawOutline(dc);
+                break;
 
             default:
                 throw new NotSupportedException();
         }
     }
 
-    Geometry GetTopLeftGeometry(double left, double top, double right, double bottom, Thickness thickness)
+    private void DrawBevel(DrawingContext dc, bool isRaised)
     {
-        var segments = new Point[]
-            {
-                new(left, top),
-                new(right, top),
-                new(right - thickness.Right, top + thickness.Top),
-                new(left + thickness.Left, top + thickness.Top),
-                new(left + thickness.Left, bottom - thickness.Bottom),
-                new(left, bottom),
-                new(left, top)
-            }
-            .Select(p => new LineSegment(p, false));
+        var light = isRaised ? Theme.LightBrush : Theme.DarkBrush;
+        var dark = isRaised ? Theme.DarkBrush : Theme.LightBrush;
+
+        var topLeftGeometry = GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
+        dc.DrawGeometry(light, new Pen(light, 0), topLeftGeometry);
+
+        var bottomRightGeometry = GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness);
+        dc.DrawGeometry(dark, new Pen(dark, 0), bottomRightGeometry);
+    }
+
+    private void DrawOutline(DrawingContext dc)
+    {
+        var outerLight = Theme.LightBrush;
+        var outerDark = Theme.DarkBrush;
+        var innerDark = Theme.DarkBrush;
+        var innerLight = Theme.LightBrush;
+
+        dc.DrawGeometry(outerLight, new Pen(outerLight, 0),
+            GetTopLeftGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness));
+        dc.DrawGeometry(outerDark, new Pen(outerDark, 0),
+            GetBottomRightGeometry(0, 0, ActualWidth, ActualHeight, BorderThickness));
+
+        dc.DrawGeometry(innerDark, new Pen(innerDark, 0),
+            GetTopLeftGeometry(BorderThickness.Left, BorderThickness.Top, ActualWidth - BorderThickness.Right,
+                ActualHeight - BorderThickness.Bottom, BorderThickness));
+        dc.DrawGeometry(innerLight, new Pen(innerLight, 0),
+            GetBottomRightGeometry(BorderThickness.Left, BorderThickness.Top, ActualWidth - BorderThickness.Right,
+                ActualHeight - BorderThickness.Bottom, BorderThickness));
+    }
+
+    private Geometry GetTopLeftGeometry(double left, double top, double right, double bottom, Thickness thickness)
+    {
+        var segments = new[]
+        {
+            new Point(left, top),
+            new Point(right, top),
+            new Point(right - thickness.Right, top + thickness.Top),
+            new Point(left + thickness.Left, top + thickness.Top),
+            new Point(left + thickness.Left, bottom - thickness.Bottom),
+            new Point(left, bottom),
+            new Point(left, top)
+        }.Select(p => new LineSegment(p, false));
 
         return new PathGeometry([new PathFigure(new Point(left, top), segments, true)]);
     }
 
-    Geometry GetBottomRightGeometry(double left, double top, double right, double bottom, Thickness thickness)
+    private Geometry GetBottomRightGeometry(double left, double top, double right, double bottom, Thickness thickness)
     {
-        var segments = new Point[]
-            {
-                new(right, top),
-                new(right, bottom),
-                new(left, bottom),
-                new(left + thickness.Left, bottom - thickness.Bottom),
-                new(right - thickness.Right, bottom - thickness.Bottom),
-                new(right - thickness.Right, top + thickness.Bottom),
-                new(right, top)
-            }
-            .Select(p => new LineSegment(p, false));
+        var segments = new[]
+        {
+            new Point(right, top),
+            new Point(right, bottom),
+            new Point(left, bottom),
+            new Point(left + thickness.Left, bottom - thickness.Bottom),
+            new Point(right - thickness.Right, bottom - thickness.Bottom),
+            new Point(right - thickness.Right, top + thickness.Bottom),
+            new Point(right, top)
+        }.Select(p => new LineSegment(p, false));
 
         return new PathGeometry([new PathFigure(new Point(left, top), segments, true)]);
     }
