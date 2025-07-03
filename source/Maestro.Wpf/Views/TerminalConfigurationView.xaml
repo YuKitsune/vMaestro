@@ -18,7 +18,7 @@
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}" />
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
 
         </ResourceDictionary>
@@ -89,7 +89,7 @@
                     
                     <!-- Change time -->
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Change configuration at: " Style="{StaticResource TextBaseStyle}"/>
+                        <TextBlock Text="Change configuration at: " Style="{StaticResource GenericTextStyle}"/>
                         <TextBox 
                             Text="{Binding ChangeTime}" 
                             Margin="8,0"
@@ -101,7 +101,7 @@
                     
                     <!-- Ra-assign runways -->
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Re-assign runways: " Style="{StaticResource TextBaseStyle}"/>
+                        <TextBlock Text="Re-assign runways: " Style="{StaticResource GenericTextStyle}"/>
                         <CheckBox IsChecked="{Binding ReassignRunways}" Margin="8,0" />
                     </StackPanel>
                     
@@ -118,7 +118,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding .}" Style="{StaticResource TextBaseStyle}"/>
+                    <TextBlock Text="{Binding .}" Style="{StaticResource GenericTextStyle}"/>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

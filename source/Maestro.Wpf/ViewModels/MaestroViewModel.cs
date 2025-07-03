@@ -6,20 +6,13 @@ using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class MaestroViewModel : ObservableObject
+public partial class MaestroViewModel(IMediator mediator) : ObservableObject
 {
-    readonly IMediator _mediator;
-    
     [ObservableProperty]
     ObservableCollection<SequenceViewModel> _sequences = [];
     
     [ObservableProperty]
     SequenceViewModel? _selectedSequence;
-
-    public MaestroViewModel(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
 
     partial void OnSequencesChanged(ObservableCollection<SequenceViewModel> sequences)
     {
@@ -33,7 +26,7 @@ public partial class MaestroViewModel : ObservableObject
     [RelayCommand]
     async Task LoadConfiguration()
     {
-        var response = await _mediator.Send(new InitializeRequest(), CancellationToken.None);
+        var response = await mediator.Send(new InitializeRequest(), CancellationToken.None);
 
         Sequences.Clear();
         foreach (var item in response.Sequences)
@@ -43,7 +36,7 @@ public partial class MaestroViewModel : ObservableObject
                 item.Views,
                 item.RunwayModes,
                 item.Sequence,
-                _mediator));
+                mediator));
         }
     }
 }

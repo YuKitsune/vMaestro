@@ -31,7 +31,7 @@
             <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
             <converters:HasItemsConverter x:Key="HasItemsConverter" />
 
-            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}" />
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
 
         </ResourceDictionary>
@@ -101,7 +101,7 @@
                     VerticalAlignment="Center"
                     TextWrapping="Wrap"
                     HorizontalAlignment="Center"
-                    Style="{StaticResource MultiLineText}">
+                    Style="{StaticResource GenericTextStyle}">
                         FLOW
                 </TextBlock>
 
@@ -126,7 +126,7 @@
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedSequence.RunwayChangeIsPlanned}">
+                                    <DataTrigger Binding="{Binding SelectedSequence.RunwayChangeIsPlanned}" Value="True">
                                         <Setter Property="Foreground" Value="White" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -197,16 +197,18 @@
             
             <Button Content="DEPS" IsEnabled="False" Style="{StaticResource TabBarButtonStyle}"/>
             <Button Content="COORD" IsEnabled="False" Style="{StaticResource TabBarButtonStyle}" />
-            <Button Content="DESQ" IsEnabled="True" Command="{Binding SelectedSequence.OpenDesequencedWindowCommand}">
-                <Button.Style>
-                    <Style TargetType="Button" BasedOn="{StaticResource TabBarButtonStyle}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedSequence.Desequenced, Converter={StaticResource HasItemsConverter}}" Value="True">
-                                <Setter Property="Foreground" Value="White" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
+            <Button Command="{Binding SelectedSequence.OpenDesequencedWindowCommand}" Style="{StaticResource TabBarButtonStyle}">
+                <TextBlock Text="DESQ">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedSequence.Desequenced, Converter={StaticResource HasItemsConverter}}" Value="True">
+                                    <Setter Property="Foreground" Value="White" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </Button>
 
             <ItemsControl ItemsSource="{Binding SelectedSequence.Views}" Name="SectorList">
@@ -266,7 +268,7 @@
                 
                 <TextBlock TextAlignment="Right">
                     <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource GenericTextStyle}">
                             <Setter Property="Text" Value="{Binding Path=SelectedSequence.SelectedView.LeftLadder, Converter={StaticResource RunwaysToLadderTitleConverter}}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding SelectedSequence.SelectedView.ViewMode}" Value="Enroute">
@@ -279,7 +281,7 @@
                 
                 <TextBlock TextAlignment="Right">
                     <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource GenericTextStyle}">
                             <Setter Property="Text" Value="{Binding Path=SelectedSequence.SelectedView.LeftLadder, Converter={StaticResource FeederFixesToLadderTitleConverter}}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding SelectedSequence.SelectedView.ViewMode}" Value="Approach">
@@ -299,7 +301,7 @@
                 
                 <TextBlock TextAlignment="Left">
                     <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource GenericTextStyle}">
                             <Setter Property="Text" Value="{Binding Path=SelectedSequence.SelectedView.RightLadder, Converter={StaticResource RunwaysToLadderTitleConverter}}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding SelectedSequence.SelectedView.ViewMode}" Value="Enroute">
@@ -312,7 +314,7 @@
                 
                 <TextBlock TextAlignment="Left">
                     <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBaseStyle}">
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource GenericTextStyle}">
                             <Setter Property="Text" Value="{Binding Path=SelectedSequence.SelectedView.RightLadder, Converter={StaticResource FeederFixesToLadderTitleConverter}}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding SelectedSequence.SelectedView.ViewMode}" Value="Approach">

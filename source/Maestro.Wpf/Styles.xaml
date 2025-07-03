@@ -27,7 +27,6 @@
     </Style>
 
     <Style x:Key="TextBaseStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}" />
         <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
         <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
@@ -37,21 +36,12 @@
         <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
     </Style>
 
-    <Style x:Key="MultiLineText" TargetType="{x:Type TextBlock}">
+    <Style x:Key="GenericTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}">
         <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}" />
-        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
-        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
-        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
-
-        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
-        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
     </Style>
 
     <Style x:Key="InteractiveTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}">
         <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
-
-        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
-        <Setter Property="Height" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToHeightConverter}}" />
     </Style>
 
     <!-- Button Styling -->
@@ -96,7 +86,7 @@
                                             Content="{TemplateBinding Content}"
                                             ContentTemplate="{TemplateBinding ContentTemplate}" 
                                             VerticalAlignment="Center"
-                                            HorizontalAlignment="Center"/>
+                                            HorizontalAlignment="Center" />
                                     </Border>
                                 </controls:BeveledBorder>
                             </Border>

@@ -28,7 +28,7 @@
                         <ControlTemplate TargetType="ListBoxItem">
                             <TextBlock Text="{Binding}">
                                 <TextBlock.Style>
-                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}">
+                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}">
                                         <Setter Property="Margin" Value="2"/>
                                         <Style.Triggers>
                                             <Trigger Property="IsFocused" Value="True">

@@ -22,7 +22,7 @@
             <converters:TimeConverter x:Key="TimeConverter" />
             <converters:MinutesConverter x:Key="MinutesConverter" />
             
-            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}" />
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             
             <Style TargetType="Border">
                 <Setter Property="BorderBrush" Value="{x:Static local:Theme.GenericTextColor}"/>
