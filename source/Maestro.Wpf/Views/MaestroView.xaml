@@ -121,17 +121,18 @@
                 <Button 
                     Grid.Column="4"
                     Padding="5"
-                    Content="{Binding TerminalConfiguration}"
                     Command="{Binding OpenTerminalConfigurationCommand}">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding RunwayChangeIsPlanned}">
-                                    <Setter Property="Foreground" Value="White" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
+                    <TextBlock TextWrapping="Wrap" Text="{Binding TerminalConfiguration}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RunwayChangeIsPlanned}">
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </Button>
 
                 <controls:BeveledLine Grid.Column="5" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>

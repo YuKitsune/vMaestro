@@ -16,8 +16,11 @@ public partial class AirportViewModel(string identifier, RunwayModeViewModel[] r
     ObservableCollection<ViewConfiguration> _views = new(views);
 }
 
-public class RunwayModeViewModel
+public partial class RunwayModeViewModel : ObservableObject
 {
+    [ObservableProperty]
+    RunwayViewModel[] _runways = [];
+    
     public RunwayModeViewModel(RunwayModeDto runwayModeDto)
         : this(runwayModeDto.Identifier, runwayModeDto.Runways.Select(r => new RunwayViewModel(r)).ToArray())
     {
@@ -30,8 +33,6 @@ public class RunwayModeViewModel
     }
     
     public string Identifier { get; }
-
-    public RunwayViewModel[] Runways { get; }
 }
 
 public partial class RunwayViewModel : ObservableObject

@@ -15,39 +15,25 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     readonly IWindowHandle _windowHandle;
     
     [ObservableProperty]
-    List<RunwayModeViewModel> _availableRunwayModes = [];
+    string _selectedRunwayModeIdentifier;
     
     [ObservableProperty]
     RunwayModeViewModel _selectedRunwayMode;
 
     [ObservableProperty]
-    string _changeTimeText;
+    string _changeTime;
 
     [ObservableProperty]
     bool _reassignRunways;
 
     [ObservableProperty]
-    List<string> _errors = [];
+    string[] _errors = [];
+    
+    public RunwayModeDto[] AvailableRunwayModes { get; }
 
     // TODO: Make configurable
     public double MinimumLandingRateSeconds => 30;
     public double MaximumLandingRateSeconds => 60 * 5; // 5 Minutes
-
-    public TerminalConfigurationViewModel()
-    {
-        SelectedRunwayMode = new RunwayModeViewModel("34PROPS", [
-            new RunwayViewModel("34L", 180),
-            new RunwayViewModel("34R", 180)
-        ]);
-
-        AvailableRunwayModes =
-        [
-            SelectedRunwayMode
-        ];
-
-        ChangeTimeText = "1234";
-        Errors = ["Example Error"];
-    }
 
     public TerminalConfigurationViewModel(
         string airportIdentifier,
@@ -64,25 +50,36 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         _windowHandle = windowHandle;
         _clock = clock;
 
-        AvailableRunwayModes = availableRunwayModes.Select(r => new RunwayModeViewModel(r)).ToList();
+        AvailableRunwayModes = availableRunwayModes;
         SelectedRunwayMode = new RunwayModeViewModel(nextTerminalConfiguration ?? currentRunwayMode);
-        ChangeTimeText = terminalConfigurationChangeTime == default
+        SelectedRunwayModeIdentifier = SelectedRunwayMode.Identifier;
+        ChangeTime = terminalConfigurationChangeTime == default
             ? _clock.UtcNow().ToString("HHmm")
             : terminalConfigurationChangeTime.ToString("HHmm");
     }
+    
+    partial void OnSelectedRunwayModeIdentifierChanged(string value)
+    {
+        // When selection changes in UI, update SelectedRunwayMode to the copy of the matching template
+        var template = AvailableRunwayModes.FirstOrDefault(r => r.Identifier == value);
+        if (template != null)
+        {
+            SelectedRunwayMode = new RunwayModeViewModel(template);
+        }
+    }
 
-    partial void OnChangeTimeTextChanged(string value)
+    partial void OnChangeTimeChanged(string value)
     {
         Errors = [];
         if (GetHoursAndMinutes(value, out _, out _))
             return;
 
-        Errors = [$"{ChangeTimeText} is invalid. Please use the format HHmm"];
+        Errors = [$"{ChangeTime} is invalid. Please use the format HHmm"];
     }
     
 
     [RelayCommand(CanExecute = nameof(CanChangeRunwayMode))]
-    public void ChangeRunwayMode()
+    void ChangeRunwayMode()
     {
         Errors = [];
         if (!TryGetChangeTime(out var changeTime))
@@ -103,13 +100,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         CloseWindow();
     }
 
-    public bool CanChangeRunwayMode()
+    bool CanChangeRunwayMode()
     {
-        return GetHoursAndMinutes(ChangeTimeText, out _, out _);
+        return GetHoursAndMinutes(ChangeTime, out _, out _);
     }
 
     [RelayCommand]
-    public void CloseWindow()
+    void CloseWindow()
     {
         _windowHandle.Close();
     }
@@ -118,7 +115,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     {
         result = default;
 
-        if (!GetHoursAndMinutes(ChangeTimeText, out var hours, out var minutes))
+        if (!GetHoursAndMinutes(ChangeTime, out var hours, out var minutes))
             return false;
 
         var currentTime = _clock.UtcNow();

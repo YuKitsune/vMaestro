@@ -30,8 +30,9 @@
             <TextBlock Text="TMA Configuration: " />
             <ComboBox
                 Padding="5"
-                ItemsSource="{Binding Path=AvailableRunwayModes}"
-                SelectedItem="{Binding Path=SelectedRunwayMode}"
+                ItemsSource="{Binding AvailableRunwayModes}"
+                SelectedValue="{Binding SelectedRunwayModeIdentifier, Mode=TwoWay}"
+                SelectedValuePath="Identifier"
                 DisplayMemberPath="Identifier"
                 Margin="8,0" 
                 Width="80"/>
@@ -56,7 +57,7 @@
                             </DataTemplate.Resources>
                             
                             <StackPanel Orientation="Vertical">
-                                <Slider Value="{Binding Path=LandingRateSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                <Slider Value="{Binding LandingRateSeconds}"
                                         TickFrequency="5"
                                         IsSnapToTickEnabled="true"
                                         Minimum="{Binding DataContext.MinimumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
@@ -85,10 +86,12 @@
             BevelType="Sunken">
             <Border Padding="2">
                 <StackPanel Orientation="Vertical">
+                    
+                    <!-- Change time -->
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Change configuration at: " Style="{StaticResource TextBaseStyle}"/>
                         <TextBox 
-                            Text="{Binding Path=ChangeTimeText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                            Text="{Binding ChangeTime}" 
                             Margin="8,0"
                             Width="40"
                             MaxLength="4" />
@@ -96,9 +99,10 @@
                     
                     <Border Padding="0,2,0,0" />
                     
+                    <!-- Ra-assign runways -->
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Re-assign runways: " Style="{StaticResource TextBaseStyle}"/>
-                        <CheckBox IsChecked="{Binding Path=ReassignRunways}" Margin="8,0" />
+                        <CheckBox IsChecked="{Binding ReassignRunways}" Margin="8,0" />
                     </StackPanel>
                     
                 </StackPanel>

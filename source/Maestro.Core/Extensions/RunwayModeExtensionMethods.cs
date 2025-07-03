@@ -9,7 +9,8 @@ public static class RunwayModeExtensionMethods
     {
         return new RunwayModeDto(
             runwayMode.Identifier,
-            runwayMode.Runways.Select(r => new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
+            runwayMode.Runways.Select(r =>
+                    new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
                 .ToArray());
     }
 }

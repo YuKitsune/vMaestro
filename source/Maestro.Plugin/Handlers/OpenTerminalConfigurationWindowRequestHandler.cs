@@ -17,7 +17,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
     IClock clock)
     : IRequestHandler<OpenTerminalConfigurationRequest>
 {
-    public async Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
+    public Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == request.AirportIdentifier);
@@ -39,19 +39,16 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                 windowHandle,
                 clock);
             
-            var child = new TerminalConfigurationView
-            {
-                DataContext = viewModel
-            };
-
             var form = new VatSysForm(
                 title: "TMA Configuration",
-                child,
+                new TerminalConfigurationView(viewModel),
                 shrinkToContent: true);
             
             windowHandle.SetForm(form);
             
             form.Show(mainForm);
         });
+
+        return Task.CompletedTask;
     }
 }
