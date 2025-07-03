@@ -26,47 +26,47 @@
         {
           "Identifier": "34IVA",
           "Runways": [
-            { "Identifier": "34L", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "34R", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "34L", "LandingRateSeconds": 180 },
+            { "Identifier": "34R", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "34I",
           "Runways": [
-            { "Identifier": "34L", "DefaultLandingRateSeconds": 210 },
-            { "Identifier": "34R", "DefaultLandingRateSeconds": 210 }
+            { "Identifier": "34L", "LandingRateSeconds": 210 },
+            { "Identifier": "34R", "LandingRateSeconds": 210 }
           ]
         },
         {
           "Identifier": "16IVA",
           "Runways": [
-            { "Identifier": "16R", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "16L", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "16R", "LandingRateSeconds": 180 },
+            { "Identifier": "16L", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "16I",
           "Runways": [
-            { "Identifier": "16R", "DefaultLandingRateSeconds": 210 },
-            { "Identifier": "16L", "DefaultLandingRateSeconds": 210 }
+            { "Identifier": "16R", "LandingRateSeconds": 210 },
+            { "Identifier": "16L", "LandingRateSeconds": 210 }
           ]
         },
         {
           "Identifier": "25I",
           "Runways": [
-            { "Identifier": "25", "DefaultLandingRateSeconds": 210 }
+            { "Identifier": "25", "LandingRateSeconds": 210 }
           ]
         },
         {
           "Identifier": "07I",
           "Runways": [
-            { "Identifier": "07", "DefaultLandingRateSeconds": 210 }
+            { "Identifier": "07", "LandingRateSeconds": 210 }
           ]
         },
         {
           "Identifier": "SODPROPS",
           "Runways": [
-            { "Identifier": "34L", "DefaultLandingRateSeconds": 300 }
+            { "Identifier": "34L", "LandingRateSeconds": 300 }
           ]
         }
       ],
@@ -293,60 +293,60 @@
         {
           "Identifier": "09",
           "Runways": [
-            { "Identifier": "09", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "09", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "16",
           "Runways": [
-            { "Identifier": "16", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "16", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "27",
           "Runways": [
-            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "27", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "34",
           "Runways": [
-            { "Identifier": "34", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "34", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "LAHSO",
           "Runways": [
-            { "Identifier": "34", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "34", "LandingRateSeconds": 180 },
+            { "Identifier": "27", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "34/27",
           "Runways": [
-            { "Identifier": "34", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "34", "LandingRateSeconds": 180 },
+            { "Identifier": "27", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "34/09",
           "Runways": [
-            { "Identifier": "34", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "09", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "34", "LandingRateSeconds": 180 },
+            { "Identifier": "09", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "16/27",
           "Runways": [
-            { "Identifier": "16", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "27", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "16", "LandingRateSeconds": 180 },
+            { "Identifier": "27", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "16/09",
           "Runways": [
-            { "Identifier": "16", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "09", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "16", "LandingRateSeconds": 180 },
+            { "Identifier": "09", "LandingRateSeconds": 180 }
           ]
         }
       ],
@@ -606,28 +606,28 @@
         {
           "Identifier": "19",
           "Runways": [
-            { "Identifier": "19L", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "19R", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "19L", "LandingRateSeconds": 180 },
+            { "Identifier": "19R", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "01",
           "Runways": [
-            { "Identifier": "01L", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "01R", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "01L", "LandingRateSeconds": 180 },
+            { "Identifier": "01R", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "SODPROPS",
           "Runways": [
-            { "Identifier": "19R", "DefaultLandingRateSeconds": 300 }
+            { "Identifier": "19R", "LandingRateSeconds": 300 }
           ]
         },
         {
           "Identifier": "RECIP",
           "Runways": [
-            { "Identifier": "19L", "DefaultLandingRateSeconds": 240 },
-            { "Identifier": "19R", "DefaultLandingRateSeconds": 240 }
+            { "Identifier": "19L", "LandingRateSeconds": 240 },
+            { "Identifier": "19R", "LandingRateSeconds": 240 }
           ]
         }
       ],
@@ -1138,32 +1138,32 @@
         {
           "Identifier": "SW PLN",
           "Runways": [
-            { "Identifier": "21", "DefaultLandingRateSeconds": 180 },
-            { "Identifier": "24", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "21", "LandingRateSeconds": 180 },
+            { "Identifier": "24", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "NE PLN",
           "Runways": [
-            { "Identifier": "03", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "03", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "06",
           "Runways": [
-            { "Identifier": "06", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "06", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "21",
           "Runways": [
-            { "Identifier": "21", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "21", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "24",
           "Runways": [
-            { "Identifier": "24", "DefaultLandingRateSeconds": 180 }
+            { "Identifier": "24", "LandingRateSeconds": 180 }
           ]
         }
       ],
