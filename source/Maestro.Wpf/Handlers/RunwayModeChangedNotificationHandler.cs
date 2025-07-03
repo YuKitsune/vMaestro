@@ -9,12 +9,14 @@ public class RunwayModeChangedNotificationHandler(MaestroViewModel viewModel)
 {
     public Task Handle(RunwayModeChangedNotification notification, CancellationToken cancellationToken)
     {
-        var selectedAirport = viewModel.SelectedAirport;
-        if (selectedAirport is null)
+        var sequence = viewModel.Sequences
+            .FirstOrDefault(s => s.AirportIdentifier == notification.AirportIdentifier);
+        
+        if (sequence is null)
             return Task.CompletedTask;
 
-        viewModel.CurrentRunwayMode = new RunwayModeViewModel(notification.CurrentRunwayMode);
-        viewModel.NextRunwayMode = notification.NextRunwayMode is null
+        sequence.CurrentRunwayMode = new RunwayModeViewModel(notification.CurrentRunwayMode);
+        sequence.NextRunwayMode = notification.NextRunwayMode is null
             ? null
             : new RunwayModeViewModel(notification.NextRunwayMode);
 

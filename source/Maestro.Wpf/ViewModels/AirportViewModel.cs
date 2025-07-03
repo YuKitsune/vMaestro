@@ -5,12 +5,20 @@ using Maestro.Core.Handlers;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class AirportViewModel(string identifier, RunwayModeViewModel[] runwayModes, ViewConfiguration[] views) : ObservableObject
+public partial class AirportViewModel(
+    string identifier,
+    RunwayModeViewModel[] runwayModes,
+    RunwayModeViewModel currentRunwayMode,
+    ViewConfiguration[] views)
+    : ObservableObject
 {
     public string Identifier => identifier;
 
     [ObservableProperty]
     ObservableCollection<RunwayModeViewModel> _runwayModes = new(runwayModes);
+    
+    [ObservableProperty]
+    RunwayModeViewModel _currentRunwayMode = currentRunwayMode;
 
     [ObservableProperty]
     ObservableCollection<ViewConfiguration> _views = new(views);

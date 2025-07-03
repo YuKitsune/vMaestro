@@ -85,13 +85,13 @@ public partial class MaestroView
         var canvasWidth = LadderCanvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
 
-        if (ViewModel.CurrentRunwayMode is null || ViewModel.SelectedView is null)
+        if (ViewModel.SelectedSequence is null)
             return;
 
-        foreach (var flight in ViewModel.Flights.Where(f => f.State is not State.Desequenced and not State.Removed))
+        foreach (var flight in ViewModel.SelectedSequence.Flights.Where(f => f.State is not State.Desequenced and not State.Removed))
         {
             double yOffset;
-            switch (ViewModel.SelectedView.ViewMode)
+            switch (ViewModel.SelectedSequence.SelectedView.ViewMode)
             {
                 case ViewMode.Enroute when flight.FeederFixTime.HasValue:
                     yOffset = GetYOffsetForTime(currentTime, flight.FeederFixTime.Value);
@@ -123,11 +123,11 @@ public partial class MaestroView
                 DataContext = new FlightLabelViewModel(
                     Ioc.Default.GetRequiredService<IMediator>(),
                     flight,
-                    ViewModel.CurrentRunwayMode),
+                    ViewModel.SelectedSequence.CurrentRunwayMode),
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
                 LadderPosition = ladderPosition.Value,
-                ViewMode = ViewModel.SelectedView.ViewMode
+                ViewMode = ViewModel.SelectedSequence.SelectedView.ViewMode
             };
             
             flightLabel.Loaded += ladderPosition switch
@@ -149,23 +149,23 @@ public partial class MaestroView
 
     LadderPosition? GetLadderPositionFor(FlightViewModel flight)
     {
-        if (ViewModel.SelectedView is null)
+        if (ViewModel.SelectedSequence.SelectedView is null)
             return null;
 
-        var searchTerm = ViewModel.SelectedView.ViewMode switch
+        var searchTerm = ViewModel.SelectedSequence.SelectedView.ViewMode switch
         {
             ViewMode.Enroute => flight.FeederFixIdentifier,
             ViewMode.Approach => flight.AssignedRunway,
-            _ => throw new ArgumentOutOfRangeException($"Unexpected LadderReferenceTime: {ViewModel.SelectedView.ViewMode}")
+            _ => throw new ArgumentOutOfRangeException($"Unexpected LadderReferenceTime: {ViewModel.SelectedSequence.SelectedView.ViewMode}")
         };
 
         if (string.IsNullOrEmpty(searchTerm))
             return null;
 
-        if (ViewModel.SelectedView.LeftLadder.Contains(searchTerm))
+        if (ViewModel.SelectedSequence.SelectedView.LeftLadder.Contains(searchTerm))
             return LadderPosition.Left;
         
-        if (ViewModel.SelectedView.RightLadder.Contains(searchTerm))
+        if (ViewModel.SelectedSequence.SelectedView.RightLadder.Contains(searchTerm))
             return LadderPosition.Right;
 
         return null;
