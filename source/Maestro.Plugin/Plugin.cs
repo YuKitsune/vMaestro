@@ -23,8 +23,7 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
 //  - What's next?
-//      - Merge new arrival configs
-//      - Runway mode and TMA configuration changes
+//      - Bug with lock contention
 //      - Insert flights and pending list
 //      - Manual ETA_FF
 
