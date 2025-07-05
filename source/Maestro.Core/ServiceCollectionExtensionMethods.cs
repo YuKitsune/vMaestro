@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Scheduling;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<IScheduler, Scheduler>()
             .AddSingleton<SchedulerBackgroundService>()
             .AddSingleton<IRunwayAssigner, RunwayAssigner>()
-            .AddSingleton<IClock, SystemClock>();
+            .AddSingleton<IClock, SystemClock>()
+            .AddScoped<SequenceCleaner>();
     }
 }

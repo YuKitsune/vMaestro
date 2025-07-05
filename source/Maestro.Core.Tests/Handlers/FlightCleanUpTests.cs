@@ -1,28 +1,20 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
 using Maestro.Core.Handlers;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
-using Maestro.Core.Tests.Mocks;
 using NSubstitute;
 using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class FlightCleanUpTests
+public class SequenceCleanerTests(AirportConfigurationFixture airportConfigurationFixture)
 {
-    private readonly AirportConfiguration _airportConfiguration;
-
-    public FlightCleanUpTests(AirportConfigurationFixture airportConfigurationFixture)
-    {
-        _airportConfiguration = airportConfigurationFixture.Instance;
-    }
+    private readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
     [Fact]
-    public async Task WhenAFlightHasLanded_ItIsNotImmediatelyDeleted()
+    public void WhenAFlightHasLanded_ItIsNotImmediatelyDeleted()
     {
         // Arrange
         var clock = new FixedClock(new DateTimeOffset(2025, 06, 29, 0, 0, 0, TimeSpan.Zero));
@@ -34,21 +26,17 @@ public class FlightCleanUpTests
         var sequence = new Sequence(_airportConfiguration);
         sequence.Add(flight);
 
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.GetSequence(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new TestExclusiveSequence(sequence));
-        
-        var handler = new FlightCleanUp(sequenceProvider, clock, Substitute.For<ILogger>());
+        var cleaner = new SequenceCleaner(clock, Substitute.For<ILogger>());
         
         // Act
-        await handler.Handle(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), CancellationToken.None);
+        cleaner.CleanUpFlights(sequence);
         
         // Assert
         sequence.Flights.ShouldContain(flight);
     }
     
     [Fact]
-    public async Task WhenAFlightHasLanded_AndMoreThanFiveLandedFlightsHaveLanded_OlderFlightsAreDeleted()
+    public void WhenAFlightHasLanded_AndMoreThanFiveLandedFlightsHaveLanded_OlderFlightsAreDeleted()
     {
         // Arrange
         var clock = new FixedClock(new DateTimeOffset(2025, 06, 29, 0, 0, 0, TimeSpan.Zero));
@@ -71,14 +59,10 @@ public class FlightCleanUpTests
             sequence.Add(newFlight);
         }
 
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.GetSequence(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new TestExclusiveSequence(sequence));
-        
-        var handler = new FlightCleanUp(sequenceProvider, clock, Substitute.For<ILogger>());
+        var cleaner = new SequenceCleaner(clock, Substitute.For<ILogger>());
         
         // Act
-        await handler.Handle(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), CancellationToken.None);
+        cleaner.CleanUpFlights(sequence);
         
         // Assert
         sequence.Flights.Length.ShouldBe(5, "only one flight should have been removed");
@@ -86,7 +70,7 @@ public class FlightCleanUpTests
     }
     
     [Fact]
-    public async Task WhenAFlightHasLanded_AndTimeHasPassed_ItIsDeleted()
+    public void WhenAFlightHasLanded_AndTimeHasPassed_ItIsDeleted()
     {
         // Arrange
         var clock = new FixedClock(new DateTimeOffset(2025, 06, 29, 0, 0, 0, TimeSpan.Zero));
@@ -98,21 +82,17 @@ public class FlightCleanUpTests
         var sequence = new Sequence(_airportConfiguration);
         sequence.Add(flight);
 
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.GetSequence(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new TestExclusiveSequence(sequence));
-        
-        var handler = new FlightCleanUp(sequenceProvider, clock, Substitute.For<ILogger>());
+        var cleaner = new SequenceCleaner(clock, Substitute.For<ILogger>());
         
         // Act
-        await handler.Handle(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), CancellationToken.None);
+        cleaner.CleanUpFlights(sequence);
         
         // Assert
         sequence.Flights.ShouldBeEmpty("landed flights should be removed at STA+15");
     }
     
     [Fact]
-    public async Task WhenAFlightHasBeenSeenRecently_ItIsNotDeleted()
+    public void WhenAFlightHasBeenSeenRecently_ItIsNotDeleted()
     {
         // Arrange
         var clock = new FixedClock(new DateTimeOffset(2025, 06, 29, 0, 0, 0, TimeSpan.Zero));
@@ -125,21 +105,17 @@ public class FlightCleanUpTests
         var sequence = new Sequence(_airportConfiguration);
         sequence.Add(flight);
 
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.GetSequence(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new TestExclusiveSequence(sequence));
-        
-        var handler = new FlightCleanUp(sequenceProvider, clock, Substitute.For<ILogger>());
+        var cleaner = new SequenceCleaner(clock, Substitute.For<ILogger>());
         
         // Act
-        await handler.Handle(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), CancellationToken.None);
+        cleaner.CleanUpFlights(sequence);
         
         // Assert
         sequence.Flights.ShouldContain(flight, "The flight was seen recently and should not be deleted");
     }
     
     [Fact]
-    public async Task WhenAFlightHasNotBeenSeenRecently_ItIsDeleted()
+    public void WhenAFlightHasNotBeenSeenRecently_ItIsDeleted()
     {
         // Arrange
         var clock = new FixedClock(new DateTimeOffset(2025, 06, 29, 0, 0, 0, TimeSpan.Zero));
@@ -152,14 +128,10 @@ public class FlightCleanUpTests
         var sequence = new Sequence(_airportConfiguration);
         sequence.Add(flight);
 
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.GetSequence(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new TestExclusiveSequence(sequence));
-        
-        var handler = new FlightCleanUp(sequenceProvider, clock, Substitute.For<ILogger>());
+        var cleaner = new SequenceCleaner(clock, Substitute.For<ILogger>());
         
         // Act
-        await handler.Handle(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), CancellationToken.None);
+        cleaner.CleanUpFlights(sequence);
         
         // Assert
         sequence.Flights.ShouldNotContain(flight, "The flight has not been seen recently");

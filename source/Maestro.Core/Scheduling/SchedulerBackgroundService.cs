@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Extensions;
+using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -7,7 +8,13 @@ using Serilog;
 
 namespace Maestro.Core.Scheduling;
 
-public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, IMediator mediator, IScheduler scheduler, IClock clock, ILogger logger)
+public class SchedulerBackgroundService(
+    ISequenceProvider sequenceProvider,
+    IMediator mediator,
+    IScheduler scheduler,
+    SequenceCleaner sequenceCleaner,
+    IClock clock,
+    ILogger logger)
 {
     readonly SemaphoreSlim _semaphore = new(1, 1);
     readonly IDictionary<string, (Task, CancellationTokenSource)> _sequences = new Dictionary<string, (Task, CancellationTokenSource)>();
@@ -28,6 +35,7 @@ public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, IMed
                 sequenceProvider,
                 mediator,
                 scheduler,
+                sequenceCleaner,
                 clock,
                 taskLogger,
                 cancellationTokenSource.Token);
@@ -63,6 +71,7 @@ public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, IMed
         ISequenceProvider sequenceProvider,
         IMediator mediator,
         IScheduler scheduler,
+        SequenceCleaner sequenceCleaner,
         IClock clock,
         ILogger logger,
         CancellationToken cancellationToken)
@@ -97,6 +106,10 @@ public class SchedulerBackgroundService(ISequenceProvider sequenceProvider, IMed
                 logger.Information("Scheduling {AirportIdentifier}", airportIdentifier);
                 lockedSequence.Sequence.Schedule(scheduler);
                 logger.Debug("Completed scheduling {AirportIdentifier}", airportIdentifier);
+                
+                logger.Debug("Cleaning {AirportIdentifier}", airportIdentifier);
+                sequenceCleaner.CleanUpFlights(lockedSequence.Sequence);
+                logger.Debug("Completed cleaning {AirportIdentifier}", airportIdentifier);
                 
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
             }

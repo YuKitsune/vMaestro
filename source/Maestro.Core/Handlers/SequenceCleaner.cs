@@ -1,27 +1,19 @@
 ﻿using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
-using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class FlightCleanUp(ISequenceProvider sequenceProvider, IClock clock, ILogger logger)
-    : INotificationHandler<MaestroFlightUpdatedNotification>
+public class SequenceCleaner(IClock clock, ILogger logger)
 {
     // TODO: Make configurable
     readonly int _maxLandedFlights = 5;
     readonly TimeSpan _lostFlightTimeout = TimeSpan.FromHours(1);
     readonly TimeSpan _landedFlightTimeout = TimeSpan.FromMinutes(15);
     
-    public async Task Handle(MaestroFlightUpdatedNotification notification, CancellationToken cancellationToken)
+    public void CleanUpFlights(Sequence sequence)
     {
-        using var exclusiveSequence = await sequenceProvider.GetSequence(
-            notification.Flight.DestinationIdentifier,
-            cancellationToken);
-        var sequence = exclusiveSequence.Sequence;
-
         var landedFlights = sequence.Flights
             .Where(f => f.State == State.Landed)
             .ToArray();
