@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.Composition;
+﻿using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Reflection;
+using System.Threading.Channels;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
@@ -11,6 +13,7 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
+using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
 using Maestro.Wpf.Views;
 using MediatR;
@@ -24,6 +27,7 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 // TODO:
 //  - What's next?
 //      - Bug with lock contention
+//          - Handlers are publishing messages leading to other handlers attempting to acquire the lock. Need to queue notifications rather than execute them synchronously.
 //      - Insert flights and pending list
 //      - Manual ETA_FF
 
@@ -97,11 +101,16 @@ namespace Maestro.Plugin
                     .AddSingleton<IServerConnection, StubServerConnection>() // TODO
                     .AddViewModels()
                     .AddMaestro()
-                    .AddMediatR(c => c.RegisterServicesFromAssemblies(
-                        typeof(Core.AssemblyMarker).Assembly,
-                        typeof(AssemblyMarker).Assembly,
-                        typeof(Wpf.AssemblyMarker).Assembly
-                    ))
+                    .AddMediatR(c =>
+                    {
+                        c.NotificationPublisher = new AsyncNotificationPublisher(logger);
+                        
+                        c.RegisterServicesFromAssemblies(
+                            typeof(Core.AssemblyMarker).Assembly,
+                            typeof(AssemblyMarker).Assembly,
+                            typeof(Wpf.AssemblyMarker).Assembly
+                        );
+                    })
                     .AddSingleton<IFixLookup, VatsysFixLookup>()
                     .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
                     .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))

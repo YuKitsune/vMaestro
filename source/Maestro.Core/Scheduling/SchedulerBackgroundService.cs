@@ -81,35 +81,37 @@ public class SchedulerBackgroundService(
             try
             {
                 logger.Debug("Waiting for lock on {AirportIdentifier}", airportIdentifier);
-                using var lockedSequence = await sequenceProvider.GetSequence(airportIdentifier, cancellationToken);
-                logger.Debug("Lock on {AirportIdentifier} acquired", airportIdentifier);
-
-                if (lockedSequence.Sequence.NextRunwayMode is not null &&
-                    lockedSequence.Sequence.RunwayModeChangeTime <= clock.UtcNow())
+                using (var lockedSequence = await sequenceProvider.GetSequence(airportIdentifier, cancellationToken))
                 {
-                    var nextRunwayMode = lockedSequence.Sequence.NextRunwayMode;
-                    lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode);
-                    logger.Information(
-                        "Runway mode for {AirportIdentifier} changed to {RunwayModeIdentifier}",
-                        airportIdentifier,
-                        nextRunwayMode.Identifier);
-                    
-                    await mediator.Publish(
-                        new RunwayModeChangedNotification(
+                    logger.Debug("Lock on {AirportIdentifier} acquired", airportIdentifier);
+
+                    if (lockedSequence.Sequence.NextRunwayMode is not null &&
+                        lockedSequence.Sequence.RunwayModeChangeTime <= clock.UtcNow())
+                    {
+                        var nextRunwayMode = lockedSequence.Sequence.NextRunwayMode;
+                        lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode);
+                        logger.Information(
+                            "Runway mode for {AirportIdentifier} changed to {RunwayModeIdentifier}",
                             airportIdentifier,
-                            nextRunwayMode.ToMessage(),
-                            null,
-                            default),
-                        cancellationToken);
+                            nextRunwayMode.Identifier);
+                    
+                        await mediator.Publish(
+                            new RunwayModeChangedNotification(
+                                airportIdentifier,
+                                nextRunwayMode.ToMessage(),
+                                null,
+                                default),
+                            cancellationToken);
+                    }
+                
+                    logger.Information("Scheduling {AirportIdentifier}", airportIdentifier);
+                    lockedSequence.Sequence.Schedule(scheduler);
+                    logger.Debug("Completed scheduling {AirportIdentifier}", airportIdentifier);
+                
+                    logger.Debug("Cleaning {AirportIdentifier}", airportIdentifier);
+                    sequenceCleaner.CleanUpFlights(lockedSequence.Sequence);
+                    logger.Debug("Completed cleaning {AirportIdentifier}", airportIdentifier);
                 }
-                
-                logger.Information("Scheduling {AirportIdentifier}", airportIdentifier);
-                lockedSequence.Sequence.Schedule(scheduler);
-                logger.Debug("Completed scheduling {AirportIdentifier}", airportIdentifier);
-                
-                logger.Debug("Cleaning {AirportIdentifier}", airportIdentifier);
-                sequenceCleaner.CleanUpFlights(lockedSequence.Sequence);
-                logger.Debug("Completed cleaning {AirportIdentifier}", airportIdentifier);
                 
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
             }

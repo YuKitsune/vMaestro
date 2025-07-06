@@ -10,16 +10,17 @@ public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, 
 {
     public async Task<ResumeSequencingResponse> Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-
-        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
-        if (flight is null)
+        using (var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken))
         {
-            logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-            return new ResumeSequencingResponse();
-        }
+            var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
+            if (flight is null)
+            {
+                logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
+                return new ResumeSequencingResponse();
+            }
         
-        flight.Resume();
+            flight.Resume();
+        }
         
         await mediator.Send(new RecomputeRequest(request.AirportIdentifier, request.Callsign), cancellationToken);
         return new ResumeSequencingResponse();
