@@ -26,339 +26,338 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 
 // TODO:
 //  - What's next?
-//      - Bug with lock contention
-//          - Handlers are publishing messages leading to other handlers attempting to acquire the lock. Need to queue notifications rather than execute them synchronously.
+//      - Find a better way to deal with concurrency
+//          - Handlers are publishing messages leading to other handlers attempting to acquire the lock.
 //      - Insert flights and pending list
 //      - Manual ETA_FF
 
-namespace Maestro.Plugin
+namespace Maestro.Plugin;
+
+[Export(typeof(IPlugin))]
+public class Plugin : IPlugin
 {
-    [Export(typeof(IPlugin))]
-    public class Plugin : IPlugin
-    {
 #if DEBUG
-        const string Name = "Maestro - Debug";
+    const string Name = "Maestro - Debug";
 #else
         const string Name = "Maestro";
 #endif
 
-        string IPlugin.Name => Name;
+    string IPlugin.Name => Name;
 
-        static BaseForm? _maestroWindow;
+    static BaseForm? _maestroWindow;
 
-        readonly IMediator _mediator = null!;
-        readonly ILogger _logger = null!;
+    readonly IMediator _mediator = null!;
+    readonly ILogger _logger = null!;
 
-        public Plugin()
+    public Plugin()
+    {
+        try
         {
-            try
-            {
-                ConfigureServices();
-                ConfigureTheme();
-                AddMenuItem();
+            ConfigureServices();
+            ConfigureTheme();
+            AddMenuItem();
 
-                _mediator = Ioc.Default.GetRequiredService<IMediator>();
-                _logger = Ioc.Default.GetRequiredService<ILogger>();
+            _mediator = Ioc.Default.GetRequiredService<IMediator>();
+            _logger = Ioc.Default.GetRequiredService<ILogger>();
                 
-                var executingAssembly = Assembly.GetExecutingAssembly();
-                var version = executingAssembly
-                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-                    .InformationalVersion ?? string.Empty;
+            var executingAssembly = Assembly.GetExecutingAssembly();
+            var version = executingAssembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                .InformationalVersion ?? string.Empty;
 #if RELEASE
                 version = version.Split('+').First();
 #endif
-                _logger.Information("{PluginName} {Version} initialized.", Name, version);
+            _logger.Information("{PluginName} {Version} initialized.", Name, version);
 
-                Network.Connected += Network_Connected;
-                Network.Disconnected += Network_Disconnected;
-            }
-            catch (Exception ex)
-            {
-                Errors.Add(ex, Name);
-            }
+            Network.Connected += Network_Connected;
+            Network.Disconnected += Network_Disconnected;
         }
-
-        void ConfigureTheme()
+        catch (Exception ex)
         {
-            Theme.BackgroundColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowBackground).ToWindowsColor());
-            Theme.GenericTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.GenericText).ToWindowsColor());
-            Theme.InteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.InteractiveText).ToWindowsColor());
-            Theme.NonInteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.NonInteractiveText).ToWindowsColor());
-            Theme.SelectedButtonColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowButtonSelected).ToWindowsColor());
-            Theme.FontFamily = new FontFamily(MMI.eurofont_xsml.FontFamily.Name);
-            Theme.FontSize = MMI.eurofont_xsml.Size;
-            Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeights.Bold : FontWeights.Regular;
+            Errors.Add(ex, Name);
         }
+    }
 
-        void ConfigureServices()
-        {
-            var configuration = ConfigureConfiguration();
-            var logger = ConfigureLogger(configuration.Logging);
+    void ConfigureTheme()
+    {
+        Theme.BackgroundColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowBackground).ToWindowsColor());
+        Theme.GenericTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.GenericText).ToWindowsColor());
+        Theme.InteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.InteractiveText).ToWindowsColor());
+        Theme.NonInteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.NonInteractiveText).ToWindowsColor());
+        Theme.SelectedButtonColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowButtonSelected).ToWindowsColor());
+        Theme.FontFamily = new FontFamily(MMI.eurofont_xsml.FontFamily.Name);
+        Theme.FontSize = MMI.eurofont_xsml.Size;
+        Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeights.Bold : FontWeights.Regular;
+    }
+
+    void ConfigureServices()
+    {
+        var configuration = ConfigureConfiguration();
+        var logger = ConfigureLogger(configuration.Logging);
             
-            Ioc.Default.ConfigureServices(
-                new ServiceCollection()
-                    .AddConfiguration(configuration)
-                    .AddSingleton<IServerConnection, StubServerConnection>() // TODO
-                    .AddViewModels()
-                    .AddMaestro()
-                    .AddMediatR(c =>
-                    {
-                        c.NotificationPublisher = new AsyncNotificationPublisher(logger);
+        Ioc.Default.ConfigureServices(
+            new ServiceCollection()
+                .AddConfiguration(configuration)
+                .AddSingleton<IServerConnection, StubServerConnection>() // TODO
+                .AddViewModels()
+                .AddMaestro()
+                .AddMediatR(c =>
+                {
+                    c.NotificationPublisher = new AsyncNotificationPublisher(logger);
                         
-                        c.RegisterServicesFromAssemblies(
-                            typeof(Core.AssemblyMarker).Assembly,
-                            typeof(AssemblyMarker).Assembly,
-                            typeof(Wpf.AssemblyMarker).Assembly
-                        );
-                    })
-                    .AddSingleton<IFixLookup, VatsysFixLookup>()
-                    .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
-                    .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
-                    .AddSingleton(logger)
-                    .BuildServiceProvider());
-        }
+                    c.RegisterServicesFromAssemblies(
+                        typeof(Core.AssemblyMarker).Assembly,
+                        typeof(AssemblyMarker).Assembly,
+                        typeof(Wpf.AssemblyMarker).Assembly
+                    );
+                })
+                .AddSingleton<IFixLookup, VatsysFixLookup>()
+                .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
+                .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
+                .AddSingleton(logger)
+                .BuildServiceProvider());
+    }
 
-        PluginConfiguration ConfigureConfiguration()
-        {
-            const string configFileName = "Maestro.json";
-            var profileDirectory = FindProfileDirectory();
+    PluginConfiguration ConfigureConfiguration()
+    {
+        const string configFileName = "Maestro.json";
+        var profileDirectory = FindProfileDirectory();
             
-            var configFilePath = Path.Combine(profileDirectory, configFileName);
+        var configFilePath = Path.Combine(profileDirectory, configFileName);
 
-            if (!File.Exists(configFilePath))
-                throw new MaestroException($"Unable to locate {configFileName}.");
+        if (!File.Exists(configFilePath))
+            throw new MaestroException($"Unable to locate {configFileName}.");
             
-            var configurationJson = File.ReadAllText(configFilePath);
-            var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
-            // TODO: Reloadable configuration would be cool
+        var configurationJson = File.ReadAllText(configFilePath);
+        var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
+        // TODO: Reloadable configuration would be cool
 
-            return configuration;
-        }
+        return configuration;
+    }
 
-        ILogger ConfigureLogger(ILoggingConfiguration loggingConfiguration)
-        {
-            var logFileName = Path.Combine(Helpers.GetFilesFolder(), "maestro_log.txt");
-            var logger = new LoggerConfiguration()
-                .WriteTo.File(
-                    path: logFileName,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: loggingConfiguration.MaxFileAgeDays,
-                    outputTemplate: "{Timestamp:u} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-                .MinimumLevel.Is(loggingConfiguration.LogLevel)
-                .CreateLogger();
+    ILogger ConfigureLogger(ILoggingConfiguration loggingConfiguration)
+    {
+        var logFileName = Path.Combine(Helpers.GetFilesFolder(), "maestro_log.txt");
+        var logger = new LoggerConfiguration()
+            .WriteTo.File(
+                path: logFileName,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: loggingConfiguration.MaxFileAgeDays,
+                outputTemplate: "{Timestamp:u} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .MinimumLevel.Is(loggingConfiguration.LogLevel)
+            .CreateLogger();
 
-            return logger;
-        }
+        return logger;
+    }
 
-        string FindProfileDirectory()
-        {
-            var vatsysFilesDirectory = Helpers.GetFilesFolder();
-            var profilesDirectory = Path.Combine(vatsysFilesDirectory, "Profiles");
-            var profileDirectories = Directory.GetDirectories(profilesDirectory);
+    string FindProfileDirectory()
+    {
+        var vatsysFilesDirectory = Helpers.GetFilesFolder();
+        var profilesDirectory = Path.Combine(vatsysFilesDirectory, "Profiles");
+        var profileDirectories = Directory.GetDirectories(profilesDirectory);
             
-            foreach (var profileDirectory in profileDirectories)
-            {
-                var profileXmlFile = Path.Combine(profileDirectory, "Profile.xml");
-                if (!File.Exists(profileXmlFile))
-                    continue;
+        foreach (var profileDirectory in profileDirectories)
+        {
+            var profileXmlFile = Path.Combine(profileDirectory, "Profile.xml");
+            if (!File.Exists(profileXmlFile))
+                continue;
                 
-                var profileXml = File.ReadAllText(profileXmlFile);
-                var fullProfileName = ExtractFullName(profileXml);
+            var profileXml = File.ReadAllText(profileXmlFile);
+            var fullProfileName = ExtractFullName(profileXml);
 
-                // Profile.Name is FullName Version and Revision combined
-                if (Profile.Name.StartsWith(fullProfileName))
-                    return profileDirectory;
-            }
-
-            throw new MaestroException($"Unable to locate profile directory for {Profile.Name}. Maestro configuration cannot be loaded.");
-            
-            string ExtractFullName(string xmlContent)
-            {
-                var doc = XDocument.Parse(xmlContent);
-                var profileElement = doc.Element("Profile");
-                return profileElement?.Attribute("FullName")?.Value ?? string.Empty;
-            }
+            // Profile.Name is FullName Version and Revision combined
+            if (Profile.Name.StartsWith(fullProfileName))
+                return profileDirectory;
         }
 
-        void AddMenuItem()
-        {
-            var menuItem = new CustomToolStripMenuItem(
-                CustomToolStripMenuItemWindowType.Main,
-                CustomToolStripMenuItemCategory.Windows,
-                new ToolStripMenuItem("TFMS"));
-
-            menuItem.Item.Click += (_, _) =>
-            {
-                ShowMaestro();
-            };
-
-            MMI.AddCustomMenuItem(menuItem);
+        throw new MaestroException($"Unable to locate profile directory for {Profile.Name}. Maestro configuration cannot be loaded.");
             
-            var debugMenuItem = new CustomToolStripMenuItem(
-                CustomToolStripMenuItemWindowType.Main,
-                CustomToolStripMenuItemCategory.Windows,
-                new ToolStripMenuItem("Debug TFMS"));
-
-            debugMenuItem.Item.Click += (_, _) =>
-            {
-                MMI.InvokeOnGUI(delegate {  new DebugWindow().Show(); });
-            };
-
-            MMI.AddCustomMenuItem(debugMenuItem);
-        }
-
-        static void ShowMaestro()
+        string ExtractFullName(string xmlContent)
         {
-            try
+            var doc = XDocument.Parse(xmlContent);
+            var profileElement = doc.Element("Profile");
+            return profileElement?.Attribute("FullName")?.Value ?? string.Empty;
+        }
+    }
+
+    void AddMenuItem()
+    {
+        var menuItem = new CustomToolStripMenuItem(
+            CustomToolStripMenuItemWindowType.Main,
+            CustomToolStripMenuItemCategory.Windows,
+            new ToolStripMenuItem("TFMS"));
+
+        menuItem.Item.Click += (_, _) =>
+        {
+            ShowMaestro();
+        };
+
+        MMI.AddCustomMenuItem(menuItem);
+            
+        var debugMenuItem = new CustomToolStripMenuItem(
+            CustomToolStripMenuItemWindowType.Main,
+            CustomToolStripMenuItemCategory.Windows,
+            new ToolStripMenuItem("Debug TFMS"));
+
+        debugMenuItem.Item.Click += (_, _) =>
+        {
+            MMI.InvokeOnGUI(delegate {  new DebugWindow().Show(); });
+        };
+
+        MMI.AddCustomMenuItem(debugMenuItem);
+    }
+
+    static void ShowMaestro()
+    {
+        try
+        {
+            if (_maestroWindow == null || _maestroWindow.IsDisposed)
             {
-                if (_maestroWindow == null || _maestroWindow.IsDisposed)
+                _maestroWindow = new VatSysForm(
+                    title: "TFMS",
+                    new MaestroView(),
+                    shrinkToContent: false)
                 {
-                    _maestroWindow = new VatSysForm(
-                        title: "TFMS",
-                        new MaestroView(),
-                        shrinkToContent: false)
-                    {
-                        Width = 560,
-                        Height = 800
-                    };
-                }
-
-                var mainForm = System.Windows.Forms.Application.OpenForms["MainForm"];
-                if (mainForm == null)
-                    return;
-
-                MMI.InvokeOnGUI(delegate { _maestroWindow.Show(mainForm); });
+                    Width = 560,
+                    Height = 800
+                };
             }
-            catch (Exception ex)
-            {
-                Errors.Add(ex, Name);
-            }
-        }
 
-        void Network_Connected(object sender, EventArgs e)
-        {
-            try
-            {
-                // TODO: Load sequence from local storage
-                
-                _mediator.Send(new StartSequencingAllRequest());
-                
-                foreach (var fdr in FDP2.GetFDRs)
-                {
-                    OnFDRUpdate(fdr);
-                }
-            }
-            catch (Exception ex)
-            {
-                Errors.Add(ex, Name);
-            }
-        }
-
-        void Network_Disconnected(object sender, EventArgs e)
-        {
-            // _mediator.Send(new ShutdownRequest());
-        }
-
-        public void OnFDRUpdate(FDP2.FDR updated)
-        {
-            try
-            {
-                PublishFlightUpdatedEvent(updated);
-            }
-            catch (Exception ex)
-            {
-                Errors.Add(ex, Name);
-            }
-        }
-
-        public void OnRadarTrackUpdate(RDP.RadarTrack updated)
-        {
-            try
-            {
-                if (updated.CoupledFDR is null)
-                    return;
-
-                // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to 
-                // fire for all flights when initially connecting to the network.
-                // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
-                PublishFlightUpdatedEvent(updated.CoupledFDR);
-            }
-            catch (Exception ex)
-            {
-                Errors.Add(ex, Name);
-            }
-        }
-
-        void PublishFlightUpdatedEvent(FDP2.FDR updated)
-        {
-            var wake = updated.AircraftWake switch
-            {
-                "J" => WakeCategory.SuperHeavy,
-                "H" => WakeCategory.Heavy,
-                "M" => WakeCategory.Medium,
-                "L" => WakeCategory.Light,
-                _ => WakeCategory.Heavy
-            };
-
-            var estimates = updated.ParsedRoute
-                .Select((s, i) => new FixEstimate(
-                    s.Intersection.Name,
-                    ToDateTimeOffset(s.ETO),
-                    i <= updated.ParsedRoute.OverflownIndex // If this fix has been overflown, then use the ATO
-                        ? ToDateTimeOffset(s.ATO) // BUG: If a flight has passed FF before we connect to the network, this will be MaxValue. ATO is unknown.
-                        : null))
-                .ToArray();
-
-            // TODO: Is there any point in tracking preactive flight plans?
-            //  Real Maestro does, but it might not be necessary for our purposes.
-            //  Revisit this when looking into the pending list.
-            var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
-            if (!isActivated)
+            var mainForm = System.Windows.Forms.Application.OpenForms["MainForm"];
+            if (mainForm == null)
                 return;
 
-            // Don't track flights that are on the ground
-            // TODO: Maestro is capable of sequencing flights on the ground. Need to revisit this.
-            if (updated.CoupledTrack is null || updated.CoupledTrack.OnGround)
+            MMI.InvokeOnGUI(delegate { _maestroWindow.Show(mainForm); });
+        }
+        catch (Exception ex)
+        {
+            Errors.Add(ex, Name);
+        }
+    }
+
+    void Network_Connected(object sender, EventArgs e)
+    {
+        try
+        {
+            // TODO: Load sequence from local storage
+                
+            _mediator.Send(new StartSequencingAllRequest());
+                
+            foreach (var fdr in FDP2.GetFDRs)
+            {
+                OnFDRUpdate(fdr);
+            }
+        }
+        catch (Exception ex)
+        {
+            Errors.Add(ex, Name);
+        }
+    }
+
+    void Network_Disconnected(object sender, EventArgs e)
+    {
+        // _mediator.Send(new ShutdownRequest());
+    }
+
+    public void OnFDRUpdate(FDP2.FDR updated)
+    {
+        try
+        {
+            PublishFlightUpdatedEvent(updated);
+        }
+        catch (Exception ex)
+        {
+            Errors.Add(ex, Name);
+        }
+    }
+
+    public void OnRadarTrackUpdate(RDP.RadarTrack updated)
+    {
+        try
+        {
+            if (updated.CoupledFDR is null)
                 return;
 
-            FlightPosition? position = null;
-            if (updated.CoupledTrack is not null)
-            {
-                var track = updated.CoupledTrack;
-                var verticalTrack = track.VerticalSpeed >= RDP.VS_CLIMB
-                    ? VerticalTrack.Climbing
-                    : track.VerticalSpeed <= RDP.VS_DESCENT
-                        ? VerticalTrack.Descending
-                        : VerticalTrack.Maintaining;
-
-                position = new FlightPosition(
-                    new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
-                    track.CorrectedAltitude,
-                    verticalTrack,
-                    track.GroundSpeed);
-            }
-
-            var notification = new FlightUpdatedNotification(
-                updated.Callsign,
-                updated.AircraftType,
-                wake,
-                updated.DepAirport,
-                updated.DesAirport,
-                updated.STAR?.Name,
-                updated.ArrivalRunway?.Name,
-                isActivated,
-                position,
-                estimates);
-            
-            _mediator.Publish(notification);
+            // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to 
+            // fire for all flights when initially connecting to the network.
+            // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
+            PublishFlightUpdatedEvent(updated.CoupledFDR);
         }
-
-        static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
+        catch (Exception ex)
         {
-            return new DateTimeOffset(
-                dateTime.Year, dateTime.Month, dateTime.Day,
-                dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond,
-                TimeSpan.Zero);
+            Errors.Add(ex, Name);
         }
+    }
+
+    void PublishFlightUpdatedEvent(FDP2.FDR updated)
+    {
+        var wake = updated.AircraftWake switch
+        {
+            "J" => WakeCategory.SuperHeavy,
+            "H" => WakeCategory.Heavy,
+            "M" => WakeCategory.Medium,
+            "L" => WakeCategory.Light,
+            _ => WakeCategory.Heavy
+        };
+
+        var estimates = updated.ParsedRoute
+            .Select((s, i) => new FixEstimate(
+                s.Intersection.Name,
+                ToDateTimeOffset(s.ETO),
+                i <= updated.ParsedRoute.OverflownIndex // If this fix has been overflown, then use the ATO
+                    ? ToDateTimeOffset(s.ATO) // BUG: If a flight has passed FF before we connect to the network, this will be MaxValue. ATO is unknown.
+                    : null))
+            .ToArray();
+
+        // TODO: Is there any point in tracking preactive flight plans?
+        //  Real Maestro does, but it might not be necessary for our purposes.
+        //  Revisit this when looking into the pending list.
+        var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
+        if (!isActivated)
+            return;
+
+        // Don't track flights that are on the ground
+        // TODO: Maestro is capable of sequencing flights on the ground. Need to revisit this.
+        if (updated.CoupledTrack is null || updated.CoupledTrack.OnGround)
+            return;
+
+        FlightPosition? position = null;
+        if (updated.CoupledTrack is not null)
+        {
+            var track = updated.CoupledTrack;
+            var verticalTrack = track.VerticalSpeed >= RDP.VS_CLIMB
+                ? VerticalTrack.Climbing
+                : track.VerticalSpeed <= RDP.VS_DESCENT
+                    ? VerticalTrack.Descending
+                    : VerticalTrack.Maintaining;
+
+            position = new FlightPosition(
+                new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
+                track.CorrectedAltitude,
+                verticalTrack,
+                track.GroundSpeed);
+        }
+
+        var notification = new FlightUpdatedNotification(
+            updated.Callsign,
+            updated.AircraftType,
+            wake,
+            updated.DepAirport,
+            updated.DesAirport,
+            updated.STAR?.Name,
+            updated.ArrivalRunway?.Name,
+            isActivated,
+            position,
+            estimates);
+            
+        _mediator.Publish(notification);
+    }
+
+    static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
+    {
+        return new DateTimeOffset(
+            dateTime.Year, dateTime.Month, dateTime.Day,
+            dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond,
+            TimeSpan.Zero);
     }
 }
