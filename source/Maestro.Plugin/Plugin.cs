@@ -1,7 +1,5 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.Composition;
+﻿using System.ComponentModel.Composition;
 using System.Reflection;
-using System.Threading.Channels;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
@@ -59,7 +57,7 @@ public class Plugin : IPlugin
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
-                
+
             var executingAssembly = Assembly.GetExecutingAssembly();
             var version = executingAssembly
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
@@ -94,7 +92,7 @@ public class Plugin : IPlugin
     {
         var configuration = ConfigureConfiguration();
         var logger = ConfigureLogger(configuration.Logging);
-            
+
         Ioc.Default.ConfigureServices(
             new ServiceCollection()
                 .AddConfiguration(configuration)
@@ -104,7 +102,7 @@ public class Plugin : IPlugin
                 .AddMediatR(c =>
                 {
                     c.NotificationPublisher = new AsyncNotificationPublisher(logger);
-                        
+
                     c.RegisterServicesFromAssemblies(
                         typeof(Core.AssemblyMarker).Assembly,
                         typeof(AssemblyMarker).Assembly,
@@ -122,12 +120,12 @@ public class Plugin : IPlugin
     {
         const string configFileName = "Maestro.json";
         var profileDirectory = FindProfileDirectory();
-            
+
         var configFilePath = Path.Combine(profileDirectory, configFileName);
 
         if (!File.Exists(configFilePath))
             throw new MaestroException($"Unable to locate {configFileName}.");
-            
+
         var configurationJson = File.ReadAllText(configFilePath);
         var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
         // TODO: Reloadable configuration would be cool
@@ -155,13 +153,13 @@ public class Plugin : IPlugin
         var vatsysFilesDirectory = Helpers.GetFilesFolder();
         var profilesDirectory = Path.Combine(vatsysFilesDirectory, "Profiles");
         var profileDirectories = Directory.GetDirectories(profilesDirectory);
-            
+
         foreach (var profileDirectory in profileDirectories)
         {
             var profileXmlFile = Path.Combine(profileDirectory, "Profile.xml");
             if (!File.Exists(profileXmlFile))
                 continue;
-                
+
             var profileXml = File.ReadAllText(profileXmlFile);
             var fullProfileName = ExtractFullName(profileXml);
 
@@ -171,7 +169,7 @@ public class Plugin : IPlugin
         }
 
         throw new MaestroException($"Unable to locate profile directory for {Profile.Name}. Maestro configuration cannot be loaded.");
-            
+
         string ExtractFullName(string xmlContent)
         {
             var doc = XDocument.Parse(xmlContent);
@@ -193,7 +191,7 @@ public class Plugin : IPlugin
         };
 
         MMI.AddCustomMenuItem(menuItem);
-            
+
         var debugMenuItem = new CustomToolStripMenuItem(
             CustomToolStripMenuItemWindowType.Main,
             CustomToolStripMenuItemCategory.Windows,
@@ -240,9 +238,9 @@ public class Plugin : IPlugin
         try
         {
             // TODO: Load sequence from local storage
-                
+
             _mediator.Send(new StartSequencingAllRequest());
-                
+
             foreach (var fdr in FDP2.GetFDRs)
             {
                 OnFDRUpdate(fdr);
@@ -278,7 +276,7 @@ public class Plugin : IPlugin
             if (updated.CoupledFDR is null)
                 return;
 
-            // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to 
+            // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to
             // fire for all flights when initially connecting to the network.
             // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
             PublishFlightUpdatedEvent(updated.CoupledFDR);
@@ -349,7 +347,7 @@ public class Plugin : IPlugin
             isActivated,
             position,
             estimates);
-            
+
         _mediator.Publish(notification);
     }
 
