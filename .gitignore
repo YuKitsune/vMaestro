@@ -134,4 +134,5 @@ $RECYCLE.BIN/
 _NCrunch*
 
 # Build output
+.dist
 .build

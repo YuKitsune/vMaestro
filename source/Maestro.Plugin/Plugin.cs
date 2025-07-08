@@ -26,6 +26,9 @@ using Coordinate = Maestro.Core.Model.Coordinate;
 //  - What's next?
 //      - Find a better way to deal with concurrency
 //          - Handlers are publishing messages leading to other handlers attempting to acquire the lock.
+//      - Jamie wants a "Reset" button
+//      - Time in the TMA config is broken
+//      - TMA config won't resize
 //      - Insert flights and pending list
 //      - Manual ETA_FF
 
