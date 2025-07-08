@@ -18,11 +18,11 @@ public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, 
                 logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
                 return new ResumeSequencingResponse();
             }
-        
+
             flight.Resume();
+            flight.NeedsRecompute = true;
         }
-        
-        await mediator.Send(new RecomputeRequest(request.AirportIdentifier, request.Callsign), cancellationToken);
+
         return new ResumeSequencingResponse();
     }
 }
