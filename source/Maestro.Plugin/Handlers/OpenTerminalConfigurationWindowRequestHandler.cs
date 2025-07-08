@@ -25,7 +25,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
         var runwayModes = airportConfiguration.RunwayModes
             .Select(r => r.ToMessage())
             .ToArray();
-        
+
         guiInvoker.InvokeOnUiThread(mainForm =>
         {
             var windowHandle = new WindowHandle();
@@ -38,14 +38,14 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                 mediator,
                 windowHandle,
                 clock);
-            
+
             var form = new VatSysForm(
                 title: "TMA Configuration",
                 new TerminalConfigurationView(viewModel),
-                shrinkToContent: true);
-            
+                shrinkToContent: false);
+
             windowHandle.SetForm(form);
-            
+
             form.Show(mainForm);
         });
 
