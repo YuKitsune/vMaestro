@@ -21,12 +21,12 @@ using Serilog;
 using vatsys;
 using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
+using MessageBox = System.Windows.Forms.MessageBox;
 
 // TODO:
 //  - What's next?
 //      - Find a better way to deal with concurrency
 //          - Handlers are publishing messages leading to other handlers attempting to acquire the lock.
-//      - Jamie wants a "Reset" button
 //      - Time in the TMA config is broken
 //      - TMA config won't resize
 //      - Insert flights and pending list
@@ -40,7 +40,7 @@ public class Plugin : IPlugin
 #if DEBUG
     const string Name = "Maestro - Debug";
 #else
-        const string Name = "Maestro";
+    const string Name = "Maestro";
 #endif
 
     string IPlugin.Name => Name;
@@ -57,6 +57,7 @@ public class Plugin : IPlugin
             ConfigureServices();
             ConfigureTheme();
             AddMenuItem();
+            AddResetMenuItem();
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
@@ -206,6 +207,31 @@ public class Plugin : IPlugin
         };
 
         MMI.AddCustomMenuItem(debugMenuItem);
+    }
+
+    void AddResetMenuItem()
+    {
+        var resetMenuItem = new CustomToolStripMenuItem(
+            CustomToolStripMenuItemWindowType.Main,
+            CustomToolStripMenuItemCategory.Tools,
+            new ToolStripMenuItem("Reset Maestro"));
+
+        resetMenuItem.Item.Click += (_, _) =>
+        {
+            MMI.InvokeOnGUI(delegate
+            {
+                if (MessageBox.Show(
+                        "Are you sure you want to reset Maestro?",
+                        "Reset Maestro",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning) == DialogResult.Yes)
+                {
+                    _mediator.Send(new ResetRequest());
+                }
+            });
+        };
+
+        MMI.AddCustomMenuItem(resetMenuItem);
     }
 
     static void ShowMaestro()

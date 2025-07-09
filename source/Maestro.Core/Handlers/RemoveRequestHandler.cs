@@ -5,7 +5,7 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class RemoveRequestHandler(ISequenceProvider sequenceProvider, ILogger logger)
+public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger logger)
     : IRequestHandler<RemoveRequest, RemoveResponse>
 {
     public async Task<RemoveResponse> Handle(RemoveRequest request, CancellationToken cancellationToken)
@@ -20,7 +20,9 @@ public class RemoveRequestHandler(ISequenceProvider sequenceProvider, ILogger lo
         }
 
         flight.Remove();
-        flight.NeedsRecompute = true;
+        await mediator.Publish(
+            new FlightRemovedNotification(flight.DestinationIdentifier, flight.Callsign),
+            cancellationToken);
 
         // TODO: Re-calculate sequence
 

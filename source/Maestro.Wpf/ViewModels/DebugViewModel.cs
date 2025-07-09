@@ -4,14 +4,17 @@ using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public class HandleSequenceModified(DebugViewModel debugViewModel) : INotificationHandler<MaestroFlightUpdatedNotification>
+public partial class DebugViewModel : ObservableObject
 {
-    public Task Handle(MaestroFlightUpdatedNotification notification, CancellationToken cancellationToken)
+    [ObservableProperty]
+    List<FlightViewModel> _flights = [];
+
+    public void UpdateFlight(FlightMessage flight)
     {
-        var flights = debugViewModel.Flights.ToList();
-        var index = flights.FindIndex(f => f.Callsign == notification.Flight.Callsign);
-        var viewModel = new FlightViewModel(notification.Flight);
-        
+        var flights = Flights.ToList();
+        var index = flights.FindIndex(f => f.Callsign == flight.Callsign);
+        var viewModel = new FlightViewModel(flight);
+
         if (index != -1)
         {
             flights[index] = viewModel;
@@ -20,15 +23,12 @@ public class HandleSequenceModified(DebugViewModel debugViewModel) : INotificati
         {
             flights.Add(viewModel);
         }
-        
-        debugViewModel.Flights = flights;
-        
-        return Task.CompletedTask;
-    }
-}
 
-public partial class DebugViewModel : ObservableObject
-{
-    [ObservableProperty]
-    List<FlightViewModel> _flights = [];
+        Flights = flights;
+    }
+
+    public void RemoveFlight(string callsign)
+    {
+        Flights.RemoveAll(f => f.Callsign == callsign);
+    }
 }
