@@ -27,8 +27,6 @@ using MessageBox = System.Windows.Forms.MessageBox;
 //  - What's next?
 //      - Find a better way to deal with concurrency
 //          - Handlers are publishing messages leading to other handlers attempting to acquire the lock.
-//      - Time in the TMA config is broken
-//      - TMA config won't resize
 //      - Insert flights and pending list
 //      - Manual ETA_FF
 

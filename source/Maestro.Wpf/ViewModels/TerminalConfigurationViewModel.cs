@@ -13,12 +13,15 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     readonly IClock _clock;
     readonly IMediator _mediator;
     readonly IWindowHandle _windowHandle;
-    
+
     [ObservableProperty]
     string _selectedRunwayModeIdentifier;
-    
+
     [ObservableProperty]
     RunwayModeViewModel _selectedRunwayMode;
+
+    [ObservableProperty]
+    bool _changeImmediately;
 
     [ObservableProperty]
     string _changeTime;
@@ -28,7 +31,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
 
     [ObservableProperty]
     string[] _errors = [];
-    
+
     public RunwayModeDto[] AvailableRunwayModes { get; }
 
     // TODO: Make configurable
@@ -53,11 +56,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         AvailableRunwayModes = availableRunwayModes;
         SelectedRunwayMode = new RunwayModeViewModel(nextTerminalConfiguration ?? currentRunwayMode);
         SelectedRunwayModeIdentifier = SelectedRunwayMode.Identifier;
+
+        ChangeImmediately = true;
         ChangeTime = terminalConfigurationChangeTime == default
             ? _clock.UtcNow().ToString("HHmm")
             : terminalConfigurationChangeTime.ToString("HHmm");
     }
-    
+
     partial void OnSelectedRunwayModeIdentifierChanged(string value)
     {
         // When selection changes in UI, update SelectedRunwayMode to the copy of the matching template
@@ -76,7 +81,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
 
         Errors = [$"{ChangeTime} is invalid. Please use the format HHmm"];
     }
-    
+
 
     [RelayCommand(CanExecute = nameof(CanChangeRunwayMode))]
     void ChangeRunwayMode()
@@ -90,13 +95,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
             SelectedRunwayMode.Runways
                 .Select(r => new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
                 .ToArray());
-        
+
         _mediator.Send(new ChangeRunwayModeRequest(
             _airportIdentifier,
             runwayModeDto,
             changeTime,
             ReassignRunways));
-        
+
         CloseWindow();
     }
 
@@ -110,10 +115,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     {
         _windowHandle.Close();
     }
-    
+
     bool TryGetChangeTime(out DateTimeOffset result)
     {
-        result = default;
+        result = _clock.UtcNow();
+
+        if (ChangeImmediately)
+            return true;
 
         if (!GetHoursAndMinutes(ChangeTime, out var hours, out var minutes))
             return false;
@@ -121,10 +129,11 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         var currentTime = _clock.UtcNow();
         var todayTarget = new DateTimeOffset(
             currentTime.Year, currentTime.Month, currentTime.Day,
-            hours, minutes, 0, currentTime.Offset
-        );
+            hours, minutes, 0, currentTime.Offset);
 
-        result = todayTarget > currentTime ? todayTarget : todayTarget.AddDays(1);
+        result = todayTarget > currentTime
+            ? todayTarget
+            : todayTarget.AddDays(1);
         return true;
     }
 
@@ -136,13 +145,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(value) || value.Length != 4)
             return false;
 
-        if (!int.TryParse(value.Substring(0, 2), out hours) || 
+        if (!int.TryParse(value.Substring(0, 2), out hours) ||
             !int.TryParse(value.Substring(2, 2), out minutes))
             return false;
 
         if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59)
             return false;
-        
+
         return true;
     }
 }

@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:Maestro.Wpf"
              xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
              xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
+             xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
              mc:Ignorable="d"
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:TerminalConfigurationViewModel}"
@@ -18,13 +19,15 @@
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <converters:BoolInversionConverter x:Key="BoolInversionConverter" />
+
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
 
         </ResourceDictionary>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical">
-        
+
         <!-- I think this needs its own window -->
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="TMA Configuration: " />
@@ -34,12 +37,12 @@
                 SelectedValue="{Binding SelectedRunwayModeIdentifier, Mode=TwoWay}"
                 SelectedValuePath="Identifier"
                 DisplayMemberPath="Identifier"
-                Margin="8,0" 
+                Margin="8,0"
                 Width="80"/>
         </StackPanel>
-        
+
         <Border Padding="2" />
-        
+
         <TextBlock Text="New Runway Rates:"/>
         <Border Padding="0,2,0,0" />
         <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
@@ -55,7 +58,7 @@
                             <DataTemplate.Resources>
                                 <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}"/>
                             </DataTemplate.Resources>
-                            
+
                             <StackPanel Orientation="Vertical">
                                 <Slider Value="{Binding LandingRateSeconds}"
                                         TickFrequency="5"
@@ -70,15 +73,15 @@
                                     <!-- TODO: Hourly rate -->
                                 </StackPanel>
                             </StackPanel>
-                            
+
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </Border>
         </controls:BeveledBorder>
-        
+
         <Border Padding="2" />
-        
+
         <TextBlock Text="Apply:" />
         <Border Padding="0,2,0,0" />
         <controls:BeveledBorder
@@ -86,29 +89,39 @@
             BevelType="Sunken">
             <Border Padding="2">
                 <StackPanel Orientation="Vertical">
-                    
-                    <!-- Change time -->
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Change configuration at: " Style="{StaticResource GenericTextStyle}"/>
-                        <TextBox 
-                            Text="{Binding ChangeTime}" 
-                            Margin="8,0"
-                            Width="40"
-                            MaxLength="4" />
-                    </StackPanel>
-                    
+
+                    <!-- Change immediately -->
+                    <RadioButton GroupName="RunwayChangeTimeRadio" IsChecked="{Binding ChangeImmediately}">
+                        <TextBlock Text="Change configuration immediately" />
+                    </RadioButton>
+
                     <Border Padding="0,2,0,0" />
-                    
+
+                    <!-- Change time -->
+                    <RadioButton GroupName="RunwayChangeTimeRadio">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Change configuration at: " Style="{StaticResource GenericTextStyle}"/>
+                            <TextBox
+                                Text="{Binding ChangeTime}"
+                                Margin="8,0"
+                                Width="40"
+                                MaxLength="4"
+                                IsEnabled="{Binding ChangeImmediately, Converter={StaticResource BoolInversionConverter}}"/>
+                        </StackPanel>
+                    </RadioButton>
+
+                    <Border Padding="0,2,0,0" />
+
                     <!-- Ra-assign runways -->
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Re-assign runways: " Style="{StaticResource GenericTextStyle}"/>
                         <CheckBox IsChecked="{Binding ReassignRunways}" Margin="8,0" />
                     </StackPanel>
-                    
+
                 </StackPanel>
             </Border>
         </controls:BeveledBorder>
-        
+
         <!-- Errors -->
         <ItemsControl ItemsSource="{Binding Path=Errors}" Margin="4">
             <ItemsControl.ItemsPanel>
@@ -122,7 +135,7 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-        
+
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -131,6 +144,6 @@
             <Button Grid.Column="0" Width="56" Command="{Binding ChangeRunwayModeCommand}">Ok</Button>
             <Button Grid.Column="1" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
         </Grid>
-        
+
     </StackPanel>
 </UserControl>
