@@ -3,7 +3,6 @@ using System.Runtime.Versioning;
 using Microsoft.Win32;
 using Nuke.Common;
 using Nuke.Common.IO;
-using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Serilog;
@@ -21,7 +20,7 @@ class Build : NukeBuild
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
-    
+
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
     AbsolutePath OutputDirectory => Configuration == Configuration.Debug
         ? GetDebugOutputPath()
@@ -29,7 +28,7 @@ class Build : NukeBuild
     AbsolutePath BuildOutputDirectory => OutputDirectory / "MaestroPlugin";
     AbsolutePath ZipPath => OutputDirectory / $"Maestro.{GitVersion.FullSemVer}.zip";
     AbsolutePath ChecksumPath => OutputDirectory / $"Maestro.{GitVersion.FullSemVer}.zip.sha256";
-    
+
     [GitVersion]
     readonly GitVersion GitVersion;
 
@@ -49,7 +48,7 @@ class Build : NukeBuild
                 GitVersion,
                 Configuration,
                 BuildOutputDirectory);
-            
+
             DotNetTasks.DotNetBuild(s => s
                 .SetProjectFile(PluginProjectPath)
                 .SetConfiguration(Configuration)
@@ -67,18 +66,18 @@ class Build : NukeBuild
             var readmeFile = RootDirectory / "README.md";
             var configFile = RootDirectory / "Maestro.json";
             // var changelogFile = RootDirectory / "CHANGELOG.md";
-            
+
             dpiAwareFixScript.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
             readmeFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
             configFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
             // changelogFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
-            
+
             Log.Information("Packaging {OutputDirectory} to {ZipPath}", OutputDirectory, ZipPath);
             OutputDirectory.ZipTo(ZipPath);
-            
+
             var hash = ZipPath.GetFileHash();
             Log.Information("{ZipPath} checksum {Checksum}", ZipPath, hash);
-            
+
             await File.WriteAllTextAsync(ChecksumPath, hash);
         });
 
