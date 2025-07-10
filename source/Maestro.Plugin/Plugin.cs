@@ -65,7 +65,7 @@ public class Plugin : IPlugin
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
                 .InformationalVersion ?? string.Empty;
 #if RELEASE
-                version = version.Split('+').First();
+            version = version.Split('+').First();
 #endif
             _logger.Information("{PluginName} {Version} initialized.", Name, version);
 

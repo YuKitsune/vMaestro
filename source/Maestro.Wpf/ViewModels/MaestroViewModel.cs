@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using MediatR;
 
@@ -10,7 +11,7 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
 {
     [ObservableProperty]
     ObservableCollection<SequenceViewModel> _sequences = [];
-    
+
     [ObservableProperty]
     SequenceViewModel? _selectedSequence;
 
@@ -38,5 +39,11 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
                 item.Sequence,
                 mediator));
         }
+    }
+
+    [RelayCommand]
+    async Task MoveFlight(MoveFlightRequest request)
+    {
+        await mediator.Send(request);
     }
 }

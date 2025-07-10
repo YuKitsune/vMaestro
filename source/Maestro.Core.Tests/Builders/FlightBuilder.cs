@@ -12,16 +12,19 @@ public class FlightBuilder(string callsign)
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
     DateTimeOffset feederFixTime = default;
     DateTimeOffset passedFeederFix = default;
-    
+
     DateTimeOffset landingEstimate = DateTimeOffset.Now;
     DateTimeOffset landingTime = default;
+    bool manualLandingTime = false;
 
     string _assignedArrival = "RIVET4";
     string _assignedRunway = "34L";
     bool _manualRunway = false;
 
+    bool _noDelay = false;
+
     State _state = State.Unstable;
-    
+
     DateTimeOffset _lastSeen = DateTimeOffset.Now;
 
     public FlightBuilder WithFeederFix(string feederFixIdentifier)
@@ -29,7 +32,7 @@ public class FlightBuilder(string callsign)
         _feederFixIdentifier = feederFixIdentifier;
         return this;
     }
-    
+
     public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate)
     {
         feederFixEstimate = estimate;
@@ -54,9 +57,16 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithLandingTime(DateTimeOffset time)
+    public FlightBuilder WithLandingTime(DateTimeOffset time, bool manual = false)
     {
         landingTime = time;
+        manualLandingTime = manual;
+        return this;
+    }
+
+    public FlightBuilder NoDelay(bool value = true)
+    {
+        _noDelay = value;
         return this;
     }
 
@@ -84,7 +94,7 @@ public class FlightBuilder(string callsign)
         _lastSeen = lastSeen;
         return this;
     }
-    
+
     public Flight Build()
     {
         var feederFix = !string.IsNullOrEmpty(_feederFixIdentifier)
@@ -100,24 +110,26 @@ public class FlightBuilder(string callsign)
             _assignedRunway,
             feederFix,
             landingEstimate);
-        
+
         if (feederFixTime != default)
             flight.SetFeederFixTime(feederFixTime);
-        
+
         if (passedFeederFix != default)
             flight.PassedFeederFix(passedFeederFix);
-        
+
         if (landingTime != default)
-            flight.SetLandingTime(landingTime);
+            flight.SetLandingTime(landingTime, manualLandingTime);
 
         flight.SetArrival(_assignedArrival);
         flight.SetRunway(_assignedRunway, _manualRunway);
-        
+
         flight.Activate(new FixedClock(DateTimeOffset.Now));
-        
+
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
-        
+
         flight.SetState(_state);
+
+        flight.NoDelay = _noDelay;
 
         return flight;
     }

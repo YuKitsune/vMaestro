@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
+using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
@@ -23,6 +24,7 @@ public partial class MaestroView
     const int LineThickness = 2;
 
     readonly DispatcherTimer _dispatcherTimer;
+    private bool _isDragging = false;
 
     public MaestroView()
     {
@@ -68,6 +70,7 @@ public partial class MaestroView
 
     void DrawLadder()
     {
+        if (_isDragging) return;
         Dispatcher.Invoke(() =>
         {
             LadderCanvas.Children.Clear();
@@ -96,7 +99,7 @@ public partial class MaestroView
                 case ViewMode.Enroute when flight.FeederFixTime.HasValue:
                     yOffset = GetYOffsetForTime(currentTime, flight.FeederFixTime.Value);
                     break;
-                
+
                 case ViewMode.Approach:
                     yOffset = GetYOffsetForTime(currentTime, flight.LandingTime);
                     break;
@@ -118,6 +121,8 @@ public partial class MaestroView
             if (ladderPosition is null)
                 continue;
 
+            var canDrag = ViewModel.SelectedSequence.SelectedView.ViewMode == ViewMode.Approach;
+
             var flightLabel = new FlightLabelView
             {
                 DataContext = new FlightLabelViewModel(
@@ -127,9 +132,10 @@ public partial class MaestroView
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
                 LadderPosition = ladderPosition.Value,
-                ViewMode = ViewModel.SelectedSequence.SelectedView.ViewMode
+                ViewMode = ViewModel.SelectedSequence.SelectedView.ViewMode,
+                IsDraggable = canDrag
             };
-            
+
             flightLabel.Loaded += ladderPosition switch
             {
                 LadderPosition.Left => PositionOnCanvas(
@@ -141,6 +147,24 @@ public partial class MaestroView
                     right: canvasWidth,
                     y: yPosition),
                 _ => throw new ArgumentException($"Unexpected LadderPosition: {ladderPosition}")
+            };
+
+            flightLabel.DragStarted += (s, e) =>
+            {
+                _isDragging = true;
+            };
+
+            flightLabel.DragEnded += (s, newY) =>
+            {
+                _isDragging = false;
+                var newYOffset = canvasHeight - newY;
+                var newTime = GetTimeForYOffset(currentTime, newYOffset);
+                ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
+                    ViewModel.SelectedSequence.AirportIdentifier,
+                    flight.Callsign,
+                    newTime
+                ));
+                DrawLadder();
             };
 
             LadderCanvas.Children.Add(flightLabel);
@@ -164,7 +188,7 @@ public partial class MaestroView
 
         if (ViewModel.SelectedSequence.SelectedView.LeftLadder.Contains(searchTerm))
             return LadderPosition.Left;
-        
+
         if (ViewModel.SelectedSequence.SelectedView.RightLadder.Contains(searchTerm))
             return LadderPosition.Right;
 
@@ -336,7 +360,15 @@ public partial class MaestroView
             minutes,
             0,
             currentTime.Offset);
-        
+
         return nextInterval;
+    }
+
+    DateTimeOffset GetTimeForYOffset(DateTimeOffset currentTime, double yOffset)
+    {
+        // Convert the Y offset back to a time
+        var minutes = yOffset / MinuteHeight;
+        var newTime = currentTime.AddMinutes(minutes);
+        return newTime;
     }
 }

@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Configuration;
+﻿using System.Security.Authentication.ExtendedProtection;
+using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -50,7 +51,7 @@ public class FlightUpdatedHandler(
             if (flight is null)
             {
                 isNew = true;
-                
+
                 // TODO: Make configurable
                 var flightCreationThreshold = TimeSpan.FromHours(2);
 
@@ -115,7 +116,7 @@ public class FlightUpdatedHandler(
                     return;
                 }
             }
-            
+
             logger.Debug("Updating {Callsign}", notification.Callsign);
 
             flight.UpdateLastSeen(clock);
@@ -201,7 +202,7 @@ public class FlightUpdatedHandler(
         var defaultRunway = terminal.Runways.First().Identifier;
         if (string.IsNullOrEmpty(feederFixIdentifier))
             return defaultRunway;
-        
+
         var possibleRunways = runwayAssigner.FindBestRunways(
             aircraftType,
             feederFixIdentifier,
@@ -210,7 +211,7 @@ public class FlightUpdatedHandler(
         var runwaysInMode = possibleRunways
             .Where(r => terminal.Runways.Any(r2 => r2.Identifier == r))
             .ToArray();
-        
+
         // No runways found, use the default one
         if (!runwaysInMode.Any())
             return defaultRunway;
@@ -238,7 +239,7 @@ public class FlightUpdatedHandler(
             flight.SetState(State.Unstable);
             return;
         }
-        
+
         if (flight.ScheduledLandingTime <= clock.UtcNow())
         {
             flight.SetState(State.Landed);
@@ -260,7 +261,7 @@ public class FlightUpdatedHandler(
             // No change required
             return;
         }
-        
+
         logger.Information("{Callsign} is now {State}", flight.Callsign, flight.State);
     }
 
@@ -294,8 +295,8 @@ public class FlightUpdatedHandler(
                     flight.Callsign,
                     flight.EstimatedFeederFixTime,
                     diff.ToHoursAndMinutesString());
-                
-                if (diff.Duration() > TimeSpan.FromMinutes(2)) 
+
+                if (diff.Duration() > TimeSpan.FromMinutes(2))
                     logger.Warning("{Callsign} ETA_FF has changed by more than 2 minutes", flight.Callsign);
             }
         }
@@ -311,8 +312,8 @@ public class FlightUpdatedHandler(
                 flight.Callsign,
                 flight.EstimatedLandingTime,
                 diff.ToHoursAndMinutesString());
-                
-            if (diff.Duration() > TimeSpan.FromMinutes(2)) 
+
+            if (diff.Duration() > TimeSpan.FromMinutes(2))
                 logger.Warning("{Callsign} ETA has changed by more than 2 minutes", flight.Callsign);
         }
     }
@@ -335,7 +336,7 @@ public class FlightUpdatedHandler(
 
         if (feederFixEstimate is null)
             flight.HighPriority = true;
-        
+
         return flight;
     }
 }

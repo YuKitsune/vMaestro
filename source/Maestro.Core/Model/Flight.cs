@@ -6,24 +6,24 @@ namespace Maestro.Core.Model;
 public sealed class FlightComparer : IComparer<Flight>
 {
     public static FlightComparer Instance { get; } = new();
-    
+
     public int Compare(Flight? left, Flight? right)
     {
         if (left is null)
             return -1;
-            
+
         if (right is null)
             return 1;
-        
+
         var timeComparison = left.ScheduledLandingTime.CompareTo(right.ScheduledLandingTime);
         if (timeComparison != 0)
             return timeComparison;
-        
+
         // Compare by state descending
         var stateComparison = right.State.CompareTo(left.State);
         if (stateComparison != 0)
             return stateComparison;
-        
+
         // To prevent two flights from sharing the same position if they have the same state, estimate, and scheduled
         // times, use their callsigns to differentiate.
         return string.Compare(left.Callsign, right.Callsign, StringComparison.Ordinal);
@@ -53,7 +53,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         InitialFeederFixTime = feederFixEstimate?.Estimate;
         EstimatedFeederFixTime = feederFixEstimate?.Estimate;
         ScheduledFeederFixTime = feederFixEstimate?.Estimate;
-        
+
         InitialLandingTime = initialLandingTime;
         EstimatedLandingTime = initialLandingTime;
         ScheduledLandingTime = initialLandingTime;
@@ -84,23 +84,24 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset InitialLandingTime { get; private set; }
     public DateTimeOffset EstimatedLandingTime { get; private set; } // ETA
     public DateTimeOffset ScheduledLandingTime { get; private set; } // STA
+    public bool ManualLandingTime { get; private set; }
     public TimeSpan TotalDelay => ScheduledLandingTime - InitialLandingTime;
     public TimeSpan RemainingDelay => ScheduledLandingTime - EstimatedLandingTime;
-    
+
     public bool Activated => ActivatedTime.HasValue;
     public DateTimeOffset? ActivatedTime { get; private set; }
-    
+
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
-    
+
     public bool HasBeenScheduled { get; private set; }
-    
+
     public DateTimeOffset LastSeen { get; private set; }
 
     public void SetState(State state)
     {
         if (State == State.Removed && state is not State.Removed)
             throw new MaestroException("Cannot change state as flight has been removed.");
-        
+
         // TODO: Prevent invalid state changes
         State = state;
     }
@@ -119,14 +120,14 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         State = State.Removed;
     }
-    
+
     public bool ShouldSequence => State != State.Desequenced && State != State.Removed;
 
     public void SetArrival(string? arrivalIdentifier)
     {
         AssignedArrivalIdentifier = arrivalIdentifier;
     }
-    
+
     public void SetRunway(string runwayIdentifier, bool manual)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
@@ -157,7 +158,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         if (HasPassedFeederFix)
             throw new MaestroException(
                 "Cannot update feeder fix estimate because the flight has already passed the feeder fix");
-        
+
         EstimatedFeederFixTime = feederFixEstimate;
         if (State == State.Unstable)
         {
@@ -173,7 +174,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         if (HasPassedFeederFix)
             throw new MaestroException(
                 "Cannot update feeder fix time because the flight has already passed the feeder fix");
-        
+
         ScheduledFeederFixTime = feederFixTime;
     }
 
@@ -184,7 +185,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
         if (HasPassedFeederFix)
             throw new MaestroException("Flight has already passed the feeder fix");
-        
+
         ActualFeederFixTime = feederFixTime;
     }
 
@@ -197,17 +198,18 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         }
     }
 
-    public void SetLandingTime(DateTimeOffset landingTime)
+    public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
     {
         HasBeenScheduled = true;
         ScheduledLandingTime = landingTime;
+        ManualLandingTime = manual;
     }
 
     public void Activate(IClock clock)
     {
         if (Activated)
             throw new MaestroException($"{Callsign} is already activated.");
-        
+
         ActivatedTime = clock.UtcNow();
     }
 
@@ -215,7 +217,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         LastSeen = clock.UtcNow();
     }
-    
+
     public int CompareTo(Flight? other)
     {
         return FlightComparer.Instance.Compare(this, other);
@@ -223,7 +225,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public bool Equals(Flight? other)
     {
-        return other is not null && (ReferenceEquals(this, other) || Callsign == other.Callsign); 
+        return other is not null && (ReferenceEquals(this, other) || Callsign == other.Callsign);
     }
 
     public override string ToString()
