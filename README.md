@@ -63,24 +63,10 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [X] Recompute
     - [X] Remove from sequence
     - [X] Desequence
-    - [ ] Change runway mode
-    - [ ] Change runway rates
+    - [X] Change runway mode
+    - [X] Change runway rates
     - [ ] Insert flight
     - [ ] Change ETA FF
-
-- [ ] Sequencing Algorithm Refinement
-    - [ ] Factor GRIB winds into estimate calculations (If required)
-    - [X] Use FF and STAR suffix for ETI
-    - [ ] Separate enroute and TMA delays
-    - [ ] Consider separation at the feeder fix
-    - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
-    - [ ] Apply optimisations (i.e. runway selection)
-
-- [ ] Terminal Configuration Refinement
-    - [ ] Runway(s) to be used
-    - [ ] Time of effect
-    - [ ] STARs used in system calculations
-    - [ ] Restrictions to be applied (E.g: B747 configured for certain runways only)
 
 - [ ] Online Mode
     - [ ] Run sequencing code in a standalone server
@@ -91,9 +77,24 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [ ] Allow Flow to modify the sequence
     - [ ] Authentication
 
+- [ ] Sequencing Algorithm Refinement
+    - [ ] Consider implementing a slot-based system to eliminate calculations with absolute times
+    - [ ] Apply optimisations (i.e. runway selection)
+    - [ ] Factor GRIB winds into estimate calculations (If required)
+    - [X] Use FF and STAR suffix for ETI
+    - [ ] Separate enroute and TMA delays
+    - [ ] Consider separation at the feeder fix
+    - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
+
+- [ ] Terminal Configuration Refinement
+    - [ ] Runway(s) to be used
+    - [ ] Time of effect
+    - [ ] STARs used in system calculations
+    - [ ] Restrictions to be applied (E.g: B747 configured for certain runways only)
+
 - [ ] Extras
+    - [ ] Arbitrary flight insertion
     - [ ] Ladder scrolling
-    - [ ] Account for GRIB winds
     - [ ] Blockout periods
     - [ ] Insert slot
     - [ ] Zero Delay and priority flights
