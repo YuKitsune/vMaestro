@@ -11,7 +11,6 @@ public class Sequence
     readonly AirportConfiguration _airportConfiguration;
 
     readonly List<BlockoutPeriod> _blockoutPeriods = new();
-    readonly List<Flight> _pending = new();
     readonly List<Flight> _flights = new();
 
     public string AirportIdentifier => _airportConfiguration.Identifier;
@@ -58,18 +57,6 @@ public class Sequence
         }
 
         _flights.Sort(FlightComparer.Instance);
-    }
-
-    public void AddPending(Flight flight)
-    {
-        if (_pending.Any(f => f.Callsign == flight.Callsign))
-            throw new MaestroException($"{flight.Callsign} is already in the Pending list for {AirportIdentifier}.");
-
-        if (flight.DestinationIdentifier != AirportIdentifier)
-            throw new MaestroException($"{flight.Callsign} cannot be added to the Pending list for {AirportIdentifier} as the destination is {flight.DestinationIdentifier}.");
-
-        // TODO: Additional validation
-        _pending.Add(flight);
     }
 
     public void AddBlockout(BlockoutPeriod blockoutPeriod)
@@ -149,7 +136,6 @@ public class Sequence
     {
         _blockoutPeriods.Clear();
         _flights.Clear();
-        _pending.Clear();
         NextRunwayMode = null;
         RunwayModeChangeTime = default;
     }

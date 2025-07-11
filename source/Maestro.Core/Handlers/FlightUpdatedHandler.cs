@@ -60,6 +60,10 @@ public class FlightUpdatedHandler(
                     notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
                 var landingEstimate = notification.Estimates.Last().Estimate;
 
+                // Only create flights in Maestro when they're within a specified range
+                if (landingEstimate - clock.UtcNow() <= flightCreationThreshold)
+                    return;
+
                 // Prefer the runway assigned in vatSys
                 var runway = notification.AssignedRunway is not null
                     ? notification.AssignedRunway!
@@ -71,39 +75,19 @@ public class FlightUpdatedHandler(
 
                 // TODO: Verify if this behaviour is correct
                 // Flights not planned via a feeder fix are added to the pending list
-                if (feederFix is null)
-                {
-                    flight = CreateMaestroFlight(
-                        notification,
-                        runway,
-                        null,
-                        landingEstimate);
+                var state = feederFix is null
+                    ? State.Pending
+                    : State.Unstable;
 
-                    // TODO: Revisit flight plan activation
-                    flight.Activate(clock);
+                flight = CreateMaestroFlight(
+                    notification,
+                    runway,
+                    state,
+                    feederFix,
+                    landingEstimate);
 
-                    sequence.AddPending(flight);
-                    logger.Information("{Callsign} created (pending)", notification.Callsign);
-                }
-                // Only create flights in Maestro when they're within a specified range of the feeder fix
-                else if (feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
-                {
-                    flight = CreateMaestroFlight(
-                        notification,
-                        runway,
-                        feederFix,
-                        landingEstimate);
-
-                    // TODO: Revisit flight plan activation
-                    flight.Activate(clock);
-
-                    sequence.Add(flight);
-                    logger.Information("{Callsign} created", notification.Callsign);
-                }
+                logger.Information("{Callsign} created ({State})", notification.Callsign, flight.State);
             }
-
-            if (flight is null)
-                return;
 
             // Only apply rate limiting if a position is available
             // When no position is available (i.e. Not coupled to a radar track), we accept all updates
@@ -321,6 +305,7 @@ public class FlightUpdatedHandler(
     Flight CreateMaestroFlight(
         FlightUpdatedNotification notification,
         string runwayIdentifier,
+        State state,
         FixEstimate? feederFixEstimate,
         DateTimeOffset landingEstimate)
     {
@@ -336,6 +321,9 @@ public class FlightUpdatedHandler(
 
         if (feederFixEstimate is null)
             flight.HighPriority = true;
+
+        flight.SetState(state);
+        flight.Activate(clock);
 
         return flight;
     }

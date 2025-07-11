@@ -2,6 +2,7 @@
 
 public enum State
 {
+    Pending,
     Unstable,
     Stable,
     SuperStable,

@@ -121,7 +121,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         State = State.Removed;
     }
 
-    public bool ShouldSequence => State != State.Desequenced && State != State.Removed;
+    public bool ShouldSequence => State != State.Pending && State != State.Desequenced && State != State.Removed;
 
     public void SetArrival(string? arrivalIdentifier)
     {
