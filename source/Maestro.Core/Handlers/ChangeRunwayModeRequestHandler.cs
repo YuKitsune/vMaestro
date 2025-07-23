@@ -24,8 +24,7 @@ public class RunwayConfigurationDto(string runwayIdentifier, int landingRateSeco
 public record ChangeRunwayModeRequest(
     string AirportIdentifier,
     RunwayModeDto RunwayMode,
-    DateTimeOffset StartTime,
-    bool ReAssignRunways)
+    DateTimeOffset StartTime)
     : IRequest;
 
 public class ChangeRunwayModeRequestHandler(
@@ -40,7 +39,7 @@ public class ChangeRunwayModeRequestHandler(
     public async Task Handle(ChangeRunwayModeRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        
+
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().SingleOrDefault(c => c.Identifier == request.AirportIdentifier);
         if (airportConfiguration == null)
         {
@@ -48,17 +47,7 @@ public class ChangeRunwayModeRequestHandler(
             return;
         }
 
-        var configuration = new RunwayMode
-        {
-            Identifier = request.RunwayMode.Identifier,
-            Runways = request.RunwayMode.Runways.Select(r =>
-                    new RunwayConfiguration
-                    {
-                        Identifier = r.RunwayIdentifier,
-                        LandingRateSeconds = r.AcceptanceRate
-                    })
-                .ToArray()
-        };
+        var configuration = new RunwayMode(request.RunwayMode);
 
         DateTimeOffset startTime;
         if (request.StartTime <= clock.UtcNow())
@@ -105,12 +94,12 @@ public class ChangeRunwayModeRequestHandler(
                 "Reassigning runways for {AirportIdentifier} arrivals arriving after {RunwayModeChangeTime}",
                 request.AirportIdentifier,
                 startTime);
-            
+
             // TODO: Duplicate of FlightUpdatedHandler.FindBestRunway(). Consolidate.
-            
+
             var arrivalsToReassign =
                 lockedSequence.Sequence.Flights.Where(f => f.EstimatedLandingTime >= startTime);
-            
+
             foreach (var arrival in arrivalsToReassign)
             {
                 // TODO: Override manual assignment?
@@ -120,20 +109,20 @@ public class ChangeRunwayModeRequestHandler(
                     arrival.SetRunway(defaultRunway.Identifier, manual: false);
                     continue;
                 }
-                
+
                 var possibleRunways = runwayAssigner.FindBestRunways(
                     arrival.AircraftType,
                     arrival.FeederFixIdentifier,
                     lockedSequence.Sequence.RunwayAssignmentRules);
-                
+
                 var runwaysInMode = possibleRunways
                     .Where(r => configuration.Runways.Any(r2 => r2.Identifier == r))
                     .ToArray();
-                
+
                 var runwayToAssign = runwaysInMode.Any()
                     ? runwaysInMode.First()
                     : configuration.Runways.First().Identifier;
-                
+
                 arrival.SetRunway(runwayToAssign, manual: false);
             }
         }

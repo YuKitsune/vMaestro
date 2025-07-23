@@ -238,16 +238,6 @@ public class Scheduler(IPerformanceLookup performanceLookup, ILogger logger) : I
         //  Can this be done first? (Probe the leader, check the time between leader STA and blockout)
         flight.SetLandingTime(scheduledLandingTime);
 
-        var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (performance is not null && performance.AircraftCategory == AircraftCategory.Jet && flight.EstimatedLandingTime < scheduledLandingTime)
-        {
-            flight.SetFlowControls(FlowControls.S250);
-        }
-        else
-        {
-            flight.SetFlowControls(FlowControls.ProfileSpeed);
-        }
-
         logger.Information(
             "{Callsign} STA now {NewLandingTime:HH:mm}. Total delay {Delay}.",
             flight.Callsign,

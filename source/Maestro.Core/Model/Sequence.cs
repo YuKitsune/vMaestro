@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
+using MediatR;
+using Serilog.Debugging;
 
 namespace Maestro.Core.Model;
 
