@@ -1,5 +1,4 @@
-﻿using System.Security.Authentication.ExtendedProtection;
-using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -28,7 +27,7 @@ public class FlightUpdatedHandler(
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
-    IScheduler scheduler,
+    ISlotBasedScheduler scheduler,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -47,7 +46,7 @@ public class FlightUpdatedHandler(
             var sequence = lockedSequence.Sequence;
 
             bool isNew = false;
-            var flight = sequence.TryGetFlight(notification.Callsign);
+            var flight = sequence.FindFlight(notification.Callsign);
             if (flight is null)
             {
                 isNew = true;
@@ -60,29 +59,19 @@ public class FlightUpdatedHandler(
                     notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
                 var landingEstimate = notification.Estimates.Last().Estimate;
 
-                // Prefer the runway assigned in vatSys
-                var runway = notification.AssignedRunway is not null
-                    ? notification.AssignedRunway!
-                    : FindBestRunway(
-                        feederFix?.FixIdentifier ?? string.Empty,
-                        notification.AircraftType,
-                        sequence.GetRunwayModeAt(landingEstimate),
-                        sequence.RunwayAssignmentRules);
-
                 // TODO: Verify if this behaviour is correct
                 // Flights not planned via a feeder fix are added to the pending list
                 if (feederFix is null)
                 {
                     flight = CreateMaestroFlight(
                         notification,
-                        runway,
                         null,
                         landingEstimate);
 
                     // TODO: Revisit flight plan activation
                     flight.Activate(clock);
 
-                    sequence.AddPending(flight);
+                    sequence.AddPendingFlight(flight);
                     logger.Information("{Callsign} created (pending)", notification.Callsign);
                 }
                 // Only create flights in Maestro when they're within a specified range of the feeder fix
@@ -90,14 +79,14 @@ public class FlightUpdatedHandler(
                 {
                     flight = CreateMaestroFlight(
                         notification,
-                        runway,
                         feederFix,
                         landingEstimate);
 
                     // TODO: Revisit flight plan activation
                     flight.Activate(clock);
 
-                    sequence.Add(flight);
+                    scheduler.AllocateSlot(sequence, flight);
+
                     logger.Information("{Callsign} created", notification.Callsign);
                 }
             }
@@ -131,10 +120,7 @@ public class FlightUpdatedHandler(
             // }
 
             // Exit early if the flight should not be processed
-            if (!flight.Activated ||
-                flight.State == State.Desequenced ||
-                flight.State == State.Removed ||
-                flight.State == State.Landed)
+            if (!flight.Activated || flight.State == State.Landed)
             {
                 if (!flight.Activated)
                     logger.Debug("{Callsign} is not activated. No additional processing required.",
@@ -146,6 +132,7 @@ public class FlightUpdatedHandler(
                 return;
             }
 
+            // TODO: Move this to recompute handler
             if (flight.NeedsRecompute)
             {
                 logger.Information("Recomputing {Callsign}", flight.Callsign);
@@ -160,15 +147,10 @@ public class FlightUpdatedHandler(
                 flight.NoDelay = false;
 
                 // Re-assign runway if it has not been manually assigned
+                // TODO: Is this the correct behaviour?
                 if (!flight.RunwayManuallyAssigned)
                 {
-                    var runway = FindBestRunway(
-                        feederFix?.FixIdentifier ?? string.Empty,
-                        flight.AircraftType,
-                        sequence.GetRunwayModeAt(flight.EstimatedLandingTime), // TODO: STA?
-                        sequence.RunwayAssignmentRules);
-
-                    flight.SetRunway(runway, false);
+                    flight.ClearRunway();
                 }
 
                 flight.NeedsRecompute = false;
@@ -183,7 +165,7 @@ public class FlightUpdatedHandler(
             // Schedule the flight if we just added it
             if (isNew)
             {
-                scheduler.Schedule(sequence, flight);
+                scheduler.AllocateSlot(sequence, flight);
             }
 
             SetState(flight);
@@ -195,31 +177,6 @@ public class FlightUpdatedHandler(
         {
             logger.Error(exception, "Error updating {Callsign}", notification.Callsign);
         }
-    }
-
-    string FindBestRunway(string feederFixIdentifier, string aircraftType, RunwayMode terminal, IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)
-    {
-        var defaultRunway = terminal.Runways.First().Identifier;
-        if (string.IsNullOrEmpty(feederFixIdentifier))
-            return defaultRunway;
-
-        var possibleRunways = runwayAssigner.FindBestRunways(
-            aircraftType,
-            feederFixIdentifier,
-            assignmentRules);
-
-        var runwaysInMode = possibleRunways
-            .Where(r => terminal.Runways.Any(r2 => r2.Identifier == r))
-            .ToArray();
-
-        // No runways found, use the default one
-        if (!runwaysInMode.Any())
-            return defaultRunway;
-
-        // TODO: Use lower priorities depending on traffic load.
-        //  How could we go about this? Probe for shortest delay? Round-robin?
-        var topPriority = runwaysInMode.First();
-        return topPriority;
     }
 
     void SetState(Flight flight)
@@ -320,7 +277,6 @@ public class FlightUpdatedHandler(
 
     Flight CreateMaestroFlight(
         FlightUpdatedNotification notification,
-        string runwayIdentifier,
         FixEstimate? feederFixEstimate,
         DateTimeOffset landingEstimate)
     {
@@ -330,7 +286,6 @@ public class FlightUpdatedHandler(
             notification.WakeCategory,
             notification.Origin,
             notification.Destination,
-            runwayIdentifier,
             feederFixEstimate,
             landingEstimate);
 

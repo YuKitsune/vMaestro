@@ -11,7 +11,7 @@ namespace Maestro.Core.Scheduling;
 public class SchedulerBackgroundService(
     ISequenceProvider sequenceProvider,
     IMediator mediator,
-    IScheduler scheduler,
+    ISlotBasedScheduler scheduler,
     SequenceCleaner sequenceCleaner,
     IClock clock,
     ILogger logger)
@@ -70,7 +70,7 @@ public class SchedulerBackgroundService(
         string airportIdentifier,
         ISequenceProvider sequenceProvider,
         IMediator mediator,
-        IScheduler scheduler,
+        ISlotBasedScheduler scheduler,
         SequenceCleaner sequenceCleaner,
         IClock clock,
         ILogger logger,
@@ -89,7 +89,7 @@ public class SchedulerBackgroundService(
                         lockedSequence.Sequence.RunwayModeChangeTime.IsSameOrBefore(clock.UtcNow()))
                     {
                         var nextRunwayMode = lockedSequence.Sequence.NextRunwayMode;
-                        lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode);
+                        lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode, scheduler, clock);
                         logger.Information(
                             "Runway mode for {AirportIdentifier} changed to {RunwayModeIdentifier}",
                             airportIdentifier,
@@ -105,7 +105,7 @@ public class SchedulerBackgroundService(
                     }
 
                     logger.Information("Scheduling {AirportIdentifier}", airportIdentifier);
-                    lockedSequence.Sequence.Schedule(scheduler);
+                    scheduler.Schedule(lockedSequence.Sequence);
                     logger.Debug("Completed scheduling {AirportIdentifier}", airportIdentifier);
 
                     logger.Debug("Cleaning {AirportIdentifier}", airportIdentifier);

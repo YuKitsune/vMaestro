@@ -23,13 +23,12 @@ public class MoveFlightRequestHandler : IRequestHandler<MoveFlightRequest>
         using var exclusiveSequence = await _sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
         var sequence = exclusiveSequence.Sequence;
 
-        var flight = sequence.TryGetFlight(request.Callsign);
+        var flight = sequence.FindFlight(request.Callsign);
         if (flight is null)
             return;
 
-        if (flight.State is State.Frozen or State.Landed or State.Desequenced or State.Removed)
+        if (flight.State is State.Frozen or State.Landed)
             throw new MaestroException($"Cannot move a {flight.State} flight.");
-
 
         // Cannot schedule in front of a frozen flight
         var frozenLeaders = sequence.SequencableFlights.Where(f => f.State == State.Frozen && f.ScheduledLandingTime.IsSameOrAfter(request.NewLandingTime));

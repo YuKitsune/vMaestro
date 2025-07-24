@@ -5,7 +5,7 @@ namespace Maestro.Core.Extensions;
 
 public static class FlightExtensionMethods
 {
-    public static FlightMessage ToMessage(this Flight flight, Sequence sequence)
+    public static FlightMessage ToMessage(this Flight flight, SlotBasedSequence sequence)
     {
         return new FlightMessage
         {

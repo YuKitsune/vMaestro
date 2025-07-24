@@ -12,8 +12,8 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IMediat
     public async Task<ZeroDelayResponse> Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        
-        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
+
+        var flight = lockedSequence.Sequence.FindFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
@@ -21,11 +21,13 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IMediat
         }
 
         flight.NoDelay = true;
-        
+
+        // TODO: Reallocate position in sequence
+
         await mediator.Publish(
             new MaestroFlightUpdatedNotification(flight.ToMessage(lockedSequence.Sequence)),
             cancellationToken);
-        
+
         return new ZeroDelayResponse();
     }
 }

@@ -30,7 +30,7 @@ public record ChangeRunwayModeRequest(
 public class ChangeRunwayModeRequestHandler(
     ISequenceProvider sequenceProvider,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IRunwayAssigner runwayAssigner,
+    ISlotBasedScheduler scheduler,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -49,11 +49,9 @@ public class ChangeRunwayModeRequestHandler(
 
         var configuration = new RunwayMode(request.RunwayMode);
 
-        DateTimeOffset startTime;
         if (request.StartTime <= clock.UtcNow())
         {
-            startTime = clock.UtcNow();
-            lockedSequence.Sequence.ChangeRunwayMode(configuration);
+            lockedSequence.Sequence.ChangeRunwayMode(configuration, scheduler, clock);
 
             logger.Information(
                 "Runway changed {AirportIdentifier} to {RunwayModeIdentifier}.",
@@ -70,8 +68,7 @@ public class ChangeRunwayModeRequestHandler(
         }
         else
         {
-            startTime = request.StartTime;
-            lockedSequence.Sequence.ChangeRunwayMode(configuration, request.StartTime);
+            lockedSequence.Sequence.ChangeRunwayMode(configuration, scheduler, request.StartTime);
 
             logger.Information(
                 "Runway change scheduled for {AirportIdentifier} to {RunwayModeIdentifier} at {RunwayModeChangeTime}.",
@@ -84,47 +81,8 @@ public class ChangeRunwayModeRequestHandler(
                     request.AirportIdentifier,
                     lockedSequence.Sequence.CurrentRunwayMode.ToMessage(),
                     request.RunwayMode,
-                    startTime),
+                    request.StartTime),
                 cancellationToken);
         }
-
-        // if (request.ReAssignRunways)
-        // {
-        //     logger.Information(
-        //         "Reassigning runways for {AirportIdentifier} arrivals arriving after {RunwayModeChangeTime}",
-        //         request.AirportIdentifier,
-        //         startTime);
-        //
-        //     // TODO: Duplicate of FlightUpdatedHandler.FindBestRunway(). Consolidate.
-        //
-        //     var arrivalsToReassign =
-        //         lockedSequence.Sequence.Flights.Where(f => f.EstimatedLandingTime >= startTime);
-        //
-        //     foreach (var arrival in arrivalsToReassign)
-        //     {
-        //         // TODO: Override manual assignment?
-        //         var defaultRunway = configuration.Runways.First();
-        //         if (string.IsNullOrEmpty(arrival.FeederFixIdentifier))
-        //         {
-        //             arrival.SetRunway(defaultRunway.Identifier, manual: false);
-        //             continue;
-        //         }
-        //
-        //         var possibleRunways = runwayAssigner.FindBestRunways(
-        //             arrival.AircraftType,
-        //             arrival.FeederFixIdentifier,
-        //             lockedSequence.Sequence.RunwayAssignmentRules);
-        //
-        //         var runwaysInMode = possibleRunways
-        //             .Where(r => configuration.Runways.Any(r2 => r2.Identifier == r))
-        //             .ToArray();
-        //
-        //         var runwayToAssign = runwaysInMode.Any()
-        //             ? runwaysInMode.First()
-        //             : configuration.Runways.First().Identifier;
-        //
-        //         arrival.SetRunway(runwayToAssign, manual: false);
-        //     }
-        // }
     }
 }

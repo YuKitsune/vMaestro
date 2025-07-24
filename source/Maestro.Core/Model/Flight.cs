@@ -38,7 +38,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         WakeCategory wakeCategory,
         string originIdentifier,
         string destinationIdentifier,
-        string assignedRunwayIdentifier,
         FixEstimate? feederFixEstimate,
         DateTimeOffset initialLandingTime)
     {
@@ -47,7 +46,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         WakeCategory = wakeCategory;
         OriginIdentifier = originIdentifier;
         DestinationIdentifier = destinationIdentifier;
-        AssignedRunwayIdentifier = assignedRunwayIdentifier;
 
         FeederFixIdentifier = feederFixEstimate?.FixIdentifier;
         InitialFeederFixTime = feederFixEstimate?.Estimate;
@@ -65,7 +63,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public string OriginIdentifier { get; private set; }
     public string DestinationIdentifier { get; private set; }
     public string? AssignedArrivalIdentifier { get; private set; }
-    public string AssignedRunwayIdentifier { get; private set; }
+    public string? AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
     public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
@@ -92,36 +90,13 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset? ActivatedTime { get; private set; }
 
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
-
-    public bool HasBeenScheduled { get; private set; }
-
     public DateTimeOffset LastSeen { get; private set; }
 
     public void SetState(State state)
     {
-        if (State == State.Removed && state is not State.Removed)
-            throw new MaestroException("Cannot change state as flight has been removed.");
-
         // TODO: Prevent invalid state changes
         State = state;
     }
-
-    public void Resume()
-    {
-        State = State.Unstable;
-    }
-
-    public void Desequence()
-    {
-        State = State.Desequenced;
-    }
-
-    public void Remove()
-    {
-        State = State.Removed;
-    }
-
-    public bool ShouldSequence => State != State.Desequenced && State != State.Removed;
 
     public void SetArrival(string? arrivalIdentifier)
     {
@@ -132,6 +107,12 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         AssignedRunwayIdentifier = runwayIdentifier;
         RunwayManuallyAssigned = manual;
+    }
+
+    public void ClearRunway()
+    {
+        AssignedRunwayIdentifier = null;
+        RunwayManuallyAssigned = false;
     }
 
     public void SetFlowControls(FlowControls flowControls)
@@ -200,7 +181,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
     {
-        HasBeenScheduled = true;
         ScheduledLandingTime = landingTime;
         ManualLandingTime = manual;
     }

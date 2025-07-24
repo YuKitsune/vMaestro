@@ -6,7 +6,5 @@ public enum State
     Stable,
     SuperStable,
     Frozen,
-    Landed,
-    Desequenced,
-    Removed
+    Landed
 }

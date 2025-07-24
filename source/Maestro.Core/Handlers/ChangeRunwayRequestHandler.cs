@@ -12,7 +12,7 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IMed
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
-        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
+        var flight = lockedSequence.Sequence.FindFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);

@@ -6,34 +6,41 @@ using Serilog;
 namespace Maestro.Core.Model;
 
 // TODO Test cases:
-// - Reprovisioning slots from a specific time
-//   - Cannot provision slots too far in the future
-//   - Deletes existing slots after the specified time
-//   - Retains existing slots before the specified time
-//   - Does not create gaps in the sequence
-//   - Reschedules affected flights (use NSubstitute to record the call count)
-// - Provisioning slots from a specific time
-//   - Cannot provision slots too far in the future
-//   - Does not delete existing slots
-//   - Does not create overlapping slots
-//   - Accounts for runway mode changes in the future
-// - Changing runway mode
-//   - Changes the current runway mode immediately
-//   - Schedules a runway mode change for a future time
-//   - Reprovisions slots based on the new runway mode
-//   - Returns a list of flights that need to be rescheduled
+// - Desequencing a flight, deallocates the slot and adds the flight to desequenced flights
+// - AddPendingFlight adds a flight to pending flights
+// - PurgeSlotsBefore removes slots before a given time and retains the 5 most recent landed flights
+// - NumberInSequence returns the index of a flight in the entire sequence, starting from 1
+// - NumberForRunway returns the index of a flight for its assigned runway, starting from 1
+
+// TODO: Insert custom slots at specific times
+//   - Facilitate manual landing times and no-delay flights
+//   - Slot created at a specific time
+//   - Duration derived from runway mode if a flight is being inserted
+//   - Duration manually specified if a custom slot is being created (i.e. arrival stop)
+//   - Conflicting slots removed
+//   - Flights in slots that conflict with the custom slot or are behind it are recomputed
+//   - If the slot is more than the landing rate behind the prior slot, a reserved slot is created to fill the gap
 
 public class SlotBasedSequence
 {
-    static TimeSpan _maxProvisionTime = TimeSpan.FromHours(2);
+    // TODO: Make these configurable
+    static readonly TimeSpan MaxProvisionTime = TimeSpan.FromHours(2);
+    static readonly int MaxLandedFlights = 5;
 
     readonly AirportConfiguration _airportConfiguration;
 
+    readonly List<Flight> _pendingFlights = [];
+    readonly List<Flight> _desequencedFlights = [];
+    readonly List<Flight> _landedFlights = [];
     readonly List<Slot> _slots = [];
 
     public string AirportIdentifier => _airportConfiguration.Identifier;
-
-    public IReadOnlyList<Slot> Slots => _slots;
+    public string[] FeederFixes => _airportConfiguration.FeederFixes;
+    public IReadOnlyList<Flight> PendingFlights => _pendingFlights.AsReadOnly();
+    public IReadOnlyList<Flight> DesequencedFlights => _desequencedFlights.AsReadOnly();
+    public IReadOnlyList<Flight> LandedFlights => _landedFlights.AsReadOnly();
+    public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
+    public IReadOnlyList<Flight> Flights => Slots.Select(s => s.Flight).WhereNotNull().ToList().AsReadOnly();
 
     public RunwayMode CurrentRunwayMode { get; private set; }
     public RunwayMode? NextRunwayMode { get; private set; }
@@ -48,7 +55,7 @@ public class SlotBasedSequence
 
     public void ReprovisionSlotsFrom(DateTimeOffset startTime, ISlotBasedScheduler scheduler)
     {
-        if (startTime > DateTime.MaxValue.Add(_maxProvisionTime.Negate()))
+        if (startTime > DateTime.MaxValue.Add(MaxProvisionTime.Negate()))
             throw new MaestroException($"Cannot provision slots for {startTime} as it is too far in the future.");
 
         var affectedFlights = _slots
@@ -71,19 +78,12 @@ public class SlotBasedSequence
         }
     }
 
-    public RunwayMode RunwayModeAt(DateTimeOffset time)
-    {
-        return NextRunwayMode is not null && RunwayModeChangeTime.IsSameOrBefore(time)
-            ? NextRunwayMode
-            : CurrentRunwayMode;
-    }
-
     public void ProvisionSlotsFrom(DateTimeOffset startTime)
     {
-        if (startTime > DateTime.MaxValue.Add(_maxProvisionTime.Negate()))
+        if (startTime > DateTime.MaxValue.Add(MaxProvisionTime.Negate()))
             throw new MaestroException($"Cannot provision slots for {startTime} as it is too far in the future.");
 
-        var endTime = startTime + _maxProvisionTime;
+        var endTime = startTime + MaxProvisionTime;
 
         if (NextRunwayMode is not null)
         {
@@ -121,6 +121,118 @@ public class SlotBasedSequence
         }
     }
 
+    public RunwayMode RunwayModeAt(DateTimeOffset time)
+    {
+        return NextRunwayMode is not null && RunwayModeChangeTime.IsSameOrBefore(time)
+            ? NextRunwayMode
+            : CurrentRunwayMode;
+    }
+
+    /// <summary>
+    ///     Changes the runway mode with an immediate effect.
+    /// </summary>
+    public void ChangeRunwayMode(RunwayMode runwayMode, ISlotBasedScheduler scheduler, IClock clock)
+    {
+        CurrentRunwayMode = runwayMode;
+        NextRunwayMode = null;
+        RunwayModeChangeTime = default;
+
+        ReprovisionSlotsFrom(clock.UtcNow(), scheduler);
+    }
+
+    /// <summary>
+    ///     Schedules a runway mode change for some time in the future.
+    /// </summary>
+    public void ChangeRunwayMode(
+        RunwayMode runwayMode,
+        ISlotBasedScheduler scheduler,
+        DateTimeOffset changeTime)
+    {
+        NextRunwayMode = runwayMode;
+        RunwayModeChangeTime = changeTime;
+
+        ReprovisionSlotsFrom(changeTime, scheduler);
+    }
+
+    public void DesequenceFlight(string callsign)
+    {
+        var slot = FindSlotFor(callsign);
+        if (slot is null)
+            return;
+
+        var flight = slot.Flight!;
+        slot.Deallocate();
+        _desequencedFlights.Add(flight);
+    }
+
+    public void ResumeSequencing(string callsign, ISlotBasedScheduler scheduler)
+    {
+        var desequencedFlight = _desequencedFlights.SingleOrDefault(f => f.Callsign == callsign);
+        if (desequencedFlight is null)
+            throw new MaestroException($"{callsign} not found in desequenced list");
+
+        _desequencedFlights.Remove(desequencedFlight);
+        scheduler.AllocateSlot(this, desequencedFlight);
+    }
+
+    public void AddPendingFlight(Flight flight)
+    {
+        if (_pendingFlights.Any(f => f.Callsign == flight.Callsign))
+            throw new MaestroException($"{flight.Callsign} is already pending");
+
+        _pendingFlights.Add(flight);
+    }
+
+    public void PurgeSlotsBefore(DateTimeOffset dateTimeOffset)
+    {
+        var flights = new List<Flight>();
+        var slotsToRemove = _slots.Where(s => s.Time < dateTimeOffset).ToArray();
+        foreach (var slot in slotsToRemove)
+        {
+            if (slot.Flight is not null)
+            {
+                flights.Add(slot.Flight);
+            }
+
+            _slots.Remove(slot);
+        }
+
+        _landedFlights.AddRange(flights);
+        if (_landedFlights.Count > MaxLandedFlights)
+        {
+            var excess = _landedFlights.Count - MaxLandedFlights;
+            _landedFlights.RemoveRange(0, excess);
+        }
+    }
+
+    public int NumberInSequence(Flight flight)
+    {
+        return _slots
+            .Select(s => s.Flight)
+            .WhereNotNull()
+            .ToList()
+            .IndexOf(flight) + 1;
+    }
+
+    public int NumberForRunway(Flight flight)
+    {
+        return _slots
+            .Where(s => s.RunwayIdentifier == flight.AssignedRunwayIdentifier)
+            .Select(s => s.Flight)
+            .WhereNotNull()
+            .ToList()
+            .IndexOf(flight) + 1;
+    }
+
+    public void Clear()
+    {
+        _slots.Clear();
+        _desequencedFlights.Clear();
+        _pendingFlights.Clear();
+        NextRunwayMode = null;
+        RunwayModeChangeTime = default;
+    }
+
     public void RecordGaps(ILogger logger)
     {
         if (_slots.Count < 2)
@@ -143,29 +255,16 @@ public class SlotBasedSequence
         }
     }
 
-    /// <summary>
-    ///     Changes the runway mode with an immediate effect.
-    /// </summary>
-    public void ChangeRunwayMode(RunwayMode runwayMode, ISlotBasedScheduler scheduler, IClock clock)
+    public Slot? FindSlotFor(string callsign)
     {
-        CurrentRunwayMode = runwayMode;
-        NextRunwayMode = null;
-        RunwayModeChangeTime = default;
-
-        ReprovisionSlotsFrom(clock.UtcNow(), scheduler);
+        return _slots.SingleOrDefault(s => s.Flight?.Callsign == callsign);
     }
 
-    /// <summary>
-    ///     Schedules a runway mode change for some time in the future.
-    /// </summary>
-    public void ChangeRunwayMode(
-        RunwayMode runwayMode,
-        DateTimeOffset changeTime,
-        ISlotBasedScheduler scheduler)
+    public Flight? FindFlight(string callsign)
     {
-        NextRunwayMode = runwayMode;
-        RunwayModeChangeTime = changeTime;
-
-        ReprovisionSlotsFrom(changeTime, scheduler);
+        return _slots
+            .Select(s => s.Flight)
+            .WhereNotNull()
+            .SingleOrDefault(f => f.Callsign == callsign);
     }
 }

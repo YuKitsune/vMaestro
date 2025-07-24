@@ -8,56 +8,28 @@ namespace Maestro.Core.Handlers;
 public class SequenceCleaner(IClock clock, ILogger logger)
 {
     // TODO: Make configurable
-    readonly int _maxLandedFlights = 5;
+    readonly TimeSpan _slotPurgeTime = TimeSpan.FromMinutes(5);
     readonly TimeSpan _lostFlightTimeout = TimeSpan.FromHours(1);
-    readonly TimeSpan _landedFlightTimeout = TimeSpan.FromMinutes(15);
-    
-    public void CleanUpFlights(Sequence sequence)
+
+    public void CleanUpFlights(SlotBasedSequence sequence)
     {
-        var landedFlights = sequence.Flights
-            .Where(f => f.State == State.Landed)
-            .ToArray();
-        
-        var flightsToTake = landedFlights.Length - _maxLandedFlights;
-        if (flightsToTake > 0)
-        {
-            foreach (var landedFlight in landedFlights.Take(flightsToTake))
-            {
-                logger.Information(
-                    "Deleting {Callsign} from {AirportIdentifier} as it has landed.", 
-                    landedFlight.Callsign,
-                    sequence.AirportIdentifier);
-                sequence.Delete(landedFlight);
-            }
-        }
-        
         var now = clock.UtcNow();
-        var expiredLandedFlights = landedFlights
-            .Where(f => now - f.ScheduledLandingTime >= _landedFlightTimeout)
+        var purgeCutoffTime = now.Subtract(_slotPurgeTime);
+        sequence.PurgeSlotsBefore(purgeCutoffTime);
+
+        var slotsWithLostFlights = sequence.Slots
+            .Where(s => s.Flight is not null)
+            .Where(s => now - s.Flight!.LastSeen >= _lostFlightTimeout)
             .ToArray();
-        
-        foreach (var landedFlight in expiredLandedFlights)
+
+        foreach (var slot in slotsWithLostFlights)
         {
             logger.Information(
-                "Deleting {Callsign} from {AirportIdentifier} as it landed {Duration} ago.", 
-                landedFlight.Callsign, 
-                sequence.AirportIdentifier, 
+                "Removing {Callsign} from {AirportIdentifier} as it has not been seen for {Duration}.",
+                slot.Flight!.Callsign,
+                sequence.AirportIdentifier,
                 _lostFlightTimeout.ToHoursAndMinutesString());
-            sequence.Delete(landedFlight);
-        }
-        
-        var lostFlights = sequence.Flights
-            .Where(f => now - f.LastSeen >= _lostFlightTimeout)
-            .ToArray();
-        
-        foreach (var lostFlight in lostFlights)
-        {
-            logger.Information(
-                "Deleting {Callsign} from {AirportIdentifier} as it has not been seen for {Duration}.", 
-                lostFlight.Callsign, 
-                sequence.AirportIdentifier, 
-                _lostFlightTimeout.ToHoursAndMinutesString());
-            sequence.Delete(lostFlight);
+            slot.Deallocate();
         }
     }
 }

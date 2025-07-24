@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
@@ -13,12 +14,12 @@ public interface ISequenceProvider
 
 public interface IExclusiveSequence : IDisposable
 {
-    Sequence Sequence { get; }
+    SlotBasedSequence Sequence { get; }
 }
 
-public class ExclusiveSequence(Sequence sequence, SemaphoreSlim semaphoreSlim) : IExclusiveSequence
+public class ExclusiveSequence(SlotBasedSequence sequence, SemaphoreSlim semaphoreSlim) : IExclusiveSequence
 {
-    public Sequence Sequence { get; } = sequence;
+    public SlotBasedSequence Sequence { get; } = sequence;
 
     public void Dispose()
     {
@@ -29,12 +30,14 @@ public class ExclusiveSequence(Sequence sequence, SemaphoreSlim semaphoreSlim) :
 public class SequenceProvider : ISequenceProvider
 {
     readonly IAirportConfigurationProvider _airportConfigurationProvider;
+    readonly IClock _clock;
 
     readonly List<SequenceLockPair> _sequences = [];
 
-    public SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider)
+    public SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider, IClock clock)
     {
         _airportConfigurationProvider = airportConfigurationProvider;
+        _clock = clock;
         InitializeSequences();
     }
 
@@ -42,10 +45,15 @@ public class SequenceProvider : ISequenceProvider
     {
         var airportConfigurations = _airportConfigurationProvider
             .GetAirportConfigurations();
-        
+
         foreach (var airportConfiguration in airportConfigurations)
         {
-            var sequence = new Sequence(airportConfiguration);
+            // TODO: Don't start sequencing until user requests it.
+            var sequence = new SlotBasedSequence(
+                airportConfiguration,
+                airportConfiguration.RunwayModes.First(),
+                _clock.UtcNow());
+
             var semaphoreSlim = new SemaphoreSlim(1, 1);
 
             var pair = new SequenceLockPair
@@ -53,7 +61,7 @@ public class SequenceProvider : ISequenceProvider
                 Sequence = sequence,
                 Semaphore = semaphoreSlim
             };
-            
+
             _sequences.Add(pair);
         }
     }
@@ -92,7 +100,7 @@ public class SequenceProvider : ISequenceProvider
 
     class SequenceLockPair
     {
-        public required Sequence Sequence { get; init; }
+        public required SlotBasedSequence Sequence { get; init; }
         public required SemaphoreSlim Semaphore { get; init; }
     }
 }

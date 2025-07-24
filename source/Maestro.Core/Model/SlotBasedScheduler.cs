@@ -5,15 +5,16 @@ namespace Maestro.Core.Model;
 
 public interface ISlotBasedScheduler
 {
+    void Schedule(SlotBasedSequence sequence);
     void AllocateSlot(SlotBasedSequence sequence, Flight flight);
 }
 
-// Test cases:
-// - When no slots are allocated, the flight should be allocated the slot closest to their landing estimate.
-// - When multiple flights share the same landing estimate, they are assigned different slots.
-// - When multiple runways are available, and the less preferred runway results in a lower delay, it should be allocated.
-// - When delaying a jet, the flight should be set to S250.
-// - When delaying a non-jet, the flight should be set to ProfileSpeed.
+// TODO: Handle no-delay and priority flights
+// TODO: Handle manual landing times
+// TODO: Account for flights not yet in the sequence regardless of state
+// TODO: Consider de-allocating all the unstable slots so they get a fresh start every time
+// TODO: Runway and terminal trajectories
+// BUG: Recompute is not respected here.
 
 public class SlotBasedScheduler(
     IRunwayAssigner runwayAssigner,
@@ -22,16 +23,38 @@ public class SlotBasedScheduler(
     ILogger logger)
     : ISlotBasedScheduler
 {
+    public void Schedule(SlotBasedSequence sequence)
+    {
+        var slotsWithUnstableFlights = sequence.Slots
+            .Where(s =>
+                s.Flight is not null &&
+                s.Flight.State == State.Unstable &&
+                !s.Flight.NoDelay &&
+                !s.Flight.ManualLandingTime)
+            .ToList();
+
+        var unstableFlights = slotsWithUnstableFlights
+            .Select(s => s.Flight!)
+            .ToList();
+
+        // Deallocate unstable flights to allow for rescheduling
+        foreach (var slotsWithUnstableFlight in slotsWithUnstableFlights)
+        {
+            slotsWithUnstableFlight.Deallocate();
+        }
+
+        foreach (var flight in unstableFlights)
+        {
+            logger.Information("Scheduling {Callsign}.", flight.Callsign);
+            AllocateSlot(sequence, flight);
+        }
+    }
+
     public void AllocateSlot(SlotBasedSequence sequence, Flight flight)
     {
         var airportConfiguration = airportConfigurationProvider
             .GetAirportConfigurations()
             .Single(c => c.Identifier == sequence.AirportIdentifier);
-
-        // TODO: Handle no-delay and priority flights
-        // TODO: Handle manual landing times
-        // TODO: Account for flights not yet in the sequence regardless of state
-        // TODO: Consider de-allocating all the unstable slots so they get a fresh start every time
 
         var matchingRunways = runwayAssigner.FindBestRunways(
             flight.AircraftType,
