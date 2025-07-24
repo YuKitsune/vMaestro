@@ -29,10 +29,8 @@ public class AirportConfigurationFixture
             ],
             RunwayModes =
             [
-                new RunwayMode
-                {
-                    Identifier = "34IVA",
-                    Runways =
+                new RunwayMode(
+                    "34IVA",
                     [
                         new RunwayConfiguration
                         {
@@ -45,7 +43,7 @@ public class AirportConfigurationFixture
                             LandingRateSeconds = 180
                         }
                     ]
-                }
+                )
             ],
             Arrivals =
             [

@@ -88,43 +88,43 @@ public class ChangeRunwayModeRequestHandler(
                 cancellationToken);
         }
 
-        if (request.ReAssignRunways)
-        {
-            logger.Information(
-                "Reassigning runways for {AirportIdentifier} arrivals arriving after {RunwayModeChangeTime}",
-                request.AirportIdentifier,
-                startTime);
-
-            // TODO: Duplicate of FlightUpdatedHandler.FindBestRunway(). Consolidate.
-
-            var arrivalsToReassign =
-                lockedSequence.Sequence.Flights.Where(f => f.EstimatedLandingTime >= startTime);
-
-            foreach (var arrival in arrivalsToReassign)
-            {
-                // TODO: Override manual assignment?
-                var defaultRunway = configuration.Runways.First();
-                if (string.IsNullOrEmpty(arrival.FeederFixIdentifier))
-                {
-                    arrival.SetRunway(defaultRunway.Identifier, manual: false);
-                    continue;
-                }
-
-                var possibleRunways = runwayAssigner.FindBestRunways(
-                    arrival.AircraftType,
-                    arrival.FeederFixIdentifier,
-                    lockedSequence.Sequence.RunwayAssignmentRules);
-
-                var runwaysInMode = possibleRunways
-                    .Where(r => configuration.Runways.Any(r2 => r2.Identifier == r))
-                    .ToArray();
-
-                var runwayToAssign = runwaysInMode.Any()
-                    ? runwaysInMode.First()
-                    : configuration.Runways.First().Identifier;
-
-                arrival.SetRunway(runwayToAssign, manual: false);
-            }
-        }
+        // if (request.ReAssignRunways)
+        // {
+        //     logger.Information(
+        //         "Reassigning runways for {AirportIdentifier} arrivals arriving after {RunwayModeChangeTime}",
+        //         request.AirportIdentifier,
+        //         startTime);
+        //
+        //     // TODO: Duplicate of FlightUpdatedHandler.FindBestRunway(). Consolidate.
+        //
+        //     var arrivalsToReassign =
+        //         lockedSequence.Sequence.Flights.Where(f => f.EstimatedLandingTime >= startTime);
+        //
+        //     foreach (var arrival in arrivalsToReassign)
+        //     {
+        //         // TODO: Override manual assignment?
+        //         var defaultRunway = configuration.Runways.First();
+        //         if (string.IsNullOrEmpty(arrival.FeederFixIdentifier))
+        //         {
+        //             arrival.SetRunway(defaultRunway.Identifier, manual: false);
+        //             continue;
+        //         }
+        //
+        //         var possibleRunways = runwayAssigner.FindBestRunways(
+        //             arrival.AircraftType,
+        //             arrival.FeederFixIdentifier,
+        //             lockedSequence.Sequence.RunwayAssignmentRules);
+        //
+        //         var runwaysInMode = possibleRunways
+        //             .Where(r => configuration.Runways.Any(r2 => r2.Identifier == r))
+        //             .ToArray();
+        //
+        //         var runwayToAssign = runwaysInMode.Any()
+        //             ? runwaysInMode.First()
+        //             : configuration.Runways.First().Identifier;
+        //
+        //         arrival.SetRunway(runwayToAssign, manual: false);
+        //     }
+        // }
     }
 }

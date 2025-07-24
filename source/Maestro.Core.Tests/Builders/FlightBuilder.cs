@@ -27,6 +27,12 @@ public class FlightBuilder(string callsign)
 
     DateTimeOffset _lastSeen = DateTimeOffset.Now;
 
+    public FlightBuilder WithAircraftType(string aircraftType)
+    {
+        _aircraftType = aircraftType;
+        return this;
+    }
+
     public FlightBuilder WithFeederFix(string feederFixIdentifier)
     {
         _feederFixIdentifier = feederFixIdentifier;

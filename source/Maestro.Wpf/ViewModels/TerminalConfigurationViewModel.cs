@@ -99,8 +99,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         _mediator.Send(new ChangeRunwayModeRequest(
             _airportIdentifier,
             runwayModeDto,
-            changeTime,
-            ReassignRunways));
+            changeTime));
 
         CloseWindow();
     }

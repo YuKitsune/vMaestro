@@ -16,6 +16,12 @@ public class RunwayMode
             .ToArray();
     }
 
+    public RunwayMode(string identifier, RunwayConfiguration[] runways)
+    {
+        Identifier = identifier;
+        Runways = runways;
+    }
+
     public string Identifier { get; private set; }
     public RunwayConfiguration[] Runways { get; private set; }
 }

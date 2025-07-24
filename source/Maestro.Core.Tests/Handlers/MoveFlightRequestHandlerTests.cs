@@ -138,11 +138,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         var handler = GetRequestHandler(sequence);
         var request = new MoveFlightRequest("YSSY", "QFA1", flight2.ScheduledLandingTime.AddMinutes(-2));
-        sequence.ChangeRunwayMode(new RunwayMode
-        {
-            Identifier = "34",
-            Runways = [new RunwayConfiguration { Identifier = "34L", LandingRateSeconds = 180 }]
-        });
+        sequence.ChangeRunwayMode(new RunwayMode("34", [new RunwayConfiguration { Identifier = "34L", LandingRateSeconds = 180 }]));
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -165,11 +161,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         var handler = GetRequestHandler(sequence);
         var request = new MoveFlightRequest("YSSY", "QFA1", flight2.ScheduledLandingTime.AddMinutes(2));
-        sequence.ChangeRunwayMode(new RunwayMode
-        {
-            Identifier = "34",
-            Runways = [new RunwayConfiguration { Identifier = "34L", LandingRateSeconds = 180 }]
-        });
+        sequence.ChangeRunwayMode(new RunwayMode("34", [new RunwayConfiguration { Identifier = "34L", LandingRateSeconds = 180 }]));
 
         // Act
         await handler.Handle(request, CancellationToken.None);

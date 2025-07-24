@@ -8,9 +8,21 @@ public interface ISlotBasedScheduler
     void AllocateSlot(SlotBasedSequence sequence, Flight flight);
 }
 
-public class SlotBasedScheduler(IRunwayAssigner runwayAssigner, IAirportConfigurationProvider airportConfigurationProvider, IPerformanceLookup performanceLookup, ILogger logger)
+// Test cases:
+// - When no slots are allocated, the flight should be allocated the slot closest to their landing estimate.
+// - When multiple flights share the same landing estimate, they are assigned different slots.
+// - When multiple runways are available, and the less preferred runway results in a lower delay, it should be allocated.
+// - When delaying a jet, the flight should be set to S250.
+// - When delaying a non-jet, the flight should be set to ProfileSpeed.
+
+public class SlotBasedScheduler(
+    IRunwayAssigner runwayAssigner,
+    IAirportConfigurationProvider airportConfigurationProvider,
+    IPerformanceLookup performanceLookup,
+    ILogger logger)
+    : ISlotBasedScheduler
 {
-    void AllocateSlot(SlotBasedSequence sequence, Flight flight)
+    public void AllocateSlot(SlotBasedSequence sequence, Flight flight)
     {
         var airportConfiguration = airportConfigurationProvider
             .GetAirportConfigurations()
@@ -20,39 +32,59 @@ public class SlotBasedScheduler(IRunwayAssigner runwayAssigner, IAirportConfigur
         // TODO: Handle manual landing times
         // TODO: Account for flights not yet in the sequence regardless of state
         // TODO: Consider de-allocating all the unstable slots so they get a fresh start every time
-        // TODO: Don't filter by runway, assign runway as part of allocating the slot
 
-        var lastSuperStableSlotIndex = sequence.Slots
-            .OrderBy(s => s.Time)
-            .ToList()
-            .FindLastIndex(s =>
-                s.RunwayIdentifier == flight.AssignedRunwayIdentifier &&
-                s.IsAvailable &&
-                (s.Flight?.PositionIsFixed ?? false));
+        var matchingRunways = runwayAssigner.FindBestRunways(
+            flight.AircraftType,
+            flight.FeederFixIdentifier,
+            airportConfiguration.RunwayAssignmentRules);
 
-        var earliestAvailableSlot = sequence.Slots
-            .Skip(lastSuperStableSlotIndex)
-            .FirstOrDefault(s =>
-                s.IsAvailable &&
-                s.RunwayIdentifier == flight.AssignedRunwayIdentifier &&
-                s.Time >= flight.EstimatedLandingTime);
+        Slot? bestSlot = null;
+        foreach (var matchingRunway in matchingRunways)
+        {
+            var availableSlotsForRunway = FindPossibleSlots(sequence, flight, matchingRunway);
+            if (availableSlotsForRunway.Length == 0)
+                continue;
 
-        if (earliestAvailableSlot is null)
+            var nextBestSlot = availableSlotsForRunway.FirstOrDefault();
+            if (nextBestSlot is null)
+                continue;
+
+            var newDelay = nextBestSlot.Time - flight.EstimatedLandingTime;
+
+            if (bestSlot is null)
+            {
+                bestSlot = nextBestSlot;
+                continue;
+            }
+
+            // Suggest the lower priority runway if it results in less delay
+            var currentDelay = bestSlot.Time - flight.EstimatedLandingTime;
+            if (newDelay < currentDelay)
+            {
+                bestSlot = nextBestSlot;
+            }
+        }
+
+        if (bestSlot is null)
         {
             logger.Warning("No available slots for {Callsign}. Cannot schedule.", flight.Callsign);
             return;
         }
 
-        // TODO: Optimisation (If a lower priority runway would result in less delay, use that instead)
-        var runway = FindBestRunway(
-            flight,
-            sequence.RunwayModeAt(earliestAvailableSlot.Time),
-            airportConfiguration.RunwayAssignmentRules);
+        if (bestSlot.RunwayIdentifier != matchingRunways.FirstOrDefault())
+        {
+            logger.Information(
+                "{Callsign} assigned runway {RunwayIdentifier} for a reduced delay",
+                flight.Callsign,
+                bestSlot.RunwayIdentifier);
+        }
 
-        earliestAvailableSlot.AllocateTo(flight);
+        bestSlot.AllocateTo(flight);
 
         var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (performance is not null && performance.AircraftCategory == AircraftCategory.Jet && flight.EstimatedLandingTime < earliestAvailableSlot.Time)
+        if (performance is not null &&
+            performance.AircraftCategory == AircraftCategory.Jet &&
+            flight.EstimatedLandingTime < bestSlot.Time)
         {
             flight.SetFlowControls(FlowControls.S250);
         }
@@ -64,36 +96,30 @@ public class SlotBasedScheduler(IRunwayAssigner runwayAssigner, IAirportConfigur
         logger.Information(
             "{Callsign} allocated to slot {Slot} (STA_FF {ScheduledFeederFixTime:HH:mm}, total delay {TotalDelay:N0} mins)",
             flight.Callsign,
-            earliestAvailableSlot,
+            bestSlot,
             flight.ScheduledFeederFixTime,
             flight.TotalDelay.TotalMinutes);
     }
 
-    string FindBestRunway(
-        Flight flight,
-        RunwayMode runwayMode,
-        IReadOnlyCollection<RunwayAssignmentRule> assignmentRules)
+    Slot[] FindPossibleSlots(SlotBasedSequence sequence, Flight flight, string runwayIdentifier)
     {
-        var defaultRunway = runwayMode.Runways.First().Identifier;
-        if (string.IsNullOrEmpty(flight.FeederFixIdentifier))
-            return defaultRunway;
+        var slotsForRunway = sequence.Slots
+            .OrderBy(s => s.Time)
+            .Where(s => s.RunwayIdentifier == runwayIdentifier)
+            .ToList();
 
-        var possibleRunways = runwayAssigner.FindBestRunways(
-            flight.AircraftType,
-            flight.FeederFixIdentifier,
-            assignmentRules);
+        var lastSuperStableSlotIndex = slotsForRunway
+            .FindLastIndex(s =>
+                s.IsAvailable &&
+                (s.Flight?.PositionIsFixed ?? false));
 
-        var runwaysInMode = possibleRunways
-            .Where(r => runwayMode.Runways.Any(r2 => r2.Identifier == r))
-            .ToArray();
+        lastSuperStableSlotIndex = Math.Max(0, lastSuperStableSlotIndex);
+        var availableSlots = slotsForRunway
+            .Skip(lastSuperStableSlotIndex)
+            .Where(s =>
+                s.IsAvailable &&
+                s.Time >= flight.EstimatedLandingTime);
 
-        // No runways found, use the default one
-        if (!runwaysInMode.Any())
-            return defaultRunway;
-
-        // TODO: Use lower priorities depending on traffic load.
-        //  How could we go about this? Probe for shortest delay? Round-robin?
-        var topPriority = runwaysInMode.First();
-        return topPriority;
+        return availableSlots.ToArray();
     }
 }
