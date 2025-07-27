@@ -60,14 +60,7 @@ public class Plugin : IPlugin
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
 
-            var executingAssembly = Assembly.GetExecutingAssembly();
-            var version = executingAssembly
-                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-                .InformationalVersion ?? string.Empty;
-#if RELEASE
-            version = version.Split('+').First();
-#endif
-            _logger.Information("{PluginName} {Version} initialized.", Name, version);
+            _logger.Information("{PluginName} {Version} initialized.", Name, VersionInfo.FullVersion);
 
             Network.Connected += Network_Connected;
             Network.Disconnected += Network_Disconnected;

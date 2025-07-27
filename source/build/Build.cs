@@ -1,10 +1,14 @@
+using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
 using Nuke.Common;
 using Nuke.Common.IO;
+using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Octokit;
 using Serilog;
 
 [SupportedOSPlatform("Windows")]
@@ -21,31 +25,28 @@ class Build : NukeBuild
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
-    AbsolutePath OutputDirectory => Configuration == Configuration.Debug
-        ? GetDebugOutputPath()
-        : RootDirectory / ".dist";
-    AbsolutePath BuildOutputDirectory => OutputDirectory / "MaestroPlugin";
-    AbsolutePath ZipPath => OutputDirectory / $"Maestro.{GitVersion.FullSemVer}.zip";
-    AbsolutePath ChecksumPath => OutputDirectory / $"Maestro.{GitVersion.FullSemVer}.zip.sha256";
-
     [GitVersion]
     readonly GitVersion GitVersion;
 
-    Target Clean => _ => _
-        .Executes(() =>
-        {
-            Log.Information("Cleaning {OutputDirectory}", OutputDirectory);
-            OutputDirectory.CreateOrCleanDirectory();
-        });
+    const string ReleasePluginName = "MaestroPlugin";
+    const string DebugPluginName = "MaestroPlugin - Debug";
+    string PluginName => Configuration == Configuration.Debug ? DebugPluginName : ReleasePluginName;
+
+    AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
+    AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build" / PluginName;
+    AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
+
+    [Parameter]
+    string ProfileName { get; }
 
     Target Compile => _ => _
-        .DependsOn(Clean)
         .Executes(() =>
         {
+            var version = GetSemanticVersion();
+
             Log.Information(
                 "Building version {Version} with configuration {Configuration} to {OutputDirectory}",
-                GitVersion,
+                version,
                 Configuration,
                 BuildOutputDirectory);
 
@@ -53,39 +54,103 @@ class Build : NukeBuild
                 .SetProjectFile(PluginProjectPath)
                 .SetConfiguration(Configuration)
                 .SetOutputDirectory(BuildOutputDirectory)
-                .SetVersion(GitVersion.FullSemVer)
-                .SetProperty("BuildMetadata", GitVersion.BuildMetaData));
+                .SetVersion(version)
+                .SetAssemblyVersion(GitVersion.MajorMinorPatch)
+                .SetFileVersion(GitVersion.MajorMinorPatch)
+                .SetInformationalVersion(version));
+        });
+
+    Target Uninstall => _ => _
+        .Requires(() => ProfileName)
+        .Executes(() =>
+        {
+            var pluginsDirectory = GetVatSysPluginsDirectory(ProfileName);
+            AbsolutePath[] pluginDirectories =
+            [
+                pluginsDirectory / DebugPluginName,
+                pluginsDirectory / ReleasePluginName
+            ];
+
+            foreach (var pluginDirectory in pluginDirectories)
+            {
+                pluginDirectory.DeleteDirectory();
+                Log.Information("Plugin uninstalled from {Directory}", pluginDirectory);
+            }
+        });
+
+    Target Install => _ => _
+        .Requires(() => ProfileName)
+        .DependsOn(Compile)
+        .DependsOn(Uninstall)
+        .Executes(() =>
+        {
+            var pluginsDirectory = GetVatSysPluginsDirectory(ProfileName);
+            Log.Information("Installing plugin to {TargetDirectory}", pluginsDirectory);
+
+            pluginsDirectory.CreateOrCleanDirectory();
+            BuildOutputDirectory.CopyToDirectory(pluginsDirectory, ExistsPolicy.MergeAndOverwrite);
+            Log.Information("Plugin installed to {PluginsDirectory}", pluginsDirectory);
+
+            var configFile = RootDirectory / "Maestro.json";
+            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var profileDirectory = Path.Combine(documentsPath, "vatSys Files", "Profiles", ProfileName);
+            configFile.CopyToDirectory(profileDirectory, ExistsPolicy.FileOverwrite);
+            Log.Information("Maestro.json copied to to {ProfileDirectory}", profileDirectory);
         });
 
     Target Package => _ => _
         .DependsOn(Compile)
         .Requires(() => Configuration == Configuration.Release)
-        .Executes(async () =>
+        .Executes(() =>
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
             var readmeFile = RootDirectory / "README.md";
             var configFile = RootDirectory / "Maestro.json";
             // var changelogFile = RootDirectory / "CHANGELOG.md";
 
-            dpiAwareFixScript.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
-            readmeFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
-            configFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
-            // changelogFile.CopyToDirectory(OutputDirectory, ExistsPolicy.FileOverwrite);
+            var packageDirectory = TemporaryDirectory / "package";
 
-            Log.Information("Packaging {OutputDirectory} to {ZipPath}", OutputDirectory, ZipPath);
-            OutputDirectory.ZipTo(ZipPath);
+            BuildOutputDirectory.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
+            dpiAwareFixScript.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
+            readmeFile.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
+            configFile.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
+            // changelogFile.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
 
-            var hash = ZipPath.GetFileHash();
-            Log.Information("{ZipPath} checksum {Checksum}", ZipPath, hash);
-
-            await File.WriteAllTextAsync(ChecksumPath, hash);
+            Log.Information("Packaging {OutputDirectory} to {ZipPath}", packageDirectory, ZipPath);
+            packageDirectory.ZipTo(ZipPath);
         });
 
-    AbsolutePath GetDebugOutputPath()
+    static AbsolutePath GetVatSysPluginsDirectory(string profileName)
     {
-        const string key = @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys";
-        const string value = "Path";
-        var basePath = Registry.GetValue(key, value, null)?.ToString();
-        return basePath == null ? null : Path.Combine(basePath, "bin", "Plugins", "MaestroPlugin - Debug");
+        return GetVatSysProfilePath(profileName) / "Plugins";
+    }
+
+    static AbsolutePath GetVatSysProfilePath(string profileName)
+    {
+        var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        return Path.Combine(documentsPath, "vatSys Files", "Profiles", profileName);
+    }
+
+    private string GetSemanticVersion()
+    {
+        // For main/master branch: use major.minor.patch (e.g., "1.2.3")
+        if (GitVersion.BranchName is "main" or "master")
+        {
+            return GitVersion.MajorMinorPatch;
+        }
+
+        // For feature branches: use major.minor.patch-feature-name (e.g., "1.2.3-feature-name")
+        if (GitVersion.BranchName.StartsWith("feature/") || GitVersion.BranchName.StartsWith("features/"))
+        {
+            var featureName = GitVersion.BranchName
+                .Replace("feature/", "")
+                .Replace("features/", "")
+                .Replace("/", "-")
+                .Replace("_", "-");
+            return $"{GitVersion.MajorMinorPatch}-{featureName}";
+        }
+
+        // For other branches (develop, hotfix, etc.): use SemVer format
+        return GitVersion.SemVer;
     }
 }
