@@ -12,21 +12,20 @@ public class DelayToColorConverter : IValueConverter
         if (value is not TimeSpan timeSpan)
             throw new NotSupportedException();
 
+        var minutes = Math.Round(timeSpan.TotalMinutes);
+
         // TODO: Make these thresholds configurable
-        
-        if (timeSpan.TotalMinutes >= 8)
+
+        if (minutes >= 8)
             return Theme.DelayMajor;
-        
-        if (timeSpan.TotalMinutes >= 1)
+
+        if (minutes >= 1)
             return Theme.DelayMinor;
-        
-        if (timeSpan.TotalMinutes is < 1 and > -1)
+
+        if (minutes > -1)
             return Theme.NoDelay;
-        
-        if (timeSpan.TotalMinutes <= -1)
-            return Theme.Expedite;
-        
-        return Theme.NoDelay;
+
+        return Theme.Expedite;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
