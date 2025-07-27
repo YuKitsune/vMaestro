@@ -78,7 +78,16 @@ public class SlotBasedScheduler(
             if (nextBestSlot is null)
                 continue;
 
-            var newDelay = nextBestSlot.Time - flight.EstimatedLandingTime;
+            // Try to push the flight forward to the preceeding slot if it's available
+            var delay = nextBestSlot.Time - flight.EstimatedLandingTime;
+            if (delay >= TimeSpan.FromMinutes(1) && delay < nextBestSlot.Duration)
+            {
+                var precedingSlot = FindPrecedingSlot(sequence, nextBestSlot, matchingRunway);
+                if (precedingSlot is not null && precedingSlot.IsAvailable)
+                {
+                    nextBestSlot = precedingSlot;
+                }
+            }
 
             if (bestSlot is null)
             {
@@ -87,6 +96,7 @@ public class SlotBasedScheduler(
             }
 
             // Suggest the lower priority runway if it results in less delay
+            var newDelay = nextBestSlot.Time - flight.EstimatedLandingTime;
             var currentDelay = bestSlot.Time - flight.EstimatedLandingTime;
             if (newDelay < currentDelay)
             {
@@ -150,5 +160,17 @@ public class SlotBasedScheduler(
                 s.Time >= flight.EstimatedLandingTime);
 
         return availableSlots.ToArray();
+    }
+
+    Slot? FindPrecedingSlot(SlotBasedSequence sequence, Slot slot, string runwayIdentifier)
+    {
+        var slotsForRunway = sequence.Slots
+            .Where(s => s.RunwayIdentifier == runwayIdentifier)
+            .ToArray();
+
+        var slotIndex = Array.IndexOf(slotsForRunway, slot);
+        return slotIndex < 0
+            ? null
+            : sequence.Slots[slotIndex - 1];
     }
 }

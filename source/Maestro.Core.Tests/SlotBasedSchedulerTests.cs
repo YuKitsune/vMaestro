@@ -130,6 +130,35 @@ public class SlotBasedSchedulerTests
     }
 
     [Fact]
+    public void WhenASlotResultsInShortDelay_FlightCanMoveForward()
+    {
+        // Arrange
+        // Use a short delay so the flight moves into the earlier slot
+        var landingEstimate = Clock.UtcNow().AddMinutes(1);
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(landingEstimate)
+            .WithRunway("34L")
+            .Build();
+
+        var runwayMode = _airportConfigurationFixture.Instance.RunwayModes.First();
+        var sequence = new SlotBasedSequence(_airportConfigurationFixture.Instance, runwayMode, Clock.UtcNow());
+
+        var scheduler = new SlotBasedScheduler(
+            _runwayAssigner,
+            _airportConfigurationProvider,
+            _performanceLookup,
+            _logger);
+
+        // Act
+        scheduler.AllocateSlot(sequence, flight);
+
+        // Assert
+        var slot = sequence.Slots.First(s => s.Flight == flight);
+        slot.Time.ShouldBe(Clock.UtcNow());
+        flight.ScheduledLandingTime.ShouldBeLessThan(flight.EstimatedLandingTime); // needs to speed up
+    }
+
+    [Fact]
     public void WhenMultipleRunwaysAvailable_LessPreferredRunwayWithLowerDelayIsAllocated()
     {
         // Arrange
