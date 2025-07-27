@@ -249,8 +249,7 @@ public partial class MaestroView
 
         // Draw a tick for every minute
         var nextMinute = currentTime.Add(new TimeSpan(0, 0, 60 - currentTime.Second));
-        var yOffset = GetYOffsetForTime(currentTime, nextMinute);
-        while (yOffset <= canvasHeight)
+        for (var yOffset = GetYOffsetForTime(currentTime, nextMinute); yOffset <= canvasHeight; yOffset += MinuteHeight)
         {
             var yPosition = canvasHeight - yOffset;
 
@@ -279,14 +278,11 @@ public partial class MaestroView
                 x: rightTickXPosition,
                 y: yPosition);
             LadderCanvas.Children.Add(rightTick);
-
-            yOffset += MinuteHeight;
         }
 
         // At each 5-minute interval, draw text with 2-digit minutes
         var nextTime = GetNearest5Minutes(currentTime);
-        yOffset = GetYOffsetForTime(currentTime, nextTime);
-        while (yOffset <= canvasHeight)
+        for (var yOffset = GetYOffsetForTime(currentTime, nextTime); yOffset <= canvasHeight; yOffset += MinuteHeight * 5)
         {
             var yPosition = canvasHeight - yOffset;
             var text = new TextBlock
@@ -301,7 +297,6 @@ public partial class MaestroView
             LadderCanvas.Children.Add(text);
 
             nextTime = nextTime.AddMinutes(5);
-            yOffset += MinuteHeight * 5;
         }
     }
 

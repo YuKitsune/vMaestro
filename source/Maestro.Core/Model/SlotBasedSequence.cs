@@ -129,24 +129,20 @@ public class SlotBasedSequence
         DateTimeOffset endTime,
         RunwayConfiguration runway)
     {
-        var currentTime = epoch;
-        while (currentTime < endTime)
+        var duration = TimeSpan.FromSeconds(runway.LandingRateSeconds);
+        for (var currentTime = epoch; currentTime < endTime; currentTime += duration)
         {
             if (currentTime < startTime)
                 continue;
 
-            var duration = TimeSpan.FromSeconds(runway.LandingRateSeconds);
-
             // Ensure no overlapping slots
-            if (!_slots.Any(s =>
+            if (_slots.Any(s =>
                     s.RunwayIdentifier == runway.Identifier &&
                     s.Time < currentTime + duration &&
                     s.Time + s.Duration > currentTime))
-            {
-                _slots.Add(new Slot(runway.Identifier, currentTime, duration));
-            }
+                continue;
 
-            currentTime += duration;
+            _slots.Add(new Slot(runway.Identifier, currentTime, duration));
         }
     }
 
