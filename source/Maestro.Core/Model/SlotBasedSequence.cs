@@ -86,7 +86,6 @@ public class SlotBasedSequence
             throw new MaestroException($"Cannot provision slots for {startTime} as it is too far in the future.");
 
         var endTime = startTime + MaxProvisionTime;
-
         if (NextRunwayMode is not null)
         {
             foreach (var runwayConfiguration in NextRunwayMode.Runways)
@@ -97,9 +96,11 @@ public class SlotBasedSequence
             endTime = RunwayModeChangeTime;
         }
 
+        // Create slots from the start of the hour so they align nicely
+        var startOfHour = new DateTimeOffset(startTime.Year, startTime.Month, startTime.Day, startTime.Hour, 0, 0, startTime.Offset);
         foreach (var runwayConfiguration in CurrentRunwayMode.Runways)
         {
-            ProvisionSlots(startTime, endTime, runwayConfiguration);
+            ProvisionSlots(startOfHour, endTime, runwayConfiguration);
         }
     }
 
