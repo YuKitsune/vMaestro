@@ -183,10 +183,10 @@ public class SlotBasedSequence
         _pendingFlights.Add(flight);
     }
 
-    public void PurgeSlotsBefore(DateTimeOffset dateTimeOffset)
+    public void PurgeEmptySlotsBefore(DateTimeOffset dateTimeOffset)
     {
         var flights = new List<Flight>();
-        var slotsToRemove = _slots.Where(s => s.Time < dateTimeOffset).ToArray();
+        var slotsToRemove = _slots.Where(s => s.IsAvailable && s.Time.IsSameOrBefore(dateTimeOffset)).ToArray();
         foreach (var slot in slotsToRemove)
         {
             if (slot.Flight is not null)
@@ -198,6 +198,28 @@ public class SlotBasedSequence
         }
 
         _landedFlights.AddRange(flights);
+        if (_landedFlights.Count > MaxLandedFlights)
+        {
+            var excess = _landedFlights.Count - MaxLandedFlights;
+            _landedFlights.RemoveRange(0, excess);
+        }
+    }
+
+    public void PurgeLandedFlights()
+    {
+        var slotsWithLandedFlights = _slots
+            .Where(s => s.Flight is not null && s.Flight.State == State.Landed)
+            .ToArray();
+
+        foreach (var slot in slotsWithLandedFlights)
+        {
+            _slots.Remove(slot);
+        }
+
+        var landedFlights = slotsWithLandedFlights
+            .Select(s => s.Flight!);
+
+        _landedFlights.AddRange(landedFlights);
         if (_landedFlights.Count > MaxLandedFlights)
         {
             var excess = _landedFlights.Count - MaxLandedFlights;

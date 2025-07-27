@@ -91,7 +91,7 @@ public partial class MaestroView
         if (ViewModel.SelectedSequence is null)
             return;
 
-        foreach (var flight in ViewModel.SelectedSequence.Flights.Where(f => f.State is not State.Desequenced and not State.Removed))
+        foreach (var flight in ViewModel.SelectedSequence.Flights)
         {
             double yOffset;
             switch (ViewModel.SelectedSequence.SelectedView.ViewMode)
@@ -162,7 +162,8 @@ public partial class MaestroView
                 ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
                     ViewModel.SelectedSequence.AirportIdentifier,
                     flight.Callsign,
-                    newTime
+                    newTime,
+                    flight.AssignedRunway
                 ));
                 DrawLadder();
             };

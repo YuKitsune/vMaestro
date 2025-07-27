@@ -244,7 +244,7 @@ public class SlotBasedSequenceTests
         var sequence = new SlotBasedSequence(_airportConfigurationFixture.Instance, _runwayMode1, startTime);
 
         var changeTime = startTime.AddMinutes(60);
-        sequence.ChangeRunwayMode(_runwayMode2, changeTime, _slotBasedScheduler);
+        sequence.ChangeRunwayMode(_runwayMode2, _slotBasedScheduler, changeTime);
 
         // Act
         sequence.ProvisionSlotsFrom(startTime);
@@ -299,7 +299,7 @@ public class SlotBasedSequenceTests
         var changeTime = startTime.AddHours(1);
 
         // Act
-        sequence.ChangeRunwayMode(_runwayMode2, changeTime, _slotBasedScheduler);
+        sequence.ChangeRunwayMode(_runwayMode2, _slotBasedScheduler, changeTime);
 
         // Assert
         sequence.CurrentRunwayMode.ShouldBe(_runwayMode1); // Current mode should not change
@@ -317,7 +317,7 @@ public class SlotBasedSequenceTests
         var changeTime = startTime.AddHours(1);
 
         // Act
-        sequence.ChangeRunwayMode(_runwayMode2, changeTime, _slotBasedScheduler);
+        sequence.ChangeRunwayMode(_runwayMode2, _slotBasedScheduler, changeTime);
 
         // Assert
         var slotsBeforeChangeTime = sequence.Slots
@@ -366,7 +366,7 @@ public class SlotBasedSequenceTests
         var changeTime = startTime.AddMinutes(30); // Only flight3 should be affected
 
         // Act
-        sequence.ChangeRunwayMode(_runwayMode2, changeTime, _slotBasedScheduler);
+        sequence.ChangeRunwayMode(_runwayMode2, _slotBasedScheduler, changeTime);
 
         // Assert
         _slotBasedScheduler.Received(0).AllocateSlot(sequence, flight1); // Not affected
@@ -382,7 +382,7 @@ public class SlotBasedSequenceTests
         var sequence = new SlotBasedSequence(_airportConfigurationFixture.Instance, _runwayMode1, startTime);
 
         var changeTime = startTime.AddHours(1);
-        sequence.ChangeRunwayMode(_runwayMode2, changeTime, _slotBasedScheduler);
+        sequence.ChangeRunwayMode(_runwayMode2, _slotBasedScheduler, changeTime);
 
         // Act & Assert
         sequence.RunwayModeAt(changeTime.AddMinutes(-1)).ShouldBe(_runwayMode1);
@@ -397,7 +397,7 @@ public class SlotBasedSequenceTests
         var sequence = new SlotBasedSequence(_airportConfigurationFixture.Instance, _runwayMode1, startTime);
 
         var changeTime = startTime.AddHours(1);
-        sequence.ChangeRunwayMode(_runwayMode2, changeTime, _slotBasedScheduler);
+        sequence.ChangeRunwayMode(_runwayMode2, _slotBasedScheduler, changeTime);
 
         // Act & Assert
         sequence.RunwayModeAt(changeTime).ShouldBe(_runwayMode2);

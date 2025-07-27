@@ -2,10 +2,10 @@
 
 namespace Maestro.Core.Tests.Mocks;
 
-public class TestExclusiveSequence(Sequence sequence) : IExclusiveSequence
+public class TestExclusiveSequence(SlotBasedSequence sequence) : IExclusiveSequence
 {
-    public Sequence Sequence { get; } = sequence;
-    
+    public SlotBasedSequence Sequence { get; } = sequence;
+
     public void Dispose()
     {
         // No-op.

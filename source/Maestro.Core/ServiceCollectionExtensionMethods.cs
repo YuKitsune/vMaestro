@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<IArrivalLookup, ArrivalLookup>()
             .AddSingleton<IEstimateProvider, EstimateProvider>()
             .AddSingleton<ISequenceProvider, SequenceProvider>()
-            .AddSingleton<IScheduler, Scheduler>()
+            .AddSingleton<ISlotBasedScheduler, SlotBasedScheduler>()
             .AddSingleton<SchedulerBackgroundService>()
             .AddSingleton<IRunwayAssigner, RunwayAssigner>()
             .AddSingleton<IClock, SystemClock>()

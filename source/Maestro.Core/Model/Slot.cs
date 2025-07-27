@@ -2,6 +2,7 @@
 
 public class Slot(string runwayIdentifier, DateTimeOffset time, TimeSpan duration)
 {
+    public string Identifier => ToString();
     public string RunwayIdentifier { get; } = runwayIdentifier;
     public DateTimeOffset Time { get; } = time;
     public TimeSpan Duration { get; } = duration;

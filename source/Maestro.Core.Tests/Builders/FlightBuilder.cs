@@ -113,7 +113,6 @@ public class FlightBuilder(string callsign)
             _wakeCategory,
             _origin,
             _destination,
-            _assignedRunway,
             feederFix,
             landingEstimate);
 

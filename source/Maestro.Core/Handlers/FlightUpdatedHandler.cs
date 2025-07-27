@@ -23,7 +23,6 @@ public record FlightUpdatedNotification(
 
 public class FlightUpdatedHandler(
     ISequenceProvider sequenceProvider,
-    IRunwayAssigner runwayAssigner,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,

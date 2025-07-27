@@ -2,72 +2,105 @@
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public record MoveFlightRequest(string AirportIdentifier, string Callsign, DateTimeOffset NewLandingTime) : IRequest;
+public record MoveFlightRequest(
+    string AirportIdentifier,
+    string Callsign,
+    string SlotIdentifier,
+    string RunwayIdentifier)
+    : IRequest;
 
-public class MoveFlightRequestHandler : IRequestHandler<MoveFlightRequest>
+// TODO: Consider whether the request should provide a specific time, or just the slot.
+
+public class MoveFlightRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger logger)
+    : IRequestHandler<MoveFlightRequest>
 {
-    readonly ISequenceProvider _sequenceProvider;
-    readonly IMediator _mediator;
-
-    public MoveFlightRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator)
-    {
-        _sequenceProvider = sequenceProvider;
-        _mediator = mediator;
-    }
-
     public async Task Handle(MoveFlightRequest request, CancellationToken cancellationToken)
     {
-        using var exclusiveSequence = await _sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
+        using var exclusiveSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
         var sequence = exclusiveSequence.Sequence;
 
-        var flight = sequence.FindFlight(request.Callsign);
-        if (flight is null)
-            return;
+        var currentSlot = sequence.FindSlotFor(request.Callsign);
+        if (currentSlot is null)
+            throw new MaestroException($"Flight {request.Callsign} not found in sequence for airport {request.AirportIdentifier}.");
 
+        // Cannot move landed or frozen flights
+        var flight = currentSlot.Flight!;
         if (flight.State is State.Frozen or State.Landed)
             throw new MaestroException($"Cannot move a {flight.State} flight.");
 
+        var slots = sequence.Slots.OrderBy(s => s.Time)
+            .Where(s => s.RunwayIdentifier == request.RunwayIdentifier)
+            .SkipWhile(s => s.Identifier != request.SlotIdentifier)
+            .ToArray();
+
         // Cannot schedule in front of a frozen flight
-        var frozenLeaders = sequence.SequencableFlights.Where(f => f.State == State.Frozen && f.ScheduledLandingTime.IsSameOrAfter(request.NewLandingTime));
-        if (frozenLeaders.Any())
+        var frozenFollowers = slots.Where(s => s.Flight is not null && s.Flight.State == State.Frozen);
+        if (frozenFollowers.Any())
             throw new MaestroException("Cannot move a flight in front of a frozen flight.");
 
-        flight.SetLandingTime(request.NewLandingTime, manual: true);
+        // If a flight is already scheduled in the slot, deallocate it
+        var targetSlot = slots.FirstOrDefault();
+        if (targetSlot is null)
+            throw new MaestroException($"No slot found with ID {request.SlotIdentifier} for runway {request.RunwayIdentifier}.");
 
+        var deallocatedFlight = targetSlot.Flight;
+        if (deallocatedFlight is not null)
+        {
+            if (deallocatedFlight.NoDelay)
+                throw new MaestroException("Cannot move a flight to a slot that has a no-delay flight already scheduled.");
+
+            targetSlot.Deallocate();
+        }
+
+        // Allocate the desired flight to the slot
+        currentSlot.Deallocate();
+        targetSlot.AllocateTo(flight);
         if (flight.State == State.Unstable)
             flight.SetState(State.Stable);
 
-        // --- New logic: Check for flight in front within landing rate ---
-        // Find the next flight ahead in sequence (by landing time, same runway)
-        var flightsOnRunway = sequence.SequencableFlights
-            .Where(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier && f.Callsign != flight.Callsign)
-            .OrderBy(f => f.ScheduledLandingTime)
-            .ToList();
-
-        // Determine which runway mode will be in effect at the new landing time
-        var runwayMode = sequence.GetRunwayModeAt(request.NewLandingTime);
-        var runwayConfig = runwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
-        if (runwayConfig != null)
+        // Move the deallocated flight back one slot
+        // Repeat the process until no more flights need to be delayed
+        if (deallocatedFlight is not null)
         {
-            var landingRate = TimeSpan.FromSeconds(runwayConfig.LandingRateSeconds);
-            // Find the first flight scheduled to land after this one
-            var nextFlight = flightsOnRunway.FirstOrDefault(f => f.ScheduledLandingTime > request.NewLandingTime);
-            if (nextFlight != null && (nextFlight.ScheduledLandingTime - request.NewLandingTime) < landingRate)
+            var currentFlightToMove = deallocatedFlight;
+
+            foreach (var slot in slots.Skip(1))
             {
-                nextFlight.NeedsRecompute = true;
+                if (slot.Flight is null)
+                {
+                    // Found an empty slot, allocate the current flight and exit
+                    slot.AllocateTo(currentFlightToMove);
+                    break;
+                }
+
+                // Do not move flights that are marked as NoDelay
+                if (slot.Flight.NoDelay)
+                {
+                    continue;
+                }
+
+                // This slot is occupied, so we need to move its flight as well
+                var flightInSlot = slot.Flight;
+                slot.Deallocate();
+                slot.AllocateTo(currentFlightToMove);
+
+                // The flight in this slot becomes the next flight to move
+                currentFlightToMove = flightInSlot;
             }
 
-            // --- New logic: Check for trailing flights within landing rate ---
-            var trailingFlight = flightsOnRunway.LastOrDefault(f => f.ScheduledLandingTime < request.NewLandingTime);
-            if (trailingFlight != null && (request.NewLandingTime - trailingFlight.ScheduledLandingTime) < landingRate)
+            if (currentFlightToMove != null)
             {
-                trailingFlight.NeedsRecompute = true;
+                logger.Warning(
+                    "{Callsign} was pushed back to the end of the sequence and no slots were available for it.",
+                    currentFlightToMove.Callsign);
             }
         }
 
-        await _mediator.Publish(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), cancellationToken);
+        // TODO: Publish for all flights that were moved
+        await mediator.Publish(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), cancellationToken);
     }
 }

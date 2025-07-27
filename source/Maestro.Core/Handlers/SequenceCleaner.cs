@@ -15,7 +15,8 @@ public class SequenceCleaner(IClock clock, ILogger logger)
     {
         var now = clock.UtcNow();
         var purgeCutoffTime = now.Subtract(_slotPurgeTime);
-        sequence.PurgeSlotsBefore(purgeCutoffTime);
+        sequence.PurgeEmptySlotsBefore(purgeCutoffTime);
+        sequence.PurgeLandedFlights();
 
         var slotsWithLostFlights = sequence.Slots
             .Where(s => s.Flight is not null)

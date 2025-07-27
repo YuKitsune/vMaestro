@@ -52,6 +52,12 @@ public class SlotBasedScheduler(
 
     public void AllocateSlot(SlotBasedSequence sequence, Flight flight)
     {
+        var allocatedSlot = sequence.FindSlotFor(flight.Callsign);
+        if (allocatedSlot is not null)
+        {
+            allocatedSlot.Deallocate();
+        }
+
         var airportConfiguration = airportConfigurationProvider
             .GetAirportConfigurations()
             .Single(c => c.Identifier == sequence.AirportIdentifier);
