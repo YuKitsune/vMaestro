@@ -169,7 +169,7 @@ public class FlightUpdatedHandler(
 
             SetState(flight);
 
-            await mediator.Publish(new MaestroFlightUpdatedNotification(flight.ToMessage(sequence)), cancellationToken);
+            await mediator.Publish(new SequenceChangedNotification(lockedSequence.Sequence.ToDto()), cancellationToken);
             logger.Debug("Flight updated: {Flight}", flight);
         }
         catch (Exception exception)

@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Handlers;
+using Newtonsoft.Json;
 
 namespace Maestro.Core.Configuration;
 
@@ -16,6 +17,7 @@ public class RunwayMode
             .ToArray();
     }
 
+    [JsonConstructor]
     public RunwayMode(string identifier, RunwayConfiguration[] runways)
     {
         Identifier = identifier;

@@ -6,7 +6,6 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
-using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.ViewModels;
 using MediatR;
@@ -24,7 +23,7 @@ public partial class MaestroView
     const int LineThickness = 2;
 
     readonly DispatcherTimer _dispatcherTimer;
-    private bool _isDragging = false;
+    private bool _isDragging;
 
     public MaestroView()
     {
@@ -91,8 +90,12 @@ public partial class MaestroView
         if (ViewModel.SelectedSequence is null)
             return;
 
-        foreach (var flight in ViewModel.SelectedSequence.Flights)
+        foreach (var slot in ViewModel.SelectedSequence.Slots)
         {
+            var flight = slot.Flight;
+            if (flight is null)
+                continue;
+
             double yOffset;
             switch (ViewModel.SelectedSequence.SelectedView.ViewMode)
             {
@@ -149,22 +152,30 @@ public partial class MaestroView
                 _ => throw new ArgumentException($"Unexpected LadderPosition: {ladderPosition}")
             };
 
-            flightLabel.DragStarted += (s, e) =>
+            // BUG: When dragging, the label moves down slightly.
+            // BUG: The position the label moves into doesn't correspond with the slot times.
+
+            flightLabel.DragStarted += (_, _) =>
             {
                 _isDragging = true;
             };
 
-            flightLabel.DragEnded += (s, newY) =>
+            flightLabel.GetSnappedY += (label, targetY) => GetSnappedYPosition(currentTime, targetY, flight.AssignedRunway, canvasHeight) - label.ActualHeight / 2;
+
+            flightLabel.DragEnded += (_, newY) =>
             {
                 _isDragging = false;
                 var newYOffset = canvasHeight - newY;
-                var newTime = GetTimeForYOffset(currentTime, newYOffset);
-                ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
-                    ViewModel.SelectedSequence.AirportIdentifier,
-                    flight.Callsign,
-                    newTime,
-                    flight.AssignedRunway
-                ));
+                var nearestSlotIdentifier = GetNearestSlotIdentifier(currentTime, newYOffset, flight.AssignedRunway);
+                if (nearestSlotIdentifier != null)
+                {
+                    ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
+                        ViewModel.SelectedSequence.AirportIdentifier,
+                        flight.Callsign,
+                        nearestSlotIdentifier,
+                        flight.AssignedRunway ?? ""
+                    ));
+                }
                 DrawLadder();
             };
 
@@ -172,7 +183,7 @@ public partial class MaestroView
         }
     }
 
-    LadderPosition? GetLadderPositionFor(FlightViewModel flight)
+    LadderPosition? GetLadderPositionFor(FlightMessage flight)
     {
         if (ViewModel.SelectedSequence.SelectedView is null)
             return null;
@@ -371,5 +382,62 @@ public partial class MaestroView
         var minutes = yOffset / MinuteHeight;
         var newTime = currentTime.AddMinutes(minutes);
         return newTime;
+    }
+
+    double GetSnappedYPosition(DateTimeOffset currentTime, double targetY, string runwayIdentifier, double canvasHeight)
+    {
+        if (ViewModel.SelectedSequence?.Slots == null)
+            return targetY;
+
+        // Convert the target Y position to Y offset (distance from bottom)
+        var yOffset = canvasHeight - targetY;
+
+        // Convert Y offset to target time
+        var targetTime = GetTimeForYOffset(currentTime, yOffset);
+
+        // Get slots for the specified runway, ordered by time
+        var runwaySlots = ViewModel.SelectedSequence.Slots
+            .Where(slot => slot.RunwayIdentifier == runwayIdentifier)
+            .OrderBy(slot => slot.Time)
+            .ToList();
+
+        if (!runwaySlots.Any())
+            return targetY;
+
+        // Find the closest slot by time
+        var closestSlot = runwaySlots
+            .OrderBy(slot => Math.Abs((slot.Time - targetTime).TotalMinutes))
+            .First();
+
+        // Convert the closest slot's time back to Y position
+        var snappedYOffset = GetYOffsetForTime(currentTime, closestSlot.Time);
+        var snappedY = canvasHeight - snappedYOffset;
+
+        return snappedY;
+    }
+
+    string? GetNearestSlotIdentifier(DateTimeOffset currentTime, double yOffset, string runwayIdentifier)
+    {
+        if (ViewModel.SelectedSequence?.Slots == null)
+            return null;
+
+        // Convert Y offset to target time
+        var targetTime = GetTimeForYOffset(currentTime, yOffset);
+
+        // Get slots for the specified runway, ordered by time
+        var runwaySlots = ViewModel.SelectedSequence.Slots
+            .Where(slot => slot.RunwayIdentifier == runwayIdentifier)
+            .OrderBy(slot => slot.Time)
+            .ToList();
+
+        if (!runwaySlots.Any())
+            return null;
+
+        // Find the closest slot by time
+        var closestSlot = runwaySlots
+            .OrderBy(slot => Math.Abs((slot.Time - targetTime).TotalMinutes))
+            .First();
+
+        return closestSlot.Identifier;
     }
 }

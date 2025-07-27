@@ -8,19 +8,12 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class FlightLabelViewModel(
     IMediator mediator,
-    FlightViewModel flightViewModel,
+    FlightMessage flightViewModel,
     RunwayModeViewModel runwayModeViewModel)
     : ObservableObject
 {
-    public FlightViewModel FlightViewModel { get; } = flightViewModel;
+    public FlightMessage FlightViewModel { get; } = flightViewModel;
     public RunwayModeViewModel RunwayModeViewModel { get; } = runwayModeViewModel;
-
-    public FlightLabelViewModel() : this(
-        null!,
-        new FlightViewModel(),
-        new RunwayModeViewModel("34", [new RunwayViewModel("34L", 180)]))
-    {
-    }
 
     [RelayCommand]
     void ShowInformationWindow()

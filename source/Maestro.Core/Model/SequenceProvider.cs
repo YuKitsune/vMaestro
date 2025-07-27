@@ -9,7 +9,7 @@ public interface ISequenceProvider
 {
     bool CanSequenceFor(string airportIdentifier);
     Task<IExclusiveSequence> GetSequence(string airportIdentifier, CancellationToken cancellationToken);
-    SequenceMessage GetReadOnlySequence(string airportIdentifier);
+    SlotBasedSequenceDto GetReadOnlySequence(string airportIdentifier);
 }
 
 public interface IExclusiveSequence : IDisposable
@@ -82,20 +82,13 @@ public class SequenceProvider : ISequenceProvider
         return new ExclusiveSequence(pair.Sequence, pair.Semaphore);
     }
 
-    public SequenceMessage GetReadOnlySequence(string airportIdentifier)
+    public SlotBasedSequenceDto GetReadOnlySequence(string airportIdentifier)
     {
         var pair = _sequences.SingleOrDefault(x => x.Sequence.AirportIdentifier == airportIdentifier);
         if (pair is null)
             throw new MaestroException($"Sequence for {airportIdentifier} not found");
 
-        return new SequenceMessage
-        {
-            Flights = pair.Sequence.Flights.Select(f => f.ToMessage(pair.Sequence))
-                .ToArray(),
-            CurrentRunwayMode = pair.Sequence.CurrentRunwayMode.ToMessage(),
-            NextRunwayMode = pair.Sequence.NextRunwayMode?.ToMessage(),
-            RunwayModeChangeTime = pair.Sequence.RunwayModeChangeTime
-        };
+        return pair.Sequence.ToDto();
     }
 
     class SequenceLockPair

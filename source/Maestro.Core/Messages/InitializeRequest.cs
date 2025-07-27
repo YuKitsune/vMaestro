@@ -14,5 +14,4 @@ public record InitializationItem(
     string AirportIdentifier,
     ViewConfiguration[] Views,
     RunwayModeDto[] RunwayModes,
-    SequenceMessage Sequence);
-    
+    SlotBasedSequenceDto Sequence);

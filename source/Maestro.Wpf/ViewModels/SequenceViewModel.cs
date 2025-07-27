@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
-using Maestro.Core.Model;
 using Maestro.Wpf.Messages;
 using MediatR;
 
@@ -33,8 +32,16 @@ public partial class SequenceViewModel : ObservableObject
     RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Desequenced))]
-    List<FlightViewModel> _flights = [];
+    string[] _pendingFlights = [];
+
+    [ObservableProperty]
+    string[] _desequencedFlights = [];
+
+    [ObservableProperty]
+    string[] _landedFlights = [];
+
+    [ObservableProperty]
+    SlotDto[] _slots = [];
 
     public string AirportIdentifier { get; }
 
@@ -45,13 +52,11 @@ public partial class SequenceViewModel : ObservableObject
 
     public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
 
-    public string[] Desequenced => Flights.Where(f => f.State == State.Desequenced).Select(airport => airport.Callsign).ToArray();
-
     public SequenceViewModel(
         string airportIdentifier,
         ViewConfiguration[] views,
         RunwayModeDto[] runwayModes,
-        SequenceMessage sequence,
+        SlotBasedSequenceDto sequence,
         IMediator mediator)
     {
         _mediator = mediator;
@@ -64,7 +69,10 @@ public partial class SequenceViewModel : ObservableObject
         CurrentRunwayMode = new RunwayModeViewModel(sequence.CurrentRunwayMode);
         NextRunwayMode = sequence.NextRunwayMode is null ? null : new RunwayModeViewModel(sequence.NextRunwayMode);
 
-        Flights = sequence.Flights.Select(f => new FlightViewModel(f)).ToList();
+        PendingFlights = sequence.PendingFlights;
+        DesequencedFlights = sequence.DesequencedFlights;
+        LandedFlights = sequence.LandedFlights;
+        Slots = sequence.Slots;
     }
 
     [RelayCommand]
@@ -80,34 +88,16 @@ public partial class SequenceViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier, Desequenced));
+    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier, DesequencedFlights));
 
-    public void UpdateFlight(FlightMessage flight)
+    public void UpdateSequence(SlotBasedSequenceDto sequence)
     {
-        var flights = Flights.ToList();
-        var index = flights.FindIndex(f => f.Callsign == flight.Callsign);
-        var viewModel = new FlightViewModel(flight);
-        if (index != -1)
-        {
-            flights[index] = viewModel;
-        }
-        else
-        {
-            flights.Add(viewModel);
-        }
+        CurrentRunwayMode = new RunwayModeViewModel(sequence.CurrentRunwayMode);
+        NextRunwayMode = sequence.NextRunwayMode is null ? null : new RunwayModeViewModel(sequence.NextRunwayMode);
 
-        Flights = flights;
-    }
-
-    public void RemoveFlight(string callsign)
-    {
-        var flights = Flights.ToList();
-        var index = flights.FindIndex(f => f.Callsign == callsign);
-        if (index != -1)
-        {
-            flights.RemoveAt(index);
-        }
-
-        Flights = flights;
+        PendingFlights = sequence.PendingFlights;
+        DesequencedFlights = sequence.DesequencedFlights;
+        LandedFlights = sequence.LandedFlights;
+        Slots = sequence.Slots;
     }
 }

@@ -4,6 +4,7 @@ namespace Maestro.Core.Messages;
 
 public class SequenceMessage
 {
+    public required string AirportIdentifier { get; init; }
     public required RunwayModeDto CurrentRunwayMode { get; init; }
     public required RunwayModeDto? NextRunwayMode { get; init; }
     public required DateTimeOffset RunwayModeChangeTime { get; init; }

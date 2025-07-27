@@ -12,14 +12,16 @@ namespace Maestro.Core.Model;
 // - NumberInSequence returns the index of a flight in the entire sequence, starting from 1
 // - NumberForRunway returns the index of a flight for its assigned runway, starting from 1
 
-// TODO: Insert custom slots at specific times
-//   - Facilitate manual landing times and no-delay flights
-//   - Slot created at a specific time
-//   - Duration derived from runway mode if a flight is being inserted
-//   - Duration manually specified if a custom slot is being created (i.e. arrival stop)
-//   - Conflicting slots removed
-//   - Flights in slots that conflict with the custom slot or are behind it are recomputed
-//   - If the slot is more than the landing rate behind the prior slot, a reserved slot is created to fill the gap
+// TODO: New idea
+//   - Create a slot for every minute
+//   - Mark slots that are too close together (based on landing rate) as unavailable
+//   - Ensure slots are rounded to the minute.
+//   - Allow flights to be moved to unavailable slots if placed there manually, or NoDelay is applied
+//     - Mark following slots as unavailable as per the landing rate
+
+// or:
+//   - Stick to the current implementation, but if the preceedng slot is free, shift the flight forward by 1 slot max
+//   - Stick to the current implementation, but if the preceedng slot is free, delete it and shift the following slot forward so there is no delay
 
 public class SlotBasedSequence
 {

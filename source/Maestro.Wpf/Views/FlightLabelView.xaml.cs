@@ -43,6 +43,7 @@ public partial class FlightLabelView : UserControl
 
     public event EventHandler<double>? DragEnded;
     public event EventHandler<double>? DragStarted;
+    public event Func<FlightLabelView, double, double>? GetSnappedY;
 
     bool _isDragging;
     Point _dragStartPoint;
@@ -79,7 +80,15 @@ public partial class FlightLabelView : UserControl
 
         var currentPoint = e.GetPosition(Parent as IInputElement);
         var deltaY = currentPoint.Y - _dragStartPoint.Y;
-        Canvas.SetTop(this, _originalTop + deltaY);
+        var targetY = _originalTop + deltaY;
+
+        // Apply snapping if a snap function is provided
+        if (GetSnappedY != null)
+        {
+            targetY = GetSnappedY(this, targetY);
+        }
+
+        Canvas.SetTop(this, targetY);
     }
 
     void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)

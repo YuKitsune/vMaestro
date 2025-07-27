@@ -6,7 +6,7 @@ namespace Maestro.Core.Handlers;
 
 public record GetSequenceRequest(string AirportIdentifier) : IRequest<GetSequenceResponse>;
 
-public record GetSequenceResponse(SequenceMessage Sequence);
+public record GetSequenceResponse(SlotBasedSequenceDto Sequence);
 
 public class GetSequenceRequestHandler(ISequenceProvider sequenceProvider)
     : IRequestHandler<GetSequenceRequest, GetSequenceResponse>

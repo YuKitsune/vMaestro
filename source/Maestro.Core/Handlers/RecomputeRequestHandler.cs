@@ -27,7 +27,7 @@ public class RecomputeRequestHandler(
         flight.NeedsRecompute = true;
 
         await mediator.Publish(
-            new MaestroFlightUpdatedNotification(flight.ToMessage(lockedSequence.Sequence)),
+            new SequenceChangedNotification(lockedSequence.Sequence.ToDto()),
             cancellationToken);
         return new RecomputeResponse();
     }

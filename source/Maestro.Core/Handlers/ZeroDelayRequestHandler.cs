@@ -22,10 +22,10 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IMediat
 
         flight.NoDelay = true;
 
-        // TODO: Reallocate position in sequence
+        // TODO: Reallocate position in sequence to ensure no delay is applied
 
         await mediator.Publish(
-            new MaestroFlightUpdatedNotification(flight.ToMessage(lockedSequence.Sequence)),
+            new SequenceChangedNotification(lockedSequence.Sequence.ToDto()),
             cancellationToken);
 
         return new ZeroDelayResponse();

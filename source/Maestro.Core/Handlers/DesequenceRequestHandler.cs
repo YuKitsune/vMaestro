@@ -24,8 +24,7 @@ public class DesequenceRequestHandler(ISequenceProvider sequenceProvider, IMedia
 
         // TODO: Publish Desequenced notification instead
         await mediator.Publish(
-            new MaestroFlightUpdatedNotification(
-                flight.ToMessage(lockedSequence.Sequence)),
+            new SequenceChangedNotification(lockedSequence.Sequence.ToDto()),
             cancellationToken);
 
         // TODO: Re-calculate sequence
