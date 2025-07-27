@@ -90,7 +90,11 @@ public class SlotBasedSequence
         {
             foreach (var runwayConfiguration in NextRunwayMode.Runways)
             {
-                ProvisionSlots(RunwayModeChangeTime, endTime, runwayConfiguration);
+                ProvisionSlots(
+                    RunwayModeChangeTime,
+                    RunwayModeChangeTime,
+                    endTime,
+                    runwayConfiguration);
             }
 
             endTime = RunwayModeChangeTime;
@@ -100,15 +104,37 @@ public class SlotBasedSequence
         var startOfHour = new DateTimeOffset(startTime.Year, startTime.Month, startTime.Day, startTime.Hour, 0, 0, startTime.Offset);
         foreach (var runwayConfiguration in CurrentRunwayMode.Runways)
         {
-            ProvisionSlots(startOfHour, endTime, runwayConfiguration);
+            ProvisionSlots(startOfHour, startTime, endTime, runwayConfiguration);
         }
     }
 
-    void ProvisionSlots(DateTimeOffset startTime, DateTimeOffset endTime, RunwayConfiguration runway)
+    /// <summary>
+    ///     Provisions landing slots for a specified runway within a given time range.
+    /// </summary>
+    /// <param name="epoch">
+    ///     The pseudo-start time used to align slots to a specific reference time.
+    /// </param>
+    /// <param name="startTime">
+    ///     The time from which the slots should start being provisioned.
+    /// </param>
+    /// <param name="endTime">
+    ///     The time up to which the slots should be provisioned.
+    /// </param>
+    /// <param name="runway">
+    ///     The configuration of the runway for which the slots are being provisioned.
+    /// </param>
+    void ProvisionSlots(
+        DateTimeOffset epoch,
+        DateTimeOffset startTime,
+        DateTimeOffset endTime,
+        RunwayConfiguration runway)
     {
-        var currentTime = startTime;
+        var currentTime = epoch;
         while (currentTime < endTime)
         {
+            if (currentTime < startTime)
+                continue;
+
             var duration = TimeSpan.FromSeconds(runway.LandingRateSeconds);
 
             // Ensure no overlapping slots
