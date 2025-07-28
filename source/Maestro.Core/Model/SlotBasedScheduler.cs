@@ -9,13 +9,6 @@ public interface ISlotBasedScheduler
     void AllocateSlot(SlotBasedSequence sequence, Flight flight);
 }
 
-// TODO: Handle no-delay and priority flights
-// TODO: Handle manual landing times
-// TODO: Account for flights not yet in the sequence regardless of state
-// TODO: Consider de-allocating all the unstable slots so they get a fresh start every time
-// TODO: Runway and terminal trajectories
-// BUG: Recompute is not respected here.
-
 public class SlotBasedScheduler(
     IRunwayAssigner runwayAssigner,
     IAirportConfigurationProvider airportConfigurationProvider,
@@ -79,6 +72,12 @@ public class SlotBasedScheduler(
                 continue;
 
             // Try to push the flight forward to the preceeding slot if it's available
+            // TODO: Reconsider how this should be handled.
+            // This is to stop flights from being delayed to a slot later than their ETA when nobody is in front of them.
+            // This workaround leads to flights needing to speed up to meet their slot time.
+            // Alternatively, we could insert a slot at a specific time (the landing ETA) and re-distribute the slots
+            // around that time so the flight doesn't need to speed up or slow down.
+            // Need to revisit this.
             var delay = nextBestSlot.Time - flight.EstimatedLandingTime;
             if (delay >= TimeSpan.FromMinutes(1) && delay < nextBestSlot.Duration)
             {

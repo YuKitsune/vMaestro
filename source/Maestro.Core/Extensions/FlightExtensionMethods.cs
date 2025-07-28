@@ -27,7 +27,9 @@ public static class FlightExtensionMethods
             LandingTime = flight.ScheduledLandingTime,
             InitialDelay = flight.TotalDelay,
             RemainingDelay = flight.RemainingDelay,
-            FlowControls = flight.FlowControls
+            FlowControls = flight.FlowControls,
+            NoDelay = flight.NoDelay,
+            ManualLandingTime = flight.ManualLandingTime
         };
     }
 }

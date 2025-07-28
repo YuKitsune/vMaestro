@@ -23,12 +23,15 @@ using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 using MessageBox = System.Windows.Forms.MessageBox;
 
-// TODO:
-//  - What's next?
-//      - Find a better way to deal with concurrency
-//          - Handlers are publishing messages leading to other handlers attempting to acquire the lock.
-//      - Insert flights and pending list
-//      - Manual ETA_FF
+// TODO: What's next?
+// - Slots
+//   - Consider if this is a viable approach
+//   - Ensure no-delay and priority flights are handled correctly
+//   - Ensure manual landing times are respected
+//   - Ensure recompute function still works
+// - Insert flights and pending list
+// - Manual ETA_FF
+// - Revise roadmap
 
 namespace Maestro.Plugin;
 

@@ -23,4 +23,6 @@ public class FlightMessage
     public required TimeSpan InitialDelay { get; init; }
     public required TimeSpan RemainingDelay { get; init; }
     public required FlowControls FlowControls { get; init; }
+    public required bool NoDelay { get; init; }
+    public required bool ManualLandingTime { get; init; }
 }

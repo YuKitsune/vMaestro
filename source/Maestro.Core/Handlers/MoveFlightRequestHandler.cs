@@ -64,7 +64,7 @@ public class MoveFlightRequestHandler(ISequenceProvider sequenceProvider, IMedia
 
             // Allocate the desired flight to the slot
             currentSlot.Deallocate();
-            targetSlot.AllocateTo(flight);
+            targetSlot.AllocateTo(flight, manual: true);
             if (flight.State == State.Unstable)
                 flight.SetState(State.Stable);
 
