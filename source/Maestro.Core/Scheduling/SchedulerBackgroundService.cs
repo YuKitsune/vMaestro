@@ -89,7 +89,7 @@ public class SchedulerBackgroundService(
                         lockedSequence.Sequence.RunwayModeChangeTime.IsSameOrBefore(clock.UtcNow()))
                     {
                         var nextRunwayMode = lockedSequence.Sequence.NextRunwayMode;
-                        lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode, scheduler, clock);
+                        lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode, scheduler);
                         logger.Information(
                             "Runway mode for {AirportIdentifier} changed to {RunwayModeIdentifier}",
                             airportIdentifier,

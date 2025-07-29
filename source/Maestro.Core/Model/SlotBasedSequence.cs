@@ -25,8 +25,7 @@ namespace Maestro.Core.Model;
 
 public class SlotBasedSequence
 {
-    // TODO: Make these configurable
-    static readonly TimeSpan MaxProvisionTime = TimeSpan.FromHours(2);
+    // TODO: Make this configurable
     static readonly int MaxLandedFlights = 5;
 
     readonly AirportConfiguration _airportConfiguration;
@@ -34,116 +33,23 @@ public class SlotBasedSequence
     readonly List<Flight> _pendingFlights = [];
     readonly List<Flight> _desequencedFlights = [];
     readonly List<Flight> _landedFlights = [];
-    readonly List<Slot> _slots = [];
+    readonly List<Flight> _sequencedFlights = [];
 
     public string AirportIdentifier => _airportConfiguration.Identifier;
     public string[] FeederFixes => _airportConfiguration.FeederFixes;
     public IReadOnlyList<Flight> PendingFlights => _pendingFlights.AsReadOnly();
     public IReadOnlyList<Flight> DesequencedFlights => _desequencedFlights.AsReadOnly();
     public IReadOnlyList<Flight> LandedFlights => _landedFlights.AsReadOnly();
-    public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
-    public IReadOnlyList<Flight> Flights => Slots.Select(s => s.Flight).WhereNotNull().ToList().AsReadOnly();
+    public IReadOnlyList<Flight> Flights => _sequencedFlights.AsReadOnly();
 
     public RunwayMode CurrentRunwayMode { get; private set; }
     public RunwayMode? NextRunwayMode { get; private set; }
     public DateTimeOffset RunwayModeChangeTime { get; private set; }
 
-    public SlotBasedSequence(AirportConfiguration airportConfiguration, RunwayMode runwayMode, DateTimeOffset startTime)
+    public SlotBasedSequence(AirportConfiguration airportConfiguration, RunwayMode runwayMode)
     {
         _airportConfiguration = airportConfiguration;
         CurrentRunwayMode = runwayMode;
-        ProvisionSlotsFrom(startTime);
-    }
-
-    public void ReprovisionSlotsFrom(DateTimeOffset startTime, ISlotBasedScheduler scheduler)
-    {
-        if (startTime > DateTime.MaxValue.Add(MaxProvisionTime.Negate()))
-            throw new MaestroException($"Cannot provision slots for {startTime} as it is too far in the future.");
-
-        var affectedFlights = _slots
-            .Where(s => s.Time >= startTime)
-            .Select(s => s.Flight)
-            .WhereNotNull()
-            .ToList();
-
-        var slotsToRemove = _slots.Where(s => s.Time >= startTime).ToArray();
-        foreach (var slot in slotsToRemove)
-        {
-            _slots.Remove(slot);
-        }
-
-        ProvisionSlotsFrom(startTime);
-
-        foreach (var affectedFlight in affectedFlights)
-        {
-            scheduler.AllocateSlot(this, affectedFlight);
-        }
-    }
-
-    public void ProvisionSlotsFrom(DateTimeOffset startTime)
-    {
-        if (startTime > DateTime.MaxValue.Add(MaxProvisionTime.Negate()))
-            throw new MaestroException($"Cannot provision slots for {startTime} as it is too far in the future.");
-
-        var endTime = startTime + MaxProvisionTime;
-        if (NextRunwayMode is not null)
-        {
-            foreach (var runwayConfiguration in NextRunwayMode.Runways)
-            {
-                ProvisionSlots(
-                    RunwayModeChangeTime,
-                    RunwayModeChangeTime,
-                    endTime,
-                    runwayConfiguration);
-            }
-
-            endTime = RunwayModeChangeTime;
-        }
-
-        // Create slots from the start of the hour so they align nicely
-        var startOfHour = new DateTimeOffset(startTime.Year, startTime.Month, startTime.Day, startTime.Hour, 0, 0, startTime.Offset);
-        foreach (var runwayConfiguration in CurrentRunwayMode.Runways)
-        {
-            ProvisionSlots(startOfHour, startTime, endTime, runwayConfiguration);
-        }
-    }
-
-    /// <summary>
-    ///     Provisions landing slots for a specified runway within a given time range.
-    /// </summary>
-    /// <param name="epoch">
-    ///     The pseudo-start time used to align slots to a specific reference time.
-    /// </param>
-    /// <param name="startTime">
-    ///     The time from which the slots should start being provisioned.
-    /// </param>
-    /// <param name="endTime">
-    ///     The time up to which the slots should be provisioned.
-    /// </param>
-    /// <param name="runway">
-    ///     The configuration of the runway for which the slots are being provisioned.
-    /// </param>
-    void ProvisionSlots(
-        DateTimeOffset epoch,
-        DateTimeOffset startTime,
-        DateTimeOffset endTime,
-        RunwayConfiguration runway)
-    {
-        var duration = TimeSpan.FromSeconds(runway.LandingRateSeconds);
-        for (var currentTime = epoch; currentTime < endTime; currentTime += duration)
-        {
-            if (currentTime < startTime)
-                continue;
-
-            // Ensure no overlapping slots
-            if (_slots.Any(s =>
-                    s.RunwayIdentifier == runway.Identifier &&
-                    s.Time < currentTime + duration &&
-                    s.Time + s.Duration > currentTime))
-                continue;
-
-            _slots.Add(new Slot(runway.Identifier, currentTime, duration));
-        }
     }
 
     public RunwayMode RunwayModeAt(DateTimeOffset time)
@@ -156,13 +62,12 @@ public class SlotBasedSequence
     /// <summary>
     ///     Changes the runway mode with an immediate effect.
     /// </summary>
-    public void ChangeRunwayMode(RunwayMode runwayMode, ISlotBasedScheduler scheduler, IClock clock)
+    public void ChangeRunwayMode(RunwayMode runwayMode, ISlotBasedScheduler scheduler)
     {
         CurrentRunwayMode = runwayMode;
         NextRunwayMode = null;
         RunwayModeChangeTime = default;
-
-        ReprovisionSlotsFrom(clock.UtcNow(), scheduler);
+        scheduler.Schedule(this);
     }
 
     /// <summary>
@@ -175,19 +80,18 @@ public class SlotBasedSequence
     {
         NextRunwayMode = runwayMode;
         RunwayModeChangeTime = changeTime;
-
-        ReprovisionSlotsFrom(changeTime, scheduler);
+        scheduler.Schedule(this);
     }
 
-    public void DesequenceFlight(string callsign)
+    public void DesequenceFlight(string callsign, ISlotBasedScheduler scheduler)
     {
-        var slot = FindSlotFor(callsign);
-        if (slot is null)
-            return;
+        var flight = _sequencedFlights.SingleOrDefault(f => f.Callsign == callsign);
+        if (flight is null)
+            throw new MaestroException($"{callsign} not found");
 
-        var flight = slot.Flight!;
-        slot.Deallocate();
+        _sequencedFlights.Remove(flight);
         _desequencedFlights.Add(flight);
+        scheduler.Schedule(this);
     }
 
     public void ResumeSequencing(string callsign, ISlotBasedScheduler scheduler)
@@ -197,7 +101,8 @@ public class SlotBasedSequence
             throw new MaestroException($"{callsign} not found in desequenced list");
 
         _desequencedFlights.Remove(desequencedFlight);
-        scheduler.AllocateSlot(this, desequencedFlight);
+        _sequencedFlights.Add(desequencedFlight);
+        scheduler.Schedule(this);
     }
 
     public void AddPendingFlight(Flight flight)
@@ -208,110 +113,42 @@ public class SlotBasedSequence
         _pendingFlights.Add(flight);
     }
 
-    public void PurgeEmptySlotsBefore(DateTimeOffset dateTimeOffset)
+    public void MarkAsLanded(Flight flight)
     {
-        var flights = new List<Flight>();
-        var slotsToRemove = _slots.Where(s => s.IsAvailable && s.Time.IsSameOrBefore(dateTimeOffset)).ToArray();
-        foreach (var slot in slotsToRemove)
-        {
-            if (slot.Flight is not null)
-            {
-                flights.Add(slot.Flight);
-            }
+        if (_landedFlights.Any(f => f.Callsign == flight.Callsign))
+            throw new MaestroException($"{flight.Callsign} is already marked as landed");
 
-            _slots.Remove(slot);
-        }
+        _landedFlights.Add(flight);
+        _sequencedFlights.Remove(flight);
 
-        _landedFlights.AddRange(flights);
+        // Keep only the most recent 5 landed flights
         if (_landedFlights.Count > MaxLandedFlights)
         {
-            var excess = _landedFlights.Count - MaxLandedFlights;
-            _landedFlights.RemoveRange(0, excess);
-        }
-    }
-
-    public void PurgeLandedFlights()
-    {
-        var slotsWithLandedFlights = _slots
-            .Where(s => s.Flight is not null && s.Flight.State == State.Landed)
-            .ToArray();
-
-        foreach (var slot in slotsWithLandedFlights)
-        {
-            _slots.Remove(slot);
-        }
-
-        var landedFlights = slotsWithLandedFlights
-            .Select(s => s.Flight!);
-
-        _landedFlights.AddRange(landedFlights);
-        if (_landedFlights.Count > MaxLandedFlights)
-        {
-            var excess = _landedFlights.Count - MaxLandedFlights;
-            _landedFlights.RemoveRange(0, excess);
+            _landedFlights.RemoveAt(0);
         }
     }
 
     public int NumberInSequence(Flight flight)
     {
-        return _slots
-            .Select(s => s.Flight)
-            .WhereNotNull()
+        return _sequencedFlights
             .ToList()
             .IndexOf(flight) + 1;
     }
 
     public int NumberForRunway(Flight flight)
     {
-        return _slots
-            .Where(s => s.RunwayIdentifier == flight.AssignedRunwayIdentifier)
-            .Select(s => s.Flight)
-            .WhereNotNull()
+        return _sequencedFlights
+            .Where(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier)
             .ToList()
             .IndexOf(flight) + 1;
     }
 
     public void Clear()
     {
-        _slots.Clear();
+        _sequencedFlights.Clear();
         _desequencedFlights.Clear();
         _pendingFlights.Clear();
         NextRunwayMode = null;
         RunwayModeChangeTime = default;
-    }
-
-    public void RecordGaps(ILogger logger)
-    {
-        if (_slots.Count < 2)
-            return;
-
-        // Sort the slots by their start time
-        var orderedSlots = _slots.OrderBy(s => s.Time).ToList();
-
-        for (int i = 0; i < orderedSlots.Count - 1; i++)
-        {
-            var currentSlot = orderedSlots[i];
-            var nextSlot = orderedSlots[i + 1];
-
-            if (currentSlot.Time + currentSlot.Duration < nextSlot.Time)
-            {
-                var gapStart = currentSlot.Time + currentSlot.Duration;
-                var gapEnd = nextSlot.Time;
-                logger.Information($"Gap detected between slots: {gapStart} to {gapEnd}");
-            }
-        }
-    }
-
-    public Slot? FindSlotFor(string callsign)
-    {
-        return _slots.SingleOrDefault(s => s.Flight?.Callsign == callsign);
-    }
-
-    public Flight? FindFlight(string callsign)
-    {
-        return _slots
-            .Select(s => s.Flight)
-            .WhereNotNull()
-            .SingleOrDefault(f => f.Callsign == callsign);
     }
 }

@@ -30,14 +30,12 @@ public class ExclusiveSequence(SlotBasedSequence sequence, SemaphoreSlim semapho
 public class SequenceProvider : ISequenceProvider
 {
     readonly IAirportConfigurationProvider _airportConfigurationProvider;
-    readonly IClock _clock;
 
     readonly List<SequenceLockPair> _sequences = [];
 
-    public SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider, IClock clock)
+    public SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider)
     {
         _airportConfigurationProvider = airportConfigurationProvider;
-        _clock = clock;
         InitializeSequences();
     }
 
@@ -51,8 +49,7 @@ public class SequenceProvider : ISequenceProvider
             // TODO: Don't start sequencing until user requests it.
             var sequence = new SlotBasedSequence(
                 airportConfiguration,
-                airportConfiguration.RunwayModes.First(),
-                _clock.UtcNow());
+                airportConfiguration.RunwayModes.First());
 
             var semaphoreSlim = new SemaphoreSlim(1, 1);
 

@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Serilog;
 
 namespace Maestro.Core.Model;
@@ -6,8 +7,16 @@ namespace Maestro.Core.Model;
 public interface ISlotBasedScheduler
 {
     void Schedule(SlotBasedSequence sequence);
-    void AllocateSlot(SlotBasedSequence sequence, Flight flight);
 }
+
+// TODO Test Cases:
+// - When a new flight is added, before a stable flight, the stable flight can be delayed
+// - When a flight has NoDelay or ManualLandingTime, it should not be delayed
+// - When a flight has NoDelay or ManualLandingTime, and the leader is too close, the leader is delayed
+// - When a flight has NoDelay or ManualLandingTime, and the leader is too close, and the leader is also NoDelay or ManualLandingTime, no delay is applied
+// - No leaders, no delay
+// - If a flight is delayed until after a runway change, the new landing rate is used
+// - If a lower priority runway results in less delay, it is reassigned
 
 public class SlotBasedScheduler(
     IRunwayAssigner runwayAssigner,
@@ -18,158 +27,165 @@ public class SlotBasedScheduler(
 {
     public void Schedule(SlotBasedSequence sequence)
     {
-        var slotsWithUnstableFlights = sequence.Slots
-            .Where(s =>
-                s.Flight is not null &&
-                s.Flight.State == State.Unstable &&
-                !s.Flight.NoDelay &&
-                !s.Flight.ManualLandingTime)
+        var sequencedFlights = new List<Flight>();
+
+        // Add all stable flights so we don't modify their landing times
+        sequencedFlights.AddRange(sequence.Flights
+            .Where(f => f.State is not State.Unstable)
+            .OrderBy(f => f.ScheduledLandingTime));
+
+        var unstableFlights = sequence.Flights
+            .Where(s => s.State == State.Unstable)
+            .OrderBy(s => s.EstimatedLandingTime)
             .ToList();
-
-        var unstableFlights = slotsWithUnstableFlights
-            .Select(s => s.Flight!)
-            .ToList();
-
-        // Deallocate unstable flights to allow for rescheduling
-        foreach (var slotsWithUnstableFlight in slotsWithUnstableFlights)
-        {
-            slotsWithUnstableFlight.Deallocate();
-        }
-
-        foreach (var flight in unstableFlights)
-        {
-            logger.Information("Scheduling {Callsign}.", flight.Callsign);
-            AllocateSlot(sequence, flight);
-        }
-    }
-
-    public void AllocateSlot(SlotBasedSequence sequence, Flight flight)
-    {
-        var allocatedSlot = sequence.FindSlotFor(flight.Callsign);
-        if (allocatedSlot is not null)
-        {
-            allocatedSlot.Deallocate();
-        }
 
         var airportConfiguration = airportConfigurationProvider
             .GetAirportConfigurations()
             .Single(c => c.Identifier == sequence.AirportIdentifier);
 
-        var matchingRunways = runwayAssigner.FindBestRunways(
-            flight.AircraftType,
-            flight.FeederFixIdentifier,
-            airportConfiguration.RunwayAssignmentRules);
-
-        Slot? bestSlot = null;
-        foreach (var matchingRunway in matchingRunways)
+        foreach (var flight in unstableFlights)
         {
-            var availableSlotsForRunway = FindPossibleSlots(sequence, flight, matchingRunway);
-            if (availableSlotsForRunway.Length == 0)
-                continue;
+            logger.Information("Scheduling {Callsign}.", flight.Callsign);
 
-            var nextBestSlot = availableSlotsForRunway.FirstOrDefault();
-            if (nextBestSlot is null)
-                continue;
-
-            // Try to push the flight forward to the preceeding slot if it's available
-            // TODO: Reconsider how this should be handled.
-            // This is to stop flights from being delayed to a slot later than their ETA when nobody is in front of them.
-            // This workaround leads to flights needing to speed up to meet their slot time.
-            // Alternatively, we could insert a slot at a specific time (the landing ETA) and re-distribute the slots
-            // around that time so the flight doesn't need to speed up or slow down.
-            // Need to revisit this.
-            var delay = nextBestSlot.Time - flight.EstimatedLandingTime;
-            if (delay >= TimeSpan.FromMinutes(1) && delay < nextBestSlot.Duration)
+            // NoDelay and ManualLandingTime flights are skipped
+            // Consider them fixed in the sequence and move everyone around them.
+            if (flight.NoDelay || flight.ManualLandingTime)
             {
-                var precedingSlot = FindPrecedingSlot(sequence, nextBestSlot, matchingRunway);
-                if (precedingSlot is not null && precedingSlot.IsAvailable)
+                var leader = sequencedFlights.LastOrDefault(f =>
+                    !f.NoDelay &&
+                    !f.ManualLandingTime &&
+                    f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
+                if (leader is not null)
                 {
-                    nextBestSlot = precedingSlot;
+                    var runwayMode = sequence.RunwayModeAt(flight.ScheduledLandingTime);
+                    var acceptanceRate = TimeSpan.FromSeconds(runwayMode.Runways
+                        .Single(r => r.Identifier == flight.AssignedRunwayIdentifier)
+                        .LandingRateSeconds);
+                    if (leader.ScheduledLandingTime.Add(acceptanceRate).IsBefore(flight.EstimatedLandingTime))
+                    {
+                        var newLeaderLandingTime = leader.ScheduledLandingTime + acceptanceRate;
+                        Schedule(leader, newLeaderLandingTime, leader.AssignedRunwayIdentifier);
+                    }
+                }
+
+                sequencedFlights.Add(flight);
+                continue;
+            }
+
+            var matchingRunways = runwayAssigner.FindBestRunways(
+                flight.AircraftType,
+                flight.FeederFixIdentifier,
+                airportConfiguration.RunwayAssignmentRules);
+
+            DateTimeOffset? bestLandingTime = null;
+            var assignedRunway = matchingRunways.First();
+            foreach (var matchingRunway in matchingRunways)
+            {
+                var leaderOnRunway = sequencedFlights.LastOrDefault(f => f.AssignedRunwayIdentifier == matchingRunway);
+                if (leaderOnRunway is null)
+                {
+                    // No leader on this runway, no delay required
+                    bestLandingTime = flight.EstimatedLandingTime;
+                    break;
+                }
+
+                var landingRate = DetermineLandingRate(sequence, leaderOnRunway.ScheduledLandingTime, matchingRunway);
+                var nextBestLandingTime = leaderOnRunway.ScheduledLandingTime + landingRate;
+                if (bestLandingTime is null)
+                {
+                    bestLandingTime = nextBestLandingTime;
+                    continue;
+                }
+
+                // Suggest the lower priority runway if it results in less delay
+                var newDelay = nextBestLandingTime - flight.EstimatedLandingTime;
+                var currentDelay = bestLandingTime - flight.EstimatedLandingTime;
+                if (newDelay < currentDelay)
+                {
+                    bestLandingTime = nextBestLandingTime;
+                    assignedRunway = matchingRunway;
                 }
             }
 
-            if (bestSlot is null)
+            if (bestLandingTime is null)
             {
-                bestSlot = nextBestSlot;
-                continue;
+                throw new MaestroException($"Landing time for {flight.Callsign} could not be determined.");
             }
 
-            // Suggest the lower priority runway if it results in less delay
-            var newDelay = nextBestSlot.Time - flight.EstimatedLandingTime;
-            var currentDelay = bestSlot.Time - flight.EstimatedLandingTime;
-            if (newDelay < currentDelay)
+            if (string.IsNullOrEmpty(assignedRunway))
             {
-                bestSlot = nextBestSlot;
+                throw new MaestroException($"Runway for {flight.Callsign} could not be determined.");
             }
-        }
 
-        if (bestSlot is null)
-        {
-            logger.Warning("No available slots for {Callsign}. Cannot schedule.", flight.Callsign);
-            return;
-        }
+            if (assignedRunway != matchingRunways.FirstOrDefault())
+            {
+                logger.Information(
+                    "{Callsign} assigned runway {RunwayIdentifier} for a reduced delay",
+                    flight.Callsign,
+                    assignedRunway);
+            }
 
-        if (bestSlot.RunwayIdentifier != matchingRunways.FirstOrDefault())
-        {
+            Schedule(flight, bestLandingTime.Value, assignedRunway);
+
+            // TODO: Revisit flow controls
+            var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+            if (performance is not null &&
+                performance.AircraftCategory == AircraftCategory.Jet &&
+                flight.EstimatedLandingTime < bestLandingTime.Value)
+            {
+                flight.SetFlowControls(FlowControls.S250);
+            }
+            else
+            {
+                flight.SetFlowControls(FlowControls.ProfileSpeed);
+            }
+
+            sequencedFlights.Add(flight);
+
             logger.Information(
-                "{Callsign} assigned runway {RunwayIdentifier} for a reduced delay",
+                "{Callsign} STA_FF {ScheduledFeederFixTime:HH:mm}, total delay {TotalDelay:N0} mins)",
                 flight.Callsign,
-                bestSlot.RunwayIdentifier);
+                flight.ScheduledFeederFixTime,
+                flight.TotalDelay.TotalMinutes);
         }
-
-        bestSlot.AllocateTo(flight);
-
-        var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (performance is not null &&
-            performance.AircraftCategory == AircraftCategory.Jet &&
-            flight.EstimatedLandingTime < bestSlot.Time)
-        {
-            flight.SetFlowControls(FlowControls.S250);
-        }
-        else
-        {
-            flight.SetFlowControls(FlowControls.ProfileSpeed);
-        }
-
-        logger.Information(
-            "{Callsign} allocated to slot {Slot} (STA_FF {ScheduledFeederFixTime:HH:mm}, total delay {TotalDelay:N0} mins)",
-            flight.Callsign,
-            bestSlot,
-            flight.ScheduledFeederFixTime,
-            flight.TotalDelay.TotalMinutes);
     }
 
-    Slot[] FindPossibleSlots(SlotBasedSequence sequence, Flight flight, string runwayIdentifier)
+    TimeSpan DetermineLandingRate(SlotBasedSequence sequence, DateTimeOffset leaderLandingTime, string runwayIdentifier)
     {
-        var slotsForRunway = sequence.Slots
-            .OrderBy(s => s.Time)
-            .Where(s => s.RunwayIdentifier == runwayIdentifier)
-            .ToList();
+        var currentLandingRateSeconds = sequence.CurrentRunwayMode.Runways
+            .Single(r => r.Identifier == runwayIdentifier)
+            .LandingRateSeconds;
 
-        var lastSuperStableSlotIndex = slotsForRunway
-            .FindLastIndex(s =>
-                s.IsAvailable &&
-                (s.Flight?.PositionIsFixed ?? false));
+        // No runway change is planned, use the current acceptance rate
+        if (sequence.NextRunwayMode is null)
+        {
+            return TimeSpan.FromSeconds(currentLandingRateSeconds);
+        }
 
-        lastSuperStableSlotIndex = Math.Max(0, lastSuperStableSlotIndex);
-        var availableSlots = slotsForRunway
-            .Skip(lastSuperStableSlotIndex)
-            .Where(s =>
-                s.IsAvailable &&
-                s.Time >= flight.EstimatedLandingTime);
+        var nextLandingRateSeconds = sequence.NextRunwayMode.Runways
+            .Single(r => r.Identifier == runwayIdentifier)
+            .LandingRateSeconds;
 
-        return availableSlots.ToArray();
+        // If the current acceptance rate pushes us into the next runway mode, use the next acceptance rate
+        if (leaderLandingTime.AddSeconds(currentLandingRateSeconds).IsAfter(sequence.RunwayModeChangeTime) &&
+            leaderLandingTime.AddSeconds(nextLandingRateSeconds).IsAfter(sequence.RunwayModeChangeTime))
+        {
+            return TimeSpan.FromSeconds(nextLandingRateSeconds);
+        }
+
+        return TimeSpan.FromSeconds(currentLandingRateSeconds);
     }
 
-    Slot? FindPrecedingSlot(SlotBasedSequence sequence, Slot slot, string runwayIdentifier)
+    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
     {
-        var slotsForRunway = sequence.Slots
-            .Where(s => s.RunwayIdentifier == runwayIdentifier)
-            .ToArray();
+        flight.SetLandingTime(landingTime, manual: false);
+        flight.SetRunway(runwayIdentifier, manual: false);
 
-        var slotIndex = Array.IndexOf(slotsForRunway, slot);
-        return slotIndex < 0
-            ? null
-            : sequence.Slots[slotIndex - 1];
+        if (flight.EstimatedFeederFixTime is not null && !flight.HasPassedFeederFix)
+        {
+            var totalDelay = landingTime - flight.EstimatedLandingTime;
+            var feederFixTime = flight.EstimatedFeederFixTime.Value + totalDelay;
+            flight.SetFeederFixTime(feederFixTime);
+        }
     }
 }
