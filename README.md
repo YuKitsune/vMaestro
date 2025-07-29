@@ -73,8 +73,8 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [ ] Revise speed-controls (`+` symbol, what does it actually mean, when it supposed to be used)
     - [X] Use FF and STAR suffix for ETI
     - [ ] Separate enroute and TMA delays
-    - [ ] Consider separation at the feeder fix
-    - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
+        - [ ] Apply separation at feeder-fix first
+        - [ ] Second delay calculation for TMA
     - [ ] Factor GRIB winds into estimate calculations (If required)
 
 - [ ] Terminal Configuration Refinement
