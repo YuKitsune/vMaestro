@@ -63,18 +63,18 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [X] Recompute
     - [X] Remove from sequence
     - [X] Desequence
-    - [ ] Change runway mode
-    - [ ] Change runway rates
+    - [X] Change runway mode
+    - [X] Change runway rates
     - [ ] Insert flight
     - [ ] Change ETA FF
 
 - [ ] Sequencing Algorithm Refinement
-    - [ ] Factor GRIB winds into estimate calculations (If required)
+    - [ ] Revise speed-controls (`+` symbol, what does it actually mean, when it supposed to be used)
     - [X] Use FF and STAR suffix for ETI
     - [ ] Separate enroute and TMA delays
     - [ ] Consider separation at the feeder fix
     - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
-    - [ ] Apply optimisations (i.e. runway selection)
+    - [ ] Factor GRIB winds into estimate calculations (If required)
 
 - [ ] Terminal Configuration Refinement
     - [ ] Runway(s) to be used
