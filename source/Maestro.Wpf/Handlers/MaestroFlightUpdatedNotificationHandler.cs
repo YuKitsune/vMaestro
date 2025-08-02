@@ -4,27 +4,27 @@ using MediatR;
 
 namespace Maestro.Wpf.Handlers;
 
-public class MaestroFlightUpdatedNotificationHandler(MaestroViewModel maestroViewModel, DebugViewModel debugViewModel)
-    : INotificationHandler<MaestroFlightUpdatedNotification>
+public class SequenceUpdatedNotificationHandler(MaestroViewModel maestroViewModel, DebugViewModel debugViewModel)
+    : INotificationHandler<SequenceUpdatedNotification>
 {
-    public Task Handle(MaestroFlightUpdatedNotification notification, CancellationToken _)
+    public Task Handle(SequenceUpdatedNotification notification, CancellationToken _)
     {
-        UpdateSequenceViewModel(notification.Flight);
-        UpdateDebugViewModel(notification.Flight);
+        UpdateSequenceViewModel(notification.Sequence);
+        UpdateDebugViewModel(notification.Sequence);
 
         return Task.CompletedTask;
     }
 
-    void UpdateSequenceViewModel(FlightMessage flight)
+    void UpdateSequenceViewModel(SequenceMessage sequence)
     {
-        var sequence = maestroViewModel.Sequences
-            .FirstOrDefault(s => s.AirportIdentifier == flight.DestinationIdentifier);
+        var sequenceViewModel = maestroViewModel.Sequences
+            .FirstOrDefault(s => s.AirportIdentifier == sequence.AirportIdentifier);
 
-        sequence?.UpdateFlight(flight);
+        sequenceViewModel?.UpdateFrom(sequence);
     }
 
-    void UpdateDebugViewModel(FlightMessage flight)
+    void UpdateDebugViewModel(SequenceMessage sequence)
     {
-        debugViewModel.UpdateFlight(flight);
+        debugViewModel.UpdateFrom(sequence);
     }
 }

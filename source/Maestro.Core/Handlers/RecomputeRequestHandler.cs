@@ -8,6 +8,7 @@ namespace Maestro.Core.Handlers;
 
 public class RecomputeRequestHandler(
     ISequenceProvider sequenceProvider,
+    IScheduler scheduler,
     IMediator mediator,
     ILogger logger)
     : IRequestHandler<RecomputeRequest, RecomputeResponse>
@@ -15,8 +16,8 @@ public class RecomputeRequestHandler(
     public async Task<RecomputeResponse> Handle(RecomputeRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        
-        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
+
+        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
@@ -24,10 +25,14 @@ public class RecomputeRequestHandler(
         }
 
         flight.NeedsRecompute = true;
-        
+        scheduler.Schedule(lockedSequence.Sequence);
+
         await mediator.Publish(
-            new MaestroFlightUpdatedNotification(flight.ToMessage(lockedSequence.Sequence)),
+            new SequenceUpdatedNotification(
+                lockedSequence.Sequence.AirportIdentifier,
+                lockedSequence.Sequence.ToMessage()),
             cancellationToken);
+
         return new RecomputeResponse();
     }
 }

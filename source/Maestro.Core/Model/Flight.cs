@@ -38,7 +38,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         WakeCategory wakeCategory,
         string originIdentifier,
         string destinationIdentifier,
-        string assignedRunwayIdentifier,
         FixEstimate? feederFixEstimate,
         DateTimeOffset initialLandingTime)
     {
@@ -47,7 +46,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         WakeCategory = wakeCategory;
         OriginIdentifier = originIdentifier;
         DestinationIdentifier = destinationIdentifier;
-        AssignedRunwayIdentifier = assignedRunwayIdentifier;
 
         FeederFixIdentifier = feederFixEstimate?.FixIdentifier;
         InitialFeederFixTime = feederFixEstimate?.Estimate;
@@ -65,14 +63,13 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public string OriginIdentifier { get; private set; }
     public string DestinationIdentifier { get; private set; }
     public string? AssignedArrivalIdentifier { get; private set; }
-    public string AssignedRunwayIdentifier { get; private set; }
+    public string? AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
     public bool HighPriority { get; set; } = false;
     public bool NoDelay { get; set; }
     public bool NeedsRecompute { get; set; }
 
     public State State { get; private set; } = State.Unstable;
-    public bool PositionIsFixed => State is not State.Unstable and not State.Stable;
 
     public string? FeederFixIdentifier { get; private set; }
     public DateTimeOffset? InitialFeederFixTime { get; private set; }
@@ -93,9 +90,11 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
 
-    public bool HasBeenScheduled { get; private set; }
+    // public bool HasBeenScheduled { get; private set; }
 
     public DateTimeOffset LastSeen { get; private set; }
+
+    public bool IsInSequence => State is not State.Desequenced and not State.Removed;
 
     public void SetState(State state)
     {
@@ -132,6 +131,12 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         AssignedRunwayIdentifier = runwayIdentifier;
         RunwayManuallyAssigned = manual;
+    }
+
+    public void ClearRunway()
+    {
+        AssignedRunwayIdentifier = null;
+        RunwayManuallyAssigned = false;
     }
 
     public void SetFlowControls(FlowControls flowControls)
@@ -200,7 +205,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
     {
-        HasBeenScheduled = true;
+        // HasBeenScheduled = true;
         ScheduledLandingTime = landingTime;
         ManualLandingTime = manual;
     }

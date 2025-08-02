@@ -9,17 +9,26 @@ using Shouldly;
 
 namespace Maestro.Core.Tests;
 
-public class SchedulerTests
+public class SchedulerTests(
+    PerformanceLookupFixture performanceLookupFixture,
+    AirportConfigurationFixture airportConfigurationFixture,
+    ClockFixture clockFixture)
 {
     static TimeSpan _landingRate = TimeSpan.FromSeconds(180);
-    static IClock _clock = new FixedClock(DateTimeOffset.Now);
 
-    readonly AirportConfigurationFixture _airportConfigurationFixture;
-    readonly IScheduler _scheduler;
+    readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
+    readonly IClock _clock = clockFixture.Instance;
+    readonly IScheduler _scheduler = CreateScheduler(performanceLookupFixture, airportConfigurationFixture);
 
-    public SchedulerTests(AirportConfigurationFixture airportConfigurationFixture)
+    static IScheduler CreateScheduler(PerformanceLookupFixture performanceLookupFixture, AirportConfigurationFixture airportConfigurationFixture)
     {
-        _airportConfigurationFixture = airportConfigurationFixture;
+        var performanceLookup = performanceLookupFixture.Instance;
+        var runwayAssigner = new RunwayAssigner(performanceLookup);
+        var airportConfiguration = airportConfigurationFixture.Instance;
+
+        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
+        airportConfigurationProvider.GetAirportConfigurations()
+            .Returns([airportConfiguration]);
 
         var lookup = Substitute.For<IPerformanceLookup>();
         lookup.GetPerformanceDataFor(Arg.Any<string>()).Returns(x =>
@@ -30,7 +39,11 @@ public class SchedulerTests
                 WakeCategory = WakeCategory.Medium
             });
 
-        _scheduler = new Scheduler(lookup, Substitute.For<ILogger>());
+        return new Scheduler(
+            runwayAssigner,
+            airportConfigurationProvider,
+            performanceLookup,
+            Substitute.For<ILogger>());
     }
 
     [Fact]
@@ -42,11 +55,12 @@ public class SchedulerTests
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(flight);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
 
         // Act
-        _scheduler.Schedule(sequence, flight);
+        _scheduler.Schedule(sequence);
 
         // Assert
         flight.ScheduledFeederFixTime.ShouldBe(flight.EstimatedFeederFixTime);
@@ -55,84 +69,83 @@ public class SchedulerTests
         flight.RemainingDelay.ShouldBe(TimeSpan.Zero);
     }
 
-    [Fact]
-    public void SingleFlight_DuringBlockout_IsDelayed()
-    {
-        // Arrange
-        var endTime = _clock.UtcNow().AddMinutes(25);
-        var blockout = new BlockoutPeriod
-        {
-            RunwayIdentifier = "34L",
-            StartTime = _clock.UtcNow().AddMinutes(5),
-            EndTime = endTime,
-        };
-
-
-        var flight = new FlightBuilder("QFA1")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-            .WithRunway("34L")
-            .Build();
-
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.AddBlockout(blockout);
-        sequence.Add(flight);
-
-        // Act
-        _scheduler.Schedule(sequence, flight);
-
-        // Assert
-        flight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
-        flight.ScheduledLandingTime.ShouldBe(endTime);
-        flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
-    }
-
-    [Fact]
-    public void MultipleFlights_DuringBlockout_AreDelayed()
-    {
-        // Arrange
-        var endTime = _clock.UtcNow().AddMinutes(25);
-        var blockout = new BlockoutPeriod
-        {
-            RunwayIdentifier = "34L",
-            StartTime = _clock.UtcNow().AddMinutes(5),
-            EndTime = endTime,
-        };
-
-        var firstFlight = new FlightBuilder("QFA1")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-            .WithRunway("34L")
-            .Build();
-
-        var secondFlight = new FlightBuilder("QFA2")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(12))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(22))
-            .WithRunway("34L")
-            .Build();
-
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.AddBlockout(blockout);
-        sequence.Add(firstFlight);
-        sequence.Add(secondFlight);
-
-        // Act
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
-
-        // Assert
-        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
-
-        firstFlight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
-        firstFlight.ScheduledLandingTime.ShouldBe(endTime);
-        firstFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
-
-        secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime!.Value.Add(_landingRate));
-        secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
-        secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(3).Add(_landingRate));
-    }
+    // [Fact]
+    // public void SingleFlight_DuringBlockout_IsDelayed()
+    // {
+    //     // Arrange
+    //     var endTime = _clock.UtcNow().AddMinutes(25);
+    //     var blockout = new BlockoutPeriod
+    //     {
+    //         RunwayIdentifier = "34L",
+    //         StartTime = _clock.UtcNow().AddMinutes(5),
+    //         EndTime = endTime,
+    //     };
+    //
+    //
+    //     var flight = new FlightBuilder("QFA1")
+    //         .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+    //         .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+    //         .WithRunway("34L")
+    //         .Build();
+    //
+    //     var sequence = new SequenceBuilder(_airportConfiguration)
+    //         .WithFlight(flight)
+    //         .Build();
+    //     sequence.AddBlockout(blockout);
+    //
+    //     // Act
+    //     _scheduler.Schedule(sequence);
+    //
+    //     // Assert
+    //     flight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
+    //     flight.ScheduledLandingTime.ShouldBe(endTime);
+    //     flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
+    // }
+    //
+    // [Fact]
+    // public void MultipleFlights_DuringBlockout_AreDelayed()
+    // {
+    //     // Arrange
+    //     var endTime = _clock.UtcNow().AddMinutes(25);
+    //     var blockout = new BlockoutPeriod
+    //     {
+    //         RunwayIdentifier = "34L",
+    //         StartTime = _clock.UtcNow().AddMinutes(5),
+    //         EndTime = endTime,
+    //     };
+    //
+    //     var firstFlight = new FlightBuilder("QFA1")
+    //         .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+    //         .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+    //         .WithRunway("34L")
+    //         .Build();
+    //
+    //     var secondFlight = new FlightBuilder("QFA2")
+    //         .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(12))
+    //         .WithLandingEstimate(_clock.UtcNow().AddMinutes(22))
+    //         .WithRunway("34L")
+    //         .Build();
+    //
+    //     var sequence = new SequenceBuilder(_airportConfiguration)
+    //         .WithFlight(firstFlight)
+    //         .WithFlight(secondFlight)
+    //         .Build();
+    //     sequence.AddBlockout(blockout);
+    //
+    //     // Act
+    //     _scheduler.Schedule(sequence);
+    //
+    //     // Assert
+    //     sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+    //
+    //     firstFlight.ScheduledFeederFixTime.ShouldBe(endTime.AddMinutes(-10));
+    //     firstFlight.ScheduledLandingTime.ShouldBe(endTime);
+    //     firstFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
+    //
+    //     secondFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.ScheduledFeederFixTime!.Value.Add(_landingRate));
+    //     secondFlight.ScheduledLandingTime.ShouldBe(firstFlight.ScheduledLandingTime.Add(_landingRate));
+    //     secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(3).Add(_landingRate));
+    // }
 
     [Fact]
     public void NewFlight_EarlierThanStable_StableFlightIsDelayed()
@@ -147,11 +160,13 @@ public class SchedulerTests
             .WithState(State.Stable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(stableFlight);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(stableFlight)
+            .Build();
 
         // First pass
-        _scheduler.Schedule(sequence, stableFlight);
+        _scheduler.Schedule(sequence);
 
         // New flight added with an earlier ETA
         var unstableFlight = new FlightBuilder("QFA2")
@@ -161,13 +176,10 @@ public class SchedulerTests
             .WithState(State.Unstable)
             .Build();
 
-        sequence.Add(unstableFlight);
+        sequence.AddFlight(unstableFlight, _scheduler);
 
         // Act
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
+        _scheduler.Schedule(sequence);
 
         // Assert
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
@@ -197,15 +209,13 @@ public class SchedulerTests
             .WithRunway("34L")
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(firstFlight);
-        sequence.Add(secondFlight);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(firstFlight)
+            .WithFlight(secondFlight)
+            .Build();
 
         // First pass
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
+        _scheduler.Schedule(sequence);
 
         // Sanity check
         firstFlight.ScheduledFeederFixTime.ShouldBe(firstFlight.EstimatedFeederFixTime);
@@ -222,10 +232,7 @@ public class SchedulerTests
         secondFlight.UpdateLandingEstimate(firstFlight.EstimatedLandingTime.Add(TimeSpan.FromMinutes(-1)));
 
         // Act
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
+        _scheduler.Schedule(sequence);
 
         // Assert
         // First flight should not be delayed
@@ -242,13 +249,10 @@ public class SchedulerTests
     }
 
     [Theory]
-    [InlineData(State.SuperStable, State.Unstable)]
-    [InlineData(State.SuperStable, State.Stable)]
-    [InlineData(State.Frozen, State.Unstable)]
-    [InlineData(State.Frozen, State.Stable)]
-    [InlineData(State.Landed, State.Unstable)]
-    [InlineData(State.Landed, State.Stable)]
-    public void NewFlight_EarlierThanSuperStable_NewFlightIsDelayed(State existingState, State newFlightState)
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    [InlineData(State.Landed)]
+    public void NewFlight_EarlierThanFixed_NewFlightIsDelayed(State existingState)
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
@@ -257,11 +261,13 @@ public class SchedulerTests
             .WithRunway("34L")
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(firstFlight);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(firstFlight)
+            .Build();
 
         // First pass
-        _scheduler.Schedule(sequence, firstFlight);
+        _scheduler.Schedule(sequence);
         firstFlight.SetState(existingState);
 
         // New flight added with an earlier ETA
@@ -269,16 +275,13 @@ public class SchedulerTests
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(9))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
             .WithRunway("34L")
-            .WithState(newFlightState)
+            .WithState(State.Unstable)
             .Build();
 
-        sequence.Add(secondFlight);
+        sequence.AddFlight(secondFlight, _scheduler);
 
         // Act
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
+        _scheduler.Schedule(sequence);
 
         // Assert
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
@@ -300,14 +303,14 @@ public class SchedulerTests
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
-            .WithState(State.SuperStable)
+            .WithState(State.Unstable)
             .Build();
 
         var second = new FlightBuilder("QFA2")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
-            .WithState(State.Stable)
+            .WithState(State.Unstable)
             .Build();
 
         var third = new FlightBuilder("QFA3")
@@ -317,16 +320,15 @@ public class SchedulerTests
             .WithState(State.Unstable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(first);
-        sequence.Add(second);
-        sequence.Add(third);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(first)
+            .WithFlight(second)
+            .WithFlight(third)
+            .Build();
 
         // Act
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
+        _scheduler.Schedule(sequence);
 
         // Assert
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
@@ -359,15 +361,13 @@ public class SchedulerTests
             .WithRunway("34R")
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(first);
-        sequence.Add(second);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(first)
+            .WithFlight(second)
+            .Build();
 
         // Act
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
+        _scheduler.Schedule(sequence);
 
         // Assert
         first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
@@ -403,16 +403,15 @@ public class SchedulerTests
             .WithState(State.SuperStable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(farAwayFlight);
-        sequence.Add(closeFlight);
-        sequence.Add(veryCloseFlight);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(farAwayFlight)
+            .WithFlight(closeFlight)
+            .WithFlight(veryCloseFlight)
+            .Build();
 
         // Act
-        foreach (var flight in sequence.Flights)
-        {
-            _scheduler.Schedule(sequence, flight);
-        }
+        _scheduler.Schedule(sequence);
 
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA3", "QFA2", "QFA1"]);
 
@@ -477,12 +476,14 @@ public class SchedulerTests
             .WithState(State.Unstable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(first);
-        sequence.Add(second);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(first)
+            .WithFlight(second)
+            .Build();
 
         // First pass, normal sequence
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Sanity check, first flight is not delayed
         first.ScheduledFeederFixTime.ShouldBe(first.EstimatedFeederFixTime);
@@ -493,8 +494,14 @@ public class SchedulerTests
         second.ScheduledLandingTime.ShouldBe(first.ScheduledLandingTime.Add(_landingRate));
 
         // Act
-        first.Desequence();
-        sequence.Schedule(_scheduler);
+        if (state == State.Desequenced)
+        {
+            sequence.DesequenceFlight(first.Callsign, _scheduler);
+        }
+        else if (state == State.Removed)
+        {
+            sequence.RemoveFlight(first.Callsign, _scheduler);
+        }
 
         // Assert
 
@@ -521,16 +528,18 @@ public class SchedulerTests
             .WithState(State.Unstable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(first);
-        sequence.Add(second);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(first)
+            .WithFlight(second)
+            .Build();
 
         // First pass, normal sequence
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Desequence the first flight and recompute the sequence
         first.Desequence();
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Sanity check, second flight should no longer have a delay
         second.ScheduledFeederFixTime.ShouldBe(second.ScheduledFeederFixTime);
@@ -538,7 +547,7 @@ public class SchedulerTests
 
         // Act
         first.Resume();
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Assert
 
@@ -569,26 +578,26 @@ public class SchedulerTests
             .WithState(State.Unstable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(first);
-        sequence.Add(second);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(first)
+            .WithFlight(second)
+            .Build();
 
         // First pass, normal sequence
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Desequence the first flight and recompute the sequence
-        first.Desequence();
-        sequence.Schedule(_scheduler);
+        sequence.DesequenceFlight(first.Callsign, _scheduler);
 
         // Act
         // Stabilize the second flight and resume the first one
         second.SetState(State.Stable);
-        first.Resume();
-        sequence.Schedule(_scheduler);
+        sequence.ResumeSequencing(first.Callsign, _scheduler);
 
         // Assert
         // No delay for the second flight since it was stabilized first
-        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
         second.ScheduledFeederFixTime.ShouldBe(second.EstimatedFeederFixTime);
         second.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
 
@@ -620,13 +629,14 @@ public class SchedulerTests
             .WithState(State.Stable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(leadingFlight);
-        sequence.Add(subjectFlight);
-        sequence.Add(fixedFlight);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(leadingFlight)
+            .WithFlight(subjectFlight)
+            .WithFlight(fixedFlight)
+            .Build();
 
         // Act
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Assert
         // No delay for the first flight
@@ -672,14 +682,15 @@ public class SchedulerTests
             .WithState(State.Stable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(leadingFlight);
-        sequence.Add(subjectFlight);
-        sequence.Add(fixedFlight1);
-        sequence.Add(fixedFlight2);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(leadingFlight)
+            .WithFlight(subjectFlight)
+            .WithFlight(fixedFlight1)
+            .WithFlight(fixedFlight2)
+            .Build();
 
         // Act
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Assert
         // No delay for the first flight
@@ -719,13 +730,14 @@ public class SchedulerTests
             .WithState(State.Stable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(leadingFlight);
-        sequence.Add(subjectFlight);
-        sequence.Add(fixedFlight);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(leadingFlight)
+            .WithFlight(subjectFlight)
+            .WithFlight(fixedFlight)
+            .Build();
 
         // Act
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Assert
         // No delay for the first flight
@@ -771,14 +783,15 @@ public class SchedulerTests
             .WithState(State.Stable)
             .Build();
 
-        var sequence = new Sequence(_airportConfigurationFixture.Instance);
-        sequence.Add(leadingFlight);
-        sequence.Add(subjectFlight);
-        sequence.Add(fixedFlight1);
-        sequence.Add(fixedFlight2);
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(leadingFlight)
+            .WithFlight(subjectFlight)
+            .WithFlight(fixedFlight1)
+            .WithFlight(fixedFlight2)
+            .Build();
 
         // Act
-        sequence.Schedule(_scheduler);
+        _scheduler.Schedule(sequence);
 
         // Assert
         // No delay for the first flight

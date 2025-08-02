@@ -33,8 +33,16 @@ public partial class SequenceViewModel : ObservableObject
     RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Desequenced))]
     List<FlightViewModel> _flights = [];
+
+    [ObservableProperty]
+    List<string> _desequencedFlights = [];
+
+    [ObservableProperty]
+    List<string> _landedFlights = [];
+
+    [ObservableProperty]
+    List<string> _pendingFlights = [];
 
     public string AirportIdentifier { get; }
 
@@ -44,8 +52,6 @@ public partial class SequenceViewModel : ObservableObject
             : CurrentRunwayMode.Identifier;
 
     public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
-
-    public string[] Desequenced => Flights.Where(f => f.State == State.Desequenced).Select(airport => airport.Callsign).ToArray();
 
     public SequenceViewModel(
         string airportIdentifier,
@@ -80,34 +86,18 @@ public partial class SequenceViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier, Desequenced));
+    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier, DesequencedFlights.ToArray()));
 
-    public void UpdateFlight(FlightMessage flight)
+    public void UpdateFrom(SequenceMessage sequenceMessage)
     {
-        var flights = Flights.ToList();
-        var index = flights.FindIndex(f => f.Callsign == flight.Callsign);
-        var viewModel = new FlightViewModel(flight);
-        if (index != -1)
-        {
-            flights[index] = viewModel;
-        }
-        else
-        {
-            flights.Add(viewModel);
-        }
+        CurrentRunwayMode = new RunwayModeViewModel(sequenceMessage.CurrentRunwayMode);
+        NextRunwayMode = sequenceMessage.NextRunwayMode is not null
+            ? new RunwayModeViewModel(sequenceMessage.NextRunwayMode)
+            : null;
 
-        Flights = flights;
-    }
-
-    public void RemoveFlight(string callsign)
-    {
-        var flights = Flights.ToList();
-        var index = flights.FindIndex(f => f.Callsign == callsign);
-        if (index != -1)
-        {
-            flights.RemoveAt(index);
-        }
-
-        Flights = flights;
+        Flights = sequenceMessage.Flights.Select(flight => new FlightViewModel(flight)).ToList();
+        DesequencedFlights = sequenceMessage.DesequencedFlights.ToList();
+        LandedFlights = sequenceMessage.LandedFlights.ToList();
+        PendingFlights = sequenceMessage.PendingFlights.ToList();
     }
 }

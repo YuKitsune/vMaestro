@@ -1,14 +1,14 @@
-﻿using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
+using Maestro.Core.Tests.Fixtures;
 using Shouldly;
 
 namespace Maestro.Core.Tests;
 
-public class FlightTests
+public class FlightTests(ClockFixture clockFixture)
 {
-    readonly DateTimeOffset _landingTime = new(2025, 05, 21, 06,49, 00, TimeSpan.Zero);
-    
+    readonly DateTimeOffset _landingTime = clockFixture.Instance.UtcNow();
+
     [Fact]
     public void WhenAFlightIsDelayed_AndItSlowsDown_DelayReduces()
     {
@@ -18,21 +18,21 @@ public class FlightTests
             .WithLandingTime(_landingTime.AddMinutes(5))
             .WithState(State.Stable)
             .Build();
-        
+
         // Sanity check
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
         // Act: New estimate after slowing down
         flight.UpdateLandingEstimate(_landingTime.AddMinutes(2));
-        
+
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(3));
-        
+
         // Act: New estimate after slowing down
         flight.UpdateLandingEstimate(_landingTime.AddMinutes(5));
-        
+
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.Zero);
@@ -47,21 +47,21 @@ public class FlightTests
             .WithLandingTime(_landingTime.AddMinutes(5))
             .WithState(State.Stable)
             .Build();
-        
+
         // Sanity check
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
         // Act: New estimate after speeding up
         flight.UpdateLandingEstimate(_landingTime.AddMinutes(-2));
-        
+
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(7));
-        
+
         // Act: New estimate after slowing down
         flight.UpdateLandingEstimate(_landingTime.AddMinutes(-5));
-        
+
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(10));
@@ -76,14 +76,14 @@ public class FlightTests
             .WithLandingTime(_landingTime.AddMinutes(5))
             .WithState(State.Stable)
             .Build();
-        
+
         // Sanity check
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
         // Act: New estimate after speeding up
         flight.UpdateLandingEstimate(_landingTime.AddMinutes(8));
-        
+
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(-3));
@@ -94,69 +94,69 @@ public class FlightTests
     {
         // Arrange
         var referenceTime = new DateTimeOffset(2025, 05, 25, 00, 00, 00, TimeSpan.Zero);
-        
+
         // Stable flights should be ordered by state and scheduled time
         var landedFlight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(-5))
             .WithState(State.Landed)
             .Build();
-        
+
         var landedFlight2 = new FlightBuilder("QFA2")
-            .WithLandingEstimate(referenceTime) 
+            .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime)
             .WithState(State.Landed)
             .Build();
-        
+
         var frozenFlight1 = new FlightBuilder("QFA3")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(5))
             .WithState(State.Frozen)
             .Build();
-        
+
         var frozenFlight2 = new FlightBuilder("QFA4")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(10))
             .WithState(State.Frozen)
             .Build();
-        
+
         var superStableFlight1 = new FlightBuilder("QFA5")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(15))
             .WithState(State.SuperStable)
             .Build();
-        
+
         var superStableFlight2 = new FlightBuilder("QFA6")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(20))
             .WithState(State.SuperStable)
             .Build();
-        
+
         var stableFlight1 = new FlightBuilder("QFA7")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(25))
             .WithState(State.Stable)
             .Build();
-        
+
         var stableFlight2 = new FlightBuilder("QFA8")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(30))
             .WithState(State.Stable)
             .Build();
-        
+
         // Unstable flights should be ordered by estimates
         var unstableFlight1 = new FlightBuilder("QFA9")
             .WithLandingEstimate(referenceTime)
             .WithLandingTime(referenceTime.AddMinutes(35))
             .WithState(State.Unstable)
             .Build();
-        
+
         var unstableFlight2 = new FlightBuilder("QFA10")
             .WithLandingEstimate(referenceTime.AddMinutes(5))
             .WithLandingTime(referenceTime.AddMinutes(40))
             .WithState(State.Unstable)
             .Build();
-        
+
         // Act
         var sortedSet = new SortedSet<Flight>
         {
@@ -171,7 +171,7 @@ public class FlightTests
             frozenFlight1,
             landedFlight2
         };
-        
+
         // Assert
         sortedSet.Select(f => f.Callsign)
             .ShouldBe([
@@ -187,7 +187,7 @@ public class FlightTests
                 "QFA10"
             ]);
     }
-    
+
     [Theory]
     [InlineData(State.Stable)]
     [InlineData(State.SuperStable)]
@@ -222,7 +222,7 @@ public class FlightTests
         // Assert
         sorted.Select(f => f.Callsign).ShouldBe(["QFA2", "QFA3", "QFA1"]);
     }
-    
+
     [Fact]
     public void WhenOrderingFlightsWithSameTime_TheyAreOrderedByStatePriority()
     {
@@ -271,10 +271,10 @@ public class FlightTests
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
             .Build();
-        
+
         // Act
         flight.Remove();
-        
+
         // Assert
         var action = () => flight.SetState(State.Stable);
         action.ShouldThrow<MaestroException>();

@@ -1,18 +1,19 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Core.Extensions;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IMediator mediator, ILogger logger)
+public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
     : IRequestHandler<RemoveRequest, RemoveResponse>
 {
     public async Task<RemoveResponse> Handle(RemoveRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
-        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
+        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
@@ -20,11 +21,13 @@ public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IMediator 
         }
 
         flight.Remove();
-        await mediator.Publish(
-            new FlightRemovedNotification(flight.DestinationIdentifier, flight.Callsign),
-            cancellationToken);
+        scheduler.Schedule(lockedSequence.Sequence);
 
-        // TODO: Re-calculate sequence
+        await mediator.Publish(
+            new SequenceUpdatedNotification(
+                lockedSequence.Sequence.AirportIdentifier,
+                lockedSequence.Sequence.ToMessage()),
+            cancellationToken);
 
         return new RemoveResponse();
     }
