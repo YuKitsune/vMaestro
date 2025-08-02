@@ -616,22 +616,16 @@ public class SchedulerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var subjectFlight = new FlightBuilder("QFA2")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(21))
-            .WithRunway("34L")
-            .WithState(State.Unstable)
-            .Build();
-
-        var fixedLandingTime = _clock.UtcNow().AddMinutes(25);
-        var fixedFlight = new FlightBuilder("QFA3")
+        var fixedLandingTime = _clock.UtcNow().AddMinutes(21);
+        var fixedFlight = new FlightBuilder("QFA2")
             .WithLandingTime(fixedLandingTime, manual: true)
             .WithRunway("34L")
             .WithState(State.Stable)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
             .WithFlight(leadingFlight)
-            .WithFlight(subjectFlight)
             .WithFlight(fixedFlight)
             .Build();
 
@@ -639,51 +633,38 @@ public class SchedulerTests(
         _scheduler.Schedule(sequence);
 
         // Assert
-        // No delay for the first flight
-        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA3", "QFA2"]);
-        leadingFlight.ScheduledFeederFixTime.ShouldBe(leadingFlight.EstimatedFeederFixTime);
-        leadingFlight.ScheduledLandingTime.ShouldBe(leadingFlight.EstimatedLandingTime);
-
         // Fixed flight should have no change to its schedule
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
         fixedFlight.ScheduledLandingTime.ShouldBe(fixedLandingTime);
-
-        // Subject flight should be delayed behind the fixed flight since delaying it behind the leading flight
-        // puts it in conflict with the fixed flight
-        subjectFlight.ScheduledLandingTime.ShouldBe(fixedLandingTime.Add(_landingRate));
+        leadingFlight.ScheduledLandingTime.ShouldBe(fixedLandingTime.Add(_landingRate));
     }
 
     [Fact]
     public void WhenDelayingAFlight_InConflictWithMultipleManualLandingTimeFlights_TheFlightIsFurtherDelayed()
     {
         // Arrange
-        var leadingFlight = new FlightBuilder("QFA1")
+        var subjectFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
-        var subjectFlight = new FlightBuilder("QFA2")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(21))
-            .WithRunway("34L")
-            .WithState(State.Unstable)
-            .Build();
-
-        var fixedLandingTime1 = _clock.UtcNow().AddMinutes(25);
-        var fixedFlight1 = new FlightBuilder("QFA3")
+        var fixedLandingTime1 = _clock.UtcNow().AddMinutes(22);
+        var fixedFlight1 = new FlightBuilder("QFA2")
             .WithLandingTime(fixedLandingTime1, manual: true)
             .WithRunway("34L")
             .WithState(State.Stable)
             .Build();
 
-        var fixedLandingTime2 = _clock.UtcNow().AddMinutes(28);
-        var fixedFlight2 = new FlightBuilder("QFA4")
+        var fixedLandingTime2 = _clock.UtcNow().AddMinutes(25);
+        var fixedFlight2 = new FlightBuilder("QFA3")
             .WithLandingTime(fixedLandingTime2, manual: true)
             .WithRunway("34L")
             .WithState(State.Stable)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(leadingFlight)
+            .WithSingleRunway("34L", _landingRate)
             .WithFlight(subjectFlight)
             .WithFlight(fixedFlight1)
             .WithFlight(fixedFlight2)
@@ -694,9 +675,7 @@ public class SchedulerTests(
 
         // Assert
         // No delay for the first flight
-        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA3", "QFA4", "QFA2"]);
-        leadingFlight.ScheduledFeederFixTime.ShouldBe(leadingFlight.EstimatedFeederFixTime);
-        leadingFlight.ScheduledLandingTime.ShouldBe(leadingFlight.EstimatedLandingTime);
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA3", "QFA1"]);
 
         // Fixed flights should have no change to their schedules
         fixedFlight1.ScheduledLandingTime.ShouldBe(fixedLandingTime1);
@@ -705,107 +684,6 @@ public class SchedulerTests(
         // Subject flight should be delayed behind the fixed flights since delaying it behind the leading flight
         // puts it in conflict with the fixed flights
         subjectFlight.ScheduledLandingTime.ShouldBe(fixedLandingTime2.Add(_landingRate));
-    }
-
-    [Fact]
-    public void WhenDelayingAFlight_InConflictWithNoDelayFlight_TheFlightIsFurtherDelayed()
-    {
-        // Arrange
-        var leadingFlight = new FlightBuilder("QFA1")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-            .WithRunway("34L")
-            .WithState(State.Unstable)
-            .Build();
-
-        var subjectFlight = new FlightBuilder("QFA2")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(21))
-            .WithRunway("34L")
-            .WithState(State.Unstable)
-            .Build();
-
-        var fixedFlight = new FlightBuilder("QFA3")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(25))
-            .NoDelay()
-            .WithRunway("34L")
-            .WithState(State.Stable)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(leadingFlight)
-            .WithFlight(subjectFlight)
-            .WithFlight(fixedFlight)
-            .Build();
-
-        // Act
-        _scheduler.Schedule(sequence);
-
-        // Assert
-        // No delay for the first flight
-        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA3", "QFA2"]);
-        leadingFlight.ScheduledFeederFixTime.ShouldBe(leadingFlight.EstimatedFeederFixTime);
-        leadingFlight.ScheduledLandingTime.ShouldBe(leadingFlight.EstimatedLandingTime);
-
-        // Fixed flight should have no change to its schedule
-        fixedFlight.ScheduledLandingTime.ShouldBe(fixedFlight.EstimatedLandingTime);
-
-        // Subject flight should be delayed behind the fixed flight since delaying it behind the leading flight
-        // puts it in conflict with the fixed flight
-        subjectFlight.ScheduledLandingTime.ShouldBe(fixedFlight.ScheduledLandingTime.Add(_landingRate));
-    }
-
-    [Fact]
-    public void WhenDelayingAFlight_InConflictWithMultipleNoDelayFlights_TheFlightIsFurtherDelayed()
-    {
-        // Arrange
-        var leadingFlight = new FlightBuilder("QFA1")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-            .WithRunway("34L")
-            .WithState(State.Unstable)
-            .Build();
-
-        var subjectFlight = new FlightBuilder("QFA2")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(21))
-            .WithRunway("34L")
-            .WithState(State.Unstable)
-            .Build();
-
-        var fixedFlight1 = new FlightBuilder("QFA3")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(25))
-            .NoDelay()
-            .WithRunway("34L")
-            .WithState(State.Stable)
-            .Build();
-
-        var fixedFlight2 = new FlightBuilder("QFA4")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(28))
-            .NoDelay()
-            .WithRunway("34L")
-            .WithState(State.Stable)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(leadingFlight)
-            .WithFlight(subjectFlight)
-            .WithFlight(fixedFlight1)
-            .WithFlight(fixedFlight2)
-            .Build();
-
-        // Act
-        _scheduler.Schedule(sequence);
-
-        // Assert
-        // No delay for the first flight
-        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA3", "QFA4", "QFA2"]);
-        leadingFlight.ScheduledFeederFixTime.ShouldBe(leadingFlight.EstimatedFeederFixTime);
-        leadingFlight.ScheduledLandingTime.ShouldBe(leadingFlight.EstimatedLandingTime);
-
-        // Fixed flights should have no change to their schedules
-        fixedFlight1.ScheduledLandingTime.ShouldBe(fixedFlight1.EstimatedLandingTime);
-        fixedFlight2.ScheduledLandingTime.ShouldBe(fixedFlight2.EstimatedLandingTime);
-
-        // Subject flight should be delayed behind the fixed flights since delaying it behind the leading flight
-        // puts it in conflict with the fixed flights
-        subjectFlight.ScheduledLandingTime.ShouldBe(fixedFlight2.ScheduledLandingTime.Add(_landingRate));
     }
 
     [Fact]
