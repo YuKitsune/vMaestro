@@ -24,9 +24,10 @@
     "ExecutableTarget": {
       "type": "string",
       "enum": [
-        "Clean",
         "Compile",
-        "Package"
+        "Install",
+        "Package",
+        "Uninstall"
       ]
     },
     "Verbosity": {
@@ -107,6 +108,9 @@
             "Debug",
             "Release"
           ]
+        },
+        "ProfileName": {
+          "type": "string"
         }
       }
     },
