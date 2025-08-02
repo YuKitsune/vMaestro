@@ -22,6 +22,7 @@ public interface IScheduler
 // - When a flight is delayed until after a runway change, the new runway and landing rate are used
 // - When a new flight is added, with ETAs earlier than a stable flight, the stable flight is delayed
 // - When a flight is moved manually, and conflicts with a stable flight, the stable flight is delayed
+// - When a flight has a manual runway assignment, it is not reassigned to a different runway
 
 public class Scheduler(
     IRunwayAssigner runwayAssigner,
@@ -35,6 +36,8 @@ public class Scheduler(
         var sequencableFlights = sequence.Flights
             .Where(f => f.State is not State.Desequenced and not State.Removed)
             .ToList();
+
+        // BUG: If a stable flight is behind any unstable ones, all the unstable flights get pushed back
 
         var sequencedFlights = new List<Flight>();
         sequencedFlights.AddRange(sequencableFlights
