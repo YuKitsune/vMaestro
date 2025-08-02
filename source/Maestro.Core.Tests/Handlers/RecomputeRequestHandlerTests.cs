@@ -17,35 +17,29 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     public async Task WhenRecomputeIsRequested_FlightIsUpdated()
     {
         // Arrange
-        var sequence = new Sequence(airportConfigurationFixture.Instance);
-        
+        var scheduler = Substitute.For<IScheduler>();
+
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .Build();
-        
-        sequence.Add(flight);
-        
-        var handler = GetRequestHandler(sequence);
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .WithFlight(flight)
+            .Build();
+
+        var handler = new RecomputeRequestHandler(
+            new MockSequenceProvider(sequence),
+            scheduler,
+            Substitute.For<IMediator>(),
+            Substitute.For<ILogger>());
+
         var request = new RecomputeRequest("YSSY", "QFA1");
-        
+
         // Act
         await handler.Handle(request, CancellationToken.None);
-        
+
         // Assert
         flight.NeedsRecompute.ShouldBe(true);
-    }
-
-    RecomputeRequestHandler GetRequestHandler(Sequence sequence)
-    {
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
-            .ReturnsForAnyArgs(new TestExclusiveSequence(sequence));
-        
-        var mediator = Substitute.For<IMediator>();
-        
-        return new RecomputeRequestHandler(
-            sequenceProvider,
-            mediator,
-            Substitute.For<ILogger>());
+        scheduler.Received(1).Schedule(Arg.Is(sequence));
     }
 }

@@ -83,6 +83,37 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "AKMIR"],
-            RunwayAssignmentRules = []
+            RunwayAssignmentRules =
+            [
+                new RunwayAssignmentRule(
+                    0,
+                    ["RIVET", "AKMIR", "BOREE", "MEPIL", "MARLN"],
+                    [WakeCategory.Heavy, WakeCategory.SuperHeavy],
+                    ["34L", "16R", "07", "25"]),
+
+                new RunwayAssignmentRule(
+                    1,
+                    ["RIVET", "AKMIR"],
+                    [WakeCategory.Light, WakeCategory.Medium],
+                    ["34L", "16R", "07", "25"]),
+
+                new RunwayAssignmentRule(
+                    2,
+                    ["RIVET", "AKMIR"],
+                    [WakeCategory.Light, WakeCategory.Medium],
+                    ["34R", "16L"]),
+
+                new RunwayAssignmentRule(
+                    1,
+                    ["BOREE", "MEPIL", "MARLN"],
+                    [WakeCategory.Light, WakeCategory.Medium],
+                    ["34R", "16L", "07", "25"]),
+
+                new RunwayAssignmentRule(
+                    2,
+                    ["BOREE", "MEPIL", "MARLN"],
+                    [WakeCategory.Light, WakeCategory.Medium],
+                    ["34L", "16R"])
+            ]
         };
 }

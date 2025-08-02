@@ -42,10 +42,13 @@ public class SequenceProvider : ISequenceProvider
     {
         var airportConfigurations = _airportConfigurationProvider
             .GetAirportConfigurations();
-        
+
         foreach (var airportConfiguration in airportConfigurations)
         {
-            var sequence = new Sequence(airportConfiguration);
+            // TODO: Don't start sequencing until the user requests it
+            var sequence = new Sequence(
+                airportConfiguration,
+                airportConfiguration.RunwayModes.First());
             var semaphoreSlim = new SemaphoreSlim(1, 1);
 
             var pair = new SequenceLockPair
@@ -53,7 +56,7 @@ public class SequenceProvider : ISequenceProvider
                 Sequence = sequence,
                 Semaphore = semaphoreSlim
             };
-            
+
             _sequences.Add(pair);
         }
     }
@@ -80,14 +83,7 @@ public class SequenceProvider : ISequenceProvider
         if (pair is null)
             throw new MaestroException($"Sequence for {airportIdentifier} not found");
 
-        return new SequenceMessage
-        {
-            Flights = pair.Sequence.Flights.Select(f => f.ToMessage(pair.Sequence))
-                .ToArray(),
-            CurrentRunwayMode = pair.Sequence.CurrentRunwayMode.ToMessage(),
-            NextRunwayMode = pair.Sequence.NextRunwayMode?.ToMessage(),
-            RunwayModeChangeTime = pair.Sequence.RunwayModeChangeTime
-        };
+        return pair.Sequence.ToMessage();
     }
 
     class SequenceLockPair

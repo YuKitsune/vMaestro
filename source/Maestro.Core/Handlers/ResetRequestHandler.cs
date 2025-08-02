@@ -30,23 +30,13 @@ public class ResetRequestHandler : IRequestHandler<ResetRequest>
                 airportConfiguration.Identifier,
                 cancellationToken);
 
-            var notifications = exclusiveSequence.Sequence.Flights
-                .Select(INotification (f) => new FlightRemovedNotification(f.DestinationIdentifier, f.Callsign))
-                .ToList();
-
-            notifications.Add(
-                new RunwayModeChangedNotification(
-                    airportConfiguration.Identifier,
-                    exclusiveSequence.Sequence.CurrentRunwayMode.ToMessage(),
-                    null,
-                    default));
-
             exclusiveSequence.Sequence.Clear();
 
-            foreach (var notification in notifications)
-            {
-                await _mediator.Publish(notification, cancellationToken);
-            }
+            await _mediator.Publish(
+                new SequenceUpdatedNotification(
+                    exclusiveSequence.Sequence.AirportIdentifier,
+                    exclusiveSequence.Sequence.ToMessage()),
+                cancellationToken);
         }
     }
 }

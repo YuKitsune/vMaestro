@@ -11,8 +11,8 @@ public class MakePendingRequestHandler(ISequenceProvider sequenceProvider, ILogg
     public async Task<MakePendingResponse> Handle(MakePendingRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        
-        var flight = lockedSequence.Sequence.TryGetFlight(request.Callsign);
+
+        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);

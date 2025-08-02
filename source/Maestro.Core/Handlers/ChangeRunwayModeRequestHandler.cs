@@ -31,7 +31,7 @@ public record ChangeRunwayModeRequest(
 public class ChangeRunwayModeRequestHandler(
     ISequenceProvider sequenceProvider,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IRunwayAssigner runwayAssigner,
+    IScheduler scheduler,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -40,7 +40,7 @@ public class ChangeRunwayModeRequestHandler(
     public async Task Handle(ChangeRunwayModeRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        
+
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().SingleOrDefault(c => c.Identifier == request.AirportIdentifier);
         if (airportConfiguration == null)
         {
@@ -64,78 +64,69 @@ public class ChangeRunwayModeRequestHandler(
         if (request.StartTime <= clock.UtcNow())
         {
             startTime = clock.UtcNow();
-            lockedSequence.Sequence.ChangeRunwayMode(configuration);
+            lockedSequence.Sequence.ChangeRunwayMode(configuration, scheduler);
 
             logger.Information(
                 "Runway changed {AirportIdentifier} to {RunwayModeIdentifier}.",
                 request.AirportIdentifier,
                 configuration.Identifier);
-
-            await mediator.Publish(
-                new RunwayModeChangedNotification(
-                    request.AirportIdentifier,
-                    request.RunwayMode,
-                    null,
-                    default),
-                cancellationToken);
         }
         else
         {
             startTime = request.StartTime;
-            lockedSequence.Sequence.ChangeRunwayMode(configuration, request.StartTime);
+            lockedSequence.Sequence.ChangeRunwayMode(configuration, request.StartTime, scheduler);
 
             logger.Information(
                 "Runway change scheduled for {AirportIdentifier} to {RunwayModeIdentifier} at {RunwayModeChangeTime}.",
                 request.AirportIdentifier,
                 configuration.Identifier,
                 request.StartTime);
-
-            await mediator.Publish(
-                new RunwayModeChangedNotification(
-                    request.AirportIdentifier,
-                    lockedSequence.Sequence.CurrentRunwayMode.ToMessage(),
-                    request.RunwayMode,
-                    startTime),
-                cancellationToken);
         }
 
+        // TODO: Move this. It's already done by the scheduler.
         if (request.ReAssignRunways)
         {
-            logger.Information(
-                "Reassigning runways for {AirportIdentifier} arrivals arriving after {RunwayModeChangeTime}",
-                request.AirportIdentifier,
-                startTime);
-            
-            // TODO: Duplicate of FlightUpdatedHandler.FindBestRunway(). Consolidate.
-            
-            var arrivalsToReassign =
-                lockedSequence.Sequence.Flights.Where(f => f.EstimatedLandingTime >= startTime);
-            
-            foreach (var arrival in arrivalsToReassign)
-            {
-                // TODO: Override manual assignment?
-                var defaultRunway = configuration.Runways.First();
-                if (string.IsNullOrEmpty(arrival.FeederFixIdentifier))
-                {
-                    arrival.SetRunway(defaultRunway.Identifier, manual: false);
-                    continue;
-                }
-                
-                var possibleRunways = runwayAssigner.FindBestRunways(
-                    arrival.AircraftType,
-                    arrival.FeederFixIdentifier,
-                    lockedSequence.Sequence.RunwayAssignmentRules);
-                
-                var runwaysInMode = possibleRunways
-                    .Where(r => configuration.Runways.Any(r2 => r2.Identifier == r))
-                    .ToArray();
-                
-                var runwayToAssign = runwaysInMode.Any()
-                    ? runwaysInMode.First()
-                    : configuration.Runways.First().Identifier;
-                
-                arrival.SetRunway(runwayToAssign, manual: false);
-            }
+            // logger.Information(
+            //     "Reassigning runways for {AirportIdentifier} arrivals arriving after {RunwayModeChangeTime}",
+            //     request.AirportIdentifier,
+            //     startTime);
+            //
+            // // TODO: Duplicate of FlightUpdatedHandler.FindBestRunway(). Consolidate.
+            //
+            // var arrivalsToReassign =
+            //     lockedSequence.Sequence.Flights.Where(f => f.EstimatedLandingTime >= startTime);
+            //
+            // foreach (var arrival in arrivalsToReassign)
+            // {
+            //     // TODO: Override manual assignment?
+            //     var defaultRunway = configuration.Runways.First();
+            //     if (string.IsNullOrEmpty(arrival.FeederFixIdentifier))
+            //     {
+            //         arrival.SetRunway(defaultRunway.Identifier, manual: false);
+            //         continue;
+            //     }
+            //
+            //     var possibleRunways = runwayAssigner.FindBestRunways(
+            //         arrival.AircraftType,
+            //         arrival.FeederFixIdentifier,
+            //         lockedSequence.Sequence.RunwayAssignmentRules);
+            //
+            //     var runwaysInMode = possibleRunways
+            //         .Where(r => configuration.Runways.Any(r2 => r2.Identifier == r))
+            //         .ToArray();
+            //
+            //     var runwayToAssign = runwaysInMode.Any()
+            //         ? runwaysInMode.First()
+            //         : configuration.Runways.First().Identifier;
+            //
+            //     arrival.SetRunway(runwayToAssign, manual: false);
+            // }
         }
+
+        await mediator.Publish(
+            new SequenceUpdatedNotification(
+                lockedSequence.Sequence.AirportIdentifier,
+                lockedSequence.Sequence.ToMessage()),
+            cancellationToken);
     }
 }

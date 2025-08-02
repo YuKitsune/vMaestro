@@ -85,32 +85,21 @@ public class SchedulerBackgroundService(
                 {
                     logger.Debug("Lock on {AirportIdentifier} acquired", airportIdentifier);
 
-                    if (lockedSequence.Sequence.NextRunwayMode is not null &&
-                        lockedSequence.Sequence.RunwayModeChangeTime.IsSameOrBefore(clock.UtcNow()))
-                    {
-                        var nextRunwayMode = lockedSequence.Sequence.NextRunwayMode;
-                        lockedSequence.Sequence.ChangeRunwayMode(nextRunwayMode);
-                        logger.Information(
-                            "Runway mode for {AirportIdentifier} changed to {RunwayModeIdentifier}",
-                            airportIdentifier,
-                            nextRunwayMode.Identifier);
-
-                        await mediator.Publish(
-                            new RunwayModeChangedNotification(
-                                airportIdentifier,
-                                nextRunwayMode.ToMessage(),
-                                null,
-                                default),
-                            cancellationToken);
-                    }
+                    lockedSequence.Sequence.TrySwapRunwayModes(clock);
 
                     logger.Information("Scheduling {AirportIdentifier}", airportIdentifier);
-                    lockedSequence.Sequence.Schedule(scheduler);
+                    scheduler.Schedule(lockedSequence.Sequence);
                     logger.Debug("Completed scheduling {AirportIdentifier}", airportIdentifier);
 
                     logger.Debug("Cleaning {AirportIdentifier}", airportIdentifier);
                     sequenceCleaner.CleanUpFlights(lockedSequence.Sequence);
                     logger.Debug("Completed cleaning {AirportIdentifier}", airportIdentifier);
+
+                    await mediator.Publish(
+                        new SequenceUpdatedNotification(
+                            lockedSequence.Sequence.AirportIdentifier,
+                            lockedSequence.Sequence.ToMessage()),
+                        cancellationToken);
                 }
 
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
