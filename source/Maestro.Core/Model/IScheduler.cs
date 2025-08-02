@@ -88,7 +88,24 @@ tryAgain:
 
                 var timeToLeader = flight.EstimatedLandingTime - leader.ScheduledLandingTime;
                 var acceptanceRate = TimeSpan.FromSeconds(runwayConfiguration.LandingRateSeconds);
-                if (timeToLeader >= acceptanceRate)
+                var delayRequired = timeToLeader < acceptanceRate;
+
+                // Do not delay if the flight has NoDelay or ManualLandingTime
+                if (delayRequired &&
+                    (flight.NoDelay || flight.ManualLandingTime) &&
+                    leader is { NoDelay: false, ManualLandingTime: false })
+                {
+                    // Delay the leader
+                    var newLeaderLandingTime = flight.EstimatedLandingTime + acceptanceRate;
+                    var newLeaderRunway = leader.AssignedRunwayIdentifier;
+
+                    // TODO: Try moving the leader to another runway if available
+                    // TODO: Check if the leader is delayed into a new runway mode
+
+                    Schedule(leader, newLeaderLandingTime, newLeaderRunway);
+                }
+
+                if (!delayRequired)
                 {
                     // No conflict with the leader, no delay required
                     proposedLandingTime = flight.EstimatedLandingTime;
