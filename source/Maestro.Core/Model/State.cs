@@ -2,6 +2,7 @@
 
 public enum State
 {
+    New,
     Unstable,
     Stable,
     SuperStable,

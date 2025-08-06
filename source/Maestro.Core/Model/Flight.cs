@@ -69,7 +69,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public bool NoDelay { get; set; }
     public bool NeedsRecompute { get; set; }
 
-    public State State { get; private set; } = State.Unstable;
+    public State State { get; private set; } = State.New;
 
     public string? FeederFixIdentifier { get; private set; }
     public DateTimeOffset? InitialFeederFixTime { get; private set; }

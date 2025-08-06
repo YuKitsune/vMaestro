@@ -42,7 +42,7 @@ public class Scheduler(
         var sequencedFlights = new List<Flight>();
         sequencedFlights.AddRange(sequencableFlights
             .Where(f => f.State is not State.Desequenced and not State.Removed)
-            .Where(f => f.State is not State.Unstable)
+            .Where(f => f.State is not State.Unstable and not State.New)
             .OrderBy(f => f.ScheduledLandingTime));
 
         // TODO: Insert NoDelay and ManualLandingTime flights last
@@ -53,7 +53,7 @@ public class Scheduler(
             .Single(c => c.Identifier == sequence.AirportIdentifier);
 
         var flightsToSchedule = sequencableFlights
-            .Where(f => f.State is State.Unstable)
+            .Where(f => f.State is State.Unstable or State.New)
             .OrderBy(f => f.EstimatedLandingTime)
             .ToList();
 
@@ -71,6 +71,7 @@ public class Scheduler(
 tryAgain:
             DateTimeOffset? proposedLandingTime = null;
             var proposedRunway = preferredRunways.First();
+            var alreadyScheduled = false;
             foreach (var runwayIdentifier in preferredRunways)
             {
                 var runwayConfiguration = currentRunwayMode.Runways
@@ -94,9 +95,12 @@ tryAgain:
                 var delayRequired = timeToLeader < acceptanceRate;
 
                 // Do not delay if the flight has NoDelay or ManualLandingTime
+                // OR if the flight is New and the leader is only Stable (not SuperStable/Frozen/Landed)
                 if (delayRequired &&
-                    (flight.NoDelay || flight.ManualLandingTime) &&
-                    leader is { NoDelay: false, ManualLandingTime: false })
+                    ((flight.NoDelay || flight.ManualLandingTime) ||
+                     (flight.State == State.New && leader.State == State.Stable)) &&
+                    leader is { NoDelay: false, ManualLandingTime: false } &&
+                    leader.State is not State.SuperStable and not State.Frozen and not State.Landed)
                 {
                     // Delay the leader
                     var newLeaderLandingTime = flight.EstimatedLandingTime + acceptanceRate;
@@ -106,6 +110,16 @@ tryAgain:
                     // TODO: Check if the leader is delayed into a new runway mode
 
                     Schedule(leader, newLeaderLandingTime, newLeaderRunway);
+                    
+                    // Insert the current flight before the delayed leader
+                    var leaderIndex = sequencedFlights.IndexOf(leader);
+                    if (leaderIndex >= 0)
+                    {
+                        Schedule(flight, flight.EstimatedLandingTime, runwayIdentifier);
+                        sequencedFlights.Insert(leaderIndex, flight);
+                        alreadyScheduled = true;
+                        break; // Exit the runway loop and continue to next flight
+                    }
                 }
 
                 if (!delayRequired)
@@ -134,6 +148,11 @@ tryAgain:
                 }
             }
 
+            if (alreadyScheduled)
+            {
+                continue;
+            }
+
             if (proposedLandingTime is null)
             {
                 logger.Warning("Could not schedule {Callsign}", flight.Callsign);
@@ -159,6 +178,12 @@ tryAgain:
 
             Schedule(flight, proposedLandingTime.Value, proposedRunway);
             sequencedFlights.Add(flight);
+        }
+
+        // Transition New flights to Unstable after scheduling
+        foreach (var flight in sequencableFlights.Where(f => f.State == State.New))
+        {
+            flight.SetState(State.Unstable);
         }
     }
 

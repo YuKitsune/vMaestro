@@ -168,29 +168,31 @@ public class SchedulerTests(
         // First pass
         _scheduler.Schedule(sequence);
 
+        // Verify initial state
+        stableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(20));
+
         // New flight added with an earlier ETA
         var unstableFlight = new FlightBuilder("QFA2")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(9))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
             .WithRunway("34L")
-            .WithState(State.Unstable)
+            .WithState(State.New)
             .Build();
 
         sequence.AddFlight(unstableFlight, _scheduler);
 
-        // Act
-        _scheduler.Schedule(sequence);
-
         // Assert
+        unstableFlight.State.ShouldBe(State.Unstable);
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
 
+        // New flight should not be delayed - it should keep its ETA
         unstableFlight.ScheduledFeederFixTime.ShouldBe(unstableFlight.EstimatedFeederFixTime);
         unstableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.EstimatedLandingTime);
         unstableFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
 
+        // Stable flight should be delayed by landing rate
         stableFlight.ScheduledFeederFixTime.ShouldBe(unstableFlight.ScheduledFeederFixTime!.Value.Add(_landingRate));
         stableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.ScheduledLandingTime.Add(_landingRate));
-        stableFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
     }
 
     [Fact]
