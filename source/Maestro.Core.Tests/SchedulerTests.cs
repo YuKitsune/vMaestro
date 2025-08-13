@@ -212,6 +212,7 @@ public class SchedulerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
             .WithFlight(firstFlight)
             .WithFlight(secondFlight)
             .Build();
