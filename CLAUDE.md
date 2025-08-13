@@ -54,6 +54,7 @@ The solution consists of four main projects:
 
 ### Flight Management
 - **Flight States**: Unstable → Stable → SuperStable → Frozen → Landed
+   - **Pseudo States**: New, Desequenced, Removed
 - **Time Management**: ETA (Estimated Time of Arrival), STA (Scheduled Time of Arrival), both for feeder fixes and landings
 - **Runway Assignment**: Automatic assignment with manual override capability
 - **Flow Controls**: Speed controls applied during sequencing

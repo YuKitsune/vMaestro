@@ -61,12 +61,14 @@ public class Scheduler(
         {
             logger.Debug("Scheduling {Callsign}", flight.Callsign);
 
+            var currentRunwayMode = sequence.RunwayModeAt(flight.EstimatedLandingTime);
+            var runwayModeChangeAttempts = 0;
+            const int maxRunwayModeChangeAttempts = 2;
+
             var preferredRunways = runwayAssigner.FindBestRunways(
                 flight.AircraftType,
                 flight.FeederFixIdentifier ?? string.Empty,
                 airportConfiguration.RunwayAssignmentRules);
-
-            var currentRunwayMode = sequence.RunwayModeAt(flight.EstimatedLandingTime);
 
 tryAgain:
             DateTimeOffset? proposedLandingTime = null;
@@ -87,12 +89,25 @@ tryAgain:
                 {
                     // No leader, no delay required
                     proposedLandingTime = flight.EstimatedLandingTime;
+                    proposedRunway = runwayIdentifier;
                     break;
                 }
 
-                var timeToLeader = flight.EstimatedLandingTime - leader.ScheduledLandingTime;
+                // Use manual landing time if flight has one, otherwise use estimated time for conflict detection
+                var flightTime = flight.ManualLandingTime ? flight.ScheduledLandingTime : flight.EstimatedLandingTime;
+                var timeToLeader = flightTime - leader.ScheduledLandingTime;
                 var acceptanceRate = TimeSpan.FromSeconds(runwayConfiguration.LandingRateSeconds);
                 var delayRequired = timeToLeader < acceptanceRate;
+
+                // Special case: Both flights have NoDelay or ManualLandingTime - no delay applied to either
+                if (delayRequired &&
+                    (flight.NoDelay || flight.ManualLandingTime) &&
+                    (leader.NoDelay || leader.ManualLandingTime))
+                {
+                    // Neither flight should be delayed - schedule at estimated time
+                    proposedLandingTime = flight.EstimatedLandingTime;
+                    break;
+                }
 
                 // Do not delay if the flight has NoDelay or ManualLandingTime
                 // OR if the flight is New and the leader is only Stable (not SuperStable/Frozen/Landed)
@@ -103,19 +118,20 @@ tryAgain:
                     leader.State is not State.SuperStable and not State.Frozen and not State.Landed)
                 {
                     // Delay the leader
-                    var newLeaderLandingTime = flight.EstimatedLandingTime + acceptanceRate;
+                    var newLeaderLandingTime = flightTime + acceptanceRate;
                     var newLeaderRunway = leader.AssignedRunwayIdentifier;
 
                     // TODO: Try moving the leader to another runway if available
                     // TODO: Check if the leader is delayed into a new runway mode
 
                     Schedule(leader, newLeaderLandingTime, newLeaderRunway);
-                    
+
                     // Insert the current flight before the delayed leader
                     var leaderIndex = sequencedFlights.IndexOf(leader);
                     if (leaderIndex >= 0)
                     {
-                        Schedule(flight, flight.EstimatedLandingTime, runwayIdentifier);
+                        // Use the same flight time we calculated for conflict detection
+                        Schedule(flight, flightTime, runwayIdentifier);
                         sequencedFlights.Insert(leaderIndex, flight);
                         alreadyScheduled = true;
                         break; // Exit the runway loop and continue to next flight
@@ -159,10 +175,24 @@ tryAgain:
                 continue;
             }
 
-            if (sequence.NextRunwayMode is not null && proposedLandingTime.Value.IsSameOrAfter(sequence.RunwayModeChangeTime))
+            if (sequence.NextRunwayMode is not null &&
+                proposedLandingTime.Value.IsSameOrAfter(sequence.RunwayModeChangeTime) &&
+                runwayModeChangeAttempts < maxRunwayModeChangeAttempts)
             {
+                logger.Debug("Flight {Callsign} delayed beyond runway mode change, trying new mode (attempt {Attempt})",
+                    flight.Callsign, runwayModeChangeAttempts + 1);
+
                 currentRunwayMode = sequence.NextRunwayMode;
+                runwayModeChangeAttempts++;
+
                 goto tryAgain;
+            }
+
+            if (sequence.NextRunwayMode is not null &&
+                proposedLandingTime.Value.IsSameOrAfter(sequence.RunwayModeChangeTime) &&
+                runwayModeChangeAttempts >= maxRunwayModeChangeAttempts)
+            {
+                logger.Warning("Flight {Callsign} could not be rescheduled after runway mode change attempts", flight.Callsign);
             }
 
             // TODO: Double check how this is supposed to work
@@ -176,7 +206,9 @@ tryAgain:
                 flight.SetFlowControls(FlowControls.ProfileSpeed);
             }
 
-            Schedule(flight, proposedLandingTime.Value, proposedRunway);
+            // Use manual landing time if the flight has one, otherwise use proposed time
+            var finalLandingTime = flight.ManualLandingTime ? flight.ScheduledLandingTime : proposedLandingTime.Value;
+            Schedule(flight, finalLandingTime, proposedRunway);
             sequencedFlights.Add(flight);
         }
 
@@ -189,8 +221,12 @@ tryAgain:
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
     {
-        flight.SetLandingTime(landingTime, manual: false);
-        flight.SetRunway(runwayIdentifier, manual: false);
+        // Preserve existing manual flags when scheduling
+        var preserveManualLandingTime = flight.ManualLandingTime;
+        var preserveManualRunway = flight.RunwayManuallyAssigned;
+
+        flight.SetLandingTime(landingTime, manual: preserveManualLandingTime);
+        flight.SetRunway(runwayIdentifier, manual: preserveManualRunway);
 
         if (flight.EstimatedFeederFixTime is not null && !flight.HasPassedFeederFix)
         {
