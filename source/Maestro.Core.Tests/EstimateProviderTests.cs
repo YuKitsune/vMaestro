@@ -1,5 +1,4 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -7,6 +6,9 @@ using NSubstitute;
 using Shouldly;
 
 namespace Maestro.Core.Tests;
+
+// TODO:
+// - When a flight has been re-routed to a new feeder fix, estimates are derived from trajectory
 
 public class EstimateProviderTests
 {
@@ -17,13 +19,13 @@ public class EstimateProviderTests
     readonly IFixLookup _fixLookup;
     readonly DateTimeOffset _currentTime = new(2025, 04, 12, 12, 00, 00, TimeSpan.Zero);
     readonly TimeSpan _arrivalInterval = TimeSpan.FromMinutes(12);
-    
+
     public EstimateProviderTests(AirportConfigurationFixture airportConfigurationFixture)
     {
         _clock = new FixedClock(_currentTime);
-        
+
         _airportConfigurationFixture = airportConfigurationFixture;
-        
+
         _performanceLookup = Substitute.For<IPerformanceLookup>();
         _performanceLookup.GetPerformanceDataFor(Arg.Is("B738"))
             .Returns(new AircraftPerformanceData
@@ -32,7 +34,7 @@ public class EstimateProviderTests
                 AircraftCategory = AircraftCategory.Jet,
                 WakeCategory = WakeCategory.Medium,
             });
-        
+
         _arrivalLookup = Substitute.For<IArrivalLookup>();
         _arrivalLookup.GetArrivalInterval(
                 Arg.Is("YSSY"),
@@ -55,7 +57,7 @@ public class EstimateProviderTests
             _arrivalLookup,
             _fixLookup,
             _clock);
-        
+
         // Act
         var systemEstimate = _currentTime.AddMinutes(5);
         var estimate = estimateProvider.GetFeederFixEstimate(
@@ -63,7 +65,7 @@ public class EstimateProviderTests
             "RIVET",
             systemEstimate,
             null);
-        
+
         // Assert
         estimate.ShouldBe(systemEstimate);
     }
@@ -77,7 +79,7 @@ public class EstimateProviderTests
             _arrivalLookup,
             _fixLookup,
             _clock);
-        
+
         // Act
         var systemEstimate = _currentTime.AddMinutes(65);
         var position = new FlightPosition(
@@ -100,7 +102,7 @@ public class EstimateProviderTests
     }
 
     [Fact]
-    public void GetLandingEstimate_WithoutIntervals_UesesSystemEstimat()
+    public void GetLandingEstimate_WithoutIntervals_UsesSystemEstimate()
     {
         // Arrange
         var flight = new FlightBuilder("QFA2")
@@ -113,11 +115,11 @@ public class EstimateProviderTests
             _arrivalLookup,
             _fixLookup,
             _clock);
-        
+
         // Act
         var systemEstimate = _currentTime.AddMinutes(15);
         var estimate = estimateProvider.GetLandingEstimate(flight, systemEstimate);
-        
+
         // Assert
         estimate.ShouldBe(systemEstimate);
     }
@@ -138,7 +140,7 @@ public class EstimateProviderTests
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(feederFixEstimate)
             .Build();
-        
+
         // Act
         var systemEstimate = _currentTime.AddMinutes(15);
         var estimate = estimateProvider.GetLandingEstimate(
@@ -168,7 +170,7 @@ public class EstimateProviderTests
             .WithFeederFixEstimate(_currentTime.AddMinutes(-5)) // Last ETA_FF was 5 minutes ago
             .PassedFeederFixAt(actualFeederFixTime) // ATO_FF was a bit late
             .Build();
-        
+
         // Act
         var systemEstimate = _currentTime.AddMinutes(10);
         var estimate = estimateProvider.GetLandingEstimate(flight, systemEstimate);

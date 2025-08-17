@@ -11,6 +11,13 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
+// TODO:
+// - When rerouted to a new feeder fix, the feeder fix and estimates are updated
+// - When recomputing a stable flight, it's position in sequence changes
+// - Runway is re-assigned (and overrides manual runway)
+// - When a runway is manually assigned, it is re-assigned (?)
+// - When a manual landing time was assigned, it is removed
+
 public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture)
 {
     [Fact]
