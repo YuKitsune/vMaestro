@@ -9,6 +9,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests;
 
+
 public class SchedulerTests(
     PerformanceLookupFixture performanceLookupFixture,
     AirportConfigurationFixture airportConfigurationFixture,
@@ -631,6 +632,7 @@ public class SchedulerTests(
         second.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
     }
 
+    // TODO: Move to resume handler
     [Fact]
     public void WhenADesequencedFlightIsResumed_TheSequenceIsRecomputed()
     {
@@ -841,25 +843,110 @@ public class SchedulerTests(
         // Act
         _scheduler.Schedule(sequence);
 
-        // Assert - Priority flight should keep its ETA and not be delayed
+        // Assert - Priority flight gets priority over other New/Unstable flights but not over Stable flights
         priorityFlight.State.ShouldBe(State.Unstable);
         priorityFlight.HighPriority.ShouldBeTrue();
 
-        // Since HighPriority doesn't have specific handling in the current scheduler,
-        // this test documents the expected behavior if it were implemented
-        // For now, we expect the priority flight to be delayed like any normal flight
-        var expectedDelayedTime = leaderFlight.ScheduledLandingTime.Add(_landingRate);
-        priorityFlight.ScheduledLandingTime.ShouldBe(expectedDelayedTime);
-        priorityFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2).Add(TimeSpan.FromSeconds(30)));
+        // HighPriority flights should be delayed behind Stable flights
+        var expectedPriorityTime = leaderFlight.EstimatedLandingTime.Add(_landingRate);
+        priorityFlight.ScheduledLandingTime.ShouldBe(expectedPriorityTime);
 
-        // Leader should be unaffected
+        // Leader (Stable flight) should keep its original time
         leaderFlight.AssignedRunwayIdentifier.ShouldBe("34L");
         leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
+    }
 
-        // TODO: When priority flight handling is implemented, update this test to verify:
-        // - priorityFlight.ScheduledLandingTime.ShouldBe(priorityFlight.EstimatedLandingTime);
-        // - priorityFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
-        // - leaderFlight should be delayed to priorityFlight.EstimatedLandingTime.Add(_landingRate)
+    [Fact]
+    public void WhenTwoFlightsShareAnETA_HighPriorityFlightWins()
+    {
+        // Arrange - Create two flights with the same ETA, one high priority
+        var regularFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.New)
+            .Build();
+
+        var priorityFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20)) // Same ETA as regular flight
+            .WithRunway("34L")
+            .HighPriority()
+            .WithState(State.New)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(regularFlight)
+            .WithFlight(priorityFlight)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert - Priority flight should be scheduled first despite same ETA
+        priorityFlight.State.ShouldBe(State.Unstable);
+        priorityFlight.HighPriority.ShouldBeTrue();
+        regularFlight.State.ShouldBe(State.Unstable);
+
+        // Priority flight should get the better slot (its ETA)
+        priorityFlight.ScheduledLandingTime.ShouldBe(priorityFlight.EstimatedLandingTime);
+        priorityFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+
+        // Regular flight should be delayed by landing rate
+        var expectedDelayedTime = priorityFlight.EstimatedLandingTime.Add(_landingRate);
+        regularFlight.ScheduledLandingTime.ShouldBe(expectedDelayedTime);
+        regularFlight.TotalDelay.ShouldBe(_landingRate);
+
+        // Sequence order should be priority flight first, then regular flight
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
+    }
+
+    [Fact]
+    public void WhenHighPriorityFlightHasEarlierETAThanStableFlight_HighPriorityFlightIsDelayed()
+    {
+        // Arrange - Create a stable flight first
+        var stableFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(stableFlight)
+            .Build();
+
+        // Schedule the stable flight first
+        _scheduler.Schedule(sequence);
+
+        // Create a high priority flight with an earlier ETA
+        var priorityFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(8))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(18)) // 2 minutes earlier than stable flight
+            .WithRunway("34L")
+            .HighPriority()
+            .WithState(State.New)
+            .Build();
+
+        sequence.AddFlight(priorityFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert - High priority flight should get its ETA and push back the stable flight
+        priorityFlight.State.ShouldBe(State.Unstable);
+        priorityFlight.HighPriority.ShouldBeTrue();
+
+        // Priority flight should still be delayed
+        priorityFlight.ScheduledLandingTime.ShouldBe(stableFlight.ScheduledLandingTime.Add(_landingRate));
+
+        // Stable flight should be delayed to accommodate the priority flight
+        stableFlight.ScheduledLandingTime.ShouldBe(stableFlight.EstimatedLandingTime);
+
+        // Sequence order should be priority flight first, then stable flight
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
     }
 
     [Fact]
@@ -911,7 +998,7 @@ public class SchedulerTests(
 
     // TODO: Implement insert flight
     [Fact]
-    public void WhenLandedFlights_CanBeReInsertedIntoTheSequence()
+    public void WhenALandedFlightIsReinserted_ItIsSequenced()
     {
         Assert.Fail("Stub");
     }
@@ -1416,5 +1503,149 @@ public class SchedulerTests(
 
         // Sequence order should be leader first, then manual runway flight
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+    }
+
+    [Fact]
+    public void WhenStableFlightHasManualLandingTimeAndUnstableFlightHasEarlierEstimateWithNoConflict_EarlierFlightIsNotDelayed()
+    {
+        // Arrange - Create a stable flight with manual landing time
+        var stableFlight = new FlightBuilder("QFA1")
+            .WithLandingTime(_clock.UtcNow().AddMinutes(30), manual: true) // Manual time far in future
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(stableFlight)
+            .Build();
+
+        // Schedule the stable flight first
+        _scheduler.Schedule(sequence);
+
+        // Create an unstable flight with earlier estimate but no conflict (more than landing rate separation)
+        var unstableFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20)) // 10 minutes before stable flight
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        sequence.AddFlight(unstableFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert - The unstable flight should not be delayed since there's no conflict
+        unstableFlight.State.ShouldBe(State.Unstable);
+        unstableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.EstimatedLandingTime);
+        unstableFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+
+        // Stable flight should keep its manual time
+        stableFlight.ManualLandingTime.ShouldBeTrue();
+        stableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(30));
+
+        // Sequence order should be unstable flight first (earlier time), then stable flight
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
+    }
+
+    [Fact]
+    public void WhenHighPriorityFlightIsBehindUnstableFlightWithNoConflict_NoDelaysAreApplied()
+    {
+        // Arrange - Create an unstable flight with early ETA
+        var unstableFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(unstableFlight)
+            .Build();
+
+        // Schedule the unstable flight first
+        _scheduler.Schedule(sequence);
+
+        // Create a high priority flight with later ETA (no conflict, more than landing rate separation)
+        var priorityFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(15))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(25)) // 5 minutes after unstable flight
+            .WithRunway("34L")
+            .HighPriority()
+            .WithState(State.New)
+            .Build();
+
+        sequence.AddFlight(priorityFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert - Neither flight should be delayed since there's no conflict
+        unstableFlight.ScheduledLandingTime.ShouldBe(unstableFlight.EstimatedLandingTime);
+        unstableFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+
+        priorityFlight.State.ShouldBe(State.Unstable);
+        priorityFlight.HighPriority.ShouldBeTrue();
+        priorityFlight.ScheduledLandingTime.ShouldBe(priorityFlight.EstimatedLandingTime);
+        priorityFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+
+        // Sequence order should be based on landing times (unstable first, then priority)
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+    }
+
+    [Fact]
+    public void WhenFlightDelayedBehindLeaderConflictsWithAnotherFlight_FlightIsDelayedBehindAllConflicts()
+    {
+        // Arrange - Create two fixed flights 5 minutes apart (landing rate is 3 minutes)
+        var firstFixedFlight = new FlightBuilder("QFA1")
+            .WithLandingTime(_clock.UtcNow().AddMinutes(20), manual: true)
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var secondFixedFlight = new FlightBuilder("QFA2")
+            .WithLandingTime(_clock.UtcNow().AddMinutes(25), manual: true) // 5 minutes after first
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate) // 3 minute landing rate
+            .WithFlight(firstFixedFlight)
+            .WithFlight(secondFixedFlight)
+            .Build();
+
+        // Schedule the fixed flights first
+        _scheduler.Schedule(sequence);
+
+        // Create an unstable flight 2 minutes behind the first fixed flight
+        var unstableFlight = new FlightBuilder("QFA3")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(12))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(22)) // 2 minutes after first fixed flight
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        sequence.AddFlight(unstableFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        // Fixed flights should keep their manual times
+        firstFixedFlight.ManualLandingTime.ShouldBeTrue();
+        firstFixedFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(20));
+
+        secondFixedFlight.ManualLandingTime.ShouldBeTrue();
+        secondFixedFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(25));
+
+        // Unstable flight should be delayed behind both fixed flights
+        var expectedTime = secondFixedFlight.ScheduledLandingTime.Add(_landingRate);
+        unstableFlight.ScheduledLandingTime.ShouldBe(expectedTime);
+
+        // Sequence order should be based on scheduled landing times
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
     }
 }
