@@ -9,21 +9,6 @@ public interface IScheduler
     void Schedule(Sequence sequence);
 }
 
-// TODO Test Cases:
-// - When a flight is added and there is nobody in front of them, no delay is applied
-// - When a flight is added and the leader is far away, no delay is applied
-// - When a flight is added and the leader is too close, delay is applied
-// - When a flight is added and the leader is too close, and other runways are available, other runway is assigned
-// - When a flight is added and the leader is too close, all runways result in a delay, the runway with the least delay is assigned
-// - When a flight has NoDelay or ManualLandingTime, it should not be delayed
-// - When a flight has NoDelay or ManualLandingTime, and the leader is too close, the leader is delayed
-// - When a flight has NoDelay or ManualLandingTime, and the leader is too close, and other runways are available, the leader is assigned to the other runway
-// - When a flight has NoDelay or ManualLandingTime, and the leader is too close, and the leader is also NoDelay or ManualLandingTime, no delay is applied
-// - When a flight is delayed until after a runway change, the new runway and landing rate are used
-// - When a new flight is added, with ETAs earlier than a stable flight, the stable flight is delayed
-// - When a flight is moved manually, and conflicts with a stable flight, the stable flight is delayed
-// - When a flight has a manual runway assignment, it is not reassigned to a different runway
-
 public class Scheduler(
     IRunwayAssigner runwayAssigner,
     IAirportConfigurationProvider airportConfigurationProvider,

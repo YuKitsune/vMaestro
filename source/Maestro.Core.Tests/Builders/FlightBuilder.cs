@@ -22,6 +22,7 @@ public class FlightBuilder(string callsign)
     bool _manualRunway = false;
 
     bool _noDelay = false;
+    bool _highPriority = false;
 
     State _state = State.Unstable;
 
@@ -73,6 +74,12 @@ public class FlightBuilder(string callsign)
     public FlightBuilder NoDelay(bool value = true)
     {
         _noDelay = value;
+        return this;
+    }
+
+    public FlightBuilder HighPriority(bool value = true)
+    {
+        _highPriority = value;
         return this;
     }
 
@@ -135,6 +142,7 @@ public class FlightBuilder(string callsign)
         flight.SetState(_state);
 
         flight.NoDelay = _noDelay;
+        flight.HighPriority = _highPriority;
 
         return flight;
     }
