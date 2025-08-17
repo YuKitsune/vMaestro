@@ -65,10 +65,12 @@ public class Scheduler(
             var runwayModeChangeAttempts = 0;
             const int maxRunwayModeChangeAttempts = 2;
 
-            var preferredRunways = runwayAssigner.FindBestRunways(
-                flight.AircraftType,
-                flight.FeederFixIdentifier ?? string.Empty,
-                airportConfiguration.RunwayAssignmentRules);
+            var preferredRunways = flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier)
+                ? [flight.AssignedRunwayIdentifier!] // Use only the manually assigned runway
+                : runwayAssigner.FindBestRunways(
+                    flight.AircraftType,
+                    flight.FeederFixIdentifier ?? string.Empty,
+                    airportConfiguration.RunwayAssignmentRules);
 
 tryAgain:
             DateTimeOffset? proposedLandingTime = null;
