@@ -54,6 +54,9 @@ public class Scheduler(
             sequencedFlights.Add(flight);
         }
 
+        // TODO: If any flights have ManualLandingTime or NoDelay, we need to make sure no Stable flights are in conflict with them
+        // If there are, they need to be delayed to avoid conflicting with the NoDelay or ManualLandingTime flights.
+
         // Third pass: High priority
         foreach (var flight in flightsToSchedule.Where(f => f.HighPriority))
         {
