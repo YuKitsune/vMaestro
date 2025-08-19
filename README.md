@@ -28,7 +28,8 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
 # Known Issues 
 
-- When flights become stable, they loose their separation
+- NoDelay and ManualLandingTime flights are not separated from Stable flights
+- When the Maestro.json file is missing, vatSys gets flooded with exceptions
 - Desequence and Information windows do not re-draw
 - The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
 - When a button is enabled, it's appearance is still disabled, but it is still interactable.
