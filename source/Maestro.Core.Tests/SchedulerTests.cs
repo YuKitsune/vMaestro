@@ -1648,4 +1648,62 @@ public class SchedulerTests(
         // Sequence order should be based on scheduled landing times
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
     }
+
+    [Fact]
+    public void WhenFlightsAreAddedOutOfChronologicalOrder_FlightsAreSeparatedFromChronologicalLeaderAndTrailer()
+    {
+        // Arrange
+        // No delay for the leader
+        var leader = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        // Trailer flight leaves enough space for a flight in the middle
+        var trailer = new FlightBuilder("QFA3")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(18))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(18))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(leader)
+            .WithFlight(trailer)
+            .Build();
+
+        // Act
+
+        // Add a middle flight in between the leader and trailer
+        var middle = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(12))
+            .WithRunway("34L")
+            .WithState(State.New)
+            .Build();
+
+        sequence.AddFlight(middle, _scheduler);
+
+        // Add another flight _just_ behind the trailer
+        // This flight should be separated from the trailer and not the middle flight
+        var subject = new FlightBuilder("QFA4")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
+            .WithRunway("34L")
+            .WithState(State.New)
+            .Build();
+
+        sequence.AddFlight(subject, _scheduler);
+
+        // Assert
+        sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Select(f => f.Callsign).ShouldBe(["QFA1", "QFA2", "QFA3", "QFA4"]);
+
+        // Middle flight should be delayed behind the leader
+        leader.ScheduledLandingTime.ShouldBe(leader.EstimatedLandingTime, "no delay should be applied to the leader");
+        middle.ScheduledLandingTime.ShouldBe(leader.ScheduledLandingTime.Add(_landingRate), "middle flight should be delayed behind the leader");
+
+        // New flight should be delayed behind the last chronological flight
+        subject.ScheduledLandingTime.ShouldBe(trailer.ScheduledLandingTime.Add(_landingRate), "last flight should be delayed behind the chronological trailer and not the last flight added to the sequence");
+    }
 }

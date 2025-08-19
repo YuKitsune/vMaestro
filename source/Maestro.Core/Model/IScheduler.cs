@@ -26,15 +26,11 @@ public class Scheduler(
             .Where(f => f.State is not State.Desequenced and not State.Removed)
             .ToList();
 
-        // BUG: If a stable flight is behind any unstable ones, all the unstable flights get pushed back
-
-        var sequencedFlights = new List<Flight>();
-        sequencedFlights.AddRange(sequencableFlights
-            .Where(f => f.State is State.Stable or State.SuperStable or State.Frozen or State.Landed)
-            .OrderBy(f => f.ScheduledLandingTime));
-
-        // TODO: Insert NoDelay and ManualLandingTime flights last
-        // Then then move everyone else around them
+        var sequencedFlights = new SortedSet<Flight>(FlightComparer.Instance);
+        foreach (var flight in sequencableFlights.Where(f => f.State is State.Stable or State.SuperStable or State.Frozen or State.Landed))
+        {
+            sequencedFlights.Add(flight);
+        }
 
         var flightsToSchedule = sequencableFlights
             .Where(f => f.State is State.New or State.Unstable)
@@ -128,7 +124,6 @@ tryAgain:
             }
 
             Schedule(flight, proposedLandingTime.Value, proposedRunway);
-            sequencedFlights.Add(flight);
         }
 
         // Transition New flights to Unstable after scheduling
@@ -377,12 +372,8 @@ tryAgain:
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
     {
-        // Preserve existing manual flags when scheduling
-        var preserveManualLandingTime = flight.ManualLandingTime;
-        var preserveManualRunway = flight.RunwayManuallyAssigned;
-
-        flight.SetLandingTime(landingTime, manual: preserveManualLandingTime);
-        flight.SetRunway(runwayIdentifier, manual: preserveManualRunway);
+        flight.SetLandingTime(landingTime);
+        flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
 
         if (flight.EstimatedFeederFixTime is not null && !flight.HasPassedFeederFix)
         {

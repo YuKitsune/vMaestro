@@ -15,18 +15,7 @@ public sealed class FlightComparer : IComparer<Flight>
         if (right is null)
             return 1;
 
-        var timeComparison = left.ScheduledLandingTime.CompareTo(right.ScheduledLandingTime);
-        if (timeComparison != 0)
-            return timeComparison;
-
-        // Compare by state descending
-        var stateComparison = right.State.CompareTo(left.State);
-        if (stateComparison != 0)
-            return stateComparison;
-
-        // To prevent two flights from sharing the same position if they have the same state, estimate, and scheduled
-        // times, use their callsigns to differentiate.
-        return string.Compare(left.Callsign, right.Callsign, StringComparison.Ordinal);
+        return left.ScheduledLandingTime.CompareTo(right.ScheduledLandingTime);
     }
 }
 
