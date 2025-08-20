@@ -26,6 +26,11 @@ public class Scheduler(
             .Where(f => f.State is not State.Desequenced and not State.Removed)
             .ToList();
 
+        // TODO: Stable and SuperStable flights should still be processed, but only if:
+        // 1. A new flight is introduced in front of them (Stable flights only)
+        // 2. A flight is manually inserted in front of them
+        // 3. A slot has been added that conflicts with their landing time
+        // Only Frozen flights should be **completely** frozen
         var sequencedFlights = new SortedSet<Flight>(FlightComparer.Instance);
         foreach (var flight in sequencableFlights.Where(f => f.State is State.Stable or State.SuperStable or State.Frozen or State.Landed))
         {
@@ -97,13 +102,22 @@ tryAgain:
                     continue;
                 }
 
-                var earliestLandingTimeForRunway = GetEarliestLandingTimeForRunway(flight, runwayConfiguration);
-                var earliestLandingTime = absoluteEarliestLandingTime.IsBefore(earliestLandingTimeForRunway)
-                    ? earliestLandingTimeForRunway
-                    : absoluteEarliestLandingTime;
+                var earliestLandingTimeForRunway = flight.EstimatedLandingTime.IsBefore(absoluteEarliestLandingTime)
+                    ? absoluteEarliestLandingTime
+                    : flight.EstimatedLandingTime;
+
+                var earliestLandingTime = GetEarliestLandingTimeForRunway(earliestLandingTimeForRunway, runwayConfiguration);
+
+                // Check if this runway has slot conflicts
+                var conflictingSlot = sequence.Slots.FirstOrDefault(s =>
+                    s.RunwayIdentifiers.Contains(runwayIdentifier) && s.StartTime.IsBefore(earliestLandingTime) && s.EndTime.IsAfter(earliestLandingTime));
+                if (conflictingSlot is not null)
+                {
+                    earliestLandingTime = GetEarliestLandingTimeForRunway(conflictingSlot.EndTime, runwayConfiguration);
+                }
 
                 // If this runway results in less delay, then use that one
-                if (proposedLandingTime is null || earliestLandingTime.IsSameOrBefore(proposedLandingTime.Value))
+                if (proposedLandingTime is null || earliestLandingTime.IsBefore(proposedLandingTime.Value))
                 {
                     proposedLandingTime = earliestLandingTime;
                     proposedRunway = runwayConfiguration.Identifier;
@@ -155,9 +169,9 @@ tryAgain:
             flight.SetState(State.Unstable);
         }
 
-        DateTimeOffset GetEarliestLandingTimeForRunway(Flight flight, RunwayConfiguration runwayConfiguration)
+        DateTimeOffset GetEarliestLandingTimeForRunway(DateTimeOffset startTime, RunwayConfiguration runwayConfiguration)
         {
-            var proposedLandingTime = flight.EstimatedLandingTime;
+            var proposedLandingTime = startTime;
 
             // Look for conflicting flights and ensure we are not in conflict with anyone already sequenced
             // Re-run checks until no more delays are needed
@@ -172,7 +186,7 @@ tryAgain:
 
                 if (conflictResolutionAttempts > maxConflictResolutionAttempts)
                 {
-                    throw new MaestroException($"{flight.Callsign} exceeded max conflict resolution attempts");
+                    throw new MaestroException("Exceeded max conflict resolution attempts");
                 }
 
                 // Check leader conflict

@@ -23,7 +23,8 @@ public static class SequenceExtensionMethods
             CurrentRunwayMode = sequence.CurrentRunwayMode.ToMessage(),
             NextRunwayMode = sequence.NextRunwayMode?.ToMessage(),
             LastLandingTimeForCurrentMode = sequence.LastLandingTimeForCurrentMode,
-            FirstLandingTimeForNextMode = sequence.FirstLandingTimeForNextMode
+            FirstLandingTimeForNextMode = sequence.FirstLandingTimeForNextMode,
+            Slots = sequence.Slots.Select(s => s.ToMessage()).ToArray()
         };
     }
 }

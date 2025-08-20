@@ -251,7 +251,15 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <StackPanel IsItemsHost="True" />
+                    <Border Background="{x:Static local:Theme.BackgroundColor}">
+                        <controls:BeveledBorder
+                            BevelType="Raised"
+                            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                            <StackPanel
+                                Background="{x:Static local:Theme.BackgroundColor}"
+                                IsItemsHost="True" />
+                        </controls:BeveledBorder>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -262,46 +270,69 @@
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}"/>
+        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}"/>
+        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type MenuItem}">
-                    <Button
-                        Style="{StaticResource ButtonBaseStyle}"
-                        HorizontalContentAlignment="Stretch"
-                        Command="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Command}"
-                        CommandParameter="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=CommandParameter}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                    <Grid Background="Transparent">
 
-                            <ContentPresenter
-                                Grid.Column="0"
-                                HorizontalAlignment="Stretch"
-                                ContentSource="Header" />
+                        <!-- Beveled border (hidden by default) -->
+                        <controls:BeveledBorder
+                            x:Name="BevelBorder"
+                            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                            BevelType="Raised"
+                            Visibility="Hidden">
+                            <Border Background="{x:Static local:Theme.BackgroundColor}" />
+                        </controls:BeveledBorder>
 
-                            <controls:Chevron
-                                Grid.Column="1"
-                                Direction="Right"
-                                HorizontalAlignment="Right"
-                                HorizontalContentAlignment="Right"
-                                Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HasItems, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <!-- Content area -->
+                        <Border Padding="{x:Static local:Theme.BeveledBorderThickness}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <!-- Popup for submenu items -->
-                            <Popup
-                                Grid.Column="1"
-                                Placement="Right"
-                                IsOpen="{TemplateBinding IsSubmenuOpen}"
-                                Focusable="False">
-                                <StackPanel IsItemsHost="True" />
-                            </Popup>
-                        </Grid>
-                    </Button>
+                                <ContentPresenter
+                                    Grid.Column="0"
+                                    ContentSource="Header"
+                                    VerticalAlignment="Center" />
+
+                                <controls:Chevron
+                                    Grid.Column="1"
+                                    Direction="Right"
+                                    Margin="8,0,4,0"
+                                    Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HasItems, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Popup for submenu items -->
+                        <Popup
+                            Placement="Right"
+                            IsOpen="{TemplateBinding IsSubmenuOpen}"
+                            Focusable="False">
+                            <Border Background="{x:Static local:Theme.BackgroundColor}">
+                                <controls:BeveledBorder
+                                    BevelType="Raised"
+                                    BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                                    <StackPanel
+                                        Background="{x:Static local:Theme.BackgroundColor}"
+                                        IsItemsHost="True" />
+                                </controls:BeveledBorder>
+                            </Border>
+                        </Popup>
+                    </Grid>
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="IsSubmenuOpen" Value="True"/>
+                            <Setter TargetName="BevelBorder" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

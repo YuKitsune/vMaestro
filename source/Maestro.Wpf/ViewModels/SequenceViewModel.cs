@@ -44,6 +44,9 @@ public partial class SequenceViewModel : ObservableObject
     [ObservableProperty]
     List<string> _pendingFlights = [];
 
+    [ObservableProperty]
+    SlotMessage[] _slots = [];
+
     public string AirportIdentifier { get; }
 
     public string TerminalConfiguration =>
@@ -71,6 +74,7 @@ public partial class SequenceViewModel : ObservableObject
         NextRunwayMode = sequence.NextRunwayMode is null ? null : new RunwayModeViewModel(sequence.NextRunwayMode);
 
         Flights = sequence.Flights.Select(f => new FlightViewModel(f)).ToList();
+        Slots = sequence.Slots;
     }
 
     [RelayCommand]
@@ -99,5 +103,6 @@ public partial class SequenceViewModel : ObservableObject
         DesequencedFlights = sequenceMessage.DesequencedFlights.ToList();
         LandedFlights = sequenceMessage.LandedFlights.ToList();
         PendingFlights = sequenceMessage.PendingFlights.ToList();
+        Slots = sequenceMessage.Slots;
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
@@ -25,6 +27,8 @@ public partial class MaestroView
 
     readonly DispatcherTimer _dispatcherTimer;
     private bool _isDragging = false;
+    private System.Windows.Point? _contextMenuPosition;
+    private bool _suppressContextMenu = false;
 
     public MaestroView()
     {
@@ -291,6 +295,75 @@ public partial class MaestroView
             nextTime = nextTime.AddMinutes(5);
             yOffset += MinuteHeight * 5;
         }
+
+        // Draw slots
+        DrawSlots(currentTime);
+    }
+
+    void DrawSlots(DateTimeOffset currentTime)
+    {
+        if (ViewModel.SelectedSequence?.Slots == null)
+            return;
+
+        var canvasHeight = LadderCanvas.ActualHeight;
+        var canvasWidth = LadderCanvas.ActualWidth;
+        var middlePoint = canvasWidth / 2;
+        var ladderLeftPosition = middlePoint - LadderWidth / 2 - LineThickness;
+        var ladderRightPosition = middlePoint + LadderWidth / 2 + LineThickness;
+
+        foreach (var slot in ViewModel.SelectedSequence.Slots)
+        {
+            // Calculate slot position
+            var startYOffset = GetYOffsetForTime(currentTime, slot.StartTime);
+            var endYOffset = GetYOffsetForTime(currentTime, slot.EndTime);
+
+            // Only draw slots that are visible on the timeline
+            if (endYOffset < 0 || startYOffset > canvasHeight)
+                continue;
+
+            var startYPosition = canvasHeight - startYOffset;
+            var endYPosition = canvasHeight - endYOffset;
+            var slotHeight = Math.Abs(startYPosition - endYPosition);
+
+            // Determine which side(s) of the ladder to draw the slot on
+            var drawOnLeft = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedSequence.SelectedView.LeftLadder);
+            var drawOnRight = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedSequence.SelectedView.RightLadder);
+
+            var slotWidth = TickWidth + 4; // Slightly wider than tick marks
+            var topY = Math.Min(startYPosition, endYPosition);
+            var rectXPosition = drawOnLeft
+                ? ladderLeftPosition - LineThickness - slotWidth / 2
+                : ladderRightPosition + LineThickness + slotWidth / 2;
+
+            var rectangle = new System.Windows.Shapes.Rectangle
+            {
+                Width = slotWidth,
+                Height = slotHeight,
+                Fill = Theme.UnstableColor,
+                Opacity = 1,
+                Cursor = Cursors.Hand
+            };
+
+            rectangle.MouseLeftButtonDown += (_, args) =>
+            {
+                ViewModel.ShowSlotWindow(slot);
+                args.Handled = true;
+            };
+
+            rectangle.Loaded += PositionOnCanvas(
+                x: rectXPosition,
+                top: topY);
+
+            LadderCanvas.Children.Add(rectangle);
+        }
+
+        return;
+
+        bool ShouldDrawSlotOnSide(string[] slotRunways, string[] sideRunways)
+        {
+            // Check if all slot's runways are on this side of the ladder
+            return slotRunways.All(sideRunways.Contains);
+        }
     }
 
     static RoutedEventHandler PositionOnCanvas(
@@ -370,5 +443,82 @@ public partial class MaestroView
         var minutes = yOffset / MinuteHeight;
         var newTime = currentTime.AddMinutes(minutes);
         return newTime;
+    }
+
+    void OnCanvasRightClick(object sender, MouseButtonEventArgs e)
+    {
+        if (!ViewModel.IsCreatingSlot)
+        {
+            // Store the right-click position so we can reference it later when creating slots
+            _contextMenuPosition = e.GetPosition(LadderCanvas);
+        }
+        else
+        {
+            // End the current slot creation if the user right-clicks while inserting a slot
+            var clickPosition = e.GetPosition(LadderCanvas);
+            var canvasHeight = LadderCanvas.ActualHeight;
+            var yOffset = canvasHeight - clickPosition.Y;
+            var currentTime = DateTimeOffset.UtcNow;
+            var clickTime = GetTimeForYOffset(currentTime, yOffset);
+            ViewModel.EndInsertingSlotCommand.Execute(clickTime);
+
+            // Prevent the context menu from opening as we're ending the slot creation
+            _suppressContextMenu = true;
+        }
+
+        e.Handled = true;
+    }
+
+    void OnContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (!_suppressContextMenu)
+            return;
+
+        // Prevent the menu from opening during slot creation
+        e.Handled = true;
+
+        // Reset the flag for next time
+        _suppressContextMenu = false;
+    }
+
+    void BeginInsertingSlot(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem menuItem)
+            return;
+
+        // Get the ContextMenu to access its placement target (the Canvas)
+        var contextMenu = menuItem.Parent as ContextMenu;
+        if (contextMenu?.PlacementTarget is not Canvas canvas || !_contextMenuPosition.HasValue)
+            return;
+
+        contextMenu.IsOpen = false;
+
+        // Use the stored right-click position to determine the time
+        var mousePosition = _contextMenuPosition.Value;
+        var canvasHeight = canvas.ActualHeight;
+        var yOffset = canvasHeight - mousePosition.Y;
+        var currentTime = DateTimeOffset.UtcNow;
+        var clickTime = GetTimeForYOffset(currentTime, yOffset);
+
+        // Determine which side was clicked and get corresponding runway identifiers
+        if (ViewModel.SelectedSequence?.SelectedView == null)
+            return;
+
+        // Determine which side of the ladder was clicked to get the correct runways
+        var canvasWidth = canvas.ActualWidth;
+        var middlePoint = canvasWidth / 2;
+        var runwayIdentifiers = mousePosition.X < middlePoint
+            ? ViewModel.SelectedSequence.SelectedView.LeftLadder
+            : // Left side clicked - get left ladder runways
+            ViewModel.SelectedSequence.SelectedView.RightLadder; // Right side clicked - get right ladder runways
+
+        var beginSlotArgs = new BeginSlotArgs
+        {
+            StartTime = clickTime,
+            RunwayIdentifiers = runwayIdentifiers
+        };
+
+        ViewModel.StartInsertingSlotCommand.Execute(beginSlotArgs);
+        _contextMenuPosition = null;
     }
 }

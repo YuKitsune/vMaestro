@@ -13,4 +13,11 @@ public class SequenceMessage
     public required string[] DesequencedFlights { get; init; }
     public required string[] LandedFlights { get; init; }
     public required string[] PendingFlights { get; init; }
+    public required SlotMessage[] Slots { get; init; }
 }
+
+public record SlotMessage(
+    Guid SlotId,
+    DateTimeOffset StartTime,
+    DateTimeOffset EndTime,
+    string[] RunwayIdentifiers);

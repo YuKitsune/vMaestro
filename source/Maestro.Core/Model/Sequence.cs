@@ -29,6 +29,7 @@ public class Sequence
 
     readonly List<Flight> _pendingFlights = [];
     readonly List<Flight> _trackedFlights = [];
+    readonly List<Slot> _slots = [];
 
     public string AirportIdentifier => _airportConfiguration.Identifier;
     public string[] FeederFixes => _airportConfiguration.FeederFixes;
@@ -39,6 +40,8 @@ public class Sequence
     public DateTimeOffset LastLandingTimeForCurrentMode { get; private set; }
     public RunwayMode? NextRunwayMode { get; private set; }
     public DateTimeOffset FirstLandingTimeForNextMode { get; private set; }
+
+    public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
 
     public Sequence(AirportConfiguration airportConfiguration, RunwayMode runwayMode)
     {
@@ -144,6 +147,37 @@ public class Sequence
             throw new MaestroException($"{flight.Callsign} is already pending");
 
         _pendingFlights.Add(flight);
+    }
+
+    public Slot CreateSlot(DateTimeOffset start, DateTimeOffset end, string[] runwayIdentifiers, IScheduler scheduler)
+    {
+        var slot = new Slot(Guid.NewGuid(), start, end, runwayIdentifiers);
+        _slots.Add(slot);
+        scheduler.Schedule(this);
+        return slot;
+    }
+
+    public Slot ModifySlot(Guid id, DateTimeOffset start, DateTimeOffset end, IScheduler scheduler)
+    {
+        var slot = _slots.FirstOrDefault(s => s.Id == id);
+        if (slot is null)
+            throw new MaestroException("Slot not found");
+
+        slot.ChangeTime(start, end);
+        scheduler.Schedule(this);
+
+        return slot;
+    }
+
+    public void DeleteSlot(Guid id, IScheduler scheduler)
+    {
+        var slot = _slots.FirstOrDefault(s => s.Id == id);
+        if (slot is null)
+            throw new MaestroException("Slot not found");
+
+        _slots.Remove(slot);
+
+        scheduler.Schedule(this);
     }
 
     public int NumberInSequence(Flight flight)

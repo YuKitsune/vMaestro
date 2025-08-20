@@ -1331,9 +1331,6 @@ public class SchedulerTests(
         }
     }
 
-    // TODO: Test runway mode changes with slots
-    // TODO: Test slots
-
     [Fact]
     public void WhenFlightDelayedBeyondRunwayModeChange_NewRunwayModeUsed()
     {
@@ -1468,6 +1465,187 @@ public class SchedulerTests(
         followerFlight.State.ShouldBe(State.Unstable);
         followerFlight.ScheduledLandingTime.ShouldBe(firstLandingTime);
         followerFlight.AssignedRunwayIdentifier.ShouldBe("34R");
+    }
+
+    [Fact]
+    public void WhenFlightDelayedIntoSlot_FlightIsFurtherDelayedToEndOfSlot()
+    {
+        // Arrange
+        var leaderFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(leaderFlight)
+            .Build();
+
+        // Act
+        // Create a slot
+        var slotStart = _clock.UtcNow().AddMinutes(12);
+        var slotEnd = _clock.UtcNow().AddMinutes(20);
+
+        sequence.CreateSlot(slotStart, slotEnd, ["34L"], _scheduler);
+
+        // Not in the slot, but will be delayed into it
+        var subject1 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(11))
+            .Build();
+
+        // In the slot
+        var subject2 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(15))
+            .Build();
+
+        sequence.AddFlight(subject1, _scheduler);
+        sequence.AddFlight(subject2, _scheduler);
+
+        // Assert
+        // Leader should remain on original runway with original schedule
+        leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
+
+        // Subject1 should be delayed to the end of the slot
+        subject1.ScheduledLandingTime.ShouldBe(slotEnd);
+
+        // Subject2 should be delayed behind subject1, at the end of the slot
+        subject2.ScheduledLandingTime.ShouldBe(subject1.ScheduledLandingTime.Add(_landingRate));
+    }
+
+    [Fact]
+    public void WhenASlotIsAdded_FlightsInTheSlotAreDelayed()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(flight)
+            .Build();
+
+        // Initial scheduling - flight should not be delayed
+        _scheduler.Schedule(sequence);
+        flight.ScheduledLandingTime.ShouldBe(flight.EstimatedLandingTime);
+        flight.TotalDelay.ShouldBe(TimeSpan.Zero);
+
+        // Act - Create a slot that conflicts with the flight
+        var slotStart = _clock.UtcNow().AddMinutes(10);
+        var slotEnd = _clock.UtcNow().AddMinutes(20);
+        sequence.CreateSlot(slotStart, slotEnd, ["34L"], _scheduler);
+
+        // Assert - Flight should be delayed to the end of the slot
+        flight.ScheduledLandingTime.ShouldBe(slotEnd);
+        flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
+    }
+
+    [Fact]
+    public void WhenASlotIsAdded_AndAnotherRunwayIsAvailable_FlightsAreMovedToTheOtherRunway()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        // Initial scheduling - flight should not be delayed
+        _scheduler.Schedule(sequence);
+        flight.ScheduledLandingTime.ShouldBe(flight.EstimatedLandingTime);
+        flight.TotalDelay.ShouldBe(TimeSpan.Zero);
+        flight.AssignedRunwayIdentifier.ShouldBe("34L");
+
+        // Act - Create a slot that conflicts with the flight
+        var slotStart = _clock.UtcNow().AddMinutes(5);
+        var slotEnd = _clock.UtcNow().AddMinutes(15);
+        sequence.CreateSlot(slotStart, slotEnd, ["34L"], _scheduler);
+
+        // Assert - Flight should not be delayed on 34L, but moved to 34
+        flight.ScheduledLandingTime.ShouldBe(flight.EstimatedLandingTime);
+        flight.TotalDelay.ShouldBe(TimeSpan.Zero);
+        flight.AssignedRunwayIdentifier.ShouldBe("34R");
+    }
+
+    [Fact]
+    public void WhenASlotIsModified_FlightsAreMovedAroundTheSlot()
+    {
+        // Arrange
+        var firstFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var secondFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(25))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(firstFlight)
+            .WithFlight(secondFlight)
+            .Build();
+
+        // Create a slot that conflicts with the first flight
+        var slotStart = _clock.UtcNow().AddMinutes(10);
+        var slotEnd = _clock.UtcNow().AddMinutes(20);
+        var slot = sequence.CreateSlot(slotStart, slotEnd, ["34L"], _scheduler);
+
+        // Verify initial state - first flight delayed to end of slot, second flight separated after first
+        firstFlight.ScheduledLandingTime.ShouldBe(slotEnd);
+        secondFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(25));
+
+        // Act - Modify the slot to conflict with just the second flight instead
+        var newSlotStart = _clock.UtcNow().AddMinutes(22);
+        var newSlotEnd = _clock.UtcNow().AddMinutes(30);
+        sequence.ModifySlot(slot.Id, newSlotStart, newSlotEnd, _scheduler);
+
+        // Assert - First flight should have no delay, second flight delayed to end of modified slot
+        firstFlight.ScheduledLandingTime.ShouldBe(firstFlight.EstimatedLandingTime);
+        firstFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+        secondFlight.ScheduledLandingTime.ShouldBe(newSlotEnd);
+        secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
+    }
+
+    [Fact]
+    public void WhenASlotIsRemoved_DelaysFromTheSlotAreRemoved()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(flight)
+            .Build();
+
+        // Create a slot that conflicts with the flight
+        var slotStart = _clock.UtcNow().AddMinutes(10);
+        var slotEnd = _clock.UtcNow().AddMinutes(20);
+        var slot = sequence.CreateSlot(slotStart, slotEnd, ["34L"], _scheduler);
+
+        // Verify flight is delayed due to the slot
+        flight.ScheduledLandingTime.ShouldBe(slotEnd);
+        flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
+
+        // Act - Delete the slot
+        sequence.DeleteSlot(slot.Id, _scheduler);
+
+        // Assert - Flight should no longer be delayed
+        flight.ScheduledLandingTime.ShouldBe(flight.EstimatedLandingTime);
+        flight.TotalDelay.ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]
