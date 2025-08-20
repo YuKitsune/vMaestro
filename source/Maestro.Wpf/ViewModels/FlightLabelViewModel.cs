@@ -12,6 +12,9 @@ public partial class FlightLabelViewModel(
     RunwayModeViewModel runwayModeViewModel)
     : ObservableObject
 {
+    [ObservableProperty]
+    bool _isSelected = false;
+
     public FlightViewModel FlightViewModel { get; } = flightViewModel;
     public RunwayModeViewModel RunwayModeViewModel { get; } = runwayModeViewModel;
 

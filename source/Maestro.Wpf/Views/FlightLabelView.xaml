@@ -1,16 +1,18 @@
 ﻿<UserControl x:Class="Maestro.Wpf.Views.FlightLabelView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
              xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
              xmlns:views="clr-namespace:Maestro.Wpf.Views"
              xmlns:configuration="clr-namespace:Maestro.Core.Configuration;assembly=Maestro.Core"
+             xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
+             xmlns:local="clr-namespace:Maestro.Wpf"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:FlightLabelViewModel}"
-             d:DesignHeight="16"
-             d:DesignWidth="250">
+             d:DesignHeight="24"
+             d:DesignWidth="240">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -21,20 +23,20 @@
             <converters:StateToColorConverter x:Key="StateToColorConverter"/>
             <converters:DelayToColorConverter x:Key="DelayToColorConverter"/>
             <converters:ViewModeToVisibilityConverter x:Key="ViewModeToVisibilityConverter"/>
-            
+
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
-            
+
             <Style TargetType="{x:Type StackPanel}">
 
                 <Setter Property="FlowDirection" Value="LeftToRight" />
-                
+
                 <Style.Triggers>
                     <DataTrigger
                         Binding="{Binding LadderPosition, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}}"
                         Value="Left">
-                        
+
                         <Setter Property="FlowDirection" Value="RightToLeft" />
-                        
+
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
@@ -42,60 +44,85 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <Border>
-        <StackPanel Orientation="Horizontal">
-        
-            <TextBlock 
-                Text="{Binding FlightViewModel.LandingTime, Converter={StaticResource MinutesConverter}}"
-                Width="24"
-                Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Enroute}}"/>
-        
-            <TextBlock 
-                Text="{Binding FlightViewModel.FeederFixTime, Converter={StaticResource MinutesConverter}}"
-                Width="24"
-                Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Approach}}"/>
-        
-            <TextBlock 
-                Text="{Binding FlightViewModel.AssignedRunway}"
-                Width="32" />
-        
-            <TextBlock
-                Text="{Binding FlightViewModel.Callsign}"
-                Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
-                Width="80"/>
-            
-            <TextBlock
-                Text="+"
-                Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
-                Width="24">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Hidden"/>
+        <Grid>
 
+            <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                <Border Background="Transparent"/>
+                <controls:BeveledBorder.Style>
+                    <Style TargetType="{x:Type controls:BeveledBorder}">
+                        <Setter Property="Visibility" Value="Hidden"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding FlightViewModel.FlowControls}" Value="S250">
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}}" Value="True">
                                 <Setter Property="Visibility" Value="Visible"/>
+                                <Setter Property="BevelType" Value="Raised"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Setter Property="BevelType" Value="Outline"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsOpen, ElementName=ContextMenu}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Setter Property="BevelType" Value="Sunken"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </TextBlock.Style>
-            </TextBlock>
-        
-            <TextBlock
-                Text="{Binding FlightViewModel.InitialDelay, Converter={StaticResource MinutesConverter}}"
-                Foreground="{Binding FlightViewModel.InitialDelay, Converter={StaticResource DelayToColorConverter}}"
-                Width="32" 
-                FlowDirection="LeftToRight" />
+                </controls:BeveledBorder.Style>
+            </controls:BeveledBorder>
 
-            <TextBlock 
-                Text="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource MinutesConverter}}"
-                Foreground="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource DelayToColorConverter}}"
-                Width="32"
-                FlowDirection="LeftToRight" />
-        
-        </StackPanel>
-        
+            <StackPanel Orientation="Horizontal" Margin="{x:Static local:Theme.BeveledBorderThickness}">
+                <TextBlock
+                    Text="{Binding FlightViewModel.LandingTime, Converter={StaticResource MinutesConverter}}"
+                    Width="24"
+                    Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Enroute}}"/>
+
+                <TextBlock
+                    Text="{Binding FlightViewModel.FeederFixTime, Converter={StaticResource MinutesConverter}}"
+                    Width="24"
+                    Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Approach}}"/>
+
+                <TextBlock
+                    Text="{Binding FlightViewModel.AssignedRunway}"
+                    Width="32" />
+
+                <TextBlock
+                    Text="{Binding FlightViewModel.Callsign}"
+                    Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
+                    Width="80"/>
+
+                <TextBlock
+                    Text="+"
+                    Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
+                    Width="24">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Hidden"/>
+
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding FlightViewModel.FlowControls}" Value="S250">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <TextBlock
+                    Text="{Binding FlightViewModel.InitialDelay, Converter={StaticResource MinutesConverter}}"
+                    Foreground="{Binding FlightViewModel.InitialDelay, Converter={StaticResource DelayToColorConverter}}"
+                    Width="32"
+                    FlowDirection="LeftToRight" />
+
+                <TextBlock
+                    Text="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource MinutesConverter}}"
+                    Foreground="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource DelayToColorConverter}}"
+                    Width="32"
+                    FlowDirection="LeftToRight" />
+
+            </StackPanel>
+        </Grid>
+
         <Border.ContextMenu>
-            <ContextMenu>
+            <ContextMenu Name="ContextMenu">
                 <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
                 <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" />
                 <MenuItem Header="Change Runway">

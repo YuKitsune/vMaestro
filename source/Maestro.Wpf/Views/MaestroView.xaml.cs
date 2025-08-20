@@ -77,6 +77,8 @@ public partial class MaestroView
         if (_isDragging) return;
         Dispatcher.Invoke(() =>
         {
+            // BUG: If a context menu is open for a flight label, the border will disappear when the ladder is redrawn
+            // TODO: Instead of deleting everything and re-drawing, we should just move existing elements
             LadderCanvas.Children.Clear();
 
             var now = DateTimeOffset.UtcNow;
