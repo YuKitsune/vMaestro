@@ -132,7 +132,7 @@ tryAgain:
 
             // If proposed landing time is after the last allowed time for current mode,
             // or if it falls in the gap between modes, delay to the next mode's first allowed time
-            if (sequence.NextRunwayMode is not null)
+            if (sequence.NextRunwayMode is not null && currentRunwayMode != sequence.NextRunwayMode)
             {
                 var isInGap = proposedLandingTime.Value.IsAfter(sequence.LastLandingTimeForCurrentMode) &&
                                          proposedLandingTime.Value.IsBefore(sequence.FirstLandingTimeForNextMode);
