@@ -16,12 +16,12 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            
+
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
                 <Setter Property="Margin" Value="2" />
             </Style>
-            
+
             <Style TargetType="ListBoxItem">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -42,7 +42,7 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            
+
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
@@ -50,17 +50,15 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        
-        <!-- TODO: Custom scrollbar -->
-        <controls:BeveledBorder Grid.Column="0" BevelType="Sunken" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" Margin="2"/>
-        <ListBox Grid.Column="0" ItemsSource="{Binding Callsigns, Mode=TwoWay}" SelectedItem="{Binding SelectedCallsign}" BorderThickness="0" SelectedIndex="1" Background="Transparent" Margin="3">
+
+        <ListBox ItemsSource="{Binding Callsigns, Mode=TwoWay}" SelectedItem="{Binding SelectedCallsign}" BorderThickness="0" SelectedIndex="1" Background="Transparent" Margin="2">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding}" Margin="2">
+                    <TextBlock Text="{Binding}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
                                 <Style.Triggers>
-                                    <DataTrigger 
+                                    <DataTrigger
                                         Binding="{Binding Path=IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem }}}"
                                         Value="True">
                                         <Setter Property="TextBlock.Foreground" Value="{x:Static local:Theme.BackgroundColor}"/>
@@ -71,7 +69,7 @@
                     </TextBlock>
                 </DataTemplate>
             </ListBox.ItemTemplate>
-            
+
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Template">
@@ -87,7 +85,7 @@
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                        <Border Background="{x:Static local:Theme.SelectedButtonColor}">
+                                        <Border Background="{x:Static local:Theme.SelectedButtonColor}" Padding="1">
                                             <ContentPresenter />
                                         </Border>
                                     </ControlTemplate>
@@ -98,7 +96,7 @@
                 </Style>
             </ListBox.ItemContainerStyle>
         </ListBox>
-        
+
         <StackPanel Grid.Column="1" Orientation="Vertical">
             <Button Content="Resume" Command="{Binding ResumeCommand}"/>
             <Button Content="Remove" Command="{Binding RemoveCommand}"/>

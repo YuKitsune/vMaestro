@@ -60,9 +60,9 @@
                             BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
                             BevelType="Raised">
                             <Border Background="{TemplateBinding Background}">
-                                <ContentPresenter 
+                                <ContentPresenter
                                     Content="{TemplateBinding Content}"
-                                    ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
                                     VerticalAlignment="Center"
                                     HorizontalAlignment="Center"/>
                             </Border>
@@ -82,9 +82,9 @@
                                     BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
                                     BevelType="Sunken">
                                     <Border Background="{TemplateBinding Background}">
-                                        <ContentPresenter 
+                                        <ContentPresenter
                                             Content="{TemplateBinding Content}"
-                                            ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                            ContentTemplate="{TemplateBinding ContentTemplate}"
                                             VerticalAlignment="Center"
                                             HorizontalAlignment="Center" />
                                     </Border>
@@ -100,7 +100,7 @@
             </Trigger>
         </Style.Triggers>
     </Style>
-    
+
     <!-- TextBox -->
     <Style TargetType="TextBox">
         <Setter Property="Background" Value="Transparent"/>
@@ -161,8 +161,8 @@
                 <ControlTemplate TargetType="{x:Type ComboBox}">
                     <Grid>
                         <ToggleButton
-                            Name="ToggleButton" 
-                            Template="{StaticResource ComboBoxToggleButton}" 
+                            Name="ToggleButton"
+                            Template="{StaticResource ComboBoxToggleButton}"
                             Focusable="false"
                             IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
                             ClickMode="Press" />
@@ -176,7 +176,7 @@
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center" />
 
-                        <Popup 
+                        <Popup
                             Name="Popup"
                             Placement="Bottom"
                             IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -198,7 +198,7 @@
                             </Border>
                         </Popup>
                     </Grid>
-                    
+
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="false">
                             <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}" />
@@ -218,7 +218,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ComboBoxItem}">
-                    <Border 
+                    <Border
                         Name="Border"
                         SnapsToDevicePixels="true"
                         Padding="2,0,2,0">
@@ -240,7 +240,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <!-- Context Menu -->
     <Style TargetType="{x:Type ContextMenu}">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -256,7 +256,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <!-- Context Menu Item -->
     <Style TargetType="{x:Type MenuItem}">
         <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -275,19 +275,19 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            
-                            <ContentPresenter 
+
+                            <ContentPresenter
                                 Grid.Column="0"
                                 HorizontalAlignment="Stretch"
                                 ContentSource="Header" />
-                        
+
                             <controls:Chevron
                                 Grid.Column="1"
                                 Direction="Right"
                                 HorizontalAlignment="Right"
                                 HorizontalContentAlignment="Right"
                                 Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HasItems, Converter={StaticResource BoolToVisibilityConverter}}" />
-                        
+
                             <!-- Popup for submenu items -->
                             <Popup
                                 Grid.Column="1"
@@ -304,6 +304,51 @@
                             <Setter Property="IsSubmenuOpen" Value="True"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- ListBox -->
+    <Style TargetType="{x:Type ListBox}" BasedOn="{StaticResource ControlBaseStyle}">
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="true"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ListBox}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Content area with sunken border -->
+                        <controls:BeveledBorder
+                            Grid.Column="0"
+                            BevelType="Sunken"
+                            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                            Margin="0,0,1,0">
+                            <ScrollViewer
+                                x:Name="PART_ScrollViewer"
+                                Focusable="false"
+                                HorizontalScrollBarVisibility="Hidden"
+                                VerticalScrollBarVisibility="Hidden"
+                                CanContentScroll="True"
+                                Margin="2">
+                                <ItemsPresenter />
+                            </ScrollViewer>
+                        </controls:BeveledBorder>
+
+                        <!-- Custom external scrollbar -->
+                        <controls:CustomScrollBar
+                            Grid.Column="1"
+                            Margin="1,0,0,0"
+                            ScrollViewer="{Binding ElementName=PART_ScrollViewer}" />
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
