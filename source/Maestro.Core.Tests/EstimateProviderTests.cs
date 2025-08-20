@@ -49,7 +49,7 @@ public class EstimateProviderTests
     }
 
     [Fact]
-    public void GetFeederFixEstimate_UsesSystemEstimate_InLieuOfPosition()
+    public void GetFeederFixEstimate_WithoutPosition_UsesSystemEstimate()
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
@@ -71,7 +71,7 @@ public class EstimateProviderTests
     }
 
     [Fact]
-    public void GetFeederFixEstimate_UsesTrajectory_WhenWithinRange()
+    public void GetFeederFixEstimate_WithinRange_UsesTrajectory()
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
@@ -179,5 +179,31 @@ public class EstimateProviderTests
         var expectedEstimate = actualFeederFixTime.Add(_arrivalInterval);
         estimate.ShouldNotBeNull();
         estimate.Value.ShouldBe(expectedEstimate, TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public void GetLandingEstimate_AfterPassingFeederFix_WithoutFeederFixTime_UsesSystemEstimate()
+    {
+        // Arrange
+        var estimateProvider = new EstimateProvider(
+            _performanceLookup,
+            _arrivalLookup,
+            _fixLookup,
+            _clock);
+
+        var flight = new FlightBuilder("QFA2")
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_currentTime.AddMinutes(-5)) // Last ETA_FF was 5 minutes ago
+            .PassedFeederFixAt(DateTimeOffset.MaxValue) // logged on after passing the feeder fix
+            .Build();
+
+        // Act
+        var systemEstimate = _currentTime.AddMinutes(10);
+        var estimate = estimateProvider.GetLandingEstimate(flight, systemEstimate);
+
+        // Assert
+        estimate.ShouldNotBeNull();
+        estimate.Value.ShouldBe(systemEstimate, TimeSpan.FromSeconds(30));
     }
 }
