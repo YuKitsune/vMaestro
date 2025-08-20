@@ -9,6 +9,7 @@ public class FlightBuilder(string callsign)
     string _origin = "YMML";
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
+    DateTimeOffset activationTime = DateTimeOffset.Now;
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
     DateTimeOffset feederFixTime = default;
     DateTimeOffset passedFeederFix = default;
@@ -27,6 +28,12 @@ public class FlightBuilder(string callsign)
     State _state = State.Unstable;
 
     DateTimeOffset _lastSeen = DateTimeOffset.Now;
+
+    public FlightBuilder WithActivationTime(DateTimeOffset time)
+    {
+        activationTime = time;
+        return this;
+    }
 
     public FlightBuilder WithAircraftType(string aircraftType)
     {
@@ -135,7 +142,7 @@ public class FlightBuilder(string callsign)
         flight.SetArrival(_assignedArrival);
         flight.SetRunway(_assignedRunway, _manualRunway);
 
-        flight.Activate(new FixedClock(DateTimeOffset.Now));
+        flight.Activate(new FixedClock(activationTime));
 
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
 

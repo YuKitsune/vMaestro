@@ -19,9 +19,9 @@ public class SchedulerTests(
 
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
     readonly IClock _clock = clockFixture.Instance;
-    readonly IScheduler _scheduler = CreateScheduler(performanceLookupFixture, airportConfigurationFixture);
+    readonly IScheduler _scheduler = CreateScheduler(performanceLookupFixture, airportConfigurationFixture, clockFixture.Instance);
 
-    static IScheduler CreateScheduler(PerformanceLookupFixture performanceLookupFixture, AirportConfigurationFixture airportConfigurationFixture)
+    static IScheduler CreateScheduler(PerformanceLookupFixture performanceLookupFixture, AirportConfigurationFixture airportConfigurationFixture, IClock clock)
     {
         var performanceLookup = performanceLookupFixture.Instance;
         var runwayAssigner = new RunwayAssigner(performanceLookup);
@@ -44,6 +44,7 @@ public class SchedulerTests(
             runwayAssigner,
             airportConfigurationProvider,
             performanceLookup,
+            clock,
             Substitute.For<ILogger>());
     }
 
@@ -1948,5 +1949,110 @@ public class SchedulerTests(
 
         // New flight should be delayed behind the last chronological flight
         subject.ScheduledLandingTime.ShouldBe(trailer.ScheduledLandingTime.Add(_landingRate), "last flight should be delayed behind the chronological trailer and not the last flight added to the sequence");
+    }
+
+    [Fact]
+    public void WhenAFlightIsNew_ItRemainsUnstable()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithActivationTime(_clock.UtcNow()) // Just activated
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(5)) // Within stable threshold
+            .WithState(State.New)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        flight.State.ShouldBe(State.Unstable);
+    }
+
+    [Fact]
+    public void WhenAFlightIsWithinRange_ItIsStablised()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithActivationTime(_clock.UtcNow().AddMinutes(-5)) // Active for 5 minutes (> 180 seconds)
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(25)) // Within stable threshold of 25 minutes
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        flight.State.ShouldBe(State.Stable);
+    }
+
+    [Fact]
+    public void WhenAFlightPassesTheOriginalFeederFixEstimate_ItIsSuperStabilised()
+    {
+        // Arrange - Create a flight that has passed its original feeder fix time
+        var flight = new FlightBuilder("QFA1")
+            .WithActivationTime(_clock.UtcNow().AddMinutes(-10)) // Active for 10 minutes
+            .WithFeederFixEstimate(_clock.UtcNow()) // Reached feeder fix time
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        flight.State.ShouldBe(State.SuperStable);
+    }
+
+    [Fact]
+    public void WhenAFlightIsWithinRange_ItIsFrozen()
+    {
+        // Arrange - Create a flight within 15 minutes of landing
+        var flight = new FlightBuilder("QFA1")
+            .WithActivationTime(_clock.UtcNow().AddMinutes(-10)) // Active for 10 minutes
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(15)) // Within frozen threshold of 15 minutes
+            .WithState(State.SuperStable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        flight.State.ShouldBe(State.Frozen);
+    }
+
+    [Fact]
+    public void WhenAFlightLands_ItIsMarkedAsLanded()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithActivationTime(_clock.UtcNow().AddMinutes(-30)) // Active for 30 minutes
+            .WithLandingTime(_clock.UtcNow().AddMinutes(0)) // Landed now
+            .WithState(State.Frozen)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        flight.State.ShouldBe(State.Landed);
     }
 }

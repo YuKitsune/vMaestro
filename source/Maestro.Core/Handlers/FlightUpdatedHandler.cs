@@ -162,8 +162,6 @@ public class FlightUpdatedHandler(
             var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().Single(a => a.Identifier == flight.DestinationIdentifier);
             CalculateEstimates(flight, notification, airportConfiguration);
 
-            SetState(flight);
-
             logger.Debug("Flight updated: {Flight}", flight);
 
             await mediator.Publish(
@@ -174,50 +172,6 @@ public class FlightUpdatedHandler(
         {
             logger.Error(exception, "Error updating {Callsign}", notification.Callsign);
         }
-    }
-
-    // TODO: Move this to the scheduler
-    void SetState(Flight flight)
-    {
-        // TODO: Make configurable
-        var stableThreshold = TimeSpan.FromMinutes(25);
-        var frozenThreshold = TimeSpan.FromMinutes(15);
-        var minUnstableTime = TimeSpan.FromSeconds(180);
-
-        var timeActive = clock.UtcNow() - flight.ActivatedTime;
-        var timeToFeeder = flight.EstimatedFeederFixTime - clock.UtcNow();
-        var timeToLanding = flight.EstimatedLandingTime - clock.UtcNow();
-
-        // Keep the flight unstable until it's passed the minimum unstable time
-        if (timeActive < minUnstableTime)
-        {
-            flight.SetState(State.Unstable);
-            return;
-        }
-
-        if (flight.ScheduledLandingTime.IsSameOrBefore(clock.UtcNow()))
-        {
-            flight.SetState(State.Landed);
-        }
-        else if (timeToLanding <= frozenThreshold)
-        {
-            flight.SetState(State.Frozen);
-        }
-        else if (flight.InitialFeederFixTime?.IsSameOrBefore(clock.UtcNow()) ?? false)
-        {
-            flight.SetState(State.SuperStable);
-        }
-        else if (timeToFeeder <= stableThreshold)
-        {
-            flight.SetState(State.Stable);
-        }
-        else
-        {
-            // No change required
-            return;
-        }
-
-        logger.Information("{Callsign} is now {State}", flight.Callsign, flight.State);
     }
 
     void CalculateEstimates(Flight flight, FlightUpdatedNotification notification, AirportConfiguration airportConfiguration)
