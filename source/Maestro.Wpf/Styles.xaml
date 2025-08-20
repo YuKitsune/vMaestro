@@ -310,6 +310,84 @@
     </Style>
 
 
+    <!-- Slider -->
+    <Style TargetType="{x:Type Slider}" BasedOn="{StaticResource ControlBaseStyle}">
+        <Setter Property="SnapsToDevicePixels" Value="true"/>
+        <Setter Property="OverridesDefaultStyle" Value="true"/>
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Slider}">
+                    <Grid>
+                        <!-- Single sunken border containing the entire track -->
+                        <controls:BeveledBorder
+                            Height="12"
+                            BevelType="Sunken"
+                            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                            <Border Background="{x:Static local:Theme.InteractiveTextColor}" />
+                        </controls:BeveledBorder>
+
+                        <!-- Track positioned over the background -->
+                        <Track x:Name="PART_Track" VerticalAlignment="Center">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton
+                                    Style="{x:Null}"
+                                    Command="Slider.DecreaseLarge">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                            <Rectangle Fill="Transparent" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="{x:Type Thumb}">
+                                            <Grid Width="32" Height="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Left half of thumb -->
+                                                <Grid Grid.Column="0" Background="{x:Static local:Theme.BackgroundColor}">
+                                                    <controls:BeveledBorder
+                                                        BevelType="Raised"
+                                                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" />
+                                                </Grid>
+
+                                                <!-- Right half of thumb -->
+                                                <Grid Grid.Column="1" Background="{x:Static local:Theme.BackgroundColor}">
+                                                    <controls:BeveledBorder
+                                                        BevelType="Raised"
+                                                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" />
+                                                </Grid>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton
+                                    Style="{x:Null}"
+                                    Command="Slider.IncreaseLarge">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                            <Rectangle Fill="Transparent" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ListBox -->
     <Style TargetType="{x:Type ListBox}" BasedOn="{StaticResource ControlBaseStyle}">
         <Setter Property="BorderThickness" Value="0"/>
