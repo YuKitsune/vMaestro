@@ -35,6 +35,7 @@ class Build : NukeBuild
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build" / PluginName;
     AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
+    AbsolutePath PackageDirectory => TemporaryDirectory / "package";
 
     [Parameter]
     string ProfileName { get; }
@@ -108,16 +109,15 @@ class Build : NukeBuild
             var configFile = RootDirectory / "Maestro.json";
             // var changelogFile = RootDirectory / "CHANGELOG.md";
 
-            var packageDirectory = TemporaryDirectory / "package";
+            PackageDirectory.CreateOrCleanDirectory();
+            BuildOutputDirectory.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            readmeFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            // changelogFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
 
-            BuildOutputDirectory.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
-            dpiAwareFixScript.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
-            readmeFile.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
-            configFile.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
-            // changelogFile.CopyToDirectory(packageDirectory, ExistsPolicy.FileOverwrite);
-
-            Log.Information("Packaging {OutputDirectory} to {ZipPath}", packageDirectory, ZipPath);
-            packageDirectory.ZipTo(ZipPath);
+            Log.Information("Packaging {OutputDirectory} to {ZipPath}", PackageDirectory, ZipPath);
+            PackageDirectory.ZipTo(ZipPath);
         });
 
     static AbsolutePath GetVatSysPluginsDirectory(string profileName)
