@@ -51,7 +51,13 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <ListBox ItemsSource="{Binding Callsigns, Mode=TwoWay}" SelectedItem="{Binding SelectedCallsign}" BorderThickness="0" SelectedIndex="1" Background="Transparent" Margin="2">
+        <ListBox
+            Name="CallsignList"
+            ItemsSource="{Binding Callsigns, Mode=TwoWay}"
+            SelectionMode="Multiple"
+            BorderThickness="0"
+            Background="Transparent"
+            Margin="2">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding}">
@@ -98,8 +104,8 @@
         </ListBox>
 
         <StackPanel Grid.Column="1" Orientation="Vertical">
-            <Button Content="Resume" Command="{Binding ResumeCommand}"/>
-            <Button Content="Remove" Command="{Binding RemoveCommand}"/>
+            <Button Content="Resume" Command="{Binding ResumeCommand}" CommandParameter="{Binding ElementName=CallsignList, Path=SelectedItems}"/>
+            <Button Content="Remove" Command="{Binding RemoveCommand}" CommandParameter="{Binding ElementName=CallsignList, Path=SelectedItems}"/>
         </StackPanel>
     </Grid>
 </UserControl>

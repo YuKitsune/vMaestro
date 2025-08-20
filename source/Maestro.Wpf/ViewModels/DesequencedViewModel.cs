@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Messages;
@@ -9,10 +9,6 @@ namespace Maestro.Wpf.ViewModels;
 public partial class DesequencedViewModel : ObservableObject
 {
     readonly IMediator _mediator;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ResumeCommand), nameof(RemoveCommand))]
-    string _selectedCallsign = string.Empty;
 
     [ObservableProperty]
     List<string> _callsigns = [];
@@ -26,25 +22,31 @@ public partial class DesequencedViewModel : ObservableObject
 
     public string AirportIdentifier { get; }
 
-    bool CanExecute() => !string.IsNullOrWhiteSpace(SelectedCallsign);
-
-    [RelayCommand(CanExecute = nameof(CanExecute))]
-    async Task Resume()
+    [RelayCommand]
+    async Task Resume(IList selectedCallsigns)
     {
-        await _mediator.Send(new ResumeSequencingRequest(AirportIdentifier, SelectedCallsign));
-
         var callsigns = Callsigns.ToList();
-        callsigns.Remove(SelectedCallsign);
+        foreach (var selectedCallsign in selectedCallsigns)
+        {
+            var selectedCallsignString = (string) selectedCallsign;
+            await _mediator.Send(new ResumeSequencingRequest(AirportIdentifier, selectedCallsignString));
+            callsigns.Remove(selectedCallsignString);
+        }
+
         Callsigns = callsigns;
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecute))]
-    async Task Remove()
+    [RelayCommand]
+    async Task Remove(IList selectedCallsigns)
     {
-        await _mediator.Send(new RemoveRequest(AirportIdentifier, SelectedCallsign));
-
         var callsigns = Callsigns.ToList();
-        callsigns.Remove(SelectedCallsign);
+        foreach (var selectedCallsign in selectedCallsigns)
+        {
+            var selectedCallsignString = (string) selectedCallsign;
+            await _mediator.Send(new RemoveRequest(AirportIdentifier, selectedCallsignString));
+            callsigns.Remove(selectedCallsignString);
+        }
+
         Callsigns = callsigns;
     }
 }
