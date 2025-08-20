@@ -30,6 +30,7 @@
             <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
             <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
             <converters:HasItemsConverter x:Key="HasItemsConverter" />
+            <converters:EqualityConverter x:Key="EqualityConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
@@ -188,7 +189,7 @@
                     <TextBlock.Style>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedSequence.Desequenced, Converter={StaticResource HasItemsConverter}}" Value="True">
+                                <DataTrigger Binding="{Binding SelectedSequence.DesequencedFlights, Converter={StaticResource HasItemsConverter}}" Value="True">
                                     <Setter Property="Foreground" Value="White" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -210,7 +211,24 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Command="{Binding Path=DataContext.SelectedSequence.SelectViewCommand, ElementName=SectorList}" CommandParameter="{Binding}" Content="{Binding Identifier}" />
+                        <Button Command="{Binding Path=DataContext.SelectedSequence.SelectViewCommand, ElementName=SectorList}" CommandParameter="{Binding}" Content="{Binding Identifier}">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
+                                    <Setter Property="Width" Value="72" />
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource EqualityConverter}">
+                                                    <Binding />
+                                                    <Binding Path="DataContext.SelectedSequence.SelectedView" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
