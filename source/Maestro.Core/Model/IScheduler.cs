@@ -75,7 +75,7 @@ public class Scheduler(
         {
             logger.Debug("Scheduling {Callsign}", flight.Callsign);
 
-            var currentRunwayMode = sequence.RunwayModeAt(flight.EstimatedLandingTime);
+            var currentRunwayMode = sequence.CurrentRunwayMode;
             var preferredRunways = flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier)
                 ? [flight.AssignedRunwayIdentifier!] // Use only the manually assigned runway
                 : runwayAssigner.FindBestRunways(
@@ -83,6 +83,7 @@ public class Scheduler(
                     flight.FeederFixIdentifier ?? string.Empty,
                     airportConfiguration.RunwayAssignmentRules);
 
+            DateTimeOffset absoluteEarliestLandingTime = flight.EstimatedLandingTime;
 tryAgain:
             DateTimeOffset? proposedLandingTime = null;
             var proposedRunway = preferredRunways.First();
@@ -96,7 +97,10 @@ tryAgain:
                     continue;
                 }
 
-                var earliestLandingTime = GetEarliestLandingTimeForRunway(flight, runwayConfiguration);
+                var earliestLandingTimeForRunway = GetEarliestLandingTimeForRunway(flight, runwayConfiguration);
+                var earliestLandingTime = absoluteEarliestLandingTime.IsBefore(earliestLandingTimeForRunway)
+                    ? earliestLandingTimeForRunway
+                    : absoluteEarliestLandingTime;
 
                 // If this runway results in less delay, then use that one
                 if (proposedLandingTime is null || earliestLandingTime.IsSameOrBefore(proposedLandingTime.Value))
@@ -106,13 +110,29 @@ tryAgain:
                 }
             }
 
-            if (sequence.NextRunwayMode is not null && proposedLandingTime.Value.IsSameOrAfter(sequence.FirstLandingTimeForNextMode))
+            if (proposedLandingTime is null)
             {
-                logger.Debug("Flight {Callsign} delayed beyond runway mode change, trying new mode", flight.Callsign);
+                logger.Warning("Could not schedule {Callsign}", flight.Callsign);
+                return;
+            }
 
-                currentRunwayMode = sequence.NextRunwayMode;
+            // If proposed landing time is after the last allowed time for current mode,
+            // or if it falls in the gap between modes, delay to the next mode's first allowed time
+            if (sequence.NextRunwayMode is not null)
+            {
+                var isInGap = proposedLandingTime.Value.IsAfter(sequence.LastLandingTimeForCurrentMode) &&
+                                         proposedLandingTime.Value.IsBefore(sequence.FirstLandingTimeForNextMode);
+                var isInNextMode = proposedLandingTime.Value.IsAfter(sequence.FirstLandingTimeForNextMode);
 
-                goto tryAgain;
+                if (isInGap || isInNextMode)
+                {
+                    logger.Debug("Flight {Callsign} delayed beyond runway mode change or into gap period, moving to next mode", flight.Callsign);
+
+                    currentRunwayMode = sequence.NextRunwayMode;
+                    absoluteEarliestLandingTime = sequence.FirstLandingTimeForNextMode;
+
+                    goto tryAgain;
+                }
             }
 
             // TODO: Double check how this is supposed to work

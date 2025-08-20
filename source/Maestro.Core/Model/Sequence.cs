@@ -46,13 +46,6 @@ public class Sequence
         CurrentRunwayMode = runwayMode;
     }
 
-    public RunwayMode RunwayModeAt(DateTimeOffset time)
-    {
-        return NextRunwayMode is not null && FirstLandingTimeForNextMode.IsSameOrBefore(time)
-            ? NextRunwayMode
-            : CurrentRunwayMode;
-    }
-
     public void TrySwapRunwayModes(IClock clock)
     {
         if (NextRunwayMode is null)
@@ -88,29 +81,10 @@ public class Sequence
         DateTimeOffset firstLandingTimeForNewMode,
         IScheduler scheduler)
     {
-        CreateSlotInternal(lastLandingTimeForOldMode, firstLandingTimeForNewMode);
-
         NextRunwayMode = runwayMode;
         LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
         FirstLandingTimeForNextMode = firstLandingTimeForNewMode;
         scheduler.Schedule(this);
-    }
-
-    /// <summary>
-    ///     Creates a slot for the given time range in which no flights can land.
-    /// </summary>
-    public void CreateSlot(DateTimeOffset startTime, DateTimeOffset endTime, IScheduler scheduler)
-    {
-        CreateSlotInternal(startTime, endTime);
-        scheduler.Schedule(this);
-    }
-
-    void CreateSlotInternal(DateTimeOffset startTime, DateTimeOffset endTime)
-    {
-        if (startTime >= endTime)
-            throw new MaestroException("Start time must be before end time");
-
-        throw new NotImplementedException();
     }
 
     public void AddFlight(Flight flight, IScheduler scheduler)

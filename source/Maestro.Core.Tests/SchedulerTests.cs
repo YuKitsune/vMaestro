@@ -1365,7 +1365,6 @@ public class SchedulerTests(
             ]
         };
 
-        // Create a leader flight on 34L that takes up a slot
         var leaderFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(18))
             .WithRunway("34L")
@@ -1377,16 +1376,13 @@ public class SchedulerTests(
             .WithFlight(leaderFlight)
             .Build();
 
-        // Schedule a runway mode change for 25 minutes from now
+        // Schedule a runway mode change for 20 minutes from now (after the leader lands)
         var modeChangeTime = _clock.UtcNow().AddMinutes(20);
         sequence.ChangeRunwayMode(futureRunwayMode, modeChangeTime, modeChangeTime, _scheduler);
 
-        // Schedule the leader first
-        _scheduler.Schedule(sequence);
-
         // Add a flight that would conflict with the leader, forcing it to be delayed beyond the mode change
         var followerFlight = new FlightBuilder("QFA2")
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
             .WithState(State.New)
             .Build();
 
@@ -1396,16 +1392,82 @@ public class SchedulerTests(
         _scheduler.Schedule(sequence);
 
         // Assert
-        // The follower flight should be scheduled using the new runway mode with 2-minute spacing
-        followerFlight.State.ShouldBe(State.Unstable);
-        followerFlight.AssignedRunwayIdentifier.ShouldBe("34R");
-
-        // The scheduled time should be at or after the mode change time
-        followerFlight.ScheduledLandingTime.ShouldBeGreaterThanOrEqualTo(leaderFlight.ScheduledLandingTime.AddSeconds(futureRunwayMode.Runways.Single().LandingRateSeconds));
-
         // Leader should remain on original runway with original schedule
         leaderFlight.AssignedRunwayIdentifier.ShouldBe("34L");
         leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
+
+        // The follower flight should be scheduled using the new runway mode with 2-minute spacing
+        followerFlight.State.ShouldBe(State.Unstable);
+        followerFlight.AssignedRunwayIdentifier.ShouldBe("34R");
+    }
+
+    [Fact]
+    public void WhenFlightDelayedBeyondInBetweenRunwayModeChange_NewRunwayModeUsed()
+    {
+        // Arrange
+        var initialRunwayMode = new RunwayMode
+        {
+            Identifier = "34L",
+            Runways =
+            [
+                new RunwayConfiguration
+                {
+                    Identifier = "34L",
+                    LandingRateSeconds = 180 // 3 minute spacing
+                }
+            ]
+        };
+
+        // Create future runway mode with different runway and different landing rate
+        var futureRunwayMode = new RunwayMode
+        {
+            Identifier = "34R",
+            Runways =
+            [
+                new RunwayConfiguration
+                {
+                    Identifier = "34R",
+                    LandingRateSeconds = 120 // 2 minute spacing
+                }
+            ]
+        };
+
+        var leaderFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(18))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithRunwayMode(initialRunwayMode)
+            .WithFlight(leaderFlight)
+            .Build();
+
+        // Schedule a runway mode change with a break-period of 10 minutes
+        var lastLandingTime = _clock.UtcNow().AddMinutes(20);
+        var firstLandingTime = _clock.UtcNow().AddMinutes(30);
+        sequence.ChangeRunwayMode(futureRunwayMode, lastLandingTime, firstLandingTime, _scheduler);
+
+        // Add a flight that would conflict with the leader, forcing it to be delayed beyond the mode change
+        var followerFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
+            .WithState(State.New)
+            .Build();
+
+        sequence.AddFlight(followerFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        // Leader should remain on original runway with original schedule
+        leaderFlight.AssignedRunwayIdentifier.ShouldBe("34L");
+        leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
+
+        // The follower flight should be scheduled using the new runway with the first landing time
+        followerFlight.State.ShouldBe(State.Unstable);
+        followerFlight.ScheduledLandingTime.ShouldBe(firstLandingTime);
+        followerFlight.AssignedRunwayIdentifier.ShouldBe("34R");
     }
 
     [Fact]
