@@ -11,7 +11,7 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:TerminalConfigurationViewModel}"
              d:DesignHeight="300"
-             d:DesignWidth="300"
+             Width="440"
              Padding="4">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -30,7 +30,7 @@
 
         <!-- I think this needs its own window -->
         <StackPanel Orientation="Horizontal">
-            <TextBlock Text="TMA Configuration: " />
+            <TextBlock Text="New TMA Configuration: " />
             <ComboBox
                 Padding="5"
                 ItemsSource="{Binding AvailableRunwayModes}"
@@ -43,7 +43,7 @@
 
         <Border Padding="2" />
 
-        <TextBlock Text="New Runway Rates:"/>
+        <TextBlock Text="Runway Acceptance Rates:"/>
         <Border Padding="0,2,0,0" />
         <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
             <Border Padding="2">
@@ -67,8 +67,9 @@
                                         Maximum="{Binding DataContext.MaximumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"/>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{Binding Identifier}"/>
+                                    <TextBlock Text=": "/>
                                     <TextBlock Text="{Binding LandingRateSeconds}" Padding="4,0,2,0"/>
-                                    <TextBlock Text="sec"/>
+                                    <TextBlock Text="s"/>
                                     <!-- TODO: Nautical miles -->
                                     <!-- TODO: Hourly rate -->
                                 </StackPanel>
@@ -88,53 +89,32 @@
             BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
             BevelType="Sunken">
             <Border Padding="2">
-                <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
 
-                    <!-- Change immediately -->
-                    <RadioButton GroupName="RunwayChangeTimeRadio" IsChecked="{Binding ChangeImmediately}">
-                        <TextBlock Text="Change configuration immediately" />
-                    </RadioButton>
+                    <TextBlock Grid.Row="0" Grid.Column="0">
+                        <Run Text="Last STA in configuration "/>
+                        <Run Text="{Binding OriginalRunwayModeIdentifier}"/>
+                    </TextBlock>
+                    <controls:TimeControl Grid.Row="0" Grid.Column="1" Time="{Binding LastLandingTime}"/>
 
-                    <Border Padding="0,2,0,0" />
-
-                    <!-- Change time -->
-                    <RadioButton GroupName="RunwayChangeTimeRadio">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Change configuration at: " Style="{StaticResource GenericTextStyle}"/>
-                            <TextBox
-                                Text="{Binding ChangeTime}"
-                                Margin="8,0"
-                                Width="40"
-                                MaxLength="4"
-                                IsEnabled="{Binding ChangeImmediately, Converter={StaticResource BoolInversionConverter}}"/>
-                        </StackPanel>
-                    </RadioButton>
-
-                    <Border Padding="0,2,0,0" />
-
-                    <!-- Ra-assign runways -->
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Re-assign runways: " Style="{StaticResource GenericTextStyle}"/>
-                        <CheckBox IsChecked="{Binding ReassignRunways}" Margin="8,0" />
-                    </StackPanel>
-
-                </StackPanel>
+                    <TextBlock Grid.Row="1" Grid.Column="0">
+                        <Run Text="First STA in configuration "/>
+                        <Run Text="{Binding SelectedRunwayModeIdentifier}"/>
+                    </TextBlock>
+                    <controls:TimeControl Grid.Row="1" Grid.Column="1" Time="{Binding FirstLandingTime}"/>
+                </Grid>
             </Border>
         </controls:BeveledBorder>
 
-        <!-- Errors -->
-        <ItemsControl ItemsSource="{Binding Path=Errors}" Margin="4">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Vertical" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding .}" Style="{StaticResource GenericTextStyle}"/>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <Border Padding="2" />
 
         <Grid>
             <Grid.ColumnDefinitions>

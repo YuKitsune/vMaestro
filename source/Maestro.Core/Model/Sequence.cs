@@ -36,8 +36,9 @@ public class Sequence
     public IReadOnlyList<Flight> Flights => _trackedFlights.AsReadOnly();
 
     public RunwayMode CurrentRunwayMode { get; private set; }
+    public DateTimeOffset LastLandingTimeForCurrentMode { get; private set; }
     public RunwayMode? NextRunwayMode { get; private set; }
-    public DateTimeOffset RunwayModeChangeTime { get; private set; }
+    public DateTimeOffset FirstLandingTimeForNextMode { get; private set; }
 
     public Sequence(AirportConfiguration airportConfiguration, RunwayMode runwayMode)
     {
@@ -47,7 +48,7 @@ public class Sequence
 
     public RunwayMode RunwayModeAt(DateTimeOffset time)
     {
-        return NextRunwayMode is not null && RunwayModeChangeTime.IsSameOrBefore(time)
+        return NextRunwayMode is not null && FirstLandingTimeForNextMode.IsSameOrBefore(time)
             ? NextRunwayMode
             : CurrentRunwayMode;
     }
@@ -57,12 +58,13 @@ public class Sequence
         if (NextRunwayMode is null)
             return;
 
-        if (RunwayModeChangeTime.IsAfter(clock.UtcNow()))
+        if (FirstLandingTimeForNextMode.IsAfter(clock.UtcNow()))
             return;
 
         CurrentRunwayMode = NextRunwayMode;
         NextRunwayMode = null;
-        RunwayModeChangeTime = default;
+        LastLandingTimeForCurrentMode = default;
+        FirstLandingTimeForNextMode = default;
     }
 
     /// <summary>
@@ -72,7 +74,8 @@ public class Sequence
     {
         CurrentRunwayMode = runwayMode;
         NextRunwayMode = null;
-        RunwayModeChangeTime = default;
+        LastLandingTimeForCurrentMode = default;
+        FirstLandingTimeForNextMode = default;
         scheduler.Schedule(this);
     }
 
@@ -81,12 +84,33 @@ public class Sequence
     /// </summary>
     public void ChangeRunwayMode(
         RunwayMode runwayMode,
-        DateTimeOffset changeTime,
+        DateTimeOffset lastLandingTimeForOldMode,
+        DateTimeOffset firstLandingTimeForNewMode,
         IScheduler scheduler)
     {
+        CreateSlotInternal(lastLandingTimeForOldMode, firstLandingTimeForNewMode);
+
         NextRunwayMode = runwayMode;
-        RunwayModeChangeTime = changeTime;
+        LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
+        FirstLandingTimeForNextMode = firstLandingTimeForNewMode;
         scheduler.Schedule(this);
+    }
+
+    /// <summary>
+    ///     Creates a slot for the given time range in which no flights can land.
+    /// </summary>
+    public void CreateSlot(DateTimeOffset startTime, DateTimeOffset endTime, IScheduler scheduler)
+    {
+        CreateSlotInternal(startTime, endTime);
+        scheduler.Schedule(this);
+    }
+
+    void CreateSlotInternal(DateTimeOffset startTime, DateTimeOffset endTime)
+    {
+        if (startTime >= endTime)
+            throw new MaestroException("Start time must be before end time");
+
+        throw new NotImplementedException();
     }
 
     public void AddFlight(Flight flight, IScheduler scheduler)
@@ -170,6 +194,7 @@ public class Sequence
         _trackedFlights.Clear();
         _pendingFlights.Clear();
         NextRunwayMode = null;
-        RunwayModeChangeTime = default;
+        LastLandingTimeForCurrentMode = default;
+        FirstLandingTimeForNextMode = default;
     }
 }

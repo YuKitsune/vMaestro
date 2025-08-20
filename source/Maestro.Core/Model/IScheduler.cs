@@ -106,7 +106,7 @@ tryAgain:
                 }
             }
 
-            if (sequence.NextRunwayMode is not null && proposedLandingTime.Value.IsSameOrAfter(sequence.RunwayModeChangeTime))
+            if (sequence.NextRunwayMode is not null && proposedLandingTime.Value.IsSameOrAfter(sequence.FirstLandingTimeForNextMode))
             {
                 logger.Debug("Flight {Callsign} delayed beyond runway mode change, trying new mode", flight.Callsign);
 

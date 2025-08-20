@@ -1331,6 +1331,9 @@ public class SchedulerTests(
         }
     }
 
+    // TODO: Test runway mode changes with slots
+    // TODO: Test slots
+
     [Fact]
     public void WhenFlightDelayedBeyondRunwayModeChange_NewRunwayModeUsed()
     {
@@ -1376,7 +1379,7 @@ public class SchedulerTests(
 
         // Schedule a runway mode change for 25 minutes from now
         var modeChangeTime = _clock.UtcNow().AddMinutes(20);
-        sequence.ChangeRunwayMode(futureRunwayMode, modeChangeTime, _scheduler);
+        sequence.ChangeRunwayMode(futureRunwayMode, modeChangeTime, modeChangeTime, _scheduler);
 
         // Schedule the leader first
         _scheduler.Schedule(sequence);

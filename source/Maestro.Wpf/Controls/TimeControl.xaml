@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="Maestro.Wpf.Controls.TimeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Maestro.Wpf"
+             xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
+             mc:Ignorable="d"
+             d:DesignHeight="20" d:DesignWidth="140">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left buttons (single chevron - 1 minute intervals) -->
+        <Button Grid.Row="0"
+                Name="MinuteDownButton"
+                Style="{StaticResource ButtonBaseStyle}"
+                Click="MinuteDownButton_Click"
+                Padding="1"
+                Margin="0,0,1,0">
+            <controls:Chevron Direction="Down"
+                              Foreground="{x:Static local:Theme.InteractiveTextColor}"
+                              Width="8" Height="8"/>
+        </Button>
+
+        <Button Grid.Column="1"
+                Name="MinuteUpButton"
+                Style="{StaticResource ButtonBaseStyle}"
+                Click="MinuteUpButton_Click"
+                Padding="1"
+                Margin="1,0,1,0">
+            <controls:Chevron Direction="Up"
+                              Foreground="{x:Static local:Theme.InteractiveTextColor}"
+                              Width="8" Height="8"/>
+        </Button>
+
+        <!-- Middle time display -->
+        <Border Grid.Column="2"
+                BorderBrush="{x:Static local:Theme.InteractiveTextColor}"
+                BorderThickness="1"
+                Margin="1,0">
+            <TextBlock Text="{Binding TimeText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                       Style="{StaticResource GenericTextStyle}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Margin="4,2"/>
+        </Border>
+
+        <!-- Right buttons (double chevron - 5 minute intervals) -->
+        <Button Grid.Column="3"
+                Name="FiveMinuteDownButton"
+                Style="{StaticResource ButtonBaseStyle}"
+                Click="FiveMinuteDownButton_Click"
+                Padding="1"
+                Margin="1,0,1,0">
+            <controls:DoubleChevron Direction="Down"
+                                    Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
+        </Button>
+
+        <Button Grid.Column="4"
+                Name="FiveMinuteUpButton"
+                Style="{StaticResource ButtonBaseStyle}"
+                Click="FiveMinuteUpButton_Click"
+                Padding="1"
+                Margin="1,0,0,0">
+            <controls:DoubleChevron Direction="Up"
+                                    Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
+        </Button>
+    </Grid>
+</UserControl>

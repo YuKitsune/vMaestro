@@ -22,7 +22,8 @@ public static class SequenceExtensionMethods
             PendingFlights = sequence.PendingFlights.Select(f => f.Callsign).ToArray(),
             CurrentRunwayMode = sequence.CurrentRunwayMode.ToMessage(),
             NextRunwayMode = sequence.NextRunwayMode?.ToMessage(),
-            RunwayModeChangeTime = sequence.RunwayModeChangeTime
+            LastLandingTimeForCurrentMode = sequence.LastLandingTimeForCurrentMode,
+            FirstLandingTimeForNextMode = sequence.FirstLandingTimeForNextMode
         };
     }
 }

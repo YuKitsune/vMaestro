@@ -28,13 +28,22 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 
         guiInvoker.InvokeOnUiThread(mainForm =>
         {
+            var lastLandingTime = sequence.LastLandingTimeForCurrentMode == default
+                ? clock.UtcNow()
+                : sequence.LastLandingTimeForCurrentMode;
+
+            var firstLandingTime = sequence.FirstLandingTimeForNextMode == default
+                ? clock.UtcNow()
+                : lastLandingTime.AddMinutes(5); // Make configurable
+
             var windowHandle = new WindowHandle();
             var viewModel = new TerminalConfigurationViewModel(
                 request.AirportIdentifier,
                 runwayModes,
                 sequence.CurrentRunwayMode,
                 sequence.NextRunwayMode,
-                sequence.RunwayModeChangeTime,
+                lastLandingTime,
+                firstLandingTime,
                 mediator,
                 windowHandle,
                 clock);

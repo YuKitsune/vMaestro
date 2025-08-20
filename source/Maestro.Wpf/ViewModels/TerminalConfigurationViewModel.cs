@@ -15,6 +15,9 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     readonly IWindowHandle _windowHandle;
 
     [ObservableProperty]
+    string _originalRunwayModeIdentifier;
+
+    [ObservableProperty]
     string _selectedRunwayModeIdentifier;
 
     [ObservableProperty]
@@ -24,13 +27,10 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     bool _changeImmediately;
 
     [ObservableProperty]
-    string _changeTime;
+    DateTimeOffset _lastLandingTime;
 
     [ObservableProperty]
-    bool _reassignRunways;
-
-    [ObservableProperty]
-    string[] _errors = [];
+    DateTimeOffset _firstLandingTime;
 
     public RunwayModeDto[] AvailableRunwayModes { get; }
 
@@ -43,7 +43,8 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         RunwayModeDto[] availableRunwayModes,
         RunwayModeDto currentRunwayMode,
         RunwayModeDto? nextTerminalConfiguration,
-        DateTimeOffset terminalConfigurationChangeTime,
+        DateTimeOffset lastLandingTimeForOldMode,
+        DateTimeOffset firstLandingTimeForNewMode,
         IMediator mediator,
         IWindowHandle windowHandle,
         IClock clock)
@@ -53,14 +54,14 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         _windowHandle = windowHandle;
         _clock = clock;
 
+        OriginalRunwayModeIdentifier = currentRunwayMode.Identifier;
+
         AvailableRunwayModes = availableRunwayModes;
         SelectedRunwayMode = new RunwayModeViewModel(nextTerminalConfiguration ?? currentRunwayMode);
         SelectedRunwayModeIdentifier = SelectedRunwayMode.Identifier;
 
-        ChangeImmediately = true;
-        ChangeTime = terminalConfigurationChangeTime == default
-            ? _clock.UtcNow().ToString("HHmm")
-            : terminalConfigurationChangeTime.ToString("HHmm");
+        LastLandingTime = lastLandingTimeForOldMode;
+        FirstLandingTime = firstLandingTimeForNewMode;
     }
 
     partial void OnSelectedRunwayModeIdentifierChanged(string value)
@@ -73,23 +74,9 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         }
     }
 
-    partial void OnChangeTimeChanged(string value)
-    {
-        Errors = [];
-        if (GetHoursAndMinutes(value, out _, out _))
-            return;
-
-        Errors = [$"{ChangeTime} is invalid. Please use the format HHmm"];
-    }
-
-
-    [RelayCommand(CanExecute = nameof(CanChangeRunwayMode))]
+    [RelayCommand]
     void ChangeRunwayMode()
     {
-        Errors = [];
-        if (!TryGetChangeTime(out var changeTime))
-            return;
-
         var runwayModeDto = new RunwayModeDto(
             SelectedRunwayMode.Identifier,
             SelectedRunwayMode.Runways
@@ -99,59 +86,15 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         _mediator.Send(new ChangeRunwayModeRequest(
             _airportIdentifier,
             runwayModeDto,
-            changeTime,
-            ReassignRunways));
+            LastLandingTime,
+            FirstLandingTime));
 
         CloseWindow();
-    }
-
-    bool CanChangeRunwayMode()
-    {
-        return GetHoursAndMinutes(ChangeTime, out _, out _);
     }
 
     [RelayCommand]
     void CloseWindow()
     {
         _windowHandle.Close();
-    }
-
-    bool TryGetChangeTime(out DateTimeOffset result)
-    {
-        result = _clock.UtcNow();
-
-        if (ChangeImmediately)
-            return true;
-
-        if (!GetHoursAndMinutes(ChangeTime, out var hours, out var minutes))
-            return false;
-
-        var currentTime = _clock.UtcNow();
-        var todayTarget = new DateTimeOffset(
-            currentTime.Year, currentTime.Month, currentTime.Day,
-            hours, minutes, 0, currentTime.Offset);
-
-        result = todayTarget > currentTime
-            ? todayTarget
-            : todayTarget.AddDays(1);
-        return true;
-    }
-
-    static bool GetHoursAndMinutes(string value, out int hours, out int minutes)
-    {
-        hours = -1;
-        minutes = -1;
-
-        if (string.IsNullOrWhiteSpace(value) || value.Length != 4)
-            return false;
-
-        if (!int.TryParse(value.Substring(0, 2), out hours) ||
-            !int.TryParse(value.Substring(2, 2), out minutes))
-            return false;
-
-        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59)
-            return false;
-
-        return true;
     }
 }
