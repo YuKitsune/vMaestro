@@ -26,7 +26,7 @@ If you have a large screen resolution, you may need to run the `dpiaware-fix.bat
 
 Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
-# Known Issues 
+# Known Issues
 
 - NoDelay and ManualLandingTime flights are not separated from Stable flights
 - When the Maestro.json file is missing, vatSys gets flooded with exceptions
@@ -43,26 +43,12 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
 # What's next?
 
-- [ ] Revise roadmap, add and remove functionality as necessary
 - [ ] Document the existing and outstanding functionality (what should it do)
 - [ ] Fix known bugs
 - [ ] Continue to MVP
 
 # Roadmap
 
-- [X] Eurocat Look and Feel
-    - [X] Pull theme from vatSys
-    - [X] Create custom controls to follow vatSys theme
-    - [X] Custom buttons
-    - [X] Custom separators
-    - [X] Clean up timeline
-    - [X] Clean up combobox
-    - [X] Fix sector selector
-    - [X] Move inline styles into Theme and Style.xaml
-
-- [X] Configuration
-    - [X] Load configuration from profile
-    
 - [ ] Offline Mode (MVP)
     - [X] Implement domain models, handlers, tiny types, etc.
     - [X] Publish notifications on FDP updates
@@ -76,51 +62,44 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [X] Change runway rates
     - [ ] Insert flight
     - [ ] Change ETA FF
+    - [ ] GitHub actions CI
+    - [ ] Architecture Decision Record
+    - [ ] Docs
 
 - [ ] Sequencing Algorithm Refinement
     - [ ] Revise speed-controls (`+` symbol, what does it actually mean, when it supposed to be used)
+    - [ ] Dependant runways (E.g: 34L depends on 16R, etc.)
     - [X] Use FF and STAR suffix for ETI
     - [ ] Separate enroute and TMA delays
     - [ ] Consider separation at the feeder fix
-    - [ ] Consider TMA delay modes (Normal, pressure, and max delay approach)
     - [ ] Factor GRIB winds into estimate calculations (If required)
-
-- [ ] Terminal Configuration Refinement
-    - [ ] Runway(s) to be used
-    - [ ] Time of effect
-    - [ ] STARs used in system calculations
-    - [ ] Restrictions to be applied (E.g: B747 configured for certain runways only)
+    - [ ] Maximum delay
+    - [ ] Approach types (TMA delay modes, normal, pressure, and max delay approach)
 
 - [ ] Online Mode
     - [ ] Run sequencing code in a standalone server
     - [ ] Connect to Maestro server via WebSocket
-    - [ ] Source configuration from server
+    - [ ] Source some configuration from server
     - [ ] Redirect notifications and requests to server
     - [ ] Source sequence information from server
-    - [ ] Allow Flow to modify the sequence
+    - [ ] Permissions (ENR, APP, FMP)
     - [ ] Authentication
 
 - [ ] Extras
+    - [ ] Revisit strong ID types
     - [ ] Ladder scrolling
-    - [ ] Account for GRIB winds
-    - [ ] Blockout periods
-    - [ ] Insert slot
-    - [ ] Zero Delay and priority flights
+    - [X] Insert slot
+    - [X] Zero Delay and priority flights
     - [ ] Departure list
     - [ ] Pending flights
     - [ ] Unit selector
     - [ ] Coordination window
-    - [ ] Revisit strong ID types
 
 - [ ] Fault Tolerance
     - [ ] Ensure exceptions are contained and recovered from. Do not crash vatSys.
-    - [ ] Persist offline sequences to sqlite in case of a restart.
+    - [ ] Persist offline sequences in case of a restart.
 
-- [ ] Look and feel improvements
-    - [ ] Refine border sizes and margins
-    - [ ] Check font sizing
-    - [ ] Size elements based on font width and height
-    - [ ] Check colors
+- [ ] Look and feel improvements final pass
 
 - [ ] Nice to haves
     - [ ] Custom debugger configuration (start and attach to vatSys)
