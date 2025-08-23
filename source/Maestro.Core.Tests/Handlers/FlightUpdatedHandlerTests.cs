@@ -49,6 +49,13 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var clock = clockFixture.Instance;
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
 
+        var position = new FlightPosition(
+            new Coordinate(0, 0),
+            0,
+            VerticalTrack.Maintaining,
+            0,
+            false);
+
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
@@ -58,7 +65,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1),
             "RIVET4",
             "34L",
-            null,
+            position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
         var scheduler = Substitute.For<IScheduler>();
@@ -82,6 +89,13 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var clock = clockFixture.Instance;
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
 
+        var position = new FlightPosition(
+            new Coordinate(0, 0),
+            0,
+            VerticalTrack.Maintaining,
+            0,
+            false);
+
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
@@ -91,7 +105,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1),
             null,
             "34L",
-            null,
+            position,
             [new FixEstimate("TESAT", clock.UtcNow().AddMinutes(30))]);
 
         var scheduler = Substitute.For<IScheduler>();
@@ -131,6 +145,36 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "RIVET4",
             "34L",
             position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
+
+        var scheduler = Substitute.For<IScheduler>();
+        var handler = GetHandler(sequence, clock, scheduler);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        var flight = sequence.Flights.ShouldHaveSingleItem();
+        flight.State.ShouldBe(State.Pending);
+    }
+
+    [Fact]
+    public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeAddedWithPendingState()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            WakeCategory.Medium,
+            "YSCB", // Departure airport configured in fixture
+            "YSSY",
+            clock.UtcNow().AddMinutes(10),
+            "RIVET4",
+            "34L",
+            null,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
         var scheduler = Substitute.For<IScheduler>();

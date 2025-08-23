@@ -57,7 +57,7 @@ public class FlightUpdatedHandler(
 
                 var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
                 var landingEstimate = notification.Estimates.Last().Estimate;
-                var hasDeparted = notification.Position is null || !notification.Position.IsOnGround;
+                var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
 
                 // Flights are added to the pending list if they are departing from a configured departure airport
                 if (airportConfiguration.DepartureAirports.Contains(notification.Origin) && !hasDeparted)

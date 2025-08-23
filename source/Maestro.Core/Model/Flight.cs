@@ -101,7 +101,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         State = state;
     }
 
-    bool IsActiveState(State state) => State is State.New or State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed;
+    bool IsActiveState(State state) => state is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed;
 
     public void Resume()
     {
