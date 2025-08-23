@@ -182,7 +182,7 @@
                 </Style>
             </StackPanel.Resources>
 
-            <Button Content="DEPS" IsEnabled="False" Style="{StaticResource TabBarButtonStyle}"/>
+            <Button Content="DEPS" Command="{Binding SelectedSequence.OpenPendingDeparturesWindowCommand}" Style="{StaticResource TabBarButtonStyle}"/>
             <Button Content="COORD" IsEnabled="False" Style="{StaticResource TabBarButtonStyle}" />
             <Button Command="{Binding SelectedSequence.OpenDesequencedWindowCommand}" Style="{StaticResource TabBarButtonStyle}">
                 <TextBlock Text="DESQ">

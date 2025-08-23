@@ -81,7 +81,15 @@ public partial class SequenceViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier, DesequencedFlights.ToArray()));
+    void OpenPendingDeparturesWindow()
+    {
+        _mediator.Send(new OpenPendingDeparturesWindowRequest(AirportIdentifier,
+            Flights.Where(f => f.State == State.Pending).ToArray()));
+    }
+
+    [RelayCommand]
+    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier,
+        Flights.Where(f => f.State == State.Desequenced).Select(f => f.Callsign).ToArray()));
 
     public void UpdateFrom(SequenceMessage sequenceMessage)
     {
