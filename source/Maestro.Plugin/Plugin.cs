@@ -334,16 +334,8 @@ public class Plugin : IPlugin
                     : null))
             .ToArray();
 
-        // TODO: Is there any point in tracking preactive flight plans?
-        //  Real Maestro does, but it might not be necessary for our purposes.
-        //  Revisit this when looking into the pending list.
         var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
         if (!isActivated)
-            return;
-
-        // Don't track flights that are on the ground
-        // TODO: Maestro is capable of sequencing flights on the ground. Need to revisit this.
-        if (updated.CoupledTrack is null || updated.CoupledTrack.OnGround)
             return;
 
         FlightPosition? position = null;
@@ -360,7 +352,8 @@ public class Plugin : IPlugin
                 new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
                 track.CorrectedAltitude,
                 verticalTrack,
-                track.GroundSpeed);
+                track.GroundSpeed,
+                track.OnGround);
         }
 
         var notification = new FlightUpdatedNotification(
@@ -371,7 +364,6 @@ public class Plugin : IPlugin
             updated.DesAirport,
             updated.STAR?.Name,
             updated.ArrivalRunway?.Name,
-            isActivated,
             position,
             estimates);
 

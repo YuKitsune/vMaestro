@@ -27,13 +27,11 @@ public class Sequence
 {
     readonly AirportConfiguration _airportConfiguration;
 
-    readonly List<Flight> _pendingFlights = [];
     readonly List<Flight> _trackedFlights = [];
     readonly List<Slot> _slots = [];
 
     public string AirportIdentifier => _airportConfiguration.Identifier;
     public string[] FeederFixes => _airportConfiguration.FeederFixes;
-    public IReadOnlyList<Flight> PendingFlights => _pendingFlights.AsReadOnly();
     public IReadOnlyList<Flight> Flights => _trackedFlights.AsReadOnly();
 
     public RunwayMode CurrentRunwayMode { get; private set; }
@@ -141,14 +139,6 @@ public class Sequence
         _trackedFlights.Remove(flight);
     }
 
-    public void AddPendingFlight(Flight flight)
-    {
-        if (_pendingFlights.Any(f => f.Callsign == flight.Callsign))
-            throw new MaestroException($"{flight.Callsign} is already pending");
-
-        _pendingFlights.Add(flight);
-    }
-
     public Slot CreateSlot(DateTimeOffset start, DateTimeOffset end, string[] runwayIdentifiers, IScheduler scheduler)
     {
         var slot = new Slot(Guid.NewGuid(), start, end, runwayIdentifiers);
@@ -183,7 +173,7 @@ public class Sequence
     public int NumberInSequence(Flight flight)
     {
         return _trackedFlights
-            .Where(f => f.IsInSequence)
+            .Where(f => f.Activated)
             .ToList()
             .IndexOf(flight) + 1;
     }
@@ -191,7 +181,7 @@ public class Sequence
     public int NumberForRunway(Flight flight)
     {
         return _trackedFlights
-            .Where(f => f.IsInSequence)
+            .Where(f => f.Activated)
             .Where(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier)
             .ToList()
             .IndexOf(flight) + 1;
@@ -200,7 +190,6 @@ public class Sequence
     public void Clear()
     {
         _trackedFlights.Clear();
-        _pendingFlights.Clear();
         NextRunwayMode = null;
         LastLandingTimeForCurrentMode = default;
         FirstLandingTimeForNextMode = default;

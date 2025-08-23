@@ -10,9 +10,6 @@ public class SequenceMessage
     public required DateTimeOffset LastLandingTimeForCurrentMode { get; init; }
     public required DateTimeOffset FirstLandingTimeForNextMode { get; init; }
     public required FlightMessage[] Flights { get; init; }
-    public required string[] DesequencedFlights { get; init; }
-    public required string[] LandedFlights { get; init; }
-    public required string[] PendingFlights { get; init; }
     public required SlotMessage[] Slots { get; init; }
 }
 

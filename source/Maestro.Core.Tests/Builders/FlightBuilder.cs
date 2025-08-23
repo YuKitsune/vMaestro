@@ -142,11 +142,9 @@ public class FlightBuilder(string callsign)
         flight.SetArrival(_assignedArrival);
         flight.SetRunway(_assignedRunway, _manualRunway);
 
-        flight.Activate(new FixedClock(activationTime));
-
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
 
-        flight.SetState(_state);
+        flight.SetState(_state, new FixedClock(activationTime));
 
         flight.NoDelay = _noDelay;
         flight.HighPriority = _highPriority;

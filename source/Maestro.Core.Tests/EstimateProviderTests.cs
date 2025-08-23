@@ -86,7 +86,8 @@ public class EstimateProviderTests
             new Coordinate(1, 0), // 60 nm
             25000,
             VerticalTrack.Maintaining,
-            60);
+            60,
+            isOnGround: false);
 
         var estimate = estimateProvider.GetFeederFixEstimate(
             _airportConfigurationFixture.Instance,

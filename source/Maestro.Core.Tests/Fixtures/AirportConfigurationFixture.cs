@@ -114,6 +114,7 @@ public class AirportConfigurationFixture
                     ["BOREE", "MEPIL", "MARLN"],
                     [WakeCategory.Light, WakeCategory.Medium],
                     ["34L", "16R"])
-            ]
+            ],
+            DepartureAirports = ["YSCB"]
         };
 }

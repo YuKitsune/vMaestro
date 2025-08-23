@@ -1592,5 +1592,6 @@
       ]
     }
   ],
+  "DepartureAirports": ["YSCB"],
   "SeparationRules": []
 }

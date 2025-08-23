@@ -83,12 +83,12 @@ public partial class MaestroView
 
             var now = DateTimeOffset.UtcNow;
             DrawLadder(now);
-            DrawAircraft(now);
+            DrawFlights(now);
             InvalidateVisual();
         });
     }
 
-    void DrawAircraft(DateTimeOffset currentTime)
+    void DrawFlights(DateTimeOffset currentTime)
     {
         var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
@@ -97,7 +97,7 @@ public partial class MaestroView
         if (ViewModel.SelectedSequence is null)
             return;
 
-        foreach (var flight in ViewModel.SelectedSequence.Flights.Where(f => f.State is not State.Desequenced and not State.Removed))
+        foreach (var flight in ViewModel.SelectedSequence.Flights.Where(f => f.State is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed))
         {
             double yOffset;
             switch (ViewModel.SelectedSequence.SelectedView.ViewMode)

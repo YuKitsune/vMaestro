@@ -276,7 +276,7 @@ public class FlightTests(ClockFixture clockFixture)
         flight.Remove();
 
         // Assert
-        var action = () => flight.SetState(State.Stable);
+        var action = () => flight.SetState(State.Stable, clockFixture.Instance);
         action.ShouldThrow<MaestroException>();
     }
 }
