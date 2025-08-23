@@ -363,6 +363,7 @@ public class Plugin : IPlugin
             updated.DepAirport,
             updated.DesAirport,
             ToDateTimeOffset(updated.ETD),
+            updated.EET,
             updated.STAR?.Name,
             updated.ArrivalRunway?.Name,
             position,

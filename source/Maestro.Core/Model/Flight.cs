@@ -28,6 +28,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         string originIdentifier,
         string destinationIdentifier,
         DateTimeOffset estimatedDepartureTime,
+        TimeSpan estimatedFlightTime,
         FixEstimate? feederFixEstimate,
         DateTimeOffset initialLandingTime)
     {
@@ -37,6 +38,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         OriginIdentifier = originIdentifier;
         DestinationIdentifier = destinationIdentifier;
         EstimatedDepartureTime = estimatedDepartureTime;
+        EstimatedFlightTime = estimatedFlightTime;
 
         FeederFixIdentifier = feederFixEstimate?.FixIdentifier;
         InitialFeederFixTime = feederFixEstimate?.Estimate;
