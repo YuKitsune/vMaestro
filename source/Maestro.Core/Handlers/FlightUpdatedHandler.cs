@@ -15,6 +15,7 @@ public record FlightUpdatedNotification(
     WakeCategory WakeCategory,
     string Origin,
     string Destination,
+    DateTimeOffset EstimatedDepartureTime,
     string? AssignedArrival,
     string? AssignedRunway,
     FlightPosition? Position,
@@ -244,6 +245,7 @@ public class FlightUpdatedHandler(
             notification.WakeCategory,
             notification.Origin,
             notification.Destination,
+            notification.EstimatedDepartureTime,
             feederFixEstimate,
             landingEstimate);
 

@@ -362,6 +362,7 @@ public class Plugin : IPlugin
             wake,
             updated.DepAirport,
             updated.DesAirport,
+            ToDateTimeOffset(updated.ETD),
             updated.STAR?.Name,
             updated.ArrivalRunway?.Name,
             position,
@@ -370,7 +371,7 @@ public class Plugin : IPlugin
         _mediator.Publish(notification);
     }
 
-    static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
+    internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
     {
         return new DateTimeOffset(
             dateTime.Year, dateTime.Month, dateTime.Day,

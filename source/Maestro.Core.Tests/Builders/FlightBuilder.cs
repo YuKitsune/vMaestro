@@ -9,6 +9,7 @@ public class FlightBuilder(string callsign)
     string _origin = "YMML";
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
+    DateTimeOffset estimatedTimeOfDeparture = DateTimeOffset.Now;
     DateTimeOffset activationTime = DateTimeOffset.Now;
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
     DateTimeOffset feederFixTime = default;
@@ -115,6 +116,12 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithEstimatedDeparture(DateTimeOffset estimatedDeparture)
+    {
+        estimatedTimeOfDeparture = estimatedDeparture;
+        return this;
+    }
+
     public Flight Build()
     {
         var feederFix = !string.IsNullOrEmpty(_feederFixIdentifier)
@@ -127,6 +134,7 @@ public class FlightBuilder(string callsign)
             _wakeCategory,
             _origin,
             _destination,
+            estimatedTimeOfDeparture,
             feederFix,
             landingEstimate);
 

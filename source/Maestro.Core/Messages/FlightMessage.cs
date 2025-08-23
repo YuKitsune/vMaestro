@@ -12,6 +12,7 @@ public class FlightMessage
     public required State State { get; init; }
     public required int NumberInSequence { get; init; }
     public required string? FeederFixIdentifier { get; init; }
+    public required DateTimeOffset EstimatedDepartureTime { get; init; }
     public required DateTimeOffset? InitialFeederFixEstimate { get; init; }
     public required DateTimeOffset? FeederFixEstimate { get; init; }
     public required DateTimeOffset? FeederFixTime { get; init; }
