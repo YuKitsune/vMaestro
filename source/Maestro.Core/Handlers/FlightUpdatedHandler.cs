@@ -16,6 +16,7 @@ public record FlightUpdatedNotification(
     string Origin,
     string Destination,
     DateTimeOffset EstimatedDepartureTime,
+    TimeSpan EstimatedFlightTime,
     string? AssignedArrival,
     string? AssignedRunway,
     FlightPosition? Position,
@@ -246,6 +247,7 @@ public class FlightUpdatedHandler(
             notification.Origin,
             notification.Destination,
             notification.EstimatedDepartureTime,
+            notification.EstimatedFlightTime,
             feederFixEstimate,
             landingEstimate);
 
