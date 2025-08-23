@@ -156,6 +156,6 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         var sequenceProvider = new MockSequenceProvider(sequence);
         var scheduler = Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
-        return new MoveFlightRequestHandler(sequenceProvider, scheduler, mediator);
+        return new MoveFlightRequestHandler(sequenceProvider, scheduler, mediator, clockFixture.Instance);
     }
 }

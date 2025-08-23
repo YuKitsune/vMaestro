@@ -37,7 +37,7 @@ public class MoveFlightRequestHandler(ISequenceProvider sequenceProvider, ISched
         flight.SetLandingTime(request.NewLandingTime, manual: true);
 
         if (flight.State == State.Unstable)
-            flight.SetState(State.Stable);
+            flight.SetState(State.Stable, clock);
 
         scheduler.Schedule(sequence);
 

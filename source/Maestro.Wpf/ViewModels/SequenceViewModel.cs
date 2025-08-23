@@ -33,16 +33,7 @@ public partial class SequenceViewModel : ObservableObject
     RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
-    List<FlightViewModel> _flights = [];
-
-    [ObservableProperty]
-    List<string> _desequencedFlights = [];
-
-    [ObservableProperty]
-    List<string> _landedFlights = [];
-
-    [ObservableProperty]
-    List<string> _pendingFlights = [];
+    List<FlightMessage> _flights = [];
 
     [ObservableProperty]
     SlotMessage[] _slots = [];
@@ -73,7 +64,7 @@ public partial class SequenceViewModel : ObservableObject
         CurrentRunwayMode = new RunwayModeViewModel(sequence.CurrentRunwayMode);
         NextRunwayMode = sequence.NextRunwayMode is null ? null : new RunwayModeViewModel(sequence.NextRunwayMode);
 
-        Flights = sequence.Flights.Select(f => new FlightViewModel(f)).ToList();
+        Flights = sequence.Flights.ToList();
         Slots = sequence.Slots;
     }
 
@@ -99,10 +90,7 @@ public partial class SequenceViewModel : ObservableObject
             ? new RunwayModeViewModel(sequenceMessage.NextRunwayMode)
             : null;
 
-        Flights = sequenceMessage.Flights.Select(flight => new FlightViewModel(flight)).ToList();
-        DesequencedFlights = sequenceMessage.DesequencedFlights.ToList();
-        LandedFlights = sequenceMessage.LandedFlights.ToList();
-        PendingFlights = sequenceMessage.PendingFlights.ToList();
+        Flights = sequenceMessage.Flights.ToList();
         Slots = sequenceMessage.Slots;
     }
 }

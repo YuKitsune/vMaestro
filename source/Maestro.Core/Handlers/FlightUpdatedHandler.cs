@@ -17,7 +17,6 @@ public record FlightUpdatedNotification(
     string Destination,
     string? AssignedArrival,
     string? AssignedRunway,
-    bool Activated,
     FlightPosition? Position,
     FixEstimate[] Estimates)
     : INotification;
@@ -46,47 +45,63 @@ public class FlightUpdatedHandler(
             using var lockedSequence = await sequenceProvider.GetSequence(notification.Destination, cancellationToken);
             var sequence = lockedSequence.Sequence;
 
-            var isNew = false;
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
+                .Single(a => a.Identifier == notification.Destination);
+
             var flight = sequence.FindTrackedFlight(notification.Callsign);
             if (flight is null)
             {
-                isNew = true;
-
                 // TODO: Make configurable
                 var flightCreationThreshold = TimeSpan.FromHours(2);
 
-                var feederFix = notification.Estimates
-                    .LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
+                var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
                 var landingEstimate = notification.Estimates.Last().Estimate;
+                var hasDeparted = notification.Position is null || !notification.Position.IsOnGround;
 
-                // TODO: Verify if this behaviour is correct
-                // Flights not planned via a feeder fix are added to the pending list
-                if (feederFix is null)
-                {
-                    flight = CreateMaestroFlight(
-                        notification,
-                        null,
-                        landingEstimate);
-
-                    // TODO: Revisit flight plan activation
-                    flight.Activate(clock);
-
-                    sequence.AddPendingFlight(flight);
-                    logger.Information("{Callsign} created (pending)", notification.Callsign);
-                }
-                // Only create flights in Maestro when they're within a specified range of the feeder fix
-                else if (feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
+                // Flights are added to the pending list if they are departing from a configured departure airport
+                if (airportConfiguration.DepartureAirports.Contains(notification.Origin) && !hasDeparted)
                 {
                     flight = CreateMaestroFlight(
                         notification,
                         feederFix,
                         landingEstimate);
 
-                    // TODO: Revisit flight plan activation
-                    flight.Activate(clock);
+                    flight.SetState(State.Pending, clock);
+                    sequence.AddFlight(flight, scheduler);
 
+                    logger.Information("{Callsign} created (pending)", notification.Callsign);
+                    return;
+                }
+
+                // TODO: Determine if this behaviour is correct
+                if (!hasDeparted)
+                    return;
+
+                // Only create flights in Maestro when they're within a specified range of the feeder fix
+                if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
+                {
+                    flight = CreateMaestroFlight(
+                        notification,
+                        feederFix,
+                        landingEstimate);
+
+                    flight.SetState(State.New, clock);
                     sequence.AddFlight(flight, scheduler);
                     logger.Information("{Callsign} created", notification.Callsign);
+                }
+                // Flights not tracking a feeder fix are created with high priority
+                else if (feederFix is null && landingEstimate - clock.UtcNow() <= flightCreationThreshold)
+                {
+                    flight = CreateMaestroFlight(
+                        notification,
+                        null,
+                        landingEstimate);
+
+                    flight.HighPriority = true;
+
+                    flight.SetState(State.New, clock);
+                    sequence.AddFlight(flight, scheduler);
+                    logger.Information("{Callsign} created (high priority)", notification.Callsign);
                 }
             }
 
@@ -110,14 +125,6 @@ public class FlightUpdatedHandler(
             flight.UpdateLastSeen(clock);
             flight.SetArrival(notification.AssignedArrival);
 
-            // TODO: Revisit flight plan activation
-            // The flight becomes 'active' in Maestro when the flight is activated in TAAATS.
-            // It is then updated by regular reports from the TAAATS FDP to the Maestro System.
-            // if (!flight.Activated && notification.Activated)
-            // {
-            //     flight.Activate(clock);
-            // }
-
             // Exit early if the flight should not be processed
             if (!flight.Activated ||
                 flight.State == State.Desequenced ||
@@ -134,7 +141,7 @@ public class FlightUpdatedHandler(
                 return;
             }
 
-            // TODO: Move this into the scheduler
+            // TODO: Move this into the recompute handler
             if (flight.NeedsRecompute)
             {
                 logger.Information("Recomputing {Callsign}", flight.Callsign);
@@ -159,7 +166,6 @@ public class FlightUpdatedHandler(
             }
 
             // Compute ETA and ETA_FF
-            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().Single(a => a.Identifier == flight.DestinationIdentifier);
             CalculateEstimates(flight, notification, airportConfiguration);
 
             logger.Debug("Flight updated: {Flight}", flight);

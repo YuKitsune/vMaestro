@@ -74,7 +74,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public TimeSpan TotalDelay => ScheduledLandingTime - InitialLandingTime;
     public TimeSpan RemainingDelay => ScheduledLandingTime - EstimatedLandingTime;
 
-    public bool Activated => ActivatedTime.HasValue;
+    public bool Activated => IsActiveState(State);
     public DateTimeOffset? ActivatedTime { get; private set; }
 
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
@@ -83,16 +83,22 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public DateTimeOffset LastSeen { get; private set; }
 
-    public bool IsInSequence => State is not State.Desequenced and not State.Removed;
+    public FixEstimate[] Fixes { get; private set; }
+    public TimeSpan EstimatedFlightTime { get; private set; }
 
-    public void SetState(State state)
+    public void SetState(State state, IClock clock)
     {
         if (State == State.Removed && state is not State.Removed)
             throw new MaestroException("Cannot change state as flight has been removed.");
 
+        if (!IsActiveState(State) && IsActiveState(state))
+            ActivatedTime = clock.UtcNow();
+
         // TODO: Prevent invalid state changes
         State = state;
     }
+
+    bool IsActiveState(State state) => State is State.New or State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed;
 
     public void Resume()
     {
@@ -108,8 +114,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         State = State.Removed;
     }
-
-    public bool ShouldSequence => State != State.Desequenced && State != State.Removed;
 
     public void SetArrival(string? arrivalIdentifier)
     {
@@ -197,14 +201,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         // HasBeenScheduled = true;
         ScheduledLandingTime = landingTime;
         ManualLandingTime = manual;
-    }
-
-    public void Activate(IClock clock)
-    {
-        if (Activated)
-            throw new MaestroException($"{Callsign} is already activated.");
-
-        ActivatedTime = clock.UtcNow();
     }
 
     public void UpdateLastSeen(IClock clock)

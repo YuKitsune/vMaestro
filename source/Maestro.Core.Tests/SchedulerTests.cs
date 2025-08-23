@@ -232,7 +232,7 @@ public class SchedulerTests(
         secondFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
 
         // Update the ETA for the second flight so that it should be earlier than the first one
-        firstFlight.SetState(State.Stable);
+        firstFlight.SetState(State.Stable, _clock);
         secondFlight.UpdateFeederFixEstimate(firstFlight.EstimatedFeederFixTime.Value.Add(TimeSpan.FromMinutes(-1)));
         secondFlight.UpdateLandingEstimate(firstFlight.EstimatedLandingTime.Add(TimeSpan.FromMinutes(-1)));
 
@@ -273,7 +273,7 @@ public class SchedulerTests(
 
         // First pass
         _scheduler.Schedule(sequence);
-        firstFlight.SetState(existingState);
+        firstFlight.SetState(existingState, _clock);
 
         // New flight added with an earlier ETA
         var secondFlight = new FlightBuilder("QFA2")
@@ -716,7 +716,7 @@ public class SchedulerTests(
 
         // Act
         // Stabilize the second flight and resume the first one
-        second.SetState(State.Stable);
+        second.SetState(State.Stable, _clock);
         sequence.ResumeSequencing(first.Callsign, _scheduler);
 
         // Assert

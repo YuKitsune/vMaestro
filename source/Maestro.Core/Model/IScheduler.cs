@@ -174,7 +174,7 @@ tryAgain:
         // Transition New flights to Unstable after scheduling
         foreach (var flight in sequencableFlights.Where(f => f.State == State.New))
         {
-            flight.SetState(State.Unstable);
+            flight.SetState(State.Unstable, clock);
         }
 
         DateTimeOffset GetEarliestLandingTimeForRunway(DateTimeOffset startTime, RunwayConfiguration runwayConfiguration)
@@ -253,25 +253,25 @@ tryAgain:
         // Keep the flight unstable until it's passed the minimum unstable time
         if (timeActive < minUnstableTime)
         {
-            flight.SetState(State.Unstable);
+            flight.SetState(State.Unstable, clock);
             return;
         }
 
         if (flight.ScheduledLandingTime.IsSameOrBefore(clock.UtcNow()))
         {
-            flight.SetState(State.Landed);
+            flight.SetState(State.Landed, clock);
         }
         else if (timeToLanding <= frozenThreshold)
         {
-            flight.SetState(State.Frozen);
+            flight.SetState(State.Frozen, clock);
         }
         else if (flight.InitialFeederFixTime?.IsSameOrBefore(clock.UtcNow()) ?? false)
         {
-            flight.SetState(State.SuperStable);
+            flight.SetState(State.SuperStable, clock);
         }
         else if (timeToFeeder <= stableThreshold)
         {
-            flight.SetState(State.Stable);
+            flight.SetState(State.Stable, clock);
         }
         else
         {
