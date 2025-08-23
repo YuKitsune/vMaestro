@@ -13,6 +13,7 @@ public static class FlightExtensionMethods
             AircraftType = flight.AircraftType,
             WakeCategory = flight.WakeCategory,
             OriginIdentifier = flight.OriginIdentifier,
+            EstimatedDepartureTime = flight.EstimatedDepartureTime,
             DestinationIdentifier = flight.DestinationIdentifier,
             State = flight.State,
             NumberInSequence = sequence.NumberInSequence(flight),

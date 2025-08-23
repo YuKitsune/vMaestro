@@ -27,6 +27,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         WakeCategory wakeCategory,
         string originIdentifier,
         string destinationIdentifier,
+        DateTimeOffset estimatedDepartureTime,
         FixEstimate? feederFixEstimate,
         DateTimeOffset initialLandingTime)
     {
@@ -35,6 +36,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         WakeCategory = wakeCategory;
         OriginIdentifier = originIdentifier;
         DestinationIdentifier = destinationIdentifier;
+        EstimatedDepartureTime = estimatedDepartureTime;
 
         FeederFixIdentifier = feederFixEstimate?.FixIdentifier;
         InitialFeederFixTime = feederFixEstimate?.Estimate;
@@ -51,6 +53,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public WakeCategory WakeCategory { get; private set; }
     public string OriginIdentifier { get; private set; }
     public string DestinationIdentifier { get; private set; }
+    public DateTimeOffset EstimatedDepartureTime { get; private set; }
     public string? AssignedArrivalIdentifier { get; private set; }
     public string? AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
