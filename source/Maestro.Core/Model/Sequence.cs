@@ -1,4 +1,4 @@
-﻿﻿using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Serilog;
@@ -25,6 +25,8 @@ namespace Maestro.Core.Model;
 
 public class Sequence
 {
+    private int _dummyCounter = 1;
+
     readonly AirportConfiguration _airportConfiguration;
 
     readonly List<Flight> _trackedFlights = [];
@@ -85,6 +87,22 @@ public class Sequence
         NextRunwayMode = runwayMode;
         LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
         FirstLandingTimeForNextMode = firstLandingTimeForNewMode;
+        scheduler.Schedule(this);
+    }
+
+    public void AddDummyFlight(DateTimeOffset landingTime, string? aircraftType, IScheduler scheduler, IClock clock)
+    {
+        var callsign = $"****{_dummyCounter++:00}*";
+
+        var flight = new Flight(callsign, AirportIdentifier, landingTime)
+        {
+            AircraftType = aircraftType
+        };
+
+        flight.SetLandingTime(landingTime, manual: true);
+        flight.SetState(State.Frozen, clock);
+
+        _trackedFlights.Add(flight);
         scheduler.Schedule(this);
     }
 

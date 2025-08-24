@@ -20,4 +20,16 @@ public static class DateTimeOffsetExtensionMethods
     {
         return left >= right;
     }
+
+    public static DateTimeOffset Rounded(this DateTimeOffset time)
+    {
+        return new DateTimeOffset(
+            time.Year,
+            time.Month,
+            time.Day,
+            time.Hour,
+            time.Minute,
+            0,
+            time.Offset);
+    }
 }

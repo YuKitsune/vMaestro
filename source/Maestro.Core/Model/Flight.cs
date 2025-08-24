@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
 
@@ -21,75 +20,58 @@ public sealed class FlightComparer : IComparer<Flight>
 
 public class Flight : IEquatable<Flight>, IComparable<Flight>
 {
-    public Flight(
-        string callsign,
-        string aircraftType,
-        WakeCategory wakeCategory,
-        string originIdentifier,
-        string destinationIdentifier,
-        DateTimeOffset estimatedDepartureTime,
-        TimeSpan estimatedFlightTime,
-        FixEstimate? feederFixEstimate,
-        DateTimeOffset initialLandingTime)
+    public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate)
     {
         Callsign = callsign;
-        AircraftType = aircraftType;
-        WakeCategory = wakeCategory;
-        OriginIdentifier = originIdentifier;
         DestinationIdentifier = destinationIdentifier;
-        EstimatedDepartureTime = estimatedDepartureTime;
-        EstimatedFlightTime = estimatedFlightTime;
-
-        FeederFixIdentifier = feederFixEstimate?.FixIdentifier;
-        InitialFeederFixTime = feederFixEstimate?.Estimate;
-        EstimatedFeederFixTime = feederFixEstimate?.Estimate;
-        ScheduledFeederFixTime = feederFixEstimate?.Estimate;
-
-        InitialLandingTime = initialLandingTime;
-        EstimatedLandingTime = initialLandingTime;
-        ScheduledLandingTime = initialLandingTime;
+        State = State.New;
+        UpdateLandingEstimate(initialLandingEstimate);
     }
 
-    public string Callsign { get; private set; }
-    public string AircraftType { get; private set; }
-    public WakeCategory WakeCategory { get; private set; }
-    public string OriginIdentifier { get; private set; }
-    public string DestinationIdentifier { get; private set; }
-    public DateTimeOffset EstimatedDepartureTime { get; private set; }
-    public string? AssignedArrivalIdentifier { get; private set; }
+    public string Callsign { get; }
+    public string? AircraftType { get; set; }
+    public WakeCategory? WakeCategory { get; set; }
+    public string? OriginIdentifier { get; set; }
+    public string DestinationIdentifier { get; }
+    public DateTimeOffset? EstimatedDepartureTime { get; set; }
+    public TimeSpan? EstimatedTimeEnroute { get; set; }
+
     public string? AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
-    public bool HighPriority { get; set; } = false;
+
+    public State State { get; private set; }
+    public bool HighPriority { get; set; }
     public bool NoDelay { get; set; }
     public bool NeedsRecompute { get; set; }
-
-    public State State { get; private set; } = State.New;
+    public bool Activated => IsActiveState(State);
+    public DateTimeOffset? ActivatedTime { get; private set; }
 
     public string? FeederFixIdentifier { get; private set; }
     public DateTimeOffset? InitialFeederFixTime { get; private set; }
     public DateTimeOffset? EstimatedFeederFixTime { get; private set; } // ETA_FF
     public DateTimeOffset? ScheduledFeederFixTime { get; private set; } // STA_FF
-    public DateTimeOffset? ActualFeederFixTime { get; private set; }
+    public DateTimeOffset? ActualFeederFixTime { get; private set; } // ATO_FF
     public bool HasPassedFeederFix => ActualFeederFixTime is not null;
 
     public DateTimeOffset InitialLandingTime { get; private set; }
     public DateTimeOffset EstimatedLandingTime { get; private set; } // ETA
     public DateTimeOffset ScheduledLandingTime { get; private set; } // STA
     public bool ManualLandingTime { get; private set; }
+
+    /// <summary>
+    ///     Used to insert flights at a specific target time without affecting the scheduled time.
+    ///     This is useful when inserting dummy or uncoupled flights where a landing estimate won't be available.
+    /// </summary>
+    public DateTimeOffset? TargetLandingTime { get; private set; }
+
     public TimeSpan TotalDelay => ScheduledLandingTime - InitialLandingTime;
     public TimeSpan RemainingDelay => ScheduledLandingTime - EstimatedLandingTime;
 
-    public bool Activated => IsActiveState(State);
-    public DateTimeOffset? ActivatedTime { get; private set; }
-
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
 
-    // public bool HasBeenScheduled { get; private set; }
-
+    public string? AssignedArrivalIdentifier { get; set; }
+    public FixEstimate[] Fixes { get; set; } = [];
     public DateTimeOffset LastSeen { get; private set; }
-
-    public FixEstimate[] Fixes { get; private set; }
-    public TimeSpan EstimatedFlightTime { get; private set; }
 
     public void SetState(State state, IClock clock)
     {
@@ -120,11 +102,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         State = State.Removed;
     }
 
-    public void SetArrival(string? arrivalIdentifier)
-    {
-        AssignedArrivalIdentifier = arrivalIdentifier;
-    }
-
     public void SetRunway(string runwayIdentifier, bool manual)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
@@ -149,6 +126,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         FeederFixIdentifier = feederFixIdentifier;
         EstimatedFeederFixTime = feederFixEstimate;
+        InitialFeederFixTime = feederFixEstimate;
         ScheduledFeederFixTime = feederFixEstimate;
         ActualFeederFixTime = actualFeederFixTime;
     }
@@ -195,7 +173,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
     {
         EstimatedLandingTime = landingEstimate;
-        if (State == State.Unstable)
+        if (State is State.New or State.Unstable)
         {
             InitialLandingTime = landingEstimate;
         }
@@ -203,9 +181,14 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
     {
-        // HasBeenScheduled = true;
         ScheduledLandingTime = landingTime;
         ManualLandingTime = manual;
+        TargetLandingTime = null;
+    }
+
+    public void SetTargetTime(DateTimeOffset targetTime)
+    {
+        TargetLandingTime = targetTime;
     }
 
     public void UpdateLastSeen(IClock clock)
@@ -232,5 +215,5 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 public enum FlowControls
 {
     ProfileSpeed,
-    S250
+    ReduceSpeed
 }

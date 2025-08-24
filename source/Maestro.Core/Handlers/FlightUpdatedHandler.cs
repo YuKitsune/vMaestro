@@ -124,8 +124,8 @@ public class FlightUpdatedHandler(
 
             logger.Debug("Updating {Callsign}", notification.Callsign);
 
+            UpdateFlightData(notification, flight);
             flight.UpdateLastSeen(clock);
-            flight.SetArrival(notification.AssignedArrival);
 
             // Exit early if the flight should not be processed
             if (!flight.Activated ||
@@ -240,20 +240,29 @@ public class FlightUpdatedHandler(
         FixEstimate? feederFixEstimate,
         DateTimeOffset landingEstimate)
     {
-        var flight = new Flight(
-            notification.Callsign,
-            notification.AircraftType,
-            notification.WakeCategory,
-            notification.Origin,
-            notification.Destination,
-            notification.EstimatedDepartureTime,
-            notification.EstimatedFlightTime,
-            feederFixEstimate,
-            landingEstimate);
+        var flight = new Flight(notification.Callsign, notification.Destination, landingEstimate);
+        UpdateFlightData(notification, flight);
+
+        if (feederFixEstimate is not null)
+            flight.SetFeederFix(feederFixEstimate.FixIdentifier, feederFixEstimate.Estimate, feederFixEstimate.ActualTimeOver);
+
+        flight.UpdateLandingEstimate(landingEstimate);
 
         if (feederFixEstimate is null)
             flight.HighPriority = true;
 
         return flight;
+    }
+
+    void UpdateFlightData(FlightUpdatedNotification notification, Flight flight)
+    {
+        flight.AircraftType = notification.AircraftType;
+        flight.WakeCategory = notification.WakeCategory;
+
+        flight.OriginIdentifier = notification.Origin;
+        flight.EstimatedDepartureTime = notification.EstimatedDepartureTime;
+        flight.EstimatedTimeEnroute = notification.EstimatedFlightTime;
+
+        flight.AssignedArrivalIdentifier = notification.AssignedArrival;
     }
 }

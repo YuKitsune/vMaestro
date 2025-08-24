@@ -1,11 +1,11 @@
-﻿using Maestro.Wpf.ViewModels;
+﻿using Maestro.Core.Messages;
 using MediatR;
 
 namespace Maestro.Wpf;
 
-public class OpenInformationWindowRequest(FlightViewModel flight) : IRequest<OpenInformationWindowResponse>
+public class OpenInformationWindowRequest(FlightMessage flight) : IRequest<OpenInformationWindowResponse>
 {
-    public FlightViewModel Flight { get; } = flight;
+    public FlightMessage Flight { get; } = flight;
 }
 
 public record OpenInformationWindowResponse;

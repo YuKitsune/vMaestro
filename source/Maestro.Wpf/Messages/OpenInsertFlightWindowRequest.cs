@@ -3,5 +3,9 @@ using MediatR;
 
 namespace Maestro.Wpf.Messages;
 
-public record OpenInsertFlightWindowResponse;
-public record OpenInsertFlightWindowRequest(string AirportIdentifier, string Callsign, InsertionPoint InsertionPoint) : IRequest<OpenInsertFlightWindowResponse>;
+public record OpenInsertFlightWindowRequest(
+    string AirportIdentifier,
+    IInsertFlightOptions Options,
+    FlightMessage[] LandedFlights,
+    FlightMessage[] PendingFlights)
+    : IRequest;

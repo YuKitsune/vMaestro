@@ -34,8 +34,13 @@ public class InsertDepartureRequestHandler(
             throw new MaestroException($"{request.Callsign} was not found in the pending list.");
         }
 
+        if (flight.EstimatedTimeEnroute is null)
+        {
+            throw new MaestroException($"{request.Callsign} does not have an ETE.");
+        }
+
         // Calculate ETA based on take-off time
-        var landingEstimate = request.TakeOffTime.Add(flight.EstimatedFlightTime);
+        var landingEstimate = request.TakeOffTime.Add(flight.EstimatedTimeEnroute.Value);
         flight.UpdateLandingEstimate(landingEstimate);
 
         // TODO: Calculate feeder fix estimate

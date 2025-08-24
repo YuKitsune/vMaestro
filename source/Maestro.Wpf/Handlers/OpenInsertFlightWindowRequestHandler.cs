@@ -4,9 +4,9 @@ using MediatR;
 
 namespace Maestro.Wpf.Handlers;
 
-public class OpenInsertFlightWindowRequestHandler : IRequestHandler<OpenInsertFlightWindowRequest, OpenInsertFlightWindowResponse>
+public class OpenInsertFlightWindowRequestHandler : IRequestHandler<OpenInsertFlightWindowRequest>
 {
-    public Task<OpenInsertFlightWindowResponse> Handle(OpenInsertFlightWindowRequest request, CancellationToken cancellationToken)
+    public Task Handle(OpenInsertFlightWindowRequest request, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
