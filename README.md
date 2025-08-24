@@ -74,11 +74,15 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
     - [X] Desequence
     - [X] Change runway mode
     - [X] Change runway rates
-    - [ ] Insert flight
+    - [X] Insert flight
     - [ ] Change ETA FF
+    - [ ] Fix failing tests
+    - [ ] TODO hunting
 
 - [ ] Sequencing Algorithm Refinement
     - [ ] Revise speed-controls (`+` symbol, what does it actually mean, when it supposed to be used)
+    - [ ] Maximum delay (revisit High Priority and Zero Delay)
+    - [ ] Approach types
     - [X] Use FF and STAR suffix for ETI
     - [ ] Separate enroute and TMA delays
     - [ ] Consider separation at the feeder fix

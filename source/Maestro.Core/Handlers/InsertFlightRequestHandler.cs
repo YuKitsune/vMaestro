@@ -55,6 +55,7 @@ public class InsertFlightRequestHandler(ISequenceProvider sequenceProvider, ISch
         }
 
         // Create a new flight if it does not exist
+        // TODO: This doesn't seem to work. Flight never gets a scheduled landing time.
         if (!string.IsNullOrWhiteSpace(request.Callsign))
         {
             var flight = new Flight(request.Callsign, request.AirportIdentifier, landingTime)

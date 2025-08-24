@@ -25,10 +25,14 @@ using MessageBox = System.Windows.Forms.MessageBox;
 
 // TODO:
 //  - What's next?
-//      - Find a better way to deal with concurrency
-//          - Handlers are publishing messages leading to other handlers attempting to acquire the lock.
-//      - Insert flights and pending list
-//      - Manual ETA_FF
+//      - Fix flight insertion with new flights
+//      - Check pending departures on network or sim
+//      - Check overshoots on network or sim
+//      - Fix issues with flights not tracking via FF
+//      - Implement tests for flight insertion
+//      - MakePending command
+//      - Change ETA_FF command
+//      - Manual landing time UI stuff (don't click and drag frozen flights, swap, single click, etc.)
 
 namespace Maestro.Plugin;
 
