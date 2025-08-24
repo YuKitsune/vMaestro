@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Messages;
+using Maestro.Core.Model;
 using Maestro.Wpf.Messages;
 using MediatR;
 
@@ -8,22 +9,20 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class FlightLabelViewModel(
     IMediator mediator,
-    FlightViewModel flightViewModel,
+    SequenceViewModel sequence,
+    FlightMessage flightViewModel,
     RunwayModeViewModel runwayModeViewModel)
     : ObservableObject
 {
     [ObservableProperty]
     bool _isSelected = false;
 
-    public FlightViewModel FlightViewModel { get; } = flightViewModel;
+    readonly SequenceViewModel _sequence = sequence;
+
+    public FlightMessage FlightViewModel { get; } = flightViewModel;
     public RunwayModeViewModel RunwayModeViewModel { get; } = runwayModeViewModel;
 
-    public FlightLabelViewModel() : this(
-        null!,
-        new FlightViewModel(),
-        new RunwayModeViewModel("34", [new RunwayViewModel("34L", 180)]))
-    {
-    }
+    public bool CanInsertBefore => FlightViewModel.State != State.Frozen;
 
     [RelayCommand]
     void ShowInformationWindow()
@@ -43,28 +42,53 @@ public partial class FlightLabelViewModel(
         mediator.Send(new ChangeRunwayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, runwayIdentifier));
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanInsertFlightBefore))]
     void InsertFlightBefore()
     {
-        mediator.Send(new OpenInsertFlightWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, InsertionPoint.Before));
+        mediator.Send(
+            new OpenInsertFlightWindowRequest(
+                FlightViewModel.DestinationIdentifier,
+                new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
+                _sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
+                _sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
+    }
+
+    bool CanInsertFlightBefore()
+    {
+        return FlightViewModel.State != State.Frozen;
     }
 
     [RelayCommand]
     void InsertFlightAfter()
     {
-        mediator.Send(new OpenInsertFlightWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, InsertionPoint.After));
+        mediator.Send(
+            new OpenInsertFlightWindowRequest(
+                FlightViewModel.DestinationIdentifier,
+                new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
+                _sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
+                _sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
     }
 
     [RelayCommand]
     void InsertSlotBefore()
     {
-        mediator.Send(new OpenInsertSlotWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, InsertionPoint.Before));
+        mediator.Send(
+            new BeginSlotCreationRequest(
+                FlightViewModel.DestinationIdentifier,
+                [FlightViewModel.AssignedRunway],
+                FlightViewModel.LandingTime,
+                SlotCreationReferencePoint.Before));
     }
 
     [RelayCommand]
     void InsertSlotAfter()
     {
-        mediator.Send(new OpenInsertSlotWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, InsertionPoint.After));
+        mediator.Send(
+            new BeginSlotCreationRequest(
+                FlightViewModel.DestinationIdentifier,
+                [FlightViewModel.AssignedRunway],
+                FlightViewModel.LandingTime,
+                SlotCreationReferencePoint.After));
     }
 
     [RelayCommand]

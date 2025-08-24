@@ -273,8 +273,10 @@
                             </Style.Triggers>
                         </Style>
                     </ContextMenu.Style>
-                    <MenuItem Header="Insert Flight" Command="{Binding InsertFlightCommand}" IsEnabled="False"/>
-                    <MenuItem Header="Insert Slot" Click="BeginInsertingSlot">
+                    <MenuItem Header="Insert Flight" Click="InsertFlight"/>
+                    <MenuItem Header="Insert Slot">
+                        <MenuItem Header="Before" Click="BeginInsertingSlotBefore"/>
+                        <MenuItem Header="After" Click="BeginInsertingSlotAfter"/>
                         <MenuItem.Style>
                             <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
                                 <Setter Property="Visibility" Value="Collapsed"/>

@@ -1,22 +1,25 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-// TODO: Try to combine this with InsertFlightViewModel (and associated views)
+// TODO: Try to combine this with PendingDeparturesViewModel (and associated views)
 
-public partial class PendingDeparturesViewModel : ObservableObject
+public partial class InsertFlightViewModel : ObservableObject
 {
-    readonly string _airportIdentifier;
     readonly IWindowHandle _windowHandle;
     readonly IMediator _mediator;
 
+    readonly string _airportIdentifier;
+    readonly IInsertFlightOptions _options;
+
     bool _isUpdatingFromSelection = false;
+
+    [ObservableProperty]
+    FlightMessage[] _landedFlights = [];
 
     [ObservableProperty]
     FlightMessage[] _pendingFlights = [];
@@ -32,27 +35,22 @@ public partial class PendingDeparturesViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
     string _aircraftType = "";
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
-    string _departureIdentifier = "";
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
-    DateTimeOffset _takeoffTime;
-
-    public PendingDeparturesViewModel(
+    public InsertFlightViewModel(
         string airportIdentifier,
+        IInsertFlightOptions options,
+        FlightMessage[] landedFlights,
         FlightMessage[] pendingFlights,
         IWindowHandle windowHandle,
-        IMediator mediator,
-        IClock clock)
+        IMediator mediator)
     {
         _airportIdentifier = airportIdentifier;
+        _options = options;
+
+        LandedFlights = landedFlights;
+        PendingFlights = pendingFlights;
+
         _windowHandle = windowHandle;
         _mediator = mediator;
-
-        PendingFlights = pendingFlights;
-        TakeoffTime = clock.UtcNow().AddMinutes(5).Rounded();
     }
 
     partial void OnSelectedFlightChanged(FlightMessage? value)
@@ -60,7 +58,6 @@ public partial class PendingDeparturesViewModel : ObservableObject
         _isUpdatingFromSelection = true;
         Callsign = value?.Callsign ?? "";
         AircraftType = value?.AircraftType ?? "";
-        DepartureIdentifier = value?.OriginIdentifier ?? "";
         _isUpdatingFromSelection = false;
     }
 
@@ -80,29 +77,23 @@ public partial class PendingDeparturesViewModel : ObservableObject
         SelectedFlight = null;
     }
 
-    partial void OnDepartureIdentifierChanged(string _)
-    {
-        if (_isUpdatingFromSelection)
-            return;
-
-        SelectedFlight = null;
-    }
-
     [RelayCommand(CanExecute = nameof(CanInsert))]
     public void Insert()
     {
-        _mediator.Send(new InsertDepartureRequest(
-            _airportIdentifier,
-            Callsign,
-            AircraftType,
-            DepartureIdentifier,
-            TakeoffTime));
+        _mediator.Send(
+            new InsertFlightRequest(
+                _airportIdentifier,
+                Callsign,
+                AircraftType,
+                _options));
+
         CloseWindow();
     }
 
     bool CanInsert()
     {
-        return !string.IsNullOrEmpty(Callsign) && !string.IsNullOrEmpty(AircraftType) && !string.IsNullOrEmpty(DepartureIdentifier);
+        return !string.IsNullOrEmpty(Callsign) &&
+               !string.IsNullOrEmpty(AircraftType);
     }
 
     [RelayCommand]

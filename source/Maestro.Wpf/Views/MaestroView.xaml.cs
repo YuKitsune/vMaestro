@@ -10,6 +10,7 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
+using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using MediatR;
 
@@ -133,6 +134,7 @@ public partial class MaestroView
             {
                 DataContext = new FlightLabelViewModel(
                     Ioc.Default.GetRequiredService<IMediator>(),
+                    ViewModel.SelectedSequence,
                     flight,
                     ViewModel.SelectedSequence.CurrentRunwayMode),
                 Width = width,
@@ -177,7 +179,7 @@ public partial class MaestroView
         }
     }
 
-    LadderPosition? GetLadderPositionFor(FlightViewModel flight)
+    LadderPosition? GetLadderPositionFor(FlightMessage flight)
     {
         if (ViewModel.SelectedSequence.SelectedView is null)
             return null;
@@ -462,7 +464,7 @@ public partial class MaestroView
             var yOffset = canvasHeight - clickPosition.Y;
             var currentTime = DateTimeOffset.UtcNow;
             var clickTime = GetTimeForYOffset(currentTime, yOffset);
-            ViewModel.EndInsertingSlotCommand.Execute(clickTime);
+            ViewModel.EndSlotCreation(clickTime);
 
             // Prevent the context menu from opening as we're ending the slot creation
             _suppressContextMenu = true;
@@ -483,15 +485,62 @@ public partial class MaestroView
         _suppressContextMenu = false;
     }
 
-    void BeginInsertingSlot(object sender, RoutedEventArgs e)
+    void BeginInsertingSlotBefore(object sender, RoutedEventArgs e)
     {
         if (sender is not MenuItem menuItem)
             return;
 
+        BeginInsertingSlot(menuItem, SlotCreationReferencePoint.Before);
+    }
+
+    void BeginInsertingSlotAfter(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem menuItem)
+            return;
+
+        BeginInsertingSlot(menuItem, SlotCreationReferencePoint.After);
+    }
+
+    void BeginInsertingSlot(MenuItem menuItem, SlotCreationReferencePoint referencePoint)
+    {
+        var clickData = GetClickDataFor(menuItem);
+        if (clickData is null)
+            return;
+
+        if (clickData.ViewMode == ViewMode.Enroute)
+            return;
+
+        ViewModel.BeginSlotCreation(
+            clickData.ClickTime,
+            referencePoint,
+            clickData.FilterItems);
+
+        _contextMenuPosition = null;
+    }
+
+    void InsertFlight(object sender, RoutedEventArgs routedEventArgs)
+    {
+        if (sender is not MenuItem menuItem)
+            return;
+
+        var clickData = GetClickDataFor(menuItem);
+        if (clickData is null)
+            return;
+
+        if (clickData.ViewMode == ViewMode.Enroute)
+            return;
+
+        var options = new ExactInsertionOptions(clickData.ClickTime);
+
+        ViewModel.ShowInsertFlightWindow(options);
+    }
+
+    ClickData? GetClickDataFor(MenuItem menuItem)
+    {
         // Get the ContextMenu to access its placement target (the Canvas)
         var contextMenu = menuItem.Parent as ContextMenu;
         if (contextMenu?.PlacementTarget is not Canvas canvas || !_contextMenuPosition.HasValue)
-            return;
+            return null;
 
         contextMenu.IsOpen = false;
 
@@ -504,23 +553,26 @@ public partial class MaestroView
 
         // Determine which side was clicked and get corresponding runway identifiers
         if (ViewModel.SelectedSequence?.SelectedView == null)
-            return;
+            return null;
 
         // Determine which side of the ladder was clicked to get the correct runways
         var canvasWidth = canvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
-        var runwayIdentifiers = mousePosition.X < middlePoint
+
+        // If the user right-clicked on the left side, we insert a flight for the left ladder
+        // If the user right-clicked on the right side, we insert a flight for the right ladder
+        var filterItems = mousePosition.X < middlePoint
             ? ViewModel.SelectedSequence.SelectedView.LeftLadder
-            : // Left side clicked - get left ladder runways
-            ViewModel.SelectedSequence.SelectedView.RightLadder; // Right side clicked - get right ladder runways
+            : ViewModel.SelectedSequence.SelectedView.RightLadder;
 
-        var beginSlotArgs = new BeginSlotArgs
-        {
-            StartTime = clickTime,
-            RunwayIdentifiers = runwayIdentifiers
-        };
-
-        ViewModel.StartInsertingSlotCommand.Execute(beginSlotArgs);
-        _contextMenuPosition = null;
+        return new ClickData(
+            clickTime,
+            ViewModel.SelectedSequence.SelectedView.ViewMode,
+            filterItems);
     }
+
+    record ClickData(
+        DateTimeOffset ClickTime,
+        ViewMode ViewMode,
+        string[] FilterItems);
 }

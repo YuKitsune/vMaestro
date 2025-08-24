@@ -14,7 +14,7 @@ public class FlightBuilder(string callsign)
     DateTimeOffset activationTime = DateTimeOffset.Now;
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
     DateTimeOffset feederFixTime = default;
-    DateTimeOffset passedFeederFix = default;
+    DateTimeOffset? passedFeederFix = null;
 
     DateTimeOffset landingEstimate = DateTimeOffset.Now;
     DateTimeOffset landingTime = default;
@@ -131,31 +131,27 @@ public class FlightBuilder(string callsign)
 
     public Flight Build()
     {
-        var feederFix = !string.IsNullOrEmpty(_feederFixIdentifier)
-            ? new FixEstimate(_feederFixIdentifier, feederFixEstimate)
-            : null;
+        var flight = new Flight(callsign, _destination, landingEstimate)
+        {
+            AircraftType = _aircraftType,
+            WakeCategory = _wakeCategory,
+            OriginIdentifier = _origin,
+            EstimatedDepartureTime = estimatedTimeOfDeparture,
+            EstimatedTimeEnroute = _estimatedFlightTime,
+            AssignedArrivalIdentifier = _assignedArrival
+        };
 
-        var flight = new Flight(
-            callsign,
-            _aircraftType,
-            _wakeCategory,
-            _origin,
-            _destination,
-            estimatedTimeOfDeparture,
-            _estimatedFlightTime,
-            feederFix,
-            landingEstimate);
+        flight.SetFeederFix(_feederFixIdentifier, feederFixEstimate, passedFeederFix);
 
         if (feederFixTime != default)
             flight.SetFeederFixTime(feederFixTime);
 
-        if (passedFeederFix != default)
-            flight.PassedFeederFix(passedFeederFix);
-
         if (landingTime != default)
             flight.SetLandingTime(landingTime, manualLandingTime);
 
-        flight.SetArrival(_assignedArrival);
+        if (landingTime == default)
+            flight.SetLandingTime(landingEstimate);
+
         flight.SetRunway(_assignedRunway, _manualRunway);
 
         flight.UpdateLastSeen(new FixedClock(_lastSeen));

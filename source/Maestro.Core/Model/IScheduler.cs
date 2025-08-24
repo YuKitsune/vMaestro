@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Serilog;
 
 namespace Maestro.Core.Model;
@@ -9,6 +10,13 @@ public interface IScheduler
 {
     void Schedule(Sequence sequence);
 }
+
+// Test cases:
+// - When scheduling an overshoot flight, between two frozen flights, it is scheduled in between them
+// - When scheduling an overshoot flight, between two frozen flights, and no space is available, it is delayed until there is space
+// - When scheduling an overshoot flight, in front of SuperStable flights, SuperStable flights are delayed
+// - When scheduling an overshoot flight, the sequence is recalculated for all subsequent flights
+// - When scheduling a new flight, stable flights are recalculated
 
 public class Scheduler(
     IRunwayAssigner runwayAssigner,
@@ -24,57 +32,85 @@ public class Scheduler(
             .GetAirportConfigurations()
             .Single(c => c.Identifier == sequence.AirportIdentifier);
 
-        var sequencableFlights = sequence.Flights
-            .Where(f => f.State is not State.Desequenced and not State.Removed)
-            .ToList();
-
-        // TODO: Stable and SuperStable flights should still be processed, but only if:
-        // 1. A new flight is introduced in front of them (Stable flights only)
-        // 2. A flight is manually inserted in front of them
-        // 3. A slot has been added that conflicts with their landing time
-        // Only Frozen flights should be **completely** frozen
         var sequencedFlights = new SortedSet<Flight>(FlightComparer.Instance);
-        foreach (var flight in sequencableFlights.Where(f => f.State is State.Stable or State.SuperStable or State.Frozen or State.Landed))
+
+        // Landed and frozen flights cannot move at all, no action required
+        foreach (var flight in sequence.Flights.Where(f => f.State is State.Frozen or State.Landed))
         {
             sequencedFlights.Add(flight);
         }
 
-        var flightsToSchedule = sequencableFlights
-            .Where(f => f.State is State.New or State.Unstable)
-            .OrderBy(f => f.EstimatedLandingTime)
-            .ToList();
-
-        // First pass: NoDelay
-        foreach (var flight in flightsToSchedule.Where(f => f.NoDelay))
+        // High-priority flights
+        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.HighPriority || f.ManualLandingTime || f.NoDelay))
         {
-            // TODO: Consider runway assignment
-            Schedule(flight, flight.EstimatedLandingTime, flight.AssignedRunwayIdentifier);
             sequencedFlights.Add(flight);
         }
 
-        // Second pass: Manual landing time
-        foreach (var flight in flightsToSchedule.Where(f => f.ManualLandingTime))
+        // Inserted flights go between or after Frozen flights, but cannot displace them
+        var recalculate = false;
+        foreach (var flight in sequence.Flights.Where(f => f.State is State.Overshoot))
         {
-            // TODO: Consider runway assignment
+            if (HasBeenScheduled(flight))
+                continue;
 
-            // Landing time is set elsewhere, so we can just add it as-is
+            if (flight.TargetLandingTime is null)
+            {
+                logger.Warning("Overshoot flight {Callsign} has no target landing time", flight.Callsign);
+                break;
+            }
+
+            ScheduleInternal(flight, flight.TargetLandingTime.Value, flight.TargetLandingTime.Value);
+            flight.SetState(State.Frozen, clock); // TODO: This state change should be configurable
+            sequencedFlights.Add(flight);
+            recalculate = true;
+        }
+
+        // SuperStable flights generally cannot move, though inserted flights can displace them
+        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.State is State.SuperStable))
+        {
+            if (HasBeenScheduled(flight))
+                continue;
+
+            if (recalculate)
+                ScheduleInternal(flight, flight.ScheduledLandingTime, flight.ScheduledLandingTime);
+
             sequencedFlights.Add(flight);
         }
 
-        // TODO: If any flights have ManualLandingTime or NoDelay, we need to make sure no Stable flights are in conflict with them
-        // If there are, they need to be delayed to avoid conflicting with the NoDelay or ManualLandingTime flights.
-
-        // Third pass: High priority
-        foreach (var flight in flightsToSchedule.Where(f => f.HighPriority))
+        // New flights can displace Stable flights, but not SuperStable flights
+        foreach (var flight in sequence.Flights.OrderBy(f => f.EstimatedLandingTime).Where(f => f.State is State.New))
         {
-            ScheduleInternal(flight);
+            if (HasBeenScheduled(flight))
+                continue;
+
+            var lastSuperStableFlight = sequencedFlights.LastOrDefault(f => f.State is State.SuperStable);
+
+            ScheduleInternal(flight, lastSuperStableFlight?.ScheduledLandingTime ?? flight.EstimatedLandingTime, flight.EstimatedLandingTime);
+            flight.SetState(State.Unstable, clock);
+
+            sequencedFlights.Add(flight);
+            recalculate = true;
+        }
+
+        // Stable flights can only be moved if a new flight is inserted in front of them
+        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.State is State.Stable))
+        {
+            if (HasBeenScheduled(flight))
+                continue;
+
+            if (recalculate)
+                ScheduleInternal(flight, flight.ScheduledLandingTime, flight.ScheduledLandingTime);
+
             sequencedFlights.Add(flight);
         }
 
-        // Fourth pass: Everyone else
-        foreach (var flight in flightsToSchedule.Where(f => f is {NoDelay: false, ManualLandingTime:false, HighPriority: false}))
+        // Unstable flights are rescheduled every time
+        foreach (var flight in sequence.Flights.Where(f => f.State is State.Unstable))
         {
-            ScheduleInternal(flight);
+            if (HasBeenScheduled(flight))
+                continue;
+
+            ScheduleInternal(flight, flight.EstimatedLandingTime, flight.EstimatedLandingTime);
             sequencedFlights.Add(flight);
         }
 
@@ -84,7 +120,12 @@ public class Scheduler(
             SetState(flight);
         }
 
-        void ScheduleInternal(Flight flight)
+        bool HasBeenScheduled(Flight flight)
+        {
+            return sequencedFlights.Any(f => f.Callsign == flight.Callsign);
+        }
+
+        void ScheduleInternal(Flight flight, DateTimeOffset absoluteEarliestLandingTime, DateTimeOffset targetTime)
         {
             logger.Debug("Scheduling {Callsign}", flight.Callsign);
 
@@ -96,7 +137,6 @@ public class Scheduler(
                     flight.FeederFixIdentifier ?? string.Empty,
                     airportConfiguration.RunwayAssignmentRules);
 
-            DateTimeOffset absoluteEarliestLandingTime = flight.EstimatedLandingTime;
 tryAgain:
             DateTimeOffset? proposedLandingTime = null;
             var proposedRunway = preferredRunways.First();
@@ -110,9 +150,9 @@ tryAgain:
                     continue;
                 }
 
-                var earliestLandingTimeForRunway = flight.EstimatedLandingTime.IsBefore(absoluteEarliestLandingTime)
+                var earliestLandingTimeForRunway = targetTime.IsBefore(absoluteEarliestLandingTime)
                     ? absoluteEarliestLandingTime
-                    : flight.EstimatedLandingTime;
+                    : targetTime;
 
                 var earliestLandingTime = GetEarliestLandingTimeForRunway(earliestLandingTimeForRunway, runwayConfiguration);
 
@@ -161,7 +201,7 @@ tryAgain:
             var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
             if (performance is not null && performance.AircraftCategory == AircraftCategory.Jet && proposedLandingTime.Value.IsAfter(flight.EstimatedLandingTime))
             {
-                flight.SetFlowControls(FlowControls.S250);
+                flight.SetFlowControls(FlowControls.ReduceSpeed);
             }
             else
             {
@@ -169,12 +209,6 @@ tryAgain:
             }
 
             Schedule(flight, proposedLandingTime.Value, proposedRunway);
-        }
-
-        // Transition New flights to Unstable after scheduling
-        foreach (var flight in sequencableFlights.Where(f => f.State == State.New))
-        {
-            flight.SetState(State.Unstable, clock);
         }
 
         DateTimeOffset GetEarliestLandingTimeForRunway(DateTimeOffset startTime, RunwayConfiguration runwayConfiguration)

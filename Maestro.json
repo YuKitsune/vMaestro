@@ -278,7 +278,8 @@
           "WakeCategories": ["Light", "Medium"],
           "Runways": ["34L", "16R"]
         }
-      ]
+      ],
+      "DepartureAirports": ["YSCB"]
     },
     {
       "Identifier": "YMML",
@@ -1591,7 +1592,5 @@
 
       ]
     }
-  ],
-  "DepartureAirports": ["YSCB"],
-  "SeparationRules": []
+  ]
 }

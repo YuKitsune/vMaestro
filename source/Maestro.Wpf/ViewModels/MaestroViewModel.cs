@@ -1,9 +1,12 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Extensions;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
+using Maestro.Core.Model;
+using Maestro.Wpf.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
@@ -24,6 +27,9 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
 
     [ObservableProperty]
     bool _isCreatingSlot = false;
+
+    [ObservableProperty]
+    SlotCreationReferencePoint _slotCreationReferencePoint = SlotCreationReferencePoint.Before;
 
     [ObservableProperty]
     string[] _slotRunwayIdentifiers = [];
@@ -66,25 +72,28 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
         await mediator.Send(request);
     }
 
-    [RelayCommand]
-    void InsertFlight()
-    {
-        // TODO: Implement insert flight functionality
-    }
-
-    [RelayCommand]
-    void StartInsertingSlot(BeginSlotArgs args)
+    public void BeginSlotCreation(DateTimeOffset firstSlotTime, SlotCreationReferencePoint slotCreationReferencePoint, string[] runwayIdentifiers)
     {
         IsCreatingSlot = true;
-        FirstSlotTime = args.StartTime;
-        SlotRunwayIdentifiers = args.RunwayIdentifiers;
+        SlotCreationReferencePoint = slotCreationReferencePoint;
+        FirstSlotTime = firstSlotTime;
+        SlotRunwayIdentifiers = runwayIdentifiers;
     }
 
-    [RelayCommand]
-    void EndInsertingSlot(DateTimeOffset secondSlotTime)
+    public void EndSlotCreation(DateTimeOffset secondSlotTime)
     {
         IsCreatingSlot = false;
         SecondSlotTime = secondSlotTime;
+
+        if (SlotCreationReferencePoint == SlotCreationReferencePoint.Before && !secondSlotTime.IsBefore(FirstSlotTime!.Value))
+        {
+            return;
+        }
+
+        if (SlotCreationReferencePoint == SlotCreationReferencePoint.After && !secondSlotTime.IsAfter(FirstSlotTime!.Value))
+        {
+            return;
+        }
 
         var startTime = FirstSlotTime!.Value.IsSameOrBefore(SecondSlotTime.Value) ? FirstSlotTime.Value : SecondSlotTime.Value;
         var endTime = FirstSlotTime!.Value.IsSameOrBefore(SecondSlotTime.Value) ? SecondSlotTime.Value : FirstSlotTime.Value;
@@ -96,7 +105,7 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
     {
         if (SelectedSequence?.AirportIdentifier == null) return;
 
-        await mediator.Send(new Messages.OpenSlotWindowRequest(
+        await mediator.Send(new OpenSlotWindowRequest(
             SelectedSequence.AirportIdentifier,
             null, // slotId is null for new slots
             startTime,
@@ -106,13 +115,27 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
 
     public async void ShowSlotWindow(SlotMessage slotMessage)
     {
-        if (SelectedSequence?.AirportIdentifier == null) return;
+        if (SelectedSequence?.AirportIdentifier == null)
+            return;
 
-        await mediator.Send(new Messages.OpenSlotWindowRequest(
+        await mediator.Send(new OpenSlotWindowRequest(
             SelectedSequence.AirportIdentifier,
             slotMessage.SlotId,
             slotMessage.StartTime,
             slotMessage.EndTime,
             slotMessage.RunwayIdentifiers));
+    }
+
+    public void ShowInsertFlightWindow(IInsertFlightOptions options)
+    {
+        if (SelectedSequence?.AirportIdentifier == null)
+            return;
+
+        mediator.Send(
+            new OpenInsertFlightWindowRequest(
+                SelectedSequence.AirportIdentifier,
+                options,
+                SelectedSequence.Flights.Where(f => f.State is State.Landed).ToArray(),
+                SelectedSequence.Flights.Where(f => f.State is State.Pending).ToArray()));
     }
 }

@@ -137,9 +137,9 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </MenuItem>
-                <MenuItem Header="Insert Flight" IsEnabled="False">
-                    <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" />
-                    <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}" />
+                <MenuItem Header="Insert Flight">
+                    <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" IsEnabled="{Binding CanInsertBefore}"/>
+                    <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}"/>
                 </MenuItem>
                 <MenuItem Header="Insert Slot" IsEnabled="False">
                     <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>

@@ -5,9 +5,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:Maestro.Wpf"
         xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
-        xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
+        xmlns:messages="clr-namespace:Maestro.Core.Messages;assembly=Maestro.Core"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=viewModels:FlightViewModel}"
+        d:DataContext="{d:DesignInstance Type=messages:FlightMessage}"
         Background="{x:Static local:Theme.BackgroundColor}"
         Width="Auto"
         Height="Auto"
@@ -17,19 +17,19 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            
+
             <converters:WakeCategoryConverter x:Key="WakeCategoryConverter" />
             <converters:TimeConverter x:Key="TimeConverter" />
             <converters:MinutesConverter x:Key="MinutesConverter" />
-            
+
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
-            
+
             <Style TargetType="Border">
                 <Setter Property="BorderBrush" Value="{x:Static local:Theme.GenericTextColor}"/>
                 <Setter Property="BorderThickness" Value="{x:Static local:Theme.BeveledBorderThickness}"/>
                 <Setter Property="Padding" Value="4"/>
             </Style>
-            
+
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
@@ -37,7 +37,7 @@
             <ColumnDefinition Width="168"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        
+
         <Grid Grid.Column="0" Margin="0,0,8,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="24" />
@@ -47,7 +47,7 @@
                 <TextBlock Text="2" TextAlignment="Center" />
             </Border>
             <Border Grid.Row="1">
-                
+
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
@@ -57,7 +57,7 @@
                         <RowDefinition />
                         <RowDefinition />
                     </Grid.RowDefinitions>
-                    
+
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Callsign}" />
                     <TextBlock Grid.Column="1" Grid.Row="0">
                         <Run Text="{Binding AircraftType, Mode=OneWay}"/>/<Run Text="{Binding WakeCategory, Mode=OneWay, Converter={StaticResource WakeCategoryConverter}}" />
@@ -67,7 +67,7 @@
                 </Grid>
             </Border>
         </Grid>
-        
+
         <Grid Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="168" />
@@ -78,13 +78,13 @@
                 <RowDefinition Height="24" />
                 <RowDefinition Height="64" />
             </Grid.RowDefinitions>
-            
+
             <Border Grid.Column="0" Grid.Row="0">
                 <TextBlock Text="{Binding FeederFixIdentifier}" TextAlignment="Center" />
             </Border>
-            
+
             <Border Grid.Column="0" Grid.Row="1">
-                
+
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
@@ -95,25 +95,25 @@
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    
+
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="ETA-FF"/>
                     <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialFeederFixEstimate, Converter={StaticResource TimeConverter}}"/>
                     <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding FeederFixEstimate, Converter={StaticResource TimeConverter}}"/>
-                    
+
                     <TextBlock Grid.Column="0" Grid.Row="1" Text="STA-FF"/>
                     <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding FeederFixTime, Converter={StaticResource TimeConverter}}"/>
-                    
+
                 </Grid>
             </Border>
-            
+
             <Border Grid.Column="1" Grid.Row="0">
                 <TextBlock TextAlignment="Center">
                     <Run Text="{Binding AssignedRunway, Mode=OneWay}"/>/<Run Text="{Binding NumberToLandOnRunway, Mode=OneWay}"/>
                 </TextBlock>
             </Border>
-            
+
             <Border Grid.Column="1" Grid.Row="1">
-                
+
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
@@ -124,23 +124,23 @@
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    
+
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="ETA"/>
                     <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialLandingEstimate, Converter={StaticResource TimeConverter}}"/>
                     <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding LandingEstimate, Converter={StaticResource TimeConverter}}"/>
-                    
+
                     <TextBlock Grid.Column="0" Grid.Row="1" Text="STA"/>
                     <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding LandingTime, Converter={StaticResource TimeConverter}}"/>
-                    
+
                 </Grid>
             </Border>
-            
+
             <Border Grid.Column="2" Grid.Row="0">
                 <TextBlock Text="Delay" TextAlignment="Center" />
             </Border>
-            
+
             <Border Grid.Column="2" Grid.Row="1">
-                
+
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
@@ -150,17 +150,17 @@
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    
+
                     <TextBlock Grid.Column="0">
                         <Run Text="{Binding InitialDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>min
                     </TextBlock>
                     <TextBlock Grid.Column="1">
                         <Run Text="{Binding RemainingDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>min
                     </TextBlock>
-                    
+
                 </Grid>
             </Border>
-            
+
         </Grid>
     </Grid>
 </UserControl>

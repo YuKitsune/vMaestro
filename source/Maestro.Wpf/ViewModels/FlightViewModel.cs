@@ -9,7 +9,7 @@ public class FlightViewModel
     {
         Callsign = "QFA1234";
         AircraftType = "B744";
-        WakeCategory = WakeCategory.Heavy;
+        WakeCategory = Core.Model.WakeCategory.Heavy;
         OriginIdentifier = "YMML";
         DestinationIdentifier = "YSSY";
         State = State.Unstable;
@@ -25,9 +25,9 @@ public class FlightViewModel
         LandingTime = DateTimeOffset.Now.AddMinutes(7);
         InitialDelay = TimeSpan.FromMinutes(2);
         RemainingDelay = TimeSpan.FromMinutes(4);
-        FlowControls = FlowControls.S250;
+        FlowControls = FlowControls.ReduceSpeed;
     }
-    
+
     public FlightViewModel(FlightMessage flight)
     {
         Callsign = flight.Callsign;
@@ -51,9 +51,9 @@ public class FlightViewModel
         FlowControls = flight.FlowControls;
     }
     public string Callsign { get; }
-    public string AircraftType { get; }
-    public WakeCategory WakeCategory { get; }
-    public string OriginIdentifier { get; }
+    public string? AircraftType { get; }
+    public WakeCategory? WakeCategory { get; }
+    public string? OriginIdentifier { get; }
     public string DestinationIdentifier { get; }
     public State State { get; }
     public int NumberInSequence { get; }
@@ -61,7 +61,7 @@ public class FlightViewModel
     public DateTimeOffset? InitialFeederFixEstimate { get; }
     public DateTimeOffset? FeederFixEstimate { get; }
     public DateTimeOffset? FeederFixTime { get; }
-    public string AssignedRunway { get; }
+    public string? AssignedRunway { get; }
     public int NumberToLandOnRunway { get; }
     public DateTimeOffset InitialLandingEstimate { get; }
     public DateTimeOffset LandingEstimate { get; }

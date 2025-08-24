@@ -30,6 +30,8 @@ public enum State
     /// </summary>
     SuperStable,
 
+    Overshoot,
+
     /// <summary>
     ///     No changes can be made to flights in this state.
     /// </summary>
