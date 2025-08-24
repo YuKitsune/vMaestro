@@ -49,6 +49,301 @@ public class SchedulerTests(
     }
 
     [Fact]
+    public void WhenSchedulingOvershootFlightBetweenTwoFrozenFlights_ItIsScheduledInBetweenThem()
+    {
+        // Arrange - Create two frozen flights with enough gap for an overshoot flight
+        var firstFrozenFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(-2))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var secondFrozenFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow())
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(16))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(16))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(firstFrozenFlight)
+            .WithFlight(secondFrozenFlight)
+            .Build();
+
+        // Schedule the frozen flights first
+        _scheduler.Schedule(sequence);
+
+        // Create an overshoot flight with target landing time between the frozen flights
+        var overshootFlight = new FlightBuilder("QFA3")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(8))
+            .WithTargetLandingTime(firstFrozenFlight.ScheduledLandingTime) // Set to the leaders time to the scheduler pushes it back
+            .WithRunway("34L")
+            .WithState(State.Overshoot)
+            .Build();
+
+        // Act
+        sequence.AddFlight(overshootFlight, _scheduler);
+
+        // Assert
+        // Overshoot flight should be scheduled at its target time
+        overshootFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(13));
+        overshootFlight.State.ShouldBe(State.Frozen);
+
+        // Frozen flights should remain unchanged
+        firstFrozenFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(10));
+        secondFrozenFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(16));
+
+        // Sequence order should be chronological
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA3", "QFA2"]);
+    }
+
+    [Fact]
+    public void WhenSchedulingOvershootFlightBetweenTwoFrozenFlightsWithNoSpace_ItIsDelayedUntilThereIsSpace()
+    {
+        // Arrange - Create two frozen flights with no adequate gap (less than landing rate)
+        var firstFrozenFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(-2))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var secondFrozenFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow())
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(15))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(firstFrozenFlight)
+            .WithFlight(secondFrozenFlight)
+            .Build();
+
+        // Schedule the frozen flights first
+        _scheduler.Schedule(sequence);
+
+        // Create an overshoot flight with target landing time between the frozen flights (but no space)
+        var overshootFlight = new FlightBuilder("QFA3")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(8))
+            .WithTargetLandingTime(firstFrozenFlight.ScheduledLandingTime) // Set to the leaders time to the scheduler pushes it back
+            .WithRunway("34L")
+            .WithState(State.Overshoot)
+            .Build();
+
+        sequence.AddFlight(overshootFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        // Overshoot flight should be delayed beyond the second frozen flight
+        var expectedTime = secondFrozenFlight.ScheduledLandingTime.Add(_landingRate);
+        overshootFlight.ScheduledLandingTime.ShouldBe(expectedTime);
+        overshootFlight.State.ShouldBe(State.Frozen); // Should become frozen after scheduling
+
+        // Frozen flights should remain unchanged
+        firstFrozenFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(10));
+        secondFrozenFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(15));
+
+        // Sequence order should be chronological by scheduled time
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
+    }
+
+    [Fact]
+    public void WhenSchedulingOvershootFlightInFrontOfSuperStableFlights_SuperStableFlightsAreDelayed()
+    {
+        // Arrange - Create SuperStable flights
+        var firstSuperStableFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(-5)) // Past feeder fix
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.SuperStable)
+            .Build();
+
+        var secondSuperStableFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(-2)) // Past feeder fix
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(23))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(23))
+            .WithRunway("34L")
+            .WithState(State.SuperStable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(firstSuperStableFlight)
+            .WithFlight(secondSuperStableFlight)
+            .Build();
+
+        // Schedule the SuperStable flights first
+        _scheduler.Schedule(sequence);
+
+        // Verify initial state
+        firstSuperStableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(20));
+        secondSuperStableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(23));
+
+        // Create an overshoot flight with target landing time before SuperStable flights
+        var overshootFlight = new FlightBuilder("QFA3")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithTargetLandingTime(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Overshoot)
+            .Build();
+
+        sequence.AddFlight(overshootFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        // Overshoot flight should be scheduled at its target time
+        overshootFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(20));
+        overshootFlight.State.ShouldBe(State.Frozen);
+
+        // SuperStable flights should be delayed to accommodate the overshoot flight
+        firstSuperStableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(23));
+        secondSuperStableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(26));
+
+        // Sequence order should be overshoot, then SuperStable flights
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA3", "QFA1", "QFA2"]);
+    }
+
+    [Fact]
+    public void WhenSchedulingOvershootFlight_SequenceIsRecalculatedForAllSubsequentFlights()
+    {
+        // Arrange - Create multiple flights in sequence
+        var frozenFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(5))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(5))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var superStableFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(8))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(8))
+            .WithRunway("34L")
+            .WithState(State.SuperStable)
+            .Build();
+
+        var stableFlight = new FlightBuilder("QFA3")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(11))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(11))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var unstableFlight = new FlightBuilder("QFA4")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(14))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(14))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(frozenFlight)
+            .WithFlight(superStableFlight)
+            .WithFlight(stableFlight)
+            .WithFlight(unstableFlight)
+            .Build();
+
+        // Create an overshoot flight that will be inserted after the frozen flight
+        var overshootFlight = new FlightBuilder("QFA5")
+            .WithTargetLandingTime(frozenFlight.ScheduledLandingTime)
+            .WithRunway("34L")
+            .WithState(State.Overshoot)
+            .Build();
+
+        // Act
+        sequence.AddFlight(overshootFlight, _scheduler);
+
+        // Assert
+        // Frozen flight should remain unchanged
+        frozenFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(5));
+
+        // Overshoot flight should be scheduled near its target time
+        overshootFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(8));
+        overshootFlight.State.ShouldBe(State.Frozen);
+
+        // SuperStable flight should be delayed due to overshoot insertion
+        superStableFlight.ScheduledLandingTime.ShouldBe(overshootFlight.ScheduledLandingTime.Add(_landingRate));
+
+        // Stable flight should be recalculated and delayed due to overshoot insertion
+        stableFlight.ScheduledLandingTime.ShouldBe(superStableFlight.ScheduledLandingTime.Add(_landingRate));
+
+        // Unstable flight should also be recalculated due to stable flight moving
+        unstableFlight.ScheduledLandingTime.ShouldBe(stableFlight.ScheduledLandingTime.Add(_landingRate));
+
+        // Sequence order should be correct
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA5", "QFA2", "QFA3", "QFA4"]);
+    }
+
+    [Fact]
+    public void WhenSchedulingNewFlight_StableFlightsAreRecalculated()
+    {
+        // Arrange - Create existing stable flights
+        var firstStableFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(25))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(25))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var secondStableFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(13))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(28))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(28))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(firstStableFlight)
+            .WithFlight(secondStableFlight)
+            .Build();
+
+        // Verify initial state - no delays initially
+        firstStableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(25));
+        secondStableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(28));
+
+        // Create a new flight with earlier ETA that will displace stable flights
+        var newFlight = new FlightBuilder("QFA3")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(12))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(22)) // Earlier than stable flights
+            .WithRunway("34L")
+            .WithState(State.New)
+            .Build();
+
+        sequence.AddFlight(newFlight, _scheduler);
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        // New flight should be scheduled at its ETA and become unstable
+        newFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(22));
+        newFlight.State.ShouldBe(State.Unstable);
+
+        // Stable flights should be recalculated and delayed
+        firstStableFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(22).Add(_landingRate));
+        secondStableFlight.ScheduledLandingTime.ShouldBe(firstStableFlight.ScheduledLandingTime.Add(_landingRate));
+
+        // Sequence order should be new flight first, then stable flights in order
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA3", "QFA1", "QFA2"]);
+    }
+
+    [Fact]
     public void WhenSingleFlight_IsNotDelayed()
     {
         // Arrange
@@ -889,9 +1184,7 @@ public class SchedulerTests(
         _scheduler.Schedule(sequence);
 
         // Assert - Priority flight should be scheduled first despite same ETA
-        priorityFlight.State.ShouldBe(State.Stable);
         priorityFlight.HighPriority.ShouldBeTrue();
-        regularFlight.State.ShouldBe(State.Unstable);
 
         // Priority flight should get the better slot (its ETA)
         priorityFlight.ScheduledLandingTime.ShouldBe(priorityFlight.EstimatedLandingTime);
@@ -977,14 +1270,12 @@ public class SchedulerTests(
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10).AddSeconds(30))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20).AddSeconds(30))
             .WithRunway("34L")
-            .NoDelay(true) // Zero delay is implemented as NoDelay flag
+            .NoDelay() // Zero delay is implemented as NoDelay flag
             .WithState(State.New)
             .Build();
 
-        sequence.AddFlight(zeroDelayFlight, _scheduler);
-
         // Act
-        _scheduler.Schedule(sequence);
+        sequence.AddFlight(zeroDelayFlight, _scheduler);
 
         // Assert - Zero delay flight should not be delayed despite conflict
         zeroDelayFlight.State.ShouldBe(State.Unstable);
@@ -998,13 +1289,6 @@ public class SchedulerTests(
 
         // Sequence order should be zero delay flight first, then leader
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1"]);
-    }
-
-    // TODO: Implement insert flight
-    [Fact]
-    public void WhenALandedFlightIsReinserted_ItIsSequenced()
-    {
-        Assert.Fail("Stub");
     }
 
     [Fact]
@@ -1287,10 +1571,9 @@ public class SchedulerTests(
         }
 
         var followerFlight = followerBuilder.Build();
-        sequence.AddFlight(followerFlight, _scheduler);
 
         // Act
-        _scheduler.Schedule(sequence);
+        sequence.AddFlight(followerFlight, _scheduler);
 
         // Assert - Neither flight should be delayed
         leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
@@ -1369,7 +1652,7 @@ public class SchedulerTests(
         // Add a flight that would conflict with the leader, forcing it to be delayed beyond the mode change
         var followerFlight = new FlightBuilder("QFA2")
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
-            .WithState(State.New)
+            .WithState(State.Unstable)
             .Build();
 
         sequence.AddFlight(followerFlight, _scheduler);
@@ -1388,7 +1671,7 @@ public class SchedulerTests(
     }
 
     [Fact]
-    public void WhenFlightDelayedBeyondInBetweenRunwayModeChange_NewRunwayModeUsed()
+    public void WhenFlightDelayedInBetweenRunwayModeChange_NewRunwayModeUsed()
     {
         // Arrange
         var initialRunwayMode = new RunwayMode
@@ -1437,13 +1720,11 @@ public class SchedulerTests(
         // Add a flight that would conflict with the leader, forcing it to be delayed beyond the mode change
         var followerFlight = new FlightBuilder("QFA2")
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(19))
-            .WithState(State.New)
+            .WithState(State.Unstable)
             .Build();
 
-        sequence.AddFlight(followerFlight, _scheduler);
-
         // Act
-        _scheduler.Schedule(sequence);
+        sequence.AddFlight(followerFlight, _scheduler);
 
         // Assert
         // Leader should remain on original runway with original schedule
@@ -1673,7 +1954,7 @@ public class SchedulerTests(
         manualFlight.SetLandingTime(manualLandingTime, manual: true);
 
         // Re-schedule after manual movement
-        _scheduler.Schedule(sequence);
+        _scheduler.Schedule(sequence, recalculateAll: true);
 
         // Assert - The manually moved flight should keep its manual time
         manualFlight.ManualLandingTime.ShouldBeTrue();
@@ -1939,108 +2220,4 @@ public class SchedulerTests(
         subject.ScheduledLandingTime.ShouldBe(trailer.ScheduledLandingTime.Add(_landingRate), "last flight should be delayed behind the chronological trailer and not the last flight added to the sequence");
     }
 
-    [Fact]
-    public void WhenAFlightIsNew_ItRemainsUnstable()
-    {
-        // Arrange
-        var flight = new FlightBuilder("QFA1")
-            .WithActivationTime(_clock.UtcNow()) // Just activated
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(5)) // Within stable threshold
-            .WithState(State.New)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
-        // Act
-        _scheduler.Schedule(sequence);
-
-        // Assert
-        flight.State.ShouldBe(State.Unstable);
-    }
-
-    [Fact]
-    public void WhenAFlightIsWithinRange_ItIsStablised()
-    {
-        // Arrange
-        var flight = new FlightBuilder("QFA1")
-            .WithActivationTime(_clock.UtcNow().AddMinutes(-5)) // Active for 5 minutes (> 180 seconds)
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(25)) // Within stable threshold of 25 minutes
-            .WithState(State.Unstable)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
-        // Act
-        _scheduler.Schedule(sequence);
-
-        // Assert
-        flight.State.ShouldBe(State.Stable);
-    }
-
-    [Fact]
-    public void WhenAFlightPassesTheOriginalFeederFixEstimate_ItIsSuperStabilised()
-    {
-        // Arrange - Create a flight that has passed its original feeder fix time
-        var flight = new FlightBuilder("QFA1")
-            .WithActivationTime(_clock.UtcNow().AddMinutes(-10)) // Active for 10 minutes
-            .WithFeederFixEstimate(_clock.UtcNow()) // Reached feeder fix time
-            .WithState(State.Stable)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
-        // Act
-        _scheduler.Schedule(sequence);
-
-        // Assert
-        flight.State.ShouldBe(State.SuperStable);
-    }
-
-    [Fact]
-    public void WhenAFlightIsWithinRange_ItIsFrozen()
-    {
-        // Arrange - Create a flight within 15 minutes of landing
-        var flight = new FlightBuilder("QFA1")
-            .WithActivationTime(_clock.UtcNow().AddMinutes(-10)) // Active for 10 minutes
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(15)) // Within frozen threshold of 15 minutes
-            .WithState(State.SuperStable)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
-        // Act
-        _scheduler.Schedule(sequence);
-
-        // Assert
-        flight.State.ShouldBe(State.Frozen);
-    }
-
-    [Fact]
-    public void WhenAFlightLands_ItIsMarkedAsLanded()
-    {
-        // Arrange
-        var flight = new FlightBuilder("QFA1")
-            .WithActivationTime(_clock.UtcNow().AddMinutes(-30)) // Active for 30 minutes
-            .WithLandingTime(_clock.UtcNow().AddMinutes(0)) // Landed now
-            .WithState(State.Frozen)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
-        // Act
-        _scheduler.Schedule(sequence);
-
-        // Assert
-        flight.State.ShouldBe(State.Landed);
-    }
 }

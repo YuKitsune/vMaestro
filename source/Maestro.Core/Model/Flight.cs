@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
 
@@ -194,6 +195,46 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public void UpdateLastSeen(IClock clock)
     {
         LastSeen = clock.UtcNow();
+    }
+
+    public void UpdateStateBasedOnTime(IClock clock)
+    {
+        // TODO: Make configurable
+        var stableThreshold = TimeSpan.FromMinutes(25);
+        var frozenThreshold = TimeSpan.FromMinutes(15);
+        var minUnstableTime = TimeSpan.FromSeconds(180);
+
+        var timeActive = clock.UtcNow() - ActivatedTime;
+        var timeToFeeder = EstimatedFeederFixTime - clock.UtcNow();
+        var timeToLanding = EstimatedLandingTime - clock.UtcNow();
+
+        // Keep the flight unstable until it's passed the minimum unstable time
+        if (State is State.Unstable && timeActive <= minUnstableTime)
+        {
+            return;
+        }
+
+        if (ScheduledLandingTime.IsSameOrBefore(clock.UtcNow()))
+        {
+            SetState(State.Landed, clock);
+        }
+        else if (timeToLanding <= frozenThreshold)
+        {
+            SetState(State.Frozen, clock);
+        }
+        else if (InitialFeederFixTime?.IsSameOrBefore(clock.UtcNow()) ?? false)
+        {
+            SetState(State.SuperStable, clock);
+        }
+        else if (timeToFeeder <= stableThreshold)
+        {
+            SetState(State.Stable, clock);
+        }
+        else
+        {
+            // No change required
+            return;
+        }
     }
 
     public int CompareTo(Flight? other)

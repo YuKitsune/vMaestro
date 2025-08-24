@@ -91,6 +91,13 @@ public class SchedulerBackgroundService(
                     scheduler.Schedule(lockedSequence.Sequence);
                     logger.Debug("Completed scheduling {AirportIdentifier}", airportIdentifier);
 
+                    logger.Debug("Updating flight states for {AirportIdentifier}", airportIdentifier);
+                    foreach (var flight in lockedSequence.Sequence.Flights)
+                    {
+                        flight.UpdateStateBasedOnTime(clock);
+                    }
+                    logger.Debug("Completed updating flight states for {AirportIdentifier}", airportIdentifier);
+
                     logger.Debug("Cleaning {AirportIdentifier}", airportIdentifier);
                     sequenceCleaner.CleanUpFlights(lockedSequence.Sequence);
                     logger.Debug("Completed cleaning {AirportIdentifier}", airportIdentifier);

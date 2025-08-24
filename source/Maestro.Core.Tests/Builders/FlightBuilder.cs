@@ -11,7 +11,7 @@ public class FlightBuilder(string callsign)
     string _feederFixIdentifier = "RIVET";
     DateTimeOffset estimatedTimeOfDeparture = DateTimeOffset.Now;
     TimeSpan _estimatedFlightTime = TimeSpan.FromHours(1);
-    DateTimeOffset activationTime = DateTimeOffset.Now;
+    DateTimeOffset activationTime = DateTimeOffset.Now.AddHours(-1);
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
     DateTimeOffset feederFixTime = default;
     DateTimeOffset? passedFeederFix = null;
@@ -19,6 +19,7 @@ public class FlightBuilder(string callsign)
     DateTimeOffset landingEstimate = DateTimeOffset.Now;
     DateTimeOffset landingTime = default;
     bool manualLandingTime = false;
+    DateTimeOffset? targetLandingTime = null;
 
     string _assignedArrival = "RIVET4";
     string _assignedRunway = "34L";
@@ -77,6 +78,12 @@ public class FlightBuilder(string callsign)
     {
         landingTime = time;
         manualLandingTime = manual;
+        return this;
+    }
+
+    public FlightBuilder WithTargetLandingTime(DateTimeOffset targetTime)
+    {
+        targetLandingTime = targetTime;
         return this;
     }
 
@@ -160,6 +167,9 @@ public class FlightBuilder(string callsign)
 
         flight.NoDelay = _noDelay;
         flight.HighPriority = _highPriority;
+
+        if (targetLandingTime.HasValue)
+            flight.SetTargetTime(targetLandingTime.Value);
 
         return flight;
     }

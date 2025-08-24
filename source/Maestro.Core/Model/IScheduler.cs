@@ -8,15 +8,11 @@ namespace Maestro.Core.Model;
 
 public interface IScheduler
 {
-    void Schedule(Sequence sequence);
+    void Schedule(Sequence sequence, bool recalculateAll = false);
 }
 
-// Test cases:
-// - When scheduling an overshoot flight, between two frozen flights, it is scheduled in between them
-// - When scheduling an overshoot flight, between two frozen flights, and no space is available, it is delayed until there is space
-// - When scheduling an overshoot flight, in front of SuperStable flights, SuperStable flights are delayed
-// - When scheduling an overshoot flight, the sequence is recalculated for all subsequent flights
-// - When scheduling a new flight, stable flights are recalculated
+// BUG:
+// - Flights not tracking via FF don't seem to get scheduled properly
 
 public class Scheduler(
     IRunwayAssigner runwayAssigner,
@@ -26,7 +22,7 @@ public class Scheduler(
     ILogger logger)
     : IScheduler
 {
-    public void Schedule(Sequence sequence)
+    public void Schedule(Sequence sequence, bool recalculateAll = false)
     {
         var airportConfiguration = airportConfigurationProvider
             .GetAirportConfigurations()
@@ -41,13 +37,19 @@ public class Scheduler(
         }
 
         // High-priority flights
+        var recalculate = recalculateAll;
         foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.HighPriority || f.ManualLandingTime || f.NoDelay))
         {
+            if (HasBeenScheduled(flight))
+                continue;
+
+            if (flight.State == State.New)
+                recalculate = true;
+
             sequencedFlights.Add(flight);
         }
 
         // Inserted flights go between or after Frozen flights, but cannot displace them
-        var recalculate = false;
         foreach (var flight in sequence.Flights.Where(f => f.State is State.Overshoot))
         {
             if (HasBeenScheduled(flight))
@@ -114,10 +116,10 @@ public class Scheduler(
             sequencedFlights.Add(flight);
         }
 
-        // Set state for all sequenced flights
-        foreach (var flight in sequencedFlights)
+        // Progress any New states to Unstable
+        foreach (var flight in sequence.Flights.Where(f => f.State is State.New))
         {
-            SetState(flight);
+            flight.SetState(State.Unstable, clock);
         }
 
         bool HasBeenScheduled(Flight flight)
@@ -139,7 +141,7 @@ public class Scheduler(
 
 tryAgain:
             DateTimeOffset? proposedLandingTime = null;
-            var proposedRunway = preferredRunways.First();
+            var proposedRunway = preferredRunways.FirstOrDefault() ?? currentRunwayMode.Runways.First().Identifier;
             foreach (var runwayIdentifier in preferredRunways)
             {
                 var runwayConfiguration = currentRunwayMode.Runways
@@ -271,48 +273,5 @@ tryAgain:
             var feederFixTime = flight.EstimatedFeederFixTime.Value + totalDelay;
             flight.SetFeederFixTime(feederFixTime);
         }
-    }
-
-    void SetState(Flight flight)
-    {
-        // TODO: Make configurable
-        var stableThreshold = TimeSpan.FromMinutes(25);
-        var frozenThreshold = TimeSpan.FromMinutes(15);
-        var minUnstableTime = TimeSpan.FromSeconds(180);
-
-        var timeActive = clock.UtcNow() - flight.ActivatedTime;
-        var timeToFeeder = flight.EstimatedFeederFixTime - clock.UtcNow();
-        var timeToLanding = flight.EstimatedLandingTime - clock.UtcNow();
-
-        // Keep the flight unstable until it's passed the minimum unstable time
-        if (timeActive < minUnstableTime)
-        {
-            flight.SetState(State.Unstable, clock);
-            return;
-        }
-
-        if (flight.ScheduledLandingTime.IsSameOrBefore(clock.UtcNow()))
-        {
-            flight.SetState(State.Landed, clock);
-        }
-        else if (timeToLanding <= frozenThreshold)
-        {
-            flight.SetState(State.Frozen, clock);
-        }
-        else if (flight.InitialFeederFixTime?.IsSameOrBefore(clock.UtcNow()) ?? false)
-        {
-            flight.SetState(State.SuperStable, clock);
-        }
-        else if (timeToFeeder <= stableThreshold)
-        {
-            flight.SetState(State.Stable, clock);
-        }
-        else
-        {
-            // No change required
-            return;
-        }
-
-        logger.Information("{Callsign} is now {State}", flight.Callsign, flight.State);
     }
 }
