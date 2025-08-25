@@ -25,10 +25,7 @@ using MessageBox = System.Windows.Forms.MessageBox;
 
 // TODO:
 //  - What's next?
-//      - Check pending departures on network or sim
-//      - Check overshoots on network or sim
-//      - Fix issues with flights not tracking via FF
-//      - Implement tests for flight insertion
+//      - Double check ETA calculation behaviour for pending flights (do pending flight ETAs get fucked up by the recurring ETA updates)
 //      - MakePending command
 //      - Change ETA_FF command
 //      - Manual landing time UI stuff (don't click and drag frozen flights, swap, single click, etc.)
