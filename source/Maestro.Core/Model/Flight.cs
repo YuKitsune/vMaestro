@@ -174,7 +174,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
     {
         EstimatedLandingTime = landingEstimate;
-        if (State is State.New or State.Unstable)
+        if (State is State.Pending or State.New or State.Unstable)
         {
             InitialLandingTime = landingEstimate;
         }
@@ -199,6 +199,10 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void UpdateStateBasedOnTime(IClock clock)
     {
+        // Sticky states
+        if (State is State.Pending or State.Landed or State.Desequenced or State.Removed)
+            return;
+
         // TODO: Make configurable
         var stableThreshold = TimeSpan.FromMinutes(25);
         var frozenThreshold = TimeSpan.FromMinutes(15);
