@@ -25,7 +25,6 @@ using MessageBox = System.Windows.Forms.MessageBox;
 
 // TODO:
 //  - What's next?
-//      - Fix flight insertion with new flights
 //      - Check pending departures on network or sim
 //      - Check overshoots on network or sim
 //      - Fix issues with flights not tracking via FF
@@ -33,6 +32,9 @@ using MessageBox = System.Windows.Forms.MessageBox;
 //      - MakePending command
 //      - Change ETA_FF command
 //      - Manual landing time UI stuff (don't click and drag frozen flights, swap, single click, etc.)
+//      - Runway assignment rules are confusing, it's easy to end up with no runways assigned (If only one runway is in mode, just assign that, defer to rules when multiple runways exist)
+//      - Recompute seems to make aircraft disappear (related to above?)
+//      - Re-schedule when removing a flight (DESQ too?)
 
 namespace Maestro.Plugin;
 

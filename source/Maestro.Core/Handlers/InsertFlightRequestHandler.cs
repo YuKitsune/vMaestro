@@ -43,6 +43,7 @@ public class InsertFlightRequestHandler(
             return;
         }
 
+        // BUG: If inserting after a frozen flight, nothing happens
         var landedFlight = sequence.Flights.FirstOrDefault(f=> f.Callsign == request.Callsign && f.State == State.Landed);
         if (landedFlight is not null)
         {

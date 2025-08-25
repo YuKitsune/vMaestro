@@ -36,7 +36,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
                 (x.AdditionalAircraftTypes.Contains(aircraftPerformanceData.Type) || x.Category is null || x.Category == aircraftPerformanceData.AircraftCategory) &&
                 (string.IsNullOrEmpty(arrivalIdentifier) || x.ArrivalRegex.IsMatch(arrivalIdentifier)))
             .ToArray();
-        
+
         // No matches, nothing to do
         if (foundArrivalConfigurations.Length == 0)
             return null;
@@ -52,7 +52,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
                 arrivalIdentifier,
                 aircraftPerformanceData.Type);
         }
-        
+
         return TimeSpan.FromMinutes(foundArrivalConfigurations.First().RunwayIntervals[runwayIdentifier]);
     }
 }
