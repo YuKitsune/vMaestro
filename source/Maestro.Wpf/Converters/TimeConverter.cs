@@ -12,8 +12,8 @@ public class TimeConverter : IValueConverter
         {
             return dateTimeOffset.ToString("HH\\:mm");
         }
-        
-        throw new NotSupportedException();
+
+        return string.Empty;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

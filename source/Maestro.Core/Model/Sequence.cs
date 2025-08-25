@@ -1,7 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Serilog;
 
 namespace Maestro.Core.Model;
 
@@ -11,17 +10,6 @@ namespace Maestro.Core.Model;
 // - PurgeSlotsBefore removes slots before a given time and retains the 5 most recent landed flights
 // - NumberInSequence returns the index of a flight in the entire sequence, starting from 1
 // - NumberForRunway returns the index of a flight for its assigned runway, starting from 1
-
-// TODO: New idea
-//   - Create a slot for every minute
-//   - Mark slots that are too close together (based on landing rate) as unavailable
-//   - Ensure slots are rounded to the minute.
-//   - Allow flights to be moved to unavailable slots if placed there manually, or NoDelay is applied
-//     - Mark following slots as unavailable as per the landing rate
-
-// or:
-//   - Stick to the current implementation, but if the preceedng slot is free, shift the flight forward by 1 slot max
-//   - Stick to the current implementation, but if the preceedng slot is free, delete it and shift the following slot forward so there is no delay
 
 public class Sequence
 {
@@ -90,20 +78,17 @@ public class Sequence
         scheduler.Schedule(this);
     }
 
-    public void AddDummyFlight(DateTimeOffset landingTime, string? aircraftType, IScheduler scheduler, IClock clock)
+    public void AddDummyFlight(DateTimeOffset landingTime, string runwayIdentifier, IScheduler scheduler, IClock clock)
     {
         var callsign = $"****{_dummyCounter++:00}*";
 
-        var flight = new Flight(callsign, AirportIdentifier, landingTime)
-        {
-            AircraftType = aircraftType
-        };
-
+        var flight = new Flight(callsign, AirportIdentifier, landingTime);
+        flight.SetRunway(runwayIdentifier, manual: true);
         flight.SetLandingTime(landingTime, manual: true);
-        flight.SetState(State.Frozen, clock);
 
         _trackedFlights.Add(flight);
         scheduler.Schedule(this);
+        flight.SetState(State.Frozen, clock);
     }
 
     public void AddFlight(Flight flight, IScheduler scheduler)

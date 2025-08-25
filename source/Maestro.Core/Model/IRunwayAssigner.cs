@@ -20,20 +20,21 @@ public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssig
         var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
         if (performanceData is null)
             return [];
-        
+
         var candidates = new List<RunwayAssignmentRule>();
         foreach (var runwayAssignmentRule in rules)
         {
             var wakeMatch = runwayAssignmentRule.WakeCategories.Contains(performanceData.WakeCategory);
 
+            // BUG: If a flight is not tracking via a feeder fix, it'll never match
             var feederMatch = runwayAssignmentRule.FeederFixes.Any()
                               && !string.IsNullOrEmpty(feederFixIdentifier)
                               && runwayAssignmentRule.FeederFixes.Contains(feederFixIdentifier);
-            
+
             if (feederMatch && wakeMatch)
                 candidates.Add(runwayAssignmentRule);
         }
-        
+
         return candidates.OrderBy(c => c.Priority)
             .SelectMany(c => c.Runways)
             .Distinct()
@@ -49,9 +50,9 @@ public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssig
         //     }
         //
         //     var airportCoords = flight.Estimates.Last().Coordinate;
-        //     
+        //
         //     var track = Calculations.CalculateTrack(lastKnownPosition.Value.ToCoordinate(), airportCoords);
-        //     
+        //
         //     var delta = double.MaxValue;
         //     var winner = candidates.First();
         //     foreach(var rule in candidates)
@@ -60,7 +61,7 @@ public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssig
         //         if (rule.RunwayIdentifier.Length < 2 ||
         //             !int.TryParse(rule.RunwayIdentifier.Substring(0, 2), out var approximateRunwayHeading))
         //             continue;
-        //         
+        //
         //         approximateRunwayHeading *= 10;
         //         var test = Math.Abs(track - approximateRunwayHeading);
         //         if (test < delta)
@@ -69,7 +70,7 @@ public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssig
         //             winner = rule;
         //         }
         //     }
-        //     
+        //
         //     return winner.RunwayIdentifier;
         // }
 
@@ -82,7 +83,7 @@ public class RunwayAssigner(IPerformanceLookup performanceLookup) : IRunwayAssig
         //
         //     if (trackMiles <= 0)
         //         continue;
-        //     
+        //
         //     if (trackMiles < shortest)
         //     {
         //         distanceWinner = rule;

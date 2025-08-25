@@ -10,7 +10,7 @@ public class FlightBuilder(string callsign)
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
     DateTimeOffset estimatedTimeOfDeparture = DateTimeOffset.Now;
-    TimeSpan _estimatedFlightTime = TimeSpan.FromHours(1);
+    TimeSpan? _estimatedFlightTime;
     DateTimeOffset activationTime = DateTimeOffset.Now.AddHours(-1);
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
     DateTimeOffset feederFixTime = default;

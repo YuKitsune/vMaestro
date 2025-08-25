@@ -279,6 +279,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
+            _logger.Error(ex, "An error occurred while handling Network_Connected.");
             Errors.Add(ex, Name);
         }
     }
@@ -296,6 +297,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
+            _logger.Error(ex, "An error occurred while handling OnFDRUpdate.");
             Errors.Add(ex, Name);
         }
     }
@@ -314,6 +316,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
+            _logger.Error(ex, "An error occurred while handling OnRadarTrackUpdate.");
             Errors.Add(ex, Name);
         }
     }

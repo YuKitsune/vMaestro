@@ -1,7 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 using Serilog;
 
 namespace Maestro.Core.Model;
@@ -10,9 +9,6 @@ public interface IScheduler
 {
     void Schedule(Sequence sequence, bool recalculateAll = false);
 }
-
-// BUG:
-// - Flights not tracking via FF don't seem to get scheduled properly
 
 public class Scheduler(
     IRunwayAssigner runwayAssigner,
@@ -132,6 +128,8 @@ public class Scheduler(
             logger.Debug("Scheduling {Callsign}", flight.Callsign);
 
             var currentRunwayMode = sequence.CurrentRunwayMode;
+
+tryAgain:
             var preferredRunways = flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier)
                 ? [flight.AssignedRunwayIdentifier!] // Use only the manually assigned runway
                 : runwayAssigner.FindBestRunways(
@@ -139,9 +137,15 @@ public class Scheduler(
                     flight.FeederFixIdentifier ?? string.Empty,
                     airportConfiguration.RunwayAssignmentRules);
 
-tryAgain:
+            // Fallback to the first runway in the current mode
+            // TODO: Need to refactor runway assignment so this isn't a problem
+            if (!preferredRunways.Any())
+            {
+                preferredRunways = [currentRunwayMode.Runways.First().Identifier];
+            }
+
             DateTimeOffset? proposedLandingTime = null;
-            var proposedRunway = preferredRunways.FirstOrDefault() ?? currentRunwayMode.Runways.First().Identifier;
+            var proposedRunway = preferredRunways.FirstOrDefault();
             foreach (var runwayIdentifier in preferredRunways)
             {
                 var runwayConfiguration = currentRunwayMode.Runways

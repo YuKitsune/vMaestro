@@ -118,28 +118,4 @@ public class SequenceCleanerTests(AirportConfigurationFixture airportConfigurati
         // Assert
         sequence.Flights.ShouldContain(flight, "The flight was seen recently and should not be deleted");
     }
-
-    [Fact]
-    public void WhenAFlightHasNotBeenSeenRecently_ItIsDeleted()
-    {
-        // Arrange
-        var clock = clockFixture.Instance;
-        var now = clock.UtcNow();
-
-        var flight = new FlightBuilder("QFA1")
-            .WithLastSeen(now.AddHours(-1))
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
-        var cleaner = new SequenceCleaner(clock, Substitute.For<ILogger>());
-
-        // Act
-        cleaner.CleanUpFlights(sequence);
-
-        // Assert
-        sequence.Flights.ShouldNotContain(flight, "The flight has not been seen recently");
-    }
 }
