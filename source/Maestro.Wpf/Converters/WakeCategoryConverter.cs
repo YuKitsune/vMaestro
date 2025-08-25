@@ -17,10 +17,10 @@ public class WakeCategoryConverter : IValueConverter
                 WakeCategory.Medium => "M",
                 WakeCategory.Heavy => "H",
                 WakeCategory.SuperHeavy => "J",
-                _ => throw new ArgumentOutOfRangeException()
+                _ => "?"
             };
         }
-        
+
         throw new NotSupportedException();
     }
 

@@ -1,19 +1,14 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-// Test cases:
-// - When inserting a flight, the landing estimate should be calculated based on the take-off time and flight time
-// - When inserting a flight, the feeder-fix estimate should be calculated based on the take-off time and flight time
-// - When inserting a flight, and it's estimated landing time conflicts with existing flights, it should be delayed
-// - When inserting a flight, and the take-off time is in the past, it should throw an exception
-
 public class InsertDepartureRequestHandler(
     ISequenceProvider sequenceProvider,
+    IPerformanceLookup performanceLookup,
+    IArrivalLookup arrivalLookup,
     IScheduler scheduler,
     IClock clock)
     : IRequestHandler<InsertDepartureRequest>
@@ -43,7 +38,10 @@ public class InsertDepartureRequestHandler(
         var landingEstimate = request.TakeOffTime.Add(flight.EstimatedTimeEnroute.Value);
         flight.UpdateLandingEstimate(landingEstimate);
 
-        // TODO: Calculate feeder fix estimate
+        // Calculate feeder fix estimate
+        var feederFixEstimate = GetFeederFixTime(flight);
+        if (feederFixEstimate is not null)
+            flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
 
         // Calculate the position in the sequence
         flight.SetState(State.New, clock);
@@ -52,5 +50,23 @@ public class InsertDepartureRequestHandler(
 
         // Pending flights are made Stable when inserted
         flight.SetState(State.Stable, clock);
+    }
+
+    DateTimeOffset? GetFeederFixTime(Flight flight)
+    {
+        var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+        if (aircraftPerformance is null)
+            return null;
+
+        var arrivalInterval = arrivalLookup.GetArrivalInterval(
+            flight.DestinationIdentifier,
+            flight.FeederFixIdentifier,
+            flight.AssignedArrivalIdentifier,
+            flight.AssignedRunwayIdentifier,
+            aircraftPerformance);
+        if (arrivalInterval is null)
+            return null;
+
+        return flight.EstimatedLandingTime.Add(-arrivalInterval.Value);
     }
 }

@@ -23,5 +23,6 @@ public record RelativeInsertionOptions(
     : IInsertFlightOptions;
 
 public record ExactInsertionOptions(
-    DateTimeOffset TargetLandingTime)
+    DateTimeOffset TargetLandingTime,
+    string[] RunwayIdentifiers)
     : IInsertFlightOptions;

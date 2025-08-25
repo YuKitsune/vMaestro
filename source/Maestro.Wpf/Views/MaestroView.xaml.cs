@@ -530,7 +530,7 @@ public partial class MaestroView
         if (clickData.ViewMode == ViewMode.Enroute)
             return;
 
-        var options = new ExactInsertionOptions(clickData.ClickTime);
+        var options = new ExactInsertionOptions(clickData.ClickTime, clickData.FilterItems);
 
         ViewModel.ShowInsertFlightWindow(options);
     }

@@ -77,7 +77,7 @@ public partial class InsertFlightViewModel : ObservableObject
         SelectedFlight = null;
     }
 
-    [RelayCommand(CanExecute = nameof(CanInsert))]
+    [RelayCommand]
     public void Insert()
     {
         _mediator.Send(
@@ -88,12 +88,6 @@ public partial class InsertFlightViewModel : ObservableObject
                 _options));
 
         CloseWindow();
-    }
-
-    bool CanInsert()
-    {
-        return !string.IsNullOrEmpty(Callsign) &&
-               !string.IsNullOrEmpty(AircraftType);
     }
 
     [RelayCommand]
