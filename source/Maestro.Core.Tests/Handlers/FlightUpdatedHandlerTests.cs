@@ -427,6 +427,63 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         Assert.Fail("Stub");
     }
 
+    [Fact]
+    public async Task WhenADesequencedFlightIsUpdated_ItsEstimatesAreStillUpdated()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Desequenced)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .WithLandingTime(clock.UtcNow().AddMinutes(20))
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .WithFlight(flight)
+            .Build();
+
+        var newFeederFixTime = clock.UtcNow().AddMinutes(15);
+        var newLandingTime = clock.UtcNow().AddMinutes(25);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            "RIVET4",
+            "34L",
+            null,
+            [
+                new FixEstimate("RIVET", newFeederFixTime),
+                new FixEstimate("YSSY", newLandingTime)
+            ]);
+
+        var estimateProvider = Substitute.For<IEstimateProvider>();
+        estimateProvider.GetFeederFixEstimate(
+                Arg.Any<AirportConfiguration>(),
+                Arg.Any<string>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<FlightPosition>())
+            .Returns(newFeederFixTime);
+        estimateProvider.GetLandingEstimate(
+                Arg.Any<Flight>(),
+                Arg.Any<DateTimeOffset?>())
+            .Returns(newLandingTime);
+
+        var handler = GetHandler(sequence, clock, estimateProvider: estimateProvider);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        flight.EstimatedFeederFixTime.ShouldBe(newFeederFixTime);
+        flight.EstimatedLandingTime.ShouldBe(newLandingTime);
+    }
+
     FlightUpdatedHandler GetHandler(
         Sequence sequence,
         IClock clock,

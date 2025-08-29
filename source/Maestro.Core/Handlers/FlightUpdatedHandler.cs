@@ -125,6 +125,7 @@ public class FlightUpdatedHandler(
             logger.Debug("Updating {Callsign}", notification.Callsign);
 
             UpdateFlightData(notification, flight);
+            CalculateEstimates(flight, notification, airportConfiguration);
             flight.UpdateLastSeen(clock);
 
             // Exit early if the flight should not be processed
@@ -166,9 +167,6 @@ public class FlightUpdatedHandler(
 
                 flight.NeedsRecompute = false;
             }
-
-            // Compute ETA and ETA_FF
-            CalculateEstimates(flight, notification, airportConfiguration);
 
             logger.Debug("Flight updated: {Flight}", flight);
 
