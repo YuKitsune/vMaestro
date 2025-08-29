@@ -279,7 +279,7 @@
           "Runways": ["34L", "16R"]
         }
       ],
-      "DepartureAirports": ["YSCB"]
+      "DepartureAirports": ["YSCB", "YBTH", "YORG", "YCWR", "YSDU", "YGTH", "YPKS", "YSWG", "YNAR", "YMRY", "YMAY", "YMER", "YCFS", "YPMQ", "YARM", "YSTW", "YMOR"]
     },
     {
       "Identifier": "YMML",
@@ -591,7 +591,8 @@
           "WakeCategories": ["Light", "Medium", "Heavy"],
           "Runways": ["16"]
         }
-      ]
+      ],
+      "DepartureAirports": ["YSCB", "YSWG", "YMER", "YMAY", "YCOM", "YMIA", "YMTG", "YMLT", "YKII", "YDPO"]
     },
     {
       "Identifier": "YBBN",
@@ -1124,7 +1125,8 @@
           "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
           "Runways": ["01L", "19R"]
         }
-      ]
+      ],
+      "DepartureAirports": ["YCFS", "YPMQ", "YARM", "YROM", "YBHA", "YBUD", "YGLA", "YBRK", "YTWB"]
     },
     {
       "Identifier": "YPPH",
@@ -1590,7 +1592,8 @@
           "Runways": ["03", "06"]
         }
 
-      ]
+      ],
+      "DepartureAirports": ["YPKG", "YESP", "YABA", "YGEL"]
     }
   ]
 }
