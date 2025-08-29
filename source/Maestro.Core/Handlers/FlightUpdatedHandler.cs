@@ -1,5 +1,4 @@
-﻿using System.Security.Authentication.ExtendedProtection;
-using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -68,6 +67,7 @@ public class FlightUpdatedHandler(
                         feederFix,
                         landingEstimate);
 
+                    flight.IsFromDepartureAirport = true;
                     flight.SetState(State.Pending, clock);
                     sequence.AddFlight(flight, scheduler);
 

@@ -15,6 +15,7 @@ public static class FlightExtensionMethods
             OriginIdentifier = flight.OriginIdentifier,
             EstimatedDepartureTime = flight.EstimatedDepartureTime,
             DestinationIdentifier = flight.DestinationIdentifier,
+            IsFromDepartureAirport = flight.IsFromDepartureAirport,
             State = flight.State,
             NumberInSequence = sequence.NumberInSequence(flight),
             FeederFixIdentifier = flight.FeederFixIdentifier,

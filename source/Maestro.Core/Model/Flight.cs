@@ -37,6 +37,8 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset? EstimatedDepartureTime { get; set; }
     public TimeSpan? EstimatedTimeEnroute { get; set; }
 
+    public bool IsFromDepartureAirport { get; set; }
+
     public string? AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
 
@@ -195,6 +197,22 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public void UpdateLastSeen(IClock clock)
     {
         LastSeen = clock.UtcNow();
+    }
+
+    public void MakePending()
+    {
+        // TODO: Prevent if the flight has departed
+        // Only allowed between Preactive and Departure
+
+        ActivatedTime = null;
+        EstimatedFeederFixTime = null;
+        InitialFeederFixTime = null;
+        ScheduledFeederFixTime = null;
+        EstimatedLandingTime = default;
+        InitialLandingTime = default;
+        ScheduledLandingTime = default;
+        ManualLandingTime = false;
+        State = State.Pending;
     }
 
     public void UpdateStateBasedOnTime(IClock clock)

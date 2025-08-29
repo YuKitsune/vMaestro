@@ -141,14 +141,17 @@
                     <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" IsEnabled="{Binding CanInsertBefore}"/>
                     <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}"/>
                 </MenuItem>
-                <MenuItem Header="Insert Slot" IsEnabled="False">
+                <MenuItem Header="Insert Slot">
                     <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>
                     <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
                 </MenuItem>
                 <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" IsEnabled="False" />
                 <MenuItem Header="Remove" Command="{Binding RemoveCommand}" />
                 <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" />
-                <MenuItem Header="Make Pending" Command="{Binding MakePendingCommand}" IsEnabled="False" />
+                <MenuItem
+                    Header="Make Pending"
+                    Command="{Binding MakePendingCommand}"
+                    Visibility="{Binding FlightViewModel.IsFromDepartureAirport, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}" />
                 <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" IsEnabled="False" />
             </ContextMenu>

@@ -1,14 +1,16 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class MakePendingRequestHandler(ISequenceProvider sequenceProvider, ILogger logger)
-    : IRequestHandler<MakePendingRequest, MakePendingResponse>
+public class MakePendingRequestHandler(ISequenceProvider sequenceProvider, IClock clock, IScheduler scheduler, IMediator mediator, ILogger logger)
+    : IRequestHandler<MakePendingRequest>
 {
-    public async Task<MakePendingResponse> Handle(MakePendingRequest request, CancellationToken cancellationToken)
+    public async Task Handle(MakePendingRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
@@ -16,9 +18,16 @@ public class MakePendingRequestHandler(ISequenceProvider sequenceProvider, ILogg
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return new MakePendingResponse();
+            return;
         }
 
-        throw new NotImplementedException("Make Pending not yet implemented.");
+        flight.MakePending();
+        scheduler.Schedule(lockedSequence.Sequence);
+
+        await mediator.Publish(
+            new SequenceUpdatedNotification(
+                lockedSequence.Sequence.AirportIdentifier,
+                lockedSequence.Sequence.ToMessage()),
+            cancellationToken);
     }
 }

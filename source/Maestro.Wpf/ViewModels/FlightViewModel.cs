@@ -35,6 +35,7 @@ public class FlightViewModel
         WakeCategory = flight.WakeCategory;
         OriginIdentifier = flight.OriginIdentifier;
         DestinationIdentifier = flight.DestinationIdentifier;
+        IsFromDepartureAirport = flight.IsFromDepartureAirport;
         State = flight.State;
         NumberInSequence = flight.NumberInSequence;
         FeederFixIdentifier = flight.FeederFixIdentifier;
@@ -55,6 +56,7 @@ public class FlightViewModel
     public WakeCategory? WakeCategory { get; }
     public string? OriginIdentifier { get; }
     public string DestinationIdentifier { get; }
+    public bool IsFromDepartureAirport { get; }
     public State State { get; }
     public int NumberInSequence { get; }
     public string? FeederFixIdentifier { get; }

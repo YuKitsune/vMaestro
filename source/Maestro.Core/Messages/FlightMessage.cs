@@ -9,6 +9,7 @@ public class FlightMessage
     public required WakeCategory? WakeCategory { get; init; }
     public required string? OriginIdentifier { get; init; }
     public required string DestinationIdentifier { get; init; }
+    public required bool IsFromDepartureAirport { get; init; }
     public required State State { get; init; }
     public required int NumberInSequence { get; init; }
     public required string? FeederFixIdentifier { get; init; }
