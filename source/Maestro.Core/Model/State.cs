@@ -18,7 +18,6 @@ public enum State
     /// </summary>
     Unstable,
 
-
     /// <summary>
     ///     The flight will keep it's position in the sequence unless another flight appears or disappears before it.
     /// </summary>

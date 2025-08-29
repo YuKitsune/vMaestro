@@ -62,7 +62,7 @@ public class AirportConfigurationFixture
                 },
                 new ArrivalConfiguration
                 {
-                    FeederFix = "AKMIR",
+                    FeederFix = "WELSH",
                     ArrivalRegex = new Regex(@"ODALE\d"),
                     Category = AircraftCategory.Jet,
                     RunwayIntervals = new Dictionary<string, int>
@@ -82,24 +82,24 @@ public class AirportConfigurationFixture
                     ViewMode = ViewMode.Enroute
                 }
             ],
-            FeederFixes = ["RIVET", "AKMIR"],
+            FeederFixes = ["RIVET", "WELSH"],
             RunwayAssignmentRules =
             [
                 new RunwayAssignmentRule(
                     0,
-                    ["RIVET", "AKMIR", "BOREE", "MEPIL", "MARLN"],
+                    ["RIVET", "WELSH", "BOREE", "MEPIL", "MARLN"],
                     [WakeCategory.Heavy, WakeCategory.SuperHeavy],
                     ["34L", "16R", "07", "25"]),
 
                 new RunwayAssignmentRule(
                     1,
-                    ["RIVET", "AKMIR"],
+                    ["RIVET", "WELSH"],
                     [WakeCategory.Light, WakeCategory.Medium],
                     ["34L", "16R", "07", "25"]),
 
                 new RunwayAssignmentRule(
                     2,
-                    ["RIVET", "AKMIR"],
+                    ["RIVET", "WELSH"],
                     [WakeCategory.Light, WakeCategory.Medium],
                     ["34R", "16L"]),
 

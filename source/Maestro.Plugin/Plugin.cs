@@ -32,6 +32,7 @@ using MessageBox = System.Windows.Forms.MessageBox;
 //      - Runway assignment rules are confusing, it's easy to end up with no runways assigned (If only one runway is in mode, just assign that, defer to rules when multiple runways exist)
 //      - Recompute seems to make aircraft disappear (related to above?)
 //      - Re-schedule when removing a flight (DESQ too?)
+//      - Revisit re-sequencing behaviour
 
 namespace Maestro.Plugin;
 

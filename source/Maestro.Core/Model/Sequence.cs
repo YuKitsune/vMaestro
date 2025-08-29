@@ -51,6 +51,17 @@ public class Sequence
         FirstLandingTimeForNextMode = default;
     }
 
+    public RunwayMode GetRunwayModeAt(DateTimeOffset time)
+    {
+        if (NextRunwayMode is null)
+            return CurrentRunwayMode;
+
+        if (time.IsBefore(LastLandingTimeForCurrentMode))
+            return CurrentRunwayMode;
+
+        return NextRunwayMode;
+    }
+
     /// <summary>
     ///     Changes the runway mode with an immediate effect.
     /// </summary>

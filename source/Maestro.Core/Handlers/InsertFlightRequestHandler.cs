@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Extensions;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -27,16 +28,16 @@ public class InsertFlightRequestHandler(
                 : sequence.CurrentRunwayMode
             : sequence.CurrentRunwayMode;
 
-        var runwayIdentifier =
-            runwayIdentifiers.FirstOrDefault(r => runwayModeAtLandingTime.Runways.Any(rm => rm.Identifier == r)) ??
-            runwayModeAtLandingTime.Runways.First().Identifier;
+        var runway =
+            runwayModeAtLandingTime.Runways.FirstOrDefault(r => runwayIdentifiers.Contains(r.Identifier))?.Identifier ??
+            runwayModeAtLandingTime.Default.Identifier;
 
         var state = State.Frozen; // TODO: Make this configurable
 
         // If the callsign was blank, create a dummy flight
         if (string.IsNullOrWhiteSpace(request.Callsign))
         {
-            sequence.AddDummyFlight(landingTime, runwayIdentifier, scheduler, clock);
+            sequence.AddDummyFlight(landingTime, runway, scheduler, clock);
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);
@@ -49,13 +50,10 @@ public class InsertFlightRequestHandler(
         {
             // Re-sequence the landed flight at the specified time
             landedFlight.SetState(State.Overshoot, clock);
-            landedFlight.SetRunway(runwayIdentifier, manual: true); // TODO: Just use the estimate
-            landedFlight.SetTargetTime(landingTime); // TODO: Just use the estimate
-
+            landedFlight.SetRunway(runway, manual: true);
+            landedFlight.SetLandingTime(landingTime);
             scheduler.Schedule(sequence);
-
             landedFlight.SetState(state, clock);
-
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);
@@ -66,7 +64,7 @@ public class InsertFlightRequestHandler(
         if (pendingFlight is not null)
         {
             pendingFlight.SetState(State.New, clock);
-            pendingFlight.SetRunway(runwayIdentifier, manual: true);
+            pendingFlight.SetRunway(runway, manual: true);
             pendingFlight.SetLandingTime(landingTime);
             scheduler.Schedule(sequence);
             pendingFlight.SetState(State.Stable, clock);
@@ -90,7 +88,7 @@ public class InsertFlightRequestHandler(
                 WakeCategory = performanceInfo?.WakeCategory,
             };
 
-            flight.SetRunway(runwayIdentifier, manual: true);
+            flight.SetRunway(runway, manual: true);
             flight.SetLandingTime(landingTime, manual: true);
 
             flight.SetState(state, clock);
@@ -114,28 +112,41 @@ public class InsertFlightRequestHandler(
         if (referenceFlight is null)
             throw new MaestroException($"Reference flight {relativeInsertionOptions.ReferenceCallsign} not found");
 
-        if (referenceFlight.State == State.Frozen)
-        {
-            if (relativeInsertionOptions.Position == RelativePosition.Before)
-                throw new MaestroException("Flights cannot be inserted before a frozen flight");
+        if (referenceFlight.State == State.Frozen && relativeInsertionOptions.Position == RelativePosition.Before)
+            throw new MaestroException("Flights cannot be inserted before a frozen flight");
 
-            // Return the reference flights's landing time so the scheduler will push the inserted flight back
-            return (referenceFlight.ScheduledLandingTime, [referenceFlight.AssignedRunwayIdentifier]);
-        }
+        // Calculate time separation based on landing rate
+        var referenceTime = referenceFlight.ScheduledLandingTime;
+        var runwayModeAtReferenceTime = GetRunwayModeAtTime(sequence, referenceTime);
+        var targetRunway = referenceFlight.AssignedRunwayIdentifier;
+        var landingRate = GetTimeSeparationForRunway(runwayModeAtReferenceTime, targetRunway);
 
-        return relativeInsertionOptions.Position switch
+        var targetLandingTime = relativeInsertionOptions.Position switch
         {
-            // Return the reference flights landing time so the scheduler will push it back (inserted flights have a higher priority than existing flights)
-            RelativePosition.Before => (
-                referenceFlight.ScheduledLandingTime,
-                [referenceFlight.AssignedRunwayIdentifier]
-            ),
-            // Add a small buffer to the reference flight to ensure the inserted flight is after it
-            RelativePosition.After => (
-                referenceFlight.ScheduledLandingTime.AddSeconds(30), // TODO: Configurable to min separation time
-                [referenceFlight.AssignedRunwayIdentifier]
-            ),
+            RelativePosition.Before => referenceTime.Subtract(landingRate),
+            RelativePosition.After => referenceTime.Add(landingRate),
             _ => throw new ArgumentOutOfRangeException()
         };
+
+        return (targetLandingTime, [targetRunway]);
+    }
+
+    private static RunwayMode GetRunwayModeAtTime(Sequence sequence, DateTimeOffset time)
+    {
+        return sequence.NextRunwayMode is not null &&
+               sequence.FirstLandingTimeForNextMode.IsSameOrBefore(time)
+            ? sequence.NextRunwayMode
+            : sequence.CurrentRunwayMode;
+    }
+
+    private static TimeSpan GetTimeSeparationForRunway(RunwayMode runwayMode, string runwayIdentifier)
+    {
+        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier);
+
+        // Default to 60 seconds if runway not found
+        // TODO: Log a warning and make this configurable
+        var landingRateSeconds = runway?.LandingRateSeconds ?? 60;
+
+        return TimeSpan.FromSeconds(landingRateSeconds);
     }
 }

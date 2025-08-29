@@ -126,47 +126,8 @@ public class FlightUpdatedHandler(
 
             UpdateFlightData(notification, flight);
             CalculateEstimates(flight, notification, airportConfiguration);
+            flight.Fixes = notification.Estimates;
             flight.UpdateLastSeen(clock);
-
-            // Exit early if the flight should not be processed
-            if (!flight.Activated ||
-                flight.State == State.Desequenced ||
-                flight.State == State.Removed ||
-                flight.State == State.Landed)
-            {
-                if (!flight.Activated)
-                    logger.Debug("{Callsign} is not activated. No additional processing required.",
-                        notification.Callsign);
-                else
-                    logger.Debug("{Callsign} is {State}. No additional processing required.", notification.Callsign,
-                        flight.State);
-
-                return;
-            }
-
-            // TODO: Move this into the recompute handler
-            if (flight.NeedsRecompute)
-            {
-                logger.Information("Recomputing {Callsign}", flight.Callsign);
-
-                // Reset the feeder fix in case of a reroute
-                var feederFix = notification.Estimates
-                    .LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
-                if (feederFix is not null)
-                    flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
-
-                flight.HighPriority = feederFix is null;
-                flight.NoDelay = false;// Re-assign runway if it has not been manually assigned
-
-                if (!flight.RunwayManuallyAssigned)
-                {
-                    flight.ClearRunway();
-                }
-
-                scheduler.Schedule(sequence);
-
-                flight.NeedsRecompute = false;
-            }
 
             logger.Debug("Flight updated: {Flight}", flight);
 

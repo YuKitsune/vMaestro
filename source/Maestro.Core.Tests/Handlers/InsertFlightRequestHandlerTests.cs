@@ -15,6 +15,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 {
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
+    static readonly TimeSpan _landingRate = TimeSpan.FromSeconds(180);
     readonly RunwayMode _runwayMode = new()
     {
         Identifier = "34IVA",
@@ -23,12 +24,12 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
             new RunwayConfiguration
             {
                 Identifier = "34L",
-                LandingRateSeconds = 180
+                LandingRateSeconds = (int)_landingRate.TotalSeconds
             },
             new RunwayConfiguration
             {
                 Identifier = "34R",
-                LandingRateSeconds = 180
+                LandingRateSeconds = (int)_landingRate.TotalSeconds
             }
         ]
     };
@@ -95,7 +96,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        insertedFlight.ScheduledLandingTime.ShouldBe(referenceFlight.ScheduledLandingTime);
+        insertedFlight.ScheduledLandingTime.ShouldBe(referenceFlight.ScheduledLandingTime.Subtract(_landingRate));
         insertedFlight.AssignedRunwayIdentifier.ShouldBe(referenceFlight.AssignedRunwayIdentifier);
         scheduler.Received(1).Schedule(sequence);
     }
@@ -129,7 +130,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        insertedFlight.ScheduledLandingTime.ShouldBe(referenceFlight.ScheduledLandingTime.AddSeconds(30));
+        insertedFlight.ScheduledLandingTime.ShouldBe(referenceFlight.ScheduledLandingTime.Add(_landingRate));
         insertedFlight.AssignedRunwayIdentifier.ShouldBe(referenceFlight.AssignedRunwayIdentifier);
         scheduler.Received(1).Schedule(sequence);
     }
@@ -198,7 +199,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         landedFlight.State.ShouldBe(State.Frozen);
-        landedFlight.TargetLandingTime.ShouldBe(targetTime);
+        landedFlight.ScheduledLandingTime.ShouldBe(targetTime);
         landedFlight.AssignedRunwayIdentifier.ShouldBe("34R");
         scheduler.Received(1).Schedule(sequence);
     }
@@ -327,7 +328,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        insertedFlight.ScheduledLandingTime.ShouldBe(frozenFlight.ScheduledLandingTime);
+        insertedFlight.ScheduledLandingTime.ShouldBe(frozenFlight.ScheduledLandingTime.Add(_landingRate));
         insertedFlight.AssignedRunwayIdentifier.ShouldBe(frozenFlight.AssignedRunwayIdentifier);
         scheduler.Received(1).Schedule(sequence);
     }

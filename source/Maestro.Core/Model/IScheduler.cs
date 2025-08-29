@@ -32,15 +32,34 @@ public class Scheduler(
             sequencedFlights.Add(flight);
         }
 
-        // High-priority flights
+        // Manual landing time and no-delay are sequenced as-is
         var recalculate = recalculateAll;
-        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.HighPriority || f.ManualLandingTime || f.NoDelay))
+        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.ManualLandingTime || f.NoDelay))
         {
             if (HasBeenScheduled(flight))
                 continue;
 
             if (flight.State == State.New)
+            {
                 recalculate = true;
+                flight.SetState(State.Unstable, clock);
+            }
+
+            sequencedFlights.Add(flight);
+        }
+
+        // High-priority flights get scheduled first
+        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.HighPriority))
+        {
+            if (HasBeenScheduled(flight))
+                continue;
+
+            ScheduleInternal(flight, flight.EstimatedLandingTime);
+            if (flight.State == State.New)
+            {
+                recalculate = true;
+                flight.SetState(State.Unstable, clock);
+            }
 
             sequencedFlights.Add(flight);
         }
@@ -51,14 +70,7 @@ public class Scheduler(
             if (HasBeenScheduled(flight))
                 continue;
 
-            if (flight.TargetLandingTime is null)
-            {
-                logger.Warning("Overshoot flight {Callsign} has no target landing time", flight.Callsign);
-                break;
-            }
-
-            ScheduleInternal(flight, flight.TargetLandingTime.Value, flight.TargetLandingTime.Value);
-            flight.SetState(State.Frozen, clock); // TODO: This state change should be configurable
+            ScheduleInternal(flight, flight.ScheduledLandingTime);
             sequencedFlights.Add(flight);
             recalculate = true;
         }
@@ -70,7 +82,7 @@ public class Scheduler(
                 continue;
 
             if (recalculate)
-                ScheduleInternal(flight, flight.ScheduledLandingTime, flight.ScheduledLandingTime);
+                ScheduleInternal(flight, flight.ScheduledLandingTime);
 
             sequencedFlights.Add(flight);
         }
@@ -83,7 +95,7 @@ public class Scheduler(
 
             var lastSuperStableFlight = sequencedFlights.LastOrDefault(f => f.State is State.SuperStable);
 
-            ScheduleInternal(flight, lastSuperStableFlight?.ScheduledLandingTime ?? flight.EstimatedLandingTime, flight.EstimatedLandingTime);
+            ScheduleInternal(flight, lastSuperStableFlight?.ScheduledLandingTime ?? flight.EstimatedLandingTime);
             flight.SetState(State.Unstable, clock);
 
             sequencedFlights.Add(flight);
@@ -97,25 +109,19 @@ public class Scheduler(
                 continue;
 
             if (recalculate)
-                ScheduleInternal(flight, flight.ScheduledLandingTime, flight.ScheduledLandingTime);
+                ScheduleInternal(flight, flight.ScheduledLandingTime);
 
             sequencedFlights.Add(flight);
         }
 
         // Unstable flights are rescheduled every time
-        foreach (var flight in sequence.Flights.Where(f => f.State is State.Unstable))
+        foreach (var flight in sequence.Flights.OrderBy(f => f.EstimatedLandingTime).Where(f => f.State is State.Unstable))
         {
             if (HasBeenScheduled(flight))
                 continue;
 
-            ScheduleInternal(flight, flight.EstimatedLandingTime, flight.EstimatedLandingTime);
+            ScheduleInternal(flight, flight.EstimatedLandingTime);
             sequencedFlights.Add(flight);
-        }
-
-        // Progress any New states to Unstable
-        foreach (var flight in sequence.Flights.Where(f => f.State is State.New))
-        {
-            flight.SetState(State.Unstable, clock);
         }
 
         bool HasBeenScheduled(Flight flight)
@@ -123,7 +129,7 @@ public class Scheduler(
             return sequencedFlights.Any(f => f.Callsign == flight.Callsign);
         }
 
-        void ScheduleInternal(Flight flight, DateTimeOffset absoluteEarliestLandingTime, DateTimeOffset targetTime)
+        void ScheduleInternal(Flight flight, DateTimeOffset absoluteEarliestLandingTime)
         {
             logger.Debug("Scheduling {Callsign}", flight.Callsign);
 
@@ -156,11 +162,7 @@ tryAgain:
                     continue;
                 }
 
-                var earliestLandingTimeForRunway = targetTime.IsBefore(absoluteEarliestLandingTime)
-                    ? absoluteEarliestLandingTime
-                    : targetTime;
-
-                var earliestLandingTime = GetEarliestLandingTimeForRunway(earliestLandingTimeForRunway, runwayConfiguration);
+                var earliestLandingTime = GetEarliestLandingTimeForRunway(absoluteEarliestLandingTime, runwayConfiguration);
 
                 // Check if this runway has slot conflicts
                 var conflictingSlot = sequence.Slots.FirstOrDefault(s =>

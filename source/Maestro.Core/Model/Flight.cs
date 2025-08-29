@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Extensions;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
@@ -39,13 +40,14 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public bool IsFromDepartureAirport { get; set; }
 
+    // TODO: Consider storing the minimum separation required here
+    // Either that or store the runway mode here so we can easily reference it later
     public string? AssignedRunwayIdentifier { get; private set; }
     public bool RunwayManuallyAssigned { get; private set; }
 
     public State State { get; private set; }
     public bool HighPriority { get; set; }
     public bool NoDelay { get; set; }
-    public bool NeedsRecompute { get; set; }
     public bool Activated => IsActiveState(State);
     public DateTimeOffset? ActivatedTime { get; private set; }
 
@@ -61,12 +63,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset ScheduledLandingTime { get; private set; } // STA
     public bool ManualLandingTime { get; private set; }
 
-    /// <summary>
-    ///     Used to insert flights at a specific target time without affecting the scheduled time.
-    ///     This is useful when inserting dummy or uncoupled flights where a landing estimate won't be available.
-    /// </summary>
-    public DateTimeOffset? TargetLandingTime { get; private set; }
-
     public TimeSpan TotalDelay => ScheduledLandingTime - InitialLandingTime;
     public TimeSpan RemainingDelay => ScheduledLandingTime - EstimatedLandingTime;
 
@@ -75,6 +71,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public string? AssignedArrivalIdentifier { get; set; }
     public FixEstimate[] Fixes { get; set; } = [];
     public DateTimeOffset LastSeen { get; private set; }
+    public FlightPosition? Position { get; private set; }
 
     public void SetState(State state, IClock clock)
     {
@@ -109,12 +106,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         AssignedRunwayIdentifier = runwayIdentifier;
         RunwayManuallyAssigned = manual;
-    }
-
-    public void ClearRunway()
-    {
-        AssignedRunwayIdentifier = null;
-        RunwayManuallyAssigned = false;
     }
 
     public void SetFlowControls(FlowControls flowControls)
@@ -186,17 +177,16 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         ScheduledLandingTime = landingTime;
         ManualLandingTime = manual;
-        TargetLandingTime = null;
-    }
-
-    public void SetTargetTime(DateTimeOffset targetTime)
-    {
-        TargetLandingTime = targetTime;
     }
 
     public void UpdateLastSeen(IClock clock)
     {
         LastSeen = clock.UtcNow();
+    }
+
+    public void UpdatePosition(FlightPosition position)
+    {
+        Position = position;
     }
 
     public void MakePending()
@@ -230,12 +220,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         var timeToFeeder = EstimatedFeederFixTime - clock.UtcNow();
         var timeToLanding = EstimatedLandingTime - clock.UtcNow();
 
-        // Keep the flight unstable until it's passed the minimum unstable time
-        if (State is State.Unstable && timeActive <= minUnstableTime)
-        {
-            return;
-        }
-
         if (ScheduledLandingTime.IsSameOrBefore(clock.UtcNow()))
         {
             SetState(State.Landed, clock);
@@ -252,10 +236,13 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         {
             SetState(State.Stable, clock);
         }
+        // Keep the flight unstable until it's passed the minimum unstable time
+        else if (State is State.Unstable && timeActive <= minUnstableTime)
+        {
+        }
         else
         {
-            // No change required
-            return;
+            SetState(State.Unstable, clock);
         }
     }
 

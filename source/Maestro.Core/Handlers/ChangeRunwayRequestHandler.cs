@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
@@ -6,7 +7,7 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
+public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IClock clock, IMediator mediator, ILogger logger)
     : IRequestHandler<ChangeRunwayRequest, ChangeRunwayResponse>
 {
     public async Task<ChangeRunwayResponse> Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
@@ -20,10 +21,15 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, ISch
             return new ChangeRunwayResponse();
         }
 
+        var previousState = flight.State;
+
         flight.SetRunway(request.RunwayIdentifier, true);
-        flight.NeedsRecompute = true;
+        flight.SetState(State.New, clock);
 
         scheduler.Schedule(lockedSequence.Sequence);
+
+        // Unstable flights become Stable when changing runway
+        flight.SetState(previousState == State.Unstable ? State.Stable : previousState, clock);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

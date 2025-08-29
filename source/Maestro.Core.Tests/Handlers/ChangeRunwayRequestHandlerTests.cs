@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -33,6 +34,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             sequenceProvider,
             scheduler,
+            Substitute.For<IClock>(),
             mediator,
             Substitute.For<ILogger>());
 

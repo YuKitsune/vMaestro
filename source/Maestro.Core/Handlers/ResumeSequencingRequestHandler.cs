@@ -1,5 +1,4 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Messages;
+﻿using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using MediatR;
 using Serilog;
@@ -21,16 +20,10 @@ public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, 
             }
 
             flight.Resume();
-            flight.NeedsRecompute = true;
-
-            scheduler.Schedule(lockedSequence.Sequence);
-
-            await mediator.Publish(
-                new SequenceUpdatedNotification(
-                    lockedSequence.Sequence.AirportIdentifier,
-                    lockedSequence.Sequence.ToMessage()),
-                cancellationToken);
         }
+
+        // Let the RecomputeRequestHandler do the scheduling and notification
+        await mediator.Send(new RecomputeRequest(request.AirportIdentifier, request.Callsign), cancellationToken);
 
         return new ResumeSequencingResponse();
     }
