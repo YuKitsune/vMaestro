@@ -54,6 +54,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public string? FeederFixIdentifier { get; private set; }
     public DateTimeOffset? InitialFeederFixTime { get; private set; }
     public DateTimeOffset? EstimatedFeederFixTime { get; private set; } // ETA_FF
+    public bool ManualFeederFixEstimate { get; private set; }
     public DateTimeOffset? ScheduledFeederFixTime { get; private set; } // STA_FF
     public DateTimeOffset? ActualFeederFixTime { get; private set; } // ATO_FF
     public bool HasPassedFeederFix => ActualFeederFixTime is not null;
@@ -125,7 +126,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         ActualFeederFixTime = actualFeederFixTime;
     }
 
-    public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate)
+    public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate, bool manual = false)
     {
         if (string.IsNullOrEmpty(FeederFixIdentifier))
             throw new MaestroException("No feeder fix has been set");
@@ -135,6 +136,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
                 "Cannot update feeder fix estimate because the flight has already passed the feeder fix");
 
         EstimatedFeederFixTime = feederFixEstimate;
+        ManualFeederFixEstimate = manual;
         if (State == State.Unstable)
         {
             InitialFeederFixTime = feederFixEstimate;

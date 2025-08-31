@@ -5,6 +5,7 @@ using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
+using MediatR;
 using NSubstitute;
 using Shouldly;
 
@@ -249,12 +250,15 @@ public class InsertDepartureRequestHandlerTests(
                 Arg.Any<AircraftPerformanceData>())
             .Returns(_arrivalDuration);
 
+        var mediator = Substitute.For<IMediator>();
+
         scheduler ??= Substitute.For<IScheduler>();
         return new InsertDepartureRequestHandler(
             sequenceProvider,
             performanceLookupFixture.Instance,
             arrivalLookup,
             scheduler,
-            clockFixture.Instance);
+            clockFixture.Instance,
+            mediator);
     }
 }

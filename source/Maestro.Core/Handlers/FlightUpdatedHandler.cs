@@ -156,8 +156,8 @@ public class FlightUpdatedHandler(
                 feederFixSystemEstimate.ActualTimeOver);
         }
 
-        // Don't update ETA_FF once passed FF
-        if (feederFixSystemEstimate is not null && !flight.HasPassedFeederFix)
+        // Don't update ETA_FF once passed FF, or if a manual estimate is set
+        if ((feederFixSystemEstimate is not null && !flight.HasPassedFeederFix) || flight.ManualFeederFixEstimate)
         {
             var calculatedFeederFixEstimate = estimateProvider.GetFeederFixEstimate(
                 airportConfiguration,

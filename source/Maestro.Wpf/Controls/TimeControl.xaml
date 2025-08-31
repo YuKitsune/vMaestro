@@ -6,7 +6,8 @@
              xmlns:local="clr-namespace:Maestro.Wpf"
              xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
              mc:Ignorable="d"
-             d:DesignHeight="20" d:DesignWidth="140">
+             MaxHeight="20"
+             d:DesignWidth="140">
 
     <UserControl.Resources>
         <ResourceDictionary>

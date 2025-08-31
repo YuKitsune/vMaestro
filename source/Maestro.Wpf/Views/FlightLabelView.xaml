@@ -145,7 +145,7 @@
                     <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>
                     <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
                 </MenuItem>
-                <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" IsEnabled="False" />
+                <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" />
                 <MenuItem Header="Remove" Command="{Binding RemoveCommand}" />
                 <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" />
                 <MenuItem

@@ -13,6 +13,7 @@ public class FlightBuilder(string callsign)
     TimeSpan? _estimatedFlightTime;
     DateTimeOffset activationTime = DateTimeOffset.Now.AddHours(-1);
     DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
+    bool manualFeederFixEstimate = false;
     DateTimeOffset feederFixTime = default;
     DateTimeOffset? passedFeederFix = null;
 
@@ -49,9 +50,10 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate)
+    public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate, bool manual = false)
     {
         feederFixEstimate = estimate;
+        manualFeederFixEstimate = manual;
         return this;
     }
 
@@ -142,6 +144,7 @@ public class FlightBuilder(string callsign)
         };
 
         flight.SetFeederFix(_feederFixIdentifier, feederFixEstimate, passedFeederFix);
+        flight.UpdateFeederFixEstimate(feederFixEstimate, manualFeederFixEstimate);
 
         if (feederFixTime != default)
             flight.SetFeederFixTime(feederFixTime);

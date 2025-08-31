@@ -318,6 +318,48 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndTheFeederFixEstimateWasManuallyAssigned_EstimatesAreNotUpdated()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+        var manualFeederFixEstimate = clock.UtcNow().AddMinutes(10);
+        var manualLandingEstimate = clock.UtcNow().AddMinutes(20);
+        var flight = new FlightBuilder("QFA123")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(manualFeederFixEstimate, manual: true)
+            .WithLandingEstimate(manualLandingEstimate)
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .WithFlight(flight)
+            .Build();
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            "RIVET4",
+            _position,
+            [
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15)),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(25))
+            ]);
+
+        var handler = GetHandler(sequence, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        flight.EstimatedFeederFixTime.ShouldBe(manualFeederFixEstimate);
+        flight.EstimatedLandingTime.ShouldBe(manualLandingEstimate);
+    }
+
+    [Fact]
     public async Task WhenAnExistingFlightIsUpdated_AllFlightDataIsUpdated()
     {
 

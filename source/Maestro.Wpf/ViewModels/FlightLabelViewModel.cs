@@ -91,10 +91,20 @@ public partial class FlightLabelViewModel(
                 SlotCreationReferencePoint.After));
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChangeEta))]
     void ChangeEta()
     {
-        mediator.Send(new OpenEstimateWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+        mediator.Send(
+            new OpenChangeFeederFixEstimateWindowRequest(
+                FlightViewModel.DestinationIdentifier,
+                FlightViewModel.Callsign,
+                FlightViewModel.FeederFixIdentifier!,
+                FlightViewModel.FeederFixEstimate!.Value));
+    }
+
+    bool CanChangeEta()
+    {
+        return !string.IsNullOrEmpty(FlightViewModel.FeederFixIdentifier) && FlightViewModel.FeederFixEstimate != null;
     }
 
     [RelayCommand]

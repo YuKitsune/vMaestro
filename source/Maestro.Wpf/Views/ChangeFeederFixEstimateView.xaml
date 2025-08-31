@@ -1,0 +1,83 @@
+﻿<UserControl x:Class="Maestro.Wpf.Views.ChangeFeederFixEstimateView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Maestro.Wpf"
+             xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
+             xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
+             xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             d:DataContext="{d:DesignInstance Type=viewModels:ChangeFeederFixEstimateViewModel}"
+             mc:Ignorable="d"
+             Padding="2"
+             Width="280">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:TimeConverter x:Key="TimeConverter"/>
+
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
+                <Setter Property="Margin" Value="2" />
+                <Setter Property="Width" Value="64" />
+            </Style>
+
+            <Style TargetType="RowDefinition">
+                <Setter Property="Height" Value="24"/>
+            </Style>
+
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="24"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Flight"/>
+            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Callsign}"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Feeder Fix"/>
+            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FeederFix}"/>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Original ETA_FF"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding OriginalFeederFixEstimate, Converter={StaticResource TimeConverter}}"/>
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="New ETA_FF"/>
+            <controls:TimeControl Grid.Row="3" Grid.Column="1" Time="{Binding NewFeederFixEstimate}" MaxHeight="20" />
+
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="1" Content="OK" Command="{Binding ChangeFeederFixEstimateCommand}"/>
+            <Button Grid.Column="3" Content="Cancel" Command="{Binding CloseWindowCommand}"/>
+        </Grid>
+    </Grid>
+</UserControl>
+

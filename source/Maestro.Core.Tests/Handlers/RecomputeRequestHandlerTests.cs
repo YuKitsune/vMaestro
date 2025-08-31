@@ -83,18 +83,20 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight.ManualLandingTime.ShouldBeFalse();
     }
 
-    [Fact]
-    public async Task WhenRecomputingAFlight_FeederFixTimeIsResetToEstimatedTime()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task WhenRecomputingAFlight_FeederFixTimeIsResetToEstimatedTime(bool manual)
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
         var scheduledFeederFixTime = now.AddMinutes(15);
-        var estimatedFeederFixTime = now.AddMinutes(5);
+        var manualFeederFixEstaimate = now.AddMinutes(10);
 
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
             .WithFeederFixTime(scheduledFeederFixTime)
-            .WithFeederFixEstimate(estimatedFeederFixTime)
+            .WithFeederFixEstimate(manualFeederFixEstaimate, manual)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
@@ -102,7 +104,10 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithFlight(flight)
             .Build();
 
-        var estimateProvider = new MockEstimateProvider(feederFixEstimate: estimatedFeederFixTime, landingEstimate: flight.EstimatedLandingTime);
+        var actualFeederFixEstaimate = now.AddMinutes(5);
+        var estimateProvider = new MockEstimateProvider(
+            feederFixEstimate: actualFeederFixEstaimate,
+            landingEstimate: flight.EstimatedLandingTime);
 
         var handler = GetRequestHandler(sequence, estimateProvider);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -111,8 +116,9 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.ScheduledFeederFixTime.ShouldBe(estimatedFeederFixTime);
-        // TODO: flight.ManualFeederFixTime.ShouldBeFalse();
+        flight.ScheduledFeederFixTime.ShouldBe(actualFeederFixEstaimate);
+        flight.EstimatedFeederFixTime.ShouldBe(actualFeederFixEstaimate);
+        flight.ManualFeederFixEstimate.ShouldBeFalse();
     }
 
     [Fact]

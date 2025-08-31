@@ -46,6 +46,11 @@ public class RecomputeRequestHandler(
 
         // Re-calculate the estimates
         CalculateEstimates(airportConfiguration, flight);
+
+        // Reset scheduled times
+        if (flight.EstimatedFeederFixTime is not null)
+            flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
+
         flight.SetLandingTime(flight.EstimatedLandingTime, manual: false);
 
         // Reset the runway
