@@ -17,14 +17,12 @@ public record FlightUpdatedNotification(
     DateTimeOffset EstimatedDepartureTime,
     TimeSpan EstimatedFlightTime,
     string? AssignedArrival,
-    string? AssignedRunway,
     FlightPosition? Position,
     FixEstimate[] Estimates)
     : INotification;
 
 public class FlightUpdatedHandler(
     ISequenceProvider sequenceProvider,
-    IRunwayAssigner runwayAssigner,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
@@ -125,8 +123,12 @@ public class FlightUpdatedHandler(
             logger.Debug("Updating {Callsign}", notification.Callsign);
 
             UpdateFlightData(notification, flight);
-            CalculateEstimates(flight, notification, airportConfiguration);
-            flight.Fixes = notification.Estimates;
+            flight.UpdatePosition(notification.Position);
+
+            // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
+            if (notification.Position is not null && !notification.Position.IsOnGround)
+                    CalculateEstimates(flight, notification, airportConfiguration);
+
             flight.UpdateLastSeen(clock);
 
             logger.Debug("Flight updated: {Flight}", flight);
@@ -223,5 +225,6 @@ public class FlightUpdatedHandler(
         flight.EstimatedTimeEnroute = notification.EstimatedFlightTime;
 
         flight.AssignedArrivalIdentifier = notification.AssignedArrival;
+        flight.Fixes = notification.Estimates;
     }
 }

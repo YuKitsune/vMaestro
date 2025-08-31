@@ -14,6 +14,13 @@ namespace Maestro.Core.Tests.Handlers;
 
 public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
+    readonly FlightPosition _position = new(
+        new Coordinate(0, 0),
+        0,
+        VerticalTrack.Maintaining,
+        0,
+        false);
+
     [Fact]
     public async Task WhenAFlightIsOutOfRangeOfFeederFix_ItShouldNotBeTracked()
     {
@@ -30,7 +37,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(4),
             "RIVET4",
-            "34L",
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(3))]);
 
@@ -50,13 +56,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var clock = clockFixture.Instance;
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
 
-        var position = new FlightPosition(
-            new Coordinate(0, 0),
-            0,
-            VerticalTrack.Maintaining,
-            0,
-            false);
-
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
@@ -66,8 +65,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
             "RIVET4",
-            "34L",
-            position,
+            _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
         var scheduler = Substitute.For<IScheduler>();
@@ -90,14 +88,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         // Arrange
         var clock = clockFixture.Instance;
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-
-        var position = new FlightPosition(
-            new Coordinate(0, 0),
-            0,
-            VerticalTrack.Maintaining,
-            0,
-            false);
-
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
@@ -107,8 +97,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
             null,
-            "34L",
-            position,
+            _position,
             [new FixEstimate("TESAT", clock.UtcNow().AddMinutes(30))]);
 
         var scheduler = Substitute.For<IScheduler>();
@@ -147,7 +136,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddMinutes(10),
             TimeSpan.FromHours(20),
             "RIVET4",
-            "34L",
             position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -178,7 +166,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddMinutes(10),
             TimeSpan.FromHours(20),
             "RIVET4",
-            "34L",
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -216,7 +203,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(10),
             TimeSpan.FromHours(20),
             "RIVET4",
-            "34L",
             position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -242,7 +228,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithState(state)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithLandingTime(clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
@@ -261,8 +247,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
             "RIVET4",
-            "34L",
-            null,
+            _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
                 new FixEstimate("YSSY", newLandingTime)
@@ -290,43 +275,93 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         flight.EstimatedLandingTime.ShouldBe(newLandingTime);
     }
 
-    // TODO
-    // [Fact]
-    // public async Task WhenAnExistingFlightIsUpdated_AllFlightDataIsUpdated()
-    // {
-    //
-    //     // Arrange
-    //     var clock = clockFixture.Instance;
-    //     var flight = new FlightBuilder("QFA123")
-    //         .WithFeederFix("RIVET")
-    //         .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-    //         .Build();
-    //
-    //     var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-    //         .WithFlight(flight)
-    //         .Build();
-    //
-    //     var notification = new FlightUpdatedNotification(
-    //         "QFA123",
-    //         "B738",
-    //         WakeCategory.Medium,
-    //         "YMML",
-    //         "YSSY",
-    //         clock.UtcNow().AddHours(-1),
-    //         "ODALE7", // Different arrival
-    //         "34R", // Different runway
-    //         null,
-    //         [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(10))]);
-    //
-    //     var handler = GetHandler(sequence, clock);
-    //
-    //     // Act
-    //     await handler.Handle(notification, CancellationToken.None);
-    //
-    //     // Assert
-    //     flight.AssignedArrival.ShouldBe("ODALE7");
-    //     flight.LastSeen.ShouldBe(clock.UtcNow());
-    // }
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_ButNoPositionIsAvailable_EstimatesAreNotRecalculated()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+        var originalFeederFixTime = clock.UtcNow().AddMinutes(10);
+        var originalLandingTime = clock.UtcNow().AddMinutes(20);
+        var flight = new FlightBuilder("QFA123")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(originalFeederFixTime)
+            .WithLandingEstimate(originalLandingTime)
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .WithFlight(flight)
+            .Build();
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            "RIVET4",
+            null,
+            [
+                new FixEstimate("RIVET", clock.UtcNow().AddHours(1)),
+                new FixEstimate("YSSY", clock.UtcNow().AddHours(1.25))
+            ]);
+
+        var handler = GetHandler(sequence, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        flight.EstimatedFeederFixTime.ShouldBe(originalFeederFixTime);
+        flight.EstimatedLandingTime.ShouldBe(originalLandingTime);
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AllFlightDataIsUpdated()
+    {
+
+        // Arrange
+        var clock = clockFixture.Instance;
+        var flight = new FlightBuilder("QFA123")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .WithFlight(flight)
+            .Build();
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B744", // Different aircraft type
+            WakeCategory.Heavy, // Different wake category
+            "YMAV", // Different origin
+            "YSSY",
+            clock.UtcNow().AddHours(-1.5), // Different estimated departure
+            TimeSpan.FromHours(2),
+            "ODALE7", // Different arrival
+            new FlightPosition(new Coordinate(1, 1), 38_000, VerticalTrack.Descending, 280, false), // Different position
+            [new FixEstimate("WELSH", clock.UtcNow().AddMinutes(10))]);
+
+        var handler = GetHandler(sequence, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        flight.AircraftType.ShouldBe("B744");
+        flight.WakeCategory.ShouldBe(WakeCategory.Heavy);
+        flight.OriginIdentifier.ShouldBe("YMAV");
+        flight.EstimatedDepartureTime.ShouldBe(notification.EstimatedDepartureTime);
+        flight.AssignedArrivalIdentifier.ShouldBe("ODALE7");
+        flight.Position!.Coordinate.Latitude.ShouldBe(notification.Position!.Coordinate.Latitude);
+        flight.Position.Coordinate.Longitude.ShouldBe(notification.Position.Coordinate.Longitude);
+        flight.Position.Altitude.ShouldBe(notification.Position.Altitude);
+        flight.Position.GroundSpeed.ShouldBe(notification.Position.GroundSpeed);
+        flight.Fixes.ShouldHaveSingleItem().ShouldBe(notification.Estimates.Single());
+        flight.LastSeen.ShouldBe(clock.UtcNow());
+    }
 
     [Fact]
     public async Task WhenADesequencedFlightIsUpdated_ItsEstimatesAreStillUpdated()
@@ -356,8 +391,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
             "RIVET4",
-            "34L",
-            null,
+            _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
                 new FixEstimate("YSSY", newLandingTime)
@@ -396,8 +430,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
             .Returns(new TestExclusiveSequence(sequence));
 
-        var runwayAssigner = Substitute.For<IRunwayAssigner>();
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
+        rateLimiter.ShouldUpdateFlight(Arg.Any<Flight>(), Arg.Any<FlightPosition>()).Returns(true);
+
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([airportConfigurationFixture.Instance]);
 
@@ -407,7 +442,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
 
         return new FlightUpdatedHandler(
             sequenceProvider,
-            runwayAssigner,
             rateLimiter,
             airportConfigurationProvider,
             estimateProvider,

@@ -26,13 +26,10 @@ using MessageBox = System.Windows.Forms.MessageBox;
 // TODO:
 //  - What's next?
 //      - Double check ETA calculation behaviour for pending flights (do pending flight ETAs get fucked up by the recurring ETA updates)
-//      - MakePending command
+//      - Clean up flight insertion UI
 //      - Change ETA_FF command
 //      - Manual landing time UI stuff (don't click and drag frozen flights, swap, single click, etc.)
 //      - Runway assignment rules are confusing, it's easy to end up with no runways assigned (If only one runway is in mode, just assign that, defer to rules when multiple runways exist)
-//      - Recompute seems to make aircraft disappear (related to above?)
-//      - Re-schedule when removing a flight (DESQ too?)
-//      - Revisit re-sequencing behaviour
 
 namespace Maestro.Plugin;
 
@@ -372,7 +369,6 @@ public class Plugin : IPlugin
             ToDateTimeOffset(updated.ETD),
             updated.EET,
             updated.STAR?.Name,
-            updated.ArrivalRunway?.Name,
             position,
             estimates);
 

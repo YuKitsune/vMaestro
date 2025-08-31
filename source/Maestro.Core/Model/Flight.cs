@@ -184,7 +184,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         LastSeen = clock.UtcNow();
     }
 
-    public void UpdatePosition(FlightPosition position)
+    public void UpdatePosition(FlightPosition? position)
     {
         Position = position;
     }
