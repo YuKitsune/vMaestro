@@ -487,7 +487,10 @@ public partial class MaestroView
 
     void BeginInsertingSlotBefore(object sender, RoutedEventArgs e)
     {
-        if (sender is not MenuItem menuItem)
+        if (sender is not MenuItem beforeMenuItem)
+            return;
+
+        if (beforeMenuItem.Parent is not MenuItem menuItem)
             return;
 
         BeginInsertingSlot(menuItem, SlotCreationReferencePoint.Before);
@@ -495,7 +498,10 @@ public partial class MaestroView
 
     void BeginInsertingSlotAfter(object sender, RoutedEventArgs e)
     {
-        if (sender is not MenuItem menuItem)
+        if (sender is not MenuItem afterMenuItem)
+            return;
+
+        if (afterMenuItem.Parent is not MenuItem menuItem)
             return;
 
         BeginInsertingSlot(menuItem, SlotCreationReferencePoint.After);

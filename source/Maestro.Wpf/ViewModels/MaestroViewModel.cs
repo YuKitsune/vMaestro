@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Windows.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Extensions;
@@ -10,12 +9,6 @@ using Maestro.Wpf.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
-
-public class BeginSlotArgs
-{
-    public DateTimeOffset StartTime { get; set; }
-    public string[] RunwayIdentifiers { get; set; } = [];
-}
 
 public partial class MaestroViewModel(IMediator mediator) : ObservableObject
 {
@@ -76,24 +69,22 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
     {
         IsCreatingSlot = true;
         SlotCreationReferencePoint = slotCreationReferencePoint;
-        FirstSlotTime = firstSlotTime;
+
+        // Round time based on reference point:
+        // Before: round down to the previous minute
+        // After: round up to the next minute
+        FirstSlotTime = slotCreationReferencePoint == SlotCreationReferencePoint.Before
+            ? new DateTimeOffset(firstSlotTime.Year, firstSlotTime.Month, firstSlotTime.Day,
+                                firstSlotTime.Hour, firstSlotTime.Minute, 0, firstSlotTime.Offset)
+            : new DateTimeOffset(firstSlotTime.Year, firstSlotTime.Month, firstSlotTime.Day,
+                                firstSlotTime.Hour, firstSlotTime.Minute, 0, firstSlotTime.Offset).AddMinutes(1);
         SlotRunwayIdentifiers = runwayIdentifiers;
     }
 
     public void EndSlotCreation(DateTimeOffset secondSlotTime)
     {
         IsCreatingSlot = false;
-        SecondSlotTime = secondSlotTime;
-
-        if (SlotCreationReferencePoint == SlotCreationReferencePoint.Before && !secondSlotTime.IsBefore(FirstSlotTime!.Value))
-        {
-            return;
-        }
-
-        if (SlotCreationReferencePoint == SlotCreationReferencePoint.After && !secondSlotTime.IsAfter(FirstSlotTime!.Value))
-        {
-            return;
-        }
+        SecondSlotTime = secondSlotTime.Rounded();
 
         var startTime = FirstSlotTime!.Value.IsSameOrBefore(SecondSlotTime.Value) ? FirstSlotTime.Value : SecondSlotTime.Value;
         var endTime = FirstSlotTime!.Value.IsSameOrBefore(SecondSlotTime.Value) ? SecondSlotTime.Value : FirstSlotTime.Value;

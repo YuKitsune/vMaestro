@@ -1585,14 +1585,17 @@ public class SchedulerTests(
         subject2.ScheduledLandingTime.ShouldBe(subject1.ScheduledLandingTime.Add(_landingRate));
     }
 
-    [Fact]
-    public void WhenASlotIsAdded_FlightsInTheSlotAreDelayed()
+    [Theory]
+    [InlineData(State.Unstable)]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    public void WhenASlotIsAdded_FlightsInTheSlotAreDelayed(State state)
     {
         // Arrange
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(15))
             .WithRunway("34L")
-            .WithState(State.Unstable)
+            .WithState(state)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
