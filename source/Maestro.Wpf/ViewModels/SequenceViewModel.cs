@@ -33,10 +33,13 @@ public partial class SequenceViewModel : ObservableObject
     RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDesequencedFlight))]
     List<FlightMessage> _flights = [];
 
     [ObservableProperty]
     SlotMessage[] _slots = [];
+
+    public bool HasDesequencedFlight => Flights.Any(f => f.State == State.Desequenced);
 
     public string AirportIdentifier { get; }
 

@@ -29,7 +29,6 @@
 
             <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
             <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
-            <converters:HasItemsConverter x:Key="HasItemsConverter" />
             <converters:EqualityConverter x:Key="EqualityConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
@@ -189,7 +188,7 @@
                     <TextBlock.Style>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedSequence.DesequencedFlights, Converter={StaticResource HasItemsConverter}}" Value="True">
+                                <DataTrigger Binding="{Binding SelectedSequence.HasDesequencedFlight}" Value="True">
                                     <Setter Property="Foreground" Value="White" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -201,6 +200,7 @@
             <ItemsControl ItemsSource="{Binding SelectedSequence.Views}" Name="SectorList">
                 <ItemsControl.Resources>
                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
+                        <Setter Property="Margin" Value="0,0,2,0"/>
                         <Setter Property="Width" Value="72" />
                     </Style>
                 </ItemsControl.Resources>
@@ -236,7 +236,7 @@
 
         <!-- Scroll Bar -->
         <!-- TODO: Not implemented -->
-        <Grid Grid.Column="0" Grid.Row="3">
+        <Grid Grid.Column="0" Grid.Row="3" Margin="2,0,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
