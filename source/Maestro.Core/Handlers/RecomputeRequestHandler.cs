@@ -35,6 +35,9 @@ public class RecomputeRequestHandler(
 
         logger.Information("Recomputing {Callsign}", flight.Callsign);
 
+        // Treat as a new flight
+        flight.SetState(State.New, clock);
+
         // Reset the feeder fix in case of a re-route
         var feederFix = flight.Fixes
             .LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
@@ -56,9 +59,6 @@ public class RecomputeRequestHandler(
         // Reset the runway
         var runwayMode = sequence.GetRunwayModeAt(flight.EstimatedLandingTime);
         flight.SetRunway(runwayMode.Default.Identifier, manual: false);
-
-        // Treat as a new flight
-        flight.SetState(State.New, clock);
 
         // Re-schedule the sequence
         scheduler.Schedule(sequence);

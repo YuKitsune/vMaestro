@@ -137,7 +137,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
         EstimatedFeederFixTime = feederFixEstimate;
         ManualFeederFixEstimate = manual;
-        if (State == State.Unstable)
+        if (State is State.Pending or State.New or State.Unstable)
         {
             InitialFeederFixTime = feederFixEstimate;
         }

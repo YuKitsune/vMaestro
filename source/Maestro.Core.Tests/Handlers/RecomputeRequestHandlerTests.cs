@@ -63,8 +63,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
-            .WithLandingTime(scheduledLandingTime, manual)
             .WithLandingEstimate(estimatedLandingTime)
+            .WithLandingTime(scheduledLandingTime, manual)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
@@ -79,6 +79,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
+        flight.InitialLandingTime.ShouldBe(estimatedLandingTime);
+        flight.EstimatedLandingTime.ShouldBe(estimatedLandingTime);
         flight.ScheduledLandingTime.ShouldBe(estimatedLandingTime);
         flight.ManualLandingTime.ShouldBeFalse();
     }
@@ -95,8 +97,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
-            .WithFeederFixTime(scheduledFeederFixTime)
             .WithFeederFixEstimate(manualFeederFixEstaimate, manual)
+            .WithFeederFixTime(scheduledFeederFixTime)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
@@ -116,8 +118,9 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.ScheduledFeederFixTime.ShouldBe(actualFeederFixEstaimate);
+        flight.InitialFeederFixTime.ShouldBe(actualFeederFixEstaimate);
         flight.EstimatedFeederFixTime.ShouldBe(actualFeederFixEstaimate);
+        flight.ScheduledFeederFixTime.ShouldBe(actualFeederFixEstaimate);
         flight.ManualFeederFixEstimate.ShouldBeFalse();
     }
 

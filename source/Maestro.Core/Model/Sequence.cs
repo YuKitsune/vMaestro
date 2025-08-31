@@ -157,7 +157,7 @@ public class Sequence
     {
         var slot = new Slot(Guid.NewGuid(), start, end, runwayIdentifiers);
         _slots.Add(slot);
-        scheduler.Schedule(this);
+        scheduler.Schedule(this, recalculateAll: true);
         return slot;
     }
 
