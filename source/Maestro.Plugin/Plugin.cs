@@ -26,7 +26,6 @@ using MessageBox = System.Windows.Forms.MessageBox;
 // TODO:
 //  - What's next?
 //      - Double check ETA calculation behaviour for pending flights (do pending flight ETAs get fucked up by the recurring ETA updates)
-//      - Clean up flight insertion UI
 //      - Change ETA_FF command
 //      - Manual landing time UI stuff (don't click and drag frozen flights, swap, single click, etc.)
 //      - Runway assignment rules are confusing, it's easy to end up with no runways assigned (If only one runway is in mode, just assign that, defer to rules when multiple runways exist)
