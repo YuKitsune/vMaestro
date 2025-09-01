@@ -107,7 +107,6 @@ public class ArrivalLookupTests
             Runways = [],
             RunwayModes = [],
             Views = [],
-            RunwayAssignmentRules = [],
             DepartureAirports = []
         };
 

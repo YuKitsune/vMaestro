@@ -19,12 +19,21 @@ public class AirportConfigurationFixture
                 new RunwayConfiguration
                 {
                     Identifier = "34L",
-                    LandingRateSeconds = 180
+                    LandingRateSeconds = 180,
+                    Preferences = new RunwayPreferences
+                    {
+                        FeederFixes = ["RIVET", "WELSH"],
+                        WakeCategories = [WakeCategory.SuperHeavy, WakeCategory.Heavy]
+                    }
                 },
                 new RunwayConfiguration
                 {
                     Identifier = "34R",
-                    LandingRateSeconds = 180
+                    LandingRateSeconds = 180,
+                    Preferences = new RunwayPreferences
+                    {
+                        FeederFixes = ["BOREE", "YAKKA", "MARLN"]
+                    }
                 }
             ],
             RunwayModes =
@@ -83,38 +92,6 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "WELSH"],
-            RunwayAssignmentRules =
-            [
-                new RunwayAssignmentRule(
-                    0,
-                    ["RIVET", "WELSH", "BOREE", "MEPIL", "MARLN"],
-                    [WakeCategory.Heavy, WakeCategory.SuperHeavy],
-                    ["34L", "16R", "07", "25"]),
-
-                new RunwayAssignmentRule(
-                    1,
-                    ["RIVET", "WELSH"],
-                    [WakeCategory.Light, WakeCategory.Medium],
-                    ["34L", "16R", "07", "25"]),
-
-                new RunwayAssignmentRule(
-                    2,
-                    ["RIVET", "WELSH"],
-                    [WakeCategory.Light, WakeCategory.Medium],
-                    ["34R", "16L"]),
-
-                new RunwayAssignmentRule(
-                    1,
-                    ["BOREE", "MEPIL", "MARLN"],
-                    [WakeCategory.Light, WakeCategory.Medium],
-                    ["34R", "16L", "07", "25"]),
-
-                new RunwayAssignmentRule(
-                    2,
-                    ["BOREE", "MEPIL", "MARLN"],
-                    [WakeCategory.Light, WakeCategory.Medium],
-                    ["34L", "16R"])
-            ],
             DepartureAirports = ["YSCB"]
         };
 }

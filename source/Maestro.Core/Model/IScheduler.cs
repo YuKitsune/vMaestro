@@ -11,7 +11,7 @@ public interface IScheduler
 }
 
 public class Scheduler(
-    IRunwayAssigner runwayAssigner,
+    IRunwayScoreCalculator runwayScoreCalculator,
     IAirportConfigurationProvider airportConfigurationProvider,
     IPerformanceLookup performanceLookup,
     IClock clock,
@@ -136,12 +136,20 @@ public class Scheduler(
             var currentRunwayMode = sequence.CurrentRunwayMode;
 
 tryAgain:
+            var eligibleRunways = flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier)
+                ? airportConfiguration.Runways.Where(r => r.Identifier == flight.AssignedRunwayIdentifier).ToArray()
+                : airportConfiguration.Runways.Where(r => IsRunwayEligible(r, flight)).ToArray();
+
             var preferredRunways = flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier)
                 ? [flight.AssignedRunwayIdentifier!] // Use only the manually assigned runway
-                : runwayAssigner.FindBestRunways(
+                : runwayScoreCalculator.CalculateScores(
+                    eligibleRunways,
                     flight.AircraftType,
-                    flight.FeederFixIdentifier ?? string.Empty,
-                    airportConfiguration.RunwayAssignmentRules);
+                    flight.WakeCategory,
+                    flight.FeederFixIdentifier)
+                    .OrderByDescending(r => r.Score)
+                    .Select(r => r.RunwayIdentifier)
+                    .ToArray();
 
             // Fallback to the first runway in the current mode
             // TODO: Need to refactor runway assignment so this isn't a problem
@@ -262,6 +270,45 @@ tryAgain:
                         delayApplied = true;
                     }
                 }
+
+                // Check runway dependency conflicts
+                foreach (var dependency in runwayConfiguration.Dependencies)
+                {
+                    if (!dependency.SeparationSeconds.HasValue)
+                        continue;
+
+                    var separationSeconds = dependency.SeparationSeconds.Value;
+
+                    // Find the most recent flight on the dependent runway that could cause a conflict
+                    var dependentLeader = sequencedFlights
+                        .LastOrDefault(f => f.AssignedRunwayIdentifier == dependency.RunwayIdentifier &&
+                                          f.ScheduledLandingTime <= proposedLandingTime);
+
+                    if (dependentLeader is not null)
+                    {
+                        var requiredSeparationTime = dependentLeader.ScheduledLandingTime.AddSeconds(separationSeconds);
+                        if (requiredSeparationTime.IsAfter(proposedLandingTime))
+                        {
+                            proposedLandingTime = requiredSeparationTime;
+                            delayApplied = true;
+                        }
+                    }
+
+                    // Find any flight on the dependent runway that we would be too close to
+                    var dependentTrailer = sequencedFlights
+                        .FirstOrDefault(f => f.AssignedRunwayIdentifier == dependency.RunwayIdentifier &&
+                                           f.ScheduledLandingTime >= proposedLandingTime);
+
+                    if (dependentTrailer is not null)
+                    {
+                        var earliestAllowedTime = dependentTrailer.ScheduledLandingTime.AddSeconds(-separationSeconds);
+                        if (earliestAllowedTime.IsBefore(proposedLandingTime))
+                        {
+                            proposedLandingTime = dependentTrailer.ScheduledLandingTime.AddSeconds(separationSeconds);
+                            delayApplied = true;
+                        }
+                    }
+                }
             } while (delayApplied);
 
             return proposedLandingTime;
@@ -273,11 +320,24 @@ tryAgain:
         flight.SetLandingTime(landingTime);
         flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
 
-        if (flight.EstimatedFeederFixTime is not null && !flight.HasPassedFeederFix)
+        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && flight.EstimatedFeederFixTime is not null && !flight.HasPassedFeederFix)
         {
             var totalDelay = landingTime - flight.EstimatedLandingTime;
             var feederFixTime = flight.EstimatedFeederFixTime.Value + totalDelay;
             flight.SetFeederFixTime(feederFixTime);
         }
+    }
+
+    private static bool IsRunwayEligible(RunwayConfiguration runway, Flight flight)
+    {
+        if (runway.Requirements?.FeederFixes.Length > 0)
+        {
+            if (string.IsNullOrEmpty(flight.FeederFixIdentifier))
+                return true; // No feeder fix = eligible for any runway
+
+            return runway.Requirements.FeederFixes.Contains(flight.FeederFixIdentifier);
+        }
+
+        return true; // No requirements = always eligible
     }
 }

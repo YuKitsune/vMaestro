@@ -27,7 +27,7 @@ public class SchedulerTests(
     static IScheduler CreateScheduler(PerformanceLookupFixture performanceLookupFixture, AirportConfigurationFixture airportConfigurationFixture, IClock clock)
     {
         var performanceLookup = performanceLookupFixture.Instance;
-        var runwayAssigner = new RunwayAssigner(performanceLookup);
+        var runwayAssigner = new RunwayScoreCalculator();
         var airportConfiguration = airportConfigurationFixture.Instance;
 
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
@@ -451,7 +451,6 @@ public class SchedulerTests(
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA3", "QFA1", "QFA2"]);
     }
 
-    // TODO: Dependent runway separation
     [Fact]
     public void WhenSchedulingMultipleFlights_OnDifferentRunways_TheyAreNotSeparated()
     {
@@ -484,6 +483,144 @@ public class SchedulerTests(
         second.ScheduledFeederFixTime.ShouldBe(second.EstimatedFeederFixTime);
         second.ScheduledLandingTime.ShouldBe(second.EstimatedLandingTime);
         second.TotalDelay.ShouldBe(TimeSpan.Zero);
+    }
+
+    [Fact]
+    public void WhenSchedulingFlights_WithRunwayDependencies_DependencySeparationIsApplied()
+    {
+        // Arrange - Create runway configuration with dependencies
+        var runway34L = new RunwayConfiguration
+        {
+            Identifier = "34L",
+            LandingRateSeconds = 180, // 3 minute spacing on same runway
+            Dependencies =
+            [
+                new RunwayDependency
+                {
+                    RunwayIdentifier = "34R",
+                    SeparationSeconds = 30 // 30 second separation from 34R
+                }
+            ]
+        };
+
+        var runway34R = new RunwayConfiguration
+        {
+            Identifier = "34R",
+            LandingRateSeconds = 180, // 3 minute spacing on same runway
+            Dependencies =
+            [
+                new RunwayDependency
+                {
+                    RunwayIdentifier = "34L",
+                    SeparationSeconds = 30 // 30 second separation from 34L
+                }
+            ]
+        };
+
+        var runwayMode = new RunwayMode
+        {
+            Identifier = "34LR",
+            Runways = [runway34L, runway34R]
+        };
+
+        // Create a flight on 34L that will cause conflicts on 34R
+        var leaderFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithRunwayMode(runwayMode)
+            .WithFlight(leaderFlight)
+            .Build();
+
+        // Create a follower flight on 34R with ETA within the dependency separation window
+        var followerFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(leaderFlight.ScheduledLandingTime) // Landing at the same time as the leader
+            .WithRunway("34R")
+            .WithState(State.Unstable)
+            .Build();
+
+        // Act
+        sequence.AddFlight(followerFlight, _scheduler);
+
+        // Assert
+        // Leader flight should remain unchanged
+        leaderFlight.AssignedRunwayIdentifier.ShouldBe("34L");
+        leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
+        leaderFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+
+        // Follower flight should be delayed by the dependency separation (30 seconds)
+        var expectedLandingTime = leaderFlight.ScheduledLandingTime.AddSeconds(30);
+        followerFlight.AssignedRunwayIdentifier.ShouldBe("34R");
+        followerFlight.ScheduledLandingTime.ShouldBe(expectedLandingTime);
+
+        // Sequence order should be leader first, then follower
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2"]);
+    }
+
+    [Fact]
+    public void WhenSchedulingFlights_WithRunwayDependencies_AndNoConflict_NoSeparationApplied()
+    {
+        // Arrange - Create runway configuration with dependencies
+        var runway34L = new RunwayConfiguration
+        {
+            Identifier = "34L",
+            LandingRateSeconds = 180,
+            Dependencies =
+            [
+                new RunwayDependency
+                {
+                    RunwayIdentifier = "34R",
+                    SeparationSeconds = 30
+                }
+            ]
+        };
+
+        var runway34R = new RunwayConfiguration
+        {
+            Identifier = "34R",
+            LandingRateSeconds = 180,
+            Dependencies = []
+        };
+
+        var runwayMode = new RunwayMode
+        {
+            Identifier = "Dual",
+            Runways = [runway34L, runway34R]
+        };
+
+        // Create flights with sufficient separation (more than dependency requirement)
+        var leaderFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34R")
+            .WithState(State.Stable)
+            .Build();
+
+        var followerFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20).AddSeconds(45)) // 45 seconds after leader (more than 30 second dependency)
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithRunwayMode(runwayMode)
+            .WithFlight(leaderFlight)
+            .WithFlight(followerFlight)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert - No delays should be applied since there's sufficient separation
+        leaderFlight.AssignedRunwayIdentifier.ShouldBe("34R");
+        leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
+        leaderFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
+
+        followerFlight.AssignedRunwayIdentifier.ShouldBe("34L");
+        followerFlight.ScheduledLandingTime.ShouldBe(followerFlight.EstimatedLandingTime);
+        followerFlight.TotalDelay.ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]

@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<ISequenceProvider, SequenceProvider>()
             .AddSingleton<IScheduler, Scheduler>()
             .AddSingleton<SchedulerBackgroundService>()
-            .AddSingleton<IRunwayAssigner, RunwayAssigner>()
+            .AddSingleton<IRunwayScoreCalculator, RunwayScoreCalculator>()
             .AddSingleton<IClock, SystemClock>()
             .AddScoped<SequenceCleaner>();
     }

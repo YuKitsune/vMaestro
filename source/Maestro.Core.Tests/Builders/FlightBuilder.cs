@@ -44,9 +44,9 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithFeederFix(string feederFixIdentifier)
+    public FlightBuilder WithFeederFix(string? feederFixIdentifier)
     {
-        _feederFixIdentifier = feederFixIdentifier;
+        _feederFixIdentifier = feederFixIdentifier ?? string.Empty;
         return this;
     }
 
@@ -144,7 +144,8 @@ public class FlightBuilder(string callsign)
         };
 
         flight.SetFeederFix(_feederFixIdentifier, feederFixEstimate, passedFeederFix);
-        flight.UpdateFeederFixEstimate(feederFixEstimate, manualFeederFixEstimate);
+        if (!string.IsNullOrEmpty(_feederFixIdentifier))
+            flight.UpdateFeederFixEstimate(feederFixEstimate, manualFeederFixEstimate);
 
         if (feederFixTime != default)
             flight.SetFeederFixTime(feederFixTime);

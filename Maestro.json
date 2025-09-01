@@ -4,22 +4,39 @@
     "OutputDirectory": "MaestroLogs",
     "MaxFileAgeDays": 7
   },
-  "Maestro": {
-    "Reclassifications": [
-      { "AircraftType": "DH8D", "NewClassification": "Jet" }
-    ]
-  },
   "Airports": [
     {
       "Identifier": "YSSY",
       "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
       "Runways": [
-        { "Identifier": "16L" },
-        { "Identifier": "34L" },
+        { 
+          "Identifier": "16L",
+          "Preferences": {
+            "FeederFixes": ["BOREE", "YAKKA", "MARLN"]
+          }
+        },
+        { 
+          "Identifier": "34L",
+          "Preferences": {
+            "FeederFixes": ["RIVET", "WELSH"],
+            "WakeCategories": ["SuperHeavy", "Heavy"]
+          } 
+        },
         { "Identifier": "07" },
-        { "Identifier": "16R" },
-        { "Identifier": "34R" },
+        {
+          "Identifier": "16R",
+          "Preferences": {
+            "FeederFixes": ["RIVET", "WELSH"],
+            "WakeCategories": ["SuperHeavy", "Heavy"]
+          } 
+        },
+        { 
+          "Identifier": "34R",
+          "Preferences": {
+            "FeederFixes": ["BOREE", "YAKKA", "MARLN"]
+          }
+        },
         { "Identifier": "25" }
       ],
       "RunwayModes": [
@@ -33,8 +50,8 @@
         {
           "Identifier": "34I",
           "Runways": [
-            { "Identifier": "34L", "LandingRateSeconds": 210 },
-            { "Identifier": "34R", "LandingRateSeconds": 210 }
+            { "Identifier": "34L", "LandingRateSeconds": 210, "Dependencies":[{ "RunwayIdentifier": "34R", "SeparationSeconds": 60 }] },
+            { "Identifier": "34R", "LandingRateSeconds": 210, "Dependencies":[{ "RunwayIdentifier": "34L", "SeparationSeconds": 60 }] }
           ]
         },
         {
@@ -47,8 +64,8 @@
         {
           "Identifier": "16I",
           "Runways": [
-            { "Identifier": "16R", "LandingRateSeconds": 210 },
-            { "Identifier": "16L", "LandingRateSeconds": 210 }
+            { "Identifier": "16R", "LandingRateSeconds": 210, "Dependencies":[{ "RunwayIdentifier": "16L", "SeparationSeconds": 60 }] },
+            { "Identifier": "16L", "LandingRateSeconds": 210, "Dependencies":[{ "RunwayIdentifier": "16R", "SeparationSeconds": 60 }] }
           ]
         },
         {
@@ -245,38 +262,6 @@
           "ViewMode": "Approach",
           "LeftLadder": ["34L", "16R", "07"],
           "RightLadder": ["34R", "16L", "25"]
-        }
-      ],
-      "RunwayAssignmentRules": [
-        {
-          "Priority": 0,
-          "FeederFixes": ["RIVET", "WELSH", "BOREE", "MEPIL", "MARLN"],
-          "WakeCategories": ["Heavy", "SuperHeavy"],
-          "Runways": ["34L", "16R", "07", "25"]
-        },
-        {
-          "Priority": 1,
-          "FeederFixes": ["RIVET", "WELSH"],
-          "WakeCategories": ["Light", "Medium"],
-          "Runways": ["34L", "16R", "07", "25"]
-        },
-        {
-          "Priority": 2,
-          "FeederFixes": ["RIVET", "WELSH"],
-          "WakeCategories": ["Light", "Medium"],
-          "Runways": ["34R", "16L"]
-        },
-        {
-          "Priority": 1,
-          "FeederFixes": ["BOREE", "MEPIL", "MARLN"],
-          "WakeCategories": ["Light", "Medium"],
-          "Runways": ["34R", "16L", "07", "25"]
-        },
-        {
-          "Priority": 2,
-          "FeederFixes": ["BOREE", "MEPIL", "MARLN"],
-          "WakeCategories": ["Light", "Medium"],
-          "Runways": ["34L", "16R"]
         }
       ],
       "DepartureAirports": ["YSCB", "YBTH", "YORG", "YCWR", "YSDU", "YGTH", "YPKS", "YSWG", "YNAR", "YMRY", "YMAY", "YMER", "YCFS", "YPMQ", "YARM", "YSTW", "YMOR"]
@@ -566,32 +551,6 @@
           "RightLadder": ["09", "27"]
         }
       ],
-      "RunwayAssignmentRules": [
-        {
-          "Priority": 0,
-          "FeederFixes": ["ARBEY", "BOOIN", "ALAXO"],
-          "WakeCategories": ["SuperHeavy"],
-          "Runways": ["09", "16", "27", "34"]
-        },
-        {
-          "Priority": 0,
-          "FeederFixes": ["ARBEY", "ALAXO", "BOYSE", "BOOIN", "PORTS"],
-          "WakeCategories": ["Light", "Medium", "Heavy"],
-          "Runways": ["09", "16", "27", "34"]
-        },
-        {
-          "Priority": 1,
-          "FeederFixes": ["BOYSE", "BOOIN"],
-          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
-          "Runways": ["34"]
-        },
-        {
-          "Priority": 2,
-          "FeederFixes": ["RAZZI", "ALAXO"],
-          "WakeCategories": ["Light", "Medium", "Heavy"],
-          "Runways": ["16"]
-        }
-      ],
       "DepartureAirports": ["YSCB", "YSWG", "YMER", "YMAY", "YCOM", "YMIA", "YMTG", "YMLT", "YKII", "YDPO"]
     },
     {
@@ -599,10 +558,30 @@
       "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["BLAKA", "GOMOL", "ENLIP", "MORBI", "SMOKA", "TEBOT", "UGTUG", "WOODY"],
       "Runways": [
-        { "Identifier": "01L" },
-        { "Identifier": "01R" },
-        { "Identifier": "19L" },
-        { "Identifier": "19R" }
+        { 
+          "Identifier": "01L",
+          "Requirements":{
+            "FeederFixes": ["ENLIP", "WOODY", "MORBI", "SMOKA"]
+          }
+        },
+        { 
+          "Identifier": "01R",
+          "Requirements":{
+            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
+          }
+        },
+        { 
+          "Identifier": "19L",
+          "Requirements":{
+            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
+          }
+        },
+        { 
+          "Identifier": "19R",
+          "Requirements": {
+            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
+          }
+        }
       ],
       "RunwayModes": [
         {
@@ -1112,20 +1091,6 @@
           "RightLadder": ["01R", "19L"] 
         }
       ],
-      "RunwayAssignmentRules": [
-        {
-          "Priority": 0,
-          "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"],
-          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
-          "Runways": ["01R", "19L"]
-        },
-        {
-          "Priority": 1,
-          "FeederFixes": ["ENLIP", "WOODY", "MORBI", "SMOKA"],
-          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
-          "Runways": ["01L", "19R"]
-        }
-      ],
       "DepartureAirports": ["YCFS", "YPMQ", "YARM", "YROM", "YBHA", "YBUD", "YGLA", "YBRK", "YTWB"]
     },
     {
@@ -1541,57 +1506,6 @@
           "LeftLadder": ["03", "21"],
           "RightLadder": ["06", "24"]
         }
-      ],
-      "RunwayAssignmentRules": [
-        {
-          "Priority": 0,
-          "FeederFixes": ["JULIM", "KAGMI"],
-          "WakeCategories": ["Medium", "Heavy"],
-          "Runways": ["21", "03"]
-        },
-        {
-          "Priority": 0,
-          "FeederFixes": ["KABLI", "SOLUS"],
-          "WakeCategories": ["Medium", "Heavy"],
-          "Runways": ["24", "03"]
-        },
-        {
-          "Priority": 0,
-          "FeederFixes": ["LAVEX", "SAPKO", "SOLUS"],
-          "WakeCategories": ["Light", "Medium"],
-          "Runways": ["21"]
-        },
-        {
-          "Priority": 0,
-          "FeederFixes": ["KAGMI", "JULIM", "KABLI"],
-          "WakeCategories": ["SuperHeavy"],
-          "Runways": ["21", "03"]
-        },
-        {
-          "Priority": 0,
-          "FeederFixes": ["DAYLR"],
-          "WakeCategories": ["Light", "Medium"],
-          "Runways": ["03", "06"]
-        },
-        {
-          "Priority": 1,
-          "FeederFixes": ["KAGMI", "JULIM", "KABLI", "LAVEX", "SAPKO", "SOLUS"],
-          "WakeCategories": ["Light", "Medium", "Heavy", "SuperHeavy"],
-          "Runways": ["03", "06", "21", "24"]
-        },
-        {
-          "Priority": 1,
-          "FeederFixes": ["KABLI", "JULIM", "LAVEX", "SAPKO", "SOLUS"],
-          "WakeCategories": ["Light", "Medium", "Heavy"],
-          "Runways": ["03"]
-        },
-        {
-          "Priority": 2,
-          "FeederFixes": ["JULIM", "KABLI", "DAYLR", "LAVEX", "SAPKO"],
-          "WakeCategories": ["Light", "Medium", "Heavy"],
-          "Runways": ["03", "06"]
-        }
-
       ],
       "DepartureAirports": ["YPKG", "YESP", "YABA", "YGEL"]
     }

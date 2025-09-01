@@ -222,6 +222,12 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         var timeToFeeder = EstimatedFeederFixTime - clock.UtcNow();
         var timeToLanding = EstimatedLandingTime - clock.UtcNow();
 
+        // Keep the flight unstable until it's passed the minimum unstable time
+        if (State is State.Unstable && timeActive <= minUnstableTime)
+        {
+            return;
+        }
+
         if (ScheduledLandingTime.IsSameOrBefore(clock.UtcNow()))
         {
             SetState(State.Landed, clock);
@@ -237,10 +243,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         else if (timeToFeeder <= stableThreshold)
         {
             SetState(State.Stable, clock);
-        }
-        // Keep the flight unstable until it's passed the minimum unstable time
-        else if (State is State.Unstable && timeActive <= minUnstableTime)
-        {
         }
         else
         {
