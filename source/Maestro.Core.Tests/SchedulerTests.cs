@@ -1631,6 +1631,54 @@ public class SchedulerTests(
     }
 
     [Fact]
+    public void WhenAFlightLands_AfterRunwayChange_TheyAreScheduledForTheNextRunway()
+    {
+        // Arrange
+        var leaderFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var trailerFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(leaderFlight)
+            .WithFlight(trailerFlight)
+            .Build();
+
+        // Act
+        sequence.ChangeRunwayMode(
+            new RunwayMode
+            {
+                Identifier = "34R",
+                Runways =
+                [
+                    new RunwayConfiguration
+                    {
+                        Identifier = "34R",
+                        LandingRateSeconds = (int)_landingRate.TotalSeconds
+                    }
+                ]
+            },
+            _clock.UtcNow().AddMinutes(10),
+            _clock.UtcNow().AddMinutes(15),
+            _scheduler);
+
+        // Assert
+        leaderFlight.ScheduledLandingTime.ShouldBe(leaderFlight.EstimatedLandingTime);
+        leaderFlight.AssignedRunwayIdentifier.ShouldBe("34L");
+
+        trailerFlight.ScheduledLandingTime.ShouldBe(trailerFlight.EstimatedLandingTime);
+        trailerFlight.AssignedRunwayIdentifier.ShouldBe("34R");
+    }
+
+    [Fact]
     public void WhenFlightHasManualRunwayAssignment_ItIsNotReassignedToDifferentRunway()
     {
         // Arrange - Create a leader flight on 34L

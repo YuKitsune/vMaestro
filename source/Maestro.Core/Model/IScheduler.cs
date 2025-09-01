@@ -133,48 +133,23 @@ public class Scheduler(
         {
             logger.Debug("Scheduling {Callsign}", flight.Callsign);
 
-            var currentRunwayMode = sequence.CurrentRunwayMode;
+            var currentRunwayMode = sequence.GetRunwayModeAt(absoluteEarliestLandingTime);
 
 tryAgain:
-            var eligibleRunways = flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier)
-                ? airportConfiguration.Runways.Where(r => r.Identifier == flight.AssignedRunwayIdentifier).ToArray()
-                : airportConfiguration.Runways.Where(r => IsRunwayEligible(r, flight)).ToArray();
-
-            var preferredRunways = flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier)
-                ? [flight.AssignedRunwayIdentifier!] // Use only the manually assigned runway
-                : runwayScoreCalculator.CalculateScores(
-                    eligibleRunways,
-                    flight.AircraftType,
-                    flight.WakeCategory,
-                    flight.FeederFixIdentifier)
-                    .OrderByDescending(r => r.Score)
-                    .Select(r => r.RunwayIdentifier)
-                    .ToArray();
-
-            // Fallback to the first runway in the current mode
-            // TODO: Need to refactor runway assignment so this isn't a problem
-            if (!preferredRunways.Any())
-            {
-                preferredRunways = [currentRunwayMode.Runways.First().Identifier];
-            }
+            var preferredRunwaysInMode = FindEligibleRunways(
+                flight,
+                currentRunwayMode,
+                airportConfiguration.Runways);
 
             DateTimeOffset? proposedLandingTime = null;
-            var proposedRunway = preferredRunways.FirstOrDefault();
-            foreach (var runwayIdentifier in preferredRunways)
+            RunwayConfiguration? proposedRunway = null;
+            foreach (var runwayConfiguration in preferredRunwaysInMode)
             {
-                var runwayConfiguration = currentRunwayMode.Runways
-                    .SingleOrDefault(r => r.Identifier == runwayIdentifier);
-                if (runwayConfiguration is null)
-                {
-                    // Runway not in mode
-                    continue;
-                }
-
                 var earliestLandingTime = GetEarliestLandingTimeForRunway(absoluteEarliestLandingTime, runwayConfiguration);
 
                 // Check if this runway has slot conflicts
                 var conflictingSlot = sequence.Slots.FirstOrDefault(s =>
-                    s.RunwayIdentifiers.Contains(runwayIdentifier) && s.StartTime.IsBefore(earliestLandingTime) && s.EndTime.IsAfter(earliestLandingTime));
+                    s.RunwayIdentifiers.Contains(runwayConfiguration.Identifier) && s.StartTime.IsBefore(earliestLandingTime) && s.EndTime.IsAfter(earliestLandingTime));
                 if (conflictingSlot is not null)
                 {
                     earliestLandingTime = GetEarliestLandingTimeForRunway(conflictingSlot.EndTime, runwayConfiguration);
@@ -184,11 +159,11 @@ tryAgain:
                 if (proposedLandingTime is null || earliestLandingTime.IsBefore(proposedLandingTime.Value))
                 {
                     proposedLandingTime = earliestLandingTime;
-                    proposedRunway = runwayConfiguration.Identifier;
+                    proposedRunway = runwayConfiguration;
                 }
             }
 
-            if (proposedLandingTime is null)
+            if (proposedLandingTime is null || proposedRunway is null)
             {
                 logger.Warning("Could not schedule {Callsign}", flight.Callsign);
                 return;
@@ -224,7 +199,25 @@ tryAgain:
                 flight.SetFlowControls(FlowControls.ProfileSpeed);
             }
 
-            Schedule(flight, proposedLandingTime.Value, proposedRunway);
+            Schedule(flight, proposedLandingTime.Value, proposedRunway.Identifier);
+        }
+
+        IEnumerable<RunwayConfiguration> FindEligibleRunways(Flight flight, RunwayMode runwayMode, IReadOnlyCollection<RunwayConfiguration> runways)
+        {
+            if (flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+                return runways.Where(r => r.Identifier == flight.AssignedRunwayIdentifier);
+
+            var eligibleRunways = runways.Where(r => IsRunwayEligible(r, flight)).ToArray();
+
+            var preferredRunwaysInMode = runwayScoreCalculator.CalculateScores(
+                    eligibleRunways,
+                    flight.AircraftType,
+                    flight.WakeCategory,
+                    flight.FeederFixIdentifier)
+                .Select(rs => runwayMode.Runways.SingleOrDefault(rc => rs.RunwayIdentifier == rc.Identifier))
+                .WhereNotNull();
+
+            return preferredRunwaysInMode;
         }
 
         DateTimeOffset GetEarliestLandingTimeForRunway(DateTimeOffset startTime, RunwayConfiguration runwayConfiguration)

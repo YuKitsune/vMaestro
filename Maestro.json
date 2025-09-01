@@ -303,8 +303,8 @@
         {
           "Identifier": "LAHSO",
           "Runways": [
-            { "Identifier": "34", "LandingRateSeconds": 180 },
-            { "Identifier": "27", "LandingRateSeconds": 180 }
+            { "Identifier": "34", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]},
+            { "Identifier": "27", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "34", "SeparationSeconds": 60}] }
           ]
         },
         {

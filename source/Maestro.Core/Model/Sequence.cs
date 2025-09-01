@@ -56,7 +56,7 @@ public class Sequence
         if (NextRunwayMode is null)
             return CurrentRunwayMode;
 
-        if (time.IsBefore(LastLandingTimeForCurrentMode))
+        if (time.IsSameOrBefore(LastLandingTimeForCurrentMode))
             return CurrentRunwayMode;
 
         return NextRunwayMode;
@@ -86,7 +86,7 @@ public class Sequence
         NextRunwayMode = runwayMode;
         LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
         FirstLandingTimeForNextMode = firstLandingTimeForNewMode;
-        scheduler.Schedule(this);
+        scheduler.Schedule(this, recalculateAll: true);
     }
 
     public void AddDummyFlight(DateTimeOffset landingTime, string runwayIdentifier, IScheduler scheduler, IClock clock)
