@@ -98,7 +98,7 @@
                             <Setter Property="Visibility" Value="Hidden"/>
 
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding FlightViewModel.FlowControls}" Value="S250">
+                                <DataTrigger Binding="{Binding FlightViewModel.FlowControls}" Value="ProfileSpeed">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </Style.Triggers>
