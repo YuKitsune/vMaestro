@@ -132,10 +132,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         if (string.IsNullOrEmpty(FeederFixIdentifier))
             throw new MaestroException("No feeder fix has been set");
 
-        if (HasPassedFeederFix)
-            throw new MaestroException(
-                "Cannot update feeder fix estimate because the flight has already passed the feeder fix");
-
         EstimatedFeederFixTime = feederFixEstimate;
         ManualFeederFixEstimate = manual;
         if (State is State.Pending or State.New or State.Unstable)
@@ -174,6 +170,16 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         {
             InitialLandingTime = landingEstimate;
         }
+    }
+
+    public void ResetInitialLandingEstimate()
+    {
+        InitialLandingTime = EstimatedLandingTime;
+    }
+
+    public void ResetInitialFeederFixEstimate()
+    {
+        InitialFeederFixTime = EstimatedFeederFixTime;
     }
 
     public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)

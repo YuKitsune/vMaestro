@@ -48,7 +48,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        scheduler.Received(1).Schedule(sequence);
+        scheduler.Received(1).Recompute(flight, sequence);
     }
 
     [Theory]
@@ -239,24 +239,6 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         // Assert
         flight.NoDelay.ShouldBeFalse();
-    }
-
-    [Fact]
-    public async Task WhenRecomputingAFlightThatDoesNotExist_ReturnsEmptyResponse()
-    {
-        // Arrange
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
-            .Build();
-
-        var handler = GetRequestHandler(sequence);
-        var request = new RecomputeRequest("YSSY", "NONEXISTENT");
-
-        // Act
-        var response = await handler.Handle(request, CancellationToken.None);
-
-        // Assert
-        response.ShouldNotBeNull();
     }
 
     [Fact]

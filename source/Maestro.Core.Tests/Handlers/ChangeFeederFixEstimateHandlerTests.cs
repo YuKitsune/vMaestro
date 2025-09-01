@@ -97,7 +97,7 @@ public class ChangeFeederFixEstimateHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        scheduler.Received(1).Schedule(sequence);
+        scheduler.Received(1).Recompute(flight, sequence);
     }
 
     [Fact]

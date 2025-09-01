@@ -49,7 +49,7 @@ public class InsertDepartureRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.State.ShouldBe(State.Stable);
+        pendingFlight.State.ShouldBe(State.Unstable);
     }
 
     [Fact]
@@ -233,8 +233,8 @@ public class InsertDepartureRequestHandlerTests(
         // Act
         await handler.Handle(request, CancellationToken.None);
 
-        // Assert - Final state should be Stable
-        pendingFlight.State.ShouldBe(State.Stable);
+        // Assert
+        pendingFlight.State.ShouldBe(State.Unstable);
     }
 
     InsertDepartureRequestHandler GetRequestHandler(Sequence sequence, IScheduler? scheduler = null)

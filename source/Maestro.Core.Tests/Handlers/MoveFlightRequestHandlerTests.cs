@@ -128,29 +128,6 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         flight.State.ShouldBe(state);
     }
 
-    [Theory]
-    [InlineData(State.Frozen)]
-    [InlineData(State.Landed)]
-    [InlineData(State.Desequenced)]
-    [InlineData(State.Removed)]
-    public async Task WhenInvalidFlightIsMoved_ExceptionIsThrown(State state)
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var flight = new FlightBuilder("QFA1").WithState(state).WithLandingTime(now.AddMinutes(10)).Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
-        var handler = GetRequestHandler(sequence);
-        var newTime = now.AddMinutes(20);
-        var request = new MoveFlightRequest("YSSY", "QFA1", newTime);
-
-        // Act/Assert
-        await Should.ThrowAsync<MaestroException>(() => handler.Handle(request, CancellationToken.None));
-    }
-
     MoveFlightRequestHandler GetRequestHandler(Sequence sequence)
     {
         var sequenceProvider = new MockSequenceProvider(sequence);

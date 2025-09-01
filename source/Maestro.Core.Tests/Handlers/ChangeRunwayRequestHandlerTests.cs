@@ -47,6 +47,6 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         flight.AssignedRunwayIdentifier.ShouldBe("34R");
         flight.RunwayManuallyAssigned.ShouldBe(true);
 
-        scheduler.Received(1).Schedule(Arg.Is(sequence));
+        scheduler.Received(1).Recompute(flight, sequence);
     }
 }

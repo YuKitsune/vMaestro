@@ -232,7 +232,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.State.ShouldBe(State.Stable);
+        pendingFlight.State.ShouldBe(State.Unstable);
         pendingFlight.ScheduledLandingTime.ShouldBe(targetTime);
         pendingFlight.AssignedRunwayIdentifier.ShouldBe("34R");
         scheduler.Received(1).Schedule(sequence);

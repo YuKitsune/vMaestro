@@ -16,9 +16,9 @@ public class RecomputeRequestHandler(
     IScheduler scheduler,
     IMediator mediator,
     ILogger logger)
-    : IRequestHandler<RecomputeRequest, RecomputeResponse>
+    : IRequestHandler<RecomputeRequest>
 {
-    public async Task<RecomputeResponse> Handle(RecomputeRequest request, CancellationToken cancellationToken)
+    public async Task Handle(RecomputeRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSequence.Sequence;
@@ -30,19 +30,13 @@ public class RecomputeRequestHandler(
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return new RecomputeResponse();
+            return;
         }
 
         logger.Information("Recomputing {Callsign}", flight.Callsign);
 
-        // Treat as a new flight
-        // BUG: If a SuperStable flight exists, this will always result in this flight being pushed behind it
-        // We'll probably need a different way to handle recomputes
-        flight.SetState(State.New, clock);
-
         // Reset the feeder fix in case of a re-route
-        var feederFix = flight.Fixes
-            .LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
+        var feederFix = flight.Fixes.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
         if (feederFix is not null)
             flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
 
@@ -51,6 +45,9 @@ public class RecomputeRequestHandler(
 
         // Re-calculate the estimates
         CalculateEstimates(airportConfiguration, flight);
+        flight.ResetInitialLandingEstimate();
+        if (feederFix is not null)
+            flight.ResetInitialFeederFixEstimate();
 
         // Reset scheduled times
         if (flight.EstimatedFeederFixTime is not null)
@@ -62,9 +59,9 @@ public class RecomputeRequestHandler(
         var runwayMode = sequence.GetRunwayModeAt(flight.EstimatedLandingTime);
         flight.SetRunway(runwayMode.Default.Identifier, manual: false);
 
-        // Re-schedule the sequence
-        scheduler.Schedule(sequence);
+        scheduler.Recompute(flight, sequence);
 
+        // Progress the state based on the new times
         flight.UpdateStateBasedOnTime(clock);
 
         await mediator.Publish(
@@ -72,8 +69,6 @@ public class RecomputeRequestHandler(
                 lockedSequence.Sequence.AirportIdentifier,
                 lockedSequence.Sequence.ToMessage()),
             cancellationToken);
-
-        return new RecomputeResponse();
     }
 
     // TODO: This is copied from FlightUpdatedHandler, consider refactoring

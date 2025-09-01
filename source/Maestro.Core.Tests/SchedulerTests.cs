@@ -1998,11 +1998,103 @@ public class SchedulerTests(
         secondFixedFlight.ScheduledLandingTime.ShouldBe(_clock.UtcNow().AddMinutes(25));
 
         // Unstable flight should be delayed behind both fixed flights
-        var expectedTime = secondFixedFlight.ScheduledLandingTime.Add(_landingRate);
-        unstableFlight.ScheduledLandingTime.ShouldBe(expectedTime);
+        // Since it can't fit after first (2 min gap < 3 min landing rate) and can't fit before second,
+        // it must be delayed to after the second fixed flight
+        var expectedDelayedTime = secondFixedFlight.ScheduledLandingTime.Add(_landingRate);
+        unstableFlight.ScheduledLandingTime.ShouldBe(expectedDelayedTime);
+        unstableFlight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(6)); // 28 - 22 = 6 minutes
 
-        // Sequence order should be based on scheduled landing times
+        // Sequence order should be first fixed, second fixed, then unstable
         sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA1", "QFA2", "QFA3"]);
+    }
+
+    [Theory]
+    [InlineData(State.Unstable, 5)]
+    [InlineData(State.Unstable, -5)]
+    [InlineData(State.Stable, 5)]
+    [InlineData(State.Stable, -5)]
+    [InlineData(State.SuperStable, 5)]
+    [InlineData(State.SuperStable, -5)]
+    [InlineData(State.Frozen, 5)]
+    [InlineData(State.Frozen, -5)]
+    public void WhenRecomputingFlightThatHasChangedEstimate_FlightMovedToNewEstimateLandingTime(
+        State state,
+        int minutesDiff)
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(state)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(flight)
+            .Build();
+
+        // Initial schedule
+        _scheduler.Schedule(sequence);
+        flight.ScheduledLandingTime.ShouldBe(flight.EstimatedLandingTime);
+
+        // Act
+        var newEstimate = flight.EstimatedLandingTime.AddMinutes(minutesDiff);
+        flight.UpdateLandingEstimate(newEstimate);
+        _scheduler.Recompute(flight, sequence);
+
+        // Assert
+        flight.ScheduledLandingTime.ShouldBe(newEstimate);
+    }
+
+    [Fact]
+    public void WhenRecomputingFlightWithTrailingFlights_TrailingFlightsAreRescheduled()
+    {
+        // Arrange
+        var leader = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithLandingTime(_clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var subject = new FlightBuilder("QFA2")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(18)) // ETA 2 minutes ahead of leader
+            .WithLandingTime(leader.ScheduledLandingTime.Add(_landingRate)) // Currently delayed behind leader
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var trailer = new FlightBuilder("QFA3")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(25))
+            .WithLandingTime(subject.ScheduledLandingTime.Add(_landingRate))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(leader)
+            .WithFlight(subject)
+            .WithFlight(trailer)
+            .Build();
+
+        // Act
+        _scheduler.Recompute(subject, sequence);
+
+        // Assert
+
+        // Subject should now be in front
+        sequence.Flights.Order().Select(f => f.Callsign).ToArray().ShouldBe(["QFA2", "QFA1", "QFA3"]);
+
+        // Subject should have no delay
+        subject.ScheduledLandingTime.ShouldBe(subject.EstimatedLandingTime);
+
+        // Leader should be delayed behind subject
+        leader.ScheduledLandingTime.ShouldBe(subject.ScheduledLandingTime.Add(_landingRate));
+
+        // Trailer should no longer be delayed
+        trailer.ScheduledLandingTime.ShouldBe(trailer.EstimatedLandingTime);
     }
 
     [Fact(Skip = "Potentially incorrect behaviour, needs review")]

@@ -36,11 +36,9 @@ public class ChangeFeederFixEstimateRequestHandler(
         if (landingEstimate is not null)
             flight.UpdateLandingEstimate(landingEstimate.Value);
 
-        var previousState = flight.State;
-
-        flight.SetState(State.New, clock);
-        scheduler.Schedule(lockedSequence.Sequence);
-        flight.SetState(previousState == State.Unstable ? State.Stable : previousState, clock); // TODO: Make configurable
+        scheduler.Recompute(flight, lockedSequence.Sequence);
+        if (flight.State is State.Unstable)
+            flight.SetState(State.Stable, clock); // TODO: Make configurable
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

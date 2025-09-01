@@ -21,15 +21,12 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, ISch
             return new ChangeRunwayResponse();
         }
 
-        var previousState = flight.State;
-
         flight.SetRunway(request.RunwayIdentifier, true);
-        flight.SetState(State.New, clock);
-
-        scheduler.Schedule(lockedSequence.Sequence);
+        scheduler.Recompute(flight, lockedSequence.Sequence);
 
         // Unstable flights become Stable when changing runway
-        flight.SetState(previousState == State.Unstable ? State.Stable : previousState, clock);
+        if (flight.State is State.Unstable)
+            flight.SetState(State.Stable, clock);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

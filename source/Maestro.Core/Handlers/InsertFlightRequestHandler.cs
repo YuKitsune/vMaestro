@@ -67,7 +67,7 @@ public class InsertFlightRequestHandler(
             pendingFlight.SetRunway(runway, manual: true);
             pendingFlight.SetLandingTime(landingTime);
             scheduler.Schedule(sequence);
-            pendingFlight.SetState(State.Stable, clock);
+            pendingFlight.SetState(State.Unstable, clock);
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);

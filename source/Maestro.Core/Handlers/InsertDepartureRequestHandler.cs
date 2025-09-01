@@ -50,9 +50,7 @@ public class InsertDepartureRequestHandler(
         flight.SetState(State.New, clock);
 
         scheduler.Schedule(lockedSequence.Sequence);
-
-        // Pending flights are made Stable when inserted
-        flight.SetState(State.Stable, clock);
+        flight.SetState(State.Unstable, clock);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

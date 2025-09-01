@@ -8,6 +8,7 @@ namespace Maestro.Core.Model;
 public interface IScheduler
 {
     void Schedule(Sequence sequence, bool recalculateAll = false);
+    void Recompute(Flight flight, Sequence sequence);
 }
 
 public class Scheduler(
@@ -25,6 +26,7 @@ public class Scheduler(
             .Single(c => c.Identifier == sequence.AirportIdentifier);
 
         var sequencedFlights = new SortedSet<Flight>(FlightComparer.Instance);
+        var recalculate = recalculateAll;
 
         // Landed and frozen flights cannot move at all, no action required
         foreach (var flight in sequence.Flights.Where(f => f.State is State.Frozen or State.Landed))
@@ -33,7 +35,6 @@ public class Scheduler(
         }
 
         // Manual landing time and no-delay are sequenced as-is
-        var recalculate = recalculateAll;
         foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.ManualLandingTime || f.NoDelay))
         {
             if (HasBeenScheduled(flight))
@@ -49,12 +50,12 @@ public class Scheduler(
         }
 
         // High-priority flights get scheduled first
-        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.HighPriority))
+        foreach (var flight in sequence.Flights.OrderBy(f => f.EstimatedLandingTime).Where(f => f.HighPriority))
         {
             if (HasBeenScheduled(flight))
                 continue;
 
-            ScheduleInternal(flight, flight.EstimatedLandingTime);
+            ScheduleInternal(airportConfiguration, sequence, flight, flight.EstimatedLandingTime, sequencedFlights);
             if (flight.State == State.New)
             {
                 recalculate = true;
@@ -70,19 +71,19 @@ public class Scheduler(
             if (HasBeenScheduled(flight))
                 continue;
 
-            ScheduleInternal(flight, flight.ScheduledLandingTime);
+            ScheduleInternal(airportConfiguration, sequence, flight, flight.ScheduledLandingTime, sequencedFlights);
             sequencedFlights.Add(flight);
             recalculate = true;
         }
 
         // SuperStable flights generally cannot move, though inserted flights can displace them
-        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.State is State.SuperStable))
+        foreach (var flight in sequence.Flights.OrderBy(f => f.EstimatedLandingTime).Where(f => f.State is State.SuperStable))
         {
             if (HasBeenScheduled(flight))
                 continue;
 
             if (recalculate)
-                ScheduleInternal(flight, flight.ScheduledLandingTime);
+                ScheduleInternal(airportConfiguration, sequence, flight, flight.EstimatedLandingTime, sequencedFlights);
 
             sequencedFlights.Add(flight);
         }
@@ -95,7 +96,7 @@ public class Scheduler(
 
             var lastSuperStableFlight = sequencedFlights.LastOrDefault(f => f.State is State.SuperStable);
 
-            ScheduleInternal(flight, lastSuperStableFlight?.ScheduledLandingTime ?? flight.EstimatedLandingTime);
+            ScheduleInternal(airportConfiguration, sequence, flight, lastSuperStableFlight?.ScheduledLandingTime ?? flight.EstimatedLandingTime, sequencedFlights);
             flight.SetState(State.Unstable, clock);
 
             sequencedFlights.Add(flight);
@@ -103,13 +104,13 @@ public class Scheduler(
         }
 
         // Stable flights can only be moved if a new flight is inserted in front of them
-        foreach (var flight in sequence.Flights.OrderBy(f => f.ScheduledLandingTime).Where(f => f.State is State.Stable))
+        foreach (var flight in sequence.Flights.OrderBy(f => f.EstimatedLandingTime).Where(f => f.State is State.Stable))
         {
             if (HasBeenScheduled(flight))
                 continue;
 
             if (recalculate)
-                ScheduleInternal(flight, flight.ScheduledLandingTime);
+                ScheduleInternal(airportConfiguration, sequence, flight, flight.EstimatedLandingTime, sequencedFlights);
 
             sequencedFlights.Add(flight);
         }
@@ -120,7 +121,7 @@ public class Scheduler(
             if (HasBeenScheduled(flight))
                 continue;
 
-            ScheduleInternal(flight, flight.EstimatedLandingTime);
+            ScheduleInternal(airportConfiguration, sequence, flight, flight.EstimatedLandingTime, sequencedFlights);
             sequencedFlights.Add(flight);
         }
 
@@ -128,185 +129,235 @@ public class Scheduler(
         {
             return sequencedFlights.Any(f => f.Callsign == flight.Callsign);
         }
+    }
 
-        void ScheduleInternal(Flight flight, DateTimeOffset absoluteEarliestLandingTime)
+    // TODO Test cases:
+    // - When recomputing a flight, and it has sped up, it is moved to it's new estimate landing time
+    // - When recomputing a flight, and it has slowed down, it is moved to it's new estimate landing time
+    // - When recomputing a flight, and trailing flights exist, they are rescheduled
+    //      1. Create three flights, QFA1, QFA2, QFA3.
+    //          QFA1 should have no delay,
+    //          QFA2 should have no delay but their ETA is ahead of QFA1 by 2 minutes
+    //          QFA3 should be delayed behind QFA2
+    //      2. Recompute QFA2
+    //      3. Assert QFA2 is in the lead with no delay, QFA1 is delayed behind QFA2, and QFA3 has no delay
+    public void Recompute(Flight flight, Sequence sequence)
+    {
+        var airportConfiguration = airportConfigurationProvider
+            .GetAirportConfigurations()
+            .Single(c => c.Identifier == sequence.AirportIdentifier);
+
+        var sequencedFlights = new SortedSet<Flight>(FlightComparer.Instance);
+
+        // Add all leaders as-is
+        var leaders = sequence.Flights
+            .Where(f => f != flight && f.ScheduledLandingTime.IsSameOrBefore(flight.EstimatedLandingTime))
+            .ToList();
+        foreach (var leader in leaders)
         {
-            logger.Debug("Scheduling {Callsign}", flight.Callsign);
+            sequencedFlights.Add(leader);
+        }
 
-            var currentRunwayMode = sequence.GetRunwayModeAt(absoluteEarliestLandingTime);
+        // Schedule just this flight, ensuring enough separation from leaders
+        ScheduleInternal(airportConfiguration, sequence, flight, flight.EstimatedLandingTime, sequencedFlights);
+
+        // Recalculate the rest of the sequence
+        Schedule(sequence, recalculateAll: true);
+    }
+
+    void ScheduleInternal(
+        AirportConfiguration airportConfiguration,
+        Sequence sequence,
+        Flight flight,
+        DateTimeOffset absoluteEarliestLandingTime,
+        SortedSet<Flight> sequencedFlights)
+    {
+        logger.Debug("Scheduling {Callsign}", flight.Callsign);
+
+        var currentRunwayMode = sequence.GetRunwayModeAt(absoluteEarliestLandingTime);
 
 tryAgain:
-            var preferredRunwaysInMode = FindEligibleRunways(
-                flight,
-                currentRunwayMode,
-                airportConfiguration.Runways);
+        var preferredRunwaysInMode = FindEligibleRunways(
+            flight,
+            currentRunwayMode,
+            airportConfiguration.Runways);
 
-            DateTimeOffset? proposedLandingTime = null;
-            RunwayConfiguration? proposedRunway = null;
-            foreach (var runwayConfiguration in preferredRunwaysInMode)
-            {
-                var earliestLandingTime = GetEarliestLandingTimeForRunway(absoluteEarliestLandingTime, runwayConfiguration);
-
-                // Check if this runway has slot conflicts
-                var conflictingSlot = sequence.Slots.FirstOrDefault(s =>
-                    s.RunwayIdentifiers.Contains(runwayConfiguration.Identifier) && s.StartTime.IsBefore(earliestLandingTime) && s.EndTime.IsAfter(earliestLandingTime));
-                if (conflictingSlot is not null)
-                {
-                    earliestLandingTime = GetEarliestLandingTimeForRunway(conflictingSlot.EndTime, runwayConfiguration);
-                }
-
-                // If this runway results in less delay, then use that one
-                if (proposedLandingTime is null || earliestLandingTime.IsBefore(proposedLandingTime.Value))
-                {
-                    proposedLandingTime = earliestLandingTime;
-                    proposedRunway = runwayConfiguration;
-                }
-            }
-
-            if (proposedLandingTime is null || proposedRunway is null)
-            {
-                logger.Warning("Could not schedule {Callsign}", flight.Callsign);
-                return;
-            }
-
-            // If proposed landing time is after the last allowed time for current mode,
-            // or if it falls in the gap between modes, delay to the next mode's first allowed time
-            if (sequence.NextRunwayMode is not null && currentRunwayMode != sequence.NextRunwayMode)
-            {
-                var isInGap = proposedLandingTime.Value.IsAfter(sequence.LastLandingTimeForCurrentMode) &&
-                                         proposedLandingTime.Value.IsBefore(sequence.FirstLandingTimeForNextMode);
-                var isInNextMode = proposedLandingTime.Value.IsAfter(sequence.FirstLandingTimeForNextMode);
-
-                if (isInGap || isInNextMode)
-                {
-                    logger.Debug("Flight {Callsign} delayed beyond runway mode change or into gap period, moving to next mode", flight.Callsign);
-
-                    currentRunwayMode = sequence.NextRunwayMode;
-                    absoluteEarliestLandingTime = sequence.FirstLandingTimeForNextMode;
-
-                    goto tryAgain;
-                }
-            }
-
-            // TODO: Double check how this is supposed to work
-            var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-            if (performance is not null && performance.AircraftCategory == AircraftCategory.Jet && proposedLandingTime.Value.IsAfter(flight.EstimatedLandingTime))
-            {
-                flight.SetFlowControls(FlowControls.ReduceSpeed);
-            }
-            else
-            {
-                flight.SetFlowControls(FlowControls.ProfileSpeed);
-            }
-
-            Schedule(flight, proposedLandingTime.Value, proposedRunway.Identifier);
-        }
-
-        IEnumerable<RunwayConfiguration> FindEligibleRunways(Flight flight, RunwayMode runwayMode, IReadOnlyCollection<RunwayConfiguration> runways)
+        DateTimeOffset? proposedLandingTime = null;
+        RunwayConfiguration? proposedRunway = null;
+        foreach (var runwayConfiguration in preferredRunwaysInMode)
         {
-            if (flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-                return runways.Where(r => r.Identifier == flight.AssignedRunwayIdentifier);
+            var earliestLandingTime = GetEarliestLandingTimeForRunway(
+                absoluteEarliestLandingTime,
+                runwayConfiguration,
+                sequencedFlights);
 
-            var eligibleRunways = runways.Where(r => IsRunwayEligible(r, flight)).ToArray();
-
-            var preferredRunwaysInMode = runwayScoreCalculator.CalculateScores(
-                    eligibleRunways,
-                    flight.AircraftType,
-                    flight.WakeCategory,
-                    flight.FeederFixIdentifier)
-                .Select(rs => runwayMode.Runways.SingleOrDefault(rc => rs.RunwayIdentifier == rc.Identifier))
-                .WhereNotNull();
-
-            return preferredRunwaysInMode;
-        }
-
-        DateTimeOffset GetEarliestLandingTimeForRunway(DateTimeOffset startTime, RunwayConfiguration runwayConfiguration)
-        {
-            var proposedLandingTime = startTime;
-
-            // Look for conflicting flights and ensure we are not in conflict with anyone already sequenced
-            // Re-run checks until no more delays are needed
-            var conflictResolutionAttempts = 0;
-            const int maxConflictResolutionAttempts = 100;
-            bool delayApplied;
-
-            do
+            // Check if this runway has slot conflicts
+            var conflictingSlot = sequence.Slots.FirstOrDefault(s =>
+                s.RunwayIdentifiers.Contains(runwayConfiguration.Identifier) && s.StartTime.IsBefore(earliestLandingTime) && s.EndTime.IsAfter(earliestLandingTime));
+            if (conflictingSlot is not null)
             {
-                delayApplied = false;
-                conflictResolutionAttempts++;
+                earliestLandingTime = GetEarliestLandingTimeForRunway(
+                    conflictingSlot.EndTime,
+                    runwayConfiguration,
+                    sequencedFlights);
+            }
 
-                if (conflictResolutionAttempts > maxConflictResolutionAttempts)
-                {
-                    throw new MaestroException("Exceeded max conflict resolution attempts");
-                }
-
-                // Check leader conflict
-                var leader = sequencedFlights.LastOrDefault(f => f.AssignedRunwayIdentifier == runwayConfiguration.Identifier && f.ScheduledLandingTime <= proposedLandingTime);
-                if (leader is not null)
-                {
-                    var nextLandingTimeAfterLeader = leader.ScheduledLandingTime.AddSeconds(runwayConfiguration.LandingRateSeconds);
-                    if (nextLandingTimeAfterLeader.IsAfter(proposedLandingTime))
-                    {
-                        proposedLandingTime = nextLandingTimeAfterLeader;
-                        delayApplied = true;
-                    }
-                }
-
-                // Check trailer conflict
-                var trailer = sequencedFlights.FirstOrDefault(f => f.AssignedRunwayIdentifier == runwayConfiguration.Identifier && f.ScheduledLandingTime >= proposedLandingTime);
-                if (trailer is not null)
-                {
-                    var lastLandingTimeBeforeTrailer = trailer.ScheduledLandingTime.AddSeconds(runwayConfiguration.LandingRateSeconds * -1);
-                    if (lastLandingTimeBeforeTrailer.IsBefore(proposedLandingTime))
-                    {
-                        proposedLandingTime = trailer.ScheduledLandingTime.AddSeconds(runwayConfiguration.LandingRateSeconds);
-                        delayApplied = true;
-                    }
-                }
-
-                // Check runway dependency conflicts
-                foreach (var dependency in runwayConfiguration.Dependencies)
-                {
-                    if (!dependency.SeparationSeconds.HasValue)
-                        continue;
-
-                    var separationSeconds = dependency.SeparationSeconds.Value;
-
-                    // Find the most recent flight on the dependent runway that could cause a conflict
-                    var dependentLeader = sequencedFlights
-                        .LastOrDefault(f => f.AssignedRunwayIdentifier == dependency.RunwayIdentifier &&
-                                          f.ScheduledLandingTime <= proposedLandingTime);
-
-                    if (dependentLeader is not null)
-                    {
-                        var requiredSeparationTime = dependentLeader.ScheduledLandingTime.AddSeconds(separationSeconds);
-                        if (requiredSeparationTime.IsAfter(proposedLandingTime))
-                        {
-                            proposedLandingTime = requiredSeparationTime;
-                            delayApplied = true;
-                        }
-                    }
-
-                    // Find any flight on the dependent runway that we would be too close to
-                    var dependentTrailer = sequencedFlights
-                        .FirstOrDefault(f => f.AssignedRunwayIdentifier == dependency.RunwayIdentifier &&
-                                           f.ScheduledLandingTime >= proposedLandingTime);
-
-                    if (dependentTrailer is not null)
-                    {
-                        var earliestAllowedTime = dependentTrailer.ScheduledLandingTime.AddSeconds(-separationSeconds);
-                        if (earliestAllowedTime.IsBefore(proposedLandingTime))
-                        {
-                            proposedLandingTime = dependentTrailer.ScheduledLandingTime.AddSeconds(separationSeconds);
-                            delayApplied = true;
-                        }
-                    }
-                }
-            } while (delayApplied);
-
-            return proposedLandingTime;
+            // If this runway results in less delay, then use that one
+            if (proposedLandingTime is null || earliestLandingTime.IsBefore(proposedLandingTime.Value))
+            {
+                proposedLandingTime = earliestLandingTime;
+                proposedRunway = runwayConfiguration;
+            }
         }
+
+        if (proposedLandingTime is null || proposedRunway is null)
+        {
+            logger.Warning("Could not schedule {Callsign}", flight.Callsign);
+            return;
+        }
+
+        // If proposed landing time is after the last allowed time for current mode,
+        // or if it falls in the gap between modes, delay to the next mode's first allowed time
+        if (sequence.NextRunwayMode is not null && currentRunwayMode != sequence.NextRunwayMode)
+        {
+            var isInGap = proposedLandingTime.Value.IsAfter(sequence.LastLandingTimeForCurrentMode) &&
+                                     proposedLandingTime.Value.IsBefore(sequence.FirstLandingTimeForNextMode);
+            var isInNextMode = proposedLandingTime.Value.IsAfter(sequence.FirstLandingTimeForNextMode);
+
+            if (isInGap || isInNextMode)
+            {
+                logger.Debug("Flight {Callsign} delayed beyond runway mode change or into gap period, moving to next mode", flight.Callsign);
+
+                currentRunwayMode = sequence.NextRunwayMode;
+                absoluteEarliestLandingTime = sequence.FirstLandingTimeForNextMode;
+
+                goto tryAgain;
+            }
+        }
+
+        // TODO: Double check how this is supposed to work
+        var performance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
+        if (performance is not null && performance.AircraftCategory == AircraftCategory.Jet && proposedLandingTime.Value.IsAfter(flight.EstimatedLandingTime))
+        {
+            flight.SetFlowControls(FlowControls.ReduceSpeed);
+        }
+        else
+        {
+            flight.SetFlowControls(FlowControls.ProfileSpeed);
+        }
+
+        Schedule(flight, proposedLandingTime.Value, proposedRunway.Identifier);
     }
+
+    IEnumerable<RunwayConfiguration> FindEligibleRunways(Flight flight, RunwayMode runwayMode, IReadOnlyCollection<RunwayConfiguration> runways)
+    {
+        if (flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+            return runways.Where(r => r.Identifier == flight.AssignedRunwayIdentifier);
+
+        var eligibleRunways = runways.Where(r => IsRunwayEligible(r, flight)).ToArray();
+
+        var preferredRunwaysInMode = runwayScoreCalculator.CalculateScores(
+                eligibleRunways,
+                flight.AircraftType,
+                flight.WakeCategory,
+                flight.FeederFixIdentifier)
+            .Select(rs => runwayMode.Runways.SingleOrDefault(rc => rs.RunwayIdentifier == rc.Identifier))
+            .WhereNotNull();
+
+        return preferredRunwaysInMode;
+    }
+
+    DateTimeOffset GetEarliestLandingTimeForRunway(
+        DateTimeOffset startTime,
+        RunwayConfiguration runwayConfiguration,
+        SortedSet<Flight> sequencedFlights)
+    {
+        var proposedLandingTime = startTime;
+
+        // Look for conflicting flights and ensure we are not in conflict with anyone already sequenced
+        // Re-run checks until no more delays are needed
+        var conflictResolutionAttempts = 0;
+        const int maxConflictResolutionAttempts = 100;
+        bool delayApplied;
+
+        do
+        {
+            delayApplied = false;
+            conflictResolutionAttempts++;
+
+            if (conflictResolutionAttempts > maxConflictResolutionAttempts)
+            {
+                throw new MaestroException("Exceeded max conflict resolution attempts");
+            }
+
+            // Check leader conflict
+            var leader = sequencedFlights.LastOrDefault(f => f.AssignedRunwayIdentifier == runwayConfiguration.Identifier && f.ScheduledLandingTime <= proposedLandingTime);
+            if (leader is not null)
+            {
+                var nextLandingTimeAfterLeader = leader.ScheduledLandingTime.AddSeconds(runwayConfiguration.LandingRateSeconds);
+                if (nextLandingTimeAfterLeader.IsAfter(proposedLandingTime))
+                {
+                    proposedLandingTime = nextLandingTimeAfterLeader;
+                    delayApplied = true;
+                }
+            }
+
+            // Check trailer conflict
+            var trailer = sequencedFlights.FirstOrDefault(f => f.AssignedRunwayIdentifier == runwayConfiguration.Identifier && f.ScheduledLandingTime >= proposedLandingTime);
+            if (trailer is not null)
+            {
+                var lastLandingTimeBeforeTrailer = trailer.ScheduledLandingTime.AddSeconds(runwayConfiguration.LandingRateSeconds * -1);
+                if (lastLandingTimeBeforeTrailer.IsBefore(proposedLandingTime))
+                {
+                    proposedLandingTime = trailer.ScheduledLandingTime.AddSeconds(runwayConfiguration.LandingRateSeconds);
+                    delayApplied = true;
+                }
+            }
+
+            // Check runway dependency conflicts
+            foreach (var dependency in runwayConfiguration.Dependencies)
+            {
+                if (!dependency.SeparationSeconds.HasValue)
+                    continue;
+
+                var separationSeconds = dependency.SeparationSeconds.Value;
+
+                // Find the most recent flight on the dependent runway that could cause a conflict
+                var dependentLeader = sequencedFlights
+                    .LastOrDefault(f => f.AssignedRunwayIdentifier == dependency.RunwayIdentifier &&
+                                      f.ScheduledLandingTime <= proposedLandingTime);
+
+                if (dependentLeader is not null)
+                {
+                    var requiredSeparationTime = dependentLeader.ScheduledLandingTime.AddSeconds(separationSeconds);
+                    if (requiredSeparationTime.IsAfter(proposedLandingTime))
+                    {
+                        proposedLandingTime = requiredSeparationTime;
+                        delayApplied = true;
+                    }
+                }
+
+                // Find any flight on the dependent runway that we would be too close to
+                var dependentTrailer = sequencedFlights
+                    .FirstOrDefault(f => f.AssignedRunwayIdentifier == dependency.RunwayIdentifier &&
+                                       f.ScheduledLandingTime >= proposedLandingTime);
+
+                if (dependentTrailer is not null)
+                {
+                    var earliestAllowedTime = dependentTrailer.ScheduledLandingTime.AddSeconds(-separationSeconds);
+                    if (earliestAllowedTime.IsBefore(proposedLandingTime))
+                    {
+                        proposedLandingTime = dependentTrailer.ScheduledLandingTime.AddSeconds(separationSeconds);
+                        delayApplied = true;
+                    }
+                }
+            }
+        } while (delayApplied);
+
+        return proposedLandingTime;
+    }
+
+
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
     {
