@@ -93,7 +93,11 @@ public class Sequence
     {
         var callsign = $"****{_dummyCounter++:00}*";
 
-        var flight = new Flight(callsign, AirportIdentifier, landingTime);
+        var flight = new Flight(callsign, AirportIdentifier, landingTime)
+        {
+            IsDummy = true
+        };
+
         flight.SetRunway(runwayIdentifier, manual: true);
         flight.SetLandingTime(landingTime, manual: true);
 

@@ -73,6 +73,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public FixEstimate[] Fixes { get; set; } = [];
     public DateTimeOffset LastSeen { get; private set; }
     public FlightPosition? Position { get; private set; }
+    public bool IsDummy { get; init; }
 
     public void SetState(State state, IClock clock)
     {

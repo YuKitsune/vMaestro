@@ -24,16 +24,26 @@ public partial class FlightLabelViewModel(
 
     public bool CanInsertBefore => FlightViewModel.State != State.Frozen;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanShowInformation))]
     void ShowInformationWindow()
     {
         mediator.Send(new OpenInformationWindowRequest(FlightViewModel));
     }
 
-    [RelayCommand]
+    bool CanShowInformation()
+    {
+        return !FlightViewModel.IsDummy;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRecompute))]
     void Recompute()
     {
         mediator.Send(new RecomputeRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+    }
+
+    bool CanRecompute()
+    {
+        return !FlightViewModel.IsDummy;
     }
 
     [RelayCommand]
