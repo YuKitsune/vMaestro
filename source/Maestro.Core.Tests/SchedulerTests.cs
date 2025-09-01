@@ -9,10 +9,6 @@ using Shouldly;
 
 namespace Maestro.Core.Tests;
 
-// New test cases:
-// - When a flight needs to be rescheduled, it is rescheduled based on it's estimated landing time
-// - When a flight is rescheduled, trailing flights are also rescheduled
-
 public class SchedulerTests(
     PerformanceLookupFixture performanceLookupFixture,
     AirportConfigurationFixture airportConfigurationFixture,
@@ -2066,47 +2062,4 @@ public class SchedulerTests(
         // New flight should be delayed behind the last chronological flight
         subject.ScheduledLandingTime.ShouldBe(trailer.ScheduledLandingTime.Add(_landingRate), "last flight should be delayed behind the chronological trailer and not the last flight added to the sequence");
     }
-
-    // [Theory]
-    // [InlineData(State.Stable)]
-    // [InlineData(State.SuperStable)]
-    // [InlineData(State.Frozen)]
-    // public void WhenAFlightIsRescheduled_AndItHasSpedUp_ItIsMovedForwardToItsLandingEstimate(State state)
-    // {
-    //     // Arrange
-    //     // Configure five flights separated by the landing rate (Two frozen, SuperStable, Stable, Unstable)
-    //
-    //     // Create a subject flight at the back of the sequence with the specified state
-    //     // Set the landing estimate to be 1 minute after the first frozen flight
-    //
-    //     // Act
-    //     // Set Reschedule = true and recalculate the sequence
-    //
-    //     // Assert
-    //     // The first frozen flight should not move
-    //     // The subject flight should be behind the first frozen flight by the landing rate with a 2 minute delay
-    //     // All later flights should be spaced behind each other in the same order they were originally
-    // }
-    //
-    // [Theory]
-    // [InlineData(State.Stable)]
-    // [InlineData(State.SuperStable)]
-    // [InlineData(State.Frozen)]
-    // public void WhenAFlightIsRescheduled_AndItSlowsDown_ItIsMoveBackToItsLandingEstimate(State state)
-    // {
-    //     // Arrange
-    //     // Create the subject flight at the beginning of the sequence with the specified state
-    //
-    //     // Configure four trailing flights separated by the landing rate (Frozen, SuperStable, Stable, Unstable)
-    //     // with a 3-minute delay
-    //
-    //     // Set the landing estimate of the subject to be 1 minute after the last flight
-    //
-    //     // Act
-    //     // Set Reschedule = true and recalculate the sequence
-    //
-    //     // Assert
-    //     // All earlier flights should be moved forward such that they have no delay
-    //     // The subject flight should be moved to the back of the sequence with a 2 minute delay
-    // }
 }

@@ -36,6 +36,8 @@ public class RecomputeRequestHandler(
         logger.Information("Recomputing {Callsign}", flight.Callsign);
 
         // Treat as a new flight
+        // BUG: If a SuperStable flight exists, this will always result in this flight being pushed behind it
+        // We'll probably need a different way to handle recomputes
         flight.SetState(State.New, clock);
 
         // Reset the feeder fix in case of a re-route
