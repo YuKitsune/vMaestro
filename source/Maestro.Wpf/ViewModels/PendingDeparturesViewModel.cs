@@ -15,6 +15,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
     readonly string _airportIdentifier;
     readonly IWindowHandle _windowHandle;
     readonly IMediator _mediator;
+    readonly IErrorReporter _errorReporter;
 
     bool _isUpdatingFromSelection = false;
 
@@ -45,11 +46,13 @@ public partial class PendingDeparturesViewModel : ObservableObject
         FlightMessage[] pendingFlights,
         IWindowHandle windowHandle,
         IMediator mediator,
-        IClock clock)
+        IClock clock,
+        IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
         _windowHandle = windowHandle;
         _mediator = mediator;
+        _errorReporter = errorReporter;
 
         PendingFlights = pendingFlights;
         TakeoffTime = clock.UtcNow().AddMinutes(5).Rounded();
@@ -91,13 +94,20 @@ public partial class PendingDeparturesViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanInsert))]
     public void Insert()
     {
-        _mediator.Send(new InsertDepartureRequest(
-            _airportIdentifier,
-            Callsign,
-            AircraftType,
-            DepartureIdentifier,
-            TakeoffTime));
-        CloseWindow();
+        try
+        {
+            _mediator.Send(new InsertDepartureRequest(
+                _airportIdentifier,
+                Callsign,
+                AircraftType,
+                DepartureIdentifier,
+                TakeoffTime));
+            CloseWindow();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
     }
 
     bool CanInsert()

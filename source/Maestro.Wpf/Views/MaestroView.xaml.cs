@@ -10,6 +10,7 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
+using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using MediatR;
@@ -134,6 +135,7 @@ public partial class MaestroView
             {
                 DataContext = new FlightLabelViewModel(
                     Ioc.Default.GetRequiredService<IMediator>(),
+                    Ioc.Default.GetRequiredService<IErrorReporter>(),
                     ViewModel.SelectedSequence,
                     flight,
                     ViewModel.SelectedSequence.CurrentRunwayMode),

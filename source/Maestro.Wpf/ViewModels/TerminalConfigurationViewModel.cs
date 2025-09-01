@@ -13,6 +13,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     readonly IClock _clock;
     readonly IMediator _mediator;
     readonly IWindowHandle _windowHandle;
+    readonly IErrorReporter _errorReporter;
 
     [ObservableProperty]
     string _originalRunwayModeIdentifier;
@@ -47,12 +48,14 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         DateTimeOffset firstLandingTimeForNewMode,
         IMediator mediator,
         IWindowHandle windowHandle,
-        IClock clock)
+        IClock clock,
+        IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
         _mediator = mediator;
         _windowHandle = windowHandle;
         _clock = clock;
+        _errorReporter = errorReporter;
 
         OriginalRunwayModeIdentifier = currentRunwayMode.Identifier;
 
@@ -77,19 +80,26 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     [RelayCommand]
     void ChangeRunwayMode()
     {
-        var runwayModeDto = new RunwayModeDto(
-            SelectedRunwayMode.Identifier,
-            SelectedRunwayMode.Runways
-                .Select(r => new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
-                .ToArray());
+        try
+        {
+            var runwayModeDto = new RunwayModeDto(
+                SelectedRunwayMode.Identifier,
+                SelectedRunwayMode.Runways
+                    .Select(r => new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
+                    .ToArray());
 
-        _mediator.Send(new ChangeRunwayModeRequest(
-            _airportIdentifier,
-            runwayModeDto,
-            LastLandingTime,
-            FirstLandingTime));
+            _mediator.Send(new ChangeRunwayModeRequest(
+                _airportIdentifier,
+                runwayModeDto,
+                LastLandingTime,
+                FirstLandingTime));
 
-        CloseWindow();
+            CloseWindow();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError( ex);
+        }
     }
 
     [RelayCommand]

@@ -13,6 +13,7 @@ using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
+using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Views;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,8 +46,8 @@ public class Plugin : IPlugin
 
     static BaseForm? _maestroWindow;
 
-    readonly IMediator _mediator = null!;
-    readonly ILogger _logger = null!;
+    readonly IMediator? _mediator;
+    readonly ILogger? _logger;
 
     public Plugin()
     {
@@ -75,6 +76,7 @@ public class Plugin : IPlugin
         catch (Exception ex)
         {
             Errors.Add(ex, Name);
+            _logger?.Error(ex, "An error occurred during initialization.");
         }
     }
 
@@ -115,6 +117,7 @@ public class Plugin : IPlugin
                 .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
                 .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
                 .AddSingleton(logger)
+                .AddSingleton<IErrorReporter>(new ErrorReporter(Name))
                 .BuildServiceProvider());
     }
 
@@ -212,7 +215,7 @@ public class Plugin : IPlugin
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
-                    _mediator.Send(new ResetRequest());
+                    _mediator?.Send(new ResetRequest());
                 }
             });
         };
@@ -254,7 +257,7 @@ public class Plugin : IPlugin
         {
             // TODO: Load sequence from local storage
 
-            _mediator.Send(new StartSequencingAllRequest());
+            _mediator?.Send(new StartSequencingAllRequest());
 
             foreach (var fdr in FDP2.GetFDRs)
             {
@@ -263,7 +266,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "An error occurred while handling Network_Connected.");
+            _logger?.Error(ex, "An error occurred while handling Network_Connected.");
             Errors.Add(ex, Name);
         }
     }
@@ -281,7 +284,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "An error occurred while handling OnFDRUpdate.");
+            _logger?.Error(ex, "An error occurred while handling OnFDRUpdate.");
             Errors.Add(ex, Name);
         }
     }
@@ -300,7 +303,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "An error occurred while handling OnRadarTrackUpdate.");
+            _logger?.Error(ex, "An error occurred while handling OnRadarTrackUpdate.");
             Errors.Add(ex, Name);
         }
     }
@@ -359,7 +362,7 @@ public class Plugin : IPlugin
             position,
             estimates);
 
-        _mediator.Publish(notification);
+        _mediator?.Publish(notification);
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)

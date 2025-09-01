@@ -4,6 +4,7 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using MediatR;
 
@@ -12,6 +13,7 @@ namespace Maestro.Wpf.ViewModels;
 public partial class SequenceViewModel : ObservableObject
 {
     readonly IMediator _mediator;
+    readonly IErrorReporter _errorReporter;
 
     // TODO: Use a ViewModel
     [ObservableProperty]
@@ -55,9 +57,11 @@ public partial class SequenceViewModel : ObservableObject
         ViewConfiguration[] views,
         RunwayModeDto[] runwayModes,
         SequenceMessage sequence,
-        IMediator mediator)
+        IMediator mediator,
+        IErrorReporter errorReporter)
     {
         _mediator = mediator;
+        _errorReporter = errorReporter;
 
         AirportIdentifier = airportIdentifier;
         Views = views;
@@ -74,7 +78,14 @@ public partial class SequenceViewModel : ObservableObject
     [RelayCommand]
     void OpenTerminalConfiguration()
     {
-        _mediator.Send(new OpenTerminalConfigurationRequest(AirportIdentifier));
+        try
+        {
+            _mediator.Send(new OpenTerminalConfigurationRequest(AirportIdentifier));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
     }
 
     [RelayCommand]
@@ -86,13 +97,34 @@ public partial class SequenceViewModel : ObservableObject
     [RelayCommand]
     void OpenPendingDeparturesWindow()
     {
-        _mediator.Send(new OpenPendingDeparturesWindowRequest(AirportIdentifier,
-            Flights.Where(f => f.State == State.Pending).ToArray()));
+        try
+        {
+            _mediator.Send(new OpenPendingDeparturesWindowRequest(AirportIdentifier,
+                Flights.Where(f => f.State == State.Pending).ToArray()));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
     }
 
     [RelayCommand]
-    void OpenDesequencedWindow() => _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier,
-        Flights.Where(f => f.State == State.Desequenced).Select(f => f.Callsign).ToArray()));
+    void OpenDesequencedWindow()
+    {
+        try
+        {
+            _mediator.Send(
+                new OpenDesequencedWindowRequest(
+                    AirportIdentifier,
+                    Flights.Where(f => f.State == State.Desequenced)
+                        .Select(f => f.Callsign)
+                        .ToArray()));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
 
     public void UpdateFrom(SequenceMessage sequenceMessage)
     {

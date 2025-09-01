@@ -12,6 +12,7 @@ public partial class InsertFlightViewModel : ObservableObject
 {
     readonly IWindowHandle _windowHandle;
     readonly IMediator _mediator;
+    readonly IErrorReporter _errorReporter;
 
     readonly string _airportIdentifier;
     readonly IInsertFlightOptions _options;
@@ -41,7 +42,8 @@ public partial class InsertFlightViewModel : ObservableObject
         FlightMessage[] landedFlights,
         FlightMessage[] pendingFlights,
         IWindowHandle windowHandle,
-        IMediator mediator)
+        IMediator mediator,
+        IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
         _options = options;
@@ -51,6 +53,7 @@ public partial class InsertFlightViewModel : ObservableObject
 
         _windowHandle = windowHandle;
         _mediator = mediator;
+        _errorReporter = errorReporter;
     }
 
     partial void OnSelectedFlightChanged(FlightMessage? value)
@@ -80,14 +83,21 @@ public partial class InsertFlightViewModel : ObservableObject
     [RelayCommand]
     public void Insert()
     {
-        _mediator.Send(
-            new InsertFlightRequest(
-                _airportIdentifier,
-                Callsign,
-                AircraftType,
-                _options));
+        try
+        {
+            _mediator.Send(
+                new InsertFlightRequest(
+                    _airportIdentifier,
+                    Callsign,
+                    AircraftType,
+                    _options));
 
-        CloseWindow();
+            CloseWindow();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
     }
 
     [RelayCommand]

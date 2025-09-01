@@ -10,6 +10,7 @@ public partial class SlotViewModel : ObservableObject
 {
     readonly IMediator _mediator;
     readonly IWindowHandle _windowHandle;
+    readonly IErrorReporter _errorReporter;
 
     readonly string _airportIdentifier;
     readonly Guid? _slotId;
@@ -22,7 +23,15 @@ public partial class SlotViewModel : ObservableObject
 
     readonly string[] _runwayIdentifiers;
 
-    public SlotViewModel(string airportIdentifier, Guid? slotId, DateTimeOffset startTime, DateTimeOffset endTime, string[] runwayIdentifiers, IMediator mediator, IWindowHandle windowHandle)
+    public SlotViewModel(
+        string airportIdentifier,
+        Guid? slotId,
+        DateTimeOffset startTime,
+        DateTimeOffset endTime,
+        string[] runwayIdentifiers,
+        IMediator mediator,
+        IWindowHandle windowHandle,
+        IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
         _slotId = slotId;
@@ -32,32 +41,47 @@ public partial class SlotViewModel : ObservableObject
 
         _mediator = mediator;
         _windowHandle = windowHandle;
+        _errorReporter = errorReporter;
     }
 
     [RelayCommand]
     public async Task CreateOrModifySlot()
     {
-        if (_slotId is null)
+        try
         {
-            await _mediator.Send(new CreateSlotRequest(_airportIdentifier, StartTime, EndTime, _runwayIdentifiers));
-        }
-        else
-        {
-            await _mediator.Send(new ModifySlotRequest(_airportIdentifier, _slotId.Value, StartTime, EndTime));
-        }
+            if (_slotId is null)
+            {
+                await _mediator.Send(new CreateSlotRequest(_airportIdentifier, StartTime, EndTime, _runwayIdentifiers));
+            }
+            else
+            {
+                await _mediator.Send(new ModifySlotRequest(_airportIdentifier, _slotId.Value, StartTime, EndTime));
+            }
 
-        _windowHandle.Close();
+            _windowHandle.Close();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
     }
 
     [RelayCommand]
     public async Task DeleteSlot()
     {
-        if (_slotId is not null)
+        try
         {
-            await _mediator.Send(new DeleteSlotRequest(_airportIdentifier, _slotId.Value));
-        }
+            if (_slotId is not null)
+            {
+                await _mediator.Send(new DeleteSlotRequest(_airportIdentifier, _slotId.Value));
+            }
 
-        _windowHandle.Close();
+            _windowHandle.Close();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
     }
 
     [RelayCommand]

@@ -28,10 +28,6 @@ public class MoveFlightRequestHandler(
         if (flight is null)
             return;
 
-        // TODO: Don't throw exceptions here, return a result instead.
-        if (flight.State is State.Frozen or State.Landed or State.Desequenced or State.Removed)
-            throw new MaestroException($"Cannot move a {flight.State} flight.");
-
         // TODO: Validate that the new landing time will not conflict with other flights that cannot be moved.
 
         // Cannot schedule in front of a frozen flight

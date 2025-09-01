@@ -2,6 +2,7 @@
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
@@ -14,7 +15,8 @@ public class OpenTerminalConfigurationWindowRequestHandler(
     ISequenceProvider sequenceProvider,
     GuiInvoker guiInvoker,
     IMediator mediator,
-    IClock clock)
+    IClock clock,
+    IErrorReporter errorReporter)
     : IRequestHandler<OpenTerminalConfigurationRequest>
 {
     public Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
@@ -46,7 +48,8 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                 firstLandingTime,
                 mediator,
                 windowHandle,
-                clock);
+                clock,
+                errorReporter);
 
             var form = new VatSysForm(
                 title: "TMA Configuration",

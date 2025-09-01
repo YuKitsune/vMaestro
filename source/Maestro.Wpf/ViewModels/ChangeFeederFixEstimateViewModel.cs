@@ -10,6 +10,7 @@ public partial class ChangeFeederFixEstimateViewModel : ObservableObject
 {
     readonly IWindowHandle _windowHandle;
     readonly IMediator _mediator;
+    readonly IErrorReporter _errorReporter;
 
     readonly string _airportIdentifier;
 
@@ -31,7 +32,8 @@ public partial class ChangeFeederFixEstimateViewModel : ObservableObject
         string feederFix,
         DateTimeOffset originalFeederFixEstimate,
         IWindowHandle windowHandle,
-        IMediator mediator)
+        IMediator mediator,
+        IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
         _callsign = callsign;
@@ -41,13 +43,21 @@ public partial class ChangeFeederFixEstimateViewModel : ObservableObject
 
         _windowHandle = windowHandle;
         _mediator = mediator;
+        _errorReporter = errorReporter;
     }
 
     [RelayCommand]
     public async Task ChangeFeederFixEstimate()
     {
-        await _mediator.Send(new ChangeFeederFixEstimateRequest(_airportIdentifier, Callsign, NewFeederFixEstimate));
-        _windowHandle.Close();
+        try
+        {
+            await _mediator.Send(new ChangeFeederFixEstimateRequest(_airportIdentifier, Callsign, NewFeederFixEstimate));
+            _windowHandle.Close();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
     }
 
     [RelayCommand]

@@ -1,11 +1,13 @@
-﻿using Maestro.Wpf.Messages;
+﻿using Maestro.Wpf.Integrations;
+using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenInsertFlightWindowRequestHandler(GuiInvoker guiInvoker, IMediator mediator) : IRequestHandler<OpenInsertFlightWindowRequest>
+public class OpenInsertFlightWindowRequestHandler(GuiInvoker guiInvoker, IMediator mediator, IErrorReporter errorReporter)
+    : IRequestHandler<OpenInsertFlightWindowRequest>
 {
     public Task Handle(OpenInsertFlightWindowRequest request, CancellationToken cancellationToken)
     {
@@ -19,7 +21,8 @@ public class OpenInsertFlightWindowRequestHandler(GuiInvoker guiInvoker, IMediat
                 request.LandedFlights,
                 request.PendingFlights,
                 windowHandle,
-                mediator);
+                mediator,
+                errorReporter);
 
             var form = new VatSysForm(
                 title: "Insert a Flight",

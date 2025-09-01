@@ -5,12 +5,13 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class MaestroViewModel(IMediator mediator) : ObservableObject
+public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorReporter) : ObservableObject
 {
     [ObservableProperty]
     ObservableCollection<SequenceViewModel> _sequences = [];
@@ -45,24 +46,39 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
     [RelayCommand]
     async Task LoadConfiguration()
     {
-        var response = await mediator.Send(new InitializeRequest(), CancellationToken.None);
-
-        Sequences.Clear();
-        foreach (var item in response.Sequences)
+        try
         {
-            Sequences.Add(new SequenceViewModel(
-                item.AirportIdentifier,
-                item.Views,
-                item.RunwayModes,
-                item.Sequence,
-                mediator));
+            var response = await mediator.Send(new InitializeRequest(), CancellationToken.None);
+
+            Sequences.Clear();
+            foreach (var item in response.Sequences)
+            {
+                Sequences.Add(new SequenceViewModel(
+                    item.AirportIdentifier,
+                    item.Views,
+                    item.RunwayModes,
+                    item.Sequence,
+                    mediator,
+                    errorReporter));
+            }
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
         }
     }
 
     [RelayCommand]
     async Task MoveFlight(MoveFlightRequest request)
     {
-        await mediator.Send(request);
+        try
+        {
+            await mediator.Send(request);
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
+        }
     }
 
     public void BeginSlotCreation(DateTimeOffset firstSlotTime, SlotCreationReferencePoint slotCreationReferencePoint, string[] runwayIdentifiers)
@@ -94,39 +110,60 @@ public partial class MaestroViewModel(IMediator mediator) : ObservableObject
 
     async void ShowSlotWindow(DateTimeOffset startTime, DateTimeOffset endTime, string[] runwayIdentifiers)
     {
-        if (SelectedSequence?.AirportIdentifier == null) return;
+        try
+        {
+            if (SelectedSequence?.AirportIdentifier == null) return;
 
-        await mediator.Send(new OpenSlotWindowRequest(
-            SelectedSequence.AirportIdentifier,
-            null, // slotId is null for new slots
-            startTime,
-            endTime,
-            runwayIdentifiers));
+            await mediator.Send(new OpenSlotWindowRequest(
+                SelectedSequence.AirportIdentifier,
+                null, // slotId is null for new slots
+                startTime,
+                endTime,
+                runwayIdentifiers));
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
+        }
     }
 
     public async void ShowSlotWindow(SlotMessage slotMessage)
     {
-        if (SelectedSequence?.AirportIdentifier == null)
-            return;
+        try
+        {
+            if (SelectedSequence?.AirportIdentifier == null)
+                return;
 
-        await mediator.Send(new OpenSlotWindowRequest(
-            SelectedSequence.AirportIdentifier,
-            slotMessage.SlotId,
-            slotMessage.StartTime,
-            slotMessage.EndTime,
-            slotMessage.RunwayIdentifiers));
+            await mediator.Send(new OpenSlotWindowRequest(
+                SelectedSequence.AirportIdentifier,
+                slotMessage.SlotId,
+                slotMessage.StartTime,
+                slotMessage.EndTime,
+                slotMessage.RunwayIdentifiers));
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
+        }
     }
 
     public void ShowInsertFlightWindow(IInsertFlightOptions options)
     {
-        if (SelectedSequence?.AirportIdentifier == null)
-            return;
+        try
+        {
+            if (SelectedSequence?.AirportIdentifier == null)
+                return;
 
-        mediator.Send(
-            new OpenInsertFlightWindowRequest(
-                SelectedSequence.AirportIdentifier,
-                options,
-                SelectedSequence.Flights.Where(f => f.State is State.Landed).ToArray(),
-                SelectedSequence.Flights.Where(f => f.State is State.Pending).ToArray()));
+            mediator.Send(
+                new OpenInsertFlightWindowRequest(
+                    SelectedSequence.AirportIdentifier,
+                    options,
+                    SelectedSequence.Flights.Where(f => f.State is State.Landed).ToArray(),
+                    SelectedSequence.Flights.Where(f => f.State is State.Pending).ToArray()));
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
+        }
     }
 }

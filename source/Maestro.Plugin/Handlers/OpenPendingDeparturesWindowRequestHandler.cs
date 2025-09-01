@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Infrastructure;
+using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
@@ -6,7 +7,7 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenPendingDeparturesWindowRequestHandler(GuiInvoker guiInvoker, IMediator mediator, IClock clock)
+public class OpenPendingDeparturesWindowRequestHandler(GuiInvoker guiInvoker, IMediator mediator, IClock clock, IErrorReporter errorReporter)
     : IRequestHandler<OpenPendingDeparturesWindowRequest>
 {
     public Task Handle(OpenPendingDeparturesWindowRequest request, CancellationToken cancellationToken)
@@ -20,7 +21,8 @@ public class OpenPendingDeparturesWindowRequestHandler(GuiInvoker guiInvoker, IM
                 request.PendingFlights,
                 windowHandle,
                 mediator,
-                clock);
+                clock,
+                errorReporter);
 
             var form = new VatSysForm(
                 title: "Insert a Flight",

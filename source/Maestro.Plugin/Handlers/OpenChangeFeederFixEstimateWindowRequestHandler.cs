@@ -1,11 +1,12 @@
-﻿using Maestro.Wpf.Messages;
+﻿using Maestro.Wpf.Integrations;
+using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenChangeFeederFixEstimateWindowRequestHandler(GuiInvoker guiInvoker, IMediator mediator)
+public class OpenChangeFeederFixEstimateWindowRequestHandler(GuiInvoker guiInvoker, IMediator mediator, IErrorReporter errorReporter)
     : IRequestHandler<OpenChangeFeederFixEstimateWindowRequest>
 {
     public Task Handle(OpenChangeFeederFixEstimateWindowRequest request, CancellationToken cancellationToken)
@@ -20,7 +21,8 @@ public class OpenChangeFeederFixEstimateWindowRequestHandler(GuiInvoker guiInvok
                 request.FeederFix,
                 request.OriginalFeederFixEstimate,
                 windowHandle,
-                mediator);
+                mediator,
+                errorReporter);
 
             var form = new VatSysForm(
                 title: "Change ETA_FF",
