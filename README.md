@@ -1,5 +1,5 @@
 <h1 align="center">
-  vMaestro 
+  vMaestro
 </h1>
 
 <h3 align="center">
@@ -28,84 +28,38 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
 # Known Issues
 
-- NoDelay and ManualLandingTime flights are not separated from Stable flights
 - When the Maestro.json file is missing, vatSys gets flooded with exceptions
 - Desequence and Information windows do not re-draw
-- The Debug window always moves to the back of the stack when moving your mouse cursor over a vatSys window.
-- When a button is enabled, it's appearance is still disabled, but it is still interactable.
-- The ladder occasionally stop updating.
-- Desequence window can be re-opened multiple times.
-- Diversions result in weird behaviour.
-- Stable flights don't seem to get updated ETAs.
-- Recompute, ETA_FF and STA_FF update, but STA doesn't.
-- Resuming a desequenced flight does not work
-- Q: Should times from vatSys be rounded to the nearest 30 secs?
-
-# What's next?
-
-- [ ] Document the existing and outstanding functionality (what should it do)
-- [ ] Fix known bugs
-- [ ] Continue to MVP
+- Window can be re-opened multiple times
 
 # Roadmap
 
-- [ ] Offline Mode (MVP)
-    - [X] Implement domain models, handlers, tiny types, etc.
-    - [X] Publish notifications on FDP updates
-    - [X] Information window
-    - [X] Basic sequencing algorithm
-    - [X] Automatic runway assignment
-    - [X] Recompute
-    - [X] Remove from sequence
-    - [X] Desequence
-    - [X] Change runway mode
-    - [X] Change runway rates
-    - [X] Insert flight
-    - [ ] Change ETA FF
-    - [ ] Fix failing tests
-    - [ ] TODO hunting
-    - [ ] GitHub actions CI
-    - [ ] Architecture Decision Record
-    - [ ] Docs
-
-- [ ] Sequencing Algorithm Refinement
-    - [ ] Revise speed-controls (`+` symbol, what does it actually mean, when it supposed to be used)
-    - [ ] Dependant runways (E.g: 34L depends on 16R, etc.)
-    - [ ] Maximum delay (revisit High Priority and Zero Delay)
-    - [ ] Approach types
-    - [X] Use FF and STAR suffix for ETI
-    - [ ] Separate enroute and TMA delays
-    - [ ] Consider separation at the feeder fix
-    - [ ] Factor GRIB winds into estimate calculations (If required)
-    - [ ] Maximum delay
-    - [ ] Approach types (TMA delay modes, normal, pressure, and max delay approach)
-
-- [ ] Online Mode
-    - [ ] Run sequencing code in a standalone server
-    - [ ] Connect to Maestro server via WebSocket
-    - [ ] Source some configuration from server
-    - [ ] Redirect notifications and requests to server
-    - [ ] Source sequence information from server
-    - [ ] Permissions (ENR, APP, FMP)
-    - [ ] Authentication
-
-- [ ] Extras
-    - [ ] Revisit strong ID types
-    - [ ] Ladder scrolling
-    - [X] Insert slot
-    - [X] Zero Delay and priority flights
-    - [ ] Departure list
-    - [ ] Pending flights
-    - [ ] Unit selector
-    - [ ] Coordination window
-
-- [ ] Fault Tolerance
-    - [ ] Ensure exceptions are contained and recovered from. Do not crash vatSys.
-    - [ ] Persist offline sequences in case of a restart.
-
-- [ ] Look and feel improvements final pass
-
-- [ ] Nice to haves
-    - [ ] Custom debugger configuration (start and attach to vatSys)
-    - [ ] Arrival list / GlobalOps backup
-    - [ ] Per-sequence online mode (E.g: YSSY offline, YMML online)
+- [X] Publish notifications on FDP updates
+- [X] Information window
+- [X] Basic sequencing algorithm
+- [X] Automatic runway assignment
+- [X] Dependant runways
+- [X] Recompute
+- [X] Remove from sequence
+- [X] Desequence
+- [X] Change runway
+- [X] Move flight (click and drag)
+- [ ] Move flight (single click)
+- [ ] Swap flights
+- [X] Change runway mode
+- [X] Change ETA FF
+- [X] Zero Delay and priority flights
+- [X] Insert slot
+- [X] Insert flight
+- [X] Insert departure
+- [ ] Maximum delay (revisit High Priority and Zero Delay)
+- [ ] Unit selector
+- [ ] Approach types
+- [ ] Separate enroute and TMA delays
+- [ ] Coordination window
+- [ ] Start sequencing on-demand
+- [ ] Online mode
+- [ ] Ladder scrolling
+- [ ] GitHub actions CI
+- [ ] Architecture Decision Record
+- [ ] Docs

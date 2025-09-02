@@ -24,13 +24,6 @@ using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 using MessageBox = System.Windows.Forms.MessageBox;
 
-// TODO:
-//  - What's next?
-//      - Double check ETA calculation behaviour for pending flights (do pending flight ETAs get fucked up by the recurring ETA updates)
-//      - Manual landing time UI stuff (don't click and drag frozen flights, swap, single click, etc.)
-//      - Runway assignment rules are confusing, it's easy to end up with no runways assigned (If only one runway is in mode, just assign that, defer to rules when multiple runways exist)
-//      - Store arrival information on the flight (then the FF time can be calculated automatically as the landing time changes)
-
 namespace Maestro.Plugin;
 
 [Export(typeof(IPlugin))]
