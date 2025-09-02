@@ -130,7 +130,6 @@ public partial class MaestroView
                 continue;
 
             var canDrag = ViewModel.SelectedSequence.SelectedView.ViewMode == ViewMode.Approach;
-
             var flightLabel = new FlightLabelView
             {
                 DataContext = new FlightLabelViewModel(
@@ -169,11 +168,22 @@ public partial class MaestroView
                 _isDragging = false;
                 var newYOffset = canvasHeight - newY;
                 var newTime = GetTimeForYOffset(currentTime, newYOffset);
+
+                var ladderPos = GetLadderPositionFor(flight);
+                var filterItems = ladderPos switch
+                {
+                    LadderPosition.Left => ViewModel.SelectedSequence.SelectedView.LeftLadder,
+                    LadderPosition.Right => ViewModel.SelectedSequence.SelectedView.RightLadder,
+                    _ => []
+                };
+
                 ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
                     ViewModel.SelectedSequence.AirportIdentifier,
                     flight.Callsign,
+                    filterItems,
                     newTime
                 ));
+
                 DrawLadder();
             };
 
