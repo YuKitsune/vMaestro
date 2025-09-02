@@ -15,28 +15,6 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
     [Fact]
-    public async Task WhenFlightIsMoved_BetweenFrozenFlights_ExceptionIsThrown()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var frozen1 = new FlightBuilder("QFA1F").WithState(State.Frozen).WithLandingTime(now.AddMinutes(10)).Build();
-        var frozen2 = new FlightBuilder("QFA2F").WithState(State.Frozen).WithLandingTime(now.AddMinutes(20)).Build();
-        var subject = new FlightBuilder("QFA1S").WithState(State.Stable).WithLandingTime(now.AddMinutes(30)).Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(frozen1)
-            .WithFlight(frozen2)
-            .WithFlight(subject)
-            .Build();
-
-        var handler = GetRequestHandler(sequence);
-        var request = new MoveFlightRequest("YSSY", "QFA1S", frozen1.ScheduledLandingTime.AddMinutes(-1));
-
-        // Act/Assert
-        await Should.ThrowAsync<MaestroException>(() => handler.Handle(request, CancellationToken.None));
-    }
-
-    [Fact]
     public async Task WhenFlightIsMoved_AfterFrozenFlight_Succeeds()
     {
         // Arrange
@@ -50,7 +28,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .Build();
 
         var handler = GetRequestHandler(sequence);
-        var request = new MoveFlightRequest("YSSY", "QFA1S", frozen.ScheduledLandingTime.AddMinutes(5));
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA1S",
+            ["34L"],
+            frozen.ScheduledLandingTime.AddMinutes(5));
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -72,7 +54,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         var newTime = now.AddMinutes(20);
         var handler = GetRequestHandler(sequence);
-        var request = new MoveFlightRequest("YSSY", "QFA1", newTime);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA1",
+            ["34L"],
+            newTime);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -95,7 +81,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         var newTime = now.AddMinutes(20);
         var handler = GetRequestHandler(sequence);
-        var request = new MoveFlightRequest("YSSY", "QFA1", newTime);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA1",
+            ["34L"],
+            newTime);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -119,13 +109,284 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         var newTime = now.AddMinutes(20);
         var handler = GetRequestHandler(sequence);
-        var request = new MoveFlightRequest("YSSY", "QFA1", newTime);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA1",
+            ["34L"],
+            newTime);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
         flight.State.ShouldBe(state);
+    }
+
+    [Fact]
+    public async Task WhenFlightIsMoved_BetweenTwoFrozenFlights_WithNoConflict_FlightIsMovedToRequestedTime()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var frozen1 = new FlightBuilder("QFA1")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(10))
+            .Build();
+        var frozen2 = new FlightBuilder("QFA2")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(30))
+            .Build();
+        var subject = new FlightBuilder("QFA3")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(40))
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(frozen1)
+            .WithFlight(frozen2)
+            .WithFlight(subject)
+            .Build();
+
+        var handler = GetRequestHandler(sequence);
+        var requestedTime = now.AddMinutes(20);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA3",
+            ["34L"],
+            requestedTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        subject.ScheduledLandingTime.ShouldBe(requestedTime);
+    }
+
+    [Fact]
+    public async Task WhenFlightIsMoved_BetweenTwoFrozenFlights_TooCloseToLeader_FlightIsMovedAfterRequestedTime()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var frozen1 = new FlightBuilder("QFA1")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(10))
+            .Build();
+        var frozen2 = new FlightBuilder("QFA2")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(20))
+            .Build();
+        var subject = new FlightBuilder("QFA3")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(30))
+            .Build();
+
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(frozen1)
+            .WithFlight(frozen2)
+            .WithFlight(subject)
+            .Build();
+
+        var handler = GetRequestHandler(sequence);
+        var requestedTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA3",
+            ["34L"],
+            requestedTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        subject.ScheduledLandingTime.ShouldBe(frozen1.ScheduledLandingTime.Add(TimeSpan.FromSeconds(180)));
+    }
+
+    [Fact]
+    public async Task WhenFlightIsMoved_BetweenTwoFrozenFlights_TooCloseToTrailer_FlightIsMovedBeforeRequestedTime()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var frozen1 = new FlightBuilder("QFA1")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(10))
+            .Build();
+        var frozen2 = new FlightBuilder("QFA2")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(20))
+            .Build();
+        var subject = new FlightBuilder("QFA3")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(30))
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(frozen1)
+            .WithFlight(frozen2)
+            .WithFlight(subject)
+            .Build();
+
+        var handler = GetRequestHandler(sequence);
+        var requestedTime = now.AddMinutes(18);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA3",
+            ["34L"],
+            requestedTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        subject.ScheduledLandingTime.ShouldBe(frozen2.ScheduledLandingTime.AddSeconds(-180));
+    }
+
+    [Fact]
+    public async Task WhenFlightIsMoved_BetweenTwoFrozenFlights_WithNoSpaceBetweenThem_ExceptionIsThrown()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var frozen1 = new FlightBuilder("QFA1")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(10))
+            .Build();
+        var frozen2 = new FlightBuilder("QFA2")
+            .WithState(State.Frozen)
+            .WithLandingTime(now.AddMinutes(15))
+            .Build();
+        var subject = new FlightBuilder("QFA3")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(20))
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(frozen1)
+            .WithFlight(frozen2)
+            .WithFlight(subject)
+            .Build();
+
+        var handler = GetRequestHandler(sequence);
+        var requestedTime = now.AddMinutes(13);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA3",
+            ["34L"],
+            requestedTime);
+
+        // Act/Assert
+        await Should.ThrowAsync<MaestroException>(() => handler.Handle(request, CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData(State.Unstable)]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    public async Task WhenFlightIsMoved_BetweenTwoNonFrozenFlights_FlightIsMovedToRequestedTime(State state)
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var flight1 = new FlightBuilder("QFA1")
+            .WithState(state)
+            .WithLandingTime(now.AddMinutes(10))
+            .Build();
+        var flight2 = new FlightBuilder("QFA2")
+            .WithState(state)
+            .WithLandingTime(now.AddMinutes(15))
+            .Build();
+        var subject = new FlightBuilder("QFA3")
+            .WithState(state)
+            .WithLandingTime(now.AddMinutes(20))
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight1)
+            .WithFlight(flight2)
+            .WithFlight(subject)
+            .Build();
+
+        var handler = GetRequestHandler(sequence);
+        var requestedTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA3",
+            ["34L"],
+            requestedTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        subject.ScheduledLandingTime.ShouldBe(requestedTime);
+    }
+
+    [Fact]
+    public async Task WhenFlightIsMoved_WithFeederFixTime_FeederFixTimeIsUpdated()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var landingEstimate = now.AddMinutes(20);
+        var originalLandingTime = now.AddMinutes(25);
+
+        var feederFixEstimate = now.AddMinutes(10);
+        var originalFeederFixTime = now.AddMinutes(15);
+
+        var flight = new FlightBuilder("QFA1")
+            .WithState(State.Stable)
+            .WithLandingEstimate(landingEstimate)
+            .WithLandingTime(originalLandingTime)
+            .WithFeederFixEstimate(feederFixEstimate)
+            .WithFeederFixTime(originalFeederFixTime)
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        var handler = GetRequestHandler(sequence);
+
+        var newLandingTime = now.AddMinutes(30);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA1",
+            ["34L"],
+            newLandingTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.ScheduledLandingTime.ShouldBe(newLandingTime);
+        var newFeederFixTime = now.AddMinutes(20);
+        flight.ScheduledFeederFixTime.ShouldBe(newFeederFixTime);
+    }
+
+    [Fact]
+    public async Task WhenFlightIsMoved_WithNoMatchingRunway_DefaultRunwayIsUsed()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var flight = new FlightBuilder("QFA1")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(10))
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithFlight(flight)
+            .Build();
+
+        var handler = GetRequestHandler(sequence);
+        var newTime = now.AddMinutes(20);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA1",
+            ["16R"], // Not in mode
+            newTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.ScheduledLandingTime.ShouldBe(newTime);
+        flight.AssignedRunwayIdentifier.ShouldBe("34L"); // Default runway
     }
 
     MoveFlightRequestHandler GetRequestHandler(Sequence sequence)

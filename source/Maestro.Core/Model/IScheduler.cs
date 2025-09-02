@@ -131,16 +131,6 @@ public class Scheduler(
         }
     }
 
-    // TODO Test cases:
-    // - When recomputing a flight, and it has sped up, it is moved to it's new estimate landing time
-    // - When recomputing a flight, and it has slowed down, it is moved to it's new estimate landing time
-    // - When recomputing a flight, and trailing flights exist, they are rescheduled
-    //      1. Create three flights, QFA1, QFA2, QFA3.
-    //          QFA1 should have no delay,
-    //          QFA2 should have no delay but their ETA is ahead of QFA1 by 2 minutes
-    //          QFA3 should be delayed behind QFA2
-    //      2. Recompute QFA2
-    //      3. Assert QFA2 is in the lead with no delay, QFA1 is delayed behind QFA2, and QFA3 has no delay
     public void Recompute(Flight flight, Sequence sequence)
     {
         var airportConfiguration = airportConfigurationProvider
@@ -356,8 +346,6 @@ tryAgain:
 
         return proposedLandingTime;
     }
-
-
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
     {
