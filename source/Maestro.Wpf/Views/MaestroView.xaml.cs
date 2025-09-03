@@ -714,10 +714,30 @@ public partial class MaestroView
         }
         else
         {
-            // This was a click operation - select the flight
+            // This was a click operation
             if (flightLabel.DataContext is FlightLabelViewModel flightLabelViewModel)
             {
-                ViewModel.SelectFlight(flightLabelViewModel.FlightViewModel);
+                var clickedFlight = flightLabelViewModel.FlightViewModel;
+
+                // Check if there's already a selected flight
+                if (ViewModel.SelectedFlight != null && ViewModel.SelectedFlight.Callsign != clickedFlight.Callsign)
+                {
+                    // Swap the positions of the selected flight and the clicked flight
+                    ViewModel.SwapFlightsCommand.Execute(
+                        new SwapFlightsRequest(
+                            ViewModel.SelectedSequence?.AirportIdentifier ?? "",
+                            ViewModel.SelectedFlight.Callsign,
+                            clickedFlight.Callsign
+                        ));
+
+                    // Deselect after swapping
+                    ViewModel.DeselectFlight();
+                }
+                else
+                {
+                    // No flight selected or clicking the same flight - just select this flight
+                    ViewModel.SelectFlight(clickedFlight);
+                }
             }
         }
 

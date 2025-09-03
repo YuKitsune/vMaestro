@@ -84,6 +84,19 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
         }
     }
 
+    [RelayCommand]
+    async Task SwapFlights(SwapFlightsRequest request)
+    {
+        try
+        {
+            await mediator.Send(request);
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
+        }
+    }
+
     public void BeginSlotCreation(DateTimeOffset firstSlotTime, SlotCreationReferencePoint slotCreationReferencePoint, string[] runwayIdentifiers)
     {
         IsCreatingSlot = true;

@@ -296,8 +296,7 @@ public class FlightTests(ClockFixture clockFixture)
     {
         // Arrange - Create a flight within 15 minutes of landing
         var flight = new FlightBuilder("QFA1")
-            .WithLandingEstimate(clockFixture.Instance.UtcNow().AddMinutes(15)) // Within frozen threshold of 15 minutes
-            .WithLandingTime(clockFixture.Instance.UtcNow().AddMinutes(16)) // Scheduled time slightly out
+            .WithLandingTime(clockFixture.Instance.UtcNow().AddMinutes(15)) // Within frozen threshold of 15 minutes
             .WithState(State.SuperStable)
             .Build();
 

@@ -225,36 +225,41 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         var frozenThreshold = TimeSpan.FromMinutes(15);
         var minUnstableTime = TimeSpan.FromSeconds(180);
 
-        var timeActive = clock.UtcNow() - ActivatedTime;
-        var timeToFeeder = EstimatedFeederFixTime - clock.UtcNow();
-        var timeToLanding = EstimatedLandingTime - clock.UtcNow();
-
         // Keep the flight unstable until it's passed the minimum unstable time
+        var timeActive = clock.UtcNow() - ActivatedTime;
         if (State is State.Unstable && timeActive <= minUnstableTime)
         {
             return;
         }
 
-        if (ScheduledLandingTime.IsSameOrBefore(clock.UtcNow()))
+        var now = clock.UtcNow();
+        if (ScheduledLandingTime.IsSameOrBefore(now))
         {
             SetState(State.Landed, clock);
+            return;
         }
-        else if (timeToLanding <= frozenThreshold)
+
+        var timeToLanding = ScheduledLandingTime - clock.UtcNow();
+        if (timeToLanding <= frozenThreshold)
         {
             SetState(State.Frozen, clock);
+            return;
         }
-        else if (InitialFeederFixTime?.IsSameOrBefore(clock.UtcNow()) ?? false)
+
+        if (InitialFeederFixTime is not null && InitialFeederFixTime.Value.IsSameOrBefore(now))
         {
             SetState(State.SuperStable, clock);
+            return;
         }
-        else if (timeToFeeder <= stableThreshold)
+
+        var timeToFeeder = EstimatedFeederFixTime - clock.UtcNow();
+        if (timeToFeeder <= stableThreshold)
         {
             SetState(State.Stable, clock);
+            return;
         }
-        else
-        {
-            SetState(State.Unstable, clock);
-        }
+
+        SetState(State.Unstable, clock);
     }
 
     public int CompareTo(Flight? other)
