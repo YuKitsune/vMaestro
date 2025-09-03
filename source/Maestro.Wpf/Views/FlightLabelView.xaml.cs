@@ -23,6 +23,9 @@ public partial class FlightLabelView : UserControl
     public static readonly DependencyProperty IsDraggableProperty = DependencyProperty.Register(
         nameof(IsDraggable), typeof(bool), typeof(FlightLabelView), new PropertyMetadata(true));
 
+    public static readonly DependencyProperty IsDraggingProperty = DependencyProperty.Register(
+        nameof(IsDragging), typeof(bool), typeof(FlightLabelView), new PropertyMetadata(false));
+
     public LadderPosition LadderPosition
     {
         get => (LadderPosition)GetValue(LadderPositionProperty);
@@ -39,6 +42,12 @@ public partial class FlightLabelView : UserControl
     {
         get => (bool)GetValue(IsDraggableProperty);
         set => SetValue(IsDraggableProperty, value);
+    }
+
+    public bool IsDragging
+    {
+        get => (bool)GetValue(IsDraggingProperty);
+        set => SetValue(IsDraggingProperty, value);
     }
 
     public event EventHandler<double>? DragEnded;
@@ -65,6 +74,7 @@ public partial class FlightLabelView : UserControl
             return;
 
         _isDragging = true;
+        IsDragging = true;
         DragStarted?.Invoke(this, Canvas.GetTop(this));
         _dragStartPoint = e.GetPosition(Parent as IInputElement);
         _originalTop = Canvas.GetTop(this);
@@ -88,6 +98,7 @@ public partial class FlightLabelView : UserControl
             return;
 
         _isDragging = false;
+        IsDragging = false;
         ReleaseMouseCapture();
         var finalTop = Canvas.GetTop(this);
         DragEnded?.Invoke(this, finalTop);
