@@ -261,7 +261,8 @@
             ClipToBounds="True"
             Background="Transparent"
             ContextMenuOpening="OnContextMenuOpening"
-            MouseRightButtonDown="OnCanvasRightClick">
+            MouseRightButtonDown="OnCanvasRightClick"
+            MouseLeftButtonDown="OnCanvasLeftClick">
             <Canvas.ContextMenu>
                 <ContextMenu>
                     <ContextMenu.Style>

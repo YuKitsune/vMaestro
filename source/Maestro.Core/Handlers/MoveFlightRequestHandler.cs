@@ -43,6 +43,7 @@ public class MoveFlightRequestHandler(
             request.NewLandingTime);
 
         flight.SetLandingTime(optimizedLandingTime, manual: true);
+        flight.SetRunway(runwayConfig.Identifier, manual: true);
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && flight.EstimatedFeederFixTime is not null && !flight.HasPassedFeederFix)
         {
             var totalDelay = optimizedLandingTime - flight.EstimatedLandingTime;

@@ -34,6 +34,9 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     [ObservableProperty]
     DateTimeOffset? _secondSlotTime = null;
 
+    [ObservableProperty]
+    FlightMessage? _selectedFlight = null;
+
     partial void OnSequencesChanged(ObservableCollection<SequenceViewModel> sequences)
     {
         // Deselect the sequence if the selected one no longer exists
@@ -165,5 +168,15 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
         {
             errorReporter.ReportError(ex);
         }
+    }
+
+    public void SelectFlight(FlightMessage flight)
+    {
+        SelectedFlight = flight;
+    }
+
+    public void DeselectFlight()
+    {
+        SelectedFlight = null;
     }
 }

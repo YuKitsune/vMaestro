@@ -14,6 +14,7 @@ using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using MediatR;
+using Point = System.Windows.Point;
 
 namespace Maestro.Wpf.Views;
 
@@ -29,8 +30,14 @@ public partial class MaestroView
 
     readonly DispatcherTimer _dispatcherTimer;
     private bool _isDragging = false;
-    private System.Windows.Point? _contextMenuPosition;
+    private Point? _contextMenuPosition;
     private bool _suppressContextMenu = false;
+
+    // Drag state
+    private FlightLabelView? _draggingFlightLabel;
+    private Point _dragStartPoint;
+    private double _originalTop;
+    private bool _hasMoved;
 
     public MaestroView()
     {
@@ -130,14 +137,19 @@ public partial class MaestroView
                 continue;
 
             var canDrag = ViewModel.SelectedSequence.SelectedView.ViewMode == ViewMode.Approach;
+            var flightLabelViewModel = new FlightLabelViewModel(
+                Ioc.Default.GetRequiredService<IMediator>(),
+                Ioc.Default.GetRequiredService<IErrorReporter>(),
+                ViewModel.SelectedSequence,
+                flight,
+                ViewModel.SelectedSequence.CurrentRunwayMode)
+            {
+                IsSelected = ViewModel.SelectedFlight?.Callsign == flight.Callsign
+            };
+
             var flightLabel = new FlightLabelView
             {
-                DataContext = new FlightLabelViewModel(
-                    Ioc.Default.GetRequiredService<IMediator>(),
-                    Ioc.Default.GetRequiredService<IErrorReporter>(),
-                    ViewModel.SelectedSequence,
-                    flight,
-                    ViewModel.SelectedSequence.CurrentRunwayMode),
+                DataContext = flightLabelViewModel,
                 Width = width,
                 Margin = new Thickness(2,0,2,0),
                 LadderPosition = ladderPosition.Value,
@@ -158,34 +170,10 @@ public partial class MaestroView
                 _ => throw new ArgumentException($"Unexpected LadderPosition: {ladderPosition}")
             };
 
-            flightLabel.DragStarted += (s, e) =>
-            {
-                _isDragging = true;
-            };
-
-            flightLabel.DragEnded += (s, newY) =>
-            {
-                _isDragging = false;
-                var newYOffset = canvasHeight - newY;
-                var newTime = GetTimeForYOffset(currentTime, newYOffset);
-
-                var ladderPos = GetLadderPositionFor(flight);
-                var filterItems = ladderPos switch
-                {
-                    LadderPosition.Left => ViewModel.SelectedSequence.SelectedView.LeftLadder,
-                    LadderPosition.Right => ViewModel.SelectedSequence.SelectedView.RightLadder,
-                    _ => []
-                };
-
-                ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
-                    ViewModel.SelectedSequence.AirportIdentifier,
-                    flight.Callsign,
-                    filterItems,
-                    newTime
-                ));
-
-                DrawLadder();
-            };
+            // Handle flight label interactions
+            flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
+            flightLabel.MouseMove += OnFlightLabelMouseMove;
+            flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
 
             LadderCanvas.Children.Add(flightLabel);
         }
@@ -345,7 +333,7 @@ public partial class MaestroView
             var drawOnLeft = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedSequence.SelectedView.LeftLadder);
             var drawOnRight = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedSequence.SelectedView.RightLadder);
 
-            var slotWidth = TickWidth + 4; // Slightly wider than tick marks
+            var slotWidth = TickWidth;
             var topY = Math.Min(startYPosition, endYPosition);
             var rectXPosition = drawOnLeft
                 ? ladderLeftPosition - LineThickness - slotWidth / 2
@@ -459,6 +447,44 @@ public partial class MaestroView
         var minutes = yOffset / MinuteHeight;
         var newTime = currentTime.AddMinutes(minutes);
         return newTime;
+    }
+
+    void OnCanvasLeftClick(object sender, MouseButtonEventArgs e)
+    {
+        // If there's a selected flight, move it to the clicked position
+        if (ViewModel.SelectedFlight != null)
+        {
+            var clickPosition = e.GetPosition(LadderCanvas);
+            var canvasHeight = LadderCanvas.ActualHeight;
+            var canvasWidth = LadderCanvas.ActualWidth;
+            var yOffset = canvasHeight - clickPosition.Y;
+            var currentTime = DateTimeOffset.UtcNow;
+            var clickTime = GetTimeForYOffset(currentTime, yOffset);
+
+            // Determine which side of the ladder was clicked to get the correct runways
+            var middlePoint = canvasWidth / 2;
+            var filterItems = clickPosition.X < middlePoint
+                ? ViewModel.SelectedSequence?.SelectedView.LeftLadder ?? []
+                : ViewModel.SelectedSequence?.SelectedView.RightLadder ?? [];
+
+            // Move the selected flight to the clicked position
+            ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
+                ViewModel.SelectedSequence?.AirportIdentifier ?? "",
+                ViewModel.SelectedFlight.Callsign,
+                filterItems,
+                clickTime
+            ));
+
+            // Deselect the flight after moving
+            ViewModel.DeselectFlight();
+
+            e.Handled = true;
+        }
+        else
+        {
+            // No flight selected, just deselect any existing selection
+            ViewModel.DeselectFlight();
+        }
     }
 
     void OnCanvasRightClick(object sender, MouseButtonEventArgs e)
@@ -593,4 +619,117 @@ public partial class MaestroView
         DateTimeOffset ClickTime,
         ViewMode ViewMode,
         string[] FilterItems);
+
+    void OnFlightLabelMouseDown(object sender, MouseButtonEventArgs e, FlightMessage flight)
+    {
+        if (sender is not FlightLabelView flightLabel)
+            return;
+
+        if (_isDragging)
+            return;
+
+        // Check if dragging is enabled for this flight label
+        if (!flightLabel.IsDraggable)
+        {
+            // If not draggable, select immediately
+            ViewModel.SelectFlight(flight);
+            return;
+        }
+
+        // For draggable flights, defer selection until we know if it's a click or drag
+        _draggingFlightLabel = flightLabel;
+        _dragStartPoint = e.GetPosition(LadderCanvas);
+        _originalTop = Canvas.GetTop(flightLabel);
+        _hasMoved = false;
+
+        flightLabel.CaptureMouse();
+        e.Handled = true;
+    }
+
+    void OnFlightLabelMouseMove(object sender, MouseEventArgs e)
+    {
+        if (sender is not FlightLabelView flightLabel)
+            return;
+
+        if (_draggingFlightLabel != flightLabel || e.LeftButton != MouseButtonState.Pressed)
+            return;
+
+        var currentPoint = e.GetPosition(LadderCanvas);
+        var deltaY = currentPoint.Y - _dragStartPoint.Y;
+
+        // Only start dragging if mouse has moved significantly (avoids accidental drags on clicks)
+        if (!_hasMoved && Math.Abs(deltaY) > SystemParameters.MinimumVerticalDragDistance)
+        {
+            _hasMoved = true;
+            _isDragging = true;
+            flightLabel.IsDragging = true;
+        }
+
+        if (_hasMoved)
+        {
+            Canvas.SetTop(flightLabel, _originalTop + deltaY);
+        }
+    }
+
+    void OnFlightLabelMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FlightLabelView flightLabel)
+            return;
+
+        if (_draggingFlightLabel != flightLabel)
+            return;
+
+        flightLabel.ReleaseMouseCapture();
+
+        if (_hasMoved && _isDragging)
+        {
+            // This was a drag operation - move the flight
+            var finalTop = Canvas.GetTop(flightLabel);
+            var currentTime = DateTimeOffset.UtcNow;
+            var canvasHeight = LadderCanvas.ActualHeight;
+            var newYOffset = canvasHeight - finalTop;
+            var newTime = GetTimeForYOffset(currentTime, newYOffset);
+
+            // Get the flight from the flight label's data context
+            if (flightLabel.DataContext is FlightLabelViewModel flightLabelViewModel)
+            {
+                var flight = flightLabelViewModel.FlightViewModel;
+                var ladderPos = GetLadderPositionFor(flight);
+                var filterItems = ladderPos switch
+                {
+                    LadderPosition.Left => ViewModel.SelectedSequence?.SelectedView.LeftLadder ?? [],
+                    LadderPosition.Right => ViewModel.SelectedSequence?.SelectedView.RightLadder ?? [],
+                    _ => []
+                };
+
+                ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
+                    ViewModel.SelectedSequence?.AirportIdentifier ?? "",
+                    flight.Callsign,
+                    filterItems,
+                    newTime
+                ));
+
+                DrawLadder();
+            }
+        }
+        else
+        {
+            // This was a click operation - select the flight
+            if (flightLabel.DataContext is FlightLabelViewModel flightLabelViewModel)
+            {
+                ViewModel.SelectFlight(flightLabelViewModel.FlightViewModel);
+            }
+        }
+
+        // Reset drag state
+        _isDragging = false;
+        if (_draggingFlightLabel != null)
+        {
+            _draggingFlightLabel.IsDragging = false;
+        }
+        _draggingFlightLabel = null;
+        _hasMoved = false;
+
+        e.Handled = true;
+    }
 }

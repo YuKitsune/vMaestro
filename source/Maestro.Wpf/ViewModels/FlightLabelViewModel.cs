@@ -19,8 +19,6 @@ public partial class FlightLabelViewModel(
     [ObservableProperty]
     bool _isSelected = false;
 
-    readonly SequenceViewModel _sequence = sequence;
-
     public FlightMessage FlightViewModel { get; } = flightViewModel;
     public RunwayModeViewModel RunwayModeViewModel { get; } = runwayModeViewModel;
 
@@ -84,8 +82,8 @@ public partial class FlightLabelViewModel(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
-                    _sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    _sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
+                    sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
         }
         catch (Exception ex)
         {
@@ -107,8 +105,8 @@ public partial class FlightLabelViewModel(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
-                    _sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    _sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
+                    sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
         }
         catch (Exception ex)
         {

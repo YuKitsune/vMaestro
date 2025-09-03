@@ -26,6 +26,7 @@ public partial class FlightLabelView : UserControl
     public static readonly DependencyProperty IsDraggingProperty = DependencyProperty.Register(
         nameof(IsDragging), typeof(bool), typeof(FlightLabelView), new PropertyMetadata(false));
 
+
     public LadderPosition LadderPosition
     {
         get => (LadderPosition)GetValue(LadderPositionProperty);
@@ -50,58 +51,8 @@ public partial class FlightLabelView : UserControl
         set => SetValue(IsDraggingProperty, value);
     }
 
-    public event EventHandler<double>? DragEnded;
-    public event EventHandler<double>? DragStarted;
-
-    bool _isDragging;
-    Point _dragStartPoint;
-    double _originalTop;
-
     public FlightLabelView()
     {
         InitializeComponent();
-        Loaded += (s, e) =>
-        {
-            MouseLeftButtonDown += OnMouseLeftButtonDown;
-            MouseMove += OnMouseMove;
-            MouseLeftButtonUp += OnMouseLeftButtonUp;
-        };
-    }
-
-    void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (!IsDraggable || _isDragging)
-            return;
-
-        _isDragging = true;
-        IsDragging = true;
-        DragStarted?.Invoke(this, Canvas.GetTop(this));
-        _dragStartPoint = e.GetPosition(Parent as IInputElement);
-        _originalTop = Canvas.GetTop(this);
-        CaptureMouse();
-        e.Handled = true;
-    }
-
-    void OnMouseMove(object sender, MouseEventArgs e)
-    {
-        if (!IsDraggable || !_isDragging || e.LeftButton != MouseButtonState.Pressed)
-            return;
-
-        var currentPoint = e.GetPosition(Parent as IInputElement);
-        var deltaY = currentPoint.Y - _dragStartPoint.Y;
-        Canvas.SetTop(this, _originalTop + deltaY);
-    }
-
-    void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        if (!IsDraggable || !_isDragging)
-            return;
-
-        _isDragging = false;
-        IsDragging = false;
-        ReleaseMouseCapture();
-        var finalTop = Canvas.GetTop(this);
-        DragEnded?.Invoke(this, finalTop);
-        e.Handled = true;
     }
 }
