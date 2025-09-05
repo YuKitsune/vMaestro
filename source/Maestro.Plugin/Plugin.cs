@@ -36,6 +36,8 @@ namespace Maestro.Plugin;
 // TODO: Need to improve the boundaries between DTOs, domain models, and view models.
 //  - Domain models and DTOs are leaking into the frontend
 
+// TODO: Hide some functions from different views (e.g: APP only and ENR only)
+
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
 {

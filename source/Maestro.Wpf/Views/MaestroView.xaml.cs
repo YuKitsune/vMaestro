@@ -401,6 +401,14 @@ public partial class MaestroView
 
     void OnCanvasRightClick(object sender, MouseButtonEventArgs e)
     {
+        // Right-clicking when a flight is selected will deselect it
+        if (ViewModel.SelectedFlight != null)
+        {
+            ViewModel.DeselectFlight();
+            e.Handled = true;
+            return;
+        }
+
         if (!ViewModel.IsCreatingSlot)
         {
             // Store the right-click position so we can reference it later when creating slots
@@ -661,6 +669,20 @@ public partial class MaestroView
         e.Handled = true;
     }
 
+    void OnFlightLabelDoubleClick(object sender, MouseButtonEventArgs e, FlightMessage flight)
+    {
+        if (sender is not FlightLabelView flightLabel)
+            return;
+
+        // Double-clicking a flight makes it stable
+        ViewModel.MakeStableCommand.Execute(new MakeStableRequest(
+            ViewModel.AirportIdentifier,
+            flight.Callsign
+        ));
+
+        e.Handled = true;
+    }
+
     void UpdateLabels(DateTimeOffset currentTime)
     {
         var canvasHeight = LadderCanvas.ActualHeight;
@@ -748,7 +770,12 @@ public partial class MaestroView
                 };
 
                 // Set up event handlers
-                if (canMove)
+                if (ViewModel.SelectedView.ViewMode == ViewMode.Enroute)
+                {
+                    flightLabel.MouseDoubleClick += (s, e) => OnFlightLabelDoubleClick(s, e, flight);
+                }
+
+                if (ViewModel.SelectedView.ViewMode == ViewMode.Approach)
                 {
                     flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
                     flightLabel.MouseMove += OnFlightLabelMouseMove;

@@ -129,6 +129,19 @@ public partial class MaestroViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    async Task MakeStable(MakeStableRequest request)
+    {
+        try
+        {
+            await _mediator.Send(request);
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
     public void BeginSlotCreation(DateTimeOffset firstSlotTime, SlotCreationReferencePoint slotCreationReferencePoint, string[] runwayIdentifiers)
     {
         IsCreatingSlot = true;

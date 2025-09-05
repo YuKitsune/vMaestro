@@ -48,6 +48,8 @@ public class SequenceInitializedNotificationHandler(
             };
 
             // Wire up the FormClosing event to show confirmation dialog
+            // TODO: Should this use the mediator to send a message to close the window instead?
+            // E.g: StopSequencingRequest -> SequenceTerminatedNotificationHandler -> close the window
             window.CustomFormClosingHandler = async (sender, e) =>
             {
                 try
