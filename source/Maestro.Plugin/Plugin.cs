@@ -222,6 +222,7 @@ public class Plugin : IPlugin
     }
 
     // TODO: Extract this into a mediator request
+    // TODO: Prevent multiple setup windows from being opened
     static void OpenSetupWindow()
     {
         try

@@ -13,6 +13,7 @@ public interface ISequenceProvider
         CancellationToken cancellationToken);
     Task<IExclusiveSequence> GetSequence(string airportIdentifier, CancellationToken cancellationToken);
     SequenceMessage GetReadOnlySequence(string airportIdentifier);
+    Task TerminateSequence(string airportIdentifier, CancellationToken cancellationToken);
 }
 
 public interface IExclusiveSequence : IDisposable
@@ -84,6 +85,17 @@ public class SequenceProvider(IAirportConfigurationProvider airportConfiguration
             throw new MaestroException($"Sequence for {airportIdentifier} not found");
 
         return pair.Sequence.ToMessage();
+    }
+
+    public async Task TerminateSequence(string airportIdentifier, CancellationToken cancellationToken)
+    {
+        using var _ = await _semaphore.LockAsync(cancellationToken);
+        var pair = _sequences.SingleOrDefault(x => x.Sequence.AirportIdentifier == airportIdentifier);
+        if (pair is null)
+            throw new MaestroException($"Sequence for {airportIdentifier} not found");
+
+        _sequences.Remove(pair);
+        pair.Semaphore.Dispose();
     }
 
     class SequenceLockPair

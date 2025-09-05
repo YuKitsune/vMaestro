@@ -59,6 +59,7 @@ public partial class SetupViewModel : ObservableObject
 
         // TODO: Mix of domain types, DTOs, and ViewModels here - needs cleanup
         AvailableRunwayModes = airport.RunwayModes.Select(r => new RunwayModeViewModel(r.ToMessage())).ToArray();
+        SelectedRunwayModeIdentifier = AvailableRunwayModes.First().Identifier;
     }
 
     partial void OnSelectedRunwayModeIdentifierChanged(string value)

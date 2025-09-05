@@ -17,9 +17,9 @@ public class ConfirmationRequestHandler(GuiInvoker guiInvoker) : IRequestHandler
             try
             {
                 VatSysForm dialogForm = null!;
-                
+
                 var dialogViewModel = new DialogViewModel(
-                    request.Message, 
+                    request.Message,
                     result =>
                     {
                         if (!taskCompletionSource.Task.IsCompleted)
@@ -31,15 +31,7 @@ public class ConfirmationRequestHandler(GuiInvoker guiInvoker) : IRequestHandler
 
                 var dialogView = new DialogView(dialogViewModel);
 
-                dialogForm = new VatSysForm("Confirmation", dialogView, shrinkToContent: false)
-                {
-                    FormBorderStyle = FormBorderStyle.FixedDialog,
-                    MaximizeBox = false,
-                    MinimizeBox = false,
-                    StartPosition = FormStartPosition.CenterParent,
-                    Width = 400,
-                    Height = 150
-                };
+                dialogForm = new VatSysForm(dialogView, shrinkToContent: true);
 
                 // Handle form closing via X button as cancel
                 dialogForm.FormClosing += (sender, e) =>

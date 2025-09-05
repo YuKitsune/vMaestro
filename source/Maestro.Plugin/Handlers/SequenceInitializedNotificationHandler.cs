@@ -52,19 +52,35 @@ public class SequenceInitializedNotificationHandler(
             {
                 try
                 {
+                    // Allow closing without confirmation for system shutdowns or application exits
+                    if (e.CloseReason is CloseReason.ApplicationExitCall or CloseReason.WindowsShutDown or CloseReason.TaskManagerClosing)
+                        return;
+
+                    // Only show confirmation for user-initiated closes
+                    if (e.CloseReason is not CloseReason.UserClosing)
+                        return;
+
                     // Cancel the close event initially
                     e.Cancel = true;
 
                     // Ask for confirmation through mediator
-                    var response = await mediator.Send(new WindowCloseConfirmationRequest(notification.AirportIdentifier));
+                    var dialogMessage =
+                        $"""
+                         Closing the TFMS window will terminate the sequence for {notification.AirportIdentifier}.
+                         Do you really want to close the window?
+                         """;
+                    var response = await mediator.Send(new ConfirmationRequest(dialogMessage));
 
                     // If user confirmed, close the window
-                    if (response.AllowClose)
-                    {
-                        // Remove the event handler to prevent infinite recursion
-                        window.CustomFormClosingHandler = null;
-                        window.Close();
-                    }
+                    if (!response.Confirmed)
+                        return;
+
+                    // Remove the event handler to prevent infinite recursion
+                    window.CustomFormClosingHandler = null;
+                    window.Close();
+
+                    // Terminate the sequence
+                    await mediator.Send(new StopSequencingRequest(notification.AirportIdentifier));
                 }
                 catch (Exception ex)
                 {

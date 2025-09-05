@@ -33,6 +33,11 @@ public class MockSequenceProvider(Sequence sequence) : ISequenceProvider
         return sequence.ToMessage();
     }
 
+    public Task TerminateSequence(string airportIdentifier, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     class MockExclusiveSequence(Sequence sequence) : IExclusiveSequence
     {
         public Sequence Sequence { get; } = sequence;
