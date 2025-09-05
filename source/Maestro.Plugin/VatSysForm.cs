@@ -7,6 +7,8 @@ namespace Maestro.Plugin;
 
 public class VatSysForm : BaseForm
 {
+    public FormClosingEventHandler? CustomFormClosingHandler { get; set; }
+
     public VatSysForm(string title, UIElement child, bool shrinkToContent) : this(child, shrinkToContent)
     {
         Text = title;
@@ -17,7 +19,9 @@ public class VatSysForm : BaseForm
         var elementHost = new ElementHost();
         if (shrinkToContent)
         {
-            child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            // For text wrapping to work correctly, we need to measure with a constraint
+            var maxWidth = 520; // Maximum dialog width
+            child.Measure(new Size(maxWidth, double.PositiveInfinity));
             child.Arrange(new Rect(child.DesiredSize));
             child.UpdateLayout();
 
@@ -29,13 +33,33 @@ public class VatSysForm : BaseForm
             FormBorderStyle = FormBorderStyle.FixedDialog;
             ClientSize = elementHost.Size;
         }
+        else
+        {
+            elementHost.Child = child;
+            elementHost.Dock = DockStyle.Fill;
+        }
 
-        elementHost.Child = child;
-        elementHost.Dock = DockStyle.Fill;
+        if (!shrinkToContent)
+        {
+            elementHost.Dock = DockStyle.Fill;
+        }
+        
         Controls.Add(elementHost);
 
         Padding = new Padding(0);
         Margin = new Padding(0);
         PerformLayout();
+    }
+
+    protected override void OnFormClosing(FormClosingEventArgs e)
+    {
+        if (CustomFormClosingHandler != null)
+        {
+            CustomFormClosingHandler(this, e);
+            if (e.Cancel)
+                return;
+        }
+        
+        base.OnFormClosing(e);
     }
 }

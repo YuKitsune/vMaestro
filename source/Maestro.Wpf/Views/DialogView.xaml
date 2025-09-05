@@ -10,20 +10,55 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              Width="Auto"
              Height="Auto"
-             Padding="4">
+             Padding="8">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+
+            <Style TargetType="ListBoxItem">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <TextBlock Text="{Binding}">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}">
+                                        <Setter Property="Margin" Value="2"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsFocused" Value="True">
+                                                <Setter Property="Background" Value="#1FFF0000" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="24"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding Message}" />
-        <Button Grid.Row="1" Grid.Column="0" Content="Confirm" Command="{Binding ConfirmCommand}" />
-        <Button Grid.Row="1" Grid.Column="2" Content="Cancel" Command="{Binding CloseCommand}"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Message}" />
+        <Button Grid.Row="2" Grid.Column="0" Content="Confirm" Command="{Binding ConfirmCommand}" />
+        <Button Grid.Row="2" Grid.Column="2" Content="Cancel" Command="{Binding CloseCommand}"/>
     </Grid>
 </UserControl>
