@@ -6,7 +6,11 @@ namespace Maestro.Core.Model;
 
 public interface ISequenceProvider
 {
-    bool CanSequenceFor(string airportIdentifier);
+    string[] ActiveSequences { get; }
+    Task InitializeSequence(
+        string airportIdentifier,
+        RunwayMode runwayMode,
+        CancellationToken cancellationToken);
     Task<IExclusiveSequence> GetSequence(string airportIdentifier, CancellationToken cancellationToken);
     SequenceMessage GetReadOnlySequence(string airportIdentifier);
 }
@@ -26,48 +30,44 @@ public class ExclusiveSequence(Sequence sequence, SemaphoreSlim semaphoreSlim) :
     }
 }
 
-public class SequenceProvider : ISequenceProvider
+public class SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider) : ISequenceProvider
 {
-    readonly IAirportConfigurationProvider _airportConfigurationProvider;
+    readonly SemaphoreSlim _semaphore = new(1, 1);
 
     readonly List<SequenceLockPair> _sequences = [];
 
-    public SequenceProvider(IAirportConfigurationProvider airportConfigurationProvider)
-    {
-        _airportConfigurationProvider = airportConfigurationProvider;
-        InitializeSequences();
-    }
+    public string[] ActiveSequences => _sequences.Select(s => s.Sequence.AirportIdentifier).ToArray();
 
-    void InitializeSequences()
+    public async Task InitializeSequence(
+        string airportIdentifier,
+        RunwayMode runwayMode,
+        CancellationToken cancellationToken)
     {
-        var airportConfigurations = _airportConfigurationProvider
-            .GetAirportConfigurations();
+        using var _ = await _semaphore.LockAsync(cancellationToken);
 
-        foreach (var airportConfiguration in airportConfigurations)
+        if (_sequences.Any(s => s.Sequence.AirportIdentifier == airportIdentifier))
+            throw new MaestroException($"Sequence for {airportIdentifier} already initialized");
+
+        var airportConfiguration = airportConfigurationProvider
+            .GetAirportConfigurations()
+            .FirstOrDefault(a => a.Identifier == airportIdentifier);
+        if (airportConfiguration is null)
+            throw new MaestroException($"No configuration found for {airportIdentifier}");
+
+        var sequence = new Sequence(airportConfiguration, runwayMode);
+        var semaphoreSlim = new SemaphoreSlim(1, 1);
+        var pair = new SequenceLockPair
         {
-            // TODO: Don't start sequencing until the user requests it
-            var sequence = new Sequence(
-                airportConfiguration,
-                airportConfiguration.RunwayModes.First());
-            var semaphoreSlim = new SemaphoreSlim(1, 1);
+            Sequence = sequence,
+            Semaphore = semaphoreSlim
+        };
 
-            var pair = new SequenceLockPair
-            {
-                Sequence = sequence,
-                Semaphore = semaphoreSlim
-            };
-
-            _sequences.Add(pair);
-        }
-    }
-
-    public bool CanSequenceFor(string airportIdentifier)
-    {
-        return _sequences.Any(s => s.Sequence.AirportIdentifier == airportIdentifier);
+        _sequences.Add(pair);
     }
 
     public async Task<IExclusiveSequence> GetSequence(string airportIdentifier, CancellationToken cancellationToken)
     {
+        using var _ = await _semaphore.LockAsync(cancellationToken);
         var pair = _sequences.SingleOrDefault(x => x.Sequence.AirportIdentifier == airportIdentifier);
 
         if (pair is null)

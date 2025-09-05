@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
@@ -11,13 +12,35 @@ using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorReporter) : ObservableObject
+public partial class MaestroViewModel : ObservableObject
 {
-    [ObservableProperty]
-    ObservableCollection<SequenceViewModel> _sequences = [];
+    readonly IMediator _mediator;
+    readonly IErrorReporter _errorReporter;
 
     [ObservableProperty]
-    SequenceViewModel? _selectedSequence;
+    ViewConfiguration[] _views = [];
+
+    [ObservableProperty]
+    ViewConfiguration _selectedView;
+
+    [ObservableProperty]
+    RunwayModeViewModel[] _runwayModes;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TerminalConfiguration))]
+    RunwayModeViewModel _currentRunwayMode;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TerminalConfiguration))]
+    [NotifyPropertyChangedFor(nameof(RunwayChangeIsPlanned))]
+    RunwayModeViewModel? _nextRunwayMode;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDesequencedFlight))]
+    List<FlightMessage> _flights = [];
+
+    [ObservableProperty]
+    List<SlotMessage> _slots = [];
 
     [ObservableProperty]
     bool _isCreatingSlot = false;
@@ -37,38 +60,39 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     [ObservableProperty]
     FlightMessage? _selectedFlight = null;
 
-    partial void OnSequencesChanged(ObservableCollection<SequenceViewModel> sequences)
-    {
-        // Deselect the sequence if the selected one no longer exists
-        if (SelectedSequence == null || sequences.All(a => a.AirportIdentifier != SelectedSequence.AirportIdentifier))
-        {
-            SelectedSequence = null;
-        }
-    }
+    public string AirportIdentifier { get;}
 
-    [RelayCommand]
-    async Task LoadConfiguration()
-    {
-        try
-        {
-            var response = await mediator.Send(new InitializeRequest(), CancellationToken.None);
+    public string TerminalConfiguration =>
+        NextRunwayMode is not null
+            ? $"{CurrentRunwayMode.Identifier} → {NextRunwayMode.Identifier}"
+            : CurrentRunwayMode.Identifier;
 
-            Sequences.Clear();
-            foreach (var item in response.Sequences)
-            {
-                Sequences.Add(new SequenceViewModel(
-                    item.AirportIdentifier,
-                    item.Views,
-                    item.RunwayModes,
-                    item.Sequence,
-                    mediator,
-                    errorReporter));
-            }
-        }
-        catch (Exception ex)
-        {
-            errorReporter.ReportError(ex);
-        }
+    public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
+
+    public bool HasDesequencedFlight => Flights.Any(f => f.State == State.Desequenced);
+
+    public MaestroViewModel(
+        string airportIdentifier,
+        RunwayModeViewModel[] runwayModes,
+        RunwayModeViewModel currentRunwayMode,
+        ViewConfiguration[] views,
+        FlightMessage[] flights,
+        SlotMessage[] slots,
+        IMediator mediator,
+        IErrorReporter errorReporter)
+    {
+        _mediator = mediator;
+        _errorReporter = errorReporter;
+
+        AirportIdentifier = airportIdentifier;
+        RunwayModes = runwayModes;
+        CurrentRunwayMode = currentRunwayMode;
+
+        Views = views;
+        SelectedView = views.First();
+
+        Flights = flights.ToList();
+        Slots = slots.ToList();
     }
 
     [RelayCommand]
@@ -76,11 +100,11 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     {
         try
         {
-            await mediator.Send(request);
+            await _mediator.Send(request);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -89,11 +113,11 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     {
         try
         {
-            await mediator.Send(request);
+            await _mediator.Send(request);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -128,10 +152,10 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     {
         try
         {
-            if (SelectedSequence?.AirportIdentifier == null) return;
+            if (string.IsNullOrEmpty(AirportIdentifier)) return;
 
-            await mediator.Send(new OpenSlotWindowRequest(
-                SelectedSequence.AirportIdentifier,
+            await _mediator.Send(new OpenSlotWindowRequest(
+                AirportIdentifier,
                 null, // slotId is null for new slots
                 startTime,
                 endTime,
@@ -139,7 +163,7 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -147,11 +171,11 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     {
         try
         {
-            if (SelectedSequence?.AirportIdentifier == null)
+            if (string.IsNullOrEmpty(AirportIdentifier))
                 return;
 
-            await mediator.Send(new OpenSlotWindowRequest(
-                SelectedSequence.AirportIdentifier,
+            await _mediator.Send(new OpenSlotWindowRequest(
+                AirportIdentifier,
                 slotMessage.SlotId,
                 slotMessage.StartTime,
                 slotMessage.EndTime,
@@ -159,7 +183,7 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -167,19 +191,19 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     {
         try
         {
-            if (SelectedSequence?.AirportIdentifier == null)
+            if (string.IsNullOrEmpty(AirportIdentifier))
                 return;
 
-            mediator.Send(
+            _mediator.Send(
                 new OpenInsertFlightWindowRequest(
-                    SelectedSequence.AirportIdentifier,
+                    AirportIdentifier,
                     options,
-                    SelectedSequence.Flights.Where(f => f.State is State.Landed).ToArray(),
-                    SelectedSequence.Flights.Where(f => f.State is State.Pending).ToArray()));
+                    Flights.Where(f => f.State is State.Landed).ToArray(),
+                    Flights.Where(f => f.State is State.Pending).ToArray()));
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -191,5 +215,68 @@ public partial class MaestroViewModel(IMediator mediator, IErrorReporter errorRe
     public void DeselectFlight()
     {
         SelectedFlight = null;
+    }
+
+    [RelayCommand]
+    void OpenTerminalConfiguration()
+    {
+        try
+        {
+            _mediator.Send(new OpenTerminalConfigurationRequest(AirportIdentifier));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void SelectView(ViewConfiguration viewConfiguration)
+    {
+        SelectedView = viewConfiguration;
+    }
+
+    [RelayCommand]
+    void OpenPendingDeparturesWindow()
+    {
+        try
+        {
+            _mediator.Send(new OpenPendingDeparturesWindowRequest(
+                AirportIdentifier,
+                Flights.Where(f => f.State == State.Pending).ToArray()));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void OpenDesequencedWindow()
+    {
+        try
+        {
+            _mediator.Send(
+                new OpenDesequencedWindowRequest(
+                    AirportIdentifier,
+                    Flights.Where(f => f.State == State.Desequenced)
+                        .Select(f => f.Callsign)
+                        .ToArray()));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    public void UpdateFrom(SequenceMessage sequenceMessage)
+    {
+        CurrentRunwayMode = new RunwayModeViewModel(sequenceMessage.CurrentRunwayMode);
+        NextRunwayMode = sequenceMessage.NextRunwayMode is not null
+            ? new RunwayModeViewModel(sequenceMessage.NextRunwayMode)
+            : null;
+
+        Flights = sequenceMessage.Flights.ToList();
+        Slots = sequenceMessage.Slots.ToList();
     }
 }

@@ -468,7 +468,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         IEstimateProvider? estimateProvider = null)
     {
         var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.CanSequenceFor(Arg.Is("YSSY")).Returns(true);
+        sequenceProvider.ActiveSequences.Returns(["YSSY"]);
         sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
             .Returns(new TestExclusiveSequence(sequence));
 

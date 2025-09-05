@@ -1,8 +1,6 @@
-﻿using MediatR;
+﻿using Maestro.Core.Handlers;
+using MediatR;
 
 namespace Maestro.Core.Messages;
 
-public class StartSequencingRequest(string airportIdentifier) : IRequest
-{
-    public string AirportIdentifier { get; } = airportIdentifier;
-}
+public record StartSequencingRequest(string AirportIdentifier, RunwayModeDto RunwayMode) : IRequest;

@@ -14,6 +14,7 @@ using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
 using Maestro.Wpf.Integrations;
+using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,15 @@ using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace Maestro.Plugin;
 
+// TODO: Need to implement some window and viewmodel management
+//  - Track multiple Maestro sessions
+//  - Prevent opening multiple windows of the same type within a session
+//  - Auto-size windows to fit content (i.e. TMA configuration and Setup)
+//  - Terminate sequence when closing TFMS window
+
+// TODO: Need to improve the boundaries between DTOs, domain models, and view models.
+//  - Domain models and DTOs are leaking into the frontend
+
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
 {
@@ -36,8 +46,6 @@ public class Plugin : IPlugin
 #endif
 
     string IPlugin.Name => Name;
-
-    static BaseForm? _maestroWindow;
 
     readonly IMediator? _mediator;
     readonly ILogger? _logger;
@@ -62,9 +70,6 @@ public class Plugin : IPlugin
             version = version.Split('+').First();
 #endif
             _logger.Information("{PluginName} {Version} initialized.", Name, version);
-
-            Network.Connected += Network_Connected;
-            Network.Disconnected += Network_Disconnected;
         }
         catch (Exception ex)
         {
@@ -185,7 +190,7 @@ public class Plugin : IPlugin
 
         menuItem.Item.Click += (_, _) =>
         {
-            ShowMaestro();
+            OpenSetupWindow();
         };
 
         MMI.AddCustomMenuItem(menuItem);
@@ -216,57 +221,46 @@ public class Plugin : IPlugin
         MMI.AddCustomMenuItem(resetMenuItem);
     }
 
-    static void ShowMaestro()
+    // TODO: Extract this into a mediator request
+    static void OpenSetupWindow()
     {
         try
         {
-            if (_maestroWindow == null || _maestroWindow.IsDisposed)
-            {
-                _maestroWindow = new VatSysForm(
-                    title: "TFMS",
-                    new MaestroView(),
-                    shrinkToContent: false)
-                {
-                    Width = 560,
-                    Height = 800
-                };
-            }
-
             var mainForm = System.Windows.Forms.Application.OpenForms["MainForm"];
             if (mainForm == null)
                 return;
 
-            MMI.InvokeOnGUI(delegate { _maestroWindow.Show(mainForm); });
-        }
-        catch (Exception ex)
-        {
-            Errors.Add(ex, Name);
-        }
-    }
-
-    void Network_Connected(object sender, EventArgs e)
-    {
-        try
-        {
-            // TODO: Load sequence from local storage
-
-            _mediator?.Send(new StartSequencingAllRequest());
-
-            foreach (var fdr in FDP2.GetFDRs)
+            MMI.InvokeOnGUI(delegate
             {
-                OnFDRUpdate(fdr);
-            }
+                var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
+                var sequenceProvider = Ioc.Default.GetRequiredService<ISequenceProvider>();
+                var configurations = airportConfigurationProvider
+                    .GetAirportConfigurations()
+                    .Where(a => !sequenceProvider.ActiveSequences.Contains(a.Identifier))
+                    .ToArray();
+
+                var windowHandle = new WindowHandle();
+
+                var viewModel = new SetupViewModel(
+                    configurations,
+                    Ioc.Default.GetRequiredService<IMediator>(),
+                    windowHandle,
+                    Ioc.Default.GetRequiredService<IErrorReporter>());
+
+                var window = new VatSysForm(
+                    title: "Maestro Setup",
+                    new SetupView(viewModel),
+                    shrinkToContent: false);
+
+                windowHandle.SetForm(window);
+
+                window.Show(mainForm);
+            });
         }
         catch (Exception ex)
         {
-            _logger?.Error(ex, "An error occurred while handling Network_Connected.");
             Errors.Add(ex, Name);
         }
-    }
-
-    void Network_Disconnected(object sender, EventArgs e)
-    {
-        // _mediator.Send(new ShutdownRequest());
     }
 
     public void OnFDRUpdate(FDP2.FDR updated)

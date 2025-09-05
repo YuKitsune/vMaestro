@@ -36,7 +36,7 @@ public class FlightUpdatedHandler(
     {
         try
         {
-            if (!sequenceProvider.CanSequenceFor(notification.Destination))
+            if (!sequenceProvider.ActiveSequences.Contains(notification.Destination))
                 return;
 
             logger.Verbose("Received update for {Callsign}", notification.Callsign);

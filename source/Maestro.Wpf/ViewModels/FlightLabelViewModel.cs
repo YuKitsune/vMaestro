@@ -11,9 +11,8 @@ namespace Maestro.Wpf.ViewModels;
 public partial class FlightLabelViewModel(
     IMediator mediator,
     IErrorReporter errorReporter,
-    SequenceViewModel sequence,
-    FlightMessage flightViewModel,
-    RunwayModeViewModel runwayModeViewModel)
+    MaestroViewModel maestroViewModel,
+    FlightMessage flightViewModel)
     : ObservableObject
 {
     [ObservableProperty]
@@ -21,8 +20,6 @@ public partial class FlightLabelViewModel(
 
     [ObservableProperty]
     bool _isSelected = false;
-
-    public RunwayModeViewModel RunwayModeViewModel { get; } = runwayModeViewModel;
 
     public bool CanInsertBefore => FlightViewModel.State != State.Frozen;
 
@@ -84,8 +81,8 @@ public partial class FlightLabelViewModel(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
-                    sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
+                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()));
         }
         catch (Exception ex)
         {
@@ -107,8 +104,8 @@ public partial class FlightLabelViewModel(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
-                    sequence.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    sequence.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
+                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()));
         }
         catch (Exception ex)
         {

@@ -15,6 +15,8 @@ public class RunwayModeDto(string identifier, RunwayConfigurationDto[] runways)
     public RunwayConfigurationDto[] Runways { get; } = runways;
 }
 
+// TODO: Missing dependencies, requirements, and preferences
+
 public class RunwayConfigurationDto(string runwayIdentifier, int landingRateSeconds)
 {
     public string RunwayIdentifier { get; } = runwayIdentifier;

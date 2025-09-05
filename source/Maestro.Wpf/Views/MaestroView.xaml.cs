@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-using System.Drawing;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -42,11 +40,10 @@ public partial class MaestroView
     // Flight label reuse pool
     private readonly Dictionary<string, FlightLabelView> _flightLabels = new();
 
-    public MaestroView()
+    public MaestroView(MaestroViewModel maestroViewModel)
     {
-        DataContext = Ioc.Default.GetRequiredService<MaestroViewModel>();
-
         InitializeComponent();
+        DataContext = maestroViewModel;
 
         _dispatcherTimer = new DispatcherTimer
         {
@@ -92,23 +89,20 @@ public partial class MaestroView
 
     LadderPosition? GetLadderPositionFor(FlightMessage flight)
     {
-        if (ViewModel.SelectedSequence.SelectedView is null)
-            return null;
-
-        var searchTerm = ViewModel.SelectedSequence.SelectedView.ViewMode switch
+        var searchTerm = ViewModel.SelectedView.ViewMode switch
         {
             ViewMode.Enroute => flight.FeederFixIdentifier,
             ViewMode.Approach => flight.AssignedRunway,
-            _ => throw new ArgumentOutOfRangeException($"Unexpected LadderReferenceTime: {ViewModel.SelectedSequence.SelectedView.ViewMode}")
+            _ => throw new ArgumentOutOfRangeException($"Unexpected LadderReferenceTime: {ViewModel.SelectedView.ViewMode}")
         };
 
         if (string.IsNullOrEmpty(searchTerm))
             return null;
 
-        if (ViewModel.SelectedSequence.SelectedView.LeftLadder.Contains(searchTerm))
+        if (ViewModel.SelectedView.LeftLadder.Contains(searchTerm))
             return LadderPosition.Left;
 
-        if (ViewModel.SelectedSequence.SelectedView.RightLadder.Contains(searchTerm))
+        if (ViewModel.SelectedView.RightLadder.Contains(searchTerm))
             return LadderPosition.Right;
 
         return null;
@@ -227,16 +221,13 @@ public partial class MaestroView
 
     void DrawSlots(DateTimeOffset currentTime)
     {
-        if (ViewModel.SelectedSequence?.Slots == null)
-            return;
-
         var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
         var ladderLeftPosition = middlePoint - LadderWidth / 2 - LineThickness;
         var ladderRightPosition = middlePoint + LadderWidth / 2 + LineThickness;
 
-        foreach (var slot in ViewModel.SelectedSequence.Slots)
+        foreach (var slot in ViewModel.Slots)
         {
             // Calculate slot position
             var startYOffset = GetYOffsetForTime(currentTime, slot.StartTime);
@@ -251,8 +242,8 @@ public partial class MaestroView
             var slotHeight = Math.Abs(startYPosition - endYPosition);
 
             // Determine which side(s) of the ladder to draw the slot on
-            var drawOnLeft = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedSequence.SelectedView.LeftLadder);
-            var drawOnRight = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedSequence.SelectedView.RightLadder);
+            var drawOnLeft = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedView.LeftLadder);
+            var drawOnRight = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedView.RightLadder);
 
             var slotWidth = TickWidth;
             var topY = Math.Min(startYPosition, endYPosition);
@@ -385,12 +376,12 @@ public partial class MaestroView
             // Determine which side of the ladder was clicked to get the correct runways
             var middlePoint = canvasWidth / 2;
             var filterItems = clickPosition.X < middlePoint
-                ? ViewModel.SelectedSequence?.SelectedView.LeftLadder ?? []
-                : ViewModel.SelectedSequence?.SelectedView.RightLadder ?? [];
+                ? ViewModel.SelectedView.LeftLadder
+                : ViewModel.SelectedView.RightLadder;
 
             // Move the selected flight to the clicked position
             ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
-                ViewModel.SelectedSequence?.AirportIdentifier ?? "",
+                ViewModel.AirportIdentifier,
                 ViewModel.SelectedFlight.Callsign,
                 filterItems,
                 clickTime
@@ -516,10 +507,6 @@ public partial class MaestroView
         var currentTime = DateTimeOffset.UtcNow;
         var clickTime = GetTimeForYOffset(currentTime, yOffset);
 
-        // Determine which side was clicked and get corresponding runway identifiers
-        if (ViewModel.SelectedSequence?.SelectedView == null)
-            return null;
-
         // Determine which side of the ladder was clicked to get the correct runways
         var canvasWidth = canvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
@@ -527,12 +514,12 @@ public partial class MaestroView
         // If the user right-clicked on the left side, we insert a flight for the left ladder
         // If the user right-clicked on the right side, we insert a flight for the right ladder
         var filterItems = mousePosition.X < middlePoint
-            ? ViewModel.SelectedSequence.SelectedView.LeftLadder
-            : ViewModel.SelectedSequence.SelectedView.RightLadder;
+            ? ViewModel.SelectedView.LeftLadder
+            : ViewModel.SelectedView.RightLadder;
 
         return new ClickData(
             clickTime,
-            ViewModel.SelectedSequence.SelectedView.ViewMode,
+            ViewModel.SelectedView.ViewMode,
             filterItems);
     }
 
@@ -618,13 +605,13 @@ public partial class MaestroView
                 var ladderPos = GetLadderPositionFor(flight);
                 var filterItems = ladderPos switch
                 {
-                    LadderPosition.Left => ViewModel.SelectedSequence?.SelectedView.LeftLadder ?? [],
-                    LadderPosition.Right => ViewModel.SelectedSequence?.SelectedView.RightLadder ?? [],
+                    LadderPosition.Left => ViewModel.SelectedView.LeftLadder,
+                    LadderPosition.Right => ViewModel.SelectedView.RightLadder,
                     _ => []
                 };
 
                 ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
-                    ViewModel.SelectedSequence?.AirportIdentifier ?? "",
+                    ViewModel.AirportIdentifier,
                     flight.Callsign,
                     filterItems,
                     newTime
@@ -646,7 +633,7 @@ public partial class MaestroView
                     // Swap the positions of the selected flight and the clicked flight
                     ViewModel.SwapFlightsCommand.Execute(
                         new SwapFlightsRequest(
-                            ViewModel.SelectedSequence?.AirportIdentifier ?? "",
+                            ViewModel.AirportIdentifier,
                             ViewModel.SelectedFlight.Callsign,
                             clickedFlight.Callsign
                         ));
@@ -680,15 +667,7 @@ public partial class MaestroView
         var canvasWidth = LadderCanvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
 
-        if (ViewModel.SelectedSequence is null)
-        {
-            // Clear all flight labels if no sequence selected
-            ClearLabels();
-            return;
-        }
-
-
-        var currentFlights = ViewModel.SelectedSequence.Flights
+        var currentFlights = ViewModel.Flights
             .Where(f => f.State is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed)
             .ToList();
 
@@ -707,7 +686,7 @@ public partial class MaestroView
         foreach (var flight in currentFlights)
         {
             double yOffset;
-            switch (ViewModel.SelectedSequence.SelectedView.ViewMode)
+            switch (ViewModel.SelectedView.ViewMode)
             {
                 case ViewMode.Enroute when flight.FeederFixTime.HasValue:
                     yOffset = GetYOffsetForTime(currentTime, flight.FeederFixTime.Value);
@@ -748,7 +727,7 @@ public partial class MaestroView
                 continue;
             }
 
-            var canMove = ViewModel.SelectedSequence.SelectedView.ViewMode == ViewMode.Approach;
+            var canMove = ViewModel.SelectedView.ViewMode == ViewMode.Approach;
 
             // Reuse existing flight label or create new one
             if (!_flightLabels.TryGetValue(flight.Callsign, out var flightLabel))
@@ -757,9 +736,8 @@ public partial class MaestroView
                 var flightLabelViewModel = new FlightLabelViewModel(
                     Ioc.Default.GetRequiredService<IMediator>(),
                     Ioc.Default.GetRequiredService<IErrorReporter>(),
-                    ViewModel.SelectedSequence,
-                    flight,
-                    ViewModel.SelectedSequence.CurrentRunwayMode);
+                    ViewModel,
+                    flight);
 
                 flightLabel = new FlightLabelView
                 {
@@ -795,7 +773,7 @@ public partial class MaestroView
 
             // Update positioning properties
             flightLabel.LadderPosition = ladderPosition.Value;
-            flightLabel.ViewMode = ViewModel.SelectedSequence.SelectedView.ViewMode;
+            flightLabel.ViewMode = ViewModel.SelectedView.ViewMode;
 
             // Position the flight label on canvas
             switch (ladderPosition)

@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Maestro.Wpf.Handlers;
 
-public class SequenceUpdatedNotificationHandler(MaestroViewModel maestroViewModel)
+public class SequenceUpdatedNotificationHandler(ViewModelManager viewModelManager)
     : INotificationHandler<SequenceUpdatedNotification>
 {
     public Task Handle(SequenceUpdatedNotification notification, CancellationToken _)
@@ -16,9 +16,7 @@ public class SequenceUpdatedNotificationHandler(MaestroViewModel maestroViewMode
 
     void UpdateSequenceViewModel(SequenceMessage sequence)
     {
-        var sequenceViewModel = maestroViewModel.Sequences
-            .FirstOrDefault(s => s.AirportIdentifier == sequence.AirportIdentifier);
-
-        sequenceViewModel?.UpdateFrom(sequence);
+        var viewModel = viewModelManager.TryGet(sequence.AirportIdentifier);
+        viewModel?.UpdateFrom(sequence);
     }
 }
