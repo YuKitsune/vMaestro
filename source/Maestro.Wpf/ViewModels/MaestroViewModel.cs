@@ -100,6 +100,10 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
+            var confirmation = await _mediator.Send(new ConfirmationRequest("Do you really want to move this flight?"));
+            if (!confirmation.Confirmed)
+                return;
+
             await _mediator.Send(request);
         }
         catch (Exception ex)
@@ -113,6 +117,10 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
+            var confirmation = await _mediator.Send(new ConfirmationRequest("Do you really want to move this flight?"));
+            if (!confirmation.Confirmed)
+                return;
+
             await _mediator.Send(request);
         }
         catch (Exception ex)
