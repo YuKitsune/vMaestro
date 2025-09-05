@@ -17,9 +17,11 @@ public partial class FlightLabelViewModel(
     : ObservableObject
 {
     [ObservableProperty]
+    FlightMessage _flightViewModel = flightViewModel;
+
+    [ObservableProperty]
     bool _isSelected = false;
 
-    public FlightMessage FlightViewModel { get; } = flightViewModel;
     public RunwayModeViewModel RunwayModeViewModel { get; } = runwayModeViewModel;
 
     public bool CanInsertBefore => FlightViewModel.State != State.Frozen;

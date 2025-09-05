@@ -39,6 +39,9 @@ public partial class MaestroView
     private double _originalTop;
     private bool _hasMoved;
 
+    // Flight label reuse pool
+    private readonly Dictionary<string, FlightLabelView> _flightLabels = new();
+
     public MaestroView()
     {
         DataContext = Ioc.Default.GetRequiredService<MaestroViewModel>();
@@ -55,7 +58,6 @@ public partial class MaestroView
 
         Loaded += ControlLoaded;
         SizeChanged += OnSizeChanged;
-        ViewModel.PropertyChanged += PropertyChanged;
     }
 
     public MaestroViewModel ViewModel => (MaestroViewModel)DataContext;
@@ -63,120 +65,29 @@ public partial class MaestroView
     void TimerTick(object sender, EventArgs args)
     {
         ClockText.Text = DateTimeOffset.UtcNow.ToString("HH:mm:ss");
-        DrawLadder();
+        DrawTimeline();
     }
 
     void ControlLoaded(object sender, RoutedEventArgs e)
     {
-        DrawLadder();
+        DrawTimeline();
     }
 
     void OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        DrawLadder();
+        DrawTimeline();
     }
 
-    void PropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        DrawLadder();
-    }
-
-    void DrawLadder()
+    void DrawTimeline()
     {
         if (_isDragging) return;
         Dispatcher.Invoke(() =>
         {
-            // BUG: If a context menu is open for a flight label, the border will disappear when the ladder is redrawn
-            // TODO: Instead of deleting everything and re-drawing, we should just move existing elements
-            LadderCanvas.Children.Clear();
-
             var now = DateTimeOffset.UtcNow;
-            DrawLadder(now);
-            DrawFlights(now);
+            RedrawLadder(now);
+            UpdateLabels(now);
             InvalidateVisual();
         });
-    }
-
-    void DrawFlights(DateTimeOffset currentTime)
-    {
-        var canvasHeight = LadderCanvas.ActualHeight;
-        var canvasWidth = LadderCanvas.ActualWidth;
-        var middlePoint = canvasWidth / 2;
-
-        if (ViewModel.SelectedSequence is null)
-            return;
-
-        foreach (var flight in ViewModel.SelectedSequence.Flights.Where(f => f.State is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed))
-        {
-            double yOffset;
-            switch (ViewModel.SelectedSequence.SelectedView.ViewMode)
-            {
-                case ViewMode.Enroute when flight.FeederFixTime.HasValue:
-                    yOffset = GetYOffsetForTime(currentTime, flight.FeederFixTime.Value);
-                    break;
-
-                case ViewMode.Approach:
-                    yOffset = GetYOffsetForTime(currentTime, flight.LandingTime);
-                    break;
-
-                // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)
-                default:
-                    continue;
-            }
-
-            var yPosition = canvasHeight - yOffset;
-
-            if (yOffset < 0 || yOffset >= canvasHeight)
-                continue;
-
-            const int distanceFromMiddle = (LadderWidth / 2) + (LineThickness * 2) + TickWidth;
-            var width = middlePoint - distanceFromMiddle;
-
-            var ladderPosition = GetLadderPositionFor(flight);
-            if (ladderPosition is null)
-                continue;
-
-            var canDrag = ViewModel.SelectedSequence.SelectedView.ViewMode == ViewMode.Approach;
-            var flightLabelViewModel = new FlightLabelViewModel(
-                Ioc.Default.GetRequiredService<IMediator>(),
-                Ioc.Default.GetRequiredService<IErrorReporter>(),
-                ViewModel.SelectedSequence,
-                flight,
-                ViewModel.SelectedSequence.CurrentRunwayMode)
-            {
-                IsSelected = ViewModel.SelectedFlight?.Callsign == flight.Callsign
-            };
-
-            var flightLabel = new FlightLabelView
-            {
-                DataContext = flightLabelViewModel,
-                Width = width,
-                Margin = new Thickness(2,0,2,0),
-                LadderPosition = ladderPosition.Value,
-                ViewMode = ViewModel.SelectedSequence.SelectedView.ViewMode,
-                IsDraggable = canDrag
-            };
-
-            flightLabel.Loaded += ladderPosition switch
-            {
-                LadderPosition.Left => PositionOnCanvas(
-                    left: 0,
-                    right: middlePoint - distanceFromMiddle,
-                    y: yPosition),
-                LadderPosition.Right => PositionOnCanvas(
-                    left: middlePoint + distanceFromMiddle,
-                    right: canvasWidth,
-                    y: yPosition),
-                _ => throw new ArgumentException($"Unexpected LadderPosition: {ladderPosition}")
-            };
-
-            // Handle flight label interactions
-            flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
-            flightLabel.MouseMove += OnFlightLabelMouseMove;
-            flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
-
-            LadderCanvas.Children.Add(flightLabel);
-        }
     }
 
     LadderPosition? GetLadderPositionFor(FlightMessage flight)
@@ -203,8 +114,18 @@ public partial class MaestroView
         return null;
     }
 
-    void DrawLadder(DateTimeOffset currentTime)
+    void RedrawLadder(DateTimeOffset currentTime)
     {
+        // Remove all elements that are NOT flight labels
+        for (int i = LadderCanvas.Children.Count - 1; i >= 0; i--)
+        {
+            var child = LadderCanvas.Children[i];
+            if (child is not FlightLabelView)
+            {
+                LadderCanvas.Children.RemoveAt(i);
+            }
+        }
+
         var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
 
@@ -709,7 +630,7 @@ public partial class MaestroView
                     newTime
                 ));
 
-                DrawLadder();
+                DrawTimeline();
             }
         }
         else
@@ -751,5 +672,155 @@ public partial class MaestroView
         _hasMoved = false;
 
         e.Handled = true;
+    }
+
+    void UpdateLabels(DateTimeOffset currentTime)
+    {
+        var canvasHeight = LadderCanvas.ActualHeight;
+        var canvasWidth = LadderCanvas.ActualWidth;
+        var middlePoint = canvasWidth / 2;
+
+        if (ViewModel.SelectedSequence is null)
+        {
+            // Clear all flight labels if no sequence selected
+            ClearLabels();
+            return;
+        }
+
+
+        var currentFlights = ViewModel.SelectedSequence.Flights
+            .Where(f => f.State is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed)
+            .ToList();
+
+        var currentCallsigns = new HashSet<string>(currentFlights.Select(f => f.Callsign));
+
+        // Remove flight labels for flights that no longer exist
+        var callsignsToRemove = _flightLabels.Keys.Except(currentCallsigns).ToList();
+        foreach (var callsign in callsignsToRemove)
+        {
+            var flightLabel = _flightLabels[callsign];
+            LadderCanvas.Children.Remove(flightLabel);
+            _flightLabels.Remove(callsign);
+        }
+
+        // Update or create flight labels for current flights
+        foreach (var flight in currentFlights)
+        {
+            double yOffset;
+            switch (ViewModel.SelectedSequence.SelectedView.ViewMode)
+            {
+                case ViewMode.Enroute when flight.FeederFixTime.HasValue:
+                    yOffset = GetYOffsetForTime(currentTime, flight.FeederFixTime.Value);
+                    break;
+
+                case ViewMode.Approach:
+                    yOffset = GetYOffsetForTime(currentTime, flight.LandingTime);
+                    break;
+
+                // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)
+                default:
+                    continue;
+            }
+
+            var yPosition = canvasHeight - yOffset;
+
+            if (yOffset < 0 || yOffset >= canvasHeight)
+            {
+                // Flight is off-screen, hide if it exists
+                if (_flightLabels.TryGetValue(flight.Callsign, out var offScreenLabel))
+                {
+                    offScreenLabel.Visibility = Visibility.Collapsed;
+                }
+                continue;
+            }
+
+            const int distanceFromMiddle = (LadderWidth / 2) + LineThickness + TickWidth;
+            var width = middlePoint - distanceFromMiddle - LineThickness;
+
+            var ladderPosition = GetLadderPositionFor(flight);
+            if (ladderPosition is null)
+            {
+                // Flight can't be positioned, hide if it exists
+                if (_flightLabels.TryGetValue(flight.Callsign, out var unpositionedLabel))
+                {
+                    unpositionedLabel.Visibility = Visibility.Collapsed;
+                }
+                continue;
+            }
+
+            var canMove = ViewModel.SelectedSequence.SelectedView.ViewMode == ViewMode.Approach;
+
+            // Reuse existing flight label or create new one
+            if (!_flightLabels.TryGetValue(flight.Callsign, out var flightLabel))
+            {
+                // Create new flight label
+                var flightLabelViewModel = new FlightLabelViewModel(
+                    Ioc.Default.GetRequiredService<IMediator>(),
+                    Ioc.Default.GetRequiredService<IErrorReporter>(),
+                    ViewModel.SelectedSequence,
+                    flight,
+                    ViewModel.SelectedSequence.CurrentRunwayMode);
+
+                flightLabel = new FlightLabelView
+                {
+                    DataContext = flightLabelViewModel,
+                    Margin = new Thickness(2, 0, 2, 0),
+                    Width = width,
+                    IsDraggable = canMove
+                };
+
+                // Set up event handlers
+                if (canMove)
+                {
+                    flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
+                    flightLabel.MouseMove += OnFlightLabelMouseMove;
+                    flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
+                }
+
+                _flightLabels[flight.Callsign] = flightLabel;
+                LadderCanvas.Children.Add(flightLabel);
+            }
+            else
+            {
+                // Update existing flight label properties
+                if (flightLabel.DataContext is FlightLabelViewModel existingViewModel)
+                {
+                    existingViewModel.FlightViewModel = flight;
+                    existingViewModel.IsSelected = ViewModel.SelectedFlight?.Callsign == flight.Callsign;
+                }
+
+                flightLabel.IsDraggable = canMove;
+                flightLabel.Visibility = Visibility.Visible;
+            }
+
+            // Update positioning properties
+            flightLabel.LadderPosition = ladderPosition.Value;
+            flightLabel.ViewMode = ViewModel.SelectedSequence.SelectedView.ViewMode;
+
+            // Position the flight label on canvas
+            switch (ladderPosition)
+            {
+                case LadderPosition.Left:
+                    Canvas.SetLeft(flightLabel, 0);
+                    Canvas.SetTop(flightLabel, yPosition - flightLabel.ActualHeight / 2);
+                    flightLabel.ClearValue(Canvas.RightProperty);
+                    break;
+
+                case LadderPosition.Right:
+                    Canvas.SetLeft(flightLabel, middlePoint + LadderWidth / 2 + LineThickness + TickWidth);
+                    Canvas.SetTop(flightLabel, yPosition - flightLabel.ActualHeight / 2);
+                    flightLabel.ClearValue(Canvas.RightProperty);
+                    break;
+            }
+        }
+    }
+
+    void ClearLabels()
+    {
+        foreach (var flightLabel in _flightLabels.Values)
+        {
+            LadderCanvas.Children.Remove(flightLabel);
+        }
+        _flightLabels.Clear();
     }
 }

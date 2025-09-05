@@ -9,6 +9,7 @@
              xmlns:configuration="clr-namespace:Maestro.Core.Configuration;assembly=Maestro.Core"
              xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
              xmlns:local="clr-namespace:Maestro.Wpf"
+             Padding="{x:Static local:Theme.BeveledBorderThickness}"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:FlightLabelViewModel}"
              d:DesignHeight="24"
