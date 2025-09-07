@@ -10,7 +10,6 @@ public class SequenceUpdatedNotificationHandler(ViewModelManager viewModelManage
     public Task Handle(SequenceUpdatedNotification notification, CancellationToken _)
     {
         UpdateSequenceViewModel(notification.Sequence);
-
         return Task.CompletedTask;
     }
 

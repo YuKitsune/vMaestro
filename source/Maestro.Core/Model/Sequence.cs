@@ -204,12 +204,4 @@ public class Sequence
             .ToList()
             .IndexOf(flight) + 1;
     }
-
-    public void Clear()
-    {
-        _trackedFlights.Clear();
-        NextRunwayMode = null;
-        LastLandingTimeForCurrentMode = default;
-        FirstLandingTimeForNextMode = default;
-    }
 }

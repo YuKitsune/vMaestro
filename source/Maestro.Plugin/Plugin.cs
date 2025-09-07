@@ -59,7 +59,6 @@ public class Plugin : IPlugin
             ConfigureServices();
             ConfigureTheme();
             AddToolbarItem();
-            AddResetMenuItem();
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
@@ -203,36 +202,6 @@ public class Plugin : IPlugin
                 CustomToolStripMenuItemWindowType.Main,
                 MenuItemCategory,
                 new ToolStripSeparator()));
-
-#if DEBUG
-        MMI.AddCustomMenuItem(
-            new CustomToolStripMenuItem(
-                CustomToolStripMenuItemWindowType.Main,
-                MenuItemCategory,
-                new ToolStripSeparator()));
-
-        var resetMenuItem = new CustomToolStripMenuItem(
-            CustomToolStripMenuItemWindowType.Main,
-            MenuItemCategory,
-            new ToolStripMenuItem("Reset Maestro"));
-
-        resetMenuItem.Item.Click += (_, _) =>
-        {
-            MMI.InvokeOnGUI(delegate
-            {
-                if (MessageBox.Show(
-                        "Are you sure you want to reset Maestro?",
-                        "Reset Maestro",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Warning) == DialogResult.Yes)
-                {
-                    _mediator?.Send(new ResetRequest());
-                }
-            });
-        };
-
-        MMI.AddCustomMenuItem(resetMenuItem);
-#endif
     }
 
     const string MenuItemCategory = "TFMS";
@@ -259,10 +228,6 @@ public class Plugin : IPlugin
     {
         if (MenuItems.TryGetValue(airportIdentifier, out var menuItem))
             MMI.RemoveCustomMenuItem(menuItem);
-    }
-
-    void AddResetMenuItem()
-    {
     }
 
     // TODO: Extract this into a mediator request
