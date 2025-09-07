@@ -58,7 +58,7 @@
             <RowDefinition Height="24"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Message}" TextWrapping="WrapWithOverflow"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Message}" TextWrapping="WrapWithOverflow" Style="{StaticResource GenericTextStyle}"/>
         <Button Grid.Row="2" Grid.Column="0" Content="Confirm" Command="{Binding ConfirmCommand}" />
         <Button Grid.Row="2" Grid.Column="2" Content="Cancel" Command="{Binding CloseCommand}"/>
     </Grid>
