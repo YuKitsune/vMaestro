@@ -13,31 +13,34 @@ namespace Maestro.Plugin.Handlers;
 public class SequenceInitializedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
     GuiInvoker guiInvoker,
+    ViewModelManager viewModelManager,
     IMediator mediator,
     IErrorReporter errorReporter)
     : INotificationHandler<SequenceInitializedNotification>
 {
-    public Task Handle(SequenceInitializedNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(SequenceInitializedNotification notification, CancellationToken cancellationToken)
     {
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
+            .Single(a => a.Identifier == notification.AirportIdentifier);
+
+        var runwayModes = airportConfiguration.RunwayModes
+            .Select(rm => new RunwayModeViewModel(rm.ToMessage()))
+            .ToArray();
+
+        var viewModel = new MaestroViewModel(
+            notification.AirportIdentifier,
+            runwayModes,
+            new RunwayModeViewModel(notification.Sequence.CurrentRunwayMode),
+            airportConfiguration.Views,
+            notification.Sequence.Flights,
+            notification.Sequence.Slots,
+            mediator,
+            errorReporter);
+
+        await viewModelManager.Register(viewModel, cancellationToken);
+
         guiInvoker.InvokeOnUiThread(mainForm =>
         {
-            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-                .Single(a => a.Identifier == notification.AirportIdentifier);
-
-            var runwayModes = airportConfiguration.RunwayModes
-                .Select(rm => new RunwayModeViewModel(rm.ToMessage()))
-                .ToArray();
-
-            var viewModel = new MaestroViewModel(
-                notification.AirportIdentifier,
-                runwayModes,
-                new RunwayModeViewModel(notification.Sequence.CurrentRunwayMode),
-                airportConfiguration.Views,
-                notification.Sequence.Flights,
-                notification.Sequence.Slots,
-                mediator,
-                errorReporter);
-
             var window = new VatSysForm(
                 title: "TFMS",
                 new MaestroView(viewModel),
@@ -81,6 +84,8 @@ public class SequenceInitializedNotificationHandler(
                     window.CustomFormClosingHandler = null;
                     window.Close();
 
+                    await viewModelManager.Unregister(notification.AirportIdentifier, CancellationToken.None);
+
                     // Terminate the sequence
                     await mediator.Send(new StopSequencingRequest(notification.AirportIdentifier));
                 }
@@ -92,7 +97,5 @@ public class SequenceInitializedNotificationHandler(
 
             window.Show(mainForm);
         });
-
-        return Task.CompletedTask;
     }
 }
