@@ -277,6 +277,17 @@ public class Plugin : IPlugin
                     .Where(a => !sequenceProvider.ActiveSequences.Contains(a.Identifier))
                     .ToArray();
 
+                if (configurations.Length == 0)
+                {
+                    // TODO: Eurocat style message box
+                    MessageBox.Show(
+                        "All configured airports already have an active TFMS sequence.",
+                        "No Available Airports",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
                 var windowHandle = new WindowHandle();
 
                 var viewModel = new SetupViewModel(
