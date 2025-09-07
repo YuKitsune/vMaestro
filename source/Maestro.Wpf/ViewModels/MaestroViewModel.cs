@@ -60,6 +60,9 @@ public partial class MaestroViewModel : ObservableObject
     [ObservableProperty]
     FlightMessage? _selectedFlight = null;
 
+    [ObservableProperty]
+    bool _isConfirmationDialogOpen = false;
+
     public string AirportIdentifier { get;}
 
     public string TerminalConfiguration =>
@@ -100,7 +103,10 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
+            IsConfirmationDialogOpen = true;
             var confirmation = await _mediator.Send(new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
+            IsConfirmationDialogOpen = false;
+            
             if (!confirmation.Confirmed)
                 return;
 
@@ -108,6 +114,7 @@ public partial class MaestroViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            IsConfirmationDialogOpen = false;
             _errorReporter.ReportError(ex);
         }
     }
@@ -117,7 +124,10 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
+            IsConfirmationDialogOpen = true;
             var confirmation = await _mediator.Send(new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
+            IsConfirmationDialogOpen = false;
+            
             if (!confirmation.Confirmed)
                 return;
 
@@ -125,6 +135,7 @@ public partial class MaestroViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            IsConfirmationDialogOpen = false;
             _errorReporter.ReportError(ex);
         }
     }

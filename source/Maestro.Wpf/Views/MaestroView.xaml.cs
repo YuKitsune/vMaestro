@@ -62,7 +62,7 @@ public partial class MaestroView
     void TimerTick(object sender, EventArgs args)
     {
         ClockText.Text = DateTimeOffset.UtcNow.ToString("HH:mm:ss");
-        DrawTimeline();
+        DrawTimelineIfAllowed();
     }
 
     void ControlLoaded(object sender, RoutedEventArgs e)
@@ -85,6 +85,15 @@ public partial class MaestroView
             UpdateLabels(now);
             InvalidateVisual();
         });
+    }
+
+    void DrawTimelineIfAllowed()
+    {
+        // Don't redraw during confirmation dialogs
+        if (ViewModel.IsConfirmationDialogOpen)
+            return;
+            
+        DrawTimeline();
     }
 
     LadderPosition? GetLadderPositionFor(FlightMessage flight)
@@ -406,7 +415,7 @@ public partial class MaestroView
         {
             ViewModel.DeselectFlight();
             _suppressContextMenu = true; // Flag to suppress context menu
-            DrawTimeline(); // Immediately update UI to reflect deselection
+            DrawTimelineIfAllowed(); // Immediately update UI to reflect deselection
             e.Handled = true;
             return;
         }
@@ -539,7 +548,7 @@ public partial class MaestroView
         {
             // If not draggable, select immediately
             ViewModel.SelectFlight(flight);
-            DrawTimeline(); // Immediately update UI to reflect selection
+            DrawTimelineIfAllowed(); // Immediately update UI to reflect selection
             return;
         }
 
@@ -644,7 +653,7 @@ public partial class MaestroView
                 {
                     // No flight selected or clicking the same flight - just select this flight
                     ViewModel.SelectFlight(clickedFlight);
-                    DrawTimeline(); // Immediately update UI to reflect selection
+                    DrawTimelineIfAllowed(); // Immediately update UI to reflect selection
                 }
             }
         }
@@ -685,7 +694,7 @@ public partial class MaestroView
         {
             ViewModel.DeselectFlight();
             _suppressContextMenu = true; // Flag to suppress context menu
-            DrawTimeline(); // Immediately update UI to reflect deselection
+            DrawTimelineIfAllowed(); // Immediately update UI to reflect deselection
             e.Handled = true;
         }
     }
