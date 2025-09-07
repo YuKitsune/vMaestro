@@ -405,6 +405,7 @@ public partial class MaestroView
         if (ViewModel.SelectedFlight != null)
         {
             ViewModel.DeselectFlight();
+            _suppressContextMenu = true; // Flag to suppress context menu
             e.Handled = true;
             return;
         }
@@ -429,18 +430,6 @@ public partial class MaestroView
         }
 
         e.Handled = true;
-    }
-
-    void OnContextMenuOpening(object sender, ContextMenuEventArgs e)
-    {
-        if (!_suppressContextMenu)
-            return;
-
-        // Prevent the menu from opening during slot creation
-        e.Handled = true;
-
-        // Reset the flag for next time
-        _suppressContextMenu = false;
     }
 
     void BeginInsertingSlotBefore(object sender, RoutedEventArgs e)
@@ -683,6 +672,29 @@ public partial class MaestroView
         e.Handled = true;
     }
 
+    void OnFlightLabelRightClick(object sender, MouseButtonEventArgs e, FlightMessage flight)
+    {
+        if (sender is not FlightLabelView flightLabel)
+            return;
+
+        // Right-clicking a flight label deselects any selected flight and prevents context menu
+        if (ViewModel.SelectedFlight != null)
+        {
+            ViewModel.DeselectFlight();
+            _suppressContextMenu = true; // Flag to suppress context menu
+            e.Handled = true;
+        }
+    }
+
+    void SuppressContextMenuIfRequired(object sender, ContextMenuEventArgs e)
+    {
+        if (!_suppressContextMenu)
+            return;
+
+        e.Handled = true;
+        _suppressContextMenu = false;
+    }
+
     void UpdateLabels(DateTimeOffset currentTime)
     {
         var canvasHeight = LadderCanvas.ActualHeight;
@@ -781,6 +793,10 @@ public partial class MaestroView
                     flightLabel.MouseMove += OnFlightLabelMouseMove;
                     flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
                 }
+
+                // Add right-click handler for both view modes to enable deselection
+                flightLabel.MouseRightButtonDown += (s, e) => OnFlightLabelRightClick(s, e, flight);
+                flightLabel.ContextMenuOpening += SuppressContextMenuIfRequired;
 
                 _flightLabels[flight.Callsign] = flightLabel;
                 LadderCanvas.Children.Add(flightLabel);
