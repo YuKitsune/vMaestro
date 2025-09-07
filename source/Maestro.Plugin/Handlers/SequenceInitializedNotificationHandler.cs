@@ -50,6 +50,8 @@ public class SequenceInitializedNotificationHandler(
                 Height = 800
             };
 
+            Plugin.AddMenuItemFor(notification.AirportIdentifier, window);
+
             // Wire up the FormClosing event to show confirmation dialog
             // TODO: Should this use the mediator to send a message to close the window instead?
             // E.g: StopSequencingRequest -> SequenceTerminatedNotificationHandler -> close the window
@@ -84,6 +86,8 @@ public class SequenceInitializedNotificationHandler(
 
                     // Terminate the sequence
                     await mediator.Send(new StopSequencingRequest(notification.AirportIdentifier));
+
+                    Plugin.RemoveMenuItemFor(notification.AirportIdentifier);
                 }
                 catch (Exception ex)
                 {

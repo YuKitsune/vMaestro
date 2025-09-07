@@ -58,7 +58,7 @@ public class Plugin : IPlugin
         {
             ConfigureServices();
             ConfigureTheme();
-            AddMenuItem();
+            AddToolbarItem();
             AddResetMenuItem();
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
@@ -183,12 +183,14 @@ public class Plugin : IPlugin
         }
     }
 
-    void AddMenuItem()
+    void AddToolbarItem()
     {
+        // TODO: Create a new custom menu category, show all open sequences in the dropdown
+
         var menuItem = new CustomToolStripMenuItem(
             CustomToolStripMenuItemWindowType.Main,
-            CustomToolStripMenuItemCategory.Windows,
-            new ToolStripMenuItem("TFMS"));
+            MenuItemCategory,
+            new ToolStripMenuItem("New TFMS Window"));
 
         menuItem.Item.Click += (_, _) =>
         {
@@ -196,6 +198,39 @@ public class Plugin : IPlugin
         };
 
         MMI.AddCustomMenuItem(menuItem);
+
+        var separator = new CustomToolStripMenuItem(
+            CustomToolStripMenuItemWindowType.Main,
+            MenuItemCategory,
+            new ToolStripSeparator());
+
+        MMI.AddCustomMenuItem(separator);
+    }
+
+    const string MenuItemCategory = "TFMS";
+    static readonly IDictionary<string, CustomToolStripMenuItem> _menuItems = new Dictionary<string, CustomToolStripMenuItem>();
+
+    internal static void AddMenuItemFor(string airportIdentifier, VatSysForm window)
+    {
+        var menuItem = new CustomToolStripMenuItem(
+            CustomToolStripMenuItemWindowType.Main,
+            MenuItemCategory,
+            new ToolStripMenuItem(airportIdentifier));
+        MMI.AddCustomMenuItem(menuItem);
+
+        _menuItems[airportIdentifier] = menuItem;
+
+        menuItem.Item.Click += (_, _) =>
+        {
+            window.WindowState = FormWindowState.Normal;
+            window.Activate();
+        };
+    }
+
+    internal static void RemoveMenuItemFor(string airportIdentifier)
+    {
+        if (_menuItems.TryGetValue(airportIdentifier, out var menuItem))
+            MMI.RemoveCustomMenuItem(menuItem);
     }
 
     void AddResetMenuItem()
