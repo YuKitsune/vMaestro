@@ -2,4 +2,4 @@
 
 namespace Maestro.Core.Messages;
 
-public class SequenceTerminatedNotification(string airportIdentifier) : INotification;
+public record SequenceTerminatedNotification(string AirportIdentifier) : INotification;

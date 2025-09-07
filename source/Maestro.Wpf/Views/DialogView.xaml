@@ -8,9 +8,9 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:DialogViewModel}"
              Background="{x:Static local:Theme.BackgroundColor}"
-             Width="Auto"
+             MaxWidth="400"
              Height="Auto"
-             Padding="8">
+             Padding="32,16,32,15">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -20,6 +20,7 @@
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
                 <Setter Property="Margin" Value="2" />
+                <Setter Property="Width" Value="80" />
             </Style>
 
             <Style TargetType="ListBoxItem">
@@ -57,7 +58,7 @@
             <RowDefinition Height="24"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Message}" />
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Message}" TextWrapping="WrapWithOverflow"/>
         <Button Grid.Row="2" Grid.Column="0" Content="Confirm" Command="{Binding ConfirmCommand}" />
         <Button Grid.Row="2" Grid.Column="2" Content="Cancel" Command="{Binding CloseCommand}"/>
     </Grid>

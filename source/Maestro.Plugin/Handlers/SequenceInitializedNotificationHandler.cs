@@ -21,7 +21,7 @@ public class SequenceInitializedNotificationHandler(
     INotificationStream<SequenceUpdatedNotification> sequenceSequenceUpdatedNotification)
     : INotificationHandler<SequenceInitializedNotification>
 {
-    public async Task Handle(SequenceInitializedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(SequenceInitializedNotification notification, CancellationToken cancellationToken)
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == notification.AirportIdentifier);
@@ -32,8 +32,8 @@ public class SequenceInitializedNotificationHandler(
 
         windowManager.FocusOrCreateWindow(
             WindowKeys.Maestro(notification.AirportIdentifier),
-            "TFMS",
-            windowHandle => new MaestroView(new MaestroViewModel(
+            $"TFMS: {notification.AirportIdentifier}",
+            _ => new MaestroView(new MaestroViewModel(
                 notification.AirportIdentifier,
                 runwayModes,
                 new RunwayModeViewModel(notification.Sequence.CurrentRunwayMode),
@@ -48,15 +48,16 @@ public class SequenceInitializedNotificationHandler(
             configureForm: form =>
             {
                 Plugin.AddMenuItemFor(notification.AirportIdentifier, form);
-                form.CustomFormClosingHandler = async (_, e) =>
+
+                form.CustomFormClosing += async (_, e) =>
                 {
                     try
                     {
                         // Only show confirmation for user-initiated closes
+                        // Application exits and programmatic closes should not be blocked
                         if (e.CloseReason is not CloseReason.UserClosing)
                             return;
 
-                        // Cancel the close event initially
                         e.Cancel = true;
 
                         // Ask for confirmation through mediator
@@ -67,24 +68,22 @@ public class SequenceInitializedNotificationHandler(
                              """;
                         var response = await mediator.Send(new ConfirmationRequest("Close Maestro", dialogMessage));
 
-                        // If user confirmed, close the window
+                        // If user confirmed, terminate the sequence
                         if (!response.Confirmed)
                             return;
 
-                        // Remove the event handler to prevent infinite recursion
-                        form.CustomFormClosingHandler = null;
-                        form.Close();
-
-                        // Terminate the sequence
+                        // Set flag and close programmatically to avoid re-triggering confirmation
                         await mediator.Send(new StopSequencingRequest(notification.AirportIdentifier));
-
-                        Plugin.RemoveMenuItemFor(notification.AirportIdentifier);
                     }
                     catch (Exception ex)
                     {
                         errorReporter.ReportError(ex);
                     }
                 };
+
+                form.Closed += (_, _) => Plugin.RemoveMenuItemFor(notification.AirportIdentifier);
             });
+
+        return Task.CompletedTask;
     }
 }

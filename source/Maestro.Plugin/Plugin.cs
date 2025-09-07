@@ -204,7 +204,7 @@ public class Plugin : IPlugin
     const string MenuItemCategory = "TFMS";
     static readonly IDictionary<string, CustomToolStripMenuItem> MenuItems = new Dictionary<string, CustomToolStripMenuItem>();
 
-    internal static void AddMenuItemFor(string airportIdentifier, VatSysForm window)
+    internal static void AddMenuItemFor(string airportIdentifier, Form window)
     {
         var menuItem = new CustomToolStripMenuItem(
             CustomToolStripMenuItemWindowType.Main,

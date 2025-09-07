@@ -7,7 +7,19 @@ namespace Maestro.Plugin;
 
 public class VatSysForm : BaseForm
 {
-    public FormClosingEventHandler? CustomFormClosingHandler { get; set; }
+    public event FormClosingEventHandler? CustomFormClosing;
+
+    bool ForceClosing { get; set; }
+
+    public void ForceClose()
+    {
+        ForceClosing = true;
+        Close();
+    }
+
+    public VatSysForm()
+    {
+    }
 
     public VatSysForm(string title, UIElement child, bool shrinkToContent)
     {
@@ -50,9 +62,9 @@ public class VatSysForm : BaseForm
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        if (CustomFormClosingHandler != null)
+        if (!ForceClosing && CustomFormClosing != null)
         {
-            CustomFormClosingHandler(this, e);
+            CustomFormClosing.Invoke(this, e);
             if (e.Cancel)
                 return;
         }
