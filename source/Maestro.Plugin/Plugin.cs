@@ -198,46 +198,22 @@ public class Plugin : IPlugin
         };
 
         MMI.AddCustomMenuItem(menuItem);
+        MMI.AddCustomMenuItem(
+            new CustomToolStripMenuItem(
+                CustomToolStripMenuItemWindowType.Main,
+                MenuItemCategory,
+                new ToolStripSeparator()));
 
-        var separator = new CustomToolStripMenuItem(
-            CustomToolStripMenuItemWindowType.Main,
-            MenuItemCategory,
-            new ToolStripSeparator());
+#if DEBUG
+        MMI.AddCustomMenuItem(
+            new CustomToolStripMenuItem(
+                CustomToolStripMenuItemWindowType.Main,
+                MenuItemCategory,
+                new ToolStripSeparator()));
 
-        MMI.AddCustomMenuItem(separator);
-    }
-
-    const string MenuItemCategory = "TFMS";
-    static readonly IDictionary<string, CustomToolStripMenuItem> _menuItems = new Dictionary<string, CustomToolStripMenuItem>();
-
-    internal static void AddMenuItemFor(string airportIdentifier, VatSysForm window)
-    {
-        var menuItem = new CustomToolStripMenuItem(
-            CustomToolStripMenuItemWindowType.Main,
-            MenuItemCategory,
-            new ToolStripMenuItem(airportIdentifier));
-        MMI.AddCustomMenuItem(menuItem);
-
-        _menuItems[airportIdentifier] = menuItem;
-
-        menuItem.Item.Click += (_, _) =>
-        {
-            window.WindowState = FormWindowState.Normal;
-            window.Activate();
-        };
-    }
-
-    internal static void RemoveMenuItemFor(string airportIdentifier)
-    {
-        if (_menuItems.TryGetValue(airportIdentifier, out var menuItem))
-            MMI.RemoveCustomMenuItem(menuItem);
-    }
-
-    void AddResetMenuItem()
-    {
         var resetMenuItem = new CustomToolStripMenuItem(
             CustomToolStripMenuItemWindowType.Main,
-            CustomToolStripMenuItemCategory.Tools,
+            MenuItemCategory,
             new ToolStripMenuItem("Reset Maestro"));
 
         resetMenuItem.Item.Click += (_, _) =>
@@ -256,6 +232,37 @@ public class Plugin : IPlugin
         };
 
         MMI.AddCustomMenuItem(resetMenuItem);
+#endif
+    }
+
+    const string MenuItemCategory = "TFMS";
+    static readonly IDictionary<string, CustomToolStripMenuItem> MenuItems = new Dictionary<string, CustomToolStripMenuItem>();
+
+    internal static void AddMenuItemFor(string airportIdentifier, VatSysForm window)
+    {
+        var menuItem = new CustomToolStripMenuItem(
+            CustomToolStripMenuItemWindowType.Main,
+            MenuItemCategory,
+            new ToolStripMenuItem(airportIdentifier));
+        MMI.AddCustomMenuItem(menuItem);
+
+        MenuItems[airportIdentifier] = menuItem;
+
+        menuItem.Item.Click += (_, _) =>
+        {
+            window.WindowState = FormWindowState.Normal;
+            window.Activate();
+        };
+    }
+
+    internal static void RemoveMenuItemFor(string airportIdentifier)
+    {
+        if (MenuItems.TryGetValue(airportIdentifier, out var menuItem))
+            MMI.RemoveCustomMenuItem(menuItem);
+    }
+
+    void AddResetMenuItem()
+    {
     }
 
     // TODO: Extract this into a mediator request
