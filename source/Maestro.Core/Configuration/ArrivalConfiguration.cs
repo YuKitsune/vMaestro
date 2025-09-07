@@ -3,6 +3,8 @@ using Maestro.Core.Model;
 
 namespace Maestro.Core.Configuration;
 
+// TODO: Transitions
+
 public class ArrivalConfiguration
 {
     public required string FeederFix { get; init; }

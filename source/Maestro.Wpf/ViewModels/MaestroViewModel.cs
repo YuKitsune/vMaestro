@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Integrations;
@@ -12,10 +12,14 @@ using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class MaestroViewModel : ObservableObject
+public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 {
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
+    readonly INotificationStream<SequenceUpdatedNotification> _sequenceUpdatedNotificationStream;
+
+    readonly CancellationTokenSource _notificationSubscriptionCancellationTokenSource;
+    readonly Task _notificationSubscriptionTask;
 
     [ObservableProperty]
     ViewConfiguration[] _views = [];
@@ -82,12 +86,16 @@ public partial class MaestroViewModel : ObservableObject
         FlightMessage[] flights,
         SlotMessage[] slots,
         IMediator mediator,
-        IErrorReporter errorReporter)
+        IErrorReporter errorReporter,
+        INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream)
     {
         _mediator = mediator;
         _errorReporter = errorReporter;
+        _sequenceUpdatedNotificationStream = sequenceUpdatedNotificationStream;
 
         AirportIdentifier = airportIdentifier;
+        _runwayModes = runwayModes;
+        _currentRunwayMode = currentRunwayMode;
         RunwayModes = runwayModes;
         CurrentRunwayMode = currentRunwayMode;
 
@@ -96,6 +104,10 @@ public partial class MaestroViewModel : ObservableObject
 
         Flights = flights.ToList();
         Slots = slots.ToList();
+
+        // Subscribe to notifications
+        _notificationSubscriptionCancellationTokenSource = new CancellationTokenSource();
+        _notificationSubscriptionTask = SubscribeToNotifications(_notificationSubscriptionCancellationTokenSource.Token);
     }
 
     [RelayCommand]
@@ -106,7 +118,7 @@ public partial class MaestroViewModel : ObservableObject
             IsConfirmationDialogOpen = true;
             var confirmation = await _mediator.Send(new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
             IsConfirmationDialogOpen = false;
-            
+
             if (!confirmation.Confirmed)
                 return;
 
@@ -127,7 +139,7 @@ public partial class MaestroViewModel : ObservableObject
             IsConfirmationDialogOpen = true;
             var confirmation = await _mediator.Send(new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
             IsConfirmationDialogOpen = false;
-            
+
             if (!confirmation.Confirmed)
                 return;
 
@@ -301,14 +313,33 @@ public partial class MaestroViewModel : ObservableObject
         }
     }
 
-    public void UpdateFrom(SequenceMessage sequenceMessage)
+    async Task SubscribeToNotifications(CancellationToken cancellationToken)
     {
-        CurrentRunwayMode = new RunwayModeViewModel(sequenceMessage.CurrentRunwayMode);
-        NextRunwayMode = sequenceMessage.NextRunwayMode is not null
-            ? new RunwayModeViewModel(sequenceMessage.NextRunwayMode)
-            : null;
+        await foreach (var notification in _sequenceUpdatedNotificationStream.SubscribeAsync(cancellationToken))
+        {
+            try
+            {
+                if (notification.AirportIdentifier != AirportIdentifier)
+                    continue;
 
-        Flights = sequenceMessage.Flights.ToList();
-        Slots = sequenceMessage.Slots.ToList();
+                CurrentRunwayMode = new RunwayModeViewModel(notification.Sequence.CurrentRunwayMode);
+                NextRunwayMode = notification.Sequence.NextRunwayMode is not null
+                    ? new RunwayModeViewModel(notification.Sequence.NextRunwayMode)
+                    : null;
+
+                Flights = notification.Sequence.Flights.ToList();
+                Slots = notification.Sequence.Slots.ToList();
+            }
+            catch (Exception ex)
+            {
+                _errorReporter.ReportError(ex);
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _notificationSubscriptionCancellationTokenSource.Cancel();
+        await _notificationSubscriptionTask;
     }
 }

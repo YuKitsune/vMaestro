@@ -1,21 +1,14 @@
-﻿using Maestro.Core.Messages;
-using Maestro.Wpf.ViewModels;
+﻿using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.Handlers;
 
-public class SequenceUpdatedNotificationHandler(ViewModelManager viewModelManager)
+public class SequenceUpdatedNotificationHandler(INotificationStream<SequenceUpdatedNotification> notificationStream)
     : INotificationHandler<SequenceUpdatedNotification>
 {
-    public Task Handle(SequenceUpdatedNotification notification, CancellationToken _)
+    public async Task Handle(SequenceUpdatedNotification notification, CancellationToken cancellationToken)
     {
-        UpdateSequenceViewModel(notification.Sequence);
-        return Task.CompletedTask;
-    }
-
-    void UpdateSequenceViewModel(SequenceMessage sequence)
-    {
-        var viewModel = viewModelManager.TryGet(sequence.AirportIdentifier);
-        viewModel?.UpdateFrom(sequence);
+        await notificationStream.PublishAsync(notification, cancellationToken);
     }
 }

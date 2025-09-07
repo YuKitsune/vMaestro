@@ -2,6 +2,7 @@
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
@@ -11,9 +12,9 @@ using MediatR;
 namespace Maestro.Plugin.Handlers;
 
 public class OpenTerminalConfigurationWindowRequestHandler(
+    WindowManager windowManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     ISequenceProvider sequenceProvider,
-    GuiInvoker guiInvoker,
     IMediator mediator,
     IClock clock,
     IErrorReporter errorReporter)
@@ -28,38 +29,33 @@ public class OpenTerminalConfigurationWindowRequestHandler(
             .Select(r => r.ToMessage())
             .ToArray();
 
-        guiInvoker.InvokeOnUiThread(mainForm =>
-        {
-            var lastLandingTime = sequence.LastLandingTimeForCurrentMode == default
-                ? clock.UtcNow()
-                : sequence.LastLandingTimeForCurrentMode;
+        windowManager.FocusOrCreateWindow(
+            WindowKeys.TerminalConfiguration(request.AirportIdentifier),
+            "TMA Configuration",
+            windowHandle =>
+            {
+                var lastLandingTime = sequence.LastLandingTimeForCurrentMode == default
+                    ? clock.UtcNow()
+                    : sequence.LastLandingTimeForCurrentMode;
 
-            var firstLandingTime = sequence.FirstLandingTimeForNextMode == default
-                ? clock.UtcNow()
-                : lastLandingTime.AddMinutes(5); // Make configurable
+                var firstLandingTime = sequence.FirstLandingTimeForNextMode == default
+                    ? clock.UtcNow()
+                    : lastLandingTime.AddMinutes(5); // Make configurable
 
-            var windowHandle = new WindowHandle();
-            var viewModel = new TerminalConfigurationViewModel(
-                request.AirportIdentifier,
-                runwayModes,
-                sequence.CurrentRunwayMode,
-                sequence.NextRunwayMode,
-                lastLandingTime,
-                firstLandingTime,
-                mediator,
-                windowHandle,
-                clock,
-                errorReporter);
+                var viewModel = new TerminalConfigurationViewModel(
+                    request.AirportIdentifier,
+                    runwayModes,
+                    sequence.CurrentRunwayMode,
+                    sequence.NextRunwayMode,
+                    lastLandingTime,
+                    firstLandingTime,
+                    mediator,
+                    windowHandle,
+                    clock,
+                    errorReporter);
 
-            var form = new VatSysForm(
-                title: "TMA Configuration",
-                new TerminalConfigurationView(viewModel),
-                shrinkToContent: false);
-
-            windowHandle.SetForm(form);
-
-            form.Show(mainForm);
-        });
+                return new TerminalConfigurationView(viewModel);
+            });
 
         return Task.CompletedTask;
     }

@@ -8,7 +8,7 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Messages;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Infrastructure;
@@ -117,6 +117,8 @@ public class Plugin : IPlugin
                 .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(new ErrorReporter(Name))
+                .AddSingleton<WindowManager>()
+                .AddSingleton(typeof(INotificationStream<>), typeof(NotificationStream<>))
                 .BuildServiceProvider());
     }
 
@@ -184,17 +186,12 @@ public class Plugin : IPlugin
 
     void AddToolbarItem()
     {
-        // TODO: Create a new custom menu category, show all open sequences in the dropdown
-
         var menuItem = new CustomToolStripMenuItem(
             CustomToolStripMenuItemWindowType.Main,
             MenuItemCategory,
             new ToolStripMenuItem("New TFMS Window"));
 
-        menuItem.Item.Click += (_, _) =>
-        {
-            OpenSetupWindow();
-        };
+        menuItem.Item.Click += (_, _) => OpenSetupWindow();
 
         MMI.AddCustomMenuItem(menuItem);
         MMI.AddCustomMenuItem(
@@ -231,55 +228,46 @@ public class Plugin : IPlugin
     }
 
     // TODO: Extract this into a mediator request
-    // TODO: Prevent multiple setup windows from being opened
-    static void OpenSetupWindow()
+    void OpenSetupWindow()
     {
         try
         {
-            var mainForm = System.Windows.Forms.Application.OpenForms["MainForm"];
-            if (mainForm == null)
-                return;
+            var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
+            var sequenceProvider = Ioc.Default.GetRequiredService<ISequenceProvider>();
+            var windowManager = Ioc.Default.GetRequiredService<WindowManager>();
+            var configurations = airportConfigurationProvider
+                .GetAirportConfigurations()
+                .Where(a => !sequenceProvider.ActiveSequences.Contains(a.Identifier))
+                .ToArray();
 
-            MMI.InvokeOnGUI(delegate
+            if (configurations.Length == 0)
             {
-                var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
-                var sequenceProvider = Ioc.Default.GetRequiredService<ISequenceProvider>();
-                var configurations = airportConfigurationProvider
-                    .GetAirportConfigurations()
-                    .Where(a => !sequenceProvider.ActiveSequences.Contains(a.Identifier))
-                    .ToArray();
+                // TODO: Eurocat style message box
+                MessageBox.Show(
+                    "All configured airports already have an active TFMS sequence.",
+                    "No Available Airports",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
 
-                if (configurations.Length == 0)
+            windowManager.FocusOrCreateWindow(
+                WindowKeys.SetupWindow,
+                "Maestro Setup",
+                handle =>
                 {
-                    // TODO: Eurocat style message box
-                    MessageBox.Show(
-                        "All configured airports already have an active TFMS sequence.",
-                        "No Available Airports",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                    return;
-                }
+                    var viewModel = new SetupViewModel(
+                        configurations,
+                        Ioc.Default.GetRequiredService<IMediator>(),
+                        handle,
+                        Ioc.Default.GetRequiredService<IErrorReporter>());
 
-                var windowHandle = new WindowHandle();
-
-                var viewModel = new SetupViewModel(
-                    configurations,
-                    Ioc.Default.GetRequiredService<IMediator>(),
-                    windowHandle,
-                    Ioc.Default.GetRequiredService<IErrorReporter>());
-
-                var window = new VatSysForm(
-                    title: "Maestro Setup",
-                    new SetupView(viewModel),
-                    shrinkToContent: false);
-
-                windowHandle.SetForm(window);
-
-                window.Show(mainForm);
-            });
+                    return new SetupView(viewModel);
+                });
         }
         catch (Exception ex)
         {
+            _logger?.Error(ex, "An error occurred while opening the Setup window.");
             Errors.Add(ex, Name);
         }
     }
