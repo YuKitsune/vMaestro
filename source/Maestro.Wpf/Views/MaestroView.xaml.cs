@@ -406,6 +406,7 @@ public partial class MaestroView
         {
             ViewModel.DeselectFlight();
             _suppressContextMenu = true; // Flag to suppress context menu
+            DrawTimeline(); // Immediately update UI to reflect deselection
             e.Handled = true;
             return;
         }
@@ -538,6 +539,7 @@ public partial class MaestroView
         {
             // If not draggable, select immediately
             ViewModel.SelectFlight(flight);
+            DrawTimeline(); // Immediately update UI to reflect selection
             return;
         }
 
@@ -642,6 +644,7 @@ public partial class MaestroView
                 {
                     // No flight selected or clicking the same flight - just select this flight
                     ViewModel.SelectFlight(clickedFlight);
+                    DrawTimeline(); // Immediately update UI to reflect selection
                 }
             }
         }
@@ -682,6 +685,7 @@ public partial class MaestroView
         {
             ViewModel.DeselectFlight();
             _suppressContextMenu = true; // Flag to suppress context menu
+            DrawTimeline(); // Immediately update UI to reflect deselection
             e.Handled = true;
         }
     }
