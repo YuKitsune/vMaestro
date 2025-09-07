@@ -27,12 +27,6 @@ using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace Maestro.Plugin;
 
-// TODO: Need to implement some window and viewmodel management
-//  - Track multiple Maestro sessions
-//  - Prevent opening multiple windows of the same type within a session
-//  - Auto-size windows to fit content (i.e. TMA configuration and Setup)
-//  - Terminate sequence when closing TFMS window
-
 // TODO: Need to improve the boundaries between DTOs, domain models, and view models.
 //  - Domain models and DTOs are leaking into the frontend
 
