@@ -57,10 +57,6 @@ public class SequenceInitializedNotificationHandler(
             {
                 try
                 {
-                    // Allow closing without confirmation for system shutdowns or application exits
-                    if (e.CloseReason is CloseReason.ApplicationExitCall or CloseReason.WindowsShutDown or CloseReason.TaskManagerClosing)
-                        return;
-
                     // Only show confirmation for user-initiated closes
                     if (e.CloseReason is not CloseReason.UserClosing)
                         return;
@@ -74,7 +70,7 @@ public class SequenceInitializedNotificationHandler(
                          Closing the TFMS window will terminate the sequence for {notification.AirportIdentifier}.
                          Do you really want to close the window?
                          """;
-                    var response = await mediator.Send(new ConfirmationRequest(dialogMessage));
+                    var response = await mediator.Send(new ConfirmationRequest("Close Maestro", dialogMessage));
 
                     // If user confirmed, close the window
                     if (!response.Confirmed)
