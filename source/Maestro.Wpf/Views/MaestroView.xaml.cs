@@ -790,7 +790,6 @@ public partial class MaestroView
                 {
                     DataContext = flightLabelViewModel,
                     Margin = new Thickness(2, 0, 2, 0),
-                    Width = width,
                     IsDraggable = canMove
                 };
 
@@ -827,6 +826,9 @@ public partial class MaestroView
                 flightLabel.Visibility = Visibility.Visible;
             }
 
+            // Always update width for proper alignment on resize
+            flightLabel.Width = width;
+
             // Update positioning properties
             flightLabel.LadderPosition = ladderPosition.Value;
             flightLabel.ViewMode = ViewModel.SelectedView.ViewMode;
@@ -835,7 +837,9 @@ public partial class MaestroView
             switch (ladderPosition)
             {
                 case LadderPosition.Left:
-                    Canvas.SetLeft(flightLabel, 0);
+                    // Align right edge of flight label to left-side ladder ticks
+                    var leftTickPosition = middlePoint - distanceFromMiddle - LineThickness;
+                    Canvas.SetLeft(flightLabel, leftTickPosition - width);
                     Canvas.SetTop(flightLabel, yPosition - flightLabel.ActualHeight / 2);
                     flightLabel.ClearValue(Canvas.RightProperty);
                     break;
