@@ -31,7 +31,7 @@ public class ConfirmationRequestHandler(GuiInvoker guiInvoker) : IRequestHandler
 
                 var dialogView = new DialogView(dialogViewModel);
 
-                dialogForm = new VatSysForm(dialogView, shrinkToContent: true);
+                dialogForm = new VatSysForm(request.Title, dialogView, shrinkToContent: true);
 
                 // Handle form closing via X button as cancel
                 dialogForm.FormClosing += (sender, e) =>

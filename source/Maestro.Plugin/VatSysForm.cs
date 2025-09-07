@@ -9,13 +9,10 @@ public class VatSysForm : BaseForm
 {
     public FormClosingEventHandler? CustomFormClosingHandler { get; set; }
 
-    public VatSysForm(string title, UIElement child, bool shrinkToContent) : this(child, shrinkToContent)
+    public VatSysForm(string title, UIElement child, bool shrinkToContent)
     {
         Text = title;
-    }
 
-    public VatSysForm(UIElement child, bool shrinkToContent)
-    {
         var elementHost = new ElementHost();
         if (shrinkToContent)
         {
@@ -43,7 +40,7 @@ public class VatSysForm : BaseForm
         {
             elementHost.Dock = DockStyle.Fill;
         }
-        
+
         Controls.Add(elementHost);
 
         Padding = new Padding(0);
@@ -59,7 +56,7 @@ public class VatSysForm : BaseForm
             if (e.Cancel)
                 return;
         }
-        
+
         base.OnFormClosing(e);
     }
 }
