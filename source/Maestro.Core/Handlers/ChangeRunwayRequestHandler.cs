@@ -8,9 +8,9 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IClock clock, IMediator mediator, ILogger logger)
-    : IRequestHandler<ChangeRunwayRequest, ChangeRunwayResponse>
+    : IRequestHandler<ChangeRunwayRequest>
 {
-    public async Task<ChangeRunwayResponse> Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
+    public async Task Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
@@ -18,7 +18,7 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, ISch
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return new ChangeRunwayResponse();
+            return;
         }
 
         flight.SetRunway(request.RunwayIdentifier, true);
@@ -33,7 +33,5 @@ public class ChangeRunwayRequestHandler(ISequenceProvider sequenceProvider, ISch
                 lockedSequence.Sequence.AirportIdentifier,
                 lockedSequence.Sequence.ToMessage()),
             cancellationToken);
-
-        return new ChangeRunwayResponse();
     }
 }

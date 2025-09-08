@@ -16,7 +16,7 @@ namespace Maestro.Plugin.Handlers;
 public class SequenceInitializedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
     WindowManager windowManager,
-    IMediator mediator,
+    IMessageDispatcher messageDispatcher,
     IErrorReporter errorReporter,
     INotificationStream<SequenceUpdatedNotification> sequenceSequenceUpdatedNotification)
     : INotificationHandler<SequenceInitializedNotification>
@@ -40,7 +40,7 @@ public class SequenceInitializedNotificationHandler(
                 airportConfiguration.Views,
                 notification.Sequence.Flights,
                 notification.Sequence.Slots,
-                mediator,
+                messageDispatcher,
                 errorReporter,
                 sequenceSequenceUpdatedNotification)),
             shrinkToContent: false,
@@ -66,14 +66,14 @@ public class SequenceInitializedNotificationHandler(
                              Closing the TFMS window will terminate the sequence for {notification.AirportIdentifier}.
                              Do you really want to close the window?
                              """;
-                        var response = await mediator.Send(new ConfirmationRequest("Close Maestro", dialogMessage));
+                        var response = await messageDispatcher.Send(new ConfirmationRequest("Close Maestro", dialogMessage));
 
                         // If user confirmed, terminate the sequence
                         if (!response.Confirmed)
                             return;
 
                         // Set flag and close programmatically to avoid re-triggering confirmation
-                        await mediator.Send(new StopSequencingRequest(notification.AirportIdentifier));
+                        await messageDispatcher.Send(new StopSequencingRequest(notification.AirportIdentifier));
                     }
                     catch (Exception ex)
                     {

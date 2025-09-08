@@ -6,9 +6,9 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
-    : IRequestHandler<ResumeSequencingRequest, ResumeSequencingResponse>
+    : IRequestHandler<ResumeSequencingRequest>
 {
-    public async Task<ResumeSequencingResponse> Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
+    public async Task Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
     {
         using (var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken))
         {
@@ -16,7 +16,7 @@ public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, 
             if (flight is null)
             {
                 logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-                return new ResumeSequencingResponse();
+                return;
             }
 
             flight.Resume();
@@ -24,7 +24,5 @@ public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, 
 
         // Let the RecomputeRequestHandler do the scheduling and notification
         await mediator.Send(new RecomputeRequest(request.AirportIdentifier, request.Callsign), cancellationToken);
-
-        return new ResumeSequencingResponse();
     }
 }

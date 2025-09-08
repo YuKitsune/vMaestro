@@ -2,5 +2,4 @@
 
 namespace Maestro.Core.Messages;
 
-public record RemoveResponse;
-public record RemoveRequest(string AirportIdentifier, string Callsign) : IRequest<RemoveResponse>;
+public record RemoveRequest(string AirportIdentifier, string Callsign) : IRequest, ISynchronizedMessage;

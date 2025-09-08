@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -8,7 +9,7 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class SlotViewModel : ObservableObject
 {
-    readonly IMediator _mediator;
+    readonly IMessageDispatcher _messageDispatcher;
     readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
 
@@ -29,7 +30,7 @@ public partial class SlotViewModel : ObservableObject
         DateTimeOffset startTime,
         DateTimeOffset endTime,
         string[] runwayIdentifiers,
-        IMediator mediator,
+        IMessageDispatcher messageDispatcher,
         IWindowHandle windowHandle,
         IErrorReporter errorReporter)
     {
@@ -39,7 +40,7 @@ public partial class SlotViewModel : ObservableObject
         EndTime = endTime;
         _runwayIdentifiers = runwayIdentifiers;
 
-        _mediator = mediator;
+        _messageDispatcher = messageDispatcher;
         _windowHandle = windowHandle;
         _errorReporter = errorReporter;
     }
@@ -51,11 +52,15 @@ public partial class SlotViewModel : ObservableObject
         {
             if (_slotId is null)
             {
-                await _mediator.Send(new CreateSlotRequest(_airportIdentifier, StartTime, EndTime, _runwayIdentifiers));
+                await _messageDispatcher.Send(
+                    new CreateSlotRequest(_airportIdentifier, StartTime, EndTime, _runwayIdentifiers),
+                    CancellationToken.None);
             }
             else
             {
-                await _mediator.Send(new ModifySlotRequest(_airportIdentifier, _slotId.Value, StartTime, EndTime));
+                await _messageDispatcher.Send(
+                    new ModifySlotRequest(_airportIdentifier, _slotId.Value, StartTime, EndTime),
+                    CancellationToken.None);
             }
 
             _windowHandle.Close();
@@ -73,7 +78,9 @@ public partial class SlotViewModel : ObservableObject
         {
             if (_slotId is not null)
             {
-                await _mediator.Send(new DeleteSlotRequest(_airportIdentifier, _slotId.Value));
+                await _messageDispatcher.Send(
+                    new DeleteSlotRequest(_airportIdentifier, _slotId.Value),
+                    CancellationToken.None);
             }
 
             _windowHandle.Close();

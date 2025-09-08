@@ -15,6 +15,7 @@
 	  <PackageReference Include="System.Diagnostics.Tools" Version="4.3.0" />
 	  <PackageReference Include="System.Net.WebSockets" Version="4.3.0" />
       <PackageReference Include="System.Threading.Channels" Version="9.0.6" />
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.6" />
 	</ItemGroup>
 
 </Project>

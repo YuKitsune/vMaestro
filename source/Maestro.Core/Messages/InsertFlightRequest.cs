@@ -13,7 +13,7 @@ public record InsertFlightRequest(
     string? Callsign,
     string? AircraftType,
     IInsertFlightOptions Options)
-    : IRequest;
+    : IRequest, ISynchronizedMessage;
 
 public interface IInsertFlightOptions;
 

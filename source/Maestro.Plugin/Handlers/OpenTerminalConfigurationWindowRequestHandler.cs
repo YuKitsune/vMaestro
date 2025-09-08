@@ -15,7 +15,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
     WindowManager windowManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     ISequenceProvider sequenceProvider,
-    IMediator mediator,
+    IMessageDispatcher messageDispatcher,
     IClock clock,
     IErrorReporter errorReporter)
     : IRequestHandler<OpenTerminalConfigurationRequest>
@@ -49,7 +49,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                     sequence.NextRunwayMode,
                     lastLandingTime,
                     firstLandingTime,
-                    mediator,
+                    messageDispatcher,
                     windowHandle,
                     clock,
                     errorReporter);

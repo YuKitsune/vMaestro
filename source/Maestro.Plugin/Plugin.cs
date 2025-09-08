@@ -49,7 +49,7 @@ public class Plugin : IPlugin
 
     string IPlugin.Name => Name;
 
-    readonly IMediator? _mediator;
+    readonly IMessageDispatcher? _messageDispatcher;
     readonly ILogger? _logger;
 
     public Plugin()
@@ -60,7 +60,7 @@ public class Plugin : IPlugin
             ConfigureTheme();
             AddToolbarItem();
 
-            _mediator = Ioc.Default.GetRequiredService<IMediator>();
+            _messageDispatcher = Ioc.Default.GetRequiredService<IMessageDispatcher>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
 
             var executingAssembly = Assembly.GetExecutingAssembly();
@@ -258,7 +258,7 @@ public class Plugin : IPlugin
                 {
                     var viewModel = new SetupViewModel(
                         configurations,
-                        Ioc.Default.GetRequiredService<IMediator>(),
+                        Ioc.Default.GetRequiredService<IMessageDispatcher>(),
                         handle,
                         Ioc.Default.GetRequiredService<IErrorReporter>());
 
@@ -358,7 +358,7 @@ public class Plugin : IPlugin
             position,
             estimates);
 
-        _mediator?.Publish(notification);
+        _messageDispatcher?.Send(notification, CancellationToken.None);
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)

@@ -11,7 +11,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
 {
     readonly string _airportIdentifier;
     readonly IClock _clock;
-    readonly IMediator _mediator;
+    readonly IMessageDispatcher _messageDispatcher;
     readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
 
@@ -46,13 +46,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         RunwayModeDto? nextTerminalConfiguration,
         DateTimeOffset lastLandingTimeForOldMode,
         DateTimeOffset firstLandingTimeForNewMode,
-        IMediator mediator,
+        IMessageDispatcher messageDispatcher,
         IWindowHandle windowHandle,
         IClock clock,
         IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
-        _mediator = mediator;
+        _messageDispatcher = messageDispatcher;
         _windowHandle = windowHandle;
         _clock = clock;
         _errorReporter = errorReporter;
@@ -88,11 +88,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
                     .Select(r => new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
                     .ToArray());
 
-            _mediator.Send(new ChangeRunwayModeRequest(
-                _airportIdentifier,
-                runwayModeDto,
-                LastLandingTime,
-                FirstLandingTime));
+            _messageDispatcher.Send(
+                new ChangeRunwayModeRequest(
+                    _airportIdentifier,
+                    runwayModeDto,
+                    LastLandingTime,
+                    FirstLandingTime),
+                CancellationToken.None);
 
             CloseWindow();
         }

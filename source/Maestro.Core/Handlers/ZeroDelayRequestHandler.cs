@@ -7,9 +7,9 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
-    : IRequestHandler<ZeroDelayRequest, ZeroDelayResponse>
+    : IRequestHandler<ZeroDelayRequest>
 {
-    public async Task<ZeroDelayResponse> Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
+    public async Task Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
@@ -17,7 +17,7 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, ISchedu
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return new ZeroDelayResponse();
+            return;
         }
 
         flight.NoDelay = true;
@@ -29,7 +29,5 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, ISchedu
                 lockedSequence.Sequence.AirportIdentifier,
                 lockedSequence.Sequence.ToMessage()),
             cancellationToken);
-
-        return new ZeroDelayResponse();
     }
 }

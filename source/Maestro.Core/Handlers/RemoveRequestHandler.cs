@@ -7,9 +7,9 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
-    : IRequestHandler<RemoveRequest, RemoveResponse>
+    : IRequestHandler<RemoveRequest>
 {
-    public async Task<RemoveResponse> Handle(RemoveRequest request, CancellationToken cancellationToken)
+    public async Task Handle(RemoveRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
@@ -17,7 +17,7 @@ public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IScheduler
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return new RemoveResponse();
+            return;
         }
 
         flight.Remove();
@@ -28,7 +28,5 @@ public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IScheduler
                 lockedSequence.Sequence.AirportIdentifier,
                 lockedSequence.Sequence.ToMessage()),
             cancellationToken);
-
-        return new RemoveResponse();
     }
 }

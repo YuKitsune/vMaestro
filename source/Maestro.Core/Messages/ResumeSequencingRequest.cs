@@ -2,5 +2,4 @@
 
 namespace Maestro.Core.Messages;
 
-public record ResumeSequencingResponse;
-public record ResumeSequencingRequest(string AirportIdentifier, string Callsign) : IRequest<ResumeSequencingResponse>;
+public record ResumeSequencingRequest(string AirportIdentifier, string Callsign) : IRequest, ISynchronizedMessage;

@@ -1,4 +1,5 @@
-﻿using Maestro.Plugin.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
+using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
@@ -7,7 +8,7 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenInsertFlightWindowRequestHandler(WindowManager windowManager, IMediator mediator, IErrorReporter errorReporter)
+public class OpenInsertFlightWindowRequestHandler(WindowManager windowManager, IMessageDispatcher messageDispatcher, IErrorReporter errorReporter)
     : IRequestHandler<OpenInsertFlightWindowRequest>
 {
     public Task Handle(OpenInsertFlightWindowRequest request, CancellationToken cancellationToken)
@@ -23,7 +24,7 @@ public class OpenInsertFlightWindowRequestHandler(WindowManager windowManager, I
                     request.LandedFlights,
                     request.PendingFlights,
                     windowHandle,
-                    mediator,
+                    messageDispatcher,
                     errorReporter);
 
                 return new InsertFlightView(viewModel);

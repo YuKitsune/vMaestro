@@ -1,4 +1,5 @@
-﻿using Maestro.Plugin.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
+using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
@@ -7,7 +8,7 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenDesequencedWindowRequestHandler(WindowManager windowManager, IMediator mediator, IErrorReporter errorReporter)
+public class OpenDesequencedWindowRequestHandler(WindowManager windowManager, IMessageDispatcher messageDispatcher, IErrorReporter errorReporter)
     : IRequestHandler<OpenDesequencedWindowRequest, OpenDesequencedWindowResponse>
 {
     public Task<OpenDesequencedWindowResponse> Handle(OpenDesequencedWindowRequest request, CancellationToken cancellationToken)
@@ -17,7 +18,7 @@ public class OpenDesequencedWindowRequestHandler(WindowManager windowManager, IM
             "De-sequenced",
             windowHandle => new DesequencedView(
                 new DesequencedViewModel(
-                    mediator,
+                    messageDispatcher,
                     errorReporter,
                     request.AirportIdentifier,
                     request.Callsigns)));

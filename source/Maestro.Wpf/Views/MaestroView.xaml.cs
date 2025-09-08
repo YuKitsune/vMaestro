@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
@@ -92,7 +93,7 @@ public partial class MaestroView
         // Don't redraw during confirmation dialogs
         if (ViewModel.IsConfirmationDialogOpen)
             return;
-            
+
         DrawTimeline();
     }
 
@@ -781,7 +782,7 @@ public partial class MaestroView
             {
                 // Create new flight label
                 var flightLabelViewModel = new FlightLabelViewModel(
-                    Ioc.Default.GetRequiredService<IMediator>(),
+                    Ioc.Default.GetRequiredService<IMessageDispatcher>(),
                     Ioc.Default.GetRequiredService<IErrorReporter>(),
                     ViewModel,
                     flight);

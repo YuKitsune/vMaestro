@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -11,7 +12,7 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class SetupViewModel : ObservableObject
 {
-    readonly IMediator _mediator;
+    readonly IMessageDispatcher _messageDispatcher;
     readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
 
@@ -32,7 +33,7 @@ public partial class SetupViewModel : ObservableObject
 
     public SetupViewModel(
         AirportConfiguration[] airportConfigurations,
-        IMediator mediator,
+        IMessageDispatcher messageDispatcher,
         IWindowHandle windowHandle,
         IErrorReporter errorReporter)
     {
@@ -44,7 +45,7 @@ public partial class SetupViewModel : ObservableObject
         AvailableRunwayModes = initialAirportConfiguration.RunwayModes.Select(rm => new RunwayModeViewModel(rm.ToMessage())).ToArray();
         SelectedRunwayModeIdentifier = initialAirportConfiguration.RunwayModes.First().Identifier;
 
-        _mediator = mediator;
+        _messageDispatcher = messageDispatcher;
         _windowHandle = windowHandle;
         _errorReporter = errorReporter;
     }
@@ -80,7 +81,10 @@ public partial class SetupViewModel : ObservableObject
                     .Select(r => new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
                     .ToArray());
 
-            _mediator.Send(new StartSequencingRequest(SelectedAirport, runwayModeDto));
+            _messageDispatcher.Send(
+                new StartSequencingRequest(SelectedAirport, runwayModeDto),
+                CancellationToken.None);
+
             CloseWindow();
         }
         catch (Exception ex)

@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Integrations;
@@ -9,7 +10,7 @@ using MediatR;
 namespace Maestro.Wpf.ViewModels;
 
 public partial class FlightLabelViewModel(
-    IMediator mediator,
+    IMessageDispatcher messageDispatcher,
     IErrorReporter errorReporter,
     MaestroViewModel maestroViewModel,
     FlightMessage flightViewModel)
@@ -28,7 +29,7 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new OpenInformationWindowRequest(FlightViewModel));
+            messageDispatcher.Send(new OpenInformationWindowRequest(FlightViewModel), CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -46,7 +47,9 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new RecomputeRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+            messageDispatcher.Send(
+                new RecomputeRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -64,7 +67,9 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new ChangeRunwayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, runwayIdentifier));
+            messageDispatcher.Send(
+                new ChangeRunwayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, runwayIdentifier),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -77,12 +82,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            messageDispatcher.Send(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
                     maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -100,12 +106,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            messageDispatcher.Send(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
                     maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -118,12 +125,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            messageDispatcher.Send(
                 new BeginSlotCreationRequest(
                     FlightViewModel.DestinationIdentifier,
                     [FlightViewModel.AssignedRunway],
                     FlightViewModel.LandingTime,
-                    SlotCreationReferencePoint.Before));
+                    SlotCreationReferencePoint.Before),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -136,12 +144,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            messageDispatcher.Send(
                 new BeginSlotCreationRequest(
                     FlightViewModel.DestinationIdentifier,
                     [FlightViewModel.AssignedRunway],
                     FlightViewModel.LandingTime,
-                    SlotCreationReferencePoint.After));
+                    SlotCreationReferencePoint.After),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -154,12 +163,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            messageDispatcher.Send(
                 new OpenChangeFeederFixEstimateWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     FlightViewModel.Callsign,
                     FlightViewModel.FeederFixIdentifier!,
-                    FlightViewModel.FeederFixEstimate!.Value));
+                    FlightViewModel.FeederFixEstimate!.Value),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -177,7 +187,9 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new RemoveRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+            messageDispatcher.Send(
+                new RemoveRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -190,7 +202,9 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new DesequenceRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+            messageDispatcher.Send(
+                new DesequenceRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -203,7 +217,9 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new MakePendingRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+            messageDispatcher.Send(
+                new MakePendingRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -216,7 +232,9 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new ZeroDelayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+            messageDispatcher.Send(
+                new ZeroDelayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -229,7 +247,9 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new OpenCoordinationWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+            messageDispatcher.Send(
+                new OpenCoordinationWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {

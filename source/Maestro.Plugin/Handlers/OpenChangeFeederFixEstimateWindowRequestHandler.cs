@@ -1,4 +1,5 @@
-﻿using Maestro.Plugin.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
+using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
@@ -7,7 +8,7 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenChangeFeederFixEstimateWindowRequestHandler(WindowManager windowManager, IMediator mediator, IErrorReporter errorReporter)
+public class OpenChangeFeederFixEstimateWindowRequestHandler(WindowManager windowManager, IMessageDispatcher messageDispatcher, IErrorReporter errorReporter)
     : IRequestHandler<OpenChangeFeederFixEstimateWindowRequest>
 {
     public Task Handle(OpenChangeFeederFixEstimateWindowRequest request, CancellationToken cancellationToken)
@@ -23,7 +24,7 @@ public class OpenChangeFeederFixEstimateWindowRequestHandler(WindowManager windo
                     request.FeederFix,
                     request.OriginalFeederFixEstimate,
                     windowHandle,
-                    mediator,
+                    messageDispatcher,
                     errorReporter);
 
                 return new ChangeFeederFixEstimateView(viewModel);

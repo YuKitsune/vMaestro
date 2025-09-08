@@ -3,14 +3,13 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
-using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Scheduling;
 
 public class SchedulerBackgroundService(
     ISequenceProvider sequenceProvider,
-    IMediator mediator,
+    IMessageDispatcher messageDispatcher,
     IScheduler scheduler,
     SequenceCleaner sequenceCleaner,
     IClock clock,
@@ -33,7 +32,7 @@ public class SchedulerBackgroundService(
             var task = DoSequence(
                 airportIdentifier,
                 sequenceProvider,
-                mediator,
+                messageDispatcher,
                 scheduler,
                 sequenceCleaner,
                 clock,
@@ -69,7 +68,7 @@ public class SchedulerBackgroundService(
     static async Task DoSequence(
         string airportIdentifier,
         ISequenceProvider sequenceProvider,
-        IMediator mediator,
+        IMessageDispatcher messageDispatcher,
         IScheduler scheduler,
         SequenceCleaner sequenceCleaner,
         IClock clock,
@@ -102,7 +101,7 @@ public class SchedulerBackgroundService(
                     sequenceCleaner.CleanUpFlights(lockedSequence.Sequence);
                     logger.Debug("Completed cleaning {AirportIdentifier}", airportIdentifier);
 
-                    await mediator.Publish(
+                    await messageDispatcher.Send(
                         new SequenceUpdatedNotification(
                             lockedSequence.Sequence.AirportIdentifier,
                             lockedSequence.Sequence.ToMessage()),

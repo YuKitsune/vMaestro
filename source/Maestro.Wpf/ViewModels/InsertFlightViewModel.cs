@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -11,7 +12,7 @@ namespace Maestro.Wpf.ViewModels;
 public partial class InsertFlightViewModel : ObservableObject
 {
     readonly IWindowHandle _windowHandle;
-    readonly IMediator _mediator;
+    readonly IMessageDispatcher _messageDispatcher;
     readonly IErrorReporter _errorReporter;
 
     readonly string _airportIdentifier;
@@ -42,7 +43,7 @@ public partial class InsertFlightViewModel : ObservableObject
         FlightMessage[] landedFlights,
         FlightMessage[] pendingFlights,
         IWindowHandle windowHandle,
-        IMediator mediator,
+        IMessageDispatcher messageDispatcher,
         IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
@@ -52,7 +53,7 @@ public partial class InsertFlightViewModel : ObservableObject
         PendingFlights = pendingFlights;
 
         _windowHandle = windowHandle;
-        _mediator = mediator;
+        _messageDispatcher = messageDispatcher;
         _errorReporter = errorReporter;
     }
 
@@ -85,12 +86,13 @@ public partial class InsertFlightViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(
+            _messageDispatcher.Send(
                 new InsertFlightRequest(
                     _airportIdentifier,
                     Callsign,
                     AircraftType,
-                    _options));
+                    _options),
+                CancellationToken.None);
 
             CloseWindow();
         }

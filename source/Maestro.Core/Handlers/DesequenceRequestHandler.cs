@@ -7,9 +7,9 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class DesequenceRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
-    : IRequestHandler<DesequenceRequest, DesequenceResponse>
+    : IRequestHandler<DesequenceRequest>
 {
-    public async Task<DesequenceResponse> Handle(DesequenceRequest request, CancellationToken cancellationToken)
+    public async Task Handle(DesequenceRequest request, CancellationToken cancellationToken)
     {
         using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
 
@@ -17,7 +17,7 @@ public class DesequenceRequestHandler(ISequenceProvider sequenceProvider, ISched
         if (flight is null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return new DesequenceResponse();
+            return;
         }
 
         flight.Desequence();
@@ -28,7 +28,5 @@ public class DesequenceRequestHandler(ISequenceProvider sequenceProvider, ISched
                 lockedSequence.Sequence.AirportIdentifier,
                 lockedSequence.Sequence.ToMessage()),
             cancellationToken);
-
-        return new DesequenceResponse();
     }
 }
