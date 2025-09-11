@@ -5,6 +5,7 @@ using Maestro.Core.Tests.Fixtures;
 using NSubstitute;
 using Serilog;
 using Shouldly;
+using RunwayRequirements = Maestro.Core.Configuration.RunwayRequirements;
 
 namespace Maestro.Core.Tests;
 
@@ -45,7 +46,7 @@ public class RunwayRequirementsTests : IClassFixture<ClockFixture>
                 }
             ],
             RunwayModes = [
-                new RunwayMode
+                new RunwayModeConfiguration
                 {
                     Identifier = "19",
                     Runways =

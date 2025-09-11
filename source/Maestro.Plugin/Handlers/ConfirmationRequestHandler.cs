@@ -1,5 +1,4 @@
-﻿using System.Windows.Forms;
-using Maestro.Wpf.Messages;
+﻿using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;

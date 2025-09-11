@@ -5,7 +5,6 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
@@ -102,7 +101,7 @@ public partial class MaestroView
         var searchTerm = ViewModel.SelectedView.ViewMode switch
         {
             ViewMode.Enroute => flight.FeederFixIdentifier,
-            ViewMode.Approach => flight.AssignedRunway,
+            ViewMode.Approach => flight.AssignedRunwayIdentifier,
             _ => throw new ArgumentOutOfRangeException($"Unexpected LadderReferenceTime: {ViewModel.SelectedView.ViewMode}")
         };
 
@@ -782,10 +781,11 @@ public partial class MaestroView
             {
                 // Create new flight label
                 var flightLabelViewModel = new FlightLabelViewModel(
-                    Ioc.Default.GetRequiredService<IMessageDispatcher>(),
+                    Ioc.Default.GetRequiredService<IMediator>(),
                     Ioc.Default.GetRequiredService<IErrorReporter>(),
                     ViewModel,
-                    flight);
+                    flight,
+                    ViewModel.Runways);
 
                 flightLabel = new FlightLabelView
                 {

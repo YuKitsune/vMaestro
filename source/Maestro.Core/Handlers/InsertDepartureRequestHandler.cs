@@ -2,12 +2,13 @@
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 
 namespace Maestro.Core.Handlers;
 
 public class InsertDepartureRequestHandler(
-    ISequenceProvider sequenceProvider,
+    ISessionManager sessionManager,
     IPerformanceLookup performanceLookup,
     IArrivalLookup arrivalLookup,
     IScheduler scheduler,
@@ -17,9 +18,15 @@ public class InsertDepartureRequestHandler(
 {
     public async Task Handle(InsertDepartureRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Send(request, cancellationToken);
+            return;
+        }
 
-        var flight = lockedSequence.Sequence.Flights.SingleOrDefault(f =>
+        var sequence = lockedSession.Session.Sequence;
+        var flight = sequence.Flights.SingleOrDefault(f =>
             f.Callsign == request.Callsign &&
             f.State == State.Pending);
 
@@ -49,13 +56,13 @@ public class InsertDepartureRequestHandler(
         // Calculate the position in the sequence
         flight.SetState(State.New, clock);
 
-        scheduler.Schedule(lockedSequence.Sequence);
+        scheduler.Schedule(sequence);
         flight.SetState(State.Unstable, clock);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
-                lockedSequence.Sequence.AirportIdentifier,
-                lockedSequence.Sequence.ToMessage()),
+                sequence.AirportIdentifier,
+                sequence.ToMessage()),
             cancellationToken);
     }
 
@@ -74,6 +81,6 @@ public class InsertDepartureRequestHandler(
         if (arrivalInterval is null)
             return null;
 
-        return flight.EstimatedLandingTime.Subtract(arrivalInterval.Value);
+        return flight.LandingEstimate.Subtract(arrivalInterval.Value);
     }
 }

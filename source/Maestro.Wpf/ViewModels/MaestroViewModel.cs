@@ -14,7 +14,7 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 {
-    readonly IMessageDispatcher _messageDispatcher;
+    readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
     readonly INotificationStream<SequenceUpdatedNotification> _sequenceUpdatedNotificationStream;
 
@@ -47,7 +47,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     List<SlotMessage> _slots = [];
 
     [ObservableProperty]
-    bool _isCreatingSlot = false;
+    bool _isCreatingSlot;
 
     [ObservableProperty]
     SlotCreationReferencePoint _slotCreationReferencePoint = SlotCreationReferencePoint.Before;
@@ -56,18 +56,19 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     string[] _slotRunwayIdentifiers = [];
 
     [ObservableProperty]
-    DateTimeOffset? _firstSlotTime = null;
+    DateTimeOffset? _firstSlotTime;
 
     [ObservableProperty]
-    DateTimeOffset? _secondSlotTime = null;
+    DateTimeOffset? _secondSlotTime;
 
     [ObservableProperty]
-    FlightMessage? _selectedFlight = null;
+    FlightMessage? _selectedFlight;
 
     [ObservableProperty]
-    bool _isConfirmationDialogOpen = false;
+    bool _isConfirmationDialogOpen;
 
     public string AirportIdentifier { get;}
+    public string[] Runways { get; }
 
     public string TerminalConfiguration =>
         NextRunwayMode is not null
@@ -80,30 +81,23 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 
     public MaestroViewModel(
         string airportIdentifier,
+        string[] runways,
         RunwayModeViewModel[] runwayModes,
-        RunwayModeViewModel currentRunwayMode,
         ViewConfiguration[] views,
-        FlightMessage[] flights,
-        SlotMessage[] slots,
-        IMessageDispatcher messageDispatcher,
+        IMediator mediator,
         IErrorReporter errorReporter,
         INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream)
     {
-        _messageDispatcher = messageDispatcher;
+        _mediator = mediator;
         _errorReporter = errorReporter;
         _sequenceUpdatedNotificationStream = sequenceUpdatedNotificationStream;
 
         AirportIdentifier = airportIdentifier;
-        _runwayModes = runwayModes;
-        _currentRunwayMode = currentRunwayMode;
+        Runways = runways;
         RunwayModes = runwayModes;
-        CurrentRunwayMode = currentRunwayMode;
-
+        CurrentRunwayMode = runwayModes.First();
         Views = views;
         SelectedView = views.First();
-
-        Flights = flights.ToList();
-        Slots = slots.ToList();
 
         // Subscribe to notifications
         _notificationSubscriptionCancellationTokenSource = new CancellationTokenSource();
@@ -116,15 +110,13 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         try
         {
             IsConfirmationDialogOpen = true;
-            var confirmation = await _messageDispatcher.Send(
-                new ConfirmationRequest("Move flight", "Do you really want to move this flight?"),
-                CancellationToken.None);
+            var confirmation = await _mediator.Send(new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
             IsConfirmationDialogOpen = false;
 
             if (!confirmation.Confirmed)
                 return;
 
-            await _messageDispatcher.Send(request);
+            await _mediator.Send(request, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -139,15 +131,14 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         try
         {
             IsConfirmationDialogOpen = true;
-            var confirmation = await _messageDispatcher.Send(
-                new ConfirmationRequest("Move flight", "Do you really want to move this flight?"),
-                CancellationToken.None);
+            var confirmation = await _mediator.Send(
+                new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
             IsConfirmationDialogOpen = false;
 
             if (!confirmation.Confirmed)
                 return;
 
-            await _messageDispatcher.Send(request);
+            await _mediator.Send(request, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -161,7 +152,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     {
         try
         {
-            await _messageDispatcher.Send(request, CancellationToken.None);
+            await _mediator.Send(request, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -202,14 +193,13 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         {
             if (string.IsNullOrEmpty(AirportIdentifier)) return;
 
-            await _messageDispatcher.Send(
+            await _mediator.Send(
                 new OpenSlotWindowRequest(
                     AirportIdentifier,
                     null, // slotId is null for new slots
                     startTime,
                     endTime,
-                    runwayIdentifiers),
-                CancellationToken.None);
+                    runwayIdentifiers));
         }
         catch (Exception ex)
         {
@@ -224,14 +214,13 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
             if (string.IsNullOrEmpty(AirportIdentifier))
                 return;
 
-            await _messageDispatcher.Send(
+            await _mediator.Send(
                 new OpenSlotWindowRequest(
                     AirportIdentifier,
-                    slotMessage.SlotId,
+                    slotMessage.Id,
                     slotMessage.StartTime,
                     slotMessage.EndTime,
-                    slotMessage.RunwayIdentifiers),
-                CancellationToken.None);
+                    slotMessage.RunwayIdentifiers));
         }
         catch (Exception ex)
         {
@@ -246,13 +235,12 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
             if (string.IsNullOrEmpty(AirportIdentifier))
                 return;
 
-            _messageDispatcher.Send(
+            _mediator.Send(
                 new OpenInsertFlightWindowRequest(
                     AirportIdentifier,
                     options,
                     Flights.Where(f => f.State is State.Landed).ToArray(),
-                    Flights.Where(f => f.State is State.Pending).ToArray()),
-                CancellationToken.None);
+                    Flights.Where(f => f.State is State.Pending).ToArray()));
         }
         catch (Exception ex)
         {
@@ -275,7 +263,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     {
         try
         {
-            _messageDispatcher.Send(new OpenTerminalConfigurationRequest(AirportIdentifier), CancellationToken.None);
+            _mediator.Send(new OpenTerminalConfigurationRequest(AirportIdentifier));
         }
         catch (Exception ex)
         {
@@ -294,11 +282,10 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     {
         try
         {
-            _messageDispatcher.Send(
+            _mediator.Send(
                 new OpenPendingDeparturesWindowRequest(
                     AirportIdentifier,
-                    Flights.Where(f => f.State == State.Pending).ToArray()),
-                CancellationToken.None);
+                    Flights.Where(f => f.State == State.Pending).ToArray()));
         }
         catch (Exception ex)
         {
@@ -311,13 +298,12 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     {
         try
         {
-            _messageDispatcher.Send(
+            _mediator.Send(
                 new OpenDesequencedWindowRequest(
                     AirportIdentifier,
                     Flights.Where(f => f.State == State.Desequenced)
                         .Select(f => f.Callsign)
-                        .ToArray()),
-                CancellationToken.None);
+                        .ToArray()));
         }
         catch (Exception ex)
         {

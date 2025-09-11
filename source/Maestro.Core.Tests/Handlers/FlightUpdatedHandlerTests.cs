@@ -2,6 +2,7 @@
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -271,8 +272,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(newFeederFixTime);
-        flight.EstimatedLandingTime.ShouldBe(newLandingTime);
+        flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
+        flight.LandingEstimate.ShouldBe(newLandingTime);
     }
 
     [Fact]
@@ -313,8 +314,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(originalFeederFixTime);
-        flight.EstimatedLandingTime.ShouldBe(originalLandingTime);
+        flight.FeederFixEstimate.ShouldBe(originalFeederFixTime);
+        flight.LandingEstimate.ShouldBe(originalLandingTime);
     }
 
     [Fact]
@@ -355,8 +356,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(manualFeederFixEstimate);
-        flight.EstimatedLandingTime.ShouldBe(manualLandingEstimate);
+        flight.FeederFixEstimate.ShouldBe(manualFeederFixEstimate);
+        flight.LandingEstimate.ShouldBe(manualLandingEstimate);
     }
 
     [Fact]
@@ -457,8 +458,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(newFeederFixTime);
-        flight.EstimatedLandingTime.ShouldBe(newLandingTime);
+        flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
+        flight.LandingEstimate.ShouldBe(newLandingTime);
     }
 
     FlightUpdatedHandler GetHandler(
@@ -467,10 +468,10 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         IScheduler? scheduler = null,
         IEstimateProvider? estimateProvider = null)
     {
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.ActiveSequences.Returns(["YSSY"]);
-        sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
-            .Returns(new TestExclusiveSequence(sequence));
+        var sessionManager = Substitute.For<ISessionManager>();
+        sessionManager.HasSessionFor("YSSY").Returns(true);
+        sessionManager.AcquireSession(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
+            .Returns(new MockExclusiveSession(new MockSession(sequence)));
 
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
         rateLimiter.ShouldUpdateFlight(Arg.Any<Flight>(), Arg.Any<FlightPosition>()).Returns(true);
@@ -483,7 +484,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var mediator = Substitute.For<IMediator>();
 
         return new FlightUpdatedHandler(
-            sequenceProvider,
+            sessionManager,
             rateLimiter,
             airportConfigurationProvider,
             estimateProvider,

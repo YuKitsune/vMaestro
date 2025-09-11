@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -10,14 +9,14 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class DesequencedViewModel : ObservableObject
 {
-    readonly IMessageDispatcher _messageDispatcher;
+    readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
 
     [ObservableProperty]
     List<string> _callsigns = [];
 
     public DesequencedViewModel(
-        IMessageDispatcher messageDispatcher,
+        IMediator mediator,
         IErrorReporter errorReporter,
         string airportIdentifier,
         string[] callsigns)
@@ -25,7 +24,7 @@ public partial class DesequencedViewModel : ObservableObject
         AirportIdentifier = airportIdentifier;
         _errorReporter = errorReporter;
         Callsigns = callsigns.ToList();
-        _messageDispatcher = messageDispatcher;
+        _mediator = mediator;
     }
 
     public string AirportIdentifier { get; }
@@ -39,7 +38,7 @@ public partial class DesequencedViewModel : ObservableObject
             foreach (var selectedCallsign in selectedCallsigns)
             {
                 var selectedCallsignString = (string) selectedCallsign;
-                await _messageDispatcher.Send(
+                await _mediator.Send(
                     new ResumeSequencingRequest(AirportIdentifier, selectedCallsignString),
                     CancellationToken.None);
                 callsigns.Remove(selectedCallsignString);
@@ -62,7 +61,7 @@ public partial class DesequencedViewModel : ObservableObject
             foreach (var selectedCallsign in selectedCallsigns)
             {
                 var selectedCallsignString = (string) selectedCallsign;
-                await _messageDispatcher.Send(
+                await _mediator.Send(
                     new RemoveRequest(AirportIdentifier, selectedCallsignString),
                     CancellationToken.None);
 

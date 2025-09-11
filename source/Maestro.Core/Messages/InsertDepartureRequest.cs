@@ -8,4 +8,4 @@ public record InsertDepartureRequest(
     string AircraftType,
     string DepartureAirport,
     DateTimeOffset TakeOffTime)
-    : IRequest, ISynchronizedMessage;
+    : IRequest;

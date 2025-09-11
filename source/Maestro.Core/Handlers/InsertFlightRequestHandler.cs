@@ -1,14 +1,14 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
+﻿using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 
 namespace Maestro.Core.Handlers;
 
 public class InsertFlightRequestHandler(
-    ISequenceProvider sequenceProvider,
+    ISessionManager sessionManager,
     IScheduler scheduler,
     IClock clock,
     IPerformanceLookup performanceLookup,
@@ -17,11 +17,15 @@ public class InsertFlightRequestHandler(
 {
     public async Task Handle(InsertFlightRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSequence.Sequence;
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Send(request, cancellationToken);
+            return;
+        }
 
+        var sequence = lockedSession.Session.Sequence;
         var (landingTime, runwayIdentifiers) = FindTargetLandingTime(sequence, request.Options);
-
         var runwayModeAtLandingTime = sequence.NextRunwayMode is not null
             ? sequence.FirstLandingTimeForNextMode.IsSameOrBefore(landingTime)
                 ? sequence.NextRunwayMode
@@ -116,7 +120,7 @@ public class InsertFlightRequestHandler(
             throw new MaestroException("Flights cannot be inserted before a frozen flight");
 
         // Calculate time separation based on landing rate
-        var referenceTime = referenceFlight.ScheduledLandingTime;
+        var referenceTime = referenceFlight.LandingTime;
         var runwayModeAtReferenceTime = GetRunwayModeAtTime(sequence, referenceTime);
         var targetRunway = referenceFlight.AssignedRunwayIdentifier;
         var landingRate = GetTimeSeparationForRunway(runwayModeAtReferenceTime, targetRunway);
@@ -145,8 +149,6 @@ public class InsertFlightRequestHandler(
 
         // Default to 60 seconds if runway not found
         // TODO: Log a warning and make this configurable
-        var landingRateSeconds = runway?.LandingRateSeconds ?? 60;
-
-        return TimeSpan.FromSeconds(landingRateSeconds);
+        return runway?.AcceptanceRate ?? TimeSpan.FromSeconds(60);
     }
 }

@@ -16,19 +16,25 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
         return this;
     }
 
+    public SequenceBuilder WithRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
+    {
+        _runwayMode = new RunwayMode(runwayModeConfiguration);
+        return this;
+    }
+
     public SequenceBuilder WithSingleRunway(string runwayIdentifier, TimeSpan landingRate)
     {
-        var runwayMode = new RunwayMode
-        {
-            Identifier = runwayIdentifier,
-            Runways =
-            [
-                new RunwayConfiguration
-                    { Identifier = runwayIdentifier, LandingRateSeconds = (int)landingRate.TotalSeconds }
-            ]
-        };
-
-        return WithRunwayMode(runwayMode);
+        return WithRunwayMode(
+            new RunwayMode(
+                new RunwayModeConfiguration
+                {
+                    Identifier = runwayIdentifier,
+                    Runways =
+                    [
+                        new RunwayConfiguration
+                            { Identifier = runwayIdentifier, LandingRateSeconds = (int)landingRate.TotalSeconds }
+                    ]
+                }));
     }
 
     public SequenceBuilder WithFlight(Flight flight)
@@ -39,9 +45,9 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
 
     public Sequence Build()
     {
-        var sequence = new Sequence(
-            airportConfiguration,
-            _runwayMode ?? airportConfiguration.RunwayModes.First());
+        var sequence = new Sequence(airportConfiguration);
+        if (_runwayMode is not null)
+            sequence.ChangeRunwayMode(_runwayMode, Substitute.For<IScheduler>());
 
         foreach (var flight in _flights)
         {

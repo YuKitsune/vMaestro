@@ -2,6 +2,7 @@
 using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
+using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
 
 [assembly: AssemblyFixture(typeof(AirportConfigurationFixture))]
 
@@ -38,7 +39,7 @@ public class AirportConfigurationFixture
             ],
             RunwayModes =
             [
-                new RunwayMode
+                new RunwayModeConfiguration
                 {
                     Identifier = "34IVA",
                     Runways =

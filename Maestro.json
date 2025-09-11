@@ -4,6 +4,10 @@
     "OutputDirectory": "MaestroLogs",
     "MaxFileAgeDays": 7
   },
+  "Server": {
+    "Uri": "http://localhost:5272/hub",
+    "Partitions": ["VATSIM", "SweatBox-1", "SweatBox-2"]
+  },
   "Airports": [
     {
       "Identifier": "YSSY",

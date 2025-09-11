@@ -1,4 +1,6 @@
-﻿namespace Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
+
+namespace Maestro.Core.Model;
 
 public class Slot
 {
@@ -11,6 +13,11 @@ public class Slot
         StartTime = start;
         EndTime = end;
         RunwayIdentifiers = runwayIdentifiers;
+    }
+
+    public Slot(SlotMessage message)
+        : this(message.Id, message.StartTime, message.EndTime, message.RunwayIdentifiers)
+    {
     }
 
     public Guid Id { get; }

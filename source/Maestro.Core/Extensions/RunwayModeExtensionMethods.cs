@@ -1,5 +1,5 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Handlers;
+﻿using Maestro.Core.Messages;
+using Maestro.Core.Model;
 
 namespace Maestro.Core.Extensions;
 
@@ -9,8 +9,6 @@ public static class RunwayModeExtensionMethods
     {
         return new RunwayModeDto(
             runwayMode.Identifier,
-            runwayMode.Runways.Select(r =>
-                    new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
-                .ToArray());
+            runwayMode.Runways.ToDictionary(r => r.Identifier, r => (int)r.AcceptanceRate.TotalSeconds));
     }
 }

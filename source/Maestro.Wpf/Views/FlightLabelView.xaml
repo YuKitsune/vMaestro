@@ -86,7 +86,7 @@
                     Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Approach}}"/>
 
                 <TextBlock
-                    Text="{Binding FlightViewModel.AssignedRunway}"
+                    Text="{Binding FlightViewModel.AssignedRunwayIdentifier}"
                     Width="32" />
 
                 <TextBlock

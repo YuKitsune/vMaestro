@@ -9,7 +9,9 @@ using Maestro.Core;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
@@ -32,18 +34,39 @@ namespace Maestro.Plugin;
 
 // TODO: Hide some functions from different views (e.g: APP only and ENR only)
 
+// TODO: Encapsulate UI related commands into a separate service rather than using the Mediator
+
+// TODO: Permissions
+//  - Restrict access to certain functions based on user roles
+//  - Allow FMP full access, restrict CTR and APP functions. All other positions view only.
+//  - When FMP is offline, allow CTR and APP to have full access.
+
+// TODO: Setup View
+//  - Show setup after opening TFMS window via Setup button
+//  - Allow connection to a session after TFMS window is open
+
+// TODO: Smaller messages
+//  - Remove SequenceUpdatedNotification, send smaller messages as needed
+
+// TODO: Clean up DTOs
+//  - Rename them to DTOs
+//  - Move into a Contracts project
+
+// TODO: Information messages
+//  - Show information messages for important events (e.g. pending flight activated, desequenced, runway mode changes etc.)
+
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
 {
 #if DEBUG
-    const string Name = "Maestro - Debug";
+    public const string Name = "Maestro - Debug";
 #else
-    const string Name = "Maestro";
+    public const string Name = "Maestro";
 #endif
 
     string IPlugin.Name => Name;
 
-    readonly IMessageDispatcher? _messageDispatcher;
+    readonly IMediator? _mediator;
     readonly ILogger? _logger;
 
     public Plugin()
@@ -54,8 +77,11 @@ public class Plugin : IPlugin
             ConfigureTheme();
             AddToolbarItem();
 
-            _messageDispatcher = Ioc.Default.GetRequiredService<IMessageDispatcher>();
+            _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
+
+            Network.Connected += NetworkOnConnected;
+            Network.Disconnected += NetworkOnDisconnected;
 
             var executingAssembly = Assembly.GetExecutingAssembly();
             var version = executingAssembly
@@ -93,7 +119,7 @@ public class Plugin : IPlugin
         Ioc.Default.ConfigureServices(
             new ServiceCollection()
                 .AddConfiguration(configuration)
-                .AddSingleton<IServerConnection, StubServerConnection>() // TODO
+                .AddSingleton(configuration.Server)
                 .AddViewModels()
                 .AddMaestro()
                 .AddMediatR(c =>
@@ -128,8 +154,8 @@ public class Plugin : IPlugin
 
         var configurationJson = File.ReadAllText(configFilePath);
         var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
-        // TODO: Reloadable configuration would be cool
 
+        // TODO: Reloadable configuration would be cool
         return configuration;
     }
 
@@ -227,11 +253,11 @@ public class Plugin : IPlugin
         try
         {
             var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
-            var sequenceProvider = Ioc.Default.GetRequiredService<ISequenceProvider>();
+            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
             var windowManager = Ioc.Default.GetRequiredService<WindowManager>();
             var configurations = airportConfigurationProvider
                 .GetAirportConfigurations()
-                .Where(a => !sequenceProvider.ActiveSequences.Contains(a.Identifier))
+                .Where(a => !sessionManager.HasSessionFor(a.Identifier))
                 .ToArray();
 
             if (configurations.Length == 0)
@@ -252,7 +278,8 @@ public class Plugin : IPlugin
                 {
                     var viewModel = new SetupViewModel(
                         configurations,
-                        Ioc.Default.GetRequiredService<IMessageDispatcher>(),
+                        Ioc.Default.GetRequiredService<ServerConfiguration>(),
+                        Ioc.Default.GetRequiredService<IMediator>(),
                         handle,
                         Ioc.Default.GetRequiredService<IErrorReporter>());
 
@@ -262,6 +289,52 @@ public class Plugin : IPlugin
         catch (Exception ex)
         {
             _logger?.Error(ex, "An error occurred while opening the Setup window.");
+            Errors.Add(ex, Name);
+        }
+    }
+
+    void NetworkOnConnected(object sender, EventArgs e)
+    {
+        try
+        {
+            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
+            foreach (var airportIdentifier in sessionManager.ActiveSessions)
+            {
+                try
+                {
+                    _mediator?.Send(
+                        new StartSessionRequest(airportIdentifier, Network.Callsign),
+                        CancellationToken.None);
+                }
+                catch
+                {
+                    // Just play it safe and destroy the session if starting it fails
+                    _mediator?.Send(
+                        new DestroySessionRequest(airportIdentifier),
+                        CancellationToken.None);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.Error(ex, "An error occurred while handling Network.Connected.");
+            Errors.Add(ex, Name);
+        }
+    }
+
+    void NetworkOnDisconnected(object sender, EventArgs e)
+    {
+        try
+        {
+            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
+            foreach (var airportIdentifier in sessionManager.ActiveSessions)
+            {
+                _mediator?.Send(new StopSessionRequest(airportIdentifier), CancellationToken.None);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.Error(ex, "An error occurred while handling Network.Disconnected.");
             Errors.Add(ex, Name);
         }
     }
@@ -352,7 +425,7 @@ public class Plugin : IPlugin
             position,
             estimates);
 
-        _messageDispatcher?.Send(notification, CancellationToken.None);
+        _mediator?.Publish(notification, CancellationToken.None);
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)

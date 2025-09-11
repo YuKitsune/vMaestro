@@ -1,6 +1,5 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using Maestro.Core.Configuration;
 
 namespace Maestro.Wpf.Views;

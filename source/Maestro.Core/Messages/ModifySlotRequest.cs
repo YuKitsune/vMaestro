@@ -7,4 +7,4 @@ public record ModifySlotRequest(
     Guid SlotId,
     DateTimeOffset StartTime,
     DateTimeOffset EndTime)
-    : IRequest, ISynchronizedMessage;
+    : IRequest;

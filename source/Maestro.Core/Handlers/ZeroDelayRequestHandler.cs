@@ -1,19 +1,26 @@
 ﻿using Maestro.Core.Extensions;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
+public class ZeroDelayRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IMediator mediator, ILogger logger)
     : IRequestHandler<ZeroDelayRequest>
 {
     public async Task Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Send(request, cancellationToken);
+            return;
+        }
 
-        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
+        var sequence = lockedSession.Session.Sequence;
+        var flight = sequence.FindTrackedFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
@@ -22,12 +29,12 @@ public class ZeroDelayRequestHandler(ISequenceProvider sequenceProvider, ISchedu
 
         flight.NoDelay = true;
 
-        scheduler.Schedule(lockedSequence.Sequence);
+        scheduler.Schedule(sequence);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
-                lockedSequence.Sequence.AirportIdentifier,
-                lockedSequence.Sequence.ToMessage()),
+                sequence.AirportIdentifier,
+                sequence.ToMessage()),
             cancellationToken);
     }
 }

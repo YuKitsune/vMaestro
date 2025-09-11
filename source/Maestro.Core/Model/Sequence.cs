@@ -1,6 +1,6 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
+﻿using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
 
@@ -15,13 +15,10 @@ public class Sequence
 {
     private int _dummyCounter = 1;
 
-    readonly AirportConfiguration _airportConfiguration;
-
     readonly List<Flight> _trackedFlights = [];
     readonly List<Slot> _slots = [];
 
-    public string AirportIdentifier => _airportConfiguration.Identifier;
-    public string[] FeederFixes => _airportConfiguration.FeederFixes;
+    public string AirportIdentifier { get; }
     public IReadOnlyList<Flight> Flights => _trackedFlights.AsReadOnly();
 
     public RunwayMode CurrentRunwayMode { get; private set; }
@@ -31,10 +28,31 @@ public class Sequence
 
     public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
 
-    public Sequence(AirportConfiguration airportConfiguration, RunwayMode runwayMode)
+    public Sequence(Configuration.AirportConfiguration airportConfiguration)
     {
-        _airportConfiguration = airportConfiguration;
-        CurrentRunwayMode = runwayMode;
+        AirportIdentifier = airportConfiguration.Identifier;
+        CurrentRunwayMode = new RunwayMode(airportConfiguration.RunwayModes.First());
+    }
+
+    public Sequence(Configuration.AirportConfiguration airportConfiguration, SequenceMessage message)
+    {
+        AirportIdentifier = message.AirportIdentifier;
+
+        var currentRunwayModeConfig = airportConfiguration.RunwayModes
+            .Single(rm => rm.Identifier == message.CurrentRunwayMode.Identifier);
+        CurrentRunwayMode = new RunwayMode(currentRunwayModeConfig);
+
+        var nextRunwayModeConfig = airportConfiguration.RunwayModes
+            .SingleOrDefault(rm => rm.Identifier == message.NextRunwayMode?.Identifier);
+        if (nextRunwayModeConfig is not null)
+        {
+            NextRunwayMode = new RunwayMode(nextRunwayModeConfig);
+            LastLandingTimeForCurrentMode = message.LastLandingTimeForCurrentMode;
+            FirstLandingTimeForNextMode = message.FirstLandingTimeForNextMode;
+        }
+
+        _trackedFlights.AddRange(message.Flights.Select(f => new Flight(f)));
+        _slots.AddRange(message.Slots.Select(s => new Slot(s)));
     }
 
     public void TrySwapRunwayModes(IClock clock)

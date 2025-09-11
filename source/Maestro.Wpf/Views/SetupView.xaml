@@ -10,8 +10,8 @@
              d:DataContext="{d:DesignInstance Type=viewModels:SetupViewModel}"
              mc:Ignorable="d"
              Padding="2"
-             Width="320"
-             Height="160">
+             Width="240"
+             Height="Auto">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -73,6 +73,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Airport"/>
@@ -82,54 +83,68 @@
                 ItemsSource="{Binding AirportConfigurations}"
                 SelectedValue="{Binding SelectedAirport, Mode=TwoWay}"
                 SelectedValuePath="Identifier"
-                DisplayMemberPath="Identifier"/>
+                DisplayMemberPath="Identifier"
+                Margin="0,0,0,2"/>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="TMA Configuration"/>
+            <!-- <TextBlock Grid.Row="1" Grid.Column="0" Text="TMA Configuration"/> -->
+            <!-- <ComboBox -->
+            <!--     Grid.Row="1" -->
+            <!--     Grid.Column="1" -->
+            <!--     ItemsSource="{Binding AvailableRunwayModes}" -->
+            <!--     SelectedValue="{Binding SelectedRunwayModeIdentifier, Mode=TwoWay}" -->
+            <!--     SelectedValuePath="Identifier" -->
+            <!--     DisplayMemberPath="Identifier" -->
+            <!--     Margin="0,2,0,2" /> -->
+
+            <!-- <controls:BeveledBorder -->
+            <!--     Grid.Row="2" -->
+            <!--     Grid.Column="0" -->
+            <!--     Grid.ColumnSpan="2" -->
+            <!--     BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" -->
+            <!--     BevelType="Sunken" -->
+            <!--     Margin="0,2,0,2"> -->
+            <!--     <Border Padding="2"> -->
+            <!--         <ItemsControl ItemsSource="{Binding Path=SelectedRunwayMode.Runways}" Margin="2"> -->
+            <!--             <ItemsControl.ItemsPanel> -->
+            <!--                 <ItemsPanelTemplate> -->
+            <!--                     <StackPanel Orientation="Vertical" /> -->
+            <!--                 </ItemsPanelTemplate> -->
+            <!--             </ItemsControl.ItemsPanel> -->
+            <!--             <ItemsControl.ItemTemplate> -->
+            <!--                 <DataTemplate> -->
+            <!--                     <DataTemplate.Resources> -->
+            <!--                         <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}"/> -->
+            <!--                     </DataTemplate.Resources> -->
+            <!-- -->
+            <!--                     <StackPanel Orientation="Vertical"> -->
+            <!--                         <Slider Value="{Binding LandingRateSeconds}" -->
+            <!--                                 TickFrequency="5" -->
+            <!--                                 IsSnapToTickEnabled="true" -->
+            <!--                                 Minimum="{Binding DataContext.MinimumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}" -->
+            <!--                                 Maximum="{Binding DataContext.MaximumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"/> -->
+            <!--                         <StackPanel Orientation="Horizontal"> -->
+            <!--                             <TextBlock Text="{Binding Identifier}"/> -->
+            <!--                             <TextBlock Text=": "/> -->
+            <!--                             <TextBlock Text="{Binding LandingRateSeconds}" Padding="4,0,2,0"/> -->
+            <!--                             <TextBlock Text="s"/> -->
+            <!--                             ~1~ TODO: Nautical miles @1@ -->
+            <!--                             ~1~ TODO: Hourly rate @1@ -->
+            <!--                         </StackPanel> -->
+            <!--                     </StackPanel> -->
+            <!-- -->
+            <!--                 </DataTemplate> -->
+            <!--             </ItemsControl.ItemTemplate> -->
+            <!--         </ItemsControl> -->
+            <!--     </Border> -->
+            <!-- </controls:BeveledBorder> -->
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Server"/>
             <ComboBox
-                Grid.Row="1"
+                Grid.Row="4"
                 Grid.Column="1"
-                ItemsSource="{Binding AvailableRunwayModes}"
-                SelectedValue="{Binding SelectedRunwayModeIdentifier, Mode=TwoWay}"
-                SelectedValuePath="Identifier"
-                DisplayMemberPath="Identifier" />
-
-            <controls:BeveledBorder Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
-                <Border Padding="2">
-                    <ItemsControl ItemsSource="{Binding Path=SelectedRunwayMode.Runways}" Margin="2">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <DataTemplate.Resources>
-                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}"/>
-                                </DataTemplate.Resources>
-
-                                <StackPanel Orientation="Vertical">
-                                    <Slider Value="{Binding LandingRateSeconds}"
-                                            TickFrequency="5"
-                                            IsSnapToTickEnabled="true"
-                                            Minimum="{Binding DataContext.MinimumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
-                                            Maximum="{Binding DataContext.MaximumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"/>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Identifier}"/>
-                                        <TextBlock Text=": "/>
-                                        <TextBlock Text="{Binding LandingRateSeconds}" Padding="4,0,2,0"/>
-                                        <TextBlock Text="s"/>
-                                        <!-- TODO: Nautical miles -->
-                                        <!-- TODO: Hourly rate -->
-                                    </StackPanel>
-                                </StackPanel>
-
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Border>
-            </controls:BeveledBorder>
-
-            <!-- TODO: Online connection options -->
+                ItemsSource="{Binding Servers}"
+                SelectedValue="{Binding SelectedServer, Mode=TwoWay}"
+                Margin="0,2,0,2" />
 
         </Grid>
 

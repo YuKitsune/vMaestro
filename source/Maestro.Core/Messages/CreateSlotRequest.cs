@@ -7,4 +7,4 @@ public record CreateSlotRequest(
     DateTimeOffset StartTime,
     DateTimeOffset EndTime,
     string[] RunwayIdentifiers)
-    : IRequest, ISynchronizedMessage;
+    : IRequest;

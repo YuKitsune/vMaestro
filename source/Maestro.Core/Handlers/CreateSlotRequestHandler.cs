@@ -1,18 +1,27 @@
 ﻿using Maestro.Core.Extensions;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-public class CreateSlotRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator) : IRequestHandler<CreateSlotRequest>
+public class CreateSlotRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IMediator mediator)
+    : IRequestHandler<CreateSlotRequest>
 {
     public async Task Handle(CreateSlotRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        lockedSequence.Sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers, scheduler);
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Send(request, cancellationToken);
+            return;
+        }
+
+        var sequence = lockedSession.Session.Sequence;
+        sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers, scheduler);
         await mediator.Publish(
-            new SequenceUpdatedNotification(lockedSequence.Sequence.AirportIdentifier, lockedSequence.Sequence.ToMessage()),
+            new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
             cancellationToken);
     }
 }

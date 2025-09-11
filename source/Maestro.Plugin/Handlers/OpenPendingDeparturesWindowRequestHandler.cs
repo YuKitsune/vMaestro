@@ -8,7 +8,7 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenPendingDeparturesWindowRequestHandler(WindowManager windowManager, IMessageDispatcher messageDispatcher, IClock clock, IErrorReporter errorReporter)
+public class OpenPendingDeparturesWindowRequestHandler(WindowManager windowManager, IMediator mediator, IClock clock, IErrorReporter errorReporter)
     : IRequestHandler<OpenPendingDeparturesWindowRequest>
 {
     public Task Handle(OpenPendingDeparturesWindowRequest request, CancellationToken cancellationToken)
@@ -22,7 +22,7 @@ public class OpenPendingDeparturesWindowRequestHandler(WindowManager windowManag
                     request.AirportIdentifier,
                     request.PendingFlights,
                     windowHandle,
-                    messageDispatcher,
+                    mediator,
                     clock,
                     errorReporter);
 

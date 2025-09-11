@@ -3,13 +3,14 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class RecomputeRequestHandler(
-    ISequenceProvider sequenceProvider,
+    ISessionManager sessionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
     IClock clock,
@@ -20,13 +21,18 @@ public class RecomputeRequestHandler(
 {
     public async Task Handle(RecomputeRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSequence.Sequence;
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Send(request, cancellationToken);
+            return;
+        }
 
+        var sequence = lockedSession.Session.Sequence;
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == request.AirportIdentifier);
 
-        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
+        var flight = sequence.FindTrackedFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
@@ -36,7 +42,7 @@ public class RecomputeRequestHandler(
         logger.Information("Recomputing {Callsign}", flight.Callsign);
 
         // Reset the feeder fix in case of a re-route
-        var feederFix = flight.Fixes.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
+        var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
         if (feederFix is not null)
             flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
 
@@ -50,13 +56,13 @@ public class RecomputeRequestHandler(
             flight.ResetInitialFeederFixEstimate();
 
         // Reset scheduled times
-        if (flight.EstimatedFeederFixTime is not null)
-            flight.SetFeederFixTime(flight.EstimatedFeederFixTime.Value);
+        if (flight.FeederFixEstimate is not null)
+            flight.SetFeederFixTime(flight.FeederFixEstimate.Value);
 
-        flight.SetLandingTime(flight.EstimatedLandingTime, manual: false);
+        flight.SetLandingTime(flight.LandingEstimate, manual: false);
 
         // Reset the runway
-        var runwayMode = sequence.GetRunwayModeAt(flight.EstimatedLandingTime);
+        var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
         flight.SetRunway(runwayMode.Default.Identifier, manual: false);
 
         scheduler.Recompute(flight, sequence);
@@ -66,8 +72,8 @@ public class RecomputeRequestHandler(
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
-                lockedSequence.Sequence.AirportIdentifier,
-                lockedSequence.Sequence.ToMessage()),
+                sequence.AirportIdentifier,
+                sequence.ToMessage()),
             cancellationToken);
     }
 
@@ -93,14 +99,14 @@ public class RecomputeRequestHandler(
                 flight.FeederFixIdentifier!,
                 feederFixSystemEstimate!.Estimate,
                 flight.Position);
-            if (calculatedFeederFixEstimate is not null && flight.EstimatedFeederFixTime is not null)
+            if (calculatedFeederFixEstimate is not null && flight.FeederFixEstimate is not null)
             {
-                var diff = flight.EstimatedFeederFixTime.Value - calculatedFeederFixEstimate.Value;
+                var diff = flight.FeederFixEstimate.Value - calculatedFeederFixEstimate.Value;
                 flight.UpdateFeederFixEstimate(calculatedFeederFixEstimate.Value);
                 logger.Debug(
                     "{Callsign} ETA_FF now {FeederFixEstimate} (diff {Difference})",
                     flight.Callsign,
-                    flight.EstimatedFeederFixTime,
+                    flight.FeederFixEstimate,
                     diff.ToHoursAndMinutesString());
 
                 if (diff.Duration() > TimeSpan.FromMinutes(2))
@@ -112,12 +118,12 @@ public class RecomputeRequestHandler(
         var calculatedLandingEstimate = estimateProvider.GetLandingEstimate(flight, landingSystemEstimate?.Estimate);
         if (calculatedLandingEstimate is not null)
         {
-            var diff = flight.EstimatedLandingTime - calculatedLandingEstimate.Value;
+            var diff = flight.LandingEstimate - calculatedLandingEstimate.Value;
             flight.UpdateLandingEstimate(calculatedLandingEstimate.Value);
             logger.Debug(
                 "{Callsign} ETA now {LandingEstimate} (diff {Difference})",
                 flight.Callsign,
-                flight.EstimatedLandingTime,
+                flight.LandingEstimate,
                 diff.ToHoursAndMinutesString());
 
             if (diff.Duration() > TimeSpan.FromMinutes(2))

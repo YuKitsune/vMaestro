@@ -15,15 +15,16 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 {
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
-    readonly RunwayMode _runwayMode = new()
-    {
-        Identifier = "34IVA",
-        Runways =
-        [
-            new RunwayConfiguration { Identifier = "34L", LandingRateSeconds = 180 },
-            new RunwayConfiguration { Identifier = "34R", LandingRateSeconds = 180 }
-        ]
-    };
+    readonly RunwayMode _runwayMode = new(
+        new RunwayModeConfiguration
+        {
+            Identifier = "34IVA",
+            Runways =
+            [
+                new RunwayConfiguration { Identifier = "34L", LandingRateSeconds = 180 },
+                new RunwayConfiguration { Identifier = "34R", LandingRateSeconds = 180 }
+            ]
+        });
 
     [Fact]
     public async Task WhenRecomputingAFlight_TheSequenceIsRecalculated()
@@ -79,9 +80,9 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.InitialLandingTime.ShouldBe(estimatedLandingTime);
-        flight.EstimatedLandingTime.ShouldBe(estimatedLandingTime);
-        flight.ScheduledLandingTime.ShouldBe(estimatedLandingTime);
+        flight.InitialLandingEstimate.ShouldBe(estimatedLandingTime);
+        flight.LandingEstimate.ShouldBe(estimatedLandingTime);
+        flight.LandingTime.ShouldBe(estimatedLandingTime);
         flight.ManualLandingTime.ShouldBeFalse();
     }
 
@@ -109,7 +110,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var actualFeederFixEstaimate = now.AddMinutes(5);
         var estimateProvider = new MockEstimateProvider(
             feederFixEstimate: actualFeederFixEstaimate,
-            landingEstimate: flight.EstimatedLandingTime);
+            landingEstimate: flight.LandingEstimate);
 
         var handler = GetRequestHandler(sequence, estimateProvider);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -118,9 +119,9 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.InitialFeederFixTime.ShouldBe(actualFeederFixEstaimate);
-        flight.EstimatedFeederFixTime.ShouldBe(actualFeederFixEstaimate);
-        flight.ScheduledFeederFixTime.ShouldBe(actualFeederFixEstaimate);
+        flight.InitialFeederFixEstimate.ShouldBe(actualFeederFixEstaimate);
+        flight.FeederFixEstimate.ShouldBe(actualFeederFixEstaimate);
+        flight.FeederFixTime.ShouldBe(actualFeederFixEstaimate);
         flight.ManualFeederFixEstimate.ShouldBeFalse();
     }
 
@@ -155,7 +156,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         // Assert
         flight.FeederFixIdentifier.ShouldBe("WELSH");
-        flight.ScheduledFeederFixTime.ShouldBe(newFeederFixEstimate);
+        flight.FeederFixTime.ShouldBe(newFeederFixEstimate);
         // TODO: flight.ManualFeederFixTime.ShouldBeFalse();
     }
 
@@ -338,7 +339,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         IScheduler? scheduler = null,
         IMediator? mediator = null)
     {
-        var sequenceProvider = new MockSequenceProvider(sequence);
+        var sessionManager = new MockLocalSessionManager(sequence);
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
 
@@ -349,7 +350,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var logger = Substitute.For<Serilog.ILogger>();
 
         return new RecomputeRequestHandler(
-            sequenceProvider,
+            sessionManager,
             airportConfigurationProvider,
             estimateProvider,
             clockFixture.Instance,
@@ -361,7 +362,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         {
             var estimateProvider = Substitute.For<IEstimateProvider>();
             estimateProvider.GetLandingEstimate(Arg.Any<Flight>(), Arg.Any<DateTimeOffset?>())
-                .Returns(call => call.Arg<Flight>().EstimatedLandingTime);
+                .Returns(call => call.Arg<Flight>().LandingEstimate);
             estimateProvider.GetFeederFixEstimate(Arg.Any<AirportConfiguration>(), Arg.Any<string>(), Arg.Any<DateTimeOffset>(), Arg.Any<FlightPosition>())
                 .Returns(call => call.Arg<DateTimeOffset>());
             return estimateProvider;

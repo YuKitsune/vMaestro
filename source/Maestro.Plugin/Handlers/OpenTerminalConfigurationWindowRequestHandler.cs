@@ -1,7 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
@@ -14,19 +14,22 @@ namespace Maestro.Plugin.Handlers;
 public class OpenTerminalConfigurationWindowRequestHandler(
     WindowManager windowManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    ISequenceProvider sequenceProvider,
-    IMessageDispatcher messageDispatcher,
+    ISessionManager sessionManager,
+    IMediator mediator,
     IClock clock,
     IErrorReporter errorReporter)
     : IRequestHandler<OpenTerminalConfigurationRequest>
 {
-    public Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
+    public async Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
     {
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == request.AirportIdentifier);
-        var sequence = sequenceProvider.GetReadOnlySequence(request.AirportIdentifier);
+
+        var sequence = lockedSession.Session.Sequence;
         var runwayModes = airportConfiguration.RunwayModes
-            .Select(r => r.ToMessage())
+            .Select(r => new RunwayModeViewModel(r))
             .ToArray();
 
         windowManager.FocusOrCreateWindow(
@@ -45,18 +48,16 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                 var viewModel = new TerminalConfigurationViewModel(
                     request.AirportIdentifier,
                     runwayModes,
-                    sequence.CurrentRunwayMode,
-                    sequence.NextRunwayMode,
+                    new RunwayModeViewModel(sequence.CurrentRunwayMode.ToMessage()),
+                    sequence.NextRunwayMode is not null ? new RunwayModeViewModel(sequence.NextRunwayMode.ToMessage()) : null,
                     lastLandingTime,
                     firstLandingTime,
-                    messageDispatcher,
+                    mediator,
                     windowHandle,
                     clock,
                     errorReporter);
 
                 return new TerminalConfigurationView(viewModel);
             });
-
-        return Task.CompletedTask;
     }
 }

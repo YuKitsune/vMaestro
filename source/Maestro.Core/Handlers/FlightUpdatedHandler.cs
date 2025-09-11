@@ -3,6 +3,7 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
@@ -22,7 +23,7 @@ public record FlightUpdatedNotification(
     : INotification;
 
 public class FlightUpdatedHandler(
-    ISequenceProvider sequenceProvider,
+    ISessionManager sessionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
@@ -36,13 +37,18 @@ public class FlightUpdatedHandler(
     {
         try
         {
-            if (!sequenceProvider.ActiveSequences.Contains(notification.Destination))
+            if (!sessionManager.HasSessionFor(notification.Destination))
                 return;
 
-            logger.Verbose("Received update for {Callsign}", notification.Callsign);
+            using var lockedSession = await sessionManager.AcquireSession(notification.Destination, cancellationToken);
+            if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+            {
+                await lockedSession.Session.Connection.Send(notification, cancellationToken);
+                return;
+            }
 
-            using var lockedSequence = await sequenceProvider.GetSequence(notification.Destination, cancellationToken);
-            var sequence = lockedSequence.Sequence;
+            var sequence = lockedSession.Session.Sequence;
+            logger.Verbose("Received update for {Callsign}", notification.Callsign);
 
             var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
                 .Single(a => a.Identifier == notification.Destination);
@@ -53,7 +59,7 @@ public class FlightUpdatedHandler(
                 // TODO: Make configurable
                 var flightCreationThreshold = TimeSpan.FromHours(2);
 
-                var feederFix = notification.Estimates.LastOrDefault(x => sequence.FeederFixes.Contains(x.FixIdentifier));
+                var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
                 var landingEstimate = notification.Estimates.Last().Estimate;
                 var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
 
@@ -164,14 +170,14 @@ public class FlightUpdatedHandler(
                 flight.FeederFixIdentifier!,
                 feederFixSystemEstimate!.Estimate,
                 notification.Position);
-            if (calculatedFeederFixEstimate is not null && flight.EstimatedFeederFixTime is not null)
+            if (calculatedFeederFixEstimate is not null && flight.FeederFixEstimate is not null)
             {
-                var diff = flight.EstimatedFeederFixTime.Value - calculatedFeederFixEstimate.Value;
+                var diff = flight.FeederFixEstimate.Value - calculatedFeederFixEstimate.Value;
                 flight.UpdateFeederFixEstimate(calculatedFeederFixEstimate.Value);
                 logger.Debug(
                     "{Callsign} ETA_FF now {FeederFixEstimate} (diff {Difference})",
                     flight.Callsign,
-                    flight.EstimatedFeederFixTime,
+                    flight.FeederFixEstimate,
                     diff.ToHoursAndMinutesString());
 
                 if (diff.Duration() > TimeSpan.FromMinutes(2))
@@ -183,12 +189,12 @@ public class FlightUpdatedHandler(
         var calculatedLandingEstimate = estimateProvider.GetLandingEstimate(flight, landingSystemEstimate?.Estimate);
         if (calculatedLandingEstimate is not null)
         {
-            var diff = flight.EstimatedLandingTime - calculatedLandingEstimate.Value;
+            var diff = flight.LandingEstimate - calculatedLandingEstimate.Value;
             flight.UpdateLandingEstimate(calculatedLandingEstimate.Value);
             logger.Debug(
                 "{Callsign} ETA now {LandingEstimate} (diff {Difference})",
                 flight.Callsign,
-                flight.EstimatedLandingTime,
+                flight.LandingEstimate,
                 diff.ToHoursAndMinutesString());
 
             if (diff.Duration() > TimeSpan.FromMinutes(2))

@@ -26,13 +26,12 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithFlight(flight)
             .Build();
 
-        var sequenceProvider = new MockSequenceProvider(sequence);
-
+        var sessionManager = new MockLocalSessionManager(sequence);
         var scheduler = Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            sequenceProvider,
+            sessionManager,
             scheduler,
             Substitute.For<IClock>(),
             mediator,

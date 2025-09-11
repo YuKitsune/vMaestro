@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -32,13 +33,13 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             "YSSY",
             "QFA1S",
             ["34L"],
-            frozen.ScheduledLandingTime.AddMinutes(5));
+            frozen.LandingTime.AddMinutes(5));
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        moving.ScheduledLandingTime.ShouldBe(frozen.ScheduledLandingTime.AddMinutes(5));
+        moving.LandingTime.ShouldBe(frozen.LandingTime.AddMinutes(5));
     }
 
     [Fact]
@@ -64,7 +65,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.ScheduledLandingTime.ShouldBe(newTime);
+        flight.LandingTime.ShouldBe(newTime);
         flight.ManualLandingTime.ShouldBeTrue();
     }
 
@@ -158,7 +159,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        subject.ScheduledLandingTime.ShouldBe(requestedTime);
+        subject.LandingTime.ShouldBe(requestedTime);
     }
 
     [Fact]
@@ -198,7 +199,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        subject.ScheduledLandingTime.ShouldBe(frozen1.ScheduledLandingTime.Add(TimeSpan.FromSeconds(180)));
+        subject.LandingTime.ShouldBe(frozen1.LandingTime.Add(TimeSpan.FromSeconds(180)));
     }
 
     [Fact]
@@ -237,7 +238,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        subject.ScheduledLandingTime.ShouldBe(frozen2.ScheduledLandingTime.AddSeconds(-180));
+        subject.LandingTime.ShouldBe(frozen2.LandingTime.AddSeconds(-180));
     }
 
     [Fact]
@@ -315,7 +316,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        subject.ScheduledLandingTime.ShouldBe(requestedTime);
+        subject.LandingTime.ShouldBe(requestedTime);
     }
 
     [Fact]
@@ -354,9 +355,9 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.ScheduledLandingTime.ShouldBe(newLandingTime);
+        flight.LandingTime.ShouldBe(newLandingTime);
         var newFeederFixTime = now.AddMinutes(20);
-        flight.ScheduledFeederFixTime.ShouldBe(newFeederFixTime);
+        flight.FeederFixTime.ShouldBe(newFeederFixTime);
     }
 
     [Fact]
@@ -385,15 +386,15 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.ScheduledLandingTime.ShouldBe(newTime);
+        flight.LandingTime.ShouldBe(newTime);
         flight.AssignedRunwayIdentifier.ShouldBe("34L"); // Default runway
     }
 
     MoveFlightRequestHandler GetRequestHandler(Sequence sequence)
     {
-        var sequenceProvider = new MockSequenceProvider(sequence);
+        var sessionManager = new MockLocalSessionManager(sequence);
         var scheduler = Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
-        return new MoveFlightRequestHandler(sequenceProvider, scheduler, mediator, clockFixture.Instance);
+        return new MoveFlightRequestHandler(sessionManager, scheduler, mediator, clockFixture.Instance);
     }
 }

@@ -2,4 +2,4 @@
 
 namespace Maestro.Core.Messages;
 
-public record RecomputeRequest(string AirportIdentifier, string Callsign) : IRequest, ISynchronizedMessage;
+public record RecomputeRequest(string AirportIdentifier, string Callsign) : IRequest;

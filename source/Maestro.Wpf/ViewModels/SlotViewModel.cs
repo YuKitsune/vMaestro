@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -9,7 +8,7 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class SlotViewModel : ObservableObject
 {
-    readonly IMessageDispatcher _messageDispatcher;
+    readonly IMediator _mediator;
     readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
 
@@ -30,7 +29,7 @@ public partial class SlotViewModel : ObservableObject
         DateTimeOffset startTime,
         DateTimeOffset endTime,
         string[] runwayIdentifiers,
-        IMessageDispatcher messageDispatcher,
+        IMediator mediator,
         IWindowHandle windowHandle,
         IErrorReporter errorReporter)
     {
@@ -40,7 +39,7 @@ public partial class SlotViewModel : ObservableObject
         EndTime = endTime;
         _runwayIdentifiers = runwayIdentifiers;
 
-        _messageDispatcher = messageDispatcher;
+        _mediator = mediator;
         _windowHandle = windowHandle;
         _errorReporter = errorReporter;
     }
@@ -52,13 +51,13 @@ public partial class SlotViewModel : ObservableObject
         {
             if (_slotId is null)
             {
-                await _messageDispatcher.Send(
+                await _mediator.Send(
                     new CreateSlotRequest(_airportIdentifier, StartTime, EndTime, _runwayIdentifiers),
                     CancellationToken.None);
             }
             else
             {
-                await _messageDispatcher.Send(
+                await _mediator.Send(
                     new ModifySlotRequest(_airportIdentifier, _slotId.Value, StartTime, EndTime),
                     CancellationToken.None);
             }
@@ -78,7 +77,7 @@ public partial class SlotViewModel : ObservableObject
         {
             if (_slotId is not null)
             {
-                await _messageDispatcher.Send(
+                await _mediator.Send(
                     new DeleteSlotRequest(_airportIdentifier, _slotId.Value),
                     CancellationToken.None);
             }

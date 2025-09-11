@@ -1,0 +1,7 @@
+﻿services:
+  maestro.server:
+    image: maestro.server
+    build:
+      context: .
+      dockerfile: Maestro.Server/Dockerfile
+

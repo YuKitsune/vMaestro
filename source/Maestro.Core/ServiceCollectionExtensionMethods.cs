@@ -1,7 +1,6 @@
-﻿using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
-using Maestro.Core.Scheduling;
+using Maestro.Core.Sessions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maestro.Core;
@@ -11,12 +10,12 @@ public static class ServiceCollectionExtensionMethods
     public static IServiceCollection AddMaestro(this IServiceCollection services)
     {
         return services
+            .AddSingleton<ISessionManager, SessionManager>()
+            .AddSingleton<ISessionFactory, SessionFactory>()
+            .AddSingleton<IScheduler, Scheduler>()
             .AddSingleton<IFlightUpdateRateLimiter, FlightUpdateRateLimiter>()
             .AddSingleton<IArrivalLookup, ArrivalLookup>()
             .AddSingleton<IEstimateProvider, EstimateProvider>()
-            .AddSingleton<ISequenceProvider, SequenceProvider>()
-            .AddSingleton<IScheduler, Scheduler>()
-            .AddSingleton<SchedulerBackgroundService>()
             .AddSingleton<IRunwayScoreCalculator, RunwayScoreCalculator>()
             .AddSingleton<IClock, SystemClock>()
             .AddScoped<SequenceCleaner>();

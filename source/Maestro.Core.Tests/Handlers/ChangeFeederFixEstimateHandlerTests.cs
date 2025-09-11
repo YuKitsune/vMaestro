@@ -37,7 +37,7 @@ public class ChangeFeederFixEstimateHandlerTests(
 
         // Assert
         flight.ManualFeederFixEstimate.ShouldBeTrue();
-        flight.EstimatedFeederFixTime.ShouldBe(newEstimate);
+        flight.FeederFixEstimate.ShouldBe(newEstimate);
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class ChangeFeederFixEstimateHandlerTests(
 
         // Assert
         estimateProvider.Received(1).GetLandingEstimate(flight, Arg.Any<DateTimeOffset>());
-        flight.EstimatedLandingTime.ShouldBe(expectedLandingEstimate);
+        flight.LandingEstimate.ShouldBe(expectedLandingEstimate);
     }
 
     [Fact]
@@ -134,14 +134,14 @@ public class ChangeFeederFixEstimateHandlerTests(
         IMediator? mediator = null,
         ILogger? logger = null)
     {
-        var sequenceProvider = new MockSequenceProvider(sequence);
+        var sessionManager = new MockLocalSessionManager(sequence);
         estimateProvider ??= Substitute.For<IEstimateProvider>();
         scheduler ??= Substitute.For<IScheduler>();
         mediator ??= Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
 
         return new ChangeFeederFixEstimateRequestHandler(
-            sequenceProvider,
+            sessionManager,
             estimateProvider,
             scheduler,
             clockFixture.Instance,

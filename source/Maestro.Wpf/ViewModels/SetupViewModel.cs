@@ -1,9 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
-using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -12,7 +9,9 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class SetupViewModel : ObservableObject
 {
-    readonly IMessageDispatcher _messageDispatcher;
+    const string NoneServer = "None";
+
+    readonly IMediator _mediator;
     readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
 
@@ -20,7 +19,7 @@ public partial class SetupViewModel : ObservableObject
     AirportConfiguration[] _airportConfigurations = [];
 
     [ObservableProperty]
-    string _selectedAirport = "";
+    string _selectedAirport = NoneServer;
 
     [ObservableProperty]
     RunwayModeViewModel[] _availableRunwayModes = [];
@@ -31,9 +30,16 @@ public partial class SetupViewModel : ObservableObject
     [ObservableProperty]
     RunwayModeViewModel _selectedRunwayMode = null!;
 
+    [ObservableProperty]
+    string[] _servers;
+
+    [ObservableProperty]
+    string _selectedServer;
+
     public SetupViewModel(
         AirportConfiguration[] airportConfigurations,
-        IMessageDispatcher messageDispatcher,
+        ServerConfiguration serverConfiguration,
+        IMediator mediator,
         IWindowHandle windowHandle,
         IErrorReporter errorReporter)
     {
@@ -42,10 +48,12 @@ public partial class SetupViewModel : ObservableObject
         var initialAirportConfiguration = AirportConfigurations.First();
 
         SelectedAirport = initialAirportConfiguration.Identifier;
-        AvailableRunwayModes = initialAirportConfiguration.RunwayModes.Select(rm => new RunwayModeViewModel(rm.ToMessage())).ToArray();
+        AvailableRunwayModes = initialAirportConfiguration.RunwayModes.Select(x => new RunwayModeViewModel(x)).ToArray();
         SelectedRunwayModeIdentifier = initialAirportConfiguration.RunwayModes.First().Identifier;
 
-        _messageDispatcher = messageDispatcher;
+        Servers = [NoneServer, ..serverConfiguration.Partitions];
+
+        _mediator = mediator;
         _windowHandle = windowHandle;
         _errorReporter = errorReporter;
     }
@@ -59,14 +67,14 @@ public partial class SetupViewModel : ObservableObject
         var airport = AirportConfigurations.First(a => a.Identifier == value);
 
         // TODO: Mix of domain types, DTOs, and ViewModels here - needs cleanup
-        AvailableRunwayModes = airport.RunwayModes.Select(r => new RunwayModeViewModel(r.ToMessage())).ToArray();
+        AvailableRunwayModes = airport.RunwayModes.Select(x => new RunwayModeViewModel(x)).ToArray();
         SelectedRunwayModeIdentifier = AvailableRunwayModes.First().Identifier;
     }
 
     partial void OnSelectedRunwayModeIdentifierChanged(string value)
     {
         // When selection changes in UI, update SelectedRunwayMode to the copy of the matching template
-        var template = AirportConfigurations.First(a => a.Identifier == SelectedAirport).RunwayModes.First(r => r.Identifier == value).ToMessage();
+        var template = AirportConfigurations.First(a => a.Identifier == SelectedAirport).RunwayModes.First(r => r.Identifier == value);
         SelectedRunwayMode = new RunwayModeViewModel(template);
     }
 
@@ -75,16 +83,7 @@ public partial class SetupViewModel : ObservableObject
     {
         try
         {
-            var runwayModeDto = new RunwayModeDto(
-                SelectedRunwayMode.Identifier,
-                SelectedRunwayMode.Runways
-                    .Select(r => new RunwayConfigurationDto(r.Identifier, r.LandingRateSeconds))
-                    .ToArray());
-
-            _messageDispatcher.Send(
-                new StartSequencingRequest(SelectedAirport, runwayModeDto),
-                CancellationToken.None);
-
+            _mediator.Send(new CreateSessionRequest(SelectedAirport, SelectedServer == NoneServer ? string.Empty : SelectedServer));
             CloseWindow();
         }
         catch (Exception ex)

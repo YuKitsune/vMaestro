@@ -54,11 +54,15 @@ public class EstimateProvider(
         // We need ETA_FF in order to calculate the landing time using intervals.
         // If we don't have those, defer to the system estimate.
         if (flight.FeederFixIdentifier is null ||
-            flight.EstimatedFeederFixTime is null)
+            flight.FeederFixEstimate is null ||
+            flight.AircraftType is null)
             return systemEstimate;
 
         var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
         if (aircraftPerformance is null)
+            return systemEstimate;
+
+        if (flight.AssignedRunwayIdentifier is null)
             return systemEstimate;
 
         var intervalToRunway = arrivalLookup.GetArrivalInterval(
@@ -77,7 +81,7 @@ public class EstimateProvider(
 
         var feederFixTime = flight.HasPassedFeederFix
             ? flight.ActualFeederFixTime // Prefer ATO_FF if available
-            : flight.EstimatedFeederFixTime; // Use ETA_FF if not passed FF
+            : flight.FeederFixEstimate; // Use ETA_FF if not passed FF
 
         var landingEstimateFromInterval = feederFixTime?.Add(intervalToRunway.Value);
         return landingEstimateFromInterval;

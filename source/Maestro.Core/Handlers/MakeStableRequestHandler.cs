@@ -2,35 +2,38 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
-using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class MakeStableRequestHandler(ISequenceProvider sequenceProvider, IClock clock, IScheduler scheduler, IMediator mediator, ILogger logger)
+public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clock, IScheduler scheduler, IMediator mediator)
     : IRequestHandler<MakeStableRequest>
 {
     public async Task Handle(MakeStableRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-
-        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
-        if (flight == null)
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
+            await lockedSession.Session.Connection.Send(request, cancellationToken);
             return;
         }
+
+        var sequence = lockedSession.Session.Sequence;
+        var flight = sequence.FindTrackedFlight(request.Callsign);
+        if (flight == null)
+            return;
 
         if (flight.State is not State.Unstable)
             return;
 
         flight.SetState(State.Stable, clock);
-        scheduler.Schedule(lockedSequence.Sequence);
+        scheduler.Schedule(sequence);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
-                lockedSequence.Sequence.AirportIdentifier,
-                lockedSequence.Sequence.ToMessage()),
+                sequence.AirportIdentifier,
+                sequence.ToMessage()),
             cancellationToken);
     }
 }

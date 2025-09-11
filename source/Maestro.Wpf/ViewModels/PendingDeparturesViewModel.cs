@@ -14,7 +14,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
 {
     readonly string _airportIdentifier;
     readonly IWindowHandle _windowHandle;
-    readonly IMessageDispatcher _messageDispatcher;
+    readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
 
     bool _isUpdatingFromSelection = false;
@@ -45,13 +45,13 @@ public partial class PendingDeparturesViewModel : ObservableObject
         string airportIdentifier,
         FlightMessage[] pendingFlights,
         IWindowHandle windowHandle,
-        IMessageDispatcher messageDispatcher,
+        IMediator mediator,
         IClock clock,
         IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
         _windowHandle = windowHandle;
-        _messageDispatcher = messageDispatcher;
+        _mediator = mediator;
         _errorReporter = errorReporter;
 
         PendingFlights = pendingFlights;
@@ -96,7 +96,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
     {
         try
         {
-            _messageDispatcher.Send(
+            _mediator.Send(
                 new InsertDepartureRequest(
                     _airportIdentifier,
                     Callsign,

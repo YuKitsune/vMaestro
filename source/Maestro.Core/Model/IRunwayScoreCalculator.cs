@@ -1,11 +1,9 @@
-﻿using Maestro.Core.Configuration;
-
-namespace Maestro.Core.Model;
+﻿namespace Maestro.Core.Model;
 
 public interface IRunwayScoreCalculator
 {
     RunwayScore[] CalculateScores(
-        IReadOnlyCollection<RunwayConfiguration> runways,
+        IReadOnlyCollection<Runway> runways,
         string? aircraftType,
         WakeCategory? wakeCategory,
         string? feederFixIdentifier);
@@ -20,7 +18,7 @@ public class RunwayScoreCalculator : IRunwayScoreCalculator
     const int FeederFixScoreWeight = 1;
 
     public RunwayScore[] CalculateScores(
-        IReadOnlyCollection<RunwayConfiguration> runways,
+        IReadOnlyCollection<Runway> runways,
         string? aircraftType,
         WakeCategory? wakeCategory,
         string? feederFixIdentifier)
@@ -32,7 +30,7 @@ public class RunwayScoreCalculator : IRunwayScoreCalculator
     }
 
     private static int CalculatePreferenceScore(
-        RunwayConfiguration runway,
+        Runway runway,
         WakeCategory? wakeCategory,
         string? feederFixIdentifier)
     {

@@ -1,4 +1,3 @@
-using Maestro.Core.Infrastructure;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
@@ -8,7 +7,7 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenSlotWindowRequestHandler(WindowManager windowManager, IMessageDispatcher messageDispatcher, IErrorReporter errorReporter)
+public class OpenSlotWindowRequestHandler(WindowManager windowManager, IMediator mediator, IErrorReporter errorReporter)
     : IRequestHandler<OpenSlotWindowRequest>
 {
     public Task Handle(OpenSlotWindowRequest request, CancellationToken cancellationToken)
@@ -24,7 +23,7 @@ public class OpenSlotWindowRequestHandler(WindowManager windowManager, IMessageD
                     request.StartTime,
                     request.EndTime,
                     request.RunwayIdentifiers,
-                    messageDispatcher,
+                    mediator,
                     windowHandle,
                     errorReporter);
 

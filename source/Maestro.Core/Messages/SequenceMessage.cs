@@ -1,6 +1,4 @@
-﻿using Maestro.Core.Handlers;
-
-namespace Maestro.Core.Messages;
+﻿namespace Maestro.Core.Messages;
 
 public class SequenceMessage
 {
@@ -14,7 +12,7 @@ public class SequenceMessage
 }
 
 public record SlotMessage(
-    Guid SlotId,
+    Guid Id,
     DateTimeOffset StartTime,
     DateTimeOffset EndTime,
     string[] RunwayIdentifiers);

@@ -108,7 +108,7 @@
 
             <Border Grid.Column="1" Grid.Row="0">
                 <TextBlock TextAlignment="Center">
-                    <Run Text="{Binding AssignedRunway, Mode=OneWay}"/>/<Run Text="{Binding NumberToLandOnRunway, Mode=OneWay}"/>
+                    <Run Text="{Binding AssignedRunwayIdentifier, Mode=OneWay}"/>/<Run Text="{Binding NumberToLandOnRunway, Mode=OneWay}"/>
                 </TextBlock>
             </Border>
 

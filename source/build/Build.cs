@@ -1,14 +1,10 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using Microsoft.Win32;
 using Nuke.Common;
 using Nuke.Common.IO;
-using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
-using Octokit;
 using Serilog;
 
 [SupportedOSPlatform("Windows")]

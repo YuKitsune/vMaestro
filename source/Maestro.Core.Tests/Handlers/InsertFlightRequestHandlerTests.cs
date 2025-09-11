@@ -16,23 +16,25 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
     static readonly TimeSpan _landingRate = TimeSpan.FromSeconds(180);
-    readonly RunwayMode _runwayMode = new()
-    {
-        Identifier = "34IVA",
-        Runways =
-        [
-            new RunwayConfiguration
-            {
-                Identifier = "34L",
-                LandingRateSeconds = (int)_landingRate.TotalSeconds
-            },
-            new RunwayConfiguration
-            {
-                Identifier = "34R",
-                LandingRateSeconds = (int)_landingRate.TotalSeconds
-            }
-        ]
-    };
+
+    readonly RunwayMode _runwayMode = new(
+        new RunwayModeConfiguration
+        {
+            Identifier = "34IVA",
+            Runways =
+            [
+                new RunwayConfiguration
+                {
+                    Identifier = "34L",
+                    LandingRateSeconds = (int)_landingRate.TotalSeconds
+                },
+                new RunwayConfiguration
+                {
+                    Identifier = "34R",
+                    LandingRateSeconds = (int)_landingRate.TotalSeconds
+                }
+            ]
+        });
 
     // Simulating the user clicking on the right ladder to avoid getting the default runways
     readonly string[] _requestedRunways = new[] { "07", "16L", "34R" };
@@ -61,7 +63,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        insertedFlight.ScheduledLandingTime.ShouldBe(targetTime);
+        insertedFlight.LandingTime.ShouldBe(targetTime);
         insertedFlight.AssignedRunwayIdentifier.ShouldBe("34R");
         insertedFlight.ManualLandingTime.ShouldBeTrue();
         scheduler.Received(1).Schedule(sequence);
@@ -96,7 +98,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        insertedFlight.ScheduledLandingTime.ShouldBe(referenceFlight.ScheduledLandingTime.Subtract(_landingRate));
+        insertedFlight.LandingTime.ShouldBe(referenceFlight.LandingTime.Subtract(_landingRate));
         insertedFlight.AssignedRunwayIdentifier.ShouldBe(referenceFlight.AssignedRunwayIdentifier);
         scheduler.Received(1).Schedule(sequence);
     }
@@ -130,7 +132,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        insertedFlight.ScheduledLandingTime.ShouldBe(referenceFlight.ScheduledLandingTime.Add(_landingRate));
+        insertedFlight.LandingTime.ShouldBe(referenceFlight.LandingTime.Add(_landingRate));
         insertedFlight.AssignedRunwayIdentifier.ShouldBe(referenceFlight.AssignedRunwayIdentifier);
         scheduler.Received(1).Schedule(sequence);
     }
@@ -163,7 +165,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         sequence.Flights.Count.ShouldBe(initialFlightCount + 1);
         var dummyFlight = sequence.Flights.Last();
         dummyFlight.Callsign.ShouldMatch("\\*{4}\\d{2}\\*");
-        dummyFlight.ScheduledLandingTime.ShouldBe(targetTime);
+        dummyFlight.LandingTime.ShouldBe(targetTime);
         dummyFlight.AssignedRunwayIdentifier.ShouldBe("34R");
         scheduler.Received(1).Schedule(sequence);
     }
@@ -199,7 +201,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         landedFlight.State.ShouldBe(State.Frozen);
-        landedFlight.ScheduledLandingTime.ShouldBe(targetTime);
+        landedFlight.LandingTime.ShouldBe(targetTime);
         landedFlight.AssignedRunwayIdentifier.ShouldBe("34R");
         scheduler.Received(1).Schedule(sequence);
     }
@@ -233,7 +235,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         pendingFlight.State.ShouldBe(State.Unstable);
-        pendingFlight.ScheduledLandingTime.ShouldBe(targetTime);
+        pendingFlight.LandingTime.ShouldBe(targetTime);
         pendingFlight.AssignedRunwayIdentifier.ShouldBe("34R");
         scheduler.Received(1).Schedule(sequence);
     }
@@ -266,7 +268,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var newFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
         newFlight.AircraftType.ShouldBe("B738");
         newFlight.WakeCategory.ShouldBe(WakeCategory.Medium);
-        newFlight.ScheduledLandingTime.ShouldBe(targetTime);
+        newFlight.LandingTime.ShouldBe(targetTime);
         newFlight.AssignedRunwayIdentifier.ShouldBe("34R");
         scheduler.Received(1).Schedule(sequence);
     }
@@ -328,7 +330,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        insertedFlight.ScheduledLandingTime.ShouldBe(frozenFlight.ScheduledLandingTime.Add(_landingRate));
+        insertedFlight.LandingTime.ShouldBe(frozenFlight.LandingTime.Add(_landingRate));
         insertedFlight.AssignedRunwayIdentifier.ShouldBe(frozenFlight.AssignedRunwayIdentifier);
         scheduler.Received(1).Schedule(sequence);
     }
@@ -355,9 +357,9 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
     InsertFlightRequestHandler GetRequestHandler(Sequence sequence, IScheduler? scheduler = null)
     {
-        var sequenceProvider = new MockSequenceProvider(sequence);
+        var sessionManager = new MockLocalSessionManager(sequence);
         scheduler ??= Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
-        return new InsertFlightRequestHandler(sequenceProvider, scheduler, clockFixture.Instance, performanceLookupFixture.Instance, mediator);
+        return new InsertFlightRequestHandler(sessionManager, scheduler, clockFixture.Instance, performanceLookupFixture.Instance, mediator);
     }
 }

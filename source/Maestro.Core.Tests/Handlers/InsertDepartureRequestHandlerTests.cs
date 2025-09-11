@@ -82,7 +82,7 @@ public class InsertDepartureRequestHandlerTests(
 
         // Assert
         var expectedLandingTime = takeOffTime.Add(flightTime);
-        pendingFlight.EstimatedLandingTime.ShouldBe(expectedLandingTime);
+        pendingFlight.LandingEstimate.ShouldBe(expectedLandingTime);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class InsertDepartureRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.EstimatedFeederFixTime.ShouldBe(takeOffTime.Add(flightTime).Add(-_arrivalDuration));
+        pendingFlight.FeederFixEstimate.ShouldBe(takeOffTime.Add(flightTime).Add(-_arrivalDuration));
     }
 
     [Fact]
@@ -239,7 +239,7 @@ public class InsertDepartureRequestHandlerTests(
 
     InsertDepartureRequestHandler GetRequestHandler(Sequence sequence, IScheduler? scheduler = null)
     {
-        var sequenceProvider = new MockSequenceProvider(sequence);
+        var sessionManager = new MockLocalSessionManager(sequence);
 
         var arrivalLookup = Substitute.For<IArrivalLookup>();
         arrivalLookup.GetArrivalInterval(
@@ -254,7 +254,7 @@ public class InsertDepartureRequestHandlerTests(
 
         scheduler ??= Substitute.For<IScheduler>();
         return new InsertDepartureRequestHandler(
-            sequenceProvider,
+            sessionManager,
             performanceLookupFixture.Instance,
             arrivalLookup,
             scheduler,

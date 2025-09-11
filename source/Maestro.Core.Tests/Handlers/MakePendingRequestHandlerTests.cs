@@ -33,9 +33,9 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
             .WithFlight(flight)
             .Build();
 
-        var originalEstimate = flight.EstimatedLandingTime;
-        var originalFeederFixEstimate = flight.EstimatedFeederFixTime;
-        var originalScheduledTime = flight.ScheduledLandingTime;
+        var originalEstimate = flight.LandingEstimate;
+        var originalFeederFixEstimate = flight.FeederFixEstimate;
+        var originalScheduledTime = flight.LandingTime;
 
         var scheduler = Substitute.For<IScheduler>();
         var handler = GetRequestHandler(sequence, scheduler);
@@ -46,9 +46,9 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
 
         // Assert
         flight.State.ShouldBe(State.Pending);
-        flight.EstimatedLandingTime.ShouldNotBe(originalEstimate);
-        flight.EstimatedFeederFixTime.ShouldNotBe(originalFeederFixEstimate);
-        flight.ScheduledLandingTime.ShouldNotBe(originalScheduledTime);
+        flight.LandingEstimate.ShouldNotBe(originalEstimate);
+        flight.FeederFixEstimate.ShouldNotBe(originalFeederFixEstimate);
+        flight.LandingTime.ShouldNotBe(originalScheduledTime);
         scheduler.Received(1).Schedule(sequence);
     }
 
@@ -72,10 +72,10 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
 
     MakePendingRequestHandler GetRequestHandler(Sequence sequence, IScheduler? scheduler = null, ILogger? logger = null)
     {
-        var sequenceProvider = new MockSequenceProvider(sequence);
+        var sessionManager = new MockLocalSessionManager(sequence);;
         scheduler ??= Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
-        return new MakePendingRequestHandler(sequenceProvider, clockFixture.Instance, scheduler, mediator, logger);
+        return new MakePendingRequestHandler(sessionManager, clockFixture.Instance, scheduler, mediator, logger);
     }
 }

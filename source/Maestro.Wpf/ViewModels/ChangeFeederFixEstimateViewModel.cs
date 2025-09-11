@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -10,7 +9,7 @@ namespace Maestro.Wpf.ViewModels;
 public partial class ChangeFeederFixEstimateViewModel : ObservableObject
 {
     readonly IWindowHandle _windowHandle;
-    readonly IMessageDispatcher _messageDispatcher;
+    readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
 
     readonly string _airportIdentifier;
@@ -33,7 +32,7 @@ public partial class ChangeFeederFixEstimateViewModel : ObservableObject
         string feederFix,
         DateTimeOffset originalFeederFixEstimate,
         IWindowHandle windowHandle,
-        IMessageDispatcher messageDispatcher,
+        IMediator mediator,
         IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
@@ -43,7 +42,7 @@ public partial class ChangeFeederFixEstimateViewModel : ObservableObject
         _newFeederFixEstimate = originalFeederFixEstimate;
 
         _windowHandle = windowHandle;
-        _messageDispatcher = messageDispatcher;
+        _mediator = mediator;
         _errorReporter = errorReporter;
     }
 
@@ -52,7 +51,7 @@ public partial class ChangeFeederFixEstimateViewModel : ObservableObject
     {
         try
         {
-            await _messageDispatcher.Send(
+            await _mediator.Send(
                 new ChangeFeederFixEstimateRequest(_airportIdentifier, Callsign, NewFeederFixEstimate),
                 CancellationToken.None);
             _windowHandle.Close();
