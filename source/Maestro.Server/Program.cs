@@ -1,4 +1,5 @@
 using Maestro.Server;
+using Newtonsoft.Json.Serialization;
 using Serilog;
 
 var loggerConfig = new LoggerConfiguration()
@@ -23,7 +24,7 @@ try
     var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddSignalR()
         .AddHubOptions<MaestroHub>(x => x.MaximumReceiveMessageSize = 32_000_000) // TODO: Just send smaller messages!!!
-        .AddNewtonsoftJsonProtocol();
+        .AddNewtonsoftJsonProtocol(x => x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver());
 
     builder.Services.AddSerilog();
 
