@@ -39,6 +39,8 @@ public class BackgroundTask(Func<CancellationToken, Task> worker) : IAsyncDispos
         if (IsDisposed)
             return;
 
+        _stoppingTokenSource?.Cancel();
+
         if (_executingTask is not null)
         {
             await _executingTask;
