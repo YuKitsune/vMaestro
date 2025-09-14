@@ -28,9 +28,12 @@ try
     builder.Services.AddSerilog();
 
     var app = builder.Build();
+
+    app.UseStaticFiles();
+
     app.MapHub<MaestroHub>("/hub");
     app.MapGet("/health", () => Results.Ok());
-    app.MapGet("/", () => Results.Ok("Maestro Server is running"));
+    app.MapFallbackToFile("index.html");
     app.Run();
 }
 catch (Exception ex)
