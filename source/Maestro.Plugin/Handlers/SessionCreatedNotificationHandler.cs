@@ -48,42 +48,21 @@ public class SessionCreatedNotificationHandler(
             {
                 Plugin.AddMenuItemFor(notification.AirportIdentifier, form);
 
-                // TODO: Can we handle this in some separate place?
-                form.CustomFormClosing += async (_, e) =>
+                form.Closed += async (_, _) =>
                 {
                     try
                     {
-                        // Only show confirmation for user-initiated closes
-                        // Application exits and programmatic closes should not be blocked
-                        if (e.CloseReason is not CloseReason.UserClosing)
-                            return;
-
-                        e.Cancel = true;
-
-                        // Ask for confirmation through mediator
-                        var dialogMessage =
-                            $"""
-                             Closing the TFMS window will terminate the sequence for {notification.AirportIdentifier}.
-                             Do you really want to close the window?
-                             """;
-                        var response = await mediator.Send(new ConfirmationRequest("Close Maestro", dialogMessage),
-                            cancellationToken);
-
-                        // If user confirmed, terminate the session
-                        if (!response.Confirmed)
-                            return;
-
+                        // TODO: Revisit confirmation dialog
                         await mediator.Send(
                             new DestroySessionRequest(notification.AirportIdentifier),
                             cancellationToken);
+                        Plugin.RemoveMenuItemFor(notification.AirportIdentifier);
                     }
                     catch (Exception ex)
                     {
                         errorReporter.ReportError(ex);
                     }
                 };
-
-                form.Closed += (_, _) => Plugin.RemoveMenuItemFor(notification.AirportIdentifier);
             });
 
         // Immediately start session if we're connected to VATSIM
