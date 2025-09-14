@@ -539,6 +539,10 @@ public partial class MaestroView
         if (sender is not FlightLabelView flightLabel)
             return;
 
+        // Only handle mouse down in Approach mode
+        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
+            return;
+
         if (_isDragging)
             return;
 
@@ -566,6 +570,10 @@ public partial class MaestroView
         if (sender is not FlightLabelView flightLabel)
             return;
 
+        // Only handle mouse move in Approach mode
+        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
+            return;
+
         if (_draggingFlightLabel != flightLabel || e.LeftButton != MouseButtonState.Pressed)
             return;
 
@@ -589,6 +597,10 @@ public partial class MaestroView
     void OnFlightLabelMouseUp(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FlightLabelView flightLabel)
+            return;
+
+        // Only handle mouse up in Approach mode
+        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
             return;
 
         if (_draggingFlightLabel != flightLabel)
@@ -634,8 +646,14 @@ public partial class MaestroView
             {
                 var clickedFlight = flightLabelViewModel.FlightViewModel;
 
-                // Check if there's already a selected flight
-                if (ViewModel.SelectedFlight != null && ViewModel.SelectedFlight.Callsign != clickedFlight.Callsign)
+                // Clicked the same flight, deselect it
+                if (ViewModel.SelectedFlight?.Callsign == clickedFlight.Callsign)
+                {
+                    ViewModel.DeselectFlight();
+                }
+
+                // Clicked a different flight, swap them
+                else if (ViewModel.SelectedFlight != null && ViewModel.SelectedFlight.Callsign != clickedFlight.Callsign)
                 {
                     // Swap the positions of the selected flight and the clicked flight
                     ViewModel.SwapFlightsCommand.Execute(
@@ -652,8 +670,9 @@ public partial class MaestroView
                 {
                     // No flight selected or clicking the same flight - just select this flight
                     ViewModel.SelectFlight(clickedFlight);
-                    DrawTimelineIfAllowed(); // Immediately update UI to reflect selection
                 }
+
+                DrawTimelineIfAllowed(); // Immediately update UI to reflect selection
             }
         }
 
@@ -674,13 +693,16 @@ public partial class MaestroView
         if (sender is not FlightLabelView flightLabel)
             return;
 
-        // Double-clicking a flight makes it stable
-        ViewModel.MakeStableCommand.Execute(new MakeStableRequest(
-            ViewModel.AirportIdentifier,
-            flight.Callsign
-        ));
+        // Double-clicking a flight makes it stable - only in Enroute mode
+        if (ViewModel.SelectedView.ViewMode == ViewMode.Enroute)
+        {
+            ViewModel.MakeStableCommand.Execute(new MakeStableRequest(
+                ViewModel.AirportIdentifier,
+                flight.Callsign
+            ));
 
-        e.Handled = true;
+            e.Handled = true;
+        }
     }
 
     void OnFlightLabelRightClick(object sender, MouseButtonEventArgs e, FlightMessage flight)
@@ -793,20 +815,12 @@ public partial class MaestroView
                     IsDraggable = canMove
                 };
 
-                // Set up event handlers
-                if (ViewModel.SelectedView.ViewMode == ViewMode.Enroute)
-                {
-                    flightLabel.MouseDoubleClick += (s, e) => OnFlightLabelDoubleClick(s, e, flight);
-                }
-
-                if (ViewModel.SelectedView.ViewMode == ViewMode.Approach)
-                {
-                    flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
-                    flightLabel.MouseMove += OnFlightLabelMouseMove;
-                    flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
-                }
-
-                // Add right-click handler for both view modes to enable deselection
+                // Set up event handlers - always subscribe to all events
+                // Conditional logic will be handled within the event handlers themselves
+                flightLabel.MouseDoubleClick += (s, e) => OnFlightLabelDoubleClick(s, e, flight);
+                flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
+                flightLabel.MouseMove += OnFlightLabelMouseMove;
+                flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
                 flightLabel.MouseRightButtonDown += (s, e) => OnFlightLabelRightClick(s, e, flight);
                 flightLabel.ContextMenuOpening += SuppressContextMenuIfRequired;
 
@@ -859,6 +873,7 @@ public partial class MaestroView
         {
             LadderCanvas.Children.Remove(flightLabel);
         }
+
         _flightLabels.Clear();
     }
 }
