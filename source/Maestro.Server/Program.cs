@@ -1,9 +1,16 @@
 using Maestro.Server;
 using Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .CreateLogger();
+var loggerConfig = new LoggerConfiguration()
+    .WriteTo.Console();
+
+var seqServerUrl = Environment.GetEnvironmentVariable("SEQ_SERVER_URL");
+if (!string.IsNullOrEmpty(seqServerUrl))
+{
+    loggerConfig.WriteTo.Seq(seqServerUrl);
+}
+
+Log.Logger = loggerConfig.CreateLogger();
 
 // TODO: Basic web UI with supervisor functions
 //  - View connected users
@@ -22,6 +29,8 @@ try
 
     var app = builder.Build();
     app.MapHub<MaestroHub>("/hub");
+    app.MapGet("/health", () => Results.Ok());
+    app.MapGet("/", () => Results.Ok("Maestro Server is running"));
     app.Run();
 }
 catch (Exception ex)
