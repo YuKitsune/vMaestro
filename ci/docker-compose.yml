@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik
+      - ./certs:/certs
+    environment:
+      - CLOUDFLARE_EMAIL=${CLOUDFLARE_EMAIL}
+      - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
+    command:
+      - --log.level=debug
+      - --api.dashboard=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cloudflare.acme.email=${CLOUDFLARE_EMAIL}
+      - --certificatesresolvers.cloudflare.acme.storage=/certs/acme.json
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+
+  seq:
+    image: datalust/seq:2025.2
+    container_name: seq
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_FIRSTRUN_ADMINPASSWORD}
+      - SEQ_API_CANONICALURI=https://${DOMAIN}/seq
+    volumes:
+      - seq-data:/data
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.seq.rule=Host(`${DOMAIN}`) && PathPrefix(`/seq`)"
+      - "traefik.http.routers.seq.priority=2"
+      - "traefik.http.routers.seq.tls=true"
+      - "traefik.http.routers.seq.tls.certresolver=cloudflare"
+      - "traefik.http.routers.seq.entrypoints=websecure"
+      - "traefik.http.routers.seq.middlewares=seq-redirect,strip-seq,autodetect"
+      - "traefik.http.middlewares.seq-redirect.redirectregex.regex=^https?://([^/]+)/seq$$"
+      - "traefik.http.middlewares.seq-redirect.redirectregex.replacement=https://$${1}/seq/"
+      - "traefik.http.middlewares.autodetect.contenttype.autodetect=false"
+      - "traefik.http.middlewares.strip-seq.stripprefix.prefixes=/seq"
+      - "traefik.http.services.seq.loadbalancer.server.port=80"
+
+  maestro:
+    image: maestro
+    container_name: maestro
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - SEQ_SERVER_URL=http://seq
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.maestro.rule=Host(`${DOMAIN}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.maestro.priority=1"
+      - "traefik.http.routers.maestro.tls=true"
+      - "traefik.http.routers.maestro.tls.certresolver=cloudflare"
+      - "traefik.http.routers.maestro.entrypoints=websecure"
+      - "traefik.http.services.maestro.loadbalancer.server.port=8080"
+
+networks:
+  web:
+    external: false
+
+volumes:
+  seq-data:
