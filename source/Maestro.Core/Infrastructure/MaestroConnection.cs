@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
@@ -65,9 +66,10 @@ public class MaestroConnection : IAsyncDisposable
 
         try
         {
+            var role = CallsignToRole.GetRoleFromCallsign(position);
             var response = await _hubConnection.InvokeAsync<JoinSequenceResponse>(
                 "JoinSequence",
-                new JoinSequenceRequest(_partition, AirportIdentifier, position),
+                new JoinSequenceRequest(_partition, AirportIdentifier, position, role),
                 cancellationToken);
 
             return new SequenceStartResult(response.OwnsSequence, response.Sequence);
@@ -102,6 +104,14 @@ public class MaestroConnection : IAsyncDisposable
     void SubscribeToNotifications()
     {
         _hubConnection.On<OwnershipGrantedNotification>("OwnershipGranted", async request =>
+        {
+            if (request.AirportIdentifier != _airportIdentifier)
+                return;
+
+            await _mediator.Send(request, GetMessageCancellationToken());
+        });
+
+        _hubConnection.On<OwnershipRevokedNotification>("OwnershipRevoked", async request =>
         {
             if (request.AirportIdentifier != _airportIdentifier)
                 return;

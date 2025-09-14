@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
 
 namespace Maestro.Server;
@@ -21,11 +22,11 @@ public class Sequence(GroupKey groupKey)
         }
     }
 
-    public Connection AddConnection(string connectionId)
+    public Connection AddConnection(string connectionId, string callsign, Role role)
     {
         lock (_lock)
         {
-            var connection = new Connection(connectionId, GroupKey);
+            var connection = new Connection(connectionId, GroupKey, callsign, role);
             _connections.Add(connection);
 
             return connection;

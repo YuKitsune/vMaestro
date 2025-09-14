@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
@@ -14,15 +15,15 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
     public async Task<JoinSequenceResponse> JoinSequence(JoinSequenceRequest request)
     {
         var groupKey = new GroupKey(request.Partition, request.AirportIdentifier);
-        logger.LogInformation("Connection {ConnectionId} attempting to join {Group}",
-            Context.ConnectionId, groupKey);
+        logger.LogInformation("{Callsign} attempting to join {Group}",
+            request.Position, groupKey);
 
         // Validate this connection is not part of another sequence
         if (Connections.TryGetValue(Context.ConnectionId, out var existingGroupKey))
         {
-            logger.LogWarning("Connection {ConnectionId} attempted to join {Group} but is already part of {ExistingGroup}",
-                Context.ConnectionId, groupKey, existingGroupKey);
-            throw new InvalidOperationException($"Connection {Context.ConnectionId} is already part of group {existingGroupKey}");
+            logger.LogWarning("{Callsign} attempted to join {Group} but is already part of {ExistingGroup}",
+                request.Position, groupKey, existingGroupKey);
+            throw new InvalidOperationException($"{request.Position} is already part of group {existingGroupKey}");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupKey.Value);
@@ -30,20 +31,35 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
 
         var sequence = Sequences.GetOrAdd(groupKey, id => new Sequence(id));
         var wasEmpty = sequence.IsEmpty;
-        var connection = sequence.AddConnection(Context.ConnectionId);
+        var connection = sequence.AddConnection(Context.ConnectionId, request.Position, request.Role);
 
-        logger.LogInformation("Connection {ConnectionId} successfully joined sequence {Group}. Total connections: {Count}",
-            Context.ConnectionId,
+        logger.LogInformation("{Callsign} successfully joined {Group}. Total connections: {Count}",
+            request.Position,
             groupKey,
             sequence.Connections.Count);
 
-        // TODO: Lookup callsign to determine the role
-
-        // First connection becomes flow controller
-        if (wasEmpty)
+        // TODO: What if there are two flow controllers?
+        if (request.Role == Role.Flow)
         {
-            logger.LogInformation("Assigning {ConnectionId} as owner for {Group}",
-                Context.ConnectionId, groupKey);
+            // Revoke ownership from current owner if any
+            var currentOwner = sequence.Connections.FirstOrDefault(c => c.OwnsSequence && c.Id != Context.ConnectionId);
+            if (currentOwner != null)
+            {
+                logger.LogInformation("Revoking ownership from {PreviousCallsign} for {Group}",
+                    currentOwner.Callsign, groupKey);
+                currentOwner.OwnsSequence = false;
+                await Clients.Client(currentOwner.Id).SendAsync("OwnershipRevoked", new OwnershipRevokedNotification(groupKey.AirportIdentifier));
+            }
+
+            logger.LogInformation("Assigning {Callsign} as flow controller for {Group}",
+                request.Position, groupKey);
+            connection.OwnsSequence = true;
+        }
+        else if (wasEmpty)
+        {
+            // First connection becomes flow controller if no FMP controller is present
+            logger.LogInformation("Assigning {Callsign} as owner for {Group} (first connection)",
+                request.Position, groupKey);
             connection.OwnsSequence = true;
         }
 
@@ -66,15 +82,17 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             return;
         }
 
-        logger.LogInformation("Connection {ConnectionId} attempting to leave {Group}",
-            Context.ConnectionId, groupKey);
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        var connection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
+        var callsign = connection?.Callsign ?? "Unknown";
+
+        logger.LogInformation("{Callsign} attempting to leave {Group}",
+            callsign, groupKey);
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupKey.Value);
 
-        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
         if (sequence != null)
         {
-            var connection = sequence.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
             if (connection == null)
             {
                 logger.LogWarning("Connection {ConnectionId} attempted to leave {Group} but was not found",
@@ -85,8 +103,8 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
 
             sequence.RemoveConnection(Context.ConnectionId);
 
-            logger.LogInformation("Connection {ConnectionId} left {Group}. Remaining connections: {Count}",
-                Context.ConnectionId, groupKey, sequence.Connections.Count);
+            logger.LogInformation("{Callsign} left {Group}. Remaining connections: {Count}",
+                callsign, groupKey, sequence.Connections.Count);
 
             if (sequence.IsEmpty)
             {
@@ -95,10 +113,15 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             }
             else if (connection.OwnsSequence)
             {
-                // Re-assign ownership to the next connection if the owner left
-                var newOwner = sequence.Connections.First();
-                await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
-                newOwner.OwnsSequence = true;
+                // Re-assign ownership when the owner leaves
+                var newOwner = SelectNewOwner(sequence);
+                if (newOwner != null)
+                {
+                    logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group}",
+                        newOwner.Callsign, groupKey);
+                    await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
+                    newOwner.OwnsSequence = true;
+                }
             }
         }
 
@@ -114,35 +137,37 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             return;
         }
 
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        var connection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
+        var callsign = connection?.Callsign ?? "Unknown";
+
         if (sequenceUpdatedNotification.AirportIdentifier != groupKey.AirportIdentifier)
         {
             logger.LogWarning(
-                "Connection {ConnectionId} attempted to update {Airport} but is part of {Group}",
-                Context.ConnectionId, sequenceUpdatedNotification.AirportIdentifier, groupKey);
+                "{Callsign} attempted to update {Airport} but is part of {Group}",
+                callsign, sequenceUpdatedNotification.AirportIdentifier, groupKey);
             return;
         }
 
-        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
-        if (sequence == null)
+        if (sequence is null)
         {
             logger.LogWarning(
-                "Connection {ConnectionId} attempted to update {Group} but no sequence exists",
-                Context.ConnectionId,
+                "{Callsign} attempted to update {Group} but no sequence exists",
+                callsign,
                 groupKey);
             return;
         }
 
-        var connection = sequence.Connections.Single(c => c.Id == Context.ConnectionId);
         if (!connection.OwnsSequence)
         {
-            logger.LogWarning("Connection {ConnectionId} attempted to update {Group} but is not the owner",
-                Context.ConnectionId,
+            logger.LogWarning("{Callsign} attempted to update {Group} but is not the owner",
+                callsign,
                 groupKey);
             return;
         }
 
-        logger.LogDebug("{ConnectionId} updating {Group}",
-            Context.ConnectionId, groupKey);
+        logger.LogDebug("{Callsign} updating {Group}",
+            callsign, groupKey);
 
         sequence.LatestSequence = sequenceUpdatedNotification.Sequence;
 
@@ -250,40 +275,43 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             return;
         }
 
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        var senderConnection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
+        var senderCallsign = senderConnection?.Callsign ?? "Unknown";
+
         if (airportIdentifier != groupKey.AirportIdentifier)
         {
             logger.LogWarning(
-                "Connection {ConnectionId} attempted to send {MessageType} for {Airport} but is part of {Group}",
-                Context.ConnectionId, messageType, airportIdentifier, groupKey);
+                "{Callsign} attempted to send {MessageType} for {Airport} but is part of {Group}",
+                senderCallsign, messageType, airportIdentifier, groupKey);
             return;
         }
 
-        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
         if (sequence == null)
         {
-            logger.LogWarning("Connection {ConnectionId} attempted to send {MessageType} to owner of {Group} but no sequence exists",
-                Context.ConnectionId, messageType, groupKey);
+            logger.LogWarning("{Callsign} attempted to send {MessageType} to owner of {Group} but no sequence exists",
+                senderCallsign, messageType, groupKey);
             return;
         }
 
         var flowController = sequence.Connections.SingleOrDefault(c => c.OwnsSequence);
         if (flowController == null)
         {
-            logger.LogWarning("Connection {ConnectionId} attempted to send {MessageType} to owner of {Group} but no owner exists",
-                Context.ConnectionId, messageType, groupKey);
+            logger.LogWarning("{Callsign} attempted to send {MessageType} to owner of {Group} but no owner exists",
+                senderCallsign, messageType, groupKey);
             return;
         }
 
         // Don't send messages to yourself
         if (flowController.Id == Context.ConnectionId)
         {
-            logger.LogWarning("Connection {ConnectionId} attempted to send {MessageType} to itself as owner of {Group}",
-                Context.ConnectionId, messageType, groupKey);
+            logger.LogWarning("{Callsign} attempted to send {MessageType} to itself as owner of {Group}",
+                senderCallsign, messageType, groupKey);
             return;
         }
 
-        logger.LogDebug("Connection {ConnectionId} sending {MessageType} to {FlowController} for {Group}",
-            Context.ConnectionId, messageType, flowController.Id, groupKey);
+        logger.LogDebug("{Callsign} sending {MessageType} to {FlowControllerCallsign} for {Group}",
+            senderCallsign, messageType, flowController.Callsign, groupKey);
 
         await Clients.Client(flowController.Id).SendAsync(messageType, request);
     }
@@ -292,30 +320,54 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
     {
         var connectionId = Context.ConnectionId;
 
+        // Try to get the callsign before we remove the connection
+        string callsign = "Unknown";
+        if (Connections.TryGetValue(connectionId, out var groupKey))
+        {
+            var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+            var connection = sequence?.Connections.SingleOrDefault(c => c.Id == connectionId);
+            callsign = connection?.Callsign ?? "Unknown";
+        }
+
         if (exception is not null)
         {
-            logger.LogError(exception, "Connection {ConnectionId} disconnected with error", connectionId);
+            logger.LogError(exception, "{Callsign} disconnected with error", callsign);
         }
         else
         {
-            logger.LogInformation("Connection {ConnectionId} disconnected", connectionId);
+            logger.LogInformation("{Callsign} disconnected", callsign);
         }
 
-        if (Connections.TryGetValue(connectionId, out var groupKey))
+        if (Connections.TryGetValue(connectionId, out groupKey))
         {
             var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
             if (sequence != null)
             {
+                // Check if the disconnecting connection was the owner before removing it
+                var wasOwner = sequence.Connections.Any(c => c.Id == connectionId && c.OwnsSequence);
+
                 await Groups.RemoveFromGroupAsync(connectionId, groupKey.Value);
                 sequence.RemoveConnection(connectionId);
 
-                logger.LogInformation("Connection {ConnectionId} left {Group}. Remaining connections: {Count}",
-                    connectionId, groupKey, sequence.Connections.Count);
+                logger.LogInformation("{Callsign} left {Group}. Remaining connections: {Count}",
+                    callsign, groupKey, sequence.Connections.Count);
 
                 if (sequence.IsEmpty)
                 {
                     logger.LogInformation("Removing empty {Group}", groupKey);
                     Sequences.TryRemove(groupKey, out _);
+                }
+                else if (wasOwner)
+                {
+                    // Re-assign ownership when the owner disconnects
+                    var newOwner = SelectNewOwner(sequence);
+                    if (newOwner != null)
+                    {
+                        logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group} after disconnect",
+                            newOwner.Callsign, groupKey);
+                        await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
+                        newOwner.OwnsSequence = true;
+                    }
                 }
             }
 
@@ -329,5 +381,18 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
     {
         logger.LogInformation("New connection established: {ConnectionId}", Context.ConnectionId);
         await base.OnConnectedAsync();
+    }
+
+    private static Connection? SelectNewOwner(Sequence sequence)
+    {
+        // Prioritize flow controllers first
+        var flowController = sequence.Connections.FirstOrDefault(c =>
+            !c.OwnsSequence && c.Role == Role.Flow);
+
+        if (flowController != null)
+            return flowController;
+
+        // Fall back to any other available connection
+        return sequence.Connections.FirstOrDefault(c => !c.OwnsSequence);
     }
 }
