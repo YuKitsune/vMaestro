@@ -47,17 +47,17 @@ public class InsertDepartureRequestHandler(
         var landingEstimate = request.TakeOffTime.Add(flight.EstimatedTimeEnroute.Value);
         flight.UpdateLandingEstimate(landingEstimate);
 
-        // Calculate feeder fix estimate based on landing time
-        // Need to do this after so that the runway gets assigned
-        var feederFixEstimate = GetFeederFixTime(flight);
-        if (feederFixEstimate is not null)
-            flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
-
         // Calculate the position in the sequence
         flight.SetState(State.New, clock);
 
         scheduler.Schedule(sequence);
         flight.SetState(State.Unstable, clock);
+
+        // Calculate feeder fix estimate based on landing time
+        // Need to do this after so that the runway gets assigned
+        var feederFixEstimate = GetFeederFixTime(flight);
+        if (feederFixEstimate is not null)
+            flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
