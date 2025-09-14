@@ -19,7 +19,7 @@ public partial class SetupViewModel : ObservableObject
     AirportConfiguration[] _airportConfigurations = [];
 
     [ObservableProperty]
-    string _selectedAirport = NoneServer;
+    string _selectedAirport;
 
     [ObservableProperty]
     RunwayModeViewModel[] _availableRunwayModes = [];
@@ -52,6 +52,7 @@ public partial class SetupViewModel : ObservableObject
         SelectedRunwayModeIdentifier = initialAirportConfiguration.RunwayModes.First().Identifier;
 
         Servers = [NoneServer, ..serverConfiguration.Partitions];
+        SelectedServer = NoneServer;
 
         _mediator = mediator;
         _windowHandle = windowHandle;
