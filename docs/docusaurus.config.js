@@ -75,9 +75,21 @@ const config = {
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
+            sidebarId: 'userGuideSidebar',
             position: 'left',
-            label: 'Tutorial',
+            label: 'User Guide',
+          },
+          {
+            type: 'docSidebar',
+            sidebarId: 'configurationGuideSidebar',
+            position: 'left',
+            label: 'Configuration Guide',
+          },
+          {
+            type: 'docSidebar',
+            sidebarId: 'developerGuideSidebar',
+            position: 'left',
+            label: 'Developer Guide',
           },
           {
             href: 'https://github.com/yukitsune/vMaestro',
