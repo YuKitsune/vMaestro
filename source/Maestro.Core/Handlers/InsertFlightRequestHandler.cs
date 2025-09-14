@@ -13,7 +13,7 @@ public class InsertFlightRequestHandler(
     IClock clock,
     IPerformanceLookup performanceLookup,
     IMediator mediator)
-    : IRequestHandler<InsertFlightRequest>
+    : IRequestHandler<InsertFlightRequest>, IRequestHandler<InsertOvershootRequest>
 {
     public async Task Handle(InsertFlightRequest request, CancellationToken cancellationToken)
     {
@@ -42,22 +42,6 @@ public class InsertFlightRequestHandler(
         if (string.IsNullOrWhiteSpace(request.Callsign))
         {
             sequence.AddDummyFlight(landingTime, runway, scheduler, clock);
-            await mediator.Publish(
-                new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
-                cancellationToken);
-            return;
-        }
-
-        // BUG: If inserting after a frozen flight, nothing happens
-        var landedFlight = sequence.Flights.FirstOrDefault(f=> f.Callsign == request.Callsign && f.State == State.Landed);
-        if (landedFlight is not null)
-        {
-            // Re-sequence the landed flight at the specified time
-            landedFlight.SetState(State.Overshoot, clock);
-            landedFlight.SetRunway(runway, manual: true);
-            landedFlight.SetLandingTime(landingTime);
-            scheduler.Schedule(sequence);
-            landedFlight.SetState(state, clock);
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);
@@ -102,6 +86,47 @@ public class InsertFlightRequestHandler(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);
         }
+    }
+
+    public async Task Handle(InsertOvershootRequest request, CancellationToken cancellationToken)
+    {
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Send(request, cancellationToken);
+            return;
+        }
+
+        var sequence = lockedSession.Session.Sequence;
+        var (landingTime, runwayIdentifiers) = FindTargetLandingTime(sequence, request.Options);
+        var runwayModeAtLandingTime = sequence.NextRunwayMode is not null
+            ? sequence.FirstLandingTimeForNextMode.IsSameOrBefore(landingTime)
+                ? sequence.NextRunwayMode
+                : sequence.CurrentRunwayMode
+            : sequence.CurrentRunwayMode;
+
+        var runway =
+            runwayModeAtLandingTime.Runways.FirstOrDefault(r => runwayIdentifiers.Contains(r.Identifier))?.Identifier ??
+            runwayModeAtLandingTime.Default.Identifier;
+
+        var state = State.Frozen; // TODO: Make this configurable
+
+        // BUG: If inserting after a frozen flight, nothing happens
+        var landedFlight = sequence.Flights.FirstOrDefault(f=> f.Callsign == request.Callsign && f.State == State.Landed);
+        if (landedFlight is null)
+        {
+            throw new MaestroException($"Flight {request.Callsign} not found in landed flights");
+        }
+
+        // Re-sequence the landed flight at the specified time
+        landedFlight.SetState(State.Overshoot, clock);
+        landedFlight.SetRunway(runway, manual: true);
+        landedFlight.SetLandingTime(landingTime);
+        scheduler.Schedule(sequence);
+        landedFlight.SetState(state, clock);
+        await mediator.Publish(
+            new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
+            cancellationToken);
     }
 
     (DateTimeOffset, string[]) FindTargetLandingTime(Sequence sequence, IInsertFlightOptions options)

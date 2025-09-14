@@ -24,7 +24,7 @@ public static class ActionKeys
     public const string ChangeFeederFixEstimate = nameof(ChangeFeederFixEstimate);
     public const string ManageSlots = nameof(ManageSlots);
     public const string InsertOvershoot = nameof(InsertOvershoot);
-    public const string InsertPending = nameof(InsertPending);
+    public const string InsertDeparture = nameof(InsertDeparture);
     public const string InsertDummy = nameof(InsertDummy);
     public const string MakePending = nameof(MakePending);
     public const string ChangeRunway = nameof(ChangeRunway);
@@ -63,7 +63,7 @@ public static class PermissionHelper
             { ActionKeys.ChangeFeederFixEstimate, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.ManageSlots, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.InsertOvershoot, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.InsertPending, [Role.Flow, Role.Enroute, Role.Approach] },
+            { ActionKeys.InsertDeparture, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.InsertDummy, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.MakePending, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.ChangeRunway, [Role.Flow, Role.Enroute, Role.Approach] },

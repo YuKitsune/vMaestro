@@ -55,6 +55,18 @@ namespace Maestro.Plugin;
 // TODO: Information messages
 //  - Show information messages for important events (e.g. pending flight activated, desequenced, runway mode changes etc.)
 
+// Notes from testing on Sunday:
+//  - Flow can't move some flights, for some reason
+//  - Changing runways sometimes doesn't deconflict
+//  - Insert flight doesn't work for APP
+//  - ChangeRunway should've worked for everyone (it didn't)
+//  - Closing the TFMS window doesn't destroy the session (also stays in the menubar)
+//  - APP can't seem to select some flights
+//  - Information Window too small
+//  - Dummy flights become unstable
+//  - Insert pending doesn't work
+//  - Sequence resets to local copy when becoming owner
+
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
 {

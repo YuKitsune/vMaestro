@@ -235,7 +235,6 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
 
     // TODO: Rename methods to just "InsertPending" and "InsertDummy" etc.
 
-    // TODO: Split this into multiple methods for overshoot and dummies
     public async Task InsertFlightRequest(InsertFlightRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertDummy, request.AirportIdentifier))
@@ -244,9 +243,17 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "InsertFlightRequest", request);
     }
 
+    public async Task InsertOvershootRequest(InsertOvershootRequest request)
+    {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertOvershoot, request.AirportIdentifier))
+            return;
+
+        await SendToFlowController(request.AirportIdentifier, "InsertOvershootRequest", request);
+    }
+
     public async Task InsertDepartureRequest(InsertDepartureRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertPending, request.AirportIdentifier))
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertDeparture, request.AirportIdentifier))
             return;
 
         await SendToFlowController(request.AirportIdentifier, "InsertDepartureRequest", request);

@@ -190,10 +190,9 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
 
         var scheduler = Substitute.For<IScheduler>();
         var handler = GetRequestHandler(sequence, scheduler);
-        var request = new InsertFlightRequest(
+        var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
-            "B738",
             new ExactInsertionOptions(targetTime, _requestedRunways));
 
         // Act
