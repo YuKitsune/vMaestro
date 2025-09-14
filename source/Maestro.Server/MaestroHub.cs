@@ -233,8 +233,10 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(flightUpdatedNotification.Destination, "FlightUpdatedNotification", flightUpdatedNotification);
     }
 
+    // TODO: Rename methods to just "InsertPending" and "InsertDummy" etc.
+
     // TODO: Split this into multiple methods for overshoot and dummies
-    public async Task InsertFlight(InsertFlightRequest request)
+    public async Task InsertFlightRequest(InsertFlightRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertDummy, request.AirportIdentifier))
             return;
@@ -242,7 +244,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "InsertFlightRequest", request);
     }
 
-    public async Task InsertDeparture(InsertDepartureRequest request)
+    public async Task InsertDepartureRequest(InsertDepartureRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertPending, request.AirportIdentifier))
             return;
@@ -250,7 +252,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "InsertDepartureRequest", request);
     }
 
-    public async Task MoveFlight(MoveFlightRequest request)
+    public async Task MoveFlightRequest(MoveFlightRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MoveFlight, request.AirportIdentifier))
             return;
@@ -258,7 +260,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "MoveFlightRequest", request);
     }
 
-    public async Task SwapFlights(SwapFlightsRequest request)
+    public async Task SwapFlightsRequest(SwapFlightsRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MoveFlight, request.AirportIdentifier))
             return;
@@ -266,7 +268,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "SwapFlightsRequest", request);
     }
 
-    public async Task RemoveFlight(RemoveRequest request)
+    public async Task RemoveRequest(RemoveRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.RemoveFlight, request.AirportIdentifier))
             return;
@@ -274,7 +276,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "RemoveRequest", request);
     }
 
-    public async Task DesequenceFlight(DesequenceRequest request)
+    public async Task DesequenceRequest(DesequenceRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Desequence, request.AirportIdentifier))
             return;
@@ -282,7 +284,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "DesequenceRequest", request);
     }
 
-    public async Task MakeFlightPending(MakePendingRequest request)
+    public async Task MakePendingRequest(MakePendingRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MakePending, request.AirportIdentifier))
             return;
@@ -290,7 +292,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "MakePendingRequest", request);
     }
 
-    public async Task MakeFlightStable(MakeStableRequest request)
+    public async Task MakeStableRequest(MakeStableRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MakeStable, request.AirportIdentifier))
             return;
@@ -298,7 +300,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "MakeStableRequest", request);
     }
 
-    public async Task RecomputeFlight(RecomputeRequest request)
+    public async Task RecomputeRequest(RecomputeRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Recompute, request.AirportIdentifier))
             return;
@@ -306,7 +308,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "RecomputeRequest", request);
     }
 
-    public async Task ResumeSequencing(ResumeSequencingRequest request)
+    public async Task ResumeSequencingRequest(ResumeSequencingRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Resequence, request.AirportIdentifier))
             return;
@@ -314,7 +316,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "ResumeSequencingRequest", request);
     }
 
-    public async Task ZeroDelay(ZeroDelayRequest request)
+    public async Task ZeroDelayRequest(ZeroDelayRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeMaxDelay, request.AirportIdentifier))
             return;
@@ -322,7 +324,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "ZeroDelayRequest", request);
     }
 
-    public async Task ChangeRunway(ChangeRunwayRequest request)
+    public async Task ChangeRunwayRequest(ChangeRunwayRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeRunway, request.AirportIdentifier))
             return;
@@ -330,7 +332,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "ChangeRunwayRequest", request);
     }
 
-    public async Task ChangeRunwayMode(ChangeRunwayModeRequest request)
+    public async Task ChangeRunwayModeRequest(ChangeRunwayModeRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeTerminalConfiguration, request.AirportIdentifier))
             return;
@@ -338,7 +340,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "ChangeRunwayModeRequest", request);
     }
 
-    public async Task ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)
+    public async Task ChangeFeederFixEstimateRequest(ChangeFeederFixEstimateRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeFeederFixEstimate, request.AirportIdentifier))
             return;
@@ -346,7 +348,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "ChangeFeederFixEstimateRequest", request);
     }
 
-    public async Task CreateSlot(CreateSlotRequest request)
+    public async Task CreateSlotRequest(CreateSlotRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
             return;
@@ -354,7 +356,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "CreateSlotRequest", request);
     }
 
-    public async Task ModifySlot(ModifySlotRequest request)
+    public async Task ModifySlotRequest(ModifySlotRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
             return;
@@ -362,7 +364,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(request.AirportIdentifier, "ModifySlotRequest", request);
     }
 
-    public async Task DeleteSlot(DeleteSlotRequest request)
+    public async Task DeleteSlotRequest(DeleteSlotRequest request)
     {
         if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
             return;

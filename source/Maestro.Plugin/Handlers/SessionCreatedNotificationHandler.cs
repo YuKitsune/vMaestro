@@ -3,7 +3,6 @@ using System.Windows.Forms;
 using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
@@ -19,8 +18,7 @@ public class SessionCreatedNotificationHandler(
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter,
-    INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream,
-    INotificationStream<PermissionSetChangedNotification> permissionSetChangedNotificationStream)
+    INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream)
     : INotificationHandler<SessionCreatedNotification>
 {
     public async Task Handle(SessionCreatedNotification notification, CancellationToken cancellationToken)
@@ -43,8 +41,7 @@ public class SessionCreatedNotificationHandler(
                     airportConfiguration.Views,
                     mediator,
                     errorReporter,
-                    sequenceUpdatedNotificationStream,
-                    permissionSetChangedNotificationStream)),
+                    sequenceUpdatedNotificationStream)),
             shrinkToContent: false,
             new Size(560, 800),
             configureForm: form =>

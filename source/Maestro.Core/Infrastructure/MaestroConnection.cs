@@ -126,7 +126,7 @@ public class MaestroConnection : IAsyncDisposable
             if (request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await _mediator.Publish(request, GetMessageCancellationToken());
         });
 
         _hubConnection.On<OwnershipRevokedNotification>("OwnershipRevoked", async request =>
@@ -134,7 +134,7 @@ public class MaestroConnection : IAsyncDisposable
             if (request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await _mediator.Publish(request, GetMessageCancellationToken());
         });
 
         _hubConnection.On<PermissionsChangedNotification>("PermissionStateNotification", async notification =>
