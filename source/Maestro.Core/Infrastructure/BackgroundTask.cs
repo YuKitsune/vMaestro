@@ -10,7 +10,7 @@ public class BackgroundTask(Func<CancellationToken, Task> worker) : IAsyncDispos
 
     public bool IsRunning => _executingTask is { IsCompleted: false };
 
-    public async Task Start(CancellationToken cancellationToken)
+    public async Task Start(CancellationToken _)
     {
         await Task.CompletedTask;
 
@@ -21,7 +21,7 @@ public class BackgroundTask(Func<CancellationToken, Task> worker) : IAsyncDispos
         _executingTask = _worker(_stoppingTokenSource.Token);
     }
 
-    public async Task Stop(CancellationToken cancellationToken)
+    public async Task Stop(CancellationToken _)
     {
         if (IsDisposed)
             throw new ObjectDisposedException(nameof(BackgroundTask));
@@ -31,10 +31,7 @@ public class BackgroundTask(Func<CancellationToken, Task> worker) : IAsyncDispos
 
         _stoppingTokenSource.Cancel();
 
-        // Yuck...
-        await Task.WhenAny(_executingTask, Task.Delay(Timeout.Infinite, cancellationToken));
-
-        cancellationToken.ThrowIfCancellationRequested();
+        await _executingTask;
     }
 
     public async ValueTask DisposeAsync()

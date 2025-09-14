@@ -1,6 +1,5 @@
 ﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
-using Maestro.Core.Services;
 using Maestro.Core.Sessions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,7 +18,6 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<IEstimateProvider, EstimateProvider>()
             .AddSingleton<IRunwayScoreCalculator, RunwayScoreCalculator>()
             .AddSingleton<IClock, SystemClock>()
-            .AddSingleton<IPermissionService, PermissionService>()
             .AddScoped<SequenceCleaner>();
     }
 }

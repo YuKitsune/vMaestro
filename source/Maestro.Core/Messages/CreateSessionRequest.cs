@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Maestro.Core.Configuration;
+using MediatR;
 
 namespace Maestro.Core.Messages;
 

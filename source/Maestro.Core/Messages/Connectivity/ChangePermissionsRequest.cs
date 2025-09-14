@@ -3,4 +3,4 @@ using MediatR;
 
 namespace Maestro.Core.Messages.Connectivity;
 
-public record ChangePermissionsRequest(string AirportIdentifier, IDictionary<string, Role[]> Permissions) : IRequest;
+public record ChangePermissionsRequest(string AirportIdentifier, IReadOnlyDictionary<string, Role[]> Permissions) : IRequest;

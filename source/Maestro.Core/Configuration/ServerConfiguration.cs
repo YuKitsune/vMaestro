@@ -53,7 +53,7 @@ public static class PermissionHelper
         return Role.Observer;
     }
 
-    public static IDictionary<string, Role[]> FullAccess()
+    public static IReadOnlyDictionary<string, Role[]> FullAccess()
     {
         return new Dictionary<string, Role[]>
         {

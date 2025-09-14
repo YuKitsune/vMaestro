@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Messages;
+using Maestro.Core.Messages.Connectivity;
 using Maestro.Core.Sessions;
 using MediatR;
 
@@ -17,6 +18,12 @@ public class StartSessionRequestHandler(ISessionManager sessionManager, IMediato
             new SessionStartedNotification(
                 request.AirportIdentifier,
                 request.Position),
+            cancellationToken);
+
+        await mediator.Publish(
+            new PermissionSetChangedNotification(
+                request.AirportIdentifier,
+                new PermissionSet(lockedSession.Session.Role, lockedSession.Session.Permissions)),
             cancellationToken);
     }
 }

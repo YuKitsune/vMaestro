@@ -51,7 +51,11 @@ public class MaestroConnection : IAsyncDisposable
     public string AirportIdentifier { get; }
 
     // TODO: Find a better place for this
-    public record SequenceStartResult(bool OwnsSequence, SequenceMessage? Sequence, IDictionary<string, Role[]> Permissions, Role Role);
+    public record SequenceStartResult(
+        bool OwnsSequence,
+        SequenceMessage? Sequence,
+        IReadOnlyDictionary<string, Role[]> Permissions,
+        Role Role);
 
     public async Task<SequenceStartResult> Start(string position, CancellationToken cancellationToken)
     {

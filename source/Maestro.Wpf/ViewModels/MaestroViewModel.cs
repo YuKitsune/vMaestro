@@ -2,12 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
-using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using Maestro.Core.Model;
-using Maestro.Core.Services;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using MediatR;
@@ -19,8 +17,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
     readonly INotificationStream<SequenceUpdatedNotification> _sequenceUpdatedNotificationStream;
-    readonly INotificationStream<PermissionsChangedNotification> _permissionNotificationStream;
-    readonly IPermissionService _permissionService;
+    readonly INotificationStream<PermissionSetChangedNotification> _permissionNotificationStream;
 
     readonly CancellationTokenSource _notificationSubscriptionCancellationTokenSource;
     readonly Task _notificationSubscriptionTask;
@@ -83,8 +80,10 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 
     public bool HasDesequencedFlight => Flights.Any(f => f.State == State.Desequenced);
 
-    public bool CanManageSlots => _permissionService.CanPerformAction(ActionKeys.ManageSlots);
-    public bool CanInsertFlight => _permissionService.CanPerformAction(ActionKeys.InsertOvershoot) || _permissionService.CanPerformAction(ActionKeys.InsertPending) || _permissionService.CanPerformAction(ActionKeys.InsertDummy);
+    public bool CanManageSlots => PermissionSet.CanPerformAction(ActionKeys.ManageSlots);
+    public bool CanInsertFlight => PermissionSet.CanPerformAction(ActionKeys.InsertOvershoot) || PermissionSet.CanPerformAction(ActionKeys.InsertPending) || PermissionSet.CanPerformAction(ActionKeys.InsertDummy);
+
+    public PermissionSet PermissionSet { get; private set; } = PermissionSet.Default;
 
     public MaestroViewModel(
         string airportIdentifier,
@@ -94,12 +93,12 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         IMediator mediator,
         IErrorReporter errorReporter,
         INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream,
-        IPermissionService permissionService)
+        INotificationStream<PermissionSetChangedNotification> permissionNotificationStream)
     {
         _mediator = mediator;
         _errorReporter = errorReporter;
         _sequenceUpdatedNotificationStream = sequenceUpdatedNotificationStream;
-        _permissionService = permissionService;
+        _permissionNotificationStream = permissionNotificationStream;
 
         AirportIdentifier = airportIdentifier;
         Runways = runways;
@@ -361,6 +360,8 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
                 if (notification.AirportIdentifier != AirportIdentifier)
                     continue;
 
+                PermissionSet = notification.PermissionSet;
+
                 // Refresh all command CanExecute states when permissions change
                 MoveFlightCommand.NotifyCanExecuteChanged();
                 SwapFlightsCommand.NotifyCanExecuteChanged();
@@ -374,10 +375,10 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
-    public bool CanMoveFlight() => _permissionService.CanPerformAction(ActionKeys.MoveFlight);
-    bool CanSwapFlights() => _permissionService.CanPerformAction(ActionKeys.MoveFlight);
-    public bool CanMakeStable() => _permissionService.CanPerformAction(ActionKeys.MakeStable);
-    bool CanOpenTerminalConfiguration() => _permissionService.CanPerformAction(ActionKeys.ChangeTerminalConfiguration);
+    public bool CanMoveFlight() => PermissionSet.CanPerformAction(ActionKeys.MoveFlight);
+    bool CanSwapFlights() => PermissionSet.CanPerformAction(ActionKeys.MoveFlight);
+    public bool CanMakeStable() => PermissionSet.CanPerformAction(ActionKeys.MakeStable);
+    bool CanOpenTerminalConfiguration() => PermissionSet.CanPerformAction(ActionKeys.ChangeTerminalConfiguration);
 
     public async ValueTask DisposeAsync()
     {

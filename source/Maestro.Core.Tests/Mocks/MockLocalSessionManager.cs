@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 
@@ -40,9 +41,11 @@ public class MockSession(Sequence sequence) : ISession
     public MaestroConnection? Connection => null;
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public bool OwnsSequence => true;
+    public Role Role => Role.Flow;
+    public IReadOnlyDictionary<string, Role[]> Permissions => PermissionHelper.FullAccess();
     public Task Start(string position, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task Stop(CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task TakeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
-
     public Task RevokeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
+    public void ChangePermissions(IReadOnlyDictionary<string, Role[]> permissions) => throw new NotImplementedException();
 }
