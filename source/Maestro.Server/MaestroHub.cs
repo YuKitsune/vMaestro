@@ -325,7 +325,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
 
     public async Task ZeroDelayRequest(ZeroDelayRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeMaxDelay, request.AirportIdentifier))
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManualDelay, request.AirportIdentifier))
             return;
 
         await SendToFlowController(request.AirportIdentifier, "ZeroDelayRequest", request);

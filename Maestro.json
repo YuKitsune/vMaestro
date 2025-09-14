@@ -18,7 +18,7 @@
       "InsertDummy": ["Flow"],
       "MakePending": ["Enroute", "Approach", "Flow"],
       "ChangeRunway": ["Enroute", "Approach", "Flow"],
-      "ChangeMaxDelay": ["Enroute", "Approach", "Flow"],
+      "ManualDelay": ["Enroute", "Approach", "Flow"],
       "MakeStable": ["Enroute", "Flow"],
       "Recompute": ["Enroute", "Flow"],
       "Desequence": ["Enroute", "Approach", "Flow"],

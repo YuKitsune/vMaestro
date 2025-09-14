@@ -28,7 +28,7 @@ public static class ActionKeys
     public const string InsertDummy = nameof(InsertDummy);
     public const string MakePending = nameof(MakePending);
     public const string ChangeRunway = nameof(ChangeRunway);
-    public const string ChangeMaxDelay = nameof(ChangeMaxDelay);
+    public const string ManualDelay = nameof(ManualDelay);
     public const string MakeStable = nameof(MakeStable);
     public const string Recompute = nameof(Recompute);
     public const string Desequence = nameof(Desequence);
@@ -67,7 +67,7 @@ public static class PermissionHelper
             { ActionKeys.InsertDummy, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.MakePending, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.ChangeRunway, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.ChangeMaxDelay, [Role.Flow, Role.Enroute, Role.Approach] },
+            { ActionKeys.ManualDelay, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.MakeStable, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.Recompute, [Role.Flow, Role.Enroute, Role.Approach] },
             { ActionKeys.Desequence, [Role.Flow, Role.Enroute, Role.Approach] },
