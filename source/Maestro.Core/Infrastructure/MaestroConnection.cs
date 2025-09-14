@@ -19,6 +19,7 @@ namespace Maestro.Core.Infrastructure;
 
 public class MaestroConnection : IAsyncDisposable
 {
+    readonly ServerConfiguration _serverConfiguration;
     readonly CancellationTokenSource _rootCancellationTokenSource = new();
     readonly string _partition;
     readonly string _airportIdentifier;
@@ -31,12 +32,14 @@ public class MaestroConnection : IAsyncDisposable
     public MaestroConnection(
         string partition,
         string airportIdentifier,
+        ServerConfiguration serverConfiguration,
         HubConnection hubConnection,
         IMediator mediator,
         ILogger logger)
     {
         _partition = partition;
         _airportIdentifier = airportIdentifier;
+        _serverConfiguration = serverConfiguration;
         _hubConnection = hubConnection;
         _mediator = mediator;
         _logger = logger;
@@ -71,8 +74,19 @@ public class MaestroConnection : IAsyncDisposable
                 "JoinSequence",
                 new JoinSequenceRequest(_partition, AirportIdentifier, position, role),
                 cancellationToken);
+            var permissions = response.Permissions;
 
-            return new SequenceStartResult(response.OwnsSequence, response.Sequence, response.Permissions, role);
+            // If this is a flow controller and we own the sequence, send permissions
+            if (role == Role.Flow && response.OwnsSequence)
+            {
+                await _hubConnection.InvokeAsync(
+                    "ChangePermissions",
+                    new ChangePermissionsRequest(AirportIdentifier, _serverConfiguration.Permissions),
+                    cancellationToken);
+                permissions = _serverConfiguration.Permissions;
+            }
+
+            return new SequenceStartResult(response.OwnsSequence, response.Sequence, permissions, role);
         }
         catch (Exception exception)
         {

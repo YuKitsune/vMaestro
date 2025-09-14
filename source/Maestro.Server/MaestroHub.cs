@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Maestro.Server;
 
-public class MaestroHub(ILogger<MaestroHub> logger, ServerConfiguration serverConfiguration) : Hub
+public class MaestroHub(ILogger<MaestroHub> logger) : Hub
 {
     private static readonly Dictionary<string, GroupKey> Connections = new();
     private static readonly ConcurrentDictionary<GroupKey, Sequence> Sequences = new();
@@ -39,8 +39,6 @@ public class MaestroHub(ILogger<MaestroHub> logger, ServerConfiguration serverCo
             sequence.Connections.Count);
 
         // TODO: What if there are two flow controllers?
-        var wasFlowControllerBefore = sequence.Connections.Any(c => c.Role == Role.Flow && c.Id != Context.ConnectionId);
-
         if (request.Role == Role.Flow)
         {
             // Revoke ownership from current owner if any
@@ -65,17 +63,49 @@ public class MaestroHub(ILogger<MaestroHub> logger, ServerConfiguration serverCo
             connection.OwnsSequence = true;
         }
 
-        // Calculate permissions based on flow controller presence
-        var hasFlowController = sequence.Connections.Any(c => c.Role == Role.Flow);
-        var permissions = hasFlowController ? serverConfiguration.Permissions : PermissionHelper.FullAccess();
-
-        // Broadcast permission changes if flow controller status changed
-        if (request.Role == Role.Flow && !wasFlowControllerBefore)
-        {
-            await BroadcastPermissionChanges(groupKey);
-        }
+        var permissions = sequence.Permissions ?? PermissionHelper.FullAccess();
 
         return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, permissions);
+    }
+
+    public async Task ChangePermissions(ChangePermissionsRequest request)
+    {
+        if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
+        {
+            logger.LogWarning("Connection {ConnectionId} attempted to change permissions but is not part of any group", Context.ConnectionId);
+            return;
+        }
+
+        if (request.AirportIdentifier != groupKey.AirportIdentifier)
+        {
+            logger.LogWarning(
+                "Connection {ConnectionId} attempted to change permissions for {Airport} but is part of {Group}",
+                Context.ConnectionId, request.AirportIdentifier, groupKey);
+            return;
+        }
+
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        var connection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
+        var callsign = connection?.Callsign ?? "Unknown";
+
+        if (sequence == null)
+        {
+            logger.LogWarning("{Callsign} attempted to change permissions but no sequence exists for {Group}",
+                callsign, groupKey);
+            return;
+        }
+
+        if (!connection.OwnsSequence)
+        {
+            logger.LogWarning("{Callsign} attempted to change permissions but is not the owner of {Group}",
+                callsign, groupKey);
+            return;
+        }
+
+        logger.LogInformation("{Callsign} updating permissions for {Group}", callsign, groupKey);
+
+        sequence.Permissions = request.Permissions;
+        await BroadcastPermissionChanges(groupKey);
     }
 
     public async Task LeaveSequence(LeaveSequenceRequest request)
@@ -348,14 +378,10 @@ public class MaestroHub(ILogger<MaestroHub> logger, ServerConfiguration serverCo
         var hasFlowController = sequence.Connections.Any(c => c.Role == Role.Flow);
 
         // When no flow controller exists, everyone can do everything
-        if (!hasFlowController)
+        if (!hasFlowController || sequence.Permissions == null)
             return true;
 
-        // When flow controller exists, check configured permissions
-        if (!serverConfiguration.Permissions.TryGetValue(actionKey, out var allowedRoles))
-            return false;
-
-        return allowedRoles.Contains(userRole);
+        return sequence.Permissions.TryGetValue(actionKey, out var allowedRoles) && allowedRoles.Contains(userRole);
     }
 
     private async Task<bool> ValidatePermissionAndNotifyIfDenied(string actionKey, string airportIdentifier)
@@ -382,7 +408,7 @@ public class MaestroHub(ILogger<MaestroHub> logger, ServerConfiguration serverCo
                 senderConnection.Callsign, actionKey, senderConnection.Role);
 
             await Clients.Caller.SendAsync("PermissionDeniedNotification",
-                new PermissionDeniedNotification(actionKey, $"You do not have permission to perform this action."));
+                new PermissionDeniedNotification(actionKey, "You do not have permission to perform this action."));
 
             return false;
         }
@@ -395,11 +421,8 @@ public class MaestroHub(ILogger<MaestroHub> logger, ServerConfiguration serverCo
         var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
         if (sequence == null) return;
 
-        var hasFlowController = sequence.Connections.Any(c => c.Role == Role.Flow);
-        var permissions = hasFlowController ? serverConfiguration.Permissions : PermissionHelper.FullAccess();
-
         await Clients.Group(groupKey.Value).SendAsync("PermissionStateNotification",
-            new PermissionsChangedNotification(groupKey.AirportIdentifier, permissions));
+            new PermissionsChangedNotification(groupKey.AirportIdentifier, sequence.Permissions ?? PermissionHelper.FullAccess()));
     }
 
     private async Task SendToFlowController<T>(string airportIdentifier, string messageType, T request)

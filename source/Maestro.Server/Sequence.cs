@@ -10,6 +10,7 @@ public class Sequence(GroupKey groupKey)
 
     public GroupKey GroupKey { get; } = groupKey;
     public SequenceMessage? LatestSequence { get; set; }
+    public IDictionary<string, Role[]>? Permissions { get; set; }
 
     public IReadOnlyList<Connection> Connections
     {

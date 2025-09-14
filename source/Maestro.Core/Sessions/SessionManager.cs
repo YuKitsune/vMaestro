@@ -76,7 +76,7 @@ public class SessionManager(
             .AddNewtonsoftJsonProtocol()
             .Build();
 
-        return new MaestroConnection(partition, airportIdentifier, hubConnection, mediator, logger);
+        return new MaestroConnection(partition, airportIdentifier, configuration, hubConnection, mediator, logger);
     }
 
     // TODO: Maybe extract into a factory
