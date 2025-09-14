@@ -7,6 +7,7 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Services;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
@@ -543,6 +544,9 @@ public partial class MaestroView
         if (_isDragging)
             return;
 
+        if (ViewModel.CanMoveFlight())
+            return;
+
         // Check if dragging is enabled for this flight label
         if (!flightLabel.IsDraggable)
         {
@@ -565,6 +569,9 @@ public partial class MaestroView
     void OnFlightLabelMouseMove(object sender, MouseEventArgs e)
     {
         if (sender is not FlightLabelView flightLabel)
+            return;
+
+        if (ViewModel.CanMoveFlight())
             return;
 
         if (_draggingFlightLabel != flightLabel || e.LeftButton != MouseButtonState.Pressed)
@@ -673,6 +680,9 @@ public partial class MaestroView
     void OnFlightLabelDoubleClick(object sender, MouseButtonEventArgs e, FlightMessage flight)
     {
         if (sender is not FlightLabelView flightLabel)
+            return;
+
+        if (ViewModel.CanMakeStable())
             return;
 
         // Double-clicking a flight makes it stable
@@ -785,7 +795,8 @@ public partial class MaestroView
                     Ioc.Default.GetRequiredService<IErrorReporter>(),
                     ViewModel,
                     flight,
-                    ViewModel.Runways);
+                    ViewModel.Runways,
+                    Ioc.Default.GetRequiredService<IPermissionService>());
 
                 flightLabel = new FlightLabelView
                 {

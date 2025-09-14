@@ -26,7 +26,6 @@ public class Session : ISession, IAsyncDisposable
 {
     readonly IAirportConfigurationProvider _airportConfigurationProvider;
     readonly IMediator _mediator;
-    // readonly INotificationStream<SequenceUpdatedNotification> _sequenceUpdatedNotificationStream;
     readonly ILogger _logger;
 
     public string AirportIdentifier => Sequence.AirportIdentifier;

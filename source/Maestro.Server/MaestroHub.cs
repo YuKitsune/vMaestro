@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Maestro.Server;
 
-public class MaestroHub(ILogger<MaestroHub> logger) : Hub
+public class MaestroHub(ILogger<MaestroHub> logger, ServerConfiguration serverConfiguration) : Hub
 {
     private static readonly Dictionary<string, GroupKey> Connections = new();
     private static readonly ConcurrentDictionary<GroupKey, Sequence> Sequences = new();
@@ -39,6 +39,8 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             sequence.Connections.Count);
 
         // TODO: What if there are two flow controllers?
+        var wasFlowControllerBefore = sequence.Connections.Any(c => c.Role == Role.Flow && c.Id != Context.ConnectionId);
+
         if (request.Role == Role.Flow)
         {
             // Revoke ownership from current owner if any
@@ -63,7 +65,17 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             connection.OwnsSequence = true;
         }
 
-        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence);
+        // Calculate permissions based on flow controller presence
+        var hasFlowController = sequence.Connections.Any(c => c.Role == Role.Flow);
+        var permissions = hasFlowController ? serverConfiguration.Permissions : PermissionHelper.FullAccess();
+
+        // Broadcast permission changes if flow controller status changed
+        if (request.Role == Role.Flow && !wasFlowControllerBefore)
+        {
+            await BroadcastPermissionChanges(groupKey);
+        }
+
+        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, permissions);
     }
 
     public async Task LeaveSequence(LeaveSequenceRequest request)
@@ -101,6 +113,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                 return;
             }
 
+            var wasFlowController = connection.Role == Role.Flow;
             sequence.RemoveConnection(Context.ConnectionId);
 
             logger.LogInformation("{Callsign} left {Group}. Remaining connections: {Count}",
@@ -111,16 +124,25 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                 logger.LogInformation("Removing empty {Group}", groupKey);
                 Sequences.TryRemove(groupKey, out _);
             }
-            else if (connection.OwnsSequence)
+            else
             {
-                // Re-assign ownership when the owner leaves
-                var newOwner = SelectNewOwner(sequence);
-                if (newOwner != null)
+                if (connection.OwnsSequence)
                 {
-                    logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group}",
-                        newOwner.Callsign, groupKey);
-                    await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
-                    newOwner.OwnsSequence = true;
+                    // Re-assign ownership when the owner leaves
+                    var newOwner = SelectNewOwner(sequence);
+                    if (newOwner != null)
+                    {
+                        logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group}",
+                            newOwner.Callsign, groupKey);
+                        await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
+                        newOwner.OwnsSequence = true;
+                    }
+                }
+
+                // Broadcast permission changes if a flow controller left
+                if (wasFlowController)
+                {
+                    await BroadcastPermissionChanges(groupKey);
                 }
             }
         }
@@ -181,89 +203,203 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(flightUpdatedNotification.Destination, "FlightUpdatedNotification", flightUpdatedNotification);
     }
 
+    // TODO: Split this into multiple methods for overshoot and dummies
     public async Task InsertFlight(InsertFlightRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertDummy, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "InsertFlightRequest", request);
     }
 
     public async Task InsertDeparture(InsertDepartureRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertPending, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "InsertDepartureRequest", request);
     }
 
     public async Task MoveFlight(MoveFlightRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MoveFlight, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "MoveFlightRequest", request);
     }
 
     public async Task SwapFlights(SwapFlightsRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MoveFlight, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "SwapFlightsRequest", request);
     }
 
     public async Task RemoveFlight(RemoveRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.RemoveFlight, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "RemoveRequest", request);
     }
 
     public async Task DesequenceFlight(DesequenceRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Desequence, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "DesequenceRequest", request);
     }
 
     public async Task MakeFlightPending(MakePendingRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MakePending, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "MakePendingRequest", request);
     }
 
     public async Task MakeFlightStable(MakeStableRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MakeStable, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "MakeStableRequest", request);
     }
 
     public async Task RecomputeFlight(RecomputeRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Recompute, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "RecomputeRequest", request);
     }
 
     public async Task ResumeSequencing(ResumeSequencingRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Resequence, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "ResumeSequencingRequest", request);
     }
 
     public async Task ZeroDelay(ZeroDelayRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeMaxDelay, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "ZeroDelayRequest", request);
     }
 
     public async Task ChangeRunway(ChangeRunwayRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeRunway, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "ChangeRunwayRequest", request);
     }
 
     public async Task ChangeRunwayMode(ChangeRunwayModeRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeTerminalConfiguration, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "ChangeRunwayModeRequest", request);
     }
 
     public async Task ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeFeederFixEstimate, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "ChangeFeederFixEstimateRequest", request);
     }
 
     public async Task CreateSlot(CreateSlotRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "CreateSlotRequest", request);
     }
 
     public async Task ModifySlot(ModifySlotRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "ModifySlotRequest", request);
     }
 
     public async Task DeleteSlot(DeleteSlotRequest request)
     {
+        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
+            return;
+
         await SendToFlowController(request.AirportIdentifier, "DeleteSlotRequest", request);
+    }
+
+    private bool CanPerformAction(string actionKey, Role userRole, GroupKey groupKey)
+    {
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        if (sequence == null) return false;
+
+        var hasFlowController = sequence.Connections.Any(c => c.Role == Role.Flow);
+
+        // When no flow controller exists, everyone can do everything
+        if (!hasFlowController)
+            return true;
+
+        // When flow controller exists, check configured permissions
+        if (!serverConfiguration.Permissions.TryGetValue(actionKey, out var allowedRoles))
+            return false;
+
+        return allowedRoles.Contains(userRole);
+    }
+
+    private async Task<bool> ValidatePermissionAndNotifyIfDenied(string actionKey, string airportIdentifier)
+    {
+        if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
+        {
+            logger.LogWarning("Connection {ConnectionId} attempted {Action} but is not part of any group",
+                Context.ConnectionId, actionKey);
+            return false;
+        }
+
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        var senderConnection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
+        if (senderConnection == null)
+        {
+            logger.LogWarning("Connection {ConnectionId} attempted {Action} but connection not found",
+                Context.ConnectionId, actionKey);
+            return false;
+        }
+
+        if (!CanPerformAction(actionKey, senderConnection.Role, groupKey))
+        {
+            logger.LogWarning("{Callsign} attempted {Action} but does not have permission (Role: {Role})",
+                senderConnection.Callsign, actionKey, senderConnection.Role);
+
+            await Clients.Caller.SendAsync("PermissionDeniedNotification",
+                new PermissionDeniedNotification(actionKey, $"You do not have permission to perform this action."));
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task BroadcastPermissionChanges(GroupKey groupKey)
+    {
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        if (sequence == null) return;
+
+        var hasFlowController = sequence.Connections.Any(c => c.Role == Role.Flow);
+        var permissions = hasFlowController ? serverConfiguration.Permissions : PermissionHelper.FullAccess();
+
+        await Clients.Group(groupKey.Value).SendAsync("PermissionStateNotification",
+            new PermissionsChangedNotification(groupKey.AirportIdentifier, permissions));
     }
 
     private async Task SendToFlowController<T>(string airportIdentifier, string messageType, T request)
@@ -343,8 +479,10 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
             if (sequence != null)
             {
-                // Check if the disconnecting connection was the owner before removing it
-                var wasOwner = sequence.Connections.Any(c => c.Id == connectionId && c.OwnsSequence);
+                // Check if the disconnecting connection was the owner or flow controller before removing it
+                var disconnectingConnection = sequence.Connections.FirstOrDefault(c => c.Id == connectionId);
+                var wasOwner = disconnectingConnection?.OwnsSequence ?? false;
+                var wasFlowController = disconnectingConnection?.Role == Role.Flow;
 
                 await Groups.RemoveFromGroupAsync(connectionId, groupKey.Value);
                 sequence.RemoveConnection(connectionId);
@@ -357,16 +495,25 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                     logger.LogInformation("Removing empty {Group}", groupKey);
                     Sequences.TryRemove(groupKey, out _);
                 }
-                else if (wasOwner)
+                else
                 {
-                    // Re-assign ownership when the owner disconnects
-                    var newOwner = SelectNewOwner(sequence);
-                    if (newOwner != null)
+                    if (wasOwner)
                     {
-                        logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group} after disconnect",
-                            newOwner.Callsign, groupKey);
-                        await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
-                        newOwner.OwnsSequence = true;
+                        // Re-assign ownership when the owner disconnects
+                        var newOwner = SelectNewOwner(sequence);
+                        if (newOwner != null)
+                        {
+                            logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group} after disconnect",
+                                newOwner.Callsign, groupKey);
+                            await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
+                            newOwner.OwnsSequence = true;
+                        }
+                    }
+
+                    // Broadcast permission changes if a flow controller disconnected
+                    if (wasFlowController)
+                    {
+                        await BroadcastPermissionChanges(groupKey);
                     }
                 }
             }

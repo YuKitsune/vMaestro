@@ -5,8 +5,27 @@
     "MaxFileAgeDays": 7
   },
   "Server": {
-    "Uri": "http://localhost:5272/hub",
-    "Partitions": ["VATSIM", "SweatBox-1", "SweatBox-2"]
+    "Uri": "https://maestro.eoinmotherway.dev/hub",
+    "Partitions": ["VATSIM", "SweatBox-1", "SweatBox-2"],
+    "Permissions": {
+      "ChangeTerminalConfiguration": ["Flow"],
+      "ChangeLandingRates": ["Flow"],
+      "MoveFlight": ["Approach", "Flow"],
+      "ChangeFeederFixEstimate": ["Enroute", "Flow"],
+      "ManageSlots": ["Flow"],
+      "InsertOvershoot": ["Approach", "Flow"],
+      "InsertPending": ["Flow"],
+      "InsertDummy": ["Flow"],
+      "MakePending": ["Enroute", "Approach", "Flow"],
+      "ChangeRunway": ["Enroute", "Approach", "Flow"],
+      "ChangeMaxDelay": ["Enroute", "Approach", "Flow"],
+      "MakeStable": ["Enroute", "Flow"],
+      "Recompute": ["Enroute", "Flow"],
+      "Desequence": ["Enroute", "Approach", "Flow"],
+      "Resequence": ["Flow"],
+      "RemoveFlight": ["Enroute", "Approach", "Flow"],
+      "Coordination": ["Enroute", "Approach", "Flow"]
+    }
   },
   "Airports": [
     {

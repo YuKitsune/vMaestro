@@ -254,8 +254,8 @@
                             </Style.Triggers>
                         </Style>
                     </ContextMenu.Style>
-                    <MenuItem Header="Insert Flight" Click="InsertFlight"/>
-                    <MenuItem Header="Insert Slot">
+                    <MenuItem Header="Insert Flight" Click="InsertFlight" IsEnabled="{Binding CanInsertFlight}"/>
+                    <MenuItem Header="Insert Slot" IsEnabled="{Binding CanManageSlots}">
                         <MenuItem Header="Before" Click="BeginInsertingSlotBefore"/>
                         <MenuItem Header="After" Click="BeginInsertingSlotAfter"/>
                         <MenuItem.Style>

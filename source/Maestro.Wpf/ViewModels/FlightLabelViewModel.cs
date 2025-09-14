@@ -1,7 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Services;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using MediatR;
@@ -13,11 +15,10 @@ public partial class FlightLabelViewModel(
     IErrorReporter errorReporter,
     MaestroViewModel maestroViewModel,
     FlightMessage flightViewModel,
-    string[] availableRunways)
+    string[] availableRunways,
+    IPermissionService permissionService)
     : ObservableObject
 {
-    readonly string[] _allRunways = availableRunways;
-
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AvailableRunways))]
     [NotifyCanExecuteChangedFor(nameof(ShowInformationWindowCommand))]
@@ -26,7 +27,7 @@ public partial class FlightLabelViewModel(
     [ObservableProperty]
     bool _isSelected = false;
 
-    public string[] AvailableRunways => _allRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
+    public string[] AvailableRunways => availableRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
 
     public bool CanInsertBefore => FlightViewModel.State != State.Frozen;
 
@@ -65,10 +66,10 @@ public partial class FlightLabelViewModel(
 
     bool CanRecompute()
     {
-        return !FlightViewModel.IsDummy;
+        return !FlightViewModel.IsDummy && permissionService.CanPerformAction(ActionKeys.Recompute);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChangeRunway))]
     void ChangeRunway(string runwayIdentifier)
     {
         try
@@ -103,10 +104,10 @@ public partial class FlightLabelViewModel(
 
     bool CanInsertFlightBefore()
     {
-        return FlightViewModel.State != State.Frozen;
+        return FlightViewModel.State != State.Frozen && CanInsertFlight();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanInsertFlight))]
     void InsertFlightAfter()
     {
         try
@@ -124,7 +125,7 @@ public partial class FlightLabelViewModel(
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanManageSlots))]
     void InsertSlotBefore()
     {
         try
@@ -142,7 +143,7 @@ public partial class FlightLabelViewModel(
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanManageSlots))]
     void InsertSlotAfter()
     {
         try
@@ -180,10 +181,10 @@ public partial class FlightLabelViewModel(
 
     bool CanChangeEta()
     {
-        return !string.IsNullOrEmpty(FlightViewModel.FeederFixIdentifier) && FlightViewModel.FeederFixEstimate != null;
+        return !string.IsNullOrEmpty(FlightViewModel.FeederFixIdentifier) && FlightViewModel.FeederFixEstimate != null && permissionService.CanPerformAction(ActionKeys.ChangeFeederFixEstimate);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRemove))]
     void Remove()
     {
         try
@@ -198,7 +199,7 @@ public partial class FlightLabelViewModel(
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanDesequence))]
     void Desequence()
     {
         try
@@ -213,7 +214,7 @@ public partial class FlightLabelViewModel(
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanMakePending))]
     void MakePending()
     {
         try
@@ -228,7 +229,7 @@ public partial class FlightLabelViewModel(
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanChangeMaxDelay))]
     void ZeroDelay()
     {
         try
@@ -243,7 +244,7 @@ public partial class FlightLabelViewModel(
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanCoordinate))]
     void Coordination()
     {
         try
@@ -255,4 +256,14 @@ public partial class FlightLabelViewModel(
             errorReporter.ReportError(ex);
         }
     }
+
+    // Permission-aware CanExecute methods for key commands
+    bool CanInsertFlight() => permissionService.CanPerformAction(ActionKeys.InsertPending) || permissionService.CanPerformAction(ActionKeys.InsertDummy) || permissionService.CanPerformAction(ActionKeys.InsertOvershoot);
+    bool CanChangeRunway(string runwayIdentifier) => permissionService.CanPerformAction(ActionKeys.ChangeRunway);
+    bool CanRemove() => permissionService.CanPerformAction(ActionKeys.RemoveFlight);
+    bool CanDesequence() => permissionService.CanPerformAction(ActionKeys.Desequence);
+    bool CanMakePending() => permissionService.CanPerformAction(ActionKeys.MakePending);
+    bool CanManageSlots() => permissionService.CanPerformAction(ActionKeys.ManageSlots);
+    bool CanCoordinate() => permissionService.CanPerformAction(ActionKeys.Coordination);
+    bool CanChangeMaxDelay() => permissionService.CanPerformAction(ActionKeys.ChangeMaxDelay);
 }

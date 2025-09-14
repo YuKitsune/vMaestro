@@ -5,7 +5,9 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
+using Maestro.Core.Messages.Connectivity;
 using Maestro.Core.Model;
+using Maestro.Core.Services;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using MediatR;
@@ -17,6 +19,8 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
     readonly INotificationStream<SequenceUpdatedNotification> _sequenceUpdatedNotificationStream;
+    readonly INotificationStream<PermissionsChangedNotification> _permissionNotificationStream;
+    readonly IPermissionService _permissionService;
 
     readonly CancellationTokenSource _notificationSubscriptionCancellationTokenSource;
     readonly Task _notificationSubscriptionTask;
@@ -79,6 +83,9 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 
     public bool HasDesequencedFlight => Flights.Any(f => f.State == State.Desequenced);
 
+    public bool CanManageSlots => _permissionService.CanPerformAction(ActionKeys.ManageSlots);
+    public bool CanInsertFlight => _permissionService.CanPerformAction(ActionKeys.InsertOvershoot) || _permissionService.CanPerformAction(ActionKeys.InsertPending) || _permissionService.CanPerformAction(ActionKeys.InsertDummy);
+
     public MaestroViewModel(
         string airportIdentifier,
         string[] runways,
@@ -86,11 +93,13 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         ViewConfiguration[] views,
         IMediator mediator,
         IErrorReporter errorReporter,
-        INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream)
+        INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream,
+        IPermissionService permissionService)
     {
         _mediator = mediator;
         _errorReporter = errorReporter;
         _sequenceUpdatedNotificationStream = sequenceUpdatedNotificationStream;
+        _permissionService = permissionService;
 
         AirportIdentifier = airportIdentifier;
         Runways = runways;
@@ -104,7 +113,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         _notificationSubscriptionTask = SubscribeToNotifications(_notificationSubscriptionCancellationTokenSource.Token);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanMoveFlight))]
     async Task MoveFlight(MoveFlightRequest request)
     {
         try
@@ -125,7 +134,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSwapFlights))]
     async Task SwapFlights(SwapFlightsRequest request)
     {
         try
@@ -147,7 +156,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanMakeStable))]
     async Task MakeStable(MakeStableRequest request)
     {
         try
@@ -258,7 +267,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         SelectedFlight = null;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanOpenTerminalConfiguration))]
     void OpenTerminalConfiguration()
     {
         try
@@ -313,6 +322,14 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 
     async Task SubscribeToNotifications(CancellationToken cancellationToken)
     {
+        var sequenceTask = SubscribeToSequenceUpdates(cancellationToken);
+        var permissionTask = SubscribeToPermissionUpdates(cancellationToken);
+
+        await Task.WhenAny(sequenceTask, permissionTask);
+    }
+
+    async Task SubscribeToSequenceUpdates(CancellationToken cancellationToken)
+    {
         await foreach (var notification in _sequenceUpdatedNotificationStream.SubscribeAsync(cancellationToken))
         {
             try
@@ -334,6 +351,33 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
             }
         }
     }
+
+    async Task SubscribeToPermissionUpdates(CancellationToken cancellationToken)
+    {
+        await foreach (var notification in _permissionNotificationStream.SubscribeAsync(cancellationToken))
+        {
+            try
+            {
+                if (notification.AirportIdentifier != AirportIdentifier)
+                    continue;
+
+                // Refresh all command CanExecute states when permissions change
+                MoveFlightCommand.NotifyCanExecuteChanged();
+                SwapFlightsCommand.NotifyCanExecuteChanged();
+                MakeStableCommand.NotifyCanExecuteChanged();
+                OpenTerminalConfigurationCommand.NotifyCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                _errorReporter.ReportError(ex);
+            }
+        }
+    }
+
+    public bool CanMoveFlight() => _permissionService.CanPerformAction(ActionKeys.MoveFlight);
+    bool CanSwapFlights() => _permissionService.CanPerformAction(ActionKeys.MoveFlight);
+    public bool CanMakeStable() => _permissionService.CanPerformAction(ActionKeys.MakeStable);
+    bool CanOpenTerminalConfiguration() => _permissionService.CanPerformAction(ActionKeys.ChangeTerminalConfiguration);
 
     public async ValueTask DisposeAsync()
     {

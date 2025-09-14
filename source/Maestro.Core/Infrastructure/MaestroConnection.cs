@@ -48,7 +48,7 @@ public class MaestroConnection : IAsyncDisposable
     public string AirportIdentifier { get; }
 
     // TODO: Find a better place for this
-    public record SequenceStartResult(bool OwnsSequence, SequenceMessage? Sequence);
+    public record SequenceStartResult(bool OwnsSequence, SequenceMessage? Sequence, IDictionary<string, Role[]> Permissions, Role Role);
 
     public async Task<SequenceStartResult> Start(string position, CancellationToken cancellationToken)
     {
@@ -66,13 +66,13 @@ public class MaestroConnection : IAsyncDisposable
 
         try
         {
-            var role = CallsignToRole.GetRoleFromCallsign(position);
+            var role = PermissionHelper.GetRoleFromCallsign(position);
             var response = await _hubConnection.InvokeAsync<JoinSequenceResponse>(
                 "JoinSequence",
                 new JoinSequenceRequest(_partition, AirportIdentifier, position, role),
                 cancellationToken);
 
-            return new SequenceStartResult(response.OwnsSequence, response.Sequence);
+            return new SequenceStartResult(response.OwnsSequence, response.Sequence, response.Permissions, role);
         }
         catch (Exception exception)
         {
@@ -117,6 +117,19 @@ public class MaestroConnection : IAsyncDisposable
                 return;
 
             await _mediator.Send(request, GetMessageCancellationToken());
+        });
+
+        _hubConnection.On<PermissionsChangedNotification>("PermissionStateNotification", async notification =>
+        {
+            if (notification.AirportIdentifier != _airportIdentifier)
+                return;
+
+            await _mediator.Publish(notification, GetMessageCancellationToken());
+        });
+
+        _hubConnection.On<PermissionDeniedNotification>("PermissionDeniedNotification", async notification =>
+        {
+            await _mediator.Publish(notification, GetMessageCancellationToken());
         });
 
         _hubConnection.On<SequenceUpdatedNotification>("SequenceUpdatedNotification", async sequenceUpdatedNotification =>
