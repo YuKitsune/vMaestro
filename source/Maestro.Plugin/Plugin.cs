@@ -54,10 +54,8 @@ namespace Maestro.Plugin;
 //  - Different handlers for pending, overshoot, and dummy flights
 
 // Notes from testing on Sunday:
-//  - Sequence resets to local copy when becoming owner
 //  - Current runway mode is not pulled in when connecting
 //  - Changing runways sometimes doesn't deconflict
-//  - ChangeRunway should've worked for everyone (it didn't)
 
 // Notes from MRM
 //  - Windows don't resize when the content changes
