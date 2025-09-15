@@ -33,27 +33,29 @@ public class WindowManager(GuiInvoker guiInvoker)
         var child = createView(windowHandle);
 
         var elementHost = new ElementHost();
-        if (shrinkToContent)
-        {
-            // For text wrapping to work correctly, we need to measure with a constraint
-            var maxWidth = 520; // Maximum dialog width
-            child.Measure(new Size(maxWidth, double.PositiveInfinity));
-            child.Arrange(new Rect(child.DesiredSize));
-            child.UpdateLayout();
 
-            var desired = child.DesiredSize;
-            elementHost.Child = child;
-            elementHost.Size = new System.Drawing.Size((int)Math.Ceiling(desired.Width), (int)Math.Ceiling(desired.Height));
-            elementHost.Location = new System.Drawing.Point(0, 0);
-
-            form.FormBorderStyle = FormBorderStyle.FixedDialog;
-            form.ClientSize = elementHost.Size;
-        }
-        else
-        {
+        // TODO: Make the windows resize themselves to the content
+        // if (shrinkToContent)
+        // {
+        //     // For text wrapping to work correctly, we need to measure with a constraint
+        //     var maxWidth = 520; // Maximum dialog width
+        //     child.Measure(new Size(maxWidth, double.PositiveInfinity));
+        //     child.Arrange(new Rect(child.DesiredSize));
+        //     child.UpdateLayout();
+        //
+        //     var desired = child.DesiredSize;
+        //     elementHost.Child = child;
+        //     elementHost.Size = new System.Drawing.Size((int)Math.Ceiling(desired.Width), (int)Math.Ceiling(desired.Height));
+        //     elementHost.Location = new System.Drawing.Point(0, 0);
+        //
+        //     form.FormBorderStyle = FormBorderStyle.FixedDialog;
+        //     form.ClientSize = elementHost.Size;
+        // }
+        // else
+        // {
             elementHost.Child = child;
             elementHost.Dock = DockStyle.Fill;
-        }
+        // }
 
         form.Controls.Add(elementHost);
         form.Padding = new Padding(0);
