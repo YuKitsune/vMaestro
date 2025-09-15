@@ -54,13 +54,15 @@ namespace Maestro.Plugin;
 //  - Different handlers for pending, overshoot, and dummy flights
 
 // Notes from testing on Sunday:
-//  - Permissions are broken
-//  - Information Window too small
 //  - Sequence resets to local copy when becoming owner
 //  - Current runway mode is not pulled in when connecting
 //  - Changing runways sometimes doesn't deconflict
 //  - ChangeRunway should've worked for everyone (it didn't)
+
+// Notes from MRM
+//  - Windows don't resize when the content changes
 //  - Recompute recomputes everybody, not just the one flight
+//  - Flights sometimes get a negative delay then become stable
 
 // YMML Config: 35 min Stable from FF
 

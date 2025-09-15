@@ -222,4 +222,32 @@ public class Sequence
             .ToList()
             .IndexOf(flight) + 1;
     }
+
+    // TODO: Rename to snapshot
+    public SequenceMessage ToMessage()
+    {
+        return new SequenceMessage
+        {
+            AirportIdentifier = AirportIdentifier,
+            Flights = Flights.Select(f => f.ToMessage(this))
+                .ToArray(),
+            CurrentRunwayMode = CurrentRunwayMode.ToMessage(),
+            NextRunwayMode = NextRunwayMode?.ToMessage(),
+            LastLandingTimeForCurrentMode = LastLandingTimeForCurrentMode,
+            FirstLandingTimeForNextMode = FirstLandingTimeForNextMode,
+            Slots = Slots.Select(s => s.ToMessage()).ToArray(),
+            DummyCounter = _dummyCounter
+        };
+    }
+
+    public void Restore(SequenceMessage message)
+    {
+        _trackedFlights.Clear();
+        _trackedFlights.AddRange(message.Flights.Select(f => new Flight(f)));
+
+        _slots.Clear();
+        _slots.AddRange(message.Slots.Select(s => new Slot(s)));
+
+        _dummyCounter = message.DummyCounter;
+    }
 }

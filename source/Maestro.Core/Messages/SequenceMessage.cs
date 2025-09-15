@@ -9,6 +9,7 @@ public class SequenceMessage
     public required DateTimeOffset FirstLandingTimeForNextMode { get; init; }
     public required FlightMessage[] Flights { get; init; }
     public required SlotMessage[] Slots { get; init; }
+    public required int DummyCounter { get; init; } = 1;
 }
 
 public record SlotMessage(
