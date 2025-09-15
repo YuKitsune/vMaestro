@@ -63,49 +63,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             connection.OwnsSequence = true;
         }
 
-        var permissions = sequence.Permissions ?? PermissionHelper.FullAccess();
-
-        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, permissions);
-    }
-
-    public async Task ChangePermissions(ChangePermissionsRequest request)
-    {
-        if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
-        {
-            logger.LogWarning("Connection {ConnectionId} attempted to change permissions but is not part of any group", Context.ConnectionId);
-            return;
-        }
-
-        if (request.AirportIdentifier != groupKey.AirportIdentifier)
-        {
-            logger.LogWarning(
-                "Connection {ConnectionId} attempted to change permissions for {Airport} but is part of {Group}",
-                Context.ConnectionId, request.AirportIdentifier, groupKey);
-            return;
-        }
-
-        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
-        var connection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
-        var callsign = connection?.Callsign ?? "Unknown";
-
-        if (sequence == null)
-        {
-            logger.LogWarning("{Callsign} attempted to change permissions but no sequence exists for {Group}",
-                callsign, groupKey);
-            return;
-        }
-
-        if (!connection.OwnsSequence)
-        {
-            logger.LogWarning("{Callsign} attempted to change permissions but is not the owner of {Group}",
-                callsign, groupKey);
-            return;
-        }
-
-        logger.LogInformation("{Callsign} updating permissions for {Group}", callsign, groupKey);
-
-        sequence.Permissions = request.Permissions;
-        await BroadcastPermissionChanges(groupKey);
+        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, PermissionHelper.FullAccess());
     }
 
     public async Task LeaveSequence(LeaveSequenceRequest request)
@@ -168,12 +126,6 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                         newOwner.OwnsSequence = true;
                     }
                 }
-
-                // Broadcast permission changes if a flow controller left
-                if (wasFlowController)
-                {
-                    await BroadcastPermissionChanges(groupKey);
-                }
             }
         }
 
@@ -233,206 +185,190 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await SendToFlowController(flightUpdatedNotification.Destination, "FlightUpdatedNotification", flightUpdatedNotification);
     }
 
-    // TODO: Rename methods to just "InsertPending" and "InsertDummy" etc.
-
-    public async Task InsertFlightRequest(InsertFlightRequest request)
+    public async Task InsertFlight(InsertFlightRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertDummy, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "InsertFlightRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "InsertFlight", envelope);
     }
 
-    public async Task InsertOvershootRequest(InsertOvershootRequest request)
+    public async Task InsertOvershoot(InsertOvershootRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertOvershoot, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "InsertOvershootRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "InsertOvershoot", envelope);
     }
 
-    public async Task InsertDepartureRequest(InsertDepartureRequest request)
+    public async Task InsertDeparture(InsertDepartureRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.InsertDeparture, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "InsertDepartureRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "InsertDeparture", envelope);
     }
 
-    public async Task MoveFlightRequest(MoveFlightRequest request)
+    public async Task MoveFlight(MoveFlightRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MoveFlight, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "MoveFlightRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "MoveFlight", envelope);
     }
 
-    public async Task SwapFlightsRequest(SwapFlightsRequest request)
+    public async Task SwapFlights(SwapFlightsRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MoveFlight, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "SwapFlightsRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "SwapFlights", envelope);
     }
 
-    public async Task RemoveRequest(RemoveRequest request)
+    public async Task Remove(RemoveRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.RemoveFlight, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "RemoveRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "Remove", envelope);
     }
 
-    public async Task DesequenceRequest(DesequenceRequest request)
+    public async Task Desequence(DesequenceRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Desequence, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "DesequenceRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "Desequence", envelope);
     }
 
-    public async Task MakePendingRequest(MakePendingRequest request)
+    public async Task MakePending(MakePendingRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MakePending, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "MakePendingRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "MakePending", envelope);
     }
 
-    public async Task MakeStableRequest(MakeStableRequest request)
+    public async Task MakeStable(MakeStableRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.MakeStable, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "MakeStableRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "MakeStable", envelope);
     }
 
-    public async Task RecomputeRequest(RecomputeRequest request)
+    public async Task Recompute(RecomputeRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Recompute, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "RecomputeRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "Recompute", envelope);
     }
 
-    public async Task ResumeSequencingRequest(ResumeSequencingRequest request)
+    public async Task ResumeSequencing(ResumeSequencingRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.Resequence, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "ResumeSequencingRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "ResumeSequencing", envelope);
     }
 
-    public async Task ZeroDelayRequest(ZeroDelayRequest request)
+    public async Task ZeroDelay(ZeroDelayRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManualDelay, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "ZeroDelayRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "ZeroDelay", envelope);
     }
 
-    public async Task ChangeRunwayRequest(ChangeRunwayRequest request)
+    public async Task ChangeRunway(ChangeRunwayRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeRunway, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "ChangeRunwayRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "ChangeRunway", envelope);
     }
 
-    public async Task ChangeRunwayModeRequest(ChangeRunwayModeRequest request)
+    public async Task ChangeRunwayMode(ChangeRunwayModeRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeTerminalConfiguration, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "ChangeRunwayModeRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "ChangeRunwayMode", envelope);
     }
 
-    public async Task ChangeFeederFixEstimateRequest(ChangeFeederFixEstimateRequest request)
+    public async Task ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ChangeFeederFixEstimate, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "ChangeFeederFixEstimateRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "ChangeFeederFixEstimate", envelope);
     }
 
-    public async Task CreateSlotRequest(CreateSlotRequest request)
+    public async Task CreateSlot(CreateSlotRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "CreateSlotRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "CreateSlot", envelope);
     }
 
-    public async Task ModifySlotRequest(ModifySlotRequest request)
+    public async Task ModifySlot(ModifySlotRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "ModifySlotRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "ModifySlot", envelope);
     }
 
-    public async Task DeleteSlotRequest(DeleteSlotRequest request)
+    public async Task DeleteSlot(DeleteSlotRequest request)
     {
-        if (!await ValidatePermissionAndNotifyIfDenied(ActionKeys.ManageSlots, request.AirportIdentifier))
+        var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
+        if (envelope == null)
             return;
 
-        await SendToFlowController(request.AirportIdentifier, "DeleteSlotRequest", request);
+        await SendToFlowController(request.AirportIdentifier, "DeleteSlot", envelope);
     }
 
-    private bool CanPerformAction(string actionKey, Role userRole, GroupKey groupKey)
-    {
-        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
-        if (sequence == null) return false;
-
-        var hasFlowController = sequence.Connections.Any(c => c.Role == Role.Flow);
-
-        // When no flow controller exists, everyone can do everything
-        if (!hasFlowController || sequence.Permissions == null)
-            return true;
-
-        return sequence.Permissions.TryGetValue(actionKey, out var allowedRoles) && allowedRoles.Contains(userRole);
-    }
-
-    private async Task<bool> ValidatePermissionAndNotifyIfDenied(string actionKey, string airportIdentifier)
+    private RequestEnvelope<T>? CreateRequestEnvelope<T>(T request, string airportIdentifier)
     {
         if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
         {
-            logger.LogWarning("Connection {ConnectionId} attempted {Action} but is not part of any group",
-                Context.ConnectionId, actionKey);
-            return false;
+            logger.LogWarning("Connection {ConnectionId} attempted to create envelope but is not part of any group",
+                Context.ConnectionId);
+            return null;
         }
 
         var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
         var senderConnection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
         if (senderConnection == null)
         {
-            logger.LogWarning("Connection {ConnectionId} attempted {Action} but connection not found",
-                Context.ConnectionId, actionKey);
-            return false;
+            logger.LogWarning("Connection {ConnectionId} attempted to create envelope but connection not found",
+                Context.ConnectionId);
+            return null;
         }
 
-        if (!CanPerformAction(actionKey, senderConnection.Role, groupKey))
-        {
-            logger.LogWarning("{Callsign} attempted {Action} but does not have permission (Role: {Role})",
-                senderConnection.Callsign, actionKey, senderConnection.Role);
-
-            await Clients.Caller.SendAsync("PermissionDeniedNotification",
-                new PermissionDeniedNotification(actionKey, "You do not have permission to perform this action."));
-
-            return false;
-        }
-
-        return true;
+        return RequestEnvelopeHelper.CreateEnvelope(request, senderConnection.Callsign, Context.ConnectionId, senderConnection.Role);
     }
 
-    private async Task BroadcastPermissionChanges(GroupKey groupKey)
-    {
-        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
-        if (sequence == null) return;
 
-        await Clients.Group(groupKey.Value).SendAsync("PermissionStateNotification",
-            new PermissionsChangedNotification(groupKey.AirportIdentifier, sequence.Permissions ?? PermissionHelper.FullAccess()));
-    }
 
     private async Task SendToFlowController<T>(string airportIdentifier, string messageType, T request)
     {
@@ -542,11 +478,6 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                         }
                     }
 
-                    // Broadcast permission changes if a flow controller disconnected
-                    if (wasFlowController)
-                    {
-                        await BroadcastPermissionChanges(groupKey);
-                    }
                 }
             }
 
