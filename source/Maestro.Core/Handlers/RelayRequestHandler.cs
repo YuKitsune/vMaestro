@@ -5,10 +5,10 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class RelayRequestHandler<T>(ISessionManager sessionManager, ServerConfiguration serverConfiguration, IMediator mediator, ILogger logger)
-    : IRequestHandler<RelayRequest<T>, RelayResponse> where T : class, IRequest
+public class RelayRequestHandler(ISessionManager sessionManager, ServerConfiguration serverConfiguration, IMediator mediator, ILogger logger)
+    : IRequestHandler<RelayRequest, RelayResponse>
 {
-    public async Task<RelayResponse> Handle(RelayRequest<T> request, CancellationToken cancellationToken)
+    public async Task<RelayResponse> Handle(RelayRequest request, CancellationToken cancellationToken)
     {
         var envelope = request.Envelope;
         var actionKey = request.ActionKey;
@@ -20,7 +20,7 @@ public class RelayRequestHandler<T>(ISessionManager sessionManager, ServerConfig
         var airportIdentifier = GetAirportIdentifier(envelope.Request);
         if (string.IsNullOrEmpty(airportIdentifier))
         {
-            logger.Warning("Could not determine airport identifier from request {RequestType}", typeof(T).Name);
+            logger.Warning("Could not determine airport identifier from request {RequestType}", request.Envelope.Request.GetType().Name);
             return RelayResponse.CreateFailure("Could not determine airport identifier from request");
         }
 
@@ -67,10 +67,10 @@ public class RelayRequestHandler<T>(ISessionManager sessionManager, ServerConfig
         return true;
     }
 
-    static string GetAirportIdentifier(T request)
+    static string GetAirportIdentifier(IRequest request)
     {
         // Use reflection to get the AirportIdentifier property from the request
-        var property = typeof(T).GetProperty("AirportIdentifier");
+        var property = request.GetType().GetProperty("AirportIdentifier");
         return property?.GetValue(request) as string ?? string.Empty;
     }
 }

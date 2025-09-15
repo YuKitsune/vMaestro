@@ -109,7 +109,11 @@ public class MaestroConnection : IAsyncDisposable
         where T : class, IRequest
     {
         var methodName = GetMethodName(message);
-        await _hubConnection.InvokeAsync(methodName, message, cancellationToken);
+        var response = await _hubConnection.InvokeAsync<RelayResponse>(methodName, message, cancellationToken);
+        if (!response.Success)
+        {
+            throw new MaestroException(response.ErrorMessage);
+        }
     }
 
     public async Task Send<T>(T message, CancellationToken cancellationToken)
@@ -368,9 +372,15 @@ public class MaestroConnection : IAsyncDisposable
         var cancellationToken = GetMessageCancellationToken();
 
         var response = await _mediator.Send(
-            new RelayRequest<T>
+            new RelayRequest
             {
-                Envelope = envelope,
+                Envelope = new RequestEnvelope
+                {
+                    OriginatingCallsign = envelope.OriginatingCallsign,
+                    OriginatingConnectionId = envelope.OriginatingConnectionId,
+                    OriginatingRole = envelope.OriginatingRole,
+                    Request = envelope.Request
+                },
                 ActionKey = actionKey
             },
             cancellationToken);

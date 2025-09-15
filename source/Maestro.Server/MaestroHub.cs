@@ -177,7 +177,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
 
         // Send to all clients in the group except the sender
         await Clients.GroupExcept(groupKey.Value, Context.ConnectionId)
-            .SendAsync("SequenceUpdatedNotification", sequenceUpdatedNotification);
+            .SendAsync("SequenceUpdated", sequenceUpdatedNotification);
     }
 
     public async Task FlightUpdated(FlightUpdatedNotification flightUpdatedNotification)

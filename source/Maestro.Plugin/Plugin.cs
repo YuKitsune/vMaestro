@@ -60,6 +60,7 @@ namespace Maestro.Plugin;
 //  - Current runway mode is not pulled in when connecting
 //  - Changing runways sometimes doesn't deconflict
 //  - ChangeRunway should've worked for everyone (it didn't)
+//  - Recompute recomputes everybody, not just the one flight
 
 // YMML Config: 35 min Stable from FF
 
