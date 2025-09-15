@@ -80,15 +80,7 @@ public class MaestroConnection : IAsyncDisposable
                 cancellationToken);
             var permissions = response.Permissions;
 
-            // If this is a flow controller and we own the sequence, send permissions
-            if (role == Role.Flow && response.OwnsSequence)
-            {
-                await _hubConnection.InvokeAsync(
-                    "ChangePermissions",
-                    new ChangePermissionsRequest(AirportIdentifier, _serverConfiguration.Permissions),
-                    cancellationToken);
-                permissions = _serverConfiguration.Permissions;
-            }
+            // Flow controllers now handle permissions client-side
 
             return new SequenceStartResult(response.OwnsSequence, response.Sequence, permissions, role);
         }
@@ -116,7 +108,35 @@ public class MaestroConnection : IAsyncDisposable
     public async Task Send<T>(T message, CancellationToken cancellationToken)
         where T : class
     {
-        await _hubConnection.InvokeAsync(message.GetType().Name, message, cancellationToken);
+        var methodName = GetMethodName(message);
+        await _hubConnection.InvokeAsync(methodName, message, cancellationToken);
+    }
+
+    private static string GetMethodName(object request)
+    {
+        // Map request type names to hub method names (removed "Request" suffix)
+        return request switch
+        {
+            ChangeRunwayRequest => "ChangeRunway",
+            ChangeRunwayModeRequest => "ChangeRunwayMode",
+            ChangeFeederFixEstimateRequest => "ChangeFeederFixEstimate",
+            InsertFlightRequest => "InsertFlight",
+            InsertDepartureRequest => "InsertDeparture",
+            InsertOvershootRequest => "InsertOvershoot",
+            MoveFlightRequest => "MoveFlight",
+            SwapFlightsRequest => "SwapFlights",
+            RemoveRequest => "Remove",
+            DesequenceRequest => "Desequence",
+            MakePendingRequest => "MakePending",
+            MakeStableRequest => "MakeStable",
+            RecomputeRequest => "Recompute",
+            ResumeSequencingRequest => "ResumeSequencing",
+            ZeroDelayRequest => "ZeroDelay",
+            CreateSlotRequest => "CreateSlot",
+            ModifySlotRequest => "ModifySlot",
+            DeleteSlotRequest => "DeleteSlot",
+            _ => throw new ArgumentOutOfRangeException(nameof(request), "Unsupported request type")
+        };
     }
 
     void SubscribeToNotifications()
@@ -137,19 +157,6 @@ public class MaestroConnection : IAsyncDisposable
             await _mediator.Publish(request, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<PermissionsChangedNotification>("PermissionStateNotification", async notification =>
-        {
-            if (notification.AirportIdentifier != _airportIdentifier)
-                return;
-
-            await _mediator.Publish(notification, GetMessageCancellationToken());
-        });
-
-        _hubConnection.On<PermissionDeniedNotification>("PermissionDeniedNotification", async notification =>
-        {
-            await _mediator.Publish(notification, GetMessageCancellationToken());
-        });
-
         _hubConnection.On<SequenceUpdatedNotification>("SequenceUpdatedNotification", async sequenceUpdatedNotification =>
         {
             if (sequenceUpdatedNotification.AirportIdentifier != _airportIdentifier)
@@ -166,140 +173,140 @@ public class MaestroConnection : IAsyncDisposable
             await _mediator.Publish(flightUpdatedNotification, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<InsertFlightRequest>("InsertFlightRequest", async request =>
+        _hubConnection.On<RequestEnvelope<InsertFlightRequest>>("InsertFlight", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDummy);
         });
 
-        _hubConnection.On<InsertDepartureRequest>("InsertDepartureRequest", async request =>
+        _hubConnection.On<RequestEnvelope<InsertDepartureRequest>>("InsertDeparture", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDeparture);
         });
 
-        _hubConnection.On<MoveFlightRequest>("MoveFlightRequest", async request =>
+        _hubConnection.On<RequestEnvelope<MoveFlightRequest>>("MoveFlight", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.MoveFlight);
         });
 
-        _hubConnection.On<SwapFlightsRequest>("SwapFlightsRequest", async request =>
+        _hubConnection.On<RequestEnvelope<SwapFlightsRequest>>("SwapFlights", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.MoveFlight);
         });
 
-        _hubConnection.On<RemoveRequest>("RemoveRequest", async request =>
+        _hubConnection.On<RequestEnvelope<RemoveRequest>>("Remove", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.RemoveFlight);
         });
 
-        _hubConnection.On<DesequenceRequest>("DesequenceRequest", async request =>
+        _hubConnection.On<RequestEnvelope<DesequenceRequest>>("Desequence", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.Desequence);
         });
 
-        _hubConnection.On<MakePendingRequest>("MakePendingRequest", async request =>
+        _hubConnection.On<RequestEnvelope<MakePendingRequest>>("MakePending", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.MakePending);
         });
 
-        _hubConnection.On<MakeStableRequest>("MakeStableRequest", async request =>
+        _hubConnection.On<RequestEnvelope<MakeStableRequest>>("MakeStable", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.MakeStable);
         });
 
-        _hubConnection.On<RecomputeRequest>("RecomputeRequest", async request =>
+        _hubConnection.On<RequestEnvelope<RecomputeRequest>>("Recompute", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.Recompute);
         });
 
-        _hubConnection.On<ResumeSequencingRequest>("ResumeSequencingRequest", async request =>
+        _hubConnection.On<RequestEnvelope<ResumeSequencingRequest>>("ResumeSequencing", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.Resequence);
         });
 
-        _hubConnection.On<ZeroDelayRequest>("ZeroDelayRequest", async request =>
+        _hubConnection.On<RequestEnvelope<ZeroDelayRequest>>("ZeroDelay", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.ManualDelay);
         });
 
-        _hubConnection.On<ChangeRunwayRequest>("ChangeRunwayRequest", async request =>
+        _hubConnection.On<RequestEnvelope<ChangeRunwayRequest>>("ChangeRunway", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeRunway);
         });
 
-        _hubConnection.On<ChangeRunwayModeRequest>("ChangeRunwayModeRequest", async request =>
+        _hubConnection.On<RequestEnvelope<ChangeRunwayModeRequest>>("ChangeRunwayMode", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeTerminalConfiguration);
         });
 
-        _hubConnection.On<ChangeFeederFixEstimateRequest>("ChangeFeederFixEstimateRequest", async request =>
+        _hubConnection.On<RequestEnvelope<ChangeFeederFixEstimateRequest>>("ChangeFeederFixEstimate", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeFeederFixEstimate);
         });
 
-        _hubConnection.On<CreateSlotRequest>("CreateSlotRequest", async request =>
+        _hubConnection.On<RequestEnvelope<CreateSlotRequest>>("CreateSlot", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
         });
 
-        _hubConnection.On<ModifySlotRequest>("ModifySlotRequest", async request =>
+        _hubConnection.On<RequestEnvelope<ModifySlotRequest>>("ModifySlot", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
         });
 
-        _hubConnection.On<DeleteSlotRequest>("DeleteSlotRequest", async request =>
+        _hubConnection.On<RequestEnvelope<DeleteSlotRequest>>("DeleteSlot", async envelope =>
         {
-            if (request.AirportIdentifier != _airportIdentifier)
+            if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Send(request, GetMessageCancellationToken());
+            await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
         });
     }
 
@@ -342,6 +349,30 @@ public class MaestroConnection : IAsyncDisposable
 
         var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(_rootCancellationTokenSource.Token, source.Token);
         return linkedSource.Token;
+    }
+
+    async Task ProcessEnvelopedRequest<T>(RequestEnvelope<T> envelope, string actionKey) where T : class, IRequest
+    {
+        var cancellationToken = GetMessageCancellationToken();
+
+        var response = await _mediator.Send(
+            new RelayRequest<T>
+            {
+                Envelope = envelope,
+                ActionKey = actionKey
+            },
+            cancellationToken);
+
+        if (!response.Success)
+        {
+            _logger.Warning("Request {ActionKey} from {Callsign} failed: {ErrorMessage}",
+                actionKey, envelope.OriginatingCallsign, response.ErrorMessage);
+        }
+        else
+        {
+            _logger.Information("Request {ActionKey} from {Callsign} processed successfully",
+                actionKey, envelope.OriginatingCallsign);
+        }
     }
 
     public async ValueTask DisposeAsync()

@@ -19,11 +19,5 @@ public class StartSessionRequestHandler(ISessionManager sessionManager, IMediato
                 request.AirportIdentifier,
                 request.Position),
             cancellationToken);
-
-        await mediator.Publish(
-            new PermissionSetChangedNotification(
-                request.AirportIdentifier,
-                new PermissionSet(lockedSession.Session.Role, lockedSession.Session.Permissions)),
-            cancellationToken);
     }
 }

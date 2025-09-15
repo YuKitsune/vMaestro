@@ -15,7 +15,6 @@ public interface ISession
     SemaphoreSlim Semaphore { get; }
     bool OwnsSequence { get; }
     Role Role { get; }
-    IReadOnlyDictionary<string, Role[]> Permissions { get; }
 
     Task Start(string position, CancellationToken cancellationToken);
     Task Stop(CancellationToken cancellationToken);
@@ -24,8 +23,6 @@ public interface ISession
 
     Task TakeOwnership(CancellationToken cancellationToken);
     Task RevokeOwnership(CancellationToken cancellationToken);
-
-    void ChangePermissions(IReadOnlyDictionary<string, Role[]> permissions);
 }
 
 public class Session : ISession, IAsyncDisposable
@@ -40,8 +37,6 @@ public class Session : ISession, IAsyncDisposable
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public Role Role { get; private set; } = Role.Observer;
     public bool OwnsSequence { get; private set; } = true;
-
-    public IReadOnlyDictionary<string, Role[]> Permissions { get; private set; } = PermissionHelper.FullAccess();
 
     readonly BackgroundTask _schedulerTask;
     // readonly BackgroundTask _synchronizeTask;
@@ -72,7 +67,6 @@ public class Session : ISession, IAsyncDisposable
             var result = await Connection.Start(position, cancellationToken);
             OwnsSequence = result.OwnsSequence;
             Role = result.Role;
-            Permissions = result.Permissions;
 
             if (result.Sequence is not null)
             {
@@ -110,11 +104,6 @@ public class Session : ISession, IAsyncDisposable
     {
         OwnsSequence = false;
         await StopOwnershipTasks(cancellationToken);
-    }
-
-    public void ChangePermissions(IReadOnlyDictionary<string, Role[]> permissions)
-    {
-        Permissions = permissions;
     }
 
     async Task StartOwnershipTasks(CancellationToken cancellationToken)
