@@ -65,6 +65,8 @@ public class RecomputeRequestHandler(
         var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
         flight.SetRunway(runwayMode.Default.Identifier, manual: false);
 
+        flight.SetState(State.Unstable, clock);
+
         scheduler.Recompute(flight, sequence);
 
         // Progress the state based on the new times

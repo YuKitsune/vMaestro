@@ -316,6 +316,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithLandingTime(now.AddMinutes(1))
             .WithFeederFixEstimate(feederFixEstimate)
             .WithLandingEstimate(landingEstimate)
+            .WithActivationTime(now.Subtract(TimeSpan.FromMinutes(10)))
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)

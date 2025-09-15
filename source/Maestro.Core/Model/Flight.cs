@@ -294,7 +294,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
             return;
         }
 
-        SetState(State.Unstable, clock);
+        // SetState(State.Unstable, clock);
     }
 
     public int CompareTo(Flight? other)
