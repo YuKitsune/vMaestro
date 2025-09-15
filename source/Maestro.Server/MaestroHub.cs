@@ -132,7 +132,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         Connections.Remove(Context.ConnectionId);
     }
 
-    public async Task SequenceUpdatedNotification(SequenceUpdatedNotification sequenceUpdatedNotification)
+    public async Task SequenceUpdated(SequenceUpdatedNotification sequenceUpdatedNotification)
     {
         // Look up the group key for this connection
         if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
@@ -180,171 +180,171 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             .SendAsync("SequenceUpdatedNotification", sequenceUpdatedNotification);
     }
 
-    public async Task FlightUpdatedNotification(FlightUpdatedNotification flightUpdatedNotification)
+    public async Task FlightUpdated(FlightUpdatedNotification flightUpdatedNotification)
     {
-        await SendToFlowController(flightUpdatedNotification.Destination, "FlightUpdatedNotification", flightUpdatedNotification);
+        await SendNotificationToFlowController(flightUpdatedNotification.Destination, "FlightUpdated", flightUpdatedNotification);
     }
 
-    public async Task InsertFlight(InsertFlightRequest request)
+    public async Task<RelayResponse> InsertFlight(InsertFlightRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "InsertFlight", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "InsertFlight", envelope);
     }
 
-    public async Task InsertOvershoot(InsertOvershootRequest request)
+    public async Task<RelayResponse> InsertOvershoot(InsertOvershootRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "InsertOvershoot", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "InsertOvershoot", envelope);
     }
 
-    public async Task InsertDeparture(InsertDepartureRequest request)
+    public async Task<RelayResponse> InsertDeparture(InsertDepartureRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "InsertDeparture", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "InsertDeparture", envelope);
     }
 
-    public async Task MoveFlight(MoveFlightRequest request)
+    public async Task<RelayResponse> MoveFlight(MoveFlightRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "MoveFlight", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "MoveFlight", envelope);
     }
 
-    public async Task SwapFlights(SwapFlightsRequest request)
+    public async Task<RelayResponse> SwapFlights(SwapFlightsRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "SwapFlights", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "SwapFlights", envelope);
     }
 
-    public async Task Remove(RemoveRequest request)
+    public async Task<RelayResponse> Remove(RemoveRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "Remove", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "Remove", envelope);
     }
 
-    public async Task Desequence(DesequenceRequest request)
+    public async Task<RelayResponse> Desequence(DesequenceRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "Desequence", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "Desequence", envelope);
     }
 
-    public async Task MakePending(MakePendingRequest request)
+    public async Task<RelayResponse> MakePending(MakePendingRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "MakePending", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "MakePending", envelope);
     }
 
-    public async Task MakeStable(MakeStableRequest request)
+    public async Task<RelayResponse> MakeStable(MakeStableRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "MakeStable", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "MakeStable", envelope);
     }
 
-    public async Task Recompute(RecomputeRequest request)
+    public async Task<RelayResponse> Recompute(RecomputeRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "Recompute", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "Recompute", envelope);
     }
 
-    public async Task ResumeSequencing(ResumeSequencingRequest request)
+    public async Task<RelayResponse> ResumeSequencing(ResumeSequencingRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "ResumeSequencing", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "ResumeSequencing", envelope);
     }
 
-    public async Task ZeroDelay(ZeroDelayRequest request)
+    public async Task<RelayResponse> ZeroDelay(ZeroDelayRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "ZeroDelay", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "ZeroDelay", envelope);
     }
 
-    public async Task ChangeRunway(ChangeRunwayRequest request)
+    public async Task<RelayResponse> ChangeRunway(ChangeRunwayRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "ChangeRunway", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "ChangeRunway", envelope);
     }
 
-    public async Task ChangeRunwayMode(ChangeRunwayModeRequest request)
+    public async Task<RelayResponse> ChangeRunwayMode(ChangeRunwayModeRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "ChangeRunwayMode", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "ChangeRunwayMode", envelope);
     }
 
-    public async Task ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)
+    public async Task<RelayResponse> ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "ChangeFeederFixEstimate", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "ChangeFeederFixEstimate", envelope);
     }
 
-    public async Task CreateSlot(CreateSlotRequest request)
+    public async Task<RelayResponse> CreateSlot(CreateSlotRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "CreateSlot", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "CreateSlot", envelope);
     }
 
-    public async Task ModifySlot(ModifySlotRequest request)
+    public async Task<RelayResponse> ModifySlot(ModifySlotRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "ModifySlot", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "ModifySlot", envelope);
     }
 
-    public async Task DeleteSlot(DeleteSlotRequest request)
+    public async Task<RelayResponse> DeleteSlot(DeleteSlotRequest request)
     {
         var envelope = CreateRequestEnvelope(request, request.AirportIdentifier);
         if (envelope == null)
-            return;
+            return RelayResponse.CreateFailure("Failed to create request envelope");
 
-        await SendToFlowController(request.AirportIdentifier, "DeleteSlot", envelope);
+        return await SendToFlowController(request.AirportIdentifier, "DeleteSlot", envelope);
     }
 
     private RequestEnvelope<T>? CreateRequestEnvelope<T>(T request, string airportIdentifier)
@@ -368,15 +368,13 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         return RequestEnvelopeHelper.CreateEnvelope(request, senderConnection.Callsign, Context.ConnectionId, senderConnection.Role);
     }
 
-
-
-    private async Task SendToFlowController<T>(string airportIdentifier, string messageType, T request)
+    async Task<RelayResponse> SendToFlowController<T>(string airportIdentifier, string methodName, T request)
     {
         if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
         {
-            logger.LogWarning("Connection {ConnectionId} attempted to send {MessageType} but is not part of any group",
-                Context.ConnectionId, messageType);
-            return;
+            logger.LogWarning("Connection {ConnectionId} attempted to send {MethodName} but is not part of any group",
+                Context.ConnectionId, methodName);
+            return RelayResponse.CreateFailure("Connection not part of any group");
         }
 
         var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
@@ -386,38 +384,55 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         if (airportIdentifier != groupKey.AirportIdentifier)
         {
             logger.LogWarning(
-                "{Callsign} attempted to send {MessageType} for {Airport} but is part of {Group}",
-                senderCallsign, messageType, airportIdentifier, groupKey);
-            return;
+                "{Callsign} attempted to send {MethodName} for {Airport} but is part of {Group}",
+                senderCallsign, methodName, airportIdentifier, groupKey);
+            return RelayResponse.CreateFailure($"Airport mismatch: expected {groupKey.AirportIdentifier}, got {airportIdentifier}");
         }
 
         if (sequence == null)
         {
-            logger.LogWarning("{Callsign} attempted to send {MessageType} to owner of {Group} but no sequence exists",
-                senderCallsign, messageType, groupKey);
-            return;
+            logger.LogWarning("{Callsign} attempted to send {MethodName} to owner of {Group} but no sequence exists",
+                senderCallsign, methodName, groupKey);
+            return RelayResponse.CreateFailure("No sequence exists");
         }
 
         var flowController = sequence.Connections.SingleOrDefault(c => c.OwnsSequence);
         if (flowController == null)
         {
-            logger.LogWarning("{Callsign} attempted to send {MessageType} to owner of {Group} but no owner exists",
-                senderCallsign, messageType, groupKey);
-            return;
+            logger.LogWarning("{Callsign} attempted to send {MethodName} to owner of {Group} but no owner exists",
+                senderCallsign, methodName, groupKey);
+            return RelayResponse.CreateFailure("No flow controller available");
         }
 
         // Don't send messages to yourself
         if (flowController.Id == Context.ConnectionId)
         {
-            logger.LogWarning("{Callsign} attempted to send {MessageType} to itself as owner of {Group}",
-                senderCallsign, messageType, groupKey);
-            return;
+            logger.LogWarning("{Callsign} attempted to send {MethodName} to itself as owner of {Group}",
+                senderCallsign, methodName, groupKey);
+            return RelayResponse.CreateFailure("Cannot send request to self");
         }
 
-        logger.LogDebug("{Callsign} sending {MessageType} to {FlowControllerCallsign} for {Group}",
-            senderCallsign, messageType, flowController.Callsign, groupKey);
+        logger.LogDebug("{Callsign} sending {MethodName} to {FlowControllerCallsign} for {Group}",
+            senderCallsign, methodName, flowController.Callsign, groupKey);
 
-        await Clients.Client(flowController.Id).SendAsync(messageType, request);
+        try
+        {
+            var response = await Clients.Client(flowController.Id).InvokeAsync<RelayResponse>(methodName, request, CancellationToken.None);
+
+            if (!response.Success)
+            {
+                logger.LogWarning("{Callsign} received error response from {FlowControllerCallsign} for {MethodName} in {Group}: {ErrorMessage}",
+                    senderCallsign, flowController.Callsign, methodName, groupKey, response.ErrorMessage);
+            }
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send {MethodName} from {Callsign} to {FlowControllerCallsign}",
+                methodName, senderCallsign, flowController.Callsign);
+            return RelayResponse.CreateFailure($"Communication error: {ex.Message}");
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -491,6 +506,56 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
     {
         logger.LogInformation("New connection established: {ConnectionId}", Context.ConnectionId);
         await base.OnConnectedAsync();
+    }
+
+    async Task SendNotificationToFlowController<T>(string airportIdentifier, string methodName, T notification)
+    {
+        if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
+        {
+            logger.LogWarning("Connection {ConnectionId} attempted to send {MethodName} but is not part of any group",
+                Context.ConnectionId, methodName);
+            return;
+        }
+
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        var senderConnection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
+        var senderCallsign = senderConnection?.Callsign ?? "Unknown";
+
+        if (airportIdentifier != groupKey.AirportIdentifier)
+        {
+            logger.LogWarning(
+                "{Callsign} attempted to send {MethodName} for {Airport} but is part of {Group}",
+                senderCallsign, methodName, airportIdentifier, groupKey);
+            return;
+        }
+
+        if (sequence == null)
+        {
+            logger.LogWarning("{Callsign} attempted to send {MethodName} to owner of {Group} but no sequence exists",
+                senderCallsign, methodName, groupKey);
+            return;
+        }
+
+        var flowController = sequence.Connections.SingleOrDefault(c => c.OwnsSequence);
+        if (flowController == null)
+        {
+            logger.LogWarning("{Callsign} attempted to send {MethodName} to owner of {Group} but no owner exists",
+                senderCallsign, methodName, groupKey);
+            return;
+        }
+
+        // Don't send messages to yourself
+        if (flowController.Id == Context.ConnectionId)
+        {
+            logger.LogWarning("{Callsign} attempted to send {MethodName} to itself as owner of {Group}",
+                senderCallsign, methodName, groupKey);
+            return;
+        }
+
+        logger.LogDebug("{Callsign} sending {MethodName} to {FlowControllerCallsign} for {Group}",
+            senderCallsign, methodName, flowController.Callsign, groupKey);
+
+        await Clients.Client(flowController.Id).SendAsync(methodName, notification);
     }
 
     private static Connection? SelectNewOwner(Sequence sequence)

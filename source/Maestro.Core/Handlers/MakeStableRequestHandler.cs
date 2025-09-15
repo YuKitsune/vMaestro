@@ -20,7 +20,7 @@ public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clo
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
-            await lockedSession.Session.Connection.Send(request, cancellationToken);
+            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
 
