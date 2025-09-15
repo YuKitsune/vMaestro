@@ -53,16 +53,30 @@ namespace Maestro.Plugin;
 //  - Allow insertion on the feeder view
 //  - Different handlers for pending, overshoot, and dummy flights
 
-// Notes from testing on Sunday:
+// Bugs from Sunday:
 //  - Current runway mode is not pulled in when connecting
 //  - Changing runways sometimes doesn't deconflict
 
-// Notes from MRM
-//  - Windows don't resize when the content changes
-//  - Recompute recomputes everybody, not just the one flight
-//  - Flights sometimes get a negative delay then become stable
+// Bugs from MRM:
+// - Windows don't resize when the content changes.
+// - Recompute behavior is unpredictable. Need to revisit.
+// - Flights sometimes get a negative total delay, even after stabling.
+// - Insert flight window doesn't work.
+// - + symbol appears when no delay is remaining. Is this intended?
+// - System estimates are very inaccurate, they rely on TAS input by the pilot. Hybrid BRL + system estimate is confusing. (Pick one?)
+// - Connection failures are not gracefully handled.
 
-// YMML Config: 35 min Stable from FF
+// AIS Notes:
+// - When a flight takes off from a non-departure airport, they jump in front of the sequence despite being really far away
+//    - Need to model close airports as well as departure airports I think
+// - YMML PORTS arrival not modeled correctly
+// - YMML needs different state thresholds
+
+// SOPS Notes:
+// - Document troubleshooting routes i.e. TANTA LEECE TANTA making the estimates all wrong. Re-route then recompute to fix.
+// - Procedure: Update ETA_FF before issuing flow actions.
+// - Procedure: Ask pilots for revised TAS speeds if you suspect they are inaccurate.
+// - Procedure: Ask pilots for winds at 10k and 6k ft to update Maestro winds.
 
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
