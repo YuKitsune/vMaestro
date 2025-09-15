@@ -7,6 +7,11 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
+// TODO: Test cases
+// - Unstable flight becomes stable
+// - Flights in other modes are ignored
+// - Flight does not become unstable when manually stablised
+
 public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clock, IScheduler scheduler, IMediator mediator)
     : IRequestHandler<MakeStableRequest>
 {
@@ -21,7 +26,7 @@ public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clo
 
         var sequence = lockedSession.Session.Sequence;
         var flight = sequence.FindTrackedFlight(request.Callsign);
-        if (flight == null)
+        if (flight is null)
             return;
 
         if (flight.State is not State.Unstable)

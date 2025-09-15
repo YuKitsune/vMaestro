@@ -32,14 +32,7 @@ namespace Maestro.Plugin;
 // TODO: Need to improve the boundaries between DTOs, domain models, and view models.
 //  - Domain models and DTOs are leaking into the frontend
 
-// TODO: Hide some functions from different views (e.g: APP only and ENR only)
-
 // TODO: Encapsulate UI related commands into a separate service rather than using the Mediator
-
-// TODO: Permissions
-//  - Restrict access to certain functions based on user roles
-//  - Allow FMP full access, restrict CTR and APP functions. All other positions view only.
-//  - When FMP is offline, allow CTR and APP to have full access.
 
 // TODO: Setup View
 //  - Show setup after opening TFMS window via Setup button
@@ -55,17 +48,20 @@ namespace Maestro.Plugin;
 // TODO: Information messages
 //  - Show information messages for important events (e.g. pending flight activated, desequenced, runway mode changes etc.)
 
+// TODO: Flight insertion
+//  - Add options to Pending DTO (i.e. departure time or arrival time)
+//  - Allow insertion on the feeder view
+//  - Different handlers for pending, overshoot, and dummy flights
+
 // Notes from testing on Sunday:
-//  - Flow can't move some flights, for some reason
-//  - Changing runways sometimes doesn't deconflict
-//  - Insert flight doesn't work for APP
-//  - ChangeRunway should've worked for everyone (it didn't)
-//  - Closing the TFMS window doesn't destroy the session (also stays in the menubar)
-//  - APP can't seem to select some flights
+//  - Permissions are broken
 //  - Information Window too small
-//  - Dummy flights become unstable
-//  - Insert pending doesn't work
 //  - Sequence resets to local copy when becoming owner
+//  - Current runway mode is not pulled in when connecting
+//  - Changing runways sometimes doesn't deconflict
+//  - ChangeRunway should've worked for everyone (it didn't)
+
+// YMML Config: 35 min Stable from FF
 
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
