@@ -11,7 +11,7 @@
         Background="{x:Static local:Theme.BackgroundColor}"
         Width="Auto"
         Height="Auto"
-        Padding="4">
+        Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -9,8 +9,8 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:PendingDeparturesViewModel}"
              mc:Ignorable="d"
-             Padding="2"
-             Width="320">
+             Padding="8"
+             MinWidth="320">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -60,7 +60,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.Column="0">
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,4,0">
             <TextBlock>Over shoot</TextBlock>
             <ListBox
                 BorderThickness="0"
@@ -69,7 +69,7 @@
                 Height="120"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="0" Grid.Column="1">
+        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4,0,0,0">
             <TextBlock>Pending</TextBlock>
 
             <ListBox

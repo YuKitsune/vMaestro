@@ -18,6 +18,7 @@ public class OpenDesequencedWindowRequestHandler(WindowManager windowManager, IM
             windowHandle => new DesequencedView(
                 new DesequencedViewModel(
                     mediator,
+                    windowHandle,
                     errorReporter,
                     request.AirportIdentifier,
                     request.Callsigns)));

@@ -9,8 +9,8 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:SetupViewModel}"
              mc:Ignorable="d"
-             Padding="2"
-             Width="240"
+             Padding="8"
+             MinWidth="240"
              Height="Auto">
     <UserControl.Resources>
         <ResourceDictionary>

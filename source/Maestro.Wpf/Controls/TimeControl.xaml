@@ -6,8 +6,7 @@
              xmlns:local="clr-namespace:Maestro.Wpf"
              xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
              mc:Ignorable="d"
-             MaxHeight="20"
-             d:DesignWidth="140">
+             Height="20">
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -21,7 +20,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="20"/>
             <ColumnDefinition Width="20"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="56"/>
             <ColumnDefinition Width="20"/>
             <ColumnDefinition Width="20"/>
         </Grid.ColumnDefinitions>
@@ -54,7 +53,7 @@
                 BorderBrush="{x:Static local:Theme.InteractiveTextColor}"
                 BorderThickness="1"
                 Margin="1,0">
-            <TextBlock Text="{Binding TimeText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            <TextBlock Text="00:00"
                        Style="{StaticResource GenericTextStyle}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
