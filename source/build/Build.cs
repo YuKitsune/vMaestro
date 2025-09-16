@@ -1,10 +1,12 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.ILRepack;
 using Serilog;
 
 [SupportedOSPlatform("Windows")]
@@ -26,10 +28,13 @@ class Build : NukeBuild
 
     const string ReleasePluginName = "MaestroPlugin";
     const string DebugPluginName = "MaestroPlugin - Debug";
+    const string PluginAssemblyFileName = "Maestro.Plugin.dll";
+
     string PluginName => Configuration == Configuration.Debug ? DebugPluginName : ReleasePluginName;
 
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
-    AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build" / PluginName;
+    AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
+    AbsolutePath RepackAssemblyPath => TemporaryDirectory / "repack" / PluginAssemblyFileName;
     AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
     AbsolutePath PackageDirectory => TemporaryDirectory / "package";
 
@@ -40,7 +45,6 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var version = GetSemanticVersion();
-
             Log.Information(
                 "Building version {Version} with configuration {Configuration} to {OutputDirectory}",
                 version,
@@ -55,6 +59,12 @@ class Build : NukeBuild
                 .SetAssemblyVersion(GitVersion.MajorMinorPatch)
                 .SetFileVersion(GitVersion.MajorMinorPatch)
                 .SetInformationalVersion(version));
+
+            Log.Information("Merging assemblies into {RepackPath}", RepackAssemblyPath);
+            ILRepackTasks.ILRepack(s => s
+                .SetAssemblies(BuildOutputDirectory / PluginAssemblyFileName)
+                .SetOutput(RepackAssemblyPath)
+                .SetLib(BuildOutputDirectory));
         });
 
     Target Uninstall => _ => _
@@ -84,9 +94,14 @@ class Build : NukeBuild
             var pluginsDirectory = GetVatSysPluginsDirectory(ProfileName);
             Log.Information("Installing plugin to {TargetDirectory}", pluginsDirectory);
 
-            pluginsDirectory.CreateOrCleanDirectory();
-            BuildOutputDirectory.CopyToDirectory(pluginsDirectory, ExistsPolicy.MergeAndOverwrite);
-            Log.Information("Plugin installed to {PluginsDirectory}", pluginsDirectory);
+            if (!pluginsDirectory.Exists())
+                pluginsDirectory.CreateDirectory();
+
+            var maestroPluginDirectory = pluginsDirectory / PluginName;
+            maestroPluginDirectory.CreateOrCleanDirectory();
+
+            RepackAssemblyPath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
+            Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
 
             var configFile = RootDirectory / "Maestro.json";
             var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -106,7 +121,7 @@ class Build : NukeBuild
             // var changelogFile = RootDirectory / "CHANGELOG.md";
 
             PackageDirectory.CreateOrCleanDirectory();
-            BuildOutputDirectory.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            RepackAssemblyPath.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             readmeFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
