@@ -396,6 +396,14 @@ public class Plugin : IPlugin
 
     void PublishFlightUpdatedEvent(FDP2.FDR updated)
     {
+        var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
+        if (!isActivated)
+            return;
+
+        // Estimates have not been calculated yet
+        if (!updated.ESTed)
+            return;
+
         var wake = updated.AircraftWake switch
         {
             "J" => WakeCategory.SuperHeavy,
@@ -414,9 +422,6 @@ public class Plugin : IPlugin
                     : null))
             .ToArray();
 
-        var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
-        if (!isActivated)
-            return;
 
         FlightPosition? position = null;
         if (updated.CoupledTrack is not null)
