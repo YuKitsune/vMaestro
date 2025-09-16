@@ -27,6 +27,7 @@
         "Compile",
         "Install",
         "Package",
+        "Repack",
         "Uninstall"
       ]
     },
@@ -111,6 +112,10 @@
         },
         "ProfileName": {
           "type": "string"
+        },
+        "repack": {
+          "type": "boolean",
+          "description": "Whether to merge all assemblies using ILRepack"
         }
       }
     },

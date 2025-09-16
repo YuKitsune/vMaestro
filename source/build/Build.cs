@@ -23,6 +23,9 @@ class Build : NukeBuild
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
+    [Parameter("Merges all dependencies into a single assembly", Name = "repack")]
+    bool ShouldRepack = false;
+
     [GitVersion]
     readonly GitVersion GitVersion;
 
@@ -34,7 +37,8 @@ class Build : NukeBuild
 
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
-    AbsolutePath RepackAssemblyPath => TemporaryDirectory / "repack" / PluginAssemblyFileName;
+    AbsolutePath RepackDirectory => TemporaryDirectory / "repack";
+    AbsolutePath PluginAssembliesPath => ShouldRepack ? RepackDirectory : BuildOutputDirectory;
     AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
     AbsolutePath PackageDirectory => TemporaryDirectory / "package";
 
@@ -59,11 +63,25 @@ class Build : NukeBuild
                 .SetAssemblyVersion(GitVersion.MajorMinorPatch)
                 .SetFileVersion(GitVersion.MajorMinorPatch)
                 .SetInformationalVersion(version));
+        });
 
-            Log.Information("Merging assemblies into {RepackPath}", RepackAssemblyPath);
+    Target Repack => _ => _
+        .DependsOn(Compile)
+        .OnlyWhenStatic(() => ShouldRepack)
+        .Executes(() =>
+        {
+            // Get all DLLs in the build output directory
+            var allDlls = BuildOutputDirectory.GlobFiles("*.dll");
+
+            // BUG: MVVM Toolkit cannot be merged because WPF needs to load it from disk apparently
+            // Consider removing the dependency if possible
+
+            var repackAssemblyPath = RepackDirectory / PluginAssemblyFileName;
+
+            Log.Information("Merging {Count} assemblies into {RepackPath}", allDlls.Count, repackAssemblyPath);
             ILRepackTasks.ILRepack(s => s
-                .SetAssemblies(BuildOutputDirectory / PluginAssemblyFileName)
-                .SetOutput(RepackAssemblyPath)
+                .SetAssemblies(allDlls.Select(dll => dll.ToString()))
+                .SetOutput(repackAssemblyPath)
                 .SetLib(BuildOutputDirectory));
         });
 
@@ -89,6 +107,7 @@ class Build : NukeBuild
         .Requires(() => ProfileName)
         .DependsOn(Compile)
         .DependsOn(Uninstall)
+        .DependsOn(Repack)
         .Executes(() =>
         {
             var pluginsDirectory = GetVatSysPluginsDirectory(ProfileName);
@@ -97,12 +116,17 @@ class Build : NukeBuild
             if (!pluginsDirectory.Exists())
                 pluginsDirectory.CreateDirectory();
 
+            // Copy plugin assemblies
             var maestroPluginDirectory = pluginsDirectory / PluginName;
             maestroPluginDirectory.CreateOrCleanDirectory();
+            foreach (var absolutePath in PluginAssembliesPath.GetFiles())
+            {
+                absolutePath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
+            }
 
-            RepackAssemblyPath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
             Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
 
+            // Copy config to profile
             var configFile = RootDirectory / "Maestro.json";
             var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             var profileDirectory = Path.Combine(documentsPath, "vatSys Files", "Profiles", ProfileName);
@@ -112,6 +136,7 @@ class Build : NukeBuild
 
     Target Package => _ => _
         .DependsOn(Compile)
+        .DependsOn(Repack)
         .Requires(() => Configuration == Configuration.Release)
         .Executes(() =>
         {
@@ -121,11 +146,22 @@ class Build : NukeBuild
             // var changelogFile = RootDirectory / "CHANGELOG.md";
 
             PackageDirectory.CreateOrCleanDirectory();
-            RepackAssemblyPath.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+
+            // Copy plugin assemblies
+            var pluginAssembliesDirectory = PackageDirectory / PluginName;
+            pluginAssembliesDirectory.CreateOrCleanDirectory();
+            foreach (var absolutePath in PluginAssembliesPath.GetFiles())
+            {
+                absolutePath.CopyToDirectory(pluginAssembliesDirectory, ExistsPolicy.MergeAndOverwrite);
+            }
+
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             readmeFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             // changelogFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+
+            if (ZipPath.FileExists())
+                ZipPath.DeleteFile();
 
             Log.Information("Packaging {OutputDirectory} to {ZipPath}", PackageDirectory, ZipPath);
             PackageDirectory.ZipTo(ZipPath);
