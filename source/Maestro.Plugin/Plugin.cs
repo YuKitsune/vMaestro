@@ -53,6 +53,9 @@ namespace Maestro.Plugin;
 //  - Allow insertion on the feeder view
 //  - Different handlers for pending, overshoot, and dummy flights
 
+// TODO: Windowing
+//  - WPF's "*" size is incompatible with WinForms AutoSizing.
+
 // Bugs from Sunday:
 //  - Current runway mode is not pulled in when connecting
 //  - Changing runways sometimes doesn't deconflict
