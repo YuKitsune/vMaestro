@@ -1,13 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class TerminalConfigurationViewModel : ObservableObject
+public class TerminalConfigurationViewModel : ViewModel
 {
     readonly string _airportIdentifier;
     readonly IClock _clock;
@@ -15,23 +12,47 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
 
-    [ObservableProperty]
-    string _originalRunwayModeIdentifier;
+    public string OriginalRunwayModeIdentifier
+    {
+        get => Get<string>(nameof(OriginalRunwayModeIdentifier));
+        set => Set(nameof(OriginalRunwayModeIdentifier), value);
+    }
 
-    [ObservableProperty]
-    string _selectedRunwayModeIdentifier;
+    public string SelectedRunwayModeIdentifier
+    {
+        get => Get<string>(nameof(SelectedRunwayModeIdentifier));
+        set => Set(
+            nameof(SelectedRunwayModeIdentifier),
+            value,
+            onPropertyChanged: OnSelectedRunwayModeIdentifierChanged);
+    }
 
-    [ObservableProperty]
-    RunwayModeViewModel _selectedRunwayMode;
+    public RunwayModeViewModel SelectedRunwayMode
+    {
+        get => Get<RunwayModeViewModel>(nameof(SelectedRunwayMode));
+        set => Set(nameof(SelectedRunwayMode), value);
+    }
 
-    [ObservableProperty]
-    bool _changeImmediately;
+    public bool ChangeImmediately
+    {
+        get => Get<bool>(nameof(ChangeImmediately));
+        set => Set(nameof(ChangeImmediately), value);
+    }
 
-    [ObservableProperty]
-    DateTimeOffset _lastLandingTime;
+    public DateTimeOffset LastLandingTime
+    {
+        get => Get<DateTimeOffset>(nameof(LastLandingTime));
+        set => Set(nameof(LastLandingTime), value);
+    }
 
-    [ObservableProperty]
-    DateTimeOffset _firstLandingTime;
+    public DateTimeOffset FirstLandingTime
+    {
+        get => Get<DateTimeOffset>(nameof(FirstLandingTime));
+        set => Set(nameof(FirstLandingTime), value);
+    }
+
+    public RelayCommand ChangeRunwayModeCommand => new(ChangeRunwayMode);
+    public RelayCommand CloseWindowCommand => new(CloseWindow);
 
     public RunwayModeDto[] AvailableRunwayModes { get; }
 
@@ -58,26 +79,23 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         _errorReporter = errorReporter;
 
         OriginalRunwayModeIdentifier = currentRunwayMode.Identifier;
-
         AvailableRunwayModes = availableRunwayModes;
         SelectedRunwayMode = new RunwayModeViewModel(nextTerminalConfiguration ?? currentRunwayMode);
         SelectedRunwayModeIdentifier = SelectedRunwayMode.Identifier;
-
         LastLandingTime = lastLandingTimeForOldMode;
         FirstLandingTime = firstLandingTimeForNewMode;
     }
 
-    partial void OnSelectedRunwayModeIdentifierChanged(string value)
+    void OnSelectedRunwayModeIdentifierChanged(string _, string newValue)
     {
         // When selection changes in UI, update SelectedRunwayMode to the copy of the matching template
-        var template = AvailableRunwayModes.FirstOrDefault(r => r.Identifier == value);
+        var template = AvailableRunwayModes.FirstOrDefault(r => r.Identifier == newValue);
         if (template != null)
         {
             SelectedRunwayMode = new RunwayModeViewModel(template);
         }
     }
 
-    [RelayCommand]
     void ChangeRunwayMode()
     {
         try
@@ -102,7 +120,6 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
     void CloseWindow()
     {
         _windowHandle.Close();

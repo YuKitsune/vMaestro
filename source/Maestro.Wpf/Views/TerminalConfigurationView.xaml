@@ -6,7 +6,6 @@
              xmlns:local="clr-namespace:Maestro.Wpf"
              xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
              xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
-             xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
              mc:Ignorable="d"
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:TerminalConfigurationViewModel}"
@@ -18,8 +17,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
-            <converters:BoolInversionConverter x:Key="BoolInversionConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
