@@ -27,7 +27,6 @@ public class FlightUpdatedHandler(
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
-    IScheduler scheduler,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -72,8 +71,7 @@ public class FlightUpdatedHandler(
                         landingEstimate);
 
                     flight.IsFromDepartureAirport = true;
-                    flight.SetState(State.Pending, clock);
-                    sequence.AddFlight(flight, scheduler);
+                    sequence.AddPendingFlight(flight);
 
                     logger.Information("{Callsign} created (pending)", notification.Callsign);
                     await mediator.Publish(new InformationNotification(notification.Destination, clock.UtcNow(), $"{notification.Callsign} added to pending list"), cancellationToken);
@@ -93,8 +91,7 @@ public class FlightUpdatedHandler(
                         feederFix,
                         landingEstimate);
 
-                    flight.SetState(State.New, clock);
-                    sequence.AddFlight(flight, scheduler);
+                    sequence.Insert(flight, flight.LandingEstimate);
                     logger.Information("{Callsign} created", notification.Callsign);
                 }
                 // Flights not tracking a feeder fix are created with high priority
@@ -107,8 +104,7 @@ public class FlightUpdatedHandler(
 
                     flight.HighPriority = true;
 
-                    flight.SetState(State.New, clock);
-                    sequence.AddFlight(flight, scheduler);
+                    sequence.Insert(flight, flight.LandingEstimate);
                     logger.Information("{Callsign} created (high priority)", notification.Callsign);
                 }
             }
@@ -133,11 +129,17 @@ public class FlightUpdatedHandler(
 
             // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
             if (notification.Position is not null && !notification.Position.IsOnGround)
-                    CalculateEstimates(flight, notification, airportConfiguration);
+                CalculateEstimates(flight, notification, airportConfiguration);
 
             flight.UpdateLastSeen(clock);
 
             logger.Verbose("Flight updated: {Flight}", flight);
+
+            // Unstable flights are repositioned in the sequence on every update
+            if (flight.State is State.Unstable)
+                sequence.Reposition(flight, flight.LandingEstimate);
+
+            flight.UpdateStateBasedOnTime(clock);
 
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),

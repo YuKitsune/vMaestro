@@ -33,6 +33,8 @@ public class SwapFlightsRequestHandler(
         }
 
         var sequence = lockedSession.Session.Sequence;
+        sequence.SwapFlights(request.FirstFlightCallsign, request.SecondFlightCallsign);
+
         var firstFlight = sequence.FindTrackedFlight(request.FirstFlightCallsign);
         if (firstFlight is null)
             throw new MaestroException($"Could not find {request.FirstFlightCallsign}");
@@ -41,54 +43,15 @@ public class SwapFlightsRequestHandler(
         if (secondFlight is null)
             throw new MaestroException($"Could not find {request.SecondFlightCallsign}");
 
-        var firstLandingTime = firstFlight.LandingTime;
-        var firstRunway = firstFlight.AssignedRunwayIdentifier;
 
-        var secondLandingTime = secondFlight.LandingTime;
-        var secondRunway = secondFlight.AssignedRunwayIdentifier;
-
-        firstFlight.SetLandingTime(secondLandingTime, manual: true);
-        firstFlight.SetRunway(secondRunway, manual: true);
-        UpdateFeederFixTime(firstFlight, secondLandingTime);
-        if (firstFlight.State == State.Unstable)
-        {
-            // Unstable flights become stable when moved
-            firstFlight.SetState(State.Stable, clock);
-        }
-        else
-        {
-            firstFlight.UpdateStateBasedOnTime(clock);
-        }
-
-        secondFlight.SetLandingTime(firstLandingTime, manual: true);
-        secondFlight.SetRunway(firstRunway, manual: true);
-        UpdateFeederFixTime(secondFlight, firstLandingTime);
-        if (secondFlight.State == State.Unstable)
-        {
-            // Unstable flights become stable when moved
-            secondFlight.SetState(State.Stable, clock);
-        }
-        else
-        {
-            secondFlight.UpdateStateBasedOnTime(clock);
-        }
-
-        // We don't need to reschedule because we know both flights have already been scheduled
+        // Unstable flights become stable when moved
+        if (firstFlight.State == State.Unstable) firstFlight.SetState(State.Stable, clock);
+        if (secondFlight.State == State.Unstable) secondFlight.SetState(State.Stable, clock);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
                 sequence.AirportIdentifier,
                 sequence.ToMessage()),
             cancellationToken);
-    }
-
-    void UpdateFeederFixTime(Flight flight, DateTimeOffset newLandingTime)
-    {
-        if (string.IsNullOrEmpty(flight.FeederFixIdentifier) || flight.FeederFixEstimate is null || flight.HasPassedFeederFix)
-            return;
-
-        var totalDelay = newLandingTime - flight.LandingEstimate;
-        var feederFixTime = flight.FeederFixEstimate.Value + totalDelay;
-        flight.SetFeederFixTime(feederFixTime);
     }
 }

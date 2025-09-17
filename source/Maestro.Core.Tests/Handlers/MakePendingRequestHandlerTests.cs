@@ -21,35 +21,48 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var flight = new FlightBuilder("QFA123")
+        var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(10))
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
+            .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
+        var flight2 = new FlightBuilder("QFA456")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(15))
+            .WithLandingEstimate(now.AddMinutes(13))
+            .WithRunway("34L")
             .Build();
 
-        var originalEstimate = flight.LandingEstimate;
-        var originalFeederFixEstimate = flight.FeederFixEstimate;
-        var originalScheduledTime = flight.LandingTime;
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(flight1, flight1.LandingEstimate);
+        sequence.Insert(flight2, flight2.LandingEstimate);
 
-        var scheduler = Substitute.For<IScheduler>();
-        var handler = GetRequestHandler(sequence, scheduler);
+        // Verify initial state
+        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
+        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
+
+        var handler = GetRequestHandler(sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.State.ShouldBe(State.Pending);
-        flight.LandingEstimate.ShouldNotBe(originalEstimate);
-        flight.FeederFixEstimate.ShouldNotBe(originalFeederFixEstimate);
-        flight.LandingTime.ShouldNotBe(originalScheduledTime);
-        scheduler.Received(1).Schedule(sequence);
+        flight1.State.ShouldBe(State.Unstable, "flight should be marked as unstable when made pending");
+
+        // Verify flight is moved to pending list and removed from main sequence
+        var sequenceMessage = sequence.ToMessage();
+        sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
+        sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
+        sequenceMessage.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
+
+        // Verify remaining flight moved up in sequence
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
+        flight2.LandingTime.ShouldBe(flight2.LandingEstimate, "remaining flight should return to its estimate");
     }
 
     [Fact]
@@ -70,12 +83,11 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         logger.Received(1).Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", "NONEXISTENT", "YSSY");
     }
 
-    MakePendingRequestHandler GetRequestHandler(Sequence sequence, IScheduler? scheduler = null, ILogger? logger = null)
+    MakePendingRequestHandler GetRequestHandler(Sequence sequence, ILogger? logger = null)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);;
-        scheduler ??= Substitute.For<IScheduler>();
+        var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
-        return new MakePendingRequestHandler(sessionManager, clockFixture.Instance, scheduler, mediator, logger);
+        return new MakePendingRequestHandler(sessionManager, mediator, logger);
     }
 }

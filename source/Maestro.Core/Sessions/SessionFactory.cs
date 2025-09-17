@@ -1,7 +1,5 @@
-using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
-using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Sessions;
@@ -12,11 +10,7 @@ public interface ISessionFactory
 }
 
 // TODO: Use Autofac to resolve dependencies
-public class SessionFactory(
-    IAirportConfigurationProvider airportConfigurationProvider,
-    IMediator mediator,
-    ILogger logger)
-    : ISessionFactory
+public class SessionFactory(ILogger logger) : ISessionFactory
 {
     public Session Create(Sequence sequence)
     {

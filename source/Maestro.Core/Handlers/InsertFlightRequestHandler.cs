@@ -1,5 +1,4 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -9,7 +8,6 @@ namespace Maestro.Core.Handlers;
 
 public class InsertFlightRequestHandler(
     ISessionManager sessionManager,
-    IScheduler scheduler,
     IClock clock,
     IPerformanceLookup performanceLookup,
     IMediator mediator)
@@ -25,37 +23,46 @@ public class InsertFlightRequestHandler(
         }
 
         var sequence = lockedSession.Session.Sequence;
-        var (landingTime, runwayIdentifiers) = FindTargetLandingTime(sequence, request.Options);
-        var runwayModeAtLandingTime = sequence.NextRunwayMode is not null
-            ? sequence.FirstLandingTimeForNextMode.IsSameOrBefore(landingTime)
-                ? sequence.NextRunwayMode
-                : sequence.CurrentRunwayMode
-            : sequence.CurrentRunwayMode;
-
-        var runway =
-            runwayModeAtLandingTime.Runways.FirstOrDefault(r => runwayIdentifiers.Contains(r.Identifier))?.Identifier ??
-            runwayModeAtLandingTime.Default.Identifier;
 
         var state = State.Frozen; // TODO: Make this configurable
 
         // If the callsign was blank, create a dummy flight
         if (string.IsNullOrWhiteSpace(request.Callsign))
         {
-            sequence.AddDummyFlight(landingTime, runway, scheduler, clock);
+            switch (request.Options)
+            {
+                case ExactInsertionOptions exactInsertionOptions:
+                    sequence.AddDummyFlight(exactInsertionOptions.TargetLandingTime, exactInsertionOptions.RunwayIdentifiers);
+                    break;
+                case RelativeInsertionOptions relativeInsertionOptions:
+                    sequence.AddDummyFlight(relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);
             return;
         }
 
-        var pendingFlight = sequence.Flights.FirstOrDefault(f => f.Callsign == request.Callsign && f.State == State.Pending);
+        var pendingFlight = sequence.PendingFlights.FirstOrDefault(f => f.Callsign == request.Callsign);
         if (pendingFlight is not null)
         {
-            pendingFlight.SetState(State.New, clock);
-            pendingFlight.SetRunway(runway, manual: true);
-            pendingFlight.SetLandingTime(landingTime);
-            scheduler.Schedule(sequence);
-            pendingFlight.SetState(State.Unstable, clock);
+            switch (request.Options)
+            {
+                case ExactInsertionOptions exactInsertionOptions:
+                    sequence.Insert(pendingFlight, exactInsertionOptions.TargetLandingTime);
+                    break;
+                case RelativeInsertionOptions relativeInsertionOptions:
+                    sequence.Insert(pendingFlight, relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            pendingFlight.SetState(State.Stable, clock);
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);
@@ -70,18 +77,26 @@ public class InsertFlightRequestHandler(
                 ? performanceLookup.GetPerformanceDataFor(request.AircraftType)
                 : null;
 
-            var flight = new Flight(request.Callsign, request.AirportIdentifier, landingTime)
+            var flight = new Flight(request.Callsign, request.AirportIdentifier, DateTimeOffset.MinValue)
             {
                 AircraftType = request.AircraftType,
                 WakeCategory = performanceInfo?.WakeCategory,
             };
 
-            flight.SetRunway(runway, manual: true);
-            flight.SetLandingTime(landingTime, manual: true);
-
             flight.SetState(state, clock);
 
-            sequence.AddFlight(flight, scheduler);
+            switch (request.Options)
+            {
+                case ExactInsertionOptions exactInsertionOptions:
+                    sequence.Insert(flight, exactInsertionOptions.TargetLandingTime);
+                    break;
+                case RelativeInsertionOptions relativeInsertionOptions:
+                    sequence.Insert(flight, relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
                 cancellationToken);
@@ -98,82 +113,33 @@ public class InsertFlightRequestHandler(
         }
 
         var sequence = lockedSession.Session.Sequence;
-        var (landingTime, runwayIdentifiers) = FindTargetLandingTime(sequence, request.Options);
-        var runwayModeAtLandingTime = sequence.NextRunwayMode is not null
-            ? sequence.FirstLandingTimeForNextMode.IsSameOrBefore(landingTime)
-                ? sequence.NextRunwayMode
-                : sequence.CurrentRunwayMode
-            : sequence.CurrentRunwayMode;
-
-        var runway =
-            runwayModeAtLandingTime.Runways.FirstOrDefault(r => runwayIdentifiers.Contains(r.Identifier))?.Identifier ??
-            runwayModeAtLandingTime.Default.Identifier;
-
-        var state = State.Frozen; // TODO: Make this configurable
 
         // BUG: If inserting after a frozen flight, nothing happens
-        var landedFlight = sequence.Flights.FirstOrDefault(f=> f.Callsign == request.Callsign && f.State == State.Landed);
+        var landedFlight = sequence.FindTrackedFlight(request.Callsign);
         if (landedFlight is null)
         {
             throw new MaestroException($"Flight {request.Callsign} not found in landed flights");
         }
 
-        // Re-sequence the landed flight at the specified time
-        landedFlight.SetState(State.Overshoot, clock);
-        landedFlight.SetRunway(runway, manual: true);
-        landedFlight.SetLandingTime(landingTime);
-        scheduler.Schedule(sequence);
-        landedFlight.SetState(state, clock);
+        sequence.Remove(landedFlight.Callsign);
+
+        switch (request.Options)
+        {
+            case ExactInsertionOptions exactInsertionOptions:
+                sequence.Insert(landedFlight, exactInsertionOptions.TargetLandingTime);
+                break;
+            case RelativeInsertionOptions relativeInsertionOptions:
+                sequence.Insert(landedFlight, relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        // TODO: Validate flights cannot be inserted between frozen flights when there is less than 2x the acceptance rate
+
+        landedFlight.SetState(State.Frozen, clock);
         await mediator.Publish(
             new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
             cancellationToken);
-    }
-
-    (DateTimeOffset, string[]) FindTargetLandingTime(Sequence sequence, IInsertFlightOptions options)
-    {
-        if (options is ExactInsertionOptions exactInsertionOptions)
-            return (exactInsertionOptions.TargetLandingTime, exactInsertionOptions.RunwayIdentifiers);
-
-        if (options is not RelativeInsertionOptions relativeInsertionOptions)
-            throw new ArgumentOutOfRangeException(nameof(options));
-
-        var referenceFlight = sequence.Flights.SingleOrDefault(f => f.Callsign == relativeInsertionOptions.ReferenceCallsign);
-        if (referenceFlight is null)
-            throw new MaestroException($"Reference flight {relativeInsertionOptions.ReferenceCallsign} not found");
-
-        if (referenceFlight.State == State.Frozen && relativeInsertionOptions.Position == RelativePosition.Before)
-            throw new MaestroException("Flights cannot be inserted before a frozen flight");
-
-        // Calculate time separation based on landing rate
-        var referenceTime = referenceFlight.LandingTime;
-        var runwayModeAtReferenceTime = GetRunwayModeAtTime(sequence, referenceTime);
-        var targetRunway = referenceFlight.AssignedRunwayIdentifier;
-        var landingRate = GetTimeSeparationForRunway(runwayModeAtReferenceTime, targetRunway);
-
-        var targetLandingTime = relativeInsertionOptions.Position switch
-        {
-            RelativePosition.Before => referenceTime.Subtract(landingRate),
-            RelativePosition.After => referenceTime.Add(landingRate),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-
-        return (targetLandingTime, [targetRunway]);
-    }
-
-    private static RunwayMode GetRunwayModeAtTime(Sequence sequence, DateTimeOffset time)
-    {
-        return sequence.NextRunwayMode is not null &&
-               sequence.FirstLandingTimeForNextMode.IsSameOrBefore(time)
-            ? sequence.NextRunwayMode
-            : sequence.CurrentRunwayMode;
-    }
-
-    private static TimeSpan GetTimeSeparationForRunway(RunwayMode runwayMode, string runwayIdentifier)
-    {
-        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier);
-
-        // Default to 60 seconds if runway not found
-        // TODO: Log a warning and make this configurable
-        return runway?.AcceptanceRate ?? TimeSpan.FromSeconds(60);
     }
 }

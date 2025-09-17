@@ -26,7 +26,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         Callsign = callsign;
         DestinationIdentifier = destinationIdentifier;
-        State = State.New;
+        State = State.Unstable;
         UpdateLandingEstimate(initialLandingEstimate);
     }
 
@@ -112,9 +112,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void SetState(State state, IClock clock)
     {
-        if (State == State.Removed && state is not State.Removed)
-            throw new MaestroException("Cannot change state as flight has been removed.");
-
         if (!IsActiveState(State) && IsActiveState(state))
             ActivatedTime = clock.UtcNow();
 
@@ -123,21 +120,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     }
 
     bool IsActiveState(State state) => state is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed;
-
-    public void Resume()
-    {
-        State = State.Unstable;
-    }
-
-    public void Desequence()
-    {
-        State = State.Desequenced;
-    }
-
-    public void Remove()
-    {
-        State = State.Removed;
-    }
 
     public void SetRunway(string runwayIdentifier, bool manual)
     {
@@ -205,6 +187,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         InitialFeederFixEstimate = FeederFixEstimate;
     }
 
+    // TODO: This should update the feeder fix time based on the processed arrival
     public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
     {
         LandingTime = landingTime;
@@ -221,7 +204,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         Position = position;
     }
 
-    public void MakePending()
+    public void Reset()
     {
         // TODO: Prevent if the flight has departed
         // Only allowed between Preactive and Departure
@@ -234,13 +217,19 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         InitialLandingEstimate = default;
         LandingTime = default;
         ManualLandingTime = false;
-        State = State.Pending;
+        State = State.Unstable;
     }
 
     public void UpdateStateBasedOnTime(IClock clock)
     {
+        if (ActivatedTime is null ||
+            LandingTime == default ||
+            InitialFeederFixEstimate is null ||
+            FeederFixEstimate is null)
+            return;
+
         // Sticky states
-        if (State is State.Pending or State.Landed or State.Desequenced or State.Removed)
+        if (State is State.Landed)
             return;
 
         // TODO: Make configurable
@@ -250,7 +239,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
         // Keep the flight unstable until it's passed the minimum unstable time
         var timeActive = clock.UtcNow() - ActivatedTime;
-        if (State is State.Unstable && timeActive <= minUnstableTime)
+        if (ActivatedTime is null || State is State.Unstable && timeActive <= minUnstableTime)
         {
             return;
         }

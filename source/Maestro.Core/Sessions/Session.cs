@@ -30,8 +30,6 @@ public interface ISession
 
 public class Session : ISession, IAsyncDisposable
 {
-    readonly IAirportConfigurationProvider _airportConfigurationProvider;
-    readonly IMediator _mediator;
     readonly ILogger _logger;
 
     public string AirportIdentifier => Sequence.AirportIdentifier;
@@ -66,13 +64,7 @@ public class Session : ISession, IAsyncDisposable
             OwnsSequence = result.OwnsSequence;
 
             if (result.Sequence is not null)
-            {
-                // YUCK
-                var airportConfig = _airportConfigurationProvider
-                    .GetAirportConfigurations()
-                    .Single(a => a.Identifier == AirportIdentifier);
-                Sequence = new Sequence(airportConfig, result.Sequence);
-            }
+                Sequence.Restore(result.Sequence);
         }
 
         if (OwnsSequence)
@@ -166,7 +158,7 @@ public class Session : ISession, IAsyncDisposable
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-                await _mediator.Send(new ScheduleRequest(Sequence.AirportIdentifier), cancellationToken);
+                // await _mediator.Send(new ScheduleRequest(Sequence.AirportIdentifier), cancellationToken);
             }
             catch (TaskCanceledException)
             {
