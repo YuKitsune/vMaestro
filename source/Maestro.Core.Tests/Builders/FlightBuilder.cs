@@ -57,6 +57,14 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate, TimeSpan arrivalInterval, bool manual = false)
+    {
+        feederFixEstimate = estimate;
+        manualFeederFixEstimate = manual;
+        landingEstimate = estimate + arrivalInterval;
+        return this;
+    }
+
     public FlightBuilder WithFeederFixTime(DateTimeOffset time)
     {
         feederFixTime = time;
@@ -170,6 +178,8 @@ public class FlightBuilder(string callsign)
             new FixEstimate(_feederFixIdentifier, feederFixEstimate, passedFeederFix),
             new FixEstimate(_destination, landingEstimate)
         ];
+
+        flight.ResetInitialEstimates();
 
         return flight;
     }

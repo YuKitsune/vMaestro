@@ -48,7 +48,7 @@ public class FlightUpdatedHandler(
             }
 
             var sequence = lockedSession.Session.Sequence;
-            logger.Verbose("Received update for {Callsign}", notification.Callsign);
+            logger.Debug("Received update for {Callsign}", notification.Callsign);
 
             var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
                 .Single(a => a.Identifier == notification.Destination);
@@ -126,8 +126,6 @@ public class FlightUpdatedHandler(
                 }
             }
 
-            logger.Debug("Updating {Callsign}", notification.Callsign);
-
             UpdateFlightData(notification, flight);
             flight.UpdatePosition(notification.Position);
 
@@ -137,7 +135,7 @@ public class FlightUpdatedHandler(
 
             flight.UpdateLastSeen(clock);
 
-            logger.Debug("Flight updated: {Flight}", flight);
+            logger.Verbose("Flight updated: {Flight}", flight);
 
             await mediator.Publish(
                 new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
@@ -179,9 +177,6 @@ public class FlightUpdatedHandler(
                     flight.Callsign,
                     flight.FeederFixEstimate,
                     diff.ToHoursAndMinutesString());
-
-                if (diff.Duration() > TimeSpan.FromMinutes(2))
-                    logger.Warning("{Callsign} ETA_FF has changed by more than 2 minutes", flight.Callsign);
             }
         }
 
@@ -196,9 +191,6 @@ public class FlightUpdatedHandler(
                 flight.Callsign,
                 flight.LandingEstimate,
                 diff.ToHoursAndMinutesString());
-
-            if (diff.Duration() > TimeSpan.FromMinutes(2))
-                logger.Warning("{Callsign} ETA has changed by more than 2 minutes", flight.Callsign);
         }
     }
 
@@ -214,6 +206,7 @@ public class FlightUpdatedHandler(
             flight.SetFeederFix(feederFixEstimate.FixIdentifier, feederFixEstimate.Estimate, feederFixEstimate.ActualTimeOver);
 
         flight.UpdateLandingEstimate(landingEstimate);
+        flight.ResetInitialEstimates();
 
         if (feederFixEstimate is null)
             flight.HighPriority = true;

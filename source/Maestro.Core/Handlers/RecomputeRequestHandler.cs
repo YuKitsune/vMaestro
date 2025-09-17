@@ -49,11 +49,9 @@ public class RecomputeRequestHandler(
         flight.HighPriority = feederFix is null;
         flight.NoDelay = false;
 
-        // Re-calculate the estimates
+        // Re-calculate estimates
         CalculateEstimates(airportConfiguration, flight);
-        flight.ResetInitialLandingEstimate();
-        if (feederFix is not null)
-            flight.ResetInitialFeederFixEstimate();
+        flight.ResetInitialEstimates(); // TODO: The scheduler does this too. Should consolidate.
 
         // Reset scheduled times
         if (flight.FeederFixEstimate is not null)
@@ -110,9 +108,6 @@ public class RecomputeRequestHandler(
                     flight.Callsign,
                     flight.FeederFixEstimate,
                     diff.ToHoursAndMinutesString());
-
-                if (diff.Duration() > TimeSpan.FromMinutes(2))
-                    logger.Warning("{Callsign} ETA_FF has changed by more than 2 minutes", flight.Callsign);
             }
         }
 
@@ -127,9 +122,6 @@ public class RecomputeRequestHandler(
                 flight.Callsign,
                 flight.LandingEstimate,
                 diff.ToHoursAndMinutesString());
-
-            if (diff.Duration() > TimeSpan.FromMinutes(2))
-                logger.Warning("{Callsign} ETA has changed by more than 2 minutes", flight.Callsign);
         }
     }
 }

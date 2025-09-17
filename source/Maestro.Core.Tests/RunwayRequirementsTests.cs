@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Configuration;
+﻿using System.Runtime.CompilerServices;
+using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -73,6 +74,7 @@ public class RunwayRequirementsTests : IClassFixture<ClockFixture>
             runwayScoreCalculator,
             new AirportConfigurationProvider([_airportConfiguration]),
             Substitute.For<IPerformanceLookup>(),
+            Substitute.For<IArrivalLookup>(),
             clockFixture.Instance,
             Substitute.For<ILogger>());
     }

@@ -16,6 +16,7 @@ public class SchedulerTests(
     ClockFixture clockFixture)
 {
     static TimeSpan _landingRate = TimeSpan.FromSeconds(180);
+    static TimeSpan _arrivalInterval = TimeSpan.FromMinutes(10);
 
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
     readonly IClock _clock = clockFixture.Instance;
@@ -40,10 +41,20 @@ public class SchedulerTests(
                 WakeCategory = WakeCategory.Medium
             });
 
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        arrivalLookup.GetArrivalInterval(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<AircraftPerformanceData>())
+            .Returns(_arrivalInterval);
+
         return new Scheduler(
             runwayAssigner,
             airportConfigurationProvider,
             performanceLookup,
+            arrivalLookup,
             clock,
             Substitute.For<ILogger>());
     }
@@ -298,14 +309,12 @@ public class SchedulerTests(
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
             .WithRunway("34L")
             .Build();
 
         var secondFlight = new FlightBuilder("QFA2")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(11))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(21))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(11), _arrivalInterval)
             .WithRunway("34L")
             .Build();
 
@@ -453,14 +462,12 @@ public class SchedulerTests(
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
             .WithRunway("34L")
             .Build();
 
         var second = new FlightBuilder("QFA2")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
             .WithRunway("34R")
             .Build();
 
@@ -625,15 +632,13 @@ public class SchedulerTests(
     {
         // Arrange
         var farAwayFlight = new FlightBuilder("QFA1")
-            .WithFeederFixEstimate(_clock.UtcNow().AddHours(10))
-            .WithLandingEstimate(_clock.UtcNow().AddHours(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddHours(10), _arrivalInterval)
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
         var closeFlight = new FlightBuilder("QFA2")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
             .WithRunway("34L")
             .WithState(State.Stable)
             .Build();
@@ -673,8 +678,7 @@ public class SchedulerTests(
         var originalFeederFix = "RIVET";
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix(originalFeederFix)
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
             .WithRunway("34L")
             .Build();
 
@@ -779,15 +783,13 @@ public class SchedulerTests(
     {
         // Arrange
         var first = new FlightBuilder("QFA1")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
         var second = new FlightBuilder("QFA2")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
@@ -2047,6 +2049,67 @@ public class SchedulerTests(
 
         // Assert
         flight.LandingTime.ShouldBe(newEstimate);
+    }
+
+    // TODO: This behaviour isn't realistic. Reconsider once we have more information.
+    [Fact]
+    public void WhenSchedulingAFlight_DelayIsReflectedInTheFeederFixTime()
+    {
+        // Arrange
+        var leader = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
+            .Build();
+
+        var trailer = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10), _arrivalInterval)
+            .Build();
+
+        // Create a sequence with plenty of runway capacity so scheduler can find earlier slots
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(leader)
+            .WithFlight(trailer)
+            .Build();
+
+        // Act
+        _scheduler.Schedule(sequence);
+
+        // Assert
+        trailer.LandingTime.ShouldBe(leader.LandingTime.Add(_landingRate));
+        trailer.FeederFixTime.ShouldBe(trailer.LandingTime.Subtract(_arrivalInterval));
+    }
+
+    [Fact]
+    public void WhenSchedulingAFlight_InitialEstimatesAreResetToCurrentEstimates()
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .Build();
+
+        // Create a sequence with plenty of runway capacity so scheduler can find earlier slots
+        var sequence = new SequenceBuilder(_airportConfiguration)
+            .WithSingleRunway("34L", _landingRate)
+            .WithFlight(flight)
+            .Build();
+
+        flight.InitialLandingEstimate.ShouldBe(flight.LandingEstimate);
+
+        // New estimate: Speed up by 5 minutes
+        var newLandingEstimate = _clock.UtcNow().AddMinutes(15);
+        flight.UpdateLandingEstimate(newLandingEstimate);
+
+        // Sanity check: Should have a 5 minute delay
+        flight.TotalDelay.ShouldBe(TimeSpan.Zero);
+        flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(5));
+
+        // Act
+        _scheduler.Recompute(flight, sequence);
+
+        // Assert
+        flight.InitialLandingEstimate.ShouldBe(flight.LandingEstimate);
+        flight.TotalDelay.ShouldBe(TimeSpan.Zero);
+        flight.RemainingDelay.ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]

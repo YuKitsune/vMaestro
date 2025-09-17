@@ -15,6 +15,7 @@ public class Scheduler(
     IRunwayScoreCalculator runwayScoreCalculator,
     IAirportConfigurationProvider airportConfigurationProvider,
     IPerformanceLookup performanceLookup,
+    IArrivalLookup arrivalLookup,
     IClock clock,
     ILogger logger)
     : IScheduler
@@ -235,11 +236,12 @@ tryAgain:
             flight.SetFlowControls(FlowControls.ProfileSpeed);
         }
 
-        Schedule(flight, proposedLandingTime.Value, proposedRunway.Identifier);
+        Schedule(flight, proposedLandingTime.Value, proposedRunway.Identifier, performance);
     }
 
     IEnumerable<Runway> FindEligibleRunways(Flight flight, RunwayMode runwayMode)
     {
+        // TODO: Choose runways based on FeederFix
         if (flight.RunwayManuallyAssigned && !string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
             return runwayMode.Runways.Where(r => r.Identifier == flight.AssignedRunwayIdentifier);
 
@@ -346,17 +348,31 @@ tryAgain:
         return proposedLandingTime;
     }
 
-    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
+    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, AircraftPerformanceData performanceData)
     {
         flight.SetLandingTime(landingTime);
         flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
 
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && flight.FeederFixEstimate is not null && !flight.HasPassedFeederFix)
         {
-            var totalDelay = landingTime - flight.LandingEstimate;
-            var feederFixTime = flight.FeederFixEstimate.Value + totalDelay;
-            flight.SetFeederFixTime(feederFixTime);
+            var arrivalInterval = arrivalLookup.GetArrivalInterval(
+                flight.DestinationIdentifier,
+                flight.FeederFixIdentifier,
+                flight.AssignedArrivalIdentifier,
+                flight.AssignedRunwayIdentifier,
+                performanceData);
+            if (arrivalInterval is not null)
+            {
+                var feederFixTime = flight.LandingTime.Subtract(arrivalInterval.Value);
+                flight.SetFeederFixTime(feederFixTime);
+            }
+            else
+            {
+                logger.Warning("Could not update feeder fix time for {Callsign}, no arrival interval found", flight.Callsign);
+            }
         }
+
+        flight.ResetInitialEstimates();
     }
 
     private static bool IsRunwayEligible(Runway runway, Flight flight)

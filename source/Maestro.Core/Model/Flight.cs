@@ -169,10 +169,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
         FeederFixEstimate = feederFixEstimate;
         ManualFeederFixEstimate = manual;
-        if (State is State.Pending or State.New or State.Unstable)
-        {
-            InitialFeederFixEstimate = feederFixEstimate;
-        }
     }
 
     public void SetFeederFixTime(DateTimeOffset feederFixTime)
@@ -201,19 +197,11 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
     {
         LandingEstimate = landingEstimate;
-        if (State is State.Pending or State.New or State.Unstable)
-        {
-            InitialLandingEstimate = landingEstimate;
-        }
     }
 
-    public void ResetInitialLandingEstimate()
+    public void ResetInitialEstimates()
     {
         InitialLandingEstimate = LandingEstimate;
-    }
-
-    public void ResetInitialFeederFixEstimate()
-    {
         InitialFeederFixEstimate = FeederFixEstimate;
     }
 
