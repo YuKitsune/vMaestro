@@ -61,7 +61,7 @@ public class ChangeRunwayModeRequestHandler(
 
         if (request.FirstLandingTimeForNewMode <= clock.UtcNow())
         {
-            sequence.ChangeRunwayMode(configuration, scheduler);
+            sequence.ChangeRunwayMode(configuration, clock);
             logger.Information(
                 "Runway changed {AirportIdentifier} to {RunwayModeIdentifier}.",
                 request.AirportIdentifier,
@@ -72,8 +72,7 @@ public class ChangeRunwayModeRequestHandler(
             sequence.ChangeRunwayMode(
                 configuration,
                 request.LastLandingTimeForOldMode,
-                request.FirstLandingTimeForNewMode,
-                scheduler);
+                request.FirstLandingTimeForNewMode);
             logger.Information(
                 "Runway change scheduled for {AirportIdentifier} to {RunwayModeIdentifier} at {RunwayModeChangeTime}.",
                 request.AirportIdentifier,

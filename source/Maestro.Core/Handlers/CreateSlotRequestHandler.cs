@@ -19,7 +19,7 @@ public class CreateSlotRequestHandler(ISessionManager sessionManager, IScheduler
         }
 
         var sequence = lockedSession.Session.Sequence;
-        sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers, scheduler);
+        sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers);
         await mediator.Publish(
             new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
             cancellationToken);

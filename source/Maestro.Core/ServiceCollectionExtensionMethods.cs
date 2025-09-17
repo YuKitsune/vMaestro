@@ -12,7 +12,7 @@ public static class ServiceCollectionExtensionMethods
         return services
             .AddSingleton<ISessionManager, SessionManager>()
             .AddSingleton<ISessionFactory, SessionFactory>()
-            .AddSingleton<IScheduler, Scheduler>()
+            .AddSingleton<IScheduler, SchedulerV2>()
             .AddSingleton<IFlightUpdateRateLimiter, FlightUpdateRateLimiter>()
             .AddSingleton<IArrivalLookup, ArrivalLookup>()
             .AddSingleton<IEstimateProvider, EstimateProvider>()

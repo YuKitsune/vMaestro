@@ -19,7 +19,7 @@ public class DeleteSlotRequestHandler(ISessionManager sessionManager, IScheduler
         }
 
         var sequence = lockedSession.Session.Sequence;
-        sequence.DeleteSlot(request.SlotId, scheduler);
+        sequence.DeleteSlot(request.SlotId);
         await mediator.Publish(
             new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
             cancellationToken);

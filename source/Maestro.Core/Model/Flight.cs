@@ -221,7 +221,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         Position = position;
     }
 
-    public void MakePending()
+    public void Reset()
     {
         // TODO: Prevent if the flight has departed
         // Only allowed between Preactive and Departure
@@ -234,13 +234,13 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         InitialLandingEstimate = default;
         LandingTime = default;
         ManualLandingTime = false;
-        State = State.Pending;
+        State = State.Unstable;
     }
 
     public void UpdateStateBasedOnTime(IClock clock)
     {
         // Sticky states
-        if (State is State.Pending or State.Landed or State.Desequenced or State.Removed)
+        if (State is State.Landed)
             return;
 
         // TODO: Make configurable

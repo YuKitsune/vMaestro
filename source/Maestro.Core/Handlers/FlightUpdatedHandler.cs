@@ -72,8 +72,7 @@ public class FlightUpdatedHandler(
                         landingEstimate);
 
                     flight.IsFromDepartureAirport = true;
-                    flight.SetState(State.Pending, clock);
-                    sequence.AddFlight(flight, scheduler);
+                    sequence.AddPendingFlight(flight);
 
                     logger.Information("{Callsign} created (pending)", notification.Callsign);
                     return;
@@ -91,8 +90,7 @@ public class FlightUpdatedHandler(
                         feederFix,
                         landingEstimate);
 
-                    flight.SetState(State.New, clock);
-                    sequence.AddFlight(flight, scheduler);
+                    scheduler.InsertNewFlight(flight, sequence);
                     logger.Information("{Callsign} created", notification.Callsign);
                 }
                 // Flights not tracking a feeder fix are created with high priority
@@ -105,8 +103,7 @@ public class FlightUpdatedHandler(
 
                     flight.HighPriority = true;
 
-                    flight.SetState(State.New, clock);
-                    sequence.AddFlight(flight, scheduler);
+                    scheduler.InsertNewFlight(flight, sequence);
                     logger.Information("{Callsign} created (high priority)", notification.Callsign);
                 }
             }

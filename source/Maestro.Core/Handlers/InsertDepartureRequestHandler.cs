@@ -26,9 +26,8 @@ public class InsertDepartureRequestHandler(
         }
 
         var sequence = lockedSession.Session.Sequence;
-        var flight = sequence.Flights.SingleOrDefault(f =>
-            f.Callsign == request.Callsign &&
-            f.State == State.Pending);
+        var flight = sequence.PendingFlights.SingleOrDefault(f =>
+            f.Callsign == request.Callsign);
 
         if (flight is null)
         {
@@ -46,9 +45,6 @@ public class InsertDepartureRequestHandler(
         // Calculate ETA based on take-off time
         var landingEstimate = request.TakeOffTime.Add(flight.EstimatedTimeEnroute.Value);
         flight.UpdateLandingEstimate(landingEstimate);
-
-        // Calculate the position in the sequence
-        flight.SetState(State.New, clock);
 
         scheduler.Schedule(sequence);
         flight.SetState(State.Unstable, clock);
