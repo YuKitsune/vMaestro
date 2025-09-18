@@ -76,6 +76,8 @@ public class FlightUpdatedHandler(
                     sequence.AddFlight(flight, scheduler);
 
                     logger.Information("{Callsign} created (pending)", notification.Callsign);
+                    await mediator.Publish(new InformationNotification(notification.Destination, clock.UtcNow(), $"{notification.Callsign} added to pending list"), cancellationToken);
+
                     return;
                 }
 

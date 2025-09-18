@@ -10,7 +10,8 @@
              d:DataContext="{d:DesignInstance Type=viewModels:InsertFlightViewModel}"
              mc:Ignorable="d"
              Padding="8"
-             MinWidth="320">
+             MinWidth="320"
+             Height="240">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

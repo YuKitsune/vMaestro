@@ -11,7 +11,8 @@
              d:DataContext="{d:DesignInstance Type=viewModels:ChangeFeederFixEstimateViewModel}"
              mc:Ignorable="d"
              Padding="8"
-             Width="320">
+             Width="320"
+             Height="140">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

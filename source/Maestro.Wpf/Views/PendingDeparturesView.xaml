@@ -10,7 +10,8 @@
              d:DataContext="{d:DesignInstance Type=viewModels:PendingDeparturesViewModel}"
              mc:Ignorable="d"
              Padding="8"
-             MinWidth="320">
+             MinWidth="320"
+             Height="280">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

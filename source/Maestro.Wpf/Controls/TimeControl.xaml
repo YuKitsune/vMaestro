@@ -53,7 +53,7 @@
                 BorderBrush="{x:Static local:Theme.InteractiveTextColor}"
                 BorderThickness="1"
                 Margin="1,0">
-            <TextBlock Text="00:00"
+            <TextBlock Text="{Binding TimeText, RelativeSource={RelativeSource AncestorType=UserControl}}"
                        Style="{StaticResource GenericTextStyle}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"

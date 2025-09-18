@@ -4,6 +4,7 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.VisualBasic;
 
 namespace Maestro.Server;
 
@@ -183,6 +184,52 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
     public async Task FlightUpdated(FlightUpdatedNotification flightUpdatedNotification)
     {
         await SendNotificationToFlowController(flightUpdatedNotification.Destination, "FlightUpdated", flightUpdatedNotification);
+    }
+
+    public async Task Information(InformationNotification informationNotification)
+    {
+        // Look up the group key for this connection
+        if (!Connections.TryGetValue(Context.ConnectionId, out var groupKey))
+        {
+            logger.LogWarning("Connection {ConnectionId} attempted to notify sequence but is not part of any group", Context.ConnectionId);
+            return;
+        }
+
+        var sequence = Sequences.TryGetValue(groupKey, out var seq) ? seq : null;
+        var connection = sequence?.Connections.SingleOrDefault(c => c.Id == Context.ConnectionId);
+        var callsign = connection?.Callsign ?? "Unknown";
+
+        if (informationNotification.AirportIdentifier != groupKey.AirportIdentifier)
+        {
+            logger.LogWarning(
+                "{Callsign} attempted to notify {Airport} but is part of {Group}",
+                callsign, informationNotification.AirportIdentifier, groupKey);
+            return;
+        }
+
+        if (sequence is null)
+        {
+            logger.LogWarning(
+                "{Callsign} attempted to notify {Group} but no sequence exists",
+                callsign,
+                groupKey);
+            return;
+        }
+
+        if (!connection.OwnsSequence)
+        {
+            logger.LogWarning("{Callsign} attempted to notify {Group} but is not the owner",
+                callsign,
+                groupKey);
+            return;
+        }
+
+        logger.LogDebug("{Callsign} notifying {Group}",
+            callsign, groupKey);
+
+        // Send to all clients in the group except the sender
+        await Clients.GroupExcept(groupKey.Value, Context.ConnectionId)
+            .SendAsync("Information", informationNotification);
     }
 
     public async Task<RelayResponse> InsertFlight(InsertFlightRequest request)

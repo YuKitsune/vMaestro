@@ -66,6 +66,8 @@ public class ChangeRunwayModeRequestHandler(
                 "Runway changed {AirportIdentifier} to {RunwayModeIdentifier}.",
                 request.AirportIdentifier,
                 configuration.Identifier);
+
+            await mediator.Publish(new InformationNotification(request.AirportIdentifier, clock.UtcNow(), $"Configuration change {request.RunwayMode.Identifier}"), cancellationToken);
         }
         else
         {
@@ -79,6 +81,8 @@ public class ChangeRunwayModeRequestHandler(
                 request.AirportIdentifier,
                 configuration.Identifier,
                 request.FirstLandingTimeForNewMode);
+
+            await mediator.Publish(new InformationNotification(request.AirportIdentifier, clock.UtcNow(), $"Configuration change {request.RunwayMode.Identifier} scheduled for {request.LastLandingTimeForOldMode:HH:mm}"), cancellationToken);
         }
 
         await mediator.Publish(

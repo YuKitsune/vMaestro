@@ -1,0 +1,39 @@
+﻿<UserControl x:Class="Maestro.Wpf.Views.InformationView2"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Maestro.Wpf"
+             xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
+             xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             d:DataContext="{d:DesignInstance Type=viewModels:InformationViewModel}"
+             mc:Ignorable="d"
+             Width="800"
+             Height="160"
+             Padding="8">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
+
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
+                <Setter Property="Margin" Value="2" />
+            </Style>
+
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <controls:BeveledBorder Grid.Row="0" BorderThickness="2" BevelType="Sunken">
+            <TextBlock Text="{Binding MessageText}" TextWrapping="WrapWithOverflow"/>
+        </controls:BeveledBorder>
+        <Button Grid.Row="1" Content="Ack" Command="{Binding AcknowledgeCommand}"/>
+    </Grid>
+</UserControl>

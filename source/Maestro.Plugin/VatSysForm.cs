@@ -22,27 +22,37 @@ public class VatSysForm : BaseForm
 
     public VatSysForm(string title, Func<IWindowHandle, UIElement> childFactory, bool shrinkToContent)
     {
-        WindowHandle = new WindowHandle(this);
-
         Text = title;
 
-        var child = childFactory(WindowHandle);
-        var elementHost = new ElementHost();
-        elementHost.Child = child;
-        elementHost.Dock = DockStyle.Fill;
+        var windowHandle = new WindowHandle(this);
+        var child = childFactory(windowHandle);
 
+        var elementHost = new ElementHost();
         if (shrinkToContent)
         {
-            // Measure the content once to get its natural size
-            child.Measure(new Size(520, double.PositiveInfinity));
+            // For text wrapping to work correctly, we need to measure with a constraint
+            var maxWidth = 520; // Maximum dialog width
+            child.Measure(new Size(maxWidth, double.PositiveInfinity));
             child.Arrange(new Rect(child.DesiredSize));
             child.UpdateLayout();
 
-            var contentSize = child.DesiredSize;
-            ClientSize = new System.Drawing.Size((int)Math.Ceiling(contentSize.Width), (int)Math.Ceiling(contentSize.Height));
+            var desired = child.DesiredSize;
+            elementHost.Child = child;
+            elementHost.Size = new System.Drawing.Size((int)Math.Ceiling(desired.Width), (int)Math.Ceiling(desired.Height));
+            elementHost.Location = new System.Drawing.Point(0, 0);
 
-            // Make it resizable so users can adjust if needed
-            FormBorderStyle = FormBorderStyle.Sizable;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            ClientSize = elementHost.Size;
+        }
+        else
+        {
+            elementHost.Child = child;
+            elementHost.Dock = DockStyle.Fill;
+        }
+
+        if (!shrinkToContent)
+        {
+            elementHost.Dock = DockStyle.Fill;
         }
 
         Controls.Add(elementHost);

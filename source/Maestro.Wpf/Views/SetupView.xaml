@@ -10,8 +10,8 @@
              d:DataContext="{d:DesignInstance Type=viewModels:SetupViewModel}"
              mc:Ignorable="d"
              Padding="8"
-             MinWidth="240"
-             Height="Auto">
+             Width="240"
+             Height="96">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
