@@ -92,7 +92,7 @@ public partial class FlightLabelViewModel(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
                     maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    maestroViewModel.PendingFlights.ToArray()));
         }
         catch (Exception ex)
         {
@@ -115,7 +115,7 @@ public partial class FlightLabelViewModel(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
                     maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    maestroViewModel.Flights.Where(f => f.State == State.Pending).ToArray()));
+                    maestroViewModel.PendingFlights.ToArray()));
         }
         catch (Exception ex)
         {

@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using NSubstitute;
 
@@ -6,9 +7,28 @@ namespace Maestro.Core.Tests.Builders;
 
 public class SequenceBuilder(AirportConfiguration airportConfiguration)
 {
-    readonly List<Flight> _flights = new();
     RunwayMode? _runwayMode;
-    readonly IScheduler _scheduler = Substitute.For<IScheduler>();
+    IArrivalLookup _arrivalLookup = Substitute.For<IArrivalLookup>();
+    IPerformanceLookup _performanceLookup = Substitute.For<IPerformanceLookup>();
+    IClock _clock = Substitute.For<IClock>();
+
+    public SequenceBuilder WithArrivalLookup(IArrivalLookup arrivalLookup)
+    {
+        _arrivalLookup = arrivalLookup;
+        return this;
+    }
+
+    public SequenceBuilder WithPerformanceLookup(IPerformanceLookup performanceLookup)
+    {
+        _performanceLookup = performanceLookup;
+        return this;
+    }
+
+    public SequenceBuilder WithClock(IClock clock)
+    {
+        _clock = clock;
+        return this;
+    }
 
     public SequenceBuilder WithRunwayMode(RunwayMode runwayMode)
     {
@@ -37,22 +57,10 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
                 }));
     }
 
-    public SequenceBuilder WithFlight(Flight flight)
-    {
-        _flights.Add(flight);
-        return this;
-    }
-
     public Sequence Build()
     {
-        var sequence = new Sequence(airportConfiguration);
-        if (_runwayMode is not null)
-            sequence.ChangeRunwayMode(_runwayMode, Substitute.For<IScheduler>());
-
-        foreach (var flight in _flights)
-        {
-            sequence.AddFlight(flight, _scheduler);
-        }
+        var sequence = new Sequence(airportConfiguration, _arrivalLookup, _performanceLookup, _clock);
+        sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(airportConfiguration.RunwayModes.First()));
 
         return sequence;
     }

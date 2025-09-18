@@ -1,5 +1,4 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -11,7 +10,6 @@ namespace Maestro.Core.Handlers;
 public class ChangeFeederFixEstimateRequestHandler(
     ISessionManager sessionManager,
     IEstimateProvider estimateProvider,
-    IScheduler scheduler,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -43,7 +41,7 @@ public class ChangeFeederFixEstimateRequestHandler(
         if (landingEstimate is not null)
             flight.UpdateLandingEstimate(landingEstimate.Value);
 
-        scheduler.Recompute(flight, sequence);
+        sequence.Recompute(flight);
         if (flight.State is State.Unstable)
             flight.SetState(State.Stable, clock); // TODO: Make configurable
 

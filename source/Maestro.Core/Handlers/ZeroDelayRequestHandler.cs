@@ -1,13 +1,11 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ZeroDelayRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IMediator mediator, ILogger logger)
+public class ZeroDelayRequestHandler(ISessionManager sessionManager, IMediator mediator, ILogger logger)
     : IRequestHandler<ZeroDelayRequest>
 {
     public async Task Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
@@ -29,7 +27,7 @@ public class ZeroDelayRequestHandler(ISessionManager sessionManager, IScheduler 
 
         flight.NoDelay = true;
 
-        scheduler.Schedule(sequence);
+        sequence.Recompute(flight);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

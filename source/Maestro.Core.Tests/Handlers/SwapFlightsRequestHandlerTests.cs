@@ -31,10 +31,9 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingTime(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(firstFlight)
-            .WithFlight(secondFlight)
-            .Build();
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
+        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
         var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
@@ -69,11 +68,9 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingTime(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(firstFlight)
-            .WithFlight(secondFlight)
-            .Build();
-
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
+        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
         var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
@@ -105,11 +102,9 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingTime(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(firstFlight)
-            .WithFlight(secondFlight)
-            .Build();
-
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
+        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
         var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
@@ -140,11 +135,9 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(firstFlight)
-            .WithFlight(secondFlight)
-            .Build();
-
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
+        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
         var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
@@ -168,10 +161,8 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(flight, flight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
         var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
@@ -195,10 +186,8 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(flight)
-            .Build();
-
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(flight, flight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
         var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
@@ -232,11 +221,9 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.SuperStable)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(firstFlight)
-            .WithFlight(secondFlight)
-            .Build();
-
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
+        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
         var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);

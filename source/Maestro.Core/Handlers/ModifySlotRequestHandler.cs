@@ -1,12 +1,10 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-public class ModifySlotRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IMediator mediator)
+public class ModifySlotRequestHandler(ISessionManager sessionManager, IMediator mediator)
     : IRequestHandler<ModifySlotRequest>
 {
     public async Task Handle(ModifySlotRequest request, CancellationToken cancellationToken)
@@ -19,7 +17,8 @@ public class ModifySlotRequestHandler(ISessionManager sessionManager, IScheduler
         }
 
         var sequence = lockedSession.Session.Sequence;
-        sequence.ModifySlot(request.SlotId, request.StartTime, request.EndTime, scheduler);
+        sequence.ModifySlot(request.SlotId, request.StartTime, request.EndTime);
+
         await mediator.Publish(
             new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
             cancellationToken);

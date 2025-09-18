@@ -27,8 +27,6 @@ public interface ISession
 
 public class Session : ISession, IAsyncDisposable
 {
-    readonly IAirportConfigurationProvider _airportConfigurationProvider;
-    readonly IMediator _mediator;
     readonly ILogger _logger;
 
     public string AirportIdentifier => Sequence.AirportIdentifier;
@@ -42,15 +40,11 @@ public class Session : ISession, IAsyncDisposable
     // readonly BackgroundTask _synchronizeTask;
 
     public Session(
-        IAirportConfigurationProvider airportConfigurationProvider,
         // INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream,
-        IMediator mediator,
         ILogger logger,
         Sequence sequence,
         MaestroConnection? connection = null)
     {
-        _airportConfigurationProvider = airportConfigurationProvider;
-        _mediator = mediator;
         // _sequenceUpdatedNotificationStream = sequenceUpdatedNotificationStream;
         _logger = logger;
         _schedulerTask = new BackgroundTask(SchedulerLoop);
@@ -69,13 +63,7 @@ public class Session : ISession, IAsyncDisposable
             Role = result.Role;
 
             if (result.Sequence is not null)
-            {
-                // YUCK
-                var airportConfig = _airportConfigurationProvider
-                    .GetAirportConfigurations()
-                    .Single(a => a.Identifier == AirportIdentifier);
-                Sequence = new Sequence(airportConfig, result.Sequence);
-            }
+                Sequence.Restore(result.Sequence);
         }
 
         if (OwnsSequence)
@@ -131,7 +119,7 @@ public class Session : ISession, IAsyncDisposable
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-                await _mediator.Send(new ScheduleRequest(Sequence.AirportIdentifier), cancellationToken);
+                // await _mediator.Send(new ScheduleRequest(Sequence.AirportIdentifier), cancellationToken);
             }
             catch (TaskCanceledException)
             {

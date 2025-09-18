@@ -10,6 +10,7 @@ namespace Maestro.Core.Tests.Fixtures;
 
 public class AirportConfigurationFixture
 {
+    public TimeSpan AcceptanceRate => TimeSpan.FromSeconds(180);
     public AirportConfiguration Instance =>
         new()
         {
@@ -20,7 +21,7 @@ public class AirportConfigurationFixture
                 new RunwayConfiguration
                 {
                     Identifier = "34L",
-                    LandingRateSeconds = 180,
+                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
                     Preferences = new RunwayPreferences
                     {
                         FeederFixes = ["RIVET", "WELSH"],
@@ -30,7 +31,7 @@ public class AirportConfigurationFixture
                 new RunwayConfiguration
                 {
                     Identifier = "34R",
-                    LandingRateSeconds = 180,
+                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
                     Preferences = new RunwayPreferences
                     {
                         FeederFixes = ["BOREE", "YAKKA", "MARLN"]
@@ -47,12 +48,12 @@ public class AirportConfigurationFixture
                         new RunwayConfiguration
                         {
                             Identifier = "34L",
-                            LandingRateSeconds = 180
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         },
                         new RunwayConfiguration
                         {
                             Identifier = "34R",
-                            LandingRateSeconds = 180
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         }
                     ]
                 }

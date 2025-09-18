@@ -12,7 +12,7 @@ namespace Maestro.Core.Handlers;
 // - Flights in other modes are ignored
 // - Flight does not become unstable when manually stablised
 
-public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clock, IScheduler scheduler, IMediator mediator)
+public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clock, IMediator mediator)
     : IRequestHandler<MakeStableRequest>
 {
     public async Task Handle(MakeStableRequest request, CancellationToken cancellationToken)
@@ -33,7 +33,6 @@ public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clo
             return;
 
         flight.SetState(State.Stable, clock);
-        scheduler.Schedule(sequence);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

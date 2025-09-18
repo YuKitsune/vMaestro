@@ -29,13 +29,11 @@ public class InsertDepartureRequestHandlerTests(
         var flightTime = TimeSpan.FromMinutes(20);
 
         var pendingFlight = new FlightBuilder("QFA1")
-            .WithState(State.Pending)
             .WithEstimatedFlightTime(flightTime)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(pendingFlight)
-            .Build();
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertDepartureRequest(
@@ -49,7 +47,7 @@ public class InsertDepartureRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.State.ShouldBe(State.Unstable);
+        pendingFlight.State.ShouldBe(State.Stable);
     }
 
     [Fact]
@@ -61,13 +59,11 @@ public class InsertDepartureRequestHandlerTests(
         var flightTime = TimeSpan.FromMinutes(20);
 
         var pendingFlight = new FlightBuilder("QFA1")
-            .WithState(State.Pending)
             .WithEstimatedFlightTime(flightTime)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(pendingFlight)
-            .Build();
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertDepartureRequest(
@@ -94,14 +90,12 @@ public class InsertDepartureRequestHandlerTests(
         var flightTime = TimeSpan.FromMinutes(20);
 
         var pendingFlight = new FlightBuilder("QFA1")
-            .WithState(State.Pending)
             .WithEstimatedFlightTime(flightTime)
             .WithFeederFix("RIVET")
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(pendingFlight)
-            .Build();
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertDepartureRequest(
@@ -148,12 +142,10 @@ public class InsertDepartureRequestHandlerTests(
         var takeOffTime = now.AddMinutes(5);
 
         var pendingFlightWithoutEte = new FlightBuilder("QFA1")
-            .WithState(State.Pending)
             .Build(); // No ETE set
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(pendingFlightWithoutEte)
-            .Build();
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.AddPendingFlight(pendingFlightWithoutEte);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertDepartureRequest(
@@ -168,76 +160,38 @@ public class InsertDepartureRequestHandlerTests(
         exception.Message.ShouldBe("QFA1 does not have an ETE.");
     }
 
-    [Fact]
-    public async Task WhenInsertingAFlight_SchedulerShouldBeCalled()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var takeOffTime = now.AddMinutes(5);
-        var flightTime = TimeSpan.FromMinutes(20);
+    // TODO: This is covered in SequenceTests. Consider moving relevent tests into here.
+    // [Fact]
+    // public async Task WhenInsertingAFlight_ItShouldBeScheduled()
+    // {
+    //     // Arrange
+    //     var now = clockFixture.Instance.UtcNow();
+    //     var takeOffTime = now.AddMinutes(5);
+    //     var flightTime = TimeSpan.FromMinutes(20);
+    //
+    //     var pendingFlight = new FlightBuilder("QFA1")
+    //         .WithEstimatedFlightTime(flightTime)
+    //         .Build();
+    //
+    //     var sequence = new SequenceBuilder(_airportConfiguration).Build();
+    //     sequence.AddPendingFlight(pendingFlight);
+    //
+    //     var handler = GetRequestHandler(sequence, scheduler);
+    //     var request = new InsertDepartureRequest(
+    //         "YSSY",
+    //         "QFA1",
+    //         "B738",
+    //         "YSCB",
+    //         takeOffTime);
+    //
+    //     // Act
+    //     await handler.Handle(request, CancellationToken.None);
+    //
+    //     // Assert
+    //     scheduler.Received(1).Schedule(Arg.Is(sequence));
+    // }
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithState(State.Pending)
-            .WithEstimatedFlightTime(flightTime)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(pendingFlight)
-            .Build();
-
-        var scheduler = Substitute.For<IScheduler>();
-        var handler = GetRequestHandler(sequence, scheduler);
-        var request = new InsertDepartureRequest(
-            "YSSY",
-            "QFA1",
-            "B738",
-            "YSCB",
-            takeOffTime);
-
-        // Act
-        await handler.Handle(request, CancellationToken.None);
-
-        // Assert
-        scheduler.Received(1).Schedule(Arg.Is(sequence));
-    }
-
-    [Fact]
-    public async Task WhenInsertingAFlight_ItShouldBecomeStable()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var takeOffTime = now.AddMinutes(5);
-        var flightTime = TimeSpan.FromMinutes(20);
-
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithState(State.Pending)
-            .WithEstimatedFlightTime(flightTime)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithFlight(pendingFlight)
-            .Build();
-
-        var scheduler = Substitute.For<IScheduler>();
-        var handler = GetRequestHandler(sequence, scheduler);
-        var request = new InsertDepartureRequest(
-            "YSSY",
-            "QFA1",
-            "B738",
-            "YSCB",
-            takeOffTime);
-
-        // Verify initial state
-        pendingFlight.State.ShouldBe(State.Pending);
-
-        // Act
-        await handler.Handle(request, CancellationToken.None);
-
-        // Assert
-        pendingFlight.State.ShouldBe(State.Unstable);
-    }
-
-    InsertDepartureRequestHandler GetRequestHandler(Sequence sequence, IScheduler? scheduler = null)
+    InsertDepartureRequestHandler GetRequestHandler(Sequence sequence)
     {
         var sessionManager = new MockLocalSessionManager(sequence);
 
@@ -252,12 +206,10 @@ public class InsertDepartureRequestHandlerTests(
 
         var mediator = Substitute.For<IMediator>();
 
-        scheduler ??= Substitute.For<IScheduler>();
         return new InsertDepartureRequestHandler(
             sessionManager,
             performanceLookupFixture.Instance,
             arrivalLookup,
-            scheduler,
             clockFixture.Instance,
             mediator);
     }

@@ -5,19 +5,19 @@ namespace Maestro.Core.Tests.Builders;
 public class FlightBuilder(string callsign)
 {
     string _aircraftType = "B738";
-    WakeCategory _wakeCategory = WakeCategory.Medium;
+    WakeCategory _wakeCategory = default;
     string _origin = "YMML";
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
-    DateTimeOffset estimatedTimeOfDeparture = DateTimeOffset.Now;
+    DateTimeOffset estimatedTimeOfDeparture = default;
     TimeSpan? _estimatedFlightTime;
     DateTimeOffset activationTime = DateTimeOffset.Now.AddHours(-1);
-    DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
+    DateTimeOffset feederFixEstimate = default;
     bool manualFeederFixEstimate = false;
     DateTimeOffset feederFixTime = default;
     DateTimeOffset? passedFeederFix = null;
 
-    DateTimeOffset landingEstimate = DateTimeOffset.Now;
+    DateTimeOffset landingEstimate = default;
     DateTimeOffset landingTime = default;
     bool manualLandingTime = false;
 
@@ -30,7 +30,7 @@ public class FlightBuilder(string callsign)
 
     State _state = State.Unstable;
 
-    DateTimeOffset _lastSeen = DateTimeOffset.Now;
+    DateTimeOffset _lastSeen = default;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
     {

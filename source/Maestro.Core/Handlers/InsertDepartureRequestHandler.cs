@@ -1,5 +1,4 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -11,7 +10,6 @@ public class InsertDepartureRequestHandler(
     ISessionManager sessionManager,
     IPerformanceLookup performanceLookup,
     IArrivalLookup arrivalLookup,
-    IScheduler scheduler,
     IClock clock,
     IMediator mediator)
     : IRequestHandler<InsertDepartureRequest>
@@ -42,12 +40,8 @@ public class InsertDepartureRequestHandler(
             throw new MaestroException($"{request.Callsign} does not have an ETE.");
         }
 
-        // Calculate ETA based on take-off time
-        var landingEstimate = request.TakeOffTime.Add(flight.EstimatedTimeEnroute.Value);
-        flight.UpdateLandingEstimate(landingEstimate);
-
-        scheduler.Schedule(sequence);
-        flight.SetState(State.Unstable, clock);
+        sequence.Depart(flight, request.TakeOffTime);
+        flight.SetState(State.Stable, clock);
 
         // Calculate feeder fix estimate based on landing time
         // Need to do this after so that the runway gets assigned

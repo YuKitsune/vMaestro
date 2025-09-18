@@ -1,13 +1,10 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
-using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class DesequenceRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IMediator mediator, ILogger logger)
+public class DesequenceRequestHandler(ISessionManager sessionManager, IMediator mediator)
     : IRequestHandler<DesequenceRequest>
 {
     public async Task Handle(DesequenceRequest request, CancellationToken cancellationToken)
@@ -20,15 +17,7 @@ public class DesequenceRequestHandler(ISessionManager sessionManager, IScheduler
         }
 
         var sequence = lockedSession.Session.Sequence;
-        var flight = sequence.FindTrackedFlight(request.Callsign);
-        if (flight is null)
-        {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return;
-        }
-
-        flight.Desequence();
-        scheduler.Schedule(sequence);
+        sequence.Desequence(request.Callsign);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
