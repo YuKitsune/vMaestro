@@ -9,8 +9,6 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class SetupViewModel : ObservableObject
 {
-    const string NoneServer = "None";
-
     readonly IMediator _mediator;
     readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
@@ -30,15 +28,8 @@ public partial class SetupViewModel : ObservableObject
     [ObservableProperty]
     RunwayModeViewModel _selectedRunwayMode = null!;
 
-    [ObservableProperty]
-    string[] _servers;
-
-    [ObservableProperty]
-    string _selectedServer;
-
     public SetupViewModel(
         AirportConfiguration[] airportConfigurations,
-        ServerConfiguration serverConfiguration,
         IMediator mediator,
         IWindowHandle windowHandle,
         IErrorReporter errorReporter)
@@ -50,9 +41,6 @@ public partial class SetupViewModel : ObservableObject
         SelectedAirport = initialAirportConfiguration.Identifier;
         AvailableRunwayModes = initialAirportConfiguration.RunwayModes.Select(x => new RunwayModeViewModel(x)).ToArray();
         SelectedRunwayModeIdentifier = initialAirportConfiguration.RunwayModes.First().Identifier;
-
-        Servers = [NoneServer, ..serverConfiguration.Partitions];
-        SelectedServer = NoneServer;
 
         _mediator = mediator;
         _windowHandle = windowHandle;
@@ -84,7 +72,7 @@ public partial class SetupViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(new CreateSessionRequest(SelectedAirport, SelectedServer == NoneServer ? string.Empty : SelectedServer));
+            _mediator.Send(new CreateSessionRequest(SelectedAirport));
             CloseWindow();
         }
         catch (Exception ex)

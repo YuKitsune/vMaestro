@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
 using Maestro.Core.Sessions;
 using MediatR;
 

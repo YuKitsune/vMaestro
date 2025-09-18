@@ -12,4 +12,5 @@ public static class WindowKeys
     public static string Slot(string airportIdentifier) => $"slot-{airportIdentifier}";
     public static string TerminalConfiguration(string airportIdentifier) => $"terminal-configuration-{airportIdentifier}";
     public static string Information2(string callsign) => $"information2-{callsign}";
+    public static string Connection(string callsign) => $"connection-{callsign}";
 }

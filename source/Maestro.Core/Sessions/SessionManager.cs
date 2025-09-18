@@ -22,18 +22,7 @@ public class SessionManager(
 
     public string[] ActiveSessions => _sessions.Keys.ToArray();
 
-    public async Task CreateRemoteSession(string airportIdentifier, string partition, CancellationToken cancellationToken)
-    {
-        using var _ = await _semaphore.LockAsync(cancellationToken);
-        if (_sessions.ContainsKey(airportIdentifier))
-            throw new MaestroException($"Session already exists for {airportIdentifier}.");
-
-        var sequence = CreateSequence(airportIdentifier);
-        var connection = CreateConnection(serverConfiguration, partition, airportIdentifier);
-        _sessions[airportIdentifier] = sessionFactory.Create(sequence, connection);
-    }
-
-    public async Task CreateLocalSession(string airportIdentifier, CancellationToken cancellationToken)
+    public async Task CreateSession(string airportIdentifier, CancellationToken cancellationToken)
     {
         using var _ = await _semaphore.LockAsync(cancellationToken);
         if (_sessions.ContainsKey(airportIdentifier))
@@ -65,19 +54,6 @@ public class SessionManager(
         _sessions.Remove(airportIdentifier);
     }
 
-    // TODO: Maybe extract into a factory
-    MaestroConnection CreateConnection(ServerConfiguration configuration, string partition, string airportIdentifier)
-    {
-        var hubConnection = new HubConnectionBuilder()
-            .WithUrl(configuration.Uri)
-            .WithServerTimeout(TimeSpan.FromSeconds(configuration.TimeoutSeconds))
-            .WithAutomaticReconnect()
-            .WithStatefulReconnect()
-            .AddNewtonsoftJsonProtocol()
-            .Build();
-
-        return new MaestroConnection(partition, airportIdentifier, configuration, hubConnection, mediator, logger);
-    }
 
     // TODO: Maybe extract into a factory
     Sequence CreateSequence(string airportIdentifier)

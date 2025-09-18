@@ -8,9 +8,8 @@ namespace Maestro.Core.Tests.Mocks;
 public class MockLocalSessionManager(Sequence sequence) : ISessionManager
 {
     public string[] ActiveSessions => [sequence.AirportIdentifier];
-    public Task CreateRemoteSession(string airportIdentifier, string server, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-    public Task CreateLocalSession(string airportIdentifier, CancellationToken cancellationToken) => throw new NotImplementedException();
+    public Task CreateSession(string airportIdentifier, CancellationToken cancellationToken) => throw new NotImplementedException();
 
     public bool HasSessionFor(string airportIdentifier) => sequence.AirportIdentifier == airportIdentifier;
 
@@ -42,10 +41,12 @@ public class MockSession(Sequence sequence) : ISession
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public bool OwnsSequence => true;
     public Role Role => Role.Flow;
-    public IReadOnlyDictionary<string, Role[]> Permissions => PermissionHelper.FullAccess();
+    public bool IsActive => true;
+    public bool IsConnected => false;
     public Task Start(string position, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task Stop(CancellationToken cancellationToken) => throw new NotImplementedException();
+    public Task Connect(MaestroConnection maestroConnection, CancellationToken cancellationToken) => throw new NotImplementedException();
+    public Task Disconnect(CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task TakeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task RevokeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
-    public void ChangePermissions(IReadOnlyDictionary<string, Role[]> permissions) => throw new NotImplementedException();
 }

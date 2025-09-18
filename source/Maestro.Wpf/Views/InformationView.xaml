@@ -9,8 +9,8 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=messages:FlightMessage}"
         Background="{x:Static local:Theme.BackgroundColor}"
-        Width="700"
-        Height="110"
+        MinWidth="700"
+        MinHeight="110"
         Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>

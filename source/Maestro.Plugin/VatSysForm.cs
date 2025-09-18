@@ -31,7 +31,7 @@ public class VatSysForm : BaseForm
         if (shrinkToContent)
         {
             // For text wrapping to work correctly, we need to measure with a constraint
-            var maxWidth = 520; // Maximum dialog width
+            var maxWidth = 1000; // Maximum dialog width
             child.Measure(new Size(maxWidth, double.PositiveInfinity));
             child.Arrange(new Rect(child.DesiredSize));
             child.UpdateLayout();

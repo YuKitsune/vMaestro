@@ -1,4 +1,6 @@
-﻿namespace Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
+
+namespace Maestro.Core.Model;
 
 // TODO: Need to clean this up a good bit.
 // Mixing Domain types and config in here makes the tests real messy.
@@ -10,6 +12,13 @@ public class RunwayMode
         Identifier = runwayModeConfigurationConfiguration.Identifier;
         Runways = runwayModeConfigurationConfiguration.Runways
             .Select(r => new Runway(r))
+            .ToArray();
+    }
+
+    public RunwayMode(RunwayModeDto runwayModeDto)
+    {
+        Identifier = runwayModeDto.Identifier;
+        Runways = runwayModeDto.AcceptanceRates.Select(kvp => new Runway(kvp.Key, TimeSpan.FromSeconds(kvp.Value)))
             .ToArray();
     }
 
@@ -33,6 +42,16 @@ public class Runway
         Preferences = runwayConfiguration.Preferences is not null
             ? new RunwayPreferences(runwayConfiguration.Preferences)
             : null;
+    }
+
+    // DTO ctor. Need to extend for dependencies, requirements, preferences.
+    public Runway(string identifier, TimeSpan acceptance)
+    {
+        Identifier = identifier;
+        AcceptanceRate = acceptance;
+        Dependencies = [];
+        Requirements = null;
+        Preferences = null;
     }
 
     public string Identifier { get; }

@@ -64,7 +64,17 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             connection.OwnsSequence = true;
         }
 
-        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, PermissionHelper.FullAccess());
+        // Get list of connected clients (excluding the one that just joined)
+        var connectedClients = sequence.Connections
+            .Where(c => c.Id != Context.ConnectionId)
+            .Select(c => new PeerInfo(c.Callsign, c.Role))
+            .ToList();
+
+        // Broadcast to other clients that this client has connected
+        await Clients.GroupExcept(groupKey.Value, Context.ConnectionId)
+            .SendAsync("PeerConnected", new PeerConnectedNotification(groupKey.AirportIdentifier, request.Position, request.Role));
+
+        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, PermissionHelper.FullAccess(), connectedClients);
     }
 
     public async Task LeaveSequence(LeaveSequenceRequest request)
@@ -105,6 +115,10 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             var wasFlowController = connection.Role == Role.Flow;
             sequence.RemoveConnection(Context.ConnectionId);
 
+            // Broadcast to remaining clients that this client has disconnected
+            await Clients.Group(groupKey.Value)
+                .SendAsync("PeerDisconnected", new PeerDisconnectedNotification(groupKey.AirportIdentifier, callsign));
+
             logger.LogInformation("{Callsign} left {Group}. Remaining connections: {Count}",
                 callsign, groupKey, sequence.Connections.Count);
 
@@ -123,7 +137,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                     {
                         logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group}",
                             newOwner.Callsign, groupKey);
-                        await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
+                        await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier, newOwner.Role));
                         newOwner.OwnsSequence = true;
                     }
                 }
@@ -517,6 +531,10 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                 await Groups.RemoveFromGroupAsync(connectionId, groupKey.Value);
                 sequence.RemoveConnection(connectionId);
 
+                // Broadcast to remaining clients that this client has disconnected
+                await Clients.Group(groupKey.Value)
+                    .SendAsync("PeerDisconnected", new PeerDisconnectedNotification(groupKey.AirportIdentifier, callsign));
+
                 logger.LogInformation("{Callsign} left {Group}. Remaining connections: {Count}",
                     callsign, groupKey, sequence.Connections.Count);
 
@@ -535,7 +553,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                         {
                             logger.LogInformation("Reassigning ownership to {NewCallsign} for {Group} after disconnect",
                                 newOwner.Callsign, groupKey);
-                            await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier));
+                            await Clients.Client(newOwner.Id).SendAsync("OwnershipGranted", new OwnershipGrantedNotification(groupKey.AirportIdentifier, newOwner.Role));
                             newOwner.OwnsSequence = true;
                         }
                     }

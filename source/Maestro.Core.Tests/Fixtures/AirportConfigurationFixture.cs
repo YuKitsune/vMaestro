@@ -93,6 +93,7 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "WELSH"],
+            PreferredRunways = [],
             DepartureAirports = ["YSCB"]
         };
 }

@@ -10,8 +10,8 @@
              d:DataContext="{d:DesignInstance Type=viewModels:SetupViewModel}"
              mc:Ignorable="d"
              Padding="8"
-             Width="240"
-             Height="96">
+             Width="200"
+             Height="72">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -137,14 +137,6 @@
             <!--         </ItemsControl> -->
             <!--     </Border> -->
             <!-- </controls:BeveledBorder> -->
-
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="Server"/>
-            <ComboBox
-                Grid.Row="4"
-                Grid.Column="1"
-                ItemsSource="{Binding Servers}"
-                SelectedValue="{Binding SelectedServer, Mode=TwoWay}"
-                Margin="0,2,0,2" />
 
         </Grid>
 

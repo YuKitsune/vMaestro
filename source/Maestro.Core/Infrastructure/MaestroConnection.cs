@@ -13,8 +13,8 @@ namespace Maestro.Core.Infrastructure;
 // - [X] Invoke SignalR methods when initializing the connection, ensure it's all synchronous to prevent dirty states
 // - [X] Encapsulate the in-memory sequence, the SignalR connection, and the UI stuff into a Session object
 // - [X] Test with two clients connected at once, what breaks?
-// - [ ] Restrict access to certain functions from certain clients
-// - [ ] Show information messages when things happen
+// - [X] Restrict access to certain functions from certain clients
+// - [X] Show information messages when things happen
 // - [ ] Coordination messages
 
 public class MaestroConnection : IAsyncDisposable
@@ -27,7 +27,11 @@ public class MaestroConnection : IAsyncDisposable
     readonly IMediator _mediator;
     readonly ILogger _logger;
 
+    string? _currentPosition;
+    Role? _currentRole;
+
     public bool IsConnected => _hubConnection.State is not HubConnectionState.Disconnected;
+    public string Partition => _partition;
 
     public MaestroConnection(
         string partition,
@@ -55,7 +59,8 @@ public class MaestroConnection : IAsyncDisposable
         bool OwnsSequence,
         SequenceMessage? Sequence,
         IReadOnlyDictionary<string, Role[]> Permissions,
-        Role Role);
+        Role Role,
+        IReadOnlyList<PeerInfo> ConnectedClients);
 
     public async Task<SequenceStartResult> Start(string position, CancellationToken cancellationToken)
     {
@@ -80,9 +85,14 @@ public class MaestroConnection : IAsyncDisposable
                 cancellationToken);
             var permissions = response.Permissions;
 
+            // Store position and role for potential reconnection
+            _currentPosition = position;
+            _currentRole = role;
+
             // Flow controllers now handle permissions client-side
 
-            return new SequenceStartResult(response.OwnsSequence, response.Sequence, permissions, role);
+            await _mediator.Publish(new SessionConnectedNotification(_airportIdentifier, role, response.ConnectedPeers), cancellationToken);
+            return new SequenceStartResult(response.OwnsSequence, response.Sequence, permissions, role, response.ConnectedPeers);
         }
         catch (Exception exception)
         {
@@ -94,10 +104,8 @@ public class MaestroConnection : IAsyncDisposable
     {
         try
         {
-            await _hubConnection.InvokeAsync(
-                "LeaveSequence",
-                new LeaveSequenceRequest(AirportIdentifier),
-                cancellationToken);
+            await _hubConnection.StopAsync(cancellationToken);
+            await _mediator.Publish(new SessionDisconnectedNotification(_airportIdentifier), cancellationToken);
         }
         catch (Exception exception)
         {
@@ -112,7 +120,7 @@ public class MaestroConnection : IAsyncDisposable
         var response = await _hubConnection.InvokeAsync<RelayResponse>(methodName, message, cancellationToken);
         if (!response.Success)
         {
-            throw new MaestroException(response.ErrorMessage);
+            await _mediator.Publish(new ErrorNotification(new MaestroException(response.ErrorMessage)), cancellationToken);
         }
     }
 
@@ -196,6 +204,22 @@ public class MaestroConnection : IAsyncDisposable
                 return;
 
             await _mediator.Publish(infoNotification, GetMessageCancellationToken());
+        });
+
+        _hubConnection.On<PeerConnectedNotification>("PeerConnected", async clientConnectedNotification =>
+        {
+            if (clientConnectedNotification.AirportIdentifier != _airportIdentifier)
+                return;
+
+            await _mediator.Publish(clientConnectedNotification, GetMessageCancellationToken());
+        });
+
+        _hubConnection.On<PeerDisconnectedNotification>("PeerDisconnected", async clientDisconnectedNotification =>
+        {
+            if (clientDisconnectedNotification.AirportIdentifier != _airportIdentifier)
+                return;
+
+            await _mediator.Publish(clientDisconnectedNotification, GetMessageCancellationToken());
         });
 
         _hubConnection.On<RequestEnvelope<InsertFlightRequest>, RelayResponse>("InsertFlight", async envelope =>
@@ -339,15 +363,14 @@ public class MaestroConnection : IAsyncDisposable
     {
         _hubConnection.Closed += async (exception) =>
         {
+            await _mediator.Publish(new SessionDisconnectedNotification(_airportIdentifier), CancellationToken.None);
+
             // If the connection was closed due to an error, take ownership of the sequence and report the error
             if (exception != null && !_rootCancellationTokenSource.Token.IsCancellationRequested)
             {
                 _logger.Error(exception, "Connection for {AirportIdentifier} lost", _airportIdentifier);
-                await _mediator.Publish(new OwnershipGrantedNotification(_airportIdentifier), CancellationToken.None);
+                await _mediator.Publish(new OwnershipGrantedNotification(_airportIdentifier, _currentRole.Value), CancellationToken.None);
                 await _mediator.Publish(new ErrorNotification(exception), CancellationToken.None);
-
-                // Temp
-                await _mediator.Publish(new InformationNotification(_airportIdentifier, DateTimeOffset.UtcNow, "Connection to server lost, local sequencing assumed"), CancellationToken.None);
             }
             else
             {
@@ -361,12 +384,45 @@ public class MaestroConnection : IAsyncDisposable
             return Task.CompletedTask;
         };
 
-        _hubConnection.Reconnected += connectionId =>
+        _hubConnection.Reconnected += async connectionId =>
         {
             _logger.Information(
                 "Connection for {AirportIdentifier} reconnected with connectionId {ConnectionId}",
                 _airportIdentifier, connectionId);
-            return Task.CompletedTask;
+
+            // Attempt to rejoin the sequence if we have stored position info
+            if (_currentPosition != null && _currentRole != null)
+            {
+                try
+                {
+                    _logger.Information("Attempting to rejoin sequence for position {Position}", _currentPosition);
+
+                    var response = await _hubConnection.InvokeAsync<JoinSequenceResponse>(
+                        "JoinSequence",
+                        new JoinSequenceRequest(_partition, AirportIdentifier, _currentPosition, _currentRole.Value),
+                        CancellationToken.None);
+
+                    _logger.Information("Successfully rejoined sequence for {Position}. OwnsSequence: {OwnsSequence}",
+                        _currentPosition, response.OwnsSequence);
+
+                    await _mediator.Publish(new SessionConnectedNotification(_airportIdentifier, _currentRole.Value, response.ConnectedPeers), CancellationToken.None);
+
+                    // If we don't own the sequence after reconnecting, revoke local ownership
+                    if (!response.OwnsSequence)
+                    {
+                        await _mediator.Publish(new OwnershipRevokedNotification(_airportIdentifier), CancellationToken.None);
+                    }
+
+                    await _mediator.Publish(new InformationNotification(_airportIdentifier, DateTimeOffset.UtcNow, "Connection to server restored"), CancellationToken.None);
+                }
+                catch (Exception exception)
+                {
+                    _logger.Error(exception, "Failed to rejoin sequence for position {Position} after reconnection", _currentPosition);
+                    // Keep local ownership since we couldn't rejoin
+                    await _mediator.Publish(new OwnershipGrantedNotification(_airportIdentifier, _currentRole.Value), CancellationToken.None);
+                    await _mediator.Publish(new ErrorNotification(exception), CancellationToken.None);
+                }
+            }
         };
     }
 

@@ -34,7 +34,7 @@ public class RelayRequestHandler(ISessionManager sessionManager, ServerConfigura
                 logger.Warning("{Callsign} attempted {ActionKey} but does not have permission (Role: {Role})",
                     envelope.OriginatingCallsign, actionKey, envelope.OriginatingRole);
 
-                return RelayResponse.CreateFailure($"Role {envelope.OriginatingRole} cannot perform {actionKey}");
+                return RelayResponse.CreateFailure($"{envelope.OriginatingRole} cannot perform {actionKey}");
             }
 
             // Permission granted - unwrap and forward the request to the appropriate handler

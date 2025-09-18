@@ -81,6 +81,13 @@ namespace Maestro.Plugin;
 // - Procedure: Ask pilots for revised TAS speeds if you suspect they are inaccurate.
 // - Procedure: Ask pilots for winds at 10k and 6k ft to update Maestro winds.
 
+// RealOps Sydney Must-Haves:
+// - [ ] Reliable connection handling (retries, recover from disconnects, manual reconnect button)
+// - [ ] Show connection status in the UI
+// - [ ] Show information messages
+// - [ ] Fix recompute behavior
+//   - [ ] New sequencing algorithm (but order the sequence dynamically based on estimates and landing times)
+
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
 {
@@ -197,6 +204,8 @@ public class Plugin : IPlugin
             .MinimumLevel.Is(loggingConfiguration.LogLevel)
             .CreateLogger();
 
+        Log.Logger = logger;
+
         return logger;
     }
 
@@ -304,7 +313,6 @@ public class Plugin : IPlugin
                 {
                     var viewModel = new SetupViewModel(
                         configurations,
-                        Ioc.Default.GetRequiredService<ServerConfiguration>(),
                         Ioc.Default.GetRequiredService<IMediator>(),
                         handle,
                         Ioc.Default.GetRequiredService<IErrorReporter>());

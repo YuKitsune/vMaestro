@@ -6,7 +6,7 @@ namespace Maestro.Core.Handlers;
 
 public record InformationNotification(string AirportIdentifier, DateTimeOffset Time, string Message) : INotification;
 
-public class InformationNotificationHandler(ISessionManager sessionManager, INotificationStream<InformationNotification> stream) : INotificationHandler<InformationNotification>
+public class InformationNotificationHandler(ISessionManager sessionManager) : INotificationHandler<InformationNotification>
 {
     public async Task Handle(InformationNotification notification, CancellationToken cancellationToken)
     {
@@ -14,11 +14,9 @@ public class InformationNotificationHandler(ISessionManager sessionManager, INot
             return;
 
         using var lockedSession = await sessionManager.AcquireSession(notification.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (lockedSession.Session is { OwnsSequence: true, Connection: not null })
         {
             await lockedSession.Session.Connection.Send(notification, cancellationToken);
         }
-
-        await stream.PublishAsync(notification, cancellationToken);
     }
 }

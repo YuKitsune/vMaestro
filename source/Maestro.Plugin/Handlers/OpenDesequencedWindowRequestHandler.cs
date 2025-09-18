@@ -1,4 +1,6 @@
-﻿using Maestro.Plugin.Infrastructure;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Sessions;
+using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
@@ -24,5 +26,28 @@ public class OpenDesequencedWindowRequestHandler(WindowManager windowManager, IM
                     request.Callsigns)));
 
         return Task.FromResult(new OpenDesequencedWindowResponse());
+    }
+}
+
+public class OpenConnectionWindowRequestHandler(ISessionManager sessionManager, WindowManager windowManager, ServerConfiguration serverConfiguration, IMediator mediator, IErrorReporter errorReporter)
+    : IRequestHandler<OpenConnectionWindowRequest>
+{
+    public Task Handle(OpenConnectionWindowRequest request, CancellationToken cancellationToken)
+    {
+        var (partition, isConnected) = GetConnectionStatus(request.AirportIdentifier, cancellationToken).GetAwaiter().GetResult();
+        windowManager.FocusOrCreateWindow(
+            WindowKeys.Connection(request.AirportIdentifier),
+            "Setup",
+            windowHandle => new ConnectionView(new ConnectionViewModel(request.AirportIdentifier, serverConfiguration, partition, isConnected, mediator, windowHandle, errorReporter)));
+
+        return Task.CompletedTask;
+    }
+
+    async Task<(string, bool)> GetConnectionStatus(string airportIdentifier, CancellationToken cancellationToken)
+    {
+        using var lockedSession = await sessionManager.AcquireSession(airportIdentifier, cancellationToken);
+        return lockedSession.Session.IsConnected
+            ? (lockedSession.Session.Connection?.Partition ?? string.Empty, true)
+            : (string.Empty, false);
     }
 }

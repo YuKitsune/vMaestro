@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
@@ -78,6 +79,8 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 
     public bool HasDesequencedFlight => Flights.Any(f => f.State == State.Desequenced);
 
+    [ObservableProperty] string _status = "OFFLINE";
+
     public MaestroViewModel(
         string airportIdentifier,
         string[] runways,
@@ -101,6 +104,14 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         // Subscribe to notifications
         _notificationSubscriptionCancellationTokenSource = new CancellationTokenSource();
         _notificationSubscriptionTask = SubscribeToSequenceUpdates(_notificationSubscriptionCancellationTokenSource.Token);
+
+        WeakReferenceMessenger.Default.Register<ConnectionStatusChanged>(this, (r, m) =>
+        {
+            if (m.AirportIdentifier == AirportIdentifier)
+            {
+                Status = m.Status;
+            }
+        });
     }
 
     [RelayCommand]
@@ -303,6 +314,19 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
                     Flights.Where(f => f.State == State.Desequenced)
                         .Select(f => f.Callsign)
                         .ToArray()));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void OpenConnectionWindow()
+    {
+        try
+        {
+            _mediator.Send(new OpenConnectionWindowRequest(AirportIdentifier));
         }
         catch (Exception ex)
         {

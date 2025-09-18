@@ -11,15 +11,7 @@ public class CreateSessionRequestHandler(
 {
     public async Task Handle(CreateSessionRequest request, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrEmpty(request.Partition))
-        {
-            await sessionManager.CreateRemoteSession(request.AirportIdentifier, request.Partition, cancellationToken);
-        }
-        else
-        {
-            await sessionManager.CreateLocalSession(request.AirportIdentifier, cancellationToken);
-        }
-
+        await sessionManager.CreateSession(request.AirportIdentifier, cancellationToken);
         await mediator.Publish(new SessionCreatedNotification(request.AirportIdentifier), cancellationToken);
     }
 }
