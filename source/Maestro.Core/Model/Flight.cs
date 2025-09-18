@@ -22,11 +22,12 @@ public sealed class FlightComparer : IComparer<Flight>
 
 public class Flight : IEquatable<Flight>, IComparable<Flight>
 {
-    public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate)
+    public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate, DateTimeOffset activatedTime)
     {
         Callsign = callsign;
         DestinationIdentifier = destinationIdentifier;
         State = State.Unstable;
+        ActivatedTime = activatedTime;
         UpdateLandingEstimate(initialLandingEstimate);
     }
 
@@ -83,7 +84,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public State State { get; private set; }
     public bool HighPriority { get; set; }
     public bool NoDelay { get; set; }
-    public bool Activated => IsActiveState(State);
     public DateTimeOffset? ActivatedTime { get; private set; }
 
     public string? FeederFixIdentifier { get; private set; }
@@ -112,14 +112,8 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void SetState(State state, IClock clock)
     {
-        if (!IsActiveState(State) && IsActiveState(state))
-            ActivatedTime = clock.UtcNow();
-
-        // TODO: Prevent invalid state changes
         State = state;
     }
-
-    bool IsActiveState(State state) => state is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed;
 
     public void SetRunway(string runwayIdentifier, bool manual)
     {

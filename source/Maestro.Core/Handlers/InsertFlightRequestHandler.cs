@@ -77,7 +77,7 @@ public class InsertFlightRequestHandler(
                 ? performanceLookup.GetPerformanceDataFor(request.AircraftType)
                 : null;
 
-            var flight = new Flight(request.Callsign, request.AirportIdentifier, DateTimeOffset.MinValue)
+            var flight = new Flight(request.Callsign, request.AirportIdentifier, DateTimeOffset.MinValue, clock.UtcNow())
             {
                 AircraftType = request.AircraftType,
                 WakeCategory = performanceInfo?.WakeCategory,

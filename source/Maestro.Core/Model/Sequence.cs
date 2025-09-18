@@ -132,7 +132,7 @@ public class Sequence
     Flight CreateDummyFlight(string runwayIdentifier)
     {
         var callsign = $"****{_dummyCounter++:00}*";
-        var flight = new Flight(callsign, AirportIdentifier, DateTimeOffset.MinValue) // TODO: Need a new ctor
+        var flight = new Flight(callsign, AirportIdentifier, DateTimeOffset.MinValue, DateTime.MinValue) // TODO: Need a new ctor
         {
             IsDummy = true
         };
@@ -295,16 +295,60 @@ public class Sequence
         };
     }
 
-    // TODO: Re-implement
     public void Restore(SequenceMessage message)
     {
-        // _trackedFlights.Clear();
-        // _trackedFlights.AddRange(message.Flights.Select(f => new Flight(f)));
-        //
-        // _slots.Clear();
-        // _slots.AddRange(message.Slots.Select(s => new Slot(s)));
-        //
-        // _dummyCounter = message.DummyCounter;
+        // Clear existing state
+        _sequence.Clear();
+        _pendingFlights.Clear();
+        _deSequencedFlights.Clear();
+
+        // Restore dummy counter
+        _dummyCounter = message.DummyCounter;
+
+        // Restore runway modes first (they need to be in the sequence for proper ordering)
+        var currentRunwayMode = new RunwayMode(message.CurrentRunwayMode);
+        _sequence.Add(new RunwayModeChangeSequenceItem(
+            currentRunwayMode,
+            DateTimeOffset.MinValue,
+            DateTimeOffset.MinValue));
+
+        // If there's a next runway mode scheduled, add it
+        if (message.NextRunwayMode is not null)
+        {
+            var nextRunwayMode = new RunwayMode(message.NextRunwayMode);
+            _sequence.Add(new RunwayModeChangeSequenceItem(
+                nextRunwayMode,
+                message.LastLandingTimeForCurrentMode,
+                message.FirstLandingTimeForNextMode));
+        }
+
+        // Restore slots
+        foreach (var slotMessage in message.Slots)
+        {
+            var slot = new Slot(slotMessage.Id, slotMessage.StartTime, slotMessage.EndTime, slotMessage.RunwayIdentifiers);
+            InsertByTime(new SlotSequenceItem(slot), slot.StartTime, _sequence);
+        }
+
+        // Restore sequenced flights
+        foreach (var flightMessage in message.Flights)
+        {
+            var flight = new Flight(flightMessage);
+            InsertByTime(new FlightSequenceItem(flight), flight.LandingTime, _sequence);
+        }
+
+        // Restore pending flights
+        foreach (var flightMessage in message.PendingFlights)
+        {
+            var flight = new Flight(flightMessage);
+            _pendingFlights.Add(flight);
+        }
+
+        // Restore desequenced flights
+        foreach (var flightMessage in message.DeSequencedFlights)
+        {
+            var flight = new Flight(flightMessage);
+            _deSequencedFlights.Add(flight);
+        }
     }
 
     public void Insert(Flight newFlight, DateTimeOffset preferredTime)

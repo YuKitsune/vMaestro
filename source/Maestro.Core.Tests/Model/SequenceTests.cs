@@ -13,6 +13,9 @@ namespace Maestro.Core.Tests.Model;
 // When dependent runways are in use, flights are separated from flights on the other runway by the dependency rate
 // Account for MaxDelay (no delay) flights
 
+// ChangeRunwayMode_CancelsFutureModeChange
+// Reposition_WithFlightsOnEitherSideOfRunwayModeChange_WithLessSpacingThanLandingRate_DelaysFlightsAppropriately (F1 00:10, Change at 00:12, F2 should be at 00:13, not 00:12)
+
 public class SequenceTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
     readonly DateTimeOffset _time = clockFixture.Instance.UtcNow();
@@ -54,6 +57,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(newLandingRate), "additional delay should be applied to the second flight");
     }
 
+    // BUG: This test passes, but it doesn't appear to work in production
     [Fact]
     public void ChangeRunwayMode_ReschedulesFlightsAfterModeChange()
     {
@@ -63,17 +67,17 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
             .Build();
 
         var flight1 = new FlightBuilder("ABC123")
-            .WithLandingEstimate(_time.AddMinutes(5))
+            .WithLandingEstimate(_time.AddMinutes(13))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("DEF456")
-            .WithLandingEstimate(_time.AddMinutes(6))
+            .WithLandingEstimate(_time.AddMinutes(16))
             .WithRunway("34L")
             .Build();
 
         var flight3 = new FlightBuilder("GHI789")
-            .WithLandingEstimate(_time.AddMinutes(7))
+            .WithLandingEstimate(_time.AddMinutes(19))
             .WithRunway("34L")
             .Build();
 
@@ -82,20 +86,22 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.Insert(flight3, flight3.LandingEstimate);
 
         // Act: Change runway mode after the first flight
-        var lastLandingTimeForOldMode = flight1.LandingTime;
-        var firstLandingTimeForNewMode = _time.AddMinutes(10);
         var newRunwayMode = new RunwayMode(new RunwayModeConfiguration
         {
             Identifier = "34R",
             Runways = [new RunwayConfiguration { Identifier = "34R", LandingRateSeconds = (int)_landingRate.TotalSeconds, Dependencies = [new RunwayDependency{RunwayIdentifier = "34L"}]}]
         });
 
-        sequence.ChangeRunwayMode(newRunwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode);
+        sequence.ChangeRunwayMode(newRunwayMode, _time.AddMinutes(10), _time.AddMinutes(20));
 
         // Assert
-        flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "first flight should remain unchanged");
-        flight2.LandingTime.ShouldBe(firstLandingTimeForNewMode, "second flight should be delayed until the start of the new mode");
-        flight3.LandingTime.ShouldBe(firstLandingTimeForNewMode.Add(_landingRate), "third flight should be delayed behind the second flight");
+        flight1.LandingTime.ShouldBe(_time.AddMinutes(20), "first flight should remain unchanged");
+        flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(_landingRate), "second flight should be delayed until the start of the new mode");
+        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(_landingRate), "third flight should be delayed behind the second flight");
+
+        flight1.AssignedRunwayIdentifier.ShouldBe("34R", "first flight should be assigned to the new runway");
+        flight2.AssignedRunwayIdentifier.ShouldBe("34R", "second flight should be assigned to the new runway");
+        flight3.AssignedRunwayIdentifier.ShouldBe("34R", "third flight should be assigned to the new runway");
     }
 
     [Fact]
@@ -1654,6 +1660,63 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.NumberInSequence(flight3).ShouldBe(1, "flight3 should now be first in sequence");
         sequence.NumberInSequence(flight2).ShouldBe(2, "flight2 should now be second in sequence");
         sequence.NumberInSequence(flight1).ShouldBe(3, "flight1 should now be third in sequence");
+    }
+
+    [Fact]
+    public void Reposition_MultipleUnstableFlights_InRunwayChangePeriod_MovesAfterRunwayChange()
+    {
+        // Arrange
+        var sequence = GetSequenceBuilder()
+            .WithSingleRunway("34L", _landingRate)
+            .Build();
+
+        // Schedule a runway mode change in the near future
+        var lastLandingTimeForOldMode = _time.AddMinutes(10);
+        var firstLandingTimeForNewMode = _time.AddMinutes(20);
+        var newRunwayMode = new RunwayMode(new RunwayModeConfiguration
+        {
+            Identifier = "34R",
+            Runways = [new RunwayConfiguration { Identifier = "34R", LandingRateSeconds = (int)_landingRate.TotalSeconds, Dependencies = [new RunwayDependency {RunwayIdentifier = "34L"}]}]
+        });
+
+        sequence.ChangeRunwayMode(newRunwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode);
+
+        // Insert multiple unstable flights with estimates that would place them in the runway change period
+        var flight1 = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(3))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var flight2 = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(6))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var flight3 = new FlightBuilder("GHI789")
+            .WithLandingEstimate(_time.AddMinutes(9))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        sequence.Insert(flight1, flight1.LandingEstimate);
+        sequence.Insert(flight2, flight2.LandingEstimate);
+        sequence.Insert(flight3, flight3.LandingEstimate);
+
+        // Act: Change estimates to place them in the runway change period and reposition each flight
+        flight1.UpdateLandingEstimate(_time.AddMinutes(13)); // In runway change period (8-12 minutes)
+        flight2.UpdateLandingEstimate(_time.AddMinutes(16)); // In runway change period
+        flight3.UpdateLandingEstimate(_time.AddMinutes(19)); // In runway change period
+
+        sequence.Reposition(flight1, flight1.LandingEstimate);
+        sequence.Reposition(flight2, flight2.LandingEstimate);
+        sequence.Reposition(flight3, flight3.LandingEstimate);
+
+        // Assert: Each flight should be moved to after the runway change period, maintaining proper separation
+        flight1.LandingTime.ShouldBe(firstLandingTimeForNewMode, "first flight should be moved to the beginning of the new runway mode");
+        flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(_landingRate), "second flight should be delayed behind the first flight");
+        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(_landingRate), "third flight should be delayed behind the second flight");
     }
 
     SequenceBuilder GetSequenceBuilder() =>

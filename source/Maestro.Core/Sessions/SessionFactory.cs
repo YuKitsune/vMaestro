@@ -1,5 +1,4 @@
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 using Serilog;
 
 namespace Maestro.Core.Sessions;

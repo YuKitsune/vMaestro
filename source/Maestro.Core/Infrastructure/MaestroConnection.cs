@@ -371,9 +371,6 @@ public class MaestroConnection : IAsyncDisposable
                 _logger.Error(exception, "Connection for {AirportIdentifier} lost", _airportIdentifier);
                 await _mediator.Publish(new OwnershipGrantedNotification(_airportIdentifier, _currentRole.Value), CancellationToken.None);
                 await _mediator.Publish(new ErrorNotification(exception), CancellationToken.None);
-
-                // Temp
-                await _mediator.Publish(new InformationNotification(_airportIdentifier, DateTimeOffset.UtcNow, "Connection to server lost, local sequencing assumed"), CancellationToken.None);
             }
             else
             {
