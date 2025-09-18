@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Extensions;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 
@@ -20,6 +21,8 @@ namespace Maestro.Core.Model;
 
 public class Sequence
 {
+    readonly AirportConfiguration _airportConfiguration;
+
     readonly IArrivalLookup _arrivalLookup;
     readonly IPerformanceLookup _performanceLookup;
     readonly IClock _clock;
@@ -44,6 +47,7 @@ public class Sequence
 
     public Sequence(Configuration.AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IPerformanceLookup performanceLookup, IClock clock)
     {
+        _airportConfiguration = airportConfiguration;
         _arrivalLookup = arrivalLookup;
         _performanceLookup = performanceLookup;
         _clock = clock;
@@ -484,9 +488,20 @@ public class Sequence
 
             // If the assigned runway isn't in the current mode, use the default
             // TODO: Need to use the preferred runway for the FF
-            var runway = currentRunwayMode.Runways
+            Runway runway;
+            if (currentFlight.FeederFixIdentifier is not null && !currentFlight.RunwayManuallyAssigned)
+            {
+                var preferredRunwaysForFeederFix = _airportConfiguration.PreferredRunways[currentFlight.FeederFixIdentifier];
+                runway = currentRunwayMode.Runways
+                             .FirstOrDefault(r => preferredRunwaysForFeederFix.Contains(r.Identifier))
+                         ?? currentRunwayMode.Default;
+            }
+            else
+            {
+                runway = currentRunwayMode.Runways
                              .FirstOrDefault(r => r.Identifier == currentFlight.AssignedRunwayIdentifier)
                          ?? currentRunwayMode.Default;
+            }
 
             var precedingItemsOnRunway = _sequence
                 .Take(i)

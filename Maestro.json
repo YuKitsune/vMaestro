@@ -32,6 +32,13 @@
       "Identifier": "YSSY",
       "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
+      "PreferredRunways": {
+        "RIVET": ["34L", "16R"],
+        "WELSH": ["34R", "16L"],
+        "BOREE": ["34R", "16L"],
+        "YAKKA": ["34R", "16L"],
+        "MARLN": ["34R", "16L"]
+      },
       "Runways": [
         { 
           "Identifier": "16L",
