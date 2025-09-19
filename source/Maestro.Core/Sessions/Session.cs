@@ -1,6 +1,8 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Sessions;

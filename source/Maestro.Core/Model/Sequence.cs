@@ -248,6 +248,11 @@ public class Sequence
         _slots.Clear();
         _slots.AddRange(message.Slots.Select(s => new Slot(s)));
 
+        CurrentRunwayMode = new RunwayMode(message.CurrentRunwayMode);
+        NextRunwayMode = message.NextRunwayMode != null ? new RunwayMode(message.NextRunwayMode) : null;
+        LastLandingTimeForCurrentMode = message.LastLandingTimeForCurrentMode;
+        FirstLandingTimeForNextMode = message.FirstLandingTimeForNextMode;
+
         _dummyCounter = message.DummyCounter;
     }
 }

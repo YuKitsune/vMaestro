@@ -141,7 +141,7 @@ public class FlightBuilder(string callsign)
 
     public Flight Build()
     {
-        var flight = new Flight(callsign, _destination, landingEstimate, activationTime)
+        var flight = new Flight(callsign, _destination, landingEstimate)
         {
             AircraftType = _aircraftType,
             WakeCategory = _wakeCategory,

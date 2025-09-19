@@ -201,7 +201,7 @@ public class FlightUpdatedHandler(
         FixEstimate? feederFixEstimate,
         DateTimeOffset landingEstimate)
     {
-        var flight = new Flight(notification.Callsign, notification.Destination, landingEstimate, clock.UtcNow());
+        var flight = new Flight(notification.Callsign, notification.Destination, landingEstimate);
         UpdateFlightData(notification, flight);
 
         if (feederFixEstimate is not null)
