@@ -383,6 +383,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     {
         var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
-        return new MoveFlightRequestHandler(sessionManager, mediator);
+        var clock = clockFixture.Instance;
+        return new MoveFlightRequestHandler(sessionManager, mediator, clock);
     }
 }
