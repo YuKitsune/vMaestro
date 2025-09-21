@@ -15,36 +15,36 @@ public class SequenceCleaner(IClock clock, ILogger logger)
     public void CleanUpFlights(Sequence sequence)
     {
         // BUG: This picks up flights that haven't even taken off yet
-        var landedFlights = sequence.Flights
-            .Where(f => f.State == State.Landed)
-            .ToArray();
-
-        var flightsToTake = landedFlights.Length - _maxLandedFlights;
-        if (flightsToTake > 0)
-        {
-            foreach (var landedFlight in landedFlights.Take(flightsToTake))
-            {
-                logger.Information(
-                    "Deleting {Callsign} from {AirportIdentifier} as it has landed.",
-                    landedFlight.Callsign,
-                    sequence.AirportIdentifier);
-                sequence.Delete(landedFlight);
-            }
-        }
-
-        var now = clock.UtcNow();
-        var expiredLandedFlights = landedFlights
-            .Where(f => now - f.LandingTime >= _landedFlightTimeout)
-            .ToArray();
-
-        foreach (var landedFlight in expiredLandedFlights)
-        {
-            logger.Information(
-                "Deleting {Callsign} from {AirportIdentifier} as it landed {Duration} ago.",
-                landedFlight.Callsign,
-                sequence.AirportIdentifier,
-                _lostFlightTimeout.ToHoursAndMinutesString());
-            sequence.Delete(landedFlight);
-        }
+        // var landedFlights = sequence.Flights
+        //     .Where(f => f.State == State.Landed)
+        //     .ToArray();
+        //
+        // var flightsToTake = landedFlights.Length - _maxLandedFlights;
+        // if (flightsToTake > 0)
+        // {
+        //     foreach (var landedFlight in landedFlights.Take(flightsToTake))
+        //     {
+        //         logger.Information(
+        //             "Deleting {Callsign} from {AirportIdentifier} as it has landed.",
+        //             landedFlight.Callsign,
+        //             sequence.AirportIdentifier);
+        //         sequence.Delete(landedFlight);
+        //     }
+        // }
+        //
+        // var now = clock.UtcNow();
+        // var expiredLandedFlights = landedFlights
+        //     .Where(f => now - f.LandingTime >= _landedFlightTimeout)
+        //     .ToArray();
+        //
+        // foreach (var landedFlight in expiredLandedFlights)
+        // {
+        //     logger.Information(
+        //         "Deleting {Callsign} from {AirportIdentifier} as it landed {Duration} ago.",
+        //         landedFlight.Callsign,
+        //         sequence.AirportIdentifier,
+        //         _lostFlightTimeout.ToHoursAndMinutesString());
+        //     sequence.Delete(landedFlight);
+        // }
     }
 }

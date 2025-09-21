@@ -41,6 +41,12 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasDesequencedFlight))]
+    List<FlightMessage> _deSequencedFlights = [];
+
+    [ObservableProperty]
+    List<FlightMessage> _pendingFlights = [];
+
+    [ObservableProperty]
     List<FlightMessage> _flights = [];
 
     [ObservableProperty]
@@ -77,7 +83,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
 
     public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
 
-    public bool HasDesequencedFlight => Flights.Any(f => f.State == State.Desequenced);
+    public bool HasDesequencedFlight => DeSequencedFlights.Any();
 
     [ObservableProperty] string _status = "OFFLINE";
 
@@ -250,7 +256,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
                     AirportIdentifier,
                     options,
                     Flights.Where(f => f.State is State.Landed).ToArray(),
-                    Flights.Where(f => f.State is State.Pending).ToArray()));
+                    PendingFlights.ToArray()));
         }
         catch (Exception ex)
         {
@@ -295,7 +301,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
             _mediator.Send(
                 new OpenPendingDeparturesWindowRequest(
                     AirportIdentifier,
-                    Flights.Where(f => f.State == State.Pending).ToArray()));
+                    PendingFlights.ToArray()));
         }
         catch (Exception ex)
         {
@@ -311,7 +317,7 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
             _mediator.Send(
                 new OpenDesequencedWindowRequest(
                     AirportIdentifier,
-                    Flights.Where(f => f.State == State.Desequenced)
+                    DeSequencedFlights
                         .Select(f => f.Callsign)
                         .ToArray()));
         }
@@ -348,6 +354,8 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
                     ? new RunwayModeViewModel(notification.Sequence.NextRunwayMode)
                     : null;
 
+                DeSequencedFlights = notification.Sequence.DeSequencedFlights.ToList();
+                PendingFlights = notification.Sequence.PendingFlights.ToList();
                 Flights = notification.Sequence.Flights.ToList();
                 Slots = notification.Sequence.Slots.ToList();
             }

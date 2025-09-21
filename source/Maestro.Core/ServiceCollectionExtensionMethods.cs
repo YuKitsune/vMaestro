@@ -12,7 +12,6 @@ public static class ServiceCollectionExtensionMethods
         return services
             .AddSingleton<ISessionManager, SessionManager>()
             .AddSingleton<ISessionFactory, SessionFactory>()
-            .AddSingleton<IScheduler, Scheduler>()
             .AddSingleton<IMaestroConnectionFactory, MaestroConnectionFactory>()
             .AddSingleton<IPeerTracker, PeerTracker>()
             .AddSingleton<IFlightUpdateRateLimiter, FlightUpdateRateLimiter>()

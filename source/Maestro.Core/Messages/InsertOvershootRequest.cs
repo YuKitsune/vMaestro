@@ -4,6 +4,6 @@ namespace Maestro.Core.Messages;
 
 public record InsertOvershootRequest(
     string AirportIdentifier,
-    string? Callsign,
+    string Callsign,
     IInsertFlightOptions Options)
     : IRequest;

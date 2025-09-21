@@ -1,14 +1,11 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class MakePendingRequestHandler(ISessionManager sessionManager, IClock clock, IScheduler scheduler, IMediator mediator, ILogger logger)
+public class MakePendingRequestHandler(ISessionManager sessionManager, IMediator mediator, ILogger logger)
     : IRequestHandler<MakePendingRequest>
 {
     public async Task Handle(MakePendingRequest request, CancellationToken cancellationToken)
@@ -28,8 +25,7 @@ public class MakePendingRequestHandler(ISessionManager sessionManager, IClock cl
             return;
         }
 
-        flight.MakePending();
-        scheduler.Schedule(sequence);
+        sequence.MakePending(flight);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

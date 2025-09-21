@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -12,7 +11,6 @@ namespace Maestro.Core.Handlers;
 public class ChangeRunwayModeRequestHandler(
     ISessionManager sessionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IScheduler scheduler,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -61,7 +59,7 @@ public class ChangeRunwayModeRequestHandler(
 
         if (request.FirstLandingTimeForNewMode <= clock.UtcNow())
         {
-            sequence.ChangeRunwayMode(configuration, scheduler);
+            sequence.ChangeRunwayMode(configuration);
             logger.Information(
                 "Runway changed {AirportIdentifier} to {RunwayModeIdentifier}.",
                 request.AirportIdentifier,
@@ -74,8 +72,7 @@ public class ChangeRunwayModeRequestHandler(
             sequence.ChangeRunwayMode(
                 configuration,
                 request.LastLandingTimeForOldMode,
-                request.FirstLandingTimeForNewMode,
-                scheduler);
+                request.FirstLandingTimeForNewMode);
             logger.Information(
                 "Runway change scheduled for {AirportIdentifier} to {RunwayModeIdentifier} at {RunwayModeChangeTime}.",
                 request.AirportIdentifier,

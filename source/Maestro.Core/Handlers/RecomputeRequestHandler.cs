@@ -14,7 +14,6 @@ public class RecomputeRequestHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
     IClock clock,
-    IScheduler scheduler,
     IMediator mediator,
     ILogger logger)
     : IRequestHandler<RecomputeRequest>
@@ -51,7 +50,7 @@ public class RecomputeRequestHandler(
 
         // Re-calculate estimates
         CalculateEstimates(airportConfiguration, flight);
-        flight.ResetInitialEstimates(); // TODO: The scheduler does this too. Should consolidate.
+        flight.ResetInitialEstimates();
 
         // Reset scheduled times
         if (flight.FeederFixEstimate is not null)
@@ -59,13 +58,7 @@ public class RecomputeRequestHandler(
 
         flight.SetLandingTime(flight.LandingEstimate, manual: false);
 
-        // Reset the runway
-        var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
-        flight.SetRunway(runwayMode.Default.Identifier, manual: false);
-
-        flight.SetState(State.Unstable, clock);
-
-        scheduler.Recompute(flight, sequence);
+        sequence.Recompute(flight);
 
         // Progress the state based on the new times
         flight.UpdateStateBasedOnTime(clock);

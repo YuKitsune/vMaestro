@@ -14,7 +14,10 @@ public class SessionManager(
     ServerConfiguration serverConfiguration,
     ISessionFactory sessionFactory,
     IMediator mediator,
-    ILogger logger)
+    ILogger logger,
+    IArrivalLookup arrivalLookup,
+    IPerformanceLookup performanceLookup,
+    IClock clock)
     : ISessionManager
 {
     readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -64,6 +67,6 @@ public class SessionManager(
         if (airportConfiguration is null)
             throw new MaestroException($"No configuration found for {airportIdentifier}");
 
-        return new Sequence(airportConfiguration);
+        return new Sequence(airportConfiguration, arrivalLookup, performanceLookup, clock);
     }
 }

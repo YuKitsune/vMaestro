@@ -1,5 +1,4 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -8,7 +7,7 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IClock clock, IMediator mediator, ILogger logger)
+public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IClock clock, IMediator mediator, ILogger logger)
     : IRequestHandler<ChangeRunwayRequest>
 {
     public async Task Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
@@ -29,7 +28,7 @@ public class ChangeRunwayRequestHandler(ISessionManager sessionManager, ISchedul
         }
 
         flight.SetRunway(request.RunwayIdentifier, true);
-        scheduler.Recompute(flight, sequence);
+        sequence.Recompute(flight);
 
         // Unstable flights become Stable when changing runway
         if (flight.State is State.Unstable)

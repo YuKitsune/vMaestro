@@ -1,12 +1,10 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-public class DeleteSlotRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IMediator mediator)
+public class DeleteSlotRequestHandler(ISessionManager sessionManager, IMediator mediator)
     : IRequestHandler<DeleteSlotRequest>
 {
     public async Task Handle(DeleteSlotRequest request, CancellationToken cancellationToken)
@@ -19,7 +17,8 @@ public class DeleteSlotRequestHandler(ISessionManager sessionManager, IScheduler
         }
 
         var sequence = lockedSession.Session.Sequence;
-        sequence.DeleteSlot(request.SlotId, scheduler);
+        sequence.DeleteSlot(request.SlotId);
+
         await mediator.Publish(
             new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
             cancellationToken);

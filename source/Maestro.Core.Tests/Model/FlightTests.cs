@@ -224,22 +224,6 @@ public class FlightTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public void WhenAFlightHasBeenRemoved_ItCannotBeResumed()
-    {
-        // Arrange
-        var flight = new FlightBuilder("QFA1")
-            .WithState(State.Stable)
-            .Build();
-
-        // Act
-        flight.Remove();
-
-        // Assert
-        var action = () => flight.SetState(State.Stable, clockFixture.Instance);
-        action.ShouldThrow<MaestroException>();
-    }
-
-    [Fact]
     public void WhenAFlightIsNew_ItRemainsUnstable()
     {
         // Arrange

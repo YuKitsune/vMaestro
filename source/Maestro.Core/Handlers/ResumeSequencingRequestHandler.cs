@@ -1,12 +1,10 @@
 ﻿using Maestro.Core.Messages;
-using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
-using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ResumeSequencingRequestHandler(ISessionManager sessionManager, IScheduler scheduler, IMediator mediator, ILogger logger)
+public class ResumeSequencingRequestHandler(ISessionManager sessionManager, IMediator mediator)
     : IRequestHandler<ResumeSequencingRequest>
 {
     public async Task Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
@@ -20,15 +18,7 @@ public class ResumeSequencingRequestHandler(ISessionManager sessionManager, ISch
             }
 
             var sequence = lockedSession.Session.Sequence;
-            var flight = sequence.FindTrackedFlight(request.Callsign);
-            if (flight is null)
-            {
-                logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-                return;
-            }
-
-            flight.Resume();
-            scheduler.Schedule(sequence);
+            sequence.Resume(request.Callsign);
         }
 
         // Let the RecomputeRequestHandler do the scheduling and notification
