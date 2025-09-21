@@ -141,6 +141,7 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
+            var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
             var readmeFile = RootDirectory / "README.md";
             var configFile = RootDirectory / "Maestro.json";
             // var changelogFile = RootDirectory / "CHANGELOG.md";
@@ -156,6 +157,7 @@ class Build : NukeBuild
             }
 
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             readmeFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             // changelogFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
