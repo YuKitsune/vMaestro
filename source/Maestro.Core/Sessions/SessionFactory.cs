@@ -13,6 +13,6 @@ public class SessionFactory(ILogger logger) : ISessionFactory
 {
     public Session Create(Sequence sequence)
     {
-        return new Session(sequence, logger, mediator, airportConfigurationProvider);
+        return new Session(sequence, logger);
     }
 }

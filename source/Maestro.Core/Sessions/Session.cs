@@ -43,12 +43,10 @@ public class Session : ISession, IAsyncDisposable
     readonly BackgroundTask _schedulerTask;
     // readonly BackgroundTask _synchronizeTask;
 
-    public Session(Sequence sequence, ILogger logger, IMediator mediator, IAirportConfigurationProvider airportConfigurationProvider)
+    public Session(Sequence sequence, ILogger logger)
     {
         _logger = logger;
-        _mediator = mediator;
         _schedulerTask = new BackgroundTask(SchedulerLoop);
-        _airportConfigurationProvider = airportConfigurationProvider;
         // _synchronizeTask = new BackgroundTask(SynchronizeLoop);
 
         Sequence = sequence;
