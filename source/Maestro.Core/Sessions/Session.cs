@@ -38,7 +38,7 @@ public class Session : ISession, IAsyncDisposable
     public Sequence Sequence { get; private set; }
     public MaestroConnection? Connection { get; private set; }
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
-    public string Position { get; private set; }
+    public string Position { get; private set; } = string.Empty;
     public Role Role { get; private set; } = Role.Observer;
     public bool OwnsSequence { get; private set; } = true;
     public bool IsActive { get; private set; }
@@ -47,10 +47,12 @@ public class Session : ISession, IAsyncDisposable
     readonly BackgroundTask _schedulerTask;
     // readonly BackgroundTask _synchronizeTask;
 
-    public Session(Sequence sequence, ILogger logger)
+    public Session(Sequence sequence, ILogger logger, IMediator mediator, IAirportConfigurationProvider airportConfigurationProvider)
     {
         _logger = logger;
+        _mediator = mediator;
         _schedulerTask = new BackgroundTask(SchedulerLoop);
+        _airportConfigurationProvider = airportConfigurationProvider;
         // _synchronizeTask = new BackgroundTask(SynchronizeLoop);
 
         Sequence = sequence;

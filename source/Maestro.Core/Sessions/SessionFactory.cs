@@ -20,6 +20,6 @@ public class SessionFactory(
 {
     public Session Create(Sequence sequence)
     {
-        return new Session(sequence, logger);
+        return new Session(sequence, logger, mediator, airportConfigurationProvider);
     }
 }
