@@ -361,6 +361,7 @@ public class Sequence
 
     public void Insert(Flight newFlight, RelativePosition relativePosition, string referenceCallsign)
     {
+        // BUG: No times for dummy flights, need to force a landing time and schedule everyone behind
         var index = InsertRelative(newFlight, relativePosition, referenceCallsign);
         Schedule(index, forceRescheduleStable: true, insertingFlights: [newFlight.Callsign]);
     }
