@@ -115,7 +115,7 @@
         },
         "repack": {
           "type": "boolean",
-          "description": "Whether to merge all assemblies using ILRepack"
+          "description": "Merges all dependencies into a single assembly"
         }
       }
     },
