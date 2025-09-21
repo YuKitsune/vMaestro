@@ -236,6 +236,13 @@ tryAgain:
             flight.SetFlowControls(FlowControls.ProfileSpeed);
         }
 
+        performance ??= new AircraftPerformanceData
+        {
+            Type = flight.AircraftType,
+            WakeCategory = WakeCategory.Medium,
+            AircraftCategory = AircraftCategory.Jet,
+        };
+
         Schedule(flight, proposedLandingTime.Value, proposedRunway.Identifier, performance);
     }
 
