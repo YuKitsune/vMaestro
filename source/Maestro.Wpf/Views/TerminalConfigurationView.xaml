@@ -11,6 +11,7 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:TerminalConfigurationViewModel}"
              MinWidth="440"
+             MinHeight="240"
              Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>
