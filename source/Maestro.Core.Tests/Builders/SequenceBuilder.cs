@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using NSubstitute;
 
@@ -9,18 +10,11 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
 {
     RunwayMode? _runwayMode;
     IArrivalLookup _arrivalLookup = Substitute.For<IArrivalLookup>();
-    IPerformanceLookup _performanceLookup = Substitute.For<IPerformanceLookup>();
     IClock _clock = Substitute.For<IClock>();
 
     public SequenceBuilder WithArrivalLookup(IArrivalLookup arrivalLookup)
     {
         _arrivalLookup = arrivalLookup;
-        return this;
-    }
-
-    public SequenceBuilder WithPerformanceLookup(IPerformanceLookup performanceLookup)
-    {
-        _performanceLookup = performanceLookup;
         return this;
     }
 
@@ -59,7 +53,7 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
 
     public Sequence Build()
     {
-        var sequence = new Sequence(airportConfiguration, _arrivalLookup, _performanceLookup, _clock);
+        var sequence = new Sequence(airportConfiguration, _arrivalLookup, _clock);
         sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(airportConfiguration.RunwayModes.First()));
 
         return sequence;

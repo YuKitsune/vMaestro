@@ -22,12 +22,15 @@ public sealed class FlightComparer : IComparer<Flight>
 
 public class Flight : IEquatable<Flight>, IComparable<Flight>
 {
-    public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate, DateTimeOffset activatedTime)
+    public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate, DateTimeOffset activatedTime, string aircraftType, AircraftCategory aircraftCategory, WakeCategory wakeCategory)
     {
         Callsign = callsign;
         DestinationIdentifier = destinationIdentifier;
         State = State.Unstable;
         ActivatedTime = activatedTime;
+        AircraftType = aircraftType;
+        AircraftCategory = aircraftCategory;
+        WakeCategory = wakeCategory;
         UpdateLandingEstimate(initialLandingEstimate);
     }
 
@@ -36,6 +39,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         Callsign = message.Callsign;
         AircraftType = message.AircraftType;
+        AircraftCategory = message.AircraftCategory;
         WakeCategory = message.WakeCategory;
         OriginIdentifier = message.OriginIdentifier;
         DestinationIdentifier = message.DestinationIdentifier;
@@ -67,8 +71,9 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     }
 
     public string Callsign { get; }
-    public string? AircraftType { get; set; }
-    public WakeCategory? WakeCategory { get; set; }
+    public string AircraftType { get; set; }
+    public AircraftCategory AircraftCategory { get; set; }
+    public WakeCategory WakeCategory { get; set; }
     public string? OriginIdentifier { get; set; }
     public string DestinationIdentifier { get; }
     public DateTimeOffset? EstimatedDepartureTime { get; set; }

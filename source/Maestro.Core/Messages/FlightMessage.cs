@@ -5,12 +5,13 @@ namespace Maestro.Core.Messages;
 public class FlightMessage
 {
     public required string Callsign { get; init; }
-    public required string? AircraftType { get; init; }
-    public required WakeCategory? WakeCategory { get; init; }
+    public required string AircraftType { get; init; }
+    public required WakeCategory WakeCategory { get; init; } // TODO: DTO
+    public required AircraftCategory AircraftCategory { get; init; } // TODO: DTO
     public required string? OriginIdentifier { get; init; }
     public required string DestinationIdentifier { get; init; }
     public required bool IsFromDepartureAirport { get; init; }
-    public required State State { get; init; }
+    public required State State { get; init; } // TODO: DTO
     public required DateTimeOffset? ActivatedTime { get; init; }
     public required bool HighPriority { get; init; }
     public required bool NoDelay { get; init; }

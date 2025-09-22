@@ -14,7 +14,6 @@ public class EstimateProviderTests
 {
     readonly IClock _clock;
     readonly AirportConfigurationFixture _airportConfigurationFixture;
-    readonly IPerformanceLookup _performanceLookup;
     readonly IArrivalLookup _arrivalLookup;
     readonly IFixLookup _fixLookup;
     readonly DateTimeOffset _currentTime = new(2025, 04, 12, 12, 00, 00, TimeSpan.Zero);
@@ -26,22 +25,14 @@ public class EstimateProviderTests
 
         _airportConfigurationFixture = airportConfigurationFixture;
 
-        _performanceLookup = Substitute.For<IPerformanceLookup>();
-        _performanceLookup.GetPerformanceDataFor(Arg.Is("B738"))
-            .Returns(new AircraftPerformanceData
-            {
-                Type = "B738",
-                AircraftCategory = AircraftCategory.Jet,
-                WakeCategory = WakeCategory.Medium,
-            });
-
         _arrivalLookup = Substitute.For<IArrivalLookup>();
         _arrivalLookup.GetArrivalInterval(
                 Arg.Is("YSSY"),
                 Arg.Is("RIVET"),
                 Arg.Is("RIVET4"),
                 Arg.Is("34L"),
-                Arg.Any<AircraftPerformanceData>())
+                Arg.Any<string>(),
+                Arg.Any<AircraftCategory>())
             .Returns(_arrivalInterval);
 
         _fixLookup = Substitute.For<IFixLookup>();
@@ -53,7 +44,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);
@@ -75,7 +65,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);
@@ -112,7 +101,6 @@ public class EstimateProviderTests
             .Build();
 
         var estimateProvider = new EstimateProvider(
-            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);
@@ -130,7 +118,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);
@@ -159,7 +146,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);
@@ -187,7 +173,6 @@ public class EstimateProviderTests
     {
         // Arrange
         var estimateProvider = new EstimateProvider(
-            _performanceLookup,
             _arrivalLookup,
             _fixLookup,
             _clock);

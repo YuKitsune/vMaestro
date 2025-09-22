@@ -5,7 +5,8 @@ namespace Maestro.Core.Tests.Builders;
 public class FlightBuilder(string callsign)
 {
     string _aircraftType = "B738";
-    WakeCategory _wakeCategory = default;
+    AircraftCategory _aircraftCategory = AircraftCategory.Jet;
+    WakeCategory _wakeCategory = WakeCategory.Medium;
     string _origin = "YMML";
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
@@ -41,6 +42,18 @@ public class FlightBuilder(string callsign)
     public FlightBuilder WithAircraftType(string aircraftType)
     {
         _aircraftType = aircraftType;
+        return this;
+    }
+
+    public FlightBuilder WithAircraftCategory(AircraftCategory aircraftCategory)
+    {
+        _aircraftCategory = aircraftCategory;
+        return this;
+    }
+
+    public FlightBuilder WithWakeCategory(WakeCategory wakeCategory)
+    {
+        _wakeCategory = wakeCategory;
         return this;
     }
 
@@ -141,10 +154,15 @@ public class FlightBuilder(string callsign)
 
     public Flight Build()
     {
-        var flight = new Flight(callsign, _destination, landingEstimate, activationTime)
+        var flight = new Flight(
+            callsign,
+            _destination,
+            landingEstimate,
+            activationTime,
+            _aircraftType,
+            _aircraftCategory,
+            _wakeCategory)
         {
-            AircraftType = _aircraftType,
-            WakeCategory = _wakeCategory,
             OriginIdentifier = _origin,
             EstimatedDepartureTime = estimatedTimeOfDeparture,
             EstimatedTimeEnroute = _estimatedFlightTime,

@@ -12,6 +12,7 @@ namespace Maestro.Core.Handlers;
 public record FlightUpdatedNotification(
     string Callsign,
     string AircraftType,
+    AircraftCategory AircraftCategory,
     WakeCategory WakeCategory,
     string Origin,
     string Destination,
@@ -203,7 +204,15 @@ public class FlightUpdatedHandler(
         FixEstimate? feederFixEstimate,
         DateTimeOffset landingEstimate)
     {
-        var flight = new Flight(notification.Callsign, notification.Destination, landingEstimate, clock.UtcNow());
+        var flight = new Flight(
+            notification.Callsign,
+            notification.Destination,
+            landingEstimate,
+            clock.UtcNow(),
+            notification.AircraftType,
+            notification.AircraftCategory,
+            notification.WakeCategory);
+
         UpdateFlightData(notification, flight);
 
         if (feederFixEstimate is not null)
@@ -220,7 +229,9 @@ public class FlightUpdatedHandler(
 
     void UpdateFlightData(FlightUpdatedNotification notification, Flight flight)
     {
+        // TODO: Figure out what needs to be updated only on recompute
         flight.AircraftType = notification.AircraftType;
+        flight.AircraftCategory = notification.AircraftCategory;
         flight.WakeCategory = notification.WakeCategory;
 
         flight.OriginIdentifier = notification.Origin;

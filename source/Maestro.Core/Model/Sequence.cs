@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
@@ -24,7 +25,6 @@ public class Sequence
     readonly AirportConfiguration _airportConfiguration;
 
     readonly IArrivalLookup _arrivalLookup;
-    readonly IPerformanceLookup _performanceLookup;
     readonly IClock _clock;
 
     private int _dummyCounter = 1;
@@ -45,11 +45,10 @@ public class Sequence
 
     // public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
 
-    public Sequence(Configuration.AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IPerformanceLookup performanceLookup, IClock clock)
+    public Sequence(Configuration.AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
     {
         _airportConfiguration = airportConfiguration;
         _arrivalLookup = arrivalLookup;
-        _performanceLookup = performanceLookup;
         _clock = clock;
 
         AirportIdentifier = airportConfiguration.Identifier;
@@ -132,10 +131,19 @@ public class Sequence
     Flight CreateDummyFlight(string runwayIdentifier)
     {
         var callsign = $"****{_dummyCounter++:00}*";
-        var flight = new Flight(callsign, AirportIdentifier, DateTimeOffset.MinValue, DateTime.MinValue) // TODO: Need a new ctor
-        {
-            IsDummy = true
-        };
+
+        var performanceData = AircraftPerformanceData.Default;
+        var flight = new Flight(
+                callsign,
+                AirportIdentifier,
+                DateTimeOffset.MinValue,
+                DateTime.MinValue,
+                performanceData.TypeCode,
+                performanceData.AircraftCategory,
+                performanceData.WakeCategory) // TODO: Need a new ctor
+            {
+                IsDummy = true
+            };
 
         flight.SetRunway(runwayIdentifier, manual: true);
         return flight;
@@ -721,8 +729,7 @@ public class Sequence
             }
 
             // TODO: Double check how this is supposed to work
-            var performance = _performanceLookup.GetPerformanceDataFor(currentFlight.AircraftType);
-            if (performance is not null && performance.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
+            if (currentFlight.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
             {
                 currentFlight.SetFlowControls(FlowControls.ReduceSpeed);
                 Serilog.Log.Debug("Schedule: Flight {Callsign} flow controls set to ReduceSpeed (delayed)", currentFlight.Callsign);
@@ -734,7 +741,7 @@ public class Sequence
             }
 
             var originalLandingTime = currentFlight.LandingTime;
-            Schedule(currentFlight, landingTime, runway.Identifier, performance);
+            Schedule(currentFlight, landingTime, runway.Identifier);
 
             Serilog.Log.Information("Schedule: Flight {Callsign} scheduled - Index: {Index}, Runway: {Runway}, Original time: {OriginalTime}, New time: {NewTime}, State: {State}",
                 currentFlight.Callsign, i, runway.Identifier, originalLandingTime, currentFlight.LandingTime, currentFlight.State);
@@ -819,7 +826,7 @@ public class Sequence
         return false;
     }
 
-    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, AircraftPerformanceData performanceData)
+    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
     {
         flight.SetLandingTime(landingTime);
         flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
@@ -831,7 +838,8 @@ public class Sequence
                 flight.FeederFixIdentifier,
                 flight.AssignedArrivalIdentifier,
                 flight.AssignedRunwayIdentifier,
-                performanceData);
+                flight.AircraftType,
+                flight.AircraftCategory);
             if (arrivalInterval is not null)
             {
                 var feederFixTime = flight.LandingTime.Subtract(arrivalInterval.Value);

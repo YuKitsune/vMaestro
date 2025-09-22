@@ -133,12 +133,8 @@ public class ArrivalLookupTests
             "ABCDE",
             "ABC1A",
             "01",
-            new AircraftPerformanceData
-            {
-                Type = aircraftType,
-                AircraftCategory = category,
-                WakeCategory = WakeCategory.Medium
-            });
+            aircraftType,
+            category);
 
         // Assert
         // A STAR has the same time for all types
@@ -159,12 +155,8 @@ public class ArrivalLookupTests
             "ABCDE",
             "ABC1B",
             "01",
-            new AircraftPerformanceData
-            {
-                Type = "DH8D",
-                AircraftCategory = AircraftCategory.NonJet,
-                WakeCategory = WakeCategory.Medium
-            });
+            "DH8D",
+            AircraftCategory.NonJet);
 
         // Assert
         // Despite DH8D being non-jet, it should still match based on aircraft type
@@ -185,24 +177,16 @@ public class ArrivalLookupTests
             "ABCDE",
             "ABC1B",
             "01",
-            new AircraftPerformanceData
-            {
-                Type = "B738",
-                AircraftCategory = AircraftCategory.Jet,
-                WakeCategory = WakeCategory.Medium
-            });
+            "B738",
+            AircraftCategory.Jet);
 
         var nonJetInterval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
             "ABC1B",
             "01",
-            new AircraftPerformanceData
-            {
-                Type = "SF34",
-                AircraftCategory = AircraftCategory.NonJet,
-                WakeCategory = WakeCategory.Medium
-            });
+            "SF34",
+            AircraftCategory.NonJet);
 
         // Assert
         jetInterval.ShouldBe(TimeSpan.FromMinutes(11));
@@ -223,36 +207,24 @@ public class ArrivalLookupTests
             "ABCDE",
             "ABC1C",
             "01",
-            new AircraftPerformanceData
-            {
-                Type = "B738",
-                AircraftCategory = AircraftCategory.Jet,
-                WakeCategory = WakeCategory.Medium
-            });
+            "B738",
+            AircraftCategory.Jet);
 
         var dash8Interval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
             "ABC1C",
             "01",
-            new AircraftPerformanceData
-            {
-                Type = "DH8D",
-                AircraftCategory = AircraftCategory.NonJet,
-                WakeCategory = WakeCategory.Medium
-            });
+            "DH8D",
+            AircraftCategory.NonJet);
 
         var nonJetInterval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
             "ABC1C",
             "01",
-            new AircraftPerformanceData
-            {
-                Type = "SF34",
-                AircraftCategory = AircraftCategory.NonJet,
-                WakeCategory = WakeCategory.Medium
-            });
+            "SF34",
+            AircraftCategory.NonJet);
 
         // Assert
         jetInterval.ShouldBe(TimeSpan.FromMinutes(13));

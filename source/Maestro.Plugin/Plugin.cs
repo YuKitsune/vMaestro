@@ -10,6 +10,7 @@ using Maestro.Core;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -417,15 +418,6 @@ public class Plugin : IPlugin
         if (!updated.ESTed)
             return;
 
-        var wake = updated.AircraftWake switch
-        {
-            "J" => WakeCategory.SuperHeavy,
-            "H" => WakeCategory.Heavy,
-            "M" => WakeCategory.Medium,
-            "L" => WakeCategory.Light,
-            _ => WakeCategory.Heavy
-        };
-
         var estimates = updated.ParsedRoute
             .Select((s, i) => new FixEstimate(
                 s.Intersection.Name,
@@ -434,7 +426,6 @@ public class Plugin : IPlugin
                     ? ToDateTimeOffset(s.ATO) // BUG: If a flight has passed FF before we connect to the network, this will be MaxValue. ATO is unknown.
                     : null))
             .ToArray();
-
 
         FlightPosition? position = null;
         if (updated.CoupledTrack is not null)
@@ -454,9 +445,23 @@ public class Plugin : IPlugin
                 track.OnGround);
         }
 
+        var aircraftCategory = updated.PerformanceData.IsJet
+            ? AircraftCategory.Jet
+            : AircraftCategory.NonJet;
+
+        var wake = updated.AircraftWake switch
+        {
+            "J" => WakeCategory.SuperHeavy,
+            "H" => WakeCategory.Heavy,
+            "M" => WakeCategory.Medium,
+            "L" => WakeCategory.Light,
+            _ => WakeCategory.Heavy
+        };
+
         var notification = new FlightUpdatedNotification(
             updated.Callsign,
             updated.AircraftType,
+            aircraftCategory,
             wake,
             updated.DepAirport,
             updated.DesAirport,

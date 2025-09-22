@@ -11,6 +11,7 @@ public static class FlightExtensionMethods
         {
             Callsign = flight.Callsign,
             AircraftType = flight.AircraftType,
+            AircraftCategory = flight.AircraftCategory,
             WakeCategory = flight.WakeCategory,
             OriginIdentifier = flight.OriginIdentifier,
             EstimatedDepartureTime = flight.EstimatedDepartureTime,

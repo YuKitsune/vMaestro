@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -67,7 +68,8 @@ public class InsertDepartureRequestHandler(
             flight.FeederFixIdentifier,
             flight.AssignedArrivalIdentifier,
             flight.AssignedRunwayIdentifier,
-            aircraftPerformance);
+            flight.AircraftType,
+            flight.AircraftCategory);
         if (arrivalInterval is null)
             return null;
 

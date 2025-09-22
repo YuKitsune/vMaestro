@@ -3,8 +3,6 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using MediatR;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace Maestro.Core.Sessions;
@@ -16,7 +14,6 @@ public class SessionManager(
     IMediator mediator,
     ILogger logger,
     IArrivalLookup arrivalLookup,
-    IPerformanceLookup performanceLookup,
     IClock clock)
     : ISessionManager
 {
@@ -57,7 +54,6 @@ public class SessionManager(
         _sessions.Remove(airportIdentifier);
     }
 
-
     // TODO: Maybe extract into a factory
     Sequence CreateSequence(string airportIdentifier)
     {
@@ -67,6 +63,6 @@ public class SessionManager(
         if (airportConfiguration is null)
             throw new MaestroException($"No configuration found for {airportIdentifier}");
 
-        return new Sequence(airportConfiguration, arrivalLookup, performanceLookup, clock);
+        return new Sequence(airportConfiguration, arrivalLookup, clock);
     }
 }

@@ -11,7 +11,6 @@ public interface IEstimateProvider
 }
 
 public class EstimateProvider(
-    IPerformanceLookup performanceLookup,
     IArrivalLookup arrivalLookup,
     IFixLookup fixLookup,
     IClock clock)
@@ -54,12 +53,7 @@ public class EstimateProvider(
         // We need ETA_FF in order to calculate the landing time using intervals.
         // If we don't have those, defer to the system estimate.
         if (flight.FeederFixIdentifier is null ||
-            flight.FeederFixEstimate is null ||
-            flight.AircraftType is null)
-            return systemEstimate;
-
-        var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (aircraftPerformance is null)
+            flight.FeederFixEstimate is null)
             return systemEstimate;
 
         if (flight.AssignedRunwayIdentifier is null)
@@ -70,7 +64,8 @@ public class EstimateProvider(
             flight.FeederFixIdentifier,
             flight.AssignedArrivalIdentifier,
             flight.AssignedRunwayIdentifier,
-            aircraftPerformance);
+            flight.AircraftType,
+            flight.AircraftCategory);
         if (intervalToRunway is null)
             return systemEstimate;
 

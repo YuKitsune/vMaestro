@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -75,13 +76,16 @@ public class InsertFlightRequestHandler(
             // TODO: Make a default for this somewhere
             var performanceInfo = !string.IsNullOrEmpty(request.AircraftType)
                 ? performanceLookup.GetPerformanceDataFor(request.AircraftType)
-                : null;
+                : AircraftPerformanceData.Default;
 
-            var flight = new Flight(request.Callsign, request.AirportIdentifier, DateTimeOffset.MinValue, clock.UtcNow())
-            {
-                AircraftType = request.AircraftType,
-                WakeCategory = performanceInfo?.WakeCategory,
-            };
+            var flight = new Flight(
+                request.Callsign,
+                request.AirportIdentifier,
+                DateTimeOffset.MinValue,
+                clock.UtcNow(),
+                performanceInfo.TypeCode,
+                performanceInfo.AircraftCategory,
+                performanceInfo.WakeCategory);
 
             flight.SetState(state, clock);
 

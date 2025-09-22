@@ -201,7 +201,8 @@ public class InsertDepartureRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
-                Arg.Any<AircraftPerformanceData>())
+                Arg.Any<string>(),
+                Arg.Any<AircraftCategory>())
             .Returns(_arrivalDuration);
 
         var mediator = Substitute.For<IMediator>();

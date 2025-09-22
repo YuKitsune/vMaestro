@@ -32,6 +32,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -60,6 +61,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -88,6 +90,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -125,6 +128,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YSCB", // Departure airport configured in fixture
             "YSSY",
@@ -155,6 +159,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YSCB", // Departure airport configured in fixture
             "YSSY",
@@ -191,6 +196,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YXXX", // Non-departure airport
             "YSSY",
@@ -234,6 +240,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -288,6 +295,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -330,6 +338,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -370,6 +379,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B744", // Different aircraft type
+            AircraftCategory.Jet,
             WakeCategory.Heavy, // Different wake category
             "YMAV", // Different origin
             "YSSY",
@@ -419,6 +429,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -490,6 +501,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -565,6 +577,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
