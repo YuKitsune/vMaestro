@@ -1,14 +1,14 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Core.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.Handlers;
 
-public class SequenceUpdatedNotificationHandler(INotificationStream<SequenceUpdatedNotification> notificationStream)
-    : INotificationHandler<SequenceUpdatedNotification>
+public class SequenceUpdatedNotificationHandler : INotificationHandler<SequenceUpdatedNotification>
 {
-    public async Task Handle(SequenceUpdatedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(SequenceUpdatedNotification notification, CancellationToken cancellationToken)
     {
-        await notificationStream.PublishAsync(notification, cancellationToken);
+        WeakReferenceMessenger.Default.Send(notification);
+        return Task.CompletedTask;
     }
 }

@@ -74,7 +74,7 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         await Clients.GroupExcept(groupKey.Value, Context.ConnectionId)
             .SendAsync("PeerConnected", new PeerConnectedNotification(groupKey.AirportIdentifier, request.Position, request.Role));
 
-        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, PermissionHelper.FullAccess(), connectedClients);
+        return new JoinSequenceResponse(Context.ConnectionId, connection.OwnsSequence, sequence.LatestSequence, connectedClients);
     }
 
     public async Task LeaveSequence(LeaveSequenceRequest request)

@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Integrations;
@@ -12,14 +11,10 @@ using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
+public partial class MaestroViewModel : ObservableObject
 {
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
-    readonly INotificationStream<SequenceUpdatedNotification> _sequenceUpdatedNotificationStream;
-
-    readonly CancellationTokenSource _notificationSubscriptionCancellationTokenSource;
-    readonly Task _notificationSubscriptionTask;
 
     [ObservableProperty]
     ViewConfiguration[] _views = [];
@@ -93,12 +88,10 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         RunwayModeViewModel[] runwayModes,
         ViewConfiguration[] views,
         IMediator mediator,
-        IErrorReporter errorReporter,
-        INotificationStream<SequenceUpdatedNotification> sequenceUpdatedNotificationStream)
+        IErrorReporter errorReporter)
     {
         _mediator = mediator;
         _errorReporter = errorReporter;
-        _sequenceUpdatedNotificationStream = sequenceUpdatedNotificationStream;
 
         AirportIdentifier = airportIdentifier;
         Runways = runways;
@@ -107,16 +100,28 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         Views = views;
         SelectedView = views.First();
 
-        // Subscribe to notifications
-        _notificationSubscriptionCancellationTokenSource = new CancellationTokenSource();
-        _notificationSubscriptionTask = SubscribeToSequenceUpdates(_notificationSubscriptionCancellationTokenSource.Token);
-
         WeakReferenceMessenger.Default.Register<ConnectionStatusChanged>(this, (r, m) =>
         {
             if (m.AirportIdentifier == AirportIdentifier)
             {
                 Status = m.Status;
             }
+        });
+
+        WeakReferenceMessenger.Default.Register<SequenceUpdatedNotification>(this, (r, notification) =>
+        {
+            if (notification.AirportIdentifier != AirportIdentifier)
+                return;
+
+            CurrentRunwayMode = new RunwayModeViewModel(notification.Sequence.CurrentRunwayMode);
+            NextRunwayMode = notification.Sequence.NextRunwayMode is not null
+                ? new RunwayModeViewModel(notification.Sequence.NextRunwayMode)
+                : null;
+
+            DeSequencedFlights = notification.Sequence.DeSequencedFlights.ToList();
+            PendingFlights = notification.Sequence.PendingFlights.ToList();
+            Flights = notification.Sequence.Flights.ToList();
+            Slots = notification.Sequence.Slots.ToList();
         });
     }
 
@@ -338,37 +343,5 @@ public partial class MaestroViewModel : ObservableObject, IAsyncDisposable
         {
             _errorReporter.ReportError(ex);
         }
-    }
-
-    async Task SubscribeToSequenceUpdates(CancellationToken cancellationToken)
-    {
-        await foreach (var notification in _sequenceUpdatedNotificationStream.SubscribeAsync(cancellationToken))
-        {
-            try
-            {
-                if (notification.AirportIdentifier != AirportIdentifier)
-                    continue;
-
-                CurrentRunwayMode = new RunwayModeViewModel(notification.Sequence.CurrentRunwayMode);
-                NextRunwayMode = notification.Sequence.NextRunwayMode is not null
-                    ? new RunwayModeViewModel(notification.Sequence.NextRunwayMode)
-                    : null;
-
-                DeSequencedFlights = notification.Sequence.DeSequencedFlights.ToList();
-                PendingFlights = notification.Sequence.PendingFlights.ToList();
-                Flights = notification.Sequence.Flights.ToList();
-                Slots = notification.Sequence.Slots.ToList();
-            }
-            catch (Exception ex)
-            {
-                _errorReporter.ReportError(ex);
-            }
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        _notificationSubscriptionCancellationTokenSource.Cancel();
-        await _notificationSubscriptionTask;
     }
 }

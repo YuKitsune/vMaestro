@@ -52,28 +52,4 @@ public static class PermissionHelper
 
         return Role.Observer;
     }
-
-    public static IReadOnlyDictionary<string, Role[]> FullAccess()
-    {
-        return new Dictionary<string, Role[]>
-        {
-            { ActionKeys.ChangeTerminalConfiguration, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.ChangeLandingRates, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.MoveFlight, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.ChangeFeederFixEstimate, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.ManageSlots, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.InsertOvershoot, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.InsertDeparture, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.InsertDummy, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.MakePending, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.ChangeRunway, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.ManualDelay, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.MakeStable, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.Recompute, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.Desequence, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.Resequence, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.RemoveFlight, [Role.Flow, Role.Enroute, Role.Approach] },
-            { ActionKeys.Coordination, [Role.Flow, Role.Enroute, Role.Approach] }
-        };
-    }
 }

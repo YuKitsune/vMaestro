@@ -174,7 +174,6 @@ public class Plugin : IPlugin
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(new ErrorReporter(Name))
                 .AddSingleton<WindowManager>()
-                .AddSingleton(typeof(INotificationStream<>), typeof(NotificationStream<>))
                 .BuildServiceProvider());
     }
 

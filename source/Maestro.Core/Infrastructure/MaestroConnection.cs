@@ -58,7 +58,6 @@ public class MaestroConnection : IAsyncDisposable
     public record SequenceStartResult(
         bool OwnsSequence,
         SequenceMessage? Sequence,
-        IReadOnlyDictionary<string, Role[]> Permissions,
         Role Role,
         IReadOnlyList<PeerInfo> ConnectedClients);
 
@@ -83,7 +82,6 @@ public class MaestroConnection : IAsyncDisposable
                 "JoinSequence",
                 new JoinSequenceRequest(_partition, AirportIdentifier, position, role),
                 cancellationToken);
-            var permissions = response.Permissions;
 
             // Store position and role for potential reconnection
             _currentPosition = position;
@@ -92,7 +90,7 @@ public class MaestroConnection : IAsyncDisposable
             // Flow controllers now handle permissions client-side
 
             await _mediator.Publish(new SessionConnectedNotification(_airportIdentifier, role, response.ConnectedPeers), cancellationToken);
-            return new SequenceStartResult(response.OwnsSequence, response.Sequence, permissions, role, response.ConnectedPeers);
+            return new SequenceStartResult(response.OwnsSequence, response.Sequence, role, response.ConnectedPeers);
         }
         catch (Exception exception)
         {
