@@ -4,7 +4,6 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.VisualBasic;
 
 namespace Maestro.Server;
 
@@ -25,6 +24,14 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
             logger.LogWarning("{Callsign} attempted to join {Group} but is already part of {ExistingGroup}",
                 request.Position, groupKey, existingGroupKey);
             throw new InvalidOperationException($"{request.Position} is already part of group {existingGroupKey}");
+        }
+
+        // Check if sequence exists and prevent observers from creating new sequences
+        var sequenceExists = Sequences.ContainsKey(groupKey);
+        if (!sequenceExists && request.Role == Role.Observer)
+        {
+            logger.LogInformation("{Callsign} attempted to create new sequence {Group}", request.Position, groupKey);
+            throw new InvalidOperationException($"No active sequence found for {groupKey.AirportIdentifier}");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupKey.Value);
@@ -56,10 +63,15 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                 request.Position, groupKey);
             connection.OwnsSequence = true;
         }
+        else if (request.Role == Role.Observer)
+        {
+            // Observers cannot own sequences when connected to server
+            connection.OwnsSequence = false;
+        }
         else if (wasEmpty)
         {
-            // First connection becomes flow controller if no FMP controller is present
-            logger.LogInformation("Assigning {Callsign} as owner for {Group} (first connection)",
+            // First non-observer connection becomes flow controller if no FMP controller is present
+            logger.LogInformation("Assigning {Callsign} as owner for {Group} (first non-observer connection)",
                 request.Position, groupKey);
             connection.OwnsSequence = true;
         }
@@ -141,6 +153,9 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                         newOwner.OwnsSequence = true;
                     }
                 }
+
+                // Check if only observers remain and disconnect them
+                await DisconnectObserversIfOnlyObserversRemain(sequence, groupKey);
             }
         }
 
@@ -558,6 +573,8 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
                         }
                     }
 
+                    // Check if only observers remain and disconnect them
+                    await DisconnectObserversIfOnlyObserversRemain(sequence, groupKey);
                 }
             }
 
@@ -632,7 +649,62 @@ public class MaestroHub(ILogger<MaestroHub> logger) : Hub
         if (flowController != null)
             return flowController;
 
-        // Fall back to any other available connection
-        return sequence.Connections.FirstOrDefault(c => !c.OwnsSequence);
+        // Fall back to any other available connection, exclude observers
+        return sequence.Connections.FirstOrDefault(c => !c.OwnsSequence && c.Role != Role.Observer);
+    }
+
+    private async Task DisconnectObserversIfOnlyObserversRemain(Sequence sequence, GroupKey groupKey)
+    {
+        // Check if only observers remain
+        var nonObservers = sequence.Connections.Where(c => c.Role != Role.Observer).ToList();
+        var observers = sequence.Connections.Where(c => c.Role == Role.Observer).ToList();
+
+        if (nonObservers.Count == 0 && observers.Count > 0)
+        {
+            logger.LogInformation("Only observers remain in {Group}. Disconnecting {Count} observers to allow group cleanup",
+                groupKey, observers.Count);
+
+            // Disconnect all remaining observers
+            var disconnectTasks = observers.Select(async observer =>
+            {
+                try
+                {
+                    // Notify the observer to revert to offline mode and force disconnect
+                    await Clients.Client(observer.Id).SendAsync("OwnershipGranted",
+                        new OwnershipGrantedNotification(groupKey.AirportIdentifier, observer.Role));
+
+                    // Send force disconnect message to the observer client
+                    await Clients.Client(observer.Id).SendAsync("ForceDisconnect",
+                        "All controllers have disconnected from Maestro Server. Reverting to offline mode.");
+
+                    // Remove from group and connections tracking
+                    await Groups.RemoveFromGroupAsync(observer.Id, groupKey.Value);
+                    Connections.Remove(observer.Id);
+
+                    logger.LogInformation("Sent disconnect signal to observer {Callsign} from {Group} - reverting to offline mode",
+                        observer.Callsign, groupKey);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to disconnect observer {Callsign} from {Group}",
+                        observer.Callsign, groupKey);
+                }
+            });
+
+            await Task.WhenAll(disconnectTasks);
+
+            // Remove all observer connections from the sequence
+            foreach (var observer in observers)
+            {
+                sequence.RemoveConnection(observer.Id);
+            }
+
+            // The sequence should now be empty and will be removed
+            if (sequence.IsEmpty)
+            {
+                logger.LogInformation("Removing empty {Group} after disconnecting observers", groupKey);
+                Sequences.TryRemove(groupKey, out _);
+            }
+        }
     }
 }

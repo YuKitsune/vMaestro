@@ -3,6 +3,7 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Serilog;
 
@@ -94,7 +95,7 @@ public class MaestroConnection : IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new MaestroException("Failed to connect to sequence", exception);
+            throw new MaestroException($"Failed to connect to sequence: {exception.Message}", exception);
         }
     }
 
@@ -107,7 +108,7 @@ public class MaestroConnection : IAsyncDisposable
         }
         catch (Exception exception)
         {
-            throw new MaestroException("Failed to leave sequence", exception);
+            throw new MaestroException($"Failed to leave sequence: {exception.Message}", exception);
         }
     }
 
@@ -354,6 +355,24 @@ public class MaestroConnection : IAsyncDisposable
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
+        });
+
+        _hubConnection.On<string>("ForceDisconnect", async message =>
+        {
+            _logger.Information("Received force disconnect from server: {Message}", message);
+
+            // Publish an information notification about the forced disconnect
+            await _mediator.Publish(new InformationNotification(_airportIdentifier, DateTimeOffset.UtcNow, message, LocalOnly: true), GetMessageCancellationToken());
+
+            // Disconnect from the server
+            try
+            {
+                await _hubConnection.StopAsync(GetMessageCancellationToken());
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Error during forced disconnect");
+            }
         });
     }
 

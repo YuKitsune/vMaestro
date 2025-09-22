@@ -23,7 +23,11 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddSignalR()
-        .AddHubOptions<MaestroHub>(x => x.MaximumReceiveMessageSize = 32_000_000) // TODO: Just send smaller messages!!!
+        .AddHubOptions<MaestroHub>(x =>
+        {
+            x.MaximumReceiveMessageSize = 32_000_000; // TODO: Just send smaller messages!!!
+            x.EnableDetailedErrors = true;
+        })
         .AddNewtonsoftJsonProtocol(x => x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver());
 
     builder.Services.AddSerilog();

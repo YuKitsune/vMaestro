@@ -57,12 +57,7 @@ public class Session : ISession, IAsyncDisposable
         Position = position;
         if (Connection is not null)
         {
-            var result = await Connection.Start(position, cancellationToken);
-            Role = result.Role;
-            OwnsSequence = result.OwnsSequence;
-
-            if (result.Sequence is not null)
-                Sequence.Restore(result.Sequence);
+            await ConnectInternal(Connection, cancellationToken);
         }
 
         if (OwnsSequence)
@@ -79,22 +74,37 @@ public class Session : ISession, IAsyncDisposable
         if (Connection is not null && Connection.IsConnected)
             await Disconnect(cancellationToken);
 
-        Connection = maestroConnection;
-
         // If we're not active yet, don't start the connection
         // Let the Start method handle that
         if (!IsActive)
             return;
 
-        var result = await Connection.Start(Position, cancellationToken);
-        Role = result.Role;
-        OwnsSequence = result.OwnsSequence;
+        await ConnectInternal(maestroConnection, cancellationToken);
+    }
 
-        if (result.Sequence is not null)
-            Sequence.Restore(result.Sequence);
+    async Task ConnectInternal(MaestroConnection maestroConnection, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await maestroConnection.Start(Position, cancellationToken);
+            Connection = maestroConnection;
+            Role = result.Role;
+            OwnsSequence = result.OwnsSequence;
 
-        if (!OwnsSequence)
-            await StopOwnershipTasks(cancellationToken);
+            if (result.Sequence is not null)
+                Sequence.Restore(result.Sequence);
+
+            if (!OwnsSequence)
+                await StopOwnershipTasks(cancellationToken);
+        }
+        catch
+        {
+            Connection = null;
+            Role = Role.Flow;
+            OwnsSequence = true;
+            await StartOwnershipTasks(cancellationToken);
+            throw;
+        }
     }
 
     public async Task Disconnect(CancellationToken cancellationToken)
@@ -102,6 +112,7 @@ public class Session : ISession, IAsyncDisposable
         if (Connection is not null && Connection.IsConnected)
             await Connection.Stop(cancellationToken);
 
+        // When disconnecting from server, revert to offline mode where all roles can own sequences
         await TakeOwnership(cancellationToken);
     }
 

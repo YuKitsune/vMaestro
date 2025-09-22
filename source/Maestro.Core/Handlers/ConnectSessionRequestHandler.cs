@@ -14,13 +14,20 @@ public class ConnectSessionRequestHandler(ISessionManager sessionManager, IMaest
 {
     public async Task Handle(ConnectSessionRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        try
+        {
+            using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
 
-        var connection = maestroConnectionFactory.Create(request.AirportIdentifier, request.Partition);
-        await lockedSession.Session.Connect(connection, cancellationToken);
+            var connection = maestroConnectionFactory.Create(request.AirportIdentifier, request.Partition);
+            await lockedSession.Session.Connect(connection, cancellationToken);
 
-        await mediator.Publish(
-            new SequenceUpdatedNotification(request.AirportIdentifier, lockedSession.Session.Sequence.ToMessage()),
-            cancellationToken);
+            await mediator.Publish(
+                new SequenceUpdatedNotification(request.AirportIdentifier, lockedSession.Session.Sequence.ToMessage()),
+                cancellationToken);
+        }
+        catch (Exception e)
+        {
+            await mediator.Publish(new ErrorNotification(e), cancellationToken);
+        }
     }
 }
