@@ -697,16 +697,13 @@ public partial class MaestroView
         if (sender is not FlightLabelView flightLabel)
             return;
 
-        // Double-clicking a flight makes it stable - only in Enroute mode
-        if (ViewModel.SelectedView.ViewMode == ViewMode.Enroute)
-        {
-            ViewModel.MakeStableCommand.Execute(new MakeStableRequest(
-                ViewModel.AirportIdentifier,
-                flight.Callsign
-            ));
+        // Double-clicking a flight makes it stable
+        ViewModel.MakeStableCommand.Execute(new MakeStableRequest(
+            ViewModel.AirportIdentifier,
+            flight.Callsign
+        ));
 
-            e.Handled = true;
-        }
+        e.Handled = true;
     }
 
     void OnFlightLabelRightClick(object sender, MouseButtonEventArgs e, FlightMessage flight)
