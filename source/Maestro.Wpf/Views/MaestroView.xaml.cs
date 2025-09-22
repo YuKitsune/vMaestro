@@ -229,6 +229,10 @@ public partial class MaestroView
 
     void DrawSlots(DateTimeOffset currentTime)
     {
+        // Slots are only drawn in Approach mode
+        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
+            return;
+
         var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
         var middlePoint = canvasWidth / 2;
