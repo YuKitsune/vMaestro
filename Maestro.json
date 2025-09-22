@@ -14,7 +14,7 @@
       "ChangeFeederFixEstimate": ["Enroute", "Flow"],
       "ManageSlots": ["Flow"],
       "InsertOvershoot": ["Approach", "Flow"],
-      "InsertPending": ["Flow"],
+      "InsertDeparture": ["Flow"],
       "InsertDummy": ["Flow"],
       "MakePending": ["Enroute", "Approach", "Flow"],
       "ChangeRunway": ["Enroute", "Approach", "Flow"],
