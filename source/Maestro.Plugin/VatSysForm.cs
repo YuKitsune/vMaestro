@@ -22,6 +22,8 @@ public class VatSysForm : BaseForm
 
     public VatSysForm(string title, Func<IWindowHandle, UIElement> childFactory, bool shrinkToContent)
     {
+        MiddleClickClose = false; // This is on by default. Why...
+
         Text = title;
 
         var windowHandle = new WindowHandle(this);
