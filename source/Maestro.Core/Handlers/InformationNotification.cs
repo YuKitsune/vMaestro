@@ -4,12 +4,15 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-public record InformationNotification(string AirportIdentifier, DateTimeOffset Time, string Message) : INotification;
+public record InformationNotification(string AirportIdentifier, DateTimeOffset Time, string Message, bool LocalOnly = false) : INotification;
 
 public class InformationNotificationHandler(ISessionManager sessionManager) : INotificationHandler<InformationNotification>
 {
     public async Task Handle(InformationNotification notification, CancellationToken cancellationToken)
     {
+        if (notification.LocalOnly)
+            return;
+
         if (!sessionManager.HasSessionFor(notification.AirportIdentifier))
             return;
 

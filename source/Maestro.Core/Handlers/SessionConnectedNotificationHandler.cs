@@ -32,7 +32,7 @@ public class SessionConnectedNotificationHandler(ISessionManager sessionManager,
 
         if (lockedSession.Session is { IsActive: true, IsConnected: true })
         {
-            await mediator.Publish(new InformationNotification(airportIdentifier, DateTimeOffset.UtcNow, "Connected to Maestro server."), cancellationToken);
+            await mediator.Publish(new InformationNotification(airportIdentifier, DateTimeOffset.UtcNow, "Connected to Maestro server.", LocalOnly: true), cancellationToken);
         }
     }
 }

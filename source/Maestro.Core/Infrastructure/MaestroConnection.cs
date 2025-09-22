@@ -413,7 +413,7 @@ public class MaestroConnection : IAsyncDisposable
                         await _mediator.Publish(new OwnershipRevokedNotification(_airportIdentifier), CancellationToken.None);
                     }
 
-                    await _mediator.Publish(new InformationNotification(_airportIdentifier, DateTimeOffset.UtcNow, "Connection to server restored"), CancellationToken.None);
+                    await _mediator.Publish(new InformationNotification(_airportIdentifier, DateTimeOffset.UtcNow, "Connection to server restored", LocalOnly: true), CancellationToken.None);
                 }
                 catch (Exception exception)
                 {
