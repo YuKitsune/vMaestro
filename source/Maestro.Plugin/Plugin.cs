@@ -9,7 +9,6 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -36,10 +35,6 @@ namespace Maestro.Plugin;
 
 // TODO: Encapsulate UI related commands into a separate service rather than using the Mediator
 
-// TODO: Setup View
-//  - Show setup after opening TFMS window via Setup button
-//  - Allow connection to a session after TFMS window is open
-
 // TODO: Smaller messages
 //  - Remove SequenceUpdatedNotification, send smaller messages as needed
 
@@ -57,10 +52,6 @@ namespace Maestro.Plugin;
 
 // TODO: Windowing
 //  - WPF's "*" size is incompatible with WinForms AutoSizing.
-
-// Bugs from Sunday:
-//  - Current runway mode is not pulled in when connecting
-//  - Changing runways sometimes doesn't deconflict
 
 // Bugs from MRM:
 // - Windows don't resize when the content changes.
@@ -83,12 +74,21 @@ namespace Maestro.Plugin;
 // - Procedure: Ask pilots for revised TAS speeds if you suspect they are inaccurate.
 // - Procedure: Ask pilots for winds at 10k and 6k ft to update Maestro winds.
 
-// RealOps Sydney Must-Haves:
-// - [ ] Reliable connection handling (retries, recover from disconnects, manual reconnect button)
-// - [ ] Show connection status in the UI
-// - [ ] Show information messages
-// - [ ] Fix recompute behavior
-//   - [ ] New sequencing algorithm (but order the sequence dynamically based on estimates and landing times)
+// TODO: Estimates and Arrivals
+// - Store processed arrival in Flight entity
+// - Set landing estimate using ETA_FF + arrival TTG
+// - Set STA_FF using STA - arrival TTG
+// - Remove BRL method from estimates
+
+// TODO: Landing estimate after STA_FF
+// - ETA should be ETA_FF + arrival TTG if ATO_FF is not set
+// - ETA should be ATO_FF + arrival TTG if ATO_FF is set (this value won't change after passing FF, this is accurate)
+
+// TODO: Custom label configurations
+// - Allow custom label configurations to be saved per airport and view
+
+// TODO: TMA Delay
+// - Separate TMA delay from enroute delay
 
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
