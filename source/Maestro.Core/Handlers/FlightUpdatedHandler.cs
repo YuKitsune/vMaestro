@@ -62,9 +62,10 @@ public class FlightUpdatedHandler(
                 var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
                 var landingEstimate = notification.Estimates.Last().Estimate;
                 var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
+                var feederFixTimeIsNotKnown = feederFix is not null && feederFix.ActualTimeOver == DateTimeOffset.MaxValue; // vatSys uses MaxValue when the fix has been overflown, but the time is not known (i.e. controller connecting after the event)
 
                 // Flights are added to the pending list if they are departing from a configured departure airport
-                if (airportConfiguration.DepartureAirports.Contains(notification.Origin) && !hasDeparted)
+                if (feederFixTimeIsNotKnown || (airportConfiguration.DepartureAirports.Contains(notification.Origin) && !hasDeparted))
                 {
                     flight = CreateMaestroFlight(
                         notification,
