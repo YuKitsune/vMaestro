@@ -512,7 +512,7 @@ public class Sequence
         var oldIndex = _sequence.IndexOf(existingFlight);
         _sequence.RemoveAt(oldIndex);
 
-        var newIndex = InsertByTime(new FlightSequenceItem(flight), time, _sequence);
+        var newIndex = InsertByEstimate(flight, _sequence);
 
         var reschedulePoint = Math.Min(oldIndex, newIndex);
 
@@ -737,6 +737,37 @@ public class Sequence
         }
 
         sequence.Add(item);
+        var finalIndex = sequence.Count - 1;
+        return finalIndex;
+    }
+
+    int InsertByEstimate(Flight flight, List<ISequenceItem> sequence)
+    {
+        var existingFlight = sequence.OfType<FlightSequenceItem>()
+            .FirstOrDefault(f => f.Flight.Callsign == flight.Callsign);
+
+        if (existingFlight is not null)
+        {
+            var existingIndex = sequence.IndexOf(existingFlight);
+            throw new MaestroException($"Flight {flight.Callsign} already exists in sequence at position {existingIndex}.");
+        }
+
+        for (var i = 0; i < sequence.Count; i++)
+        {
+            var time = sequence[i] switch
+            {
+                FlightSequenceItem flightItem => flightItem.Flight.LandingEstimate,
+                _ => sequence[i].Time
+            };
+
+            if (flight.LandingEstimate > time)
+                continue;
+
+            sequence.Insert(i, new FlightSequenceItem(flight));
+            return i;
+        }
+
+        sequence.Add(new FlightSequenceItem(flight));
         var finalIndex = sequence.Count - 1;
         return finalIndex;
     }
