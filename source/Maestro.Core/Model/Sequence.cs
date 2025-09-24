@@ -64,7 +64,6 @@ public class Sequence
     {
         var now = _clock.UtcNow();
         var index = InsertByTime(new RunwayModeChangeSequenceItem(runwayMode, now, now), now, _sequence);
-        Serilog.Log.Debug("ChangeRunwayMode: {RunwayMode} inserted at {Time} (index {Index})", runwayMode.Identifier, now, index);
         Schedule(index, forceRescheduleStable: true);
     }
 
@@ -77,7 +76,6 @@ public class Sequence
             new RunwayModeChangeSequenceItem(runwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode),
             lastLandingTimeForOldMode,
             _sequence);
-        Serilog.Log.Debug("ChangeRunwayMode: {RunwayMode} inserted at {Time} with a first landing time of {FirstLandingTime} (index {Index})", runwayMode.Identifier, lastLandingTimeForOldMode, firstLandingTimeForNewMode, index);
 
         Schedule(index, forceRescheduleStable: true);
     }
@@ -419,8 +417,6 @@ public class Sequence
 
         var recomputePoint = Math.Min(originalIndex, newIndex);
 
-        Serilog.Log.Debug("Recompute: Flight {Callsign} moved from {OriginalIndex} to {NewIndex}, recompute point: {RecomputePoint}", flight.Callsign, originalIndex, newIndex, recomputePoint);
-
         Schedule(recomputePoint, [flight.AssignedRunwayIdentifier], forceRescheduleStable: true);
     }
 
@@ -516,14 +512,9 @@ public class Sequence
         var oldIndex = _sequence.IndexOf(existingFlight);
         _sequence.RemoveAt(oldIndex);
 
-        // Remove and re-insert the flight at the specified time
-        _sequence.RemoveAll(i => i is FlightSequenceItem f && f.Flight == flight);
-        var index = InsertByTime(new FlightSequenceItem(flight), time, _sequence);
+        var newIndex = InsertByTime(new FlightSequenceItem(flight), time, _sequence);
 
-        var reschedulePoint = Math.Min(oldIndex, index);
-
-        Serilog.Log.Debug("Reposition: Flight {Callsign} moved from {OldIndex} to {NewIndex}. Reschedule from {ReschedulePoint}",
-            flight.Callsign, oldIndex, index, reschedulePoint);
+        var reschedulePoint = Math.Min(oldIndex, newIndex);
 
         Schedule(reschedulePoint, [flight.AssignedRunwayIdentifier]);
     }
@@ -534,9 +525,6 @@ public class Sequence
         bool forceRescheduleStable = false,
         HashSet<string>? insertingFlights = null)
     {
-        Serilog.Log.Debug("Schedule: Starting from index {StartIndex}, affectedRunways: {AffectedRunways}, forceRescheduleStable: {ForceRescheduleStable}, insertingFlights: {InsertingFlights}",
-            startIndex, affectedRunways != null ? string.Join(",", affectedRunways) : "null", forceRescheduleStable, insertingFlights != null ? string.Join(",", insertingFlights) : "null");
-
         for (var i = startIndex; i < _sequence.Count; i++)
         {
             if (i == 0)
@@ -545,17 +533,12 @@ public class Sequence
             var currentItem = _sequence[i];
             if (currentItem is not FlightSequenceItem flightItem)
             {
-                Serilog.Log.Debug("Schedule: Index {Index} is not a flight item ({ItemType}), skipping", i, currentItem.GetType().Name);
                 continue;
             }
 
             var currentFlight = flightItem.Flight;
-            Serilog.Log.Debug("Schedule: Processing flight {Callsign} at index {Index}, state: {State}, runway: {Runway}, estimate: {Estimate}, current landing time: {LandingTime}",
-                currentFlight.Callsign, i, currentFlight.State, currentFlight.AssignedRunwayIdentifier, currentFlight.LandingEstimate, currentFlight.LandingTime);
-
             if (currentFlight.State is State.Landed or State.Frozen)
             {
-                Serilog.Log.Debug("Schedule: Flight {Callsign} is {State}, skipping", currentFlight.Callsign, currentFlight.State);
                 continue;
             }
 
@@ -563,7 +546,6 @@ public class Sequence
             // unless we're forcing a reschedule due to operational changes
             if (currentFlight.State is State.Stable or State.SuperStable && !forceRescheduleStable)
             {
-                Serilog.Log.Debug("Schedule: Flight {Callsign} is {State} and forceRescheduleStable is false, skipping", currentFlight.Callsign, currentFlight.State);
                 continue;
             }
 
@@ -572,7 +554,6 @@ public class Sequence
                 !string.IsNullOrEmpty(currentFlight.AssignedRunwayIdentifier) &&
                 !IsRunwayAffected(currentFlight.AssignedRunwayIdentifier, affectedRunways))
             {
-                Serilog.Log.Debug("Schedule: Flight {Callsign} on runway {Runway} is not affected by runway filter, skipping", currentFlight.Callsign, currentFlight.AssignedRunwayIdentifier);
                 continue;
             }
 
@@ -584,7 +565,6 @@ public class Sequence
                 throw new Exception("No runway mode found");
 
             var currentRunwayMode = runwayModeItem.RunwayMode;
-            Serilog.Log.Debug("Schedule: Flight {Callsign} using runway mode: {RunwayMode}", currentFlight.Callsign, currentRunwayMode.Identifier);
 
             // If the assigned runway isn't in the current mode, use the default
             // TODO: Need to use the preferred runway for the FF
@@ -597,14 +577,10 @@ public class Sequence
                     runway = currentRunwayMode.Runways
                                  .FirstOrDefault(r => preferredRunways.Contains(r.Identifier))
                              ?? currentRunwayMode.Default;
-                    Serilog.Log.Debug("Schedule: Flight {Callsign} assigned runway {Runway} based on feeder fix {FeederFix} preferences",
-                        currentFlight.Callsign, runway.Identifier, currentFlight.FeederFixIdentifier);
                 }
                 else
                 {
                     runway = currentRunwayMode.Default;
-                    Serilog.Log.Debug("Schedule: Flight {Callsign} assigned default runway {Runway} (no preferences for feeder fix {FeederFix})",
-                        currentFlight.Callsign, runway.Identifier, currentFlight.FeederFixIdentifier);
                 }
             }
             else
@@ -612,8 +588,6 @@ public class Sequence
                 runway = currentRunwayMode.Runways
                              .FirstOrDefault(r => r.Identifier == currentFlight.AssignedRunwayIdentifier)
                          ?? currentRunwayMode.Default;
-                Serilog.Log.Debug("Schedule: Flight {Callsign} using assigned/default runway {Runway}",
-                    currentFlight.Callsign, runway.Identifier);
             }
 
             // Determine the earliest possible landing time based on the preceding item on this runway
@@ -630,9 +604,6 @@ public class Sequence
                 RunwayModeChangeSequenceItem runwayModeChange => runwayModeChange.FirstLandingTimeInNewMode,
                 _ => throw new ArgumentOutOfRangeException()
             };
-
-            Serilog.Log.Debug("Schedule: Flight {Callsign} previous item type: {PreviousItemType}, earliest time from previous: {EarliestTime}",
-                currentFlight.Callsign, previousItem.GetType().Name, earliestLandingTimeFromPrevious);
 
             // If the previous item is a frozen flight, look ahead for any slots they may be occupying
             if (previousItem is FlightSequenceItem { Flight.State: State.Frozen })
@@ -652,16 +623,10 @@ public class Sequence
                 ? currentFlight.LandingTime
                 : currentFlight.LandingEstimate;
 
-            Serilog.Log.Debug("Schedule: Flight {Callsign} earliest allowed time: {EarliestAllowed} (manual: {IsManual})",
-                currentFlight.Callsign, earliestAllowedTime, currentFlight.ManualLandingTime);
-
             // Ensure the flight isn't sped up to meet the previous item
             var landingTime = earliestLandingTimeFromPrevious.IsAfter(earliestAllowedTime)
                 ? earliestLandingTimeFromPrevious
                 : earliestAllowedTime;
-
-            Serilog.Log.Debug("Schedule: Flight {Callsign} calculated landing time: {LandingTime} (from previous: {FromPrevious}, from allowed: {FromAllowed})",
-                currentFlight.Callsign, landingTime, earliestLandingTimeFromPrevious, earliestAllowedTime);
 
             // Check if this landing time would conflict with the next item in the sequence
             var nextItem = _sequence
@@ -677,77 +642,58 @@ public class Sequence
                     _ => nextItem.Time
                 };
 
-                Serilog.Log.Debug("Schedule: Flight {Callsign} next item type: {NextItemType}, earliest time to trailer: {EarliestTimeToTrailer}",
-                    currentFlight.Callsign, nextItem.GetType().Name, earliestTimeToTrailer);
-
                 // If the landing time is in conflict with the next item, we may need to move this flight behind it
                 if (landingTime.IsAfter(earliestTimeToTrailer))
                 {
-                    // The only times we can displace (i.e. delay) a flight behind us:
-                    // 1. We're rescheduling stable flights
-                    // 2. The flight behind us is unstable
-                    // 3. The current flight is being inserted (i.e. not already in the sequence) and the flight behind us is either stable or unstable
-
                     var isNewFlight = insertingFlights?.Contains(currentFlight.Callsign) ?? false;
-                    var canDisplace = nextItem is FlightSequenceItem nextFlight &&
-                                      (forceRescheduleStable ||
-                                       nextFlight.Flight.State is State.Unstable ||
-                                       (isNewFlight && nextFlight.Flight.State is State.Unstable or State.Stable));
-
-                    Serilog.Log.Debug("Schedule: Flight {Callsign} conflicts with next item, isNewFlight: {IsNewFlight}, canDisplace: {CanDisplace}",
-                        currentFlight.Callsign, isNewFlight, canDisplace);
-
-                    // If we can't displace (i.e. delay) the next item, we need to move this flight behind it
-                    if (!canDisplace)
+                    var canDelayNextItem = nextItem switch
                     {
-                        Serilog.Log.Debug("Schedule: Swapping flight {Callsign} with next item, will reprocess at index {Index}",
-                            currentFlight.Callsign, i);
-                        _sequence[i] = nextItem;
-                        _sequence[i + 1] = currentItem;
+                        // Slots and runway mode changes can't be delayed
+                        SlotSequenceItem => false,
+                        RunwayModeChangeSequenceItem => false,
 
-                        // If we've swapped positions with another flight, re-process this index so that we don't skip it
-                        if (nextItem is FlightSequenceItem)
-                            i--;
+                        // New flights can delay stable flights
+                        FlightSequenceItem { Flight.State: State.Stable } when isNewFlight => true,
 
-                        // No need to schedule this flight as we'll pick it up again in i + 2 iteration
+                        // forceRescheduleStable allows stable and superstable flights to be delayed
+                        FlightSequenceItem { Flight.State: State.Stable or State.SuperStable } when isNewFlight || forceRescheduleStable => true,
+
+                        // Unstable flights can always be delayed
+                        FlightSequenceItem { Flight.State: State.Unstable } => true,
+
+                        _ => false
+                    };
+
+                    // If we can't delay the next item, we need to move this flight behind it
+                    if (!canDelayNextItem)
+                    {
+                        // Find the actual index of the nextItem in the sequence
+                        var nextItemIndex = _sequence.IndexOf(nextItem);
+                        if (nextItemIndex == -1)
+                        {
+                            continue;
+                        }
+
+                        (_sequence[i], _sequence[nextItemIndex]) = (_sequence[nextItemIndex], _sequence[i]);
+
+                        // Decrement i to reprocess this index since we've moved something new into this position
+                        i--;
                         continue;
                     }
-                    else
-                    {
-                        Serilog.Log.Debug("Schedule: Flight {Callsign} can displace next item, continuing with current landing time",
-                            currentFlight.Callsign);
-                    }
                 }
-                else
-                {
-                    Serilog.Log.Debug("Schedule: Flight {Callsign} has no conflict with next item", currentFlight.Callsign);
-                }
-            }
-            else
-            {
-                Serilog.Log.Debug("Schedule: Flight {Callsign} has no next item on runway", currentFlight.Callsign);
             }
 
             // TODO: Double check how this is supposed to work
             if (currentFlight.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
             {
                 currentFlight.SetFlowControls(FlowControls.ReduceSpeed);
-                Serilog.Log.Debug("Schedule: Flight {Callsign} flow controls set to ReduceSpeed (delayed)", currentFlight.Callsign);
             }
             else
             {
                 currentFlight.SetFlowControls(FlowControls.ProfileSpeed);
-                Serilog.Log.Debug("Schedule: Flight {Callsign} flow controls set to ProfileSpeed", currentFlight.Callsign);
             }
 
-            var originalLandingTime = currentFlight.LandingTime;
             Schedule(currentFlight, landingTime, runway.Identifier);
-
-            Serilog.Log.Information("Schedule: Flight {Callsign} scheduled - Index: {Index}, Runway: {Runway}, Original time: {OriginalTime}, New time: {NewTime}, State: {State}",
-                currentFlight.Callsign, i, runway.Identifier, originalLandingTime, currentFlight.LandingTime, currentFlight.State);
-
-            // Immediate validation to prevent any temporary overlaps
-            ValidateNoOverlapsOnRunway(runway.Identifier, currentFlight);
 
             bool AppliesToRunway(ISequenceItem item, Runway runway)
             {
@@ -764,9 +710,6 @@ public class Sequence
                 }
             }
         }
-
-        // Log any separation violations or forbidden period violations
-        LogSequenceViolations();
     }
 
     int InsertByTime(ISequenceItem item, DateTimeOffset dateTimeOffset, List<ISequenceItem> sequence)
@@ -779,7 +722,8 @@ public class Sequence
 
             if (existingFlight is not null)
             {
-                throw new MaestroException($"Flight {flightItem.Flight.Callsign} already exists in sequence at position {sequence.IndexOf(existingFlight)}.");
+                var existingIndex = sequence.IndexOf(existingFlight);
+                throw new MaestroException($"Flight {flightItem.Flight.Callsign} already exists in sequence at position {existingIndex}.");
             }
         }
 
@@ -793,7 +737,8 @@ public class Sequence
         }
 
         sequence.Add(item);
-        return sequence.Count - 1;
+        var finalIndex = sequence.Count - 1;
+        return finalIndex;
     }
 
     bool IsRunwayAffected(string runwayIdentifier, HashSet<string> affectedRunways)
@@ -845,127 +790,9 @@ public class Sequence
                 var feederFixTime = flight.LandingTime.Subtract(arrivalInterval.Value);
                 flight.SetFeederFixTime(feederFixTime);
             }
-            else
-            {
-                // _logger.Warning("Could not update feeder fix time for {Callsign}, no arrival interval found", flight.Callsign);
-            }
         }
 
         flight.ResetInitialEstimates();
-    }
-
-    void LogSequenceViolations()
-    {
-        // Group flights by runway for separation checking
-        var flightsByRunway = _sequence.OfType<FlightSequenceItem>()
-            .Where(f => !string.IsNullOrEmpty(f.Flight.AssignedRunwayIdentifier))
-            .GroupBy(f => f.Flight.AssignedRunwayIdentifier);
-
-        foreach (var runwayGroup in flightsByRunway)
-        {
-            var runwayId = runwayGroup.Key;
-            var flightsOnRunway = runwayGroup.OrderBy(f => f.Flight.LandingTime).ToList();
-
-            // Get runway configuration for acceptance rate
-            var currentRunwayMode = GetRunwayModeAt(_clock.UtcNow());
-            var runway = currentRunwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayId) ?? currentRunwayMode.Default;
-
-            // Check separation violations between consecutive flights
-            for (int i = 1; i < flightsOnRunway.Count; i++)
-            {
-                var previousFlight = flightsOnRunway[i - 1].Flight;
-                var currentFlight = flightsOnRunway[i].Flight;
-
-                var actualSeparation = currentFlight.LandingTime - previousFlight.LandingTime;
-                if (actualSeparation < runway.AcceptanceRate)
-                {
-                    Serilog.Log.Warning("Insufficient separation on runway {Runway}: {PreviousFlight} at {PreviousTime}, {CurrentFlight} at {CurrentTime}, separation {ActualSeparation} < required {RequiredSeparation}",
-                        runwayId, previousFlight.Callsign, previousFlight.LandingTime,
-                        currentFlight.Callsign, currentFlight.LandingTime,
-                        actualSeparation, runway.AcceptanceRate);
-                }
-
-                // Check if flights have exactly the same landing time
-                if (actualSeparation == TimeSpan.Zero)
-                {
-                    Serilog.Log.Error("CRITICAL: Multiple flights scheduled at same time on runway {Runway}: {Flight1} and {Flight2} both at {Time}",
-                        runwayId, previousFlight.Callsign, currentFlight.Callsign, currentFlight.LandingTime);
-                }
-            }
-
-            // Check for flights landing during runway change periods
-            var runwayModeChanges = _sequence.OfType<RunwayModeChangeSequenceItem>().ToList();
-            foreach (var change in runwayModeChanges)
-            {
-                var flightsDuringChange = flightsOnRunway
-                    .Where(f => f.Flight.LandingTime > change.LastLandingTimeInPreviousMode &&
-                               f.Flight.LandingTime < change.FirstLandingTimeInNewMode)
-                    .ToList();
-
-                foreach (var flightItem in flightsDuringChange)
-                {
-                    Serilog.Log.Warning("Flight {Callsign} scheduled during runway change period on {Runway}: landing at {LandingTime}, change period {StartTime} to {EndTime}",
-                        flightItem.Flight.Callsign, runwayId, flightItem.Flight.LandingTime,
-                        change.LastLandingTimeInPreviousMode, change.FirstLandingTimeInNewMode);
-                }
-            }
-
-            // Check for flights landing during slots
-            var slots = _sequence.OfType<SlotSequenceItem>()
-                .Where(s => s.Slot.RunwayIdentifiers.Contains(runwayId))
-                .ToList();
-
-            foreach (var slot in slots)
-            {
-                var flightsDuringSlot = flightsOnRunway
-                    .Where(f => f.Flight.LandingTime >= slot.Slot.StartTime &&
-                               f.Flight.LandingTime < slot.Slot.EndTime)
-                    .ToList();
-
-                foreach (var flightItem in flightsDuringSlot)
-                {
-                    Serilog.Log.Warning("Flight {Callsign} scheduled during slot on {Runway}: landing at {LandingTime}, slot {SlotStart} to {SlotEnd}",
-                        flightItem.Flight.Callsign, runwayId, flightItem.Flight.LandingTime,
-                        slot.Slot.StartTime, slot.Slot.EndTime);
-                }
-            }
-
-            // Check for flights at runway mode boundaries
-            foreach (var change in runwayModeChanges)
-            {
-                var flightsAtBoundary = flightsOnRunway
-                    .Where(f => f.Flight.LandingTime == change.LastLandingTimeInPreviousMode)
-                    .ToList();
-
-                if (flightsAtBoundary.Count > 1)
-                {
-                    var callsigns = string.Join(", ", flightsAtBoundary.Select(f => f.Flight.Callsign));
-                    Serilog.Log.Error("CRITICAL: Multiple flights at runway mode boundary on {Runway} at {BoundaryTime}: {Callsigns}",
-                        runwayId, change.LastLandingTimeInPreviousMode, callsigns);
-                }
-            }
-        }
-    }
-
-    void ValidateNoOverlapsOnRunway(string runwayIdentifier, Flight justScheduledFlight)
-    {
-        var flightsOnRunway = _sequence.OfType<FlightSequenceItem>()
-            .Where(f => f.Flight.AssignedRunwayIdentifier == runwayIdentifier)
-            .OrderBy(f => f.Flight.LandingTime)
-            .ToList();
-
-        // Check for exact time overlaps
-        for (int i = 1; i < flightsOnRunway.Count; i++)
-        {
-            var previousFlight = flightsOnRunway[i - 1].Flight;
-            var currentFlight = flightsOnRunway[i].Flight;
-
-            if (previousFlight.LandingTime == currentFlight.LandingTime)
-            {
-                Serilog.Log.Error("CRITICAL OVERLAP DETECTED: Flights {Flight1} and {Flight2} both scheduled at {Time} on runway {Runway}",
-                    previousFlight.Callsign, currentFlight.Callsign, currentFlight.LandingTime, runwayIdentifier);
-            }
-        }
     }
 
     interface ISequenceItem
