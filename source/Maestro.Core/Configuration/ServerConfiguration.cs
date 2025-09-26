@@ -37,7 +37,7 @@ public static class ActionKeys
     public const string Coordination = nameof(Coordination);
 }
 
-public static class PermissionHelper
+public static class RoleHelper
 {
     public static Role GetRoleFromCallsign(string callsign)
     {

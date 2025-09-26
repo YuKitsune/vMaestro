@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Model;
+﻿using Maestro.Core.Infrastructure;
+using Maestro.Core.Model;
 using Serilog;
 
 namespace Maestro.Core.Sessions;
@@ -9,10 +10,10 @@ public interface ISessionFactory
 }
 
 // TODO: Use Autofac to resolve dependencies
-public class SessionFactory(ILogger logger) : ISessionFactory
+public class SessionFactory(IMaestroConnectionFactory maestroConnectionFactory, ILogger logger) : ISessionFactory
 {
     public Session Create(Sequence sequence)
     {
-        return new Session(sequence, logger);
+        return new Session(sequence, maestroConnectionFactory, logger);
     }
 }

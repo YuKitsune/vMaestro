@@ -19,7 +19,7 @@ public interface ISession
     Task Start(string position, CancellationToken cancellationToken);
     Task Stop(CancellationToken cancellationToken);
 
-    Task Connect(MaestroConnection maestroConnection, CancellationToken cancellationToken);
+    Task SetConnectionInfo(ConnectionInfo connectionInfo, CancellationToken cancellationToken);
     Task Disconnect(CancellationToken cancellationToken);
 
     Task TakeOwnership(CancellationToken cancellationToken);
@@ -28,10 +28,12 @@ public interface ISession
 
 public class Session : ISession, IAsyncDisposable
 {
+    readonly IMaestroConnectionFactory _maestroConnectionFactory;
     readonly ILogger _logger;
 
     public string AirportIdentifier => Sequence.AirportIdentifier;
     public Sequence Sequence { get; private set; }
+    public ConnectionInfo? ConnectionInfo { get; private set; }
     public MaestroConnection? Connection { get; private set; }
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public string Position { get; private set; } = string.Empty;
@@ -41,13 +43,12 @@ public class Session : ISession, IAsyncDisposable
     public bool IsConnected => Connection?.IsConnected ?? false;
 
     readonly BackgroundTask _schedulerTask;
-    // readonly BackgroundTask _synchronizeTask;
 
-    public Session(Sequence sequence, ILogger logger)
+    public Session(Sequence sequence, IMaestroConnectionFactory maestroConnectionFactory, ILogger logger)
     {
+        _maestroConnectionFactory = maestroConnectionFactory;
         _logger = logger;
         _schedulerTask = new BackgroundTask(SchedulerLoop);
-        // _synchronizeTask = new BackgroundTask(SynchronizeLoop);
 
         Sequence = sequence;
     }
@@ -55,56 +56,38 @@ public class Session : ISession, IAsyncDisposable
     public async Task Start(string position, CancellationToken cancellationToken)
     {
         Position = position;
-        if (Connection is not null)
+        if (ConnectionInfo is not null)
         {
-            await ConnectInternal(Connection, cancellationToken);
+            await Connect(ConnectionInfo, position, cancellationToken);
         }
-
-        if (OwnsSequence)
+        else
+        {
             await StartOwnershipTasks(cancellationToken);
+        }
 
         IsActive = true;
     }
 
-    public async Task Connect(MaestroConnection maestroConnection, CancellationToken cancellationToken)
+    public async Task SetConnectionInfo(ConnectionInfo connectionInfo, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(Position))
-            throw new MaestroException("Cannot connect to a sequence without a position.");
+        ConnectionInfo = connectionInfo;
 
-        if (Connection is not null && Connection.IsConnected)
-            await Disconnect(cancellationToken);
-
-        // If we're not active yet, don't start the connection
-        // Let the Start method handle that
-        if (!IsActive)
-            return;
-
-        await ConnectInternal(maestroConnection, cancellationToken);
+        if (IsActive)
+            await Connect(connectionInfo, Position, cancellationToken);
     }
 
-    async Task ConnectInternal(MaestroConnection maestroConnection, CancellationToken cancellationToken)
+    async Task Connect(ConnectionInfo connectionInfo, string position, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await maestroConnection.Start(Position, cancellationToken);
-            Connection = maestroConnection;
-            Role = result.Role;
-            OwnsSequence = result.OwnsSequence;
+        var maestroConnection = _maestroConnectionFactory.Create(
+            connectionInfo.Partition,
+            AirportIdentifier,
+            position,
+            RoleHelper.GetRoleFromCallsign(position));
 
-            if (result.Sequence is not null)
-                Sequence.Restore(result.Sequence);
+        await maestroConnection.Start(cancellationToken);
+        Connection = maestroConnection;
 
-            if (!OwnsSequence)
-                await StopOwnershipTasks(cancellationToken);
-        }
-        catch
-        {
-            Connection = null;
-            Role = Role.Flow;
-            OwnsSequence = true;
-            await StartOwnershipTasks(cancellationToken);
-            throw;
-        }
+        // Server will send a ConnectionInitialized message to us when we've successfully connected
     }
 
     public async Task Disconnect(CancellationToken cancellationToken)
@@ -123,9 +106,6 @@ public class Session : ISession, IAsyncDisposable
 
         if (_schedulerTask.IsRunning)
             await _schedulerTask.Stop(cancellationToken);
-
-        // if (_synchronizeTask.IsRunning)
-        //     await _synchronizeTask.Stop(cancellationToken);
 
         IsActive = false;
     }
@@ -146,18 +126,12 @@ public class Session : ISession, IAsyncDisposable
     {
         if (!_schedulerTask.IsRunning)
             await _schedulerTask.Start(cancellationToken);
-
-        // if (!_synchronizeTask.IsRunning)
-        //     await _synchronizeTask.Start(cancellationToken);
     }
 
     async Task StopOwnershipTasks(CancellationToken cancellationToken)
     {
         if (_schedulerTask.IsRunning)
             await _schedulerTask.Stop(cancellationToken);
-
-        // if (_synchronizeTask.IsRunning)
-        //     await _synchronizeTask.Stop(cancellationToken);
     }
 
     async Task SchedulerLoop(CancellationToken cancellationToken)
@@ -167,7 +141,6 @@ public class Session : ISession, IAsyncDisposable
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-                // await _mediator.Send(new ScheduleRequest(Sequence.AirportIdentifier), cancellationToken);
             }
             catch (TaskCanceledException)
             {
@@ -180,31 +153,11 @@ public class Session : ISession, IAsyncDisposable
         }
     }
 
-    // Publish SequenceUpdatedNotifications to connected clients if we own the sequence
-    // async Task SynchronizeLoop(CancellationToken cancellationToken)
-    // {
-    //     await foreach (var notification in _sequenceUpdatedNotificationStream.SubscribeAsync(cancellationToken))
-    //     {
-    //         if (!OwnsSequence || notification.AirportIdentifier != AirportIdentifier || Connection is null)
-    //             continue;
-    //         try
-    //         {
-    //             _logger.Information("Synchronizing {AirportIdentifier}.", AirportIdentifier);
-    //             await Connection.Send(notification, cancellationToken);
-    //         }
-    //         catch (Exception exception)
-    //         {
-    //             _logger.Error(exception, "Error synchronizing {AirportIdentifier}.", AirportIdentifier);
-    //         }
-    //     }
-    // }
-
     public async ValueTask DisposeAsync()
     {
         if (Connection != null)
             await Connection.DisposeAsync();
         await _schedulerTask.DisposeAsync();
-        // await _synchronizeTask.DisposeAsync();
         Semaphore.Dispose();
     }
 }

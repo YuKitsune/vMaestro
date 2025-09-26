@@ -1,6 +1,5 @@
-﻿using Maestro.Core.Configuration;
-using MediatR;
+﻿using MediatR;
 
 namespace Maestro.Core.Messages.Connectivity;
 
-public record OwnershipGrantedNotification(string AirportIdentifier, Role Role) : INotification;
+public record OwnershipGrantedNotification(string AirportIdentifier) : INotification;

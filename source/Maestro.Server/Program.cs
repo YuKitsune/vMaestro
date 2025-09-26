@@ -19,6 +19,11 @@ Log.Logger = loggerConfig.CreateLogger();
 //  - Administrative messages
 //  - Kick user
 
+// TODO: Error handling
+// - Don't throw exceptions, return results
+// - Write exceptions to logs
+// - Log notifications and requests are they're being sent and received
+
 try
 {
     var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +36,8 @@ try
         .AddNewtonsoftJsonProtocol(x => x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver());
 
     builder.Services.AddSerilog();
+
+    builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
 
     var app = builder.Build();
 

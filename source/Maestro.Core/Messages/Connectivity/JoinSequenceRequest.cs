@@ -1,9 +1,0 @@
-﻿using Maestro.Core.Configuration;
-using MediatR;
-
-namespace Maestro.Core.Messages.Connectivity;
-
-public record JoinSequenceRequest(string Partition, string AirportIdentifier, string Position, Role Role) : IRequest<JoinSequenceResponse>;
-public record JoinSequenceResponse(string ConnectionId, bool OwnsSequence, SequenceMessage? Sequence, IReadOnlyList<PeerInfo> ConnectedPeers);
-
-public record PeerInfo(string Callsign, Role Role);

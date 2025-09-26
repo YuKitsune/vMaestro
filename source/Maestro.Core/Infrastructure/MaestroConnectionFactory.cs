@@ -22,10 +22,10 @@ public class MaestroConnectionFactory : IMaestroConnectionFactory
         _logger = logger;
     }
 
-    public MaestroConnection Create(string airportIdentifier, string partition)
+    public MaestroConnection Create(string partition, string airportIdentifier, string callsign, Role role)
     {
         var hubConnection = new HubConnectionBuilder()
-            .WithUrl(_serverConfiguration.Uri)
+            .WithUrl(_serverConfiguration.Uri + $"?partition={partition}&airportIdentifier={airportIdentifier}&callsign={callsign}&role={role}")
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
