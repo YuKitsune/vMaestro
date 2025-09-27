@@ -1,27 +1,32 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 
 namespace Maestro.Core.Handlers;
 
 public class InsertDepartureRequestHandler(
-    ISequenceProvider sequenceProvider,
+    ISessionManager sessionManager,
     IPerformanceLookup performanceLookup,
     IArrivalLookup arrivalLookup,
-    IScheduler scheduler,
     IClock clock,
     IMediator mediator)
     : IRequestHandler<InsertDepartureRequest>
 {
     public async Task Handle(InsertDepartureRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            return;
+        }
 
-        var flight = lockedSequence.Sequence.Flights.SingleOrDefault(f =>
-            f.Callsign == request.Callsign &&
-            f.State == State.Pending);
+        var sequence = lockedSession.Session.Sequence;
+        var flight = sequence.PendingFlights.SingleOrDefault(f =>
+            f.Callsign == request.Callsign);
 
         if (flight is null)
         {
@@ -36,9 +41,8 @@ public class InsertDepartureRequestHandler(
             throw new MaestroException($"{request.Callsign} does not have an ETE.");
         }
 
-        // Calculate ETA based on take-off time
-        var landingEstimate = request.TakeOffTime.Add(flight.EstimatedTimeEnroute.Value);
-        flight.UpdateLandingEstimate(landingEstimate);
+        sequence.Depart(flight, request.TakeOffTime);
+        flight.SetState(State.Stable, clock);
 
         // Calculate feeder fix estimate based on landing time
         // Need to do this after so that the runway gets assigned
@@ -46,16 +50,10 @@ public class InsertDepartureRequestHandler(
         if (feederFixEstimate is not null)
             flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
 
-        // Calculate the position in the sequence
-        flight.SetState(State.New, clock);
-
-        scheduler.Schedule(lockedSequence.Sequence);
-        flight.SetState(State.Unstable, clock);
-
         await mediator.Publish(
             new SequenceUpdatedNotification(
-                lockedSequence.Sequence.AirportIdentifier,
-                lockedSequence.Sequence.ToMessage()),
+                sequence.AirportIdentifier,
+                sequence.ToMessage()),
             cancellationToken);
     }
 
@@ -70,10 +68,11 @@ public class InsertDepartureRequestHandler(
             flight.FeederFixIdentifier,
             flight.AssignedArrivalIdentifier,
             flight.AssignedRunwayIdentifier,
-            aircraftPerformance);
+            flight.AircraftType,
+            flight.AircraftCategory);
         if (arrivalInterval is null)
             return null;
 
-        return flight.EstimatedLandingTime.Subtract(arrivalInterval.Value);
+        return flight.LandingEstimate.Subtract(arrivalInterval.Value);
     }
 }

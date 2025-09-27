@@ -9,7 +9,7 @@
   [![License](https://img.shields.io/github/license/YuKitsune/vMaestro)](https://github.com/YuKitsune/vMaestro/blob/main/LICENSE)
   [![Latest Release](https://img.shields.io/github/v/release/YuKitsune/vMaestro?include_prereleases)](https://github.com/YuKitsune/vMaestro/releases)
 
-  <img src="./docs/README-screenshot.png" width="320" />
+  <img src="./README-screenshot.png" width="320" />
 </h3>
 
 > [!WARNING]

@@ -10,6 +10,7 @@ namespace Maestro.Wpf.ViewModels;
 public partial class DesequencedViewModel : ObservableObject
 {
     readonly IMediator _mediator;
+    readonly IWindowHandle _windowHandle;
     readonly IErrorReporter _errorReporter;
 
     [ObservableProperty]
@@ -17,6 +18,7 @@ public partial class DesequencedViewModel : ObservableObject
 
     public DesequencedViewModel(
         IMediator mediator,
+        IWindowHandle windowHandle,
         IErrorReporter errorReporter,
         string airportIdentifier,
         string[] callsigns)
@@ -25,6 +27,7 @@ public partial class DesequencedViewModel : ObservableObject
         _errorReporter = errorReporter;
         Callsigns = callsigns.ToList();
         _mediator = mediator;
+        _windowHandle = windowHandle;
     }
 
     public string AirportIdentifier { get; }
@@ -38,7 +41,9 @@ public partial class DesequencedViewModel : ObservableObject
             foreach (var selectedCallsign in selectedCallsigns)
             {
                 var selectedCallsignString = (string) selectedCallsign;
-                await _mediator.Send(new ResumeSequencingRequest(AirportIdentifier, selectedCallsignString));
+                await _mediator.Send(
+                    new ResumeSequencingRequest(AirportIdentifier, selectedCallsignString),
+                    CancellationToken.None);
                 callsigns.Remove(selectedCallsignString);
             }
 
@@ -59,7 +64,10 @@ public partial class DesequencedViewModel : ObservableObject
             foreach (var selectedCallsign in selectedCallsigns)
             {
                 var selectedCallsignString = (string) selectedCallsign;
-                await _mediator.Send(new RemoveRequest(AirportIdentifier, selectedCallsignString));
+                await _mediator.Send(
+                    new RemoveRequest(AirportIdentifier, selectedCallsignString),
+                    CancellationToken.None);
+
                 callsigns.Remove(selectedCallsignString);
             }
 
@@ -69,5 +77,11 @@ public partial class DesequencedViewModel : ObservableObject
         {
             _errorReporter.ReportError(ex);
         }
+    }
+
+    [RelayCommand]
+    void Close()
+    {
+        _windowHandle.Close();
     }
 }

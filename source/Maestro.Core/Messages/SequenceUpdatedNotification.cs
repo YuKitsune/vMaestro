@@ -2,8 +2,9 @@
 
 namespace Maestro.Core.Messages;
 
-public class SequenceUpdatedNotification(string airportIdentifier, SequenceMessage sequence) : INotification
-{
-    public string AirportIdentifier { get; } = airportIdentifier;
-    public SequenceMessage Sequence { get; } = sequence;
-}
+// TODO: Split this up into multiple messages for different sequence changes
+
+public record SequenceUpdatedNotification(
+    string AirportIdentifier,
+    SequenceMessage Sequence)
+    : INotification;

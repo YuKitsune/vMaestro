@@ -8,6 +8,8 @@ public enum RelativePosition
     After
 }
 
+// TODO: Split this up into separate requests for overshoot and dummies
+
 public record InsertFlightRequest(
     string AirportIdentifier,
     string? Callsign,

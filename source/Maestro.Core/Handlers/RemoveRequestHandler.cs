@@ -1,34 +1,28 @@
-﻿using Maestro.Core.Extensions;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Messages;
+using Maestro.Core.Sessions;
 using MediatR;
-using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class RemoveRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
-    : IRequestHandler<RemoveRequest, RemoveResponse>
+public class RemoveRequestHandler(ISessionManager sessionManager, IMediator mediator)
+    : IRequestHandler<RemoveRequest>
 {
-    public async Task<RemoveResponse> Handle(RemoveRequest request, CancellationToken cancellationToken)
+    public async Task Handle(RemoveRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-
-        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
-        if (flight == null)
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return new RemoveResponse();
+            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            return;
         }
 
-        flight.Remove();
-        scheduler.Schedule(lockedSequence.Sequence);
+        var sequence = lockedSession.Session.Sequence;
+        sequence.Remove(request.Callsign);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
-                lockedSequence.Sequence.AirportIdentifier,
-                lockedSequence.Sequence.ToMessage()),
+                sequence.AirportIdentifier,
+                sequence.ToMessage()),
             cancellationToken);
-
-        return new RemoveResponse();
     }
 }

@@ -2,6 +2,7 @@
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -31,6 +32,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -59,6 +61,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -68,18 +71,14 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
-        var scheduler = Substitute.For<IScheduler>();
-        var handler = GetHandler(sequence, clock, scheduler);
+        var handler = GetHandler(sequence, clock);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
         var flight = sequence.Flights.ShouldHaveSingleItem();
-        // Flight is created with New state before being passed to scheduler
-        // The real scheduler will set the state to Stable immediately after scheduling
-        flight.State.ShouldBe(State.New);
-        scheduler.Received(1).Schedule(sequence);
+        flight.State.ShouldBe(State.Unstable);
     }
 
     [Fact]
@@ -91,6 +90,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -100,21 +100,19 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             _position,
             [new FixEstimate("TESAT", clock.UtcNow().AddMinutes(30))]);
 
-        var scheduler = Substitute.For<IScheduler>();
-        var handler = GetHandler(sequence, clock, scheduler);
+        var handler = GetHandler(sequence, clock);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
         var flight = sequence.Flights.ShouldHaveSingleItem();
-        flight.State.ShouldBe(State.New);
+        flight.State.ShouldBe(State.Unstable);
         flight.HighPriority.ShouldBe(true);
-        scheduler.Received(1).Schedule(sequence);
     }
 
     [Fact]
-    public async Task WhenAFlightIsOnGroundAtDepartureAirport_ItShouldBeAddedWithPendingState()
+    public async Task WhenAFlightIsOnGroundAtDepartureAirport_ItShouldBeAddedToThePendingList()
     {
         // Arrange
         var clock = clockFixture.Instance;
@@ -130,6 +128,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YSCB", // Departure airport configured in fixture
             "YSSY",
@@ -139,19 +138,19 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
-        var scheduler = Substitute.For<IScheduler>();
-        var handler = GetHandler(sequence, clock, scheduler);
+        var handler = GetHandler(sequence, clock);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        var flight = sequence.Flights.ShouldHaveSingleItem();
-        flight.State.ShouldBe(State.Pending);
+        var flight = sequence.PendingFlights.ShouldHaveSingleItem();
+        flight.Callsign.ShouldBe(notification.Callsign);
+
     }
 
     [Fact]
-    public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeAddedWithPendingState()
+    public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeToThePendingList()
     {
         // Arrange
         var clock = clockFixture.Instance;
@@ -160,6 +159,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YSCB", // Departure airport configured in fixture
             "YSSY",
@@ -169,15 +169,14 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
-        var scheduler = Substitute.For<IScheduler>();
-        var handler = GetHandler(sequence, clock, scheduler);
+        var handler = GetHandler(sequence, clock);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        var flight = sequence.Flights.ShouldHaveSingleItem();
-        flight.State.ShouldBe(State.Pending);
+        var flight = sequence.PendingFlights.ShouldHaveSingleItem();
+        flight.Callsign.ShouldBe(notification.Callsign);
     }
 
     [Fact]
@@ -197,6 +196,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YXXX", // Non-departure airport
             "YSSY",
@@ -231,9 +231,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithFlight(flight)
-            .Build();
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
+        sequence.Insert(flight, flight.LandingEstimate);
 
         var newFeederFixTime = clock.UtcNow().AddMinutes(15);
         var newLandingTime = clock.UtcNow().AddMinutes(25);
@@ -241,6 +240,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -271,8 +271,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(newFeederFixTime);
-        flight.EstimatedLandingTime.ShouldBe(newLandingTime);
+        flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
+        flight.LandingEstimate.ShouldBe(newLandingTime);
     }
 
     [Fact]
@@ -289,12 +289,13 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithFlight(flight)
             .Build();
+        sequence.Insert(flight, flight.LandingEstimate);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -313,8 +314,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(originalFeederFixTime);
-        flight.EstimatedLandingTime.ShouldBe(originalLandingTime);
+        flight.FeederFixEstimate.ShouldBe(originalFeederFixTime);
+        flight.LandingEstimate.ShouldBe(originalLandingTime);
     }
 
     [Fact]
@@ -331,12 +332,13 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithFlight(flight)
             .Build();
+        sequence.Insert(flight, flight.LandingEstimate);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -355,8 +357,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(manualFeederFixEstimate);
-        flight.EstimatedLandingTime.ShouldBe(manualLandingEstimate);
+        flight.FeederFixEstimate.ShouldBe(manualFeederFixEstimate);
+        flight.LandingEstimate.ShouldBe(manualLandingEstimate);
     }
 
     [Fact]
@@ -371,12 +373,13 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithFlight(flight)
             .Build();
+        sequence.Insert(flight, flight.LandingEstimate);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B744", // Different aircraft type
+            AircraftCategory.Jet,
             WakeCategory.Heavy, // Different wake category
             "YMAV", // Different origin
             "YSSY",
@@ -411,15 +414,14 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         // Arrange
         var clock = clockFixture.Instance;
         var flight = new FlightBuilder("QFA123")
-            .WithState(State.Desequenced)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .WithLandingTime(clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithFlight(flight)
-            .Build();
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
+        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Desequence(flight.Callsign);
 
         var newFeederFixTime = clock.UtcNow().AddMinutes(15);
         var newLandingTime = clock.UtcNow().AddMinutes(25);
@@ -427,6 +429,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
+            AircraftCategory.Jet,
             WakeCategory.Medium,
             "YMML",
             "YSSY",
@@ -457,20 +460,174 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        flight.EstimatedFeederFixTime.ShouldBe(newFeederFixTime);
-        flight.EstimatedLandingTime.ShouldBe(newLandingTime);
+        flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
+        flight.LandingEstimate.ShouldBe(newLandingTime);
+    }
+
+    [Fact]
+    public async Task WhenAnUnstableFlightIsUpdated_ItsPositionInSequenceIsRecalculated()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+
+        var flight1 = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(30))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA456")
+            .WithState(State.Stable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
+        sequence.Insert(flight2, flight2.LandingEstimate); // QFA456 first (earlier estimate)
+        sequence.Insert(flight1, flight1.LandingEstimate); // QFA123 second (later estimate)
+
+        // Verify initial order
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first initially");
+        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second initially");
+
+        // Update QFA123 with an earlier landing estimate
+        var newFeederFixTime = clock.UtcNow().AddMinutes(5);
+        var newLandingTime = clock.UtcNow().AddMinutes(15);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            "RIVET4",
+            _position,
+            [
+                new FixEstimate("RIVET", newFeederFixTime),
+                new FixEstimate("YSSY", newLandingTime)
+            ]);
+
+        var estimateProvider = Substitute.For<IEstimateProvider>();
+        estimateProvider.GetFeederFixEstimate(
+                Arg.Any<AirportConfiguration>(),
+                Arg.Any<string>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<FlightPosition>())
+            .Returns(newFeederFixTime);
+        estimateProvider.GetLandingEstimate(
+                Arg.Any<Flight>(),
+                Arg.Any<DateTimeOffset?>())
+            .Returns(newLandingTime);
+
+        var handler = GetHandler(sequence, clock, estimateProvider: estimateProvider);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert - QFA123 should now be first due to earlier estimate
+        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first after update with earlier estimate");
+        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second after QFA123 moves ahead");
+        flight1.LandingEstimate.ShouldBe(newLandingTime, "QFA123 estimate should be updated");
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    public async Task WhenAStableFlightIsUpdated_ItsPositionInSequenceIsNotRecalculated(State state)
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+
+        var flight1 = new FlightBuilder("QFA123")
+            .WithState(state)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(30))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA456")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
+        sequence.Insert(flight2, flight2.LandingEstimate); // QFA456 first (earlier estimate)
+        sequence.Insert(flight1, flight1.LandingEstimate); // QFA123 second (later estimate)
+
+        // Verify initial order
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first initially");
+        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second initially");
+
+        // Update QFA123 with an earlier landing estimate (this would normally move it ahead)
+        var newFeederFixTime = clock.UtcNow().AddMinutes(5);
+        var newLandingTime = clock.UtcNow().AddMinutes(15);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            "RIVET4",
+            _position,
+            [
+                new FixEstimate("RIVET", newFeederFixTime),
+                new FixEstimate("YSSY", newLandingTime)
+            ]);
+
+        var estimateProvider = Substitute.For<IEstimateProvider>();
+        estimateProvider.GetFeederFixEstimate(
+                Arg.Any<AirportConfiguration>(),
+                Arg.Any<string>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<FlightPosition>())
+            .Returns(newFeederFixTime);
+        estimateProvider.GetLandingEstimate(
+                Arg.Any<Flight>(),
+                Arg.Any<DateTimeOffset?>())
+            .Returns(newLandingTime);
+
+        var handler = GetHandler(sequence, clock, estimateProvider: estimateProvider);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert - Position should remain unchanged for stable flights
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should remain first - stable flights don't get repositioned");
+        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should remain second - stable flights don't get repositioned");
+
+        // But estimates should still be updated
+        if (state != State.Landed)
+        {
+            flight1.LandingEstimate.ShouldBe(newLandingTime, "estimates should still be updated for non-landed flights");
+            flight1.FeederFixEstimate.ShouldBe(newFeederFixTime, "estimates should still be updated for non-landed flights");
+        }
     }
 
     FlightUpdatedHandler GetHandler(
         Sequence sequence,
         IClock clock,
-        IScheduler? scheduler = null,
         IEstimateProvider? estimateProvider = null)
     {
-        var sequenceProvider = Substitute.For<ISequenceProvider>();
-        sequenceProvider.ActiveSequences.Returns(["YSSY"]);
-        sequenceProvider.GetSequence(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
-            .Returns(new TestExclusiveSequence(sequence));
+        var sessionManager = Substitute.For<ISessionManager>();
+        sessionManager.HasSessionFor("YSSY").Returns(true);
+        sessionManager.AcquireSession(Arg.Is("YSSY"), Arg.Any<CancellationToken>())
+            .Returns(new MockExclusiveSession(new MockSession(sequence)));
 
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
         rateLimiter.ShouldUpdateFlight(Arg.Any<Flight>(), Arg.Any<FlightPosition>()).Returns(true);
@@ -479,15 +636,13 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         airportConfigurationProvider.GetAirportConfigurations().Returns([airportConfigurationFixture.Instance]);
 
         estimateProvider ??= Substitute.For<IEstimateProvider>();
-        scheduler ??= Substitute.For<IScheduler>();
         var mediator = Substitute.For<IMediator>();
 
         return new FlightUpdatedHandler(
-            sequenceProvider,
+            sessionManager,
             rateLimiter,
             airportConfigurationProvider,
             estimateProvider,
-            scheduler,
             mediator,
             clock,
             Substitute.For<ILogger>());

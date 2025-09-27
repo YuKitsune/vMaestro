@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Model;
+﻿using Maestro.Core.Integration;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
 using NSubstitute;
 
@@ -17,7 +18,7 @@ public class PerformanceLookupFixture
             lookup.GetPerformanceDataFor(Arg.Is(AircraftTypes.LightProp))
                 .Returns(new AircraftPerformanceData
                 {
-                    Type = AircraftTypes.LightProp,
+                    TypeCode = AircraftTypes.LightProp,
                     AircraftCategory = AircraftCategory.NonJet,
                     WakeCategory = WakeCategory.Light
                 });
@@ -25,7 +26,7 @@ public class PerformanceLookupFixture
             lookup.GetPerformanceDataFor(Arg.Is(AircraftTypes.MediumProp))
                 .Returns(new AircraftPerformanceData
                 {
-                    Type = AircraftTypes.MediumProp,
+                    TypeCode = AircraftTypes.MediumProp,
                     AircraftCategory = AircraftCategory.NonJet,
                     WakeCategory = WakeCategory.Medium
                 });
@@ -33,7 +34,7 @@ public class PerformanceLookupFixture
             lookup.GetPerformanceDataFor(Arg.Is(AircraftTypes.MediumJet))
                 .Returns(new AircraftPerformanceData
                 {
-                    Type = AircraftTypes.MediumJet,
+                    TypeCode = AircraftTypes.MediumJet,
                     AircraftCategory = AircraftCategory.Jet,
                     WakeCategory = WakeCategory.Medium
                 });
@@ -41,7 +42,7 @@ public class PerformanceLookupFixture
             lookup.GetPerformanceDataFor(Arg.Is(AircraftTypes.HeavyJet))
                 .Returns(new AircraftPerformanceData
                 {
-                    Type = AircraftTypes.HeavyJet,
+                    TypeCode = AircraftTypes.HeavyJet,
                     AircraftCategory = AircraftCategory.Jet,
                     WakeCategory = WakeCategory.Heavy
                 });
@@ -49,7 +50,7 @@ public class PerformanceLookupFixture
             lookup.GetPerformanceDataFor(Arg.Is(AircraftTypes.SuperHeavyJet))
                 .Returns(new AircraftPerformanceData
                 {
-                    Type = AircraftTypes.SuperHeavyJet,
+                    TypeCode = AircraftTypes.SuperHeavyJet,
                     AircraftCategory = AircraftCategory.Jet,
                     WakeCategory = WakeCategory.SuperHeavy
                 });

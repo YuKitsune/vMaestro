@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using NSubstitute;
 
@@ -6,9 +8,21 @@ namespace Maestro.Core.Tests.Builders;
 
 public class SequenceBuilder(AirportConfiguration airportConfiguration)
 {
-    readonly List<Flight> _flights = new();
     RunwayMode? _runwayMode;
-    readonly IScheduler _scheduler = Substitute.For<IScheduler>();
+    IArrivalLookup _arrivalLookup = Substitute.For<IArrivalLookup>();
+    IClock _clock = Substitute.For<IClock>();
+
+    public SequenceBuilder WithArrivalLookup(IArrivalLookup arrivalLookup)
+    {
+        _arrivalLookup = arrivalLookup;
+        return this;
+    }
+
+    public SequenceBuilder WithClock(IClock clock)
+    {
+        _clock = clock;
+        return this;
+    }
 
     public SequenceBuilder WithRunwayMode(RunwayMode runwayMode)
     {
@@ -16,37 +30,31 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
         return this;
     }
 
-    public SequenceBuilder WithSingleRunway(string runwayIdentifier, TimeSpan landingRate)
+    public SequenceBuilder WithRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
     {
-        var runwayMode = new RunwayMode
-        {
-            Identifier = runwayIdentifier,
-            Runways =
-            [
-                new RunwayConfiguration
-                    { Identifier = runwayIdentifier, LandingRateSeconds = (int)landingRate.TotalSeconds }
-            ]
-        };
-
-        return WithRunwayMode(runwayMode);
+        _runwayMode = new RunwayMode(runwayModeConfiguration);
+        return this;
     }
 
-    public SequenceBuilder WithFlight(Flight flight)
+    public SequenceBuilder WithSingleRunway(string runwayIdentifier, TimeSpan landingRate)
     {
-        _flights.Add(flight);
-        return this;
+        return WithRunwayMode(
+            new RunwayMode(
+                new RunwayModeConfiguration
+                {
+                    Identifier = runwayIdentifier,
+                    Runways =
+                    [
+                        new RunwayConfiguration
+                            { Identifier = runwayIdentifier, LandingRateSeconds = (int)landingRate.TotalSeconds }
+                    ]
+                }));
     }
 
     public Sequence Build()
     {
-        var sequence = new Sequence(
-            airportConfiguration,
-            _runwayMode ?? airportConfiguration.RunwayModes.First());
-
-        foreach (var flight in _flights)
-        {
-            sequence.AddFlight(flight, _scheduler);
-        }
+        var sequence = new Sequence(airportConfiguration, _arrivalLookup, _clock);
+        sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(airportConfiguration.RunwayModes.First()));
 
         return sequence;
     }

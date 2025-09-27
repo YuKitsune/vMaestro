@@ -6,7 +6,7 @@ namespace Maestro.Wpf.Views;
 
 public partial class InformationView : UserControl
 {
-    public InformationView(FlightMessage viewModel)
+    public InformationView(FlightInformationViewModel viewModel)
     {
         DataContext = viewModel;
         InitializeComponent();

@@ -5,8 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
-		<BaseOutputPath>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)\bin\Plugins\MaestroPlugin - Debug</BaseOutputPath>
-		
+
 		<Version>0.0.0</Version>
 		<Metadata Condition="'$(BuildMetadata)' != ''">+$(BuildMetadata)</Metadata>
 		<AssemblyVersion>$(Version)</AssemblyVersion>
@@ -18,7 +17,7 @@
 	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 	  <PackageReference Include="MediatR" Version="12.4.1" />
 	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	  <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
 	  <PackageReference Include="System.Threading.Channels" Version="9.0.6" />
@@ -28,17 +27,13 @@
 	  <ProjectReference Include="..\Maestro.Core\Maestro.Core.csproj" />
 	  <ProjectReference Include="..\Maestro.Wpf\Maestro.Wpf.csproj" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<Reference Include="PresentationCore" />
 		<Reference Include="PresentationFramework" />
 		<Reference Include="System.ComponentModel.Composition" />
 		<Reference Include="vatSys">
 			<HintPath>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)\bin\vatSys.exe</HintPath>
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="VATSYSControls">
-			<HintPath>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)\bin\VATSYSControls.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="System.Windows.Forms" />

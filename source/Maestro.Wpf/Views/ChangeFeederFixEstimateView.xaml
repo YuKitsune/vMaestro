@@ -10,8 +10,9 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:ChangeFeederFixEstimateViewModel}"
              mc:Ignorable="d"
-             Padding="2"
-             Width="280">
+             Padding="8"
+             Width="320"
+             Height="140">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -20,7 +21,10 @@
 
             <converters:TimeConverter x:Key="TimeConverter"/>
 
-            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
                 <Setter Property="Margin" Value="2" />
                 <Setter Property="Width" Value="64" />

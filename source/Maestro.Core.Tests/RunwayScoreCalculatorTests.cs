@@ -1,58 +1,62 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Shouldly;
+using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
 
 namespace Maestro.Core.Tests;
 
 public class RunwayScoreCalculatorTests
 {
     readonly RunwayScoreCalculator _runwayScoreCalculator;
-    readonly RunwayConfiguration[] _runways;
+    readonly Runway[] _runways;
 
     public RunwayScoreCalculatorTests()
     {
         _runwayScoreCalculator = new RunwayScoreCalculator();
         _runways =
-        [
-            new RunwayConfiguration
-            {
-                Identifier = "34L",
-                LandingRateSeconds = 180,
-                Preferences = new RunwayPreferences
+            new[]
                 {
-                    WakeCategories = [WakeCategory.Heavy, WakeCategory.SuperHeavy],
-                    FeederFixes = ["RIVET", "WELSH"]
+                    new RunwayConfiguration
+                    {
+                        Identifier = "34L",
+                        LandingRateSeconds = 180,
+                        Preferences = new RunwayPreferences
+                        {
+                            WakeCategories = [WakeCategory.Heavy, WakeCategory.SuperHeavy],
+                            FeederFixes = ["RIVET", "WELSH"]
+                        }
+                    },
+                    new RunwayConfiguration
+                    {
+                        Identifier = "34R",
+                        LandingRateSeconds = 180,
+                        Preferences = new RunwayPreferences
+                        {
+                            FeederFixes = ["BOREE", "YAKKA", "MARLN"]
+                        }
+                    },
+                    new RunwayConfiguration
+                    {
+                        Identifier = "16R",
+                        LandingRateSeconds = 180,
+                        Preferences = new RunwayPreferences
+                        {
+                            WakeCategories = [WakeCategory.Heavy, WakeCategory.SuperHeavy],
+                            FeederFixes = ["RIVET", "WELSH"]
+                        }
+                    },
+                    new RunwayConfiguration
+                    {
+                        Identifier = "16L",
+                        LandingRateSeconds = 180,
+                        Preferences = new RunwayPreferences
+                        {
+                            FeederFixes = ["BOREE", "YAKKA", "MARLN"]
+                        }
+                    }
                 }
-            },
-            new RunwayConfiguration
-            {
-                Identifier = "34R",
-                LandingRateSeconds = 180,
-                Preferences = new RunwayPreferences
-                {
-                    FeederFixes = ["BOREE", "YAKKA", "MARLN"]
-                }
-            },
-            new RunwayConfiguration
-            {
-                Identifier = "16R",
-                LandingRateSeconds = 180,
-                Preferences = new RunwayPreferences
-                {
-                    WakeCategories = [WakeCategory.Heavy, WakeCategory.SuperHeavy],
-                    FeederFixes = ["RIVET", "WELSH"]
-                }
-            },
-            new RunwayConfiguration
-            {
-                Identifier = "16L",
-                LandingRateSeconds = 180,
-                Preferences = new RunwayPreferences
-                {
-                    FeederFixes = ["BOREE", "YAKKA", "MARLN"]
-                }
-            }
-        ];
+                .Select(rc => new Runway(rc))
+                .ToArray();
     }
 
     [Fact]

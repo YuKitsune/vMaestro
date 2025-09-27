@@ -86,7 +86,7 @@
                     Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Approach}}"/>
 
                 <TextBlock
-                    Text="{Binding FlightViewModel.AssignedRunway}"
+                    Text="{Binding FlightViewModel.AssignedRunwayIdentifier}"
                     Width="32" />
 
                 <TextBlock
@@ -131,13 +131,13 @@
                 <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
                 <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" />
                 <MenuItem Header="Change Runway">
-                    <ItemsControl ItemsSource="{Binding RunwayModeViewModel.Runways}">
+                    <ItemsControl ItemsSource="{Binding AvailableRunways}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <MenuItem
-                                    Header="{Binding Identifier}"
+                                    Header="{Binding .}"
                                     Command="{Binding Path=DataContext.ChangeRunwayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                    CommandParameter="{Binding Identifier}" />
+                                    CommandParameter="{Binding .}" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

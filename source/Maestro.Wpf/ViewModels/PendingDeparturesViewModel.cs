@@ -96,12 +96,14 @@ public partial class PendingDeparturesViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(new InsertDepartureRequest(
-                _airportIdentifier,
-                Callsign,
-                AircraftType,
-                DepartureIdentifier,
-                TakeoffTime));
+            _mediator.Send(
+                new InsertDepartureRequest(
+                    _airportIdentifier,
+                    Callsign,
+                    AircraftType,
+                    DepartureIdentifier,
+                    TakeoffTime),
+                CancellationToken.None);
             CloseWindow();
         }
         catch (Exception ex)

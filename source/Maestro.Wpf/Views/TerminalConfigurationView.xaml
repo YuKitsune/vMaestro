@@ -10,9 +10,9 @@
              mc:Ignorable="d"
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:TerminalConfigurationViewModel}"
-             d:DesignHeight="300"
-             Width="440"
-             Padding="4">
+             MinWidth="440"
+             MinHeight="240"
+             Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

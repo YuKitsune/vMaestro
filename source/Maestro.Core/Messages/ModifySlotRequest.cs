@@ -2,4 +2,9 @@
 
 namespace Maestro.Core.Messages;
 
-public record ModifySlotRequest(string AirportIdentifier, Guid SlotId, DateTimeOffset StartTime, DateTimeOffset EndTime) : IRequest;
+public record ModifySlotRequest(
+    string AirportIdentifier,
+    Guid SlotId,
+    DateTimeOffset StartTime,
+    DateTimeOffset EndTime)
+    : IRequest;

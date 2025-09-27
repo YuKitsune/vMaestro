@@ -30,10 +30,10 @@
         <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
         <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+        <Setter Property="VerticalAlignment" Value="Center" />
 
-        <!-- <Setter Property="LineStackingStrategy" Value="BlockLineHeight" /> -->
-        <!-- <Setter Property="Height" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToHeightConverter}}" /> -->
-        <!-- <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" /> -->
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
     </Style>
 
     <Style x:Key="GenericTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource TextBaseStyle}">
@@ -48,9 +48,12 @@
     <Style x:Key="ButtonBaseStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource ControlBaseStyle}">
 
         <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
 
         <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight"/>
         <Setter Property="TextBlock.LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
+        <Setter Property="TextBlock.TextAlignment" Value="Center" />
 
         <Setter Property="Template">
             <Setter.Value>

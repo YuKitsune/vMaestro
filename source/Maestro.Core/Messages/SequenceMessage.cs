@@ -1,6 +1,4 @@
-﻿using Maestro.Core.Handlers;
-
-namespace Maestro.Core.Messages;
+﻿namespace Maestro.Core.Messages;
 
 public class SequenceMessage
 {
@@ -10,11 +8,14 @@ public class SequenceMessage
     public required DateTimeOffset LastLandingTimeForCurrentMode { get; init; }
     public required DateTimeOffset FirstLandingTimeForNextMode { get; init; }
     public required FlightMessage[] Flights { get; init; }
+    public required FlightMessage[] PendingFlights { get; init; }
+    public required FlightMessage[] DeSequencedFlights { get; init; }
     public required SlotMessage[] Slots { get; init; }
+    public required int DummyCounter { get; init; } = 1;
 }
 
 public record SlotMessage(
-    Guid SlotId,
+    Guid Id,
     DateTimeOffset StartTime,
     DateTimeOffset EndTime,
     string[] RunwayIdentifiers);

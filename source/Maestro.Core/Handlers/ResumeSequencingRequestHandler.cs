@@ -1,30 +1,27 @@
 ﻿using Maestro.Core.Messages;
-using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
-using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ResumeSequencingRequestHandler(ISequenceProvider sequenceProvider, IScheduler scheduler, IMediator mediator, ILogger logger)
-    : IRequestHandler<ResumeSequencingRequest, ResumeSequencingResponse>
+public class ResumeSequencingRequestHandler(ISessionManager sessionManager, IMediator mediator)
+    : IRequestHandler<ResumeSequencingRequest>
 {
-    public async Task<ResumeSequencingResponse> Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
+    public async Task Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
     {
-        using (var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken))
+        using (var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken))
         {
-            var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
-            if (flight is null)
+            if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
             {
-                logger.Warning("Sequence not found for airport {AirportIdentifier}.", request.AirportIdentifier);
-                return new ResumeSequencingResponse();
+                await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+                return;
             }
 
-            flight.Resume();
+            var sequence = lockedSession.Session.Sequence;
+            sequence.Resume(request.Callsign);
         }
 
         // Let the RecomputeRequestHandler do the scheduling and notification
         await mediator.Send(new RecomputeRequest(request.AirportIdentifier, request.Callsign), cancellationToken);
-
-        return new ResumeSequencingResponse();
     }
 }

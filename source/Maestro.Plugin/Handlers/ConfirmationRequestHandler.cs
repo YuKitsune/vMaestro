@@ -1,5 +1,4 @@
-﻿using System.Windows.Forms;
-using Maestro.Wpf.Messages;
+﻿using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;
@@ -31,7 +30,7 @@ public class ConfirmationRequestHandler(GuiInvoker guiInvoker) : IRequestHandler
 
                 var dialogView = new DialogView(dialogViewModel);
 
-                dialogForm = new VatSysForm(request.Title, dialogView, shrinkToContent: true);
+                dialogForm = new VatSysForm(request.Title, _ => dialogView, shrinkToContent: true);
 
                 // Handle form closing via X button as cancel
                 dialogForm.FormClosing += (sender, e) =>

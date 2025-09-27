@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Forms.Integration;
 using System.Windows.Forms;
+using Maestro.Wpf.Integrations;
 using vatsys;
 
 namespace Maestro.Plugin;
@@ -11,25 +12,28 @@ public class VatSysForm : BaseForm
 
     bool ForceClosing { get; set; }
 
+    public IWindowHandle WindowHandle { get; }
+
     public void ForceClose()
     {
         ForceClosing = true;
         Close();
     }
 
-    public VatSysForm()
+    public VatSysForm(string title, Func<IWindowHandle, UIElement> childFactory, bool shrinkToContent)
     {
-    }
+        MiddleClickClose = false; // This is on by default. Why...
 
-    public VatSysForm(string title, UIElement child, bool shrinkToContent)
-    {
         Text = title;
+
+        var windowHandle = new WindowHandle(this);
+        var child = childFactory(windowHandle);
 
         var elementHost = new ElementHost();
         if (shrinkToContent)
         {
             // For text wrapping to work correctly, we need to measure with a constraint
-            var maxWidth = 520; // Maximum dialog width
+            var maxWidth = 1000; // Maximum dialog width
             child.Measure(new Size(maxWidth, double.PositiveInfinity));
             child.Arrange(new Rect(child.DesiredSize));
             child.UpdateLayout();

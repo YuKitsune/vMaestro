@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 using MediatR;
 using Serilog;
+using vatsys;
 
 namespace Maestro.Plugin.Infrastructure;
 
@@ -20,7 +20,7 @@ public class AsyncNotificationPublisher : INotificationPublisher, IAsyncDisposab
             SingleReader = true,
             SingleWriter = false
         });
-        
+
         _cancellationTokenSource = new CancellationTokenSource();
         _processTask = ProcessNotificationsAsync(_cancellationTokenSource.Token);
     }
@@ -34,8 +34,6 @@ public class AsyncNotificationPublisher : INotificationPublisher, IAsyncDisposab
         await _channel.Writer.WriteAsync(
             new NotificationWorkItem(handlerExecutors.ToArray(), notification),
             cancellationToken);
-        _logger.Debug("{NotificationType} published",
-            notification.GetType());
     }
 
     private async Task ProcessNotificationsAsync(CancellationToken cancellationToken)
@@ -46,13 +44,7 @@ public class AsyncNotificationPublisher : INotificationPublisher, IAsyncDisposab
             {
                 foreach (var notificationHandlerExecutor in workItem.Handlers)
                 {
-                    var sw = new Stopwatch();
-                    sw.Start();
                     await notificationHandlerExecutor.HandlerCallback(workItem.Notification, cancellationToken);
-                    _logger.Debug("{HandlerType} handled {NotificationType} in {ElapsedMilliseconds}ms",
-                        notificationHandlerExecutor.HandlerInstance.GetType(),
-                        workItem.Notification.GetType(),
-                        sw.Elapsed);
                 }
             }
             catch (OperationCanceledException)
@@ -63,6 +55,7 @@ public class AsyncNotificationPublisher : INotificationPublisher, IAsyncDisposab
             {
                 // Log error but continue processing other notifications
                 _logger.Error(exception, "Failed to process notification {NotificationType}", workItem.Notification.GetType());
+                Errors.Add(exception, Plugin.Name);
             }
         }
     }

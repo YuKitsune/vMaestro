@@ -9,9 +9,9 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:SlotViewModel}"
              mc:Ignorable="d"
-             Width="300"
-             d:DesignHeight="100"
-             Padding="4">
+             Width="260"
+             Height="100"
+             Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -37,10 +37,10 @@
             <RowDefinition Height="32"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Start slot at:"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Start slot at"/>
         <controls:TimeControl Grid.Row="0" Grid.Column="1" Time="{Binding StartTime}"/>
 
-        <TextBlock Grid.Row="1" Grid.Column="0" Text="End slot at:"/>
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="End slot at"/>
         <controls:TimeControl Grid.Row="1" Grid.Column="1" Time="{Binding EndTime}"/>
 
         <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">

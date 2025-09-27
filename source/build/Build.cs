@@ -1,14 +1,12 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Win32;
 using Nuke.Common;
 using Nuke.Common.IO;
-using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
-using Octokit;
+using Nuke.Common.Tools.ILRepack;
 using Serilog;
 
 [SupportedOSPlatform("Windows")]
@@ -25,15 +23,22 @@ class Build : NukeBuild
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
+    [Parameter("Merges all dependencies into a single assembly", Name = "repack")]
+    bool ShouldRepack = false;
+
     [GitVersion]
     readonly GitVersion GitVersion;
 
     const string ReleasePluginName = "MaestroPlugin";
     const string DebugPluginName = "MaestroPlugin - Debug";
+    const string PluginAssemblyFileName = "Maestro.Plugin.dll";
+
     string PluginName => Configuration == Configuration.Debug ? DebugPluginName : ReleasePluginName;
 
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
-    AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build" / PluginName;
+    AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
+    AbsolutePath RepackDirectory => TemporaryDirectory / "repack";
+    AbsolutePath PluginAssembliesPath => ShouldRepack ? RepackDirectory : BuildOutputDirectory;
     AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
     AbsolutePath PackageDirectory => TemporaryDirectory / "package";
 
@@ -44,7 +49,6 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var version = GetSemanticVersion();
-
             Log.Information(
                 "Building version {Version} with configuration {Configuration} to {OutputDirectory}",
                 version,
@@ -59,6 +63,26 @@ class Build : NukeBuild
                 .SetAssemblyVersion(GitVersion.MajorMinorPatch)
                 .SetFileVersion(GitVersion.MajorMinorPatch)
                 .SetInformationalVersion(version));
+        });
+
+    Target Repack => _ => _
+        .DependsOn(Compile)
+        .OnlyWhenStatic(() => ShouldRepack)
+        .Executes(() =>
+        {
+            // Get all DLLs in the build output directory
+            var allDlls = BuildOutputDirectory.GlobFiles("*.dll");
+
+            // BUG: MVVM Toolkit cannot be merged because WPF needs to load it from disk apparently
+            // Consider removing the dependency if possible
+
+            var repackAssemblyPath = RepackDirectory / PluginAssemblyFileName;
+
+            Log.Information("Merging {Count} assemblies into {RepackPath}", allDlls.Count, repackAssemblyPath);
+            ILRepackTasks.ILRepack(s => s
+                .SetAssemblies(allDlls.Select(dll => dll.ToString()))
+                .SetOutput(repackAssemblyPath)
+                .SetLib(BuildOutputDirectory));
         });
 
     Target Uninstall => _ => _
@@ -83,15 +107,26 @@ class Build : NukeBuild
         .Requires(() => ProfileName)
         .DependsOn(Compile)
         .DependsOn(Uninstall)
+        .DependsOn(Repack)
         .Executes(() =>
         {
             var pluginsDirectory = GetVatSysPluginsDirectory(ProfileName);
             Log.Information("Installing plugin to {TargetDirectory}", pluginsDirectory);
 
-            pluginsDirectory.CreateOrCleanDirectory();
-            BuildOutputDirectory.CopyToDirectory(pluginsDirectory, ExistsPolicy.MergeAndOverwrite);
-            Log.Information("Plugin installed to {PluginsDirectory}", pluginsDirectory);
+            if (!pluginsDirectory.Exists())
+                pluginsDirectory.CreateDirectory();
 
+            // Copy plugin assemblies
+            var maestroPluginDirectory = pluginsDirectory / PluginName;
+            maestroPluginDirectory.CreateOrCleanDirectory();
+            foreach (var absolutePath in PluginAssembliesPath.GetFiles())
+            {
+                absolutePath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
+            }
+
+            Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
+
+            // Copy config to profile
             var configFile = RootDirectory / "Maestro.json";
             var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             var profileDirectory = Path.Combine(documentsPath, "vatSys Files", "Profiles", ProfileName);
@@ -101,20 +136,34 @@ class Build : NukeBuild
 
     Target Package => _ => _
         .DependsOn(Compile)
+        .DependsOn(Repack)
         .Requires(() => Configuration == Configuration.Release)
         .Executes(() =>
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
+            var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
             var readmeFile = RootDirectory / "README.md";
             var configFile = RootDirectory / "Maestro.json";
             // var changelogFile = RootDirectory / "CHANGELOG.md";
 
             PackageDirectory.CreateOrCleanDirectory();
-            BuildOutputDirectory.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+
+            // Copy plugin assemblies
+            var pluginAssembliesDirectory = PackageDirectory / PluginName;
+            pluginAssembliesDirectory.CreateOrCleanDirectory();
+            foreach (var absolutePath in PluginAssembliesPath.GetFiles())
+            {
+                absolutePath.CopyToDirectory(pluginAssembliesDirectory, ExistsPolicy.MergeAndOverwrite);
+            }
+
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             readmeFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             // changelogFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+
+            if (ZipPath.FileExists())
+                ZipPath.DeleteFile();
 
             Log.Information("Packaging {OutputDirectory} to {ZipPath}", PackageDirectory, ZipPath);
             PackageDirectory.ZipTo(ZipPath);

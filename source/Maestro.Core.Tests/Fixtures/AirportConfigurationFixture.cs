@@ -2,6 +2,7 @@
 using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
+using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
 
 [assembly: AssemblyFixture(typeof(AirportConfigurationFixture))]
 
@@ -9,6 +10,7 @@ namespace Maestro.Core.Tests.Fixtures;
 
 public class AirportConfigurationFixture
 {
+    public TimeSpan AcceptanceRate => TimeSpan.FromSeconds(180);
     public AirportConfiguration Instance =>
         new()
         {
@@ -19,7 +21,7 @@ public class AirportConfigurationFixture
                 new RunwayConfiguration
                 {
                     Identifier = "34L",
-                    LandingRateSeconds = 180,
+                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
                     Preferences = new RunwayPreferences
                     {
                         FeederFixes = ["RIVET", "WELSH"],
@@ -29,7 +31,7 @@ public class AirportConfigurationFixture
                 new RunwayConfiguration
                 {
                     Identifier = "34R",
-                    LandingRateSeconds = 180,
+                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
                     Preferences = new RunwayPreferences
                     {
                         FeederFixes = ["BOREE", "YAKKA", "MARLN"]
@@ -38,7 +40,7 @@ public class AirportConfigurationFixture
             ],
             RunwayModes =
             [
-                new RunwayMode
+                new RunwayModeConfiguration
                 {
                     Identifier = "34IVA",
                     Runways =
@@ -46,12 +48,12 @@ public class AirportConfigurationFixture
                         new RunwayConfiguration
                         {
                             Identifier = "34L",
-                            LandingRateSeconds = 180
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         },
                         new RunwayConfiguration
                         {
                             Identifier = "34R",
-                            LandingRateSeconds = 180
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         }
                     ]
                 }
@@ -92,6 +94,7 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "WELSH"],
+            PreferredRunways = [],
             DepartureAirports = ["YSCB"]
         };
 }

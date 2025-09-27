@@ -76,9 +76,8 @@
                     VerticalAlignment="Center"
                     TextWrapping="Wrap"
                     HorizontalAlignment="Center"
-                    Style="{StaticResource GenericTextStyle}">
-                        FLOW
-                </TextBlock>
+                    Style="{StaticResource GenericTextStyle}"
+                    Text="{Binding Status}"/>
 
                 <controls:BeveledLine Grid.Column="1" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
 
@@ -142,7 +141,7 @@
                     Orientation="Vertical" />
 
                 <!-- Setup Button -->
-                <Button Grid.Column="6" Content="SETUP" IsEnabled="False" />
+                <Button Grid.Column="6" Content="SETUP" Command="{Binding OpenConnectionWindowCommand}" />
             </Grid>
 
         </controls:BeveledBorder>

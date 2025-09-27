@@ -1,7 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
@@ -14,19 +14,22 @@ namespace Maestro.Plugin.Handlers;
 public class OpenTerminalConfigurationWindowRequestHandler(
     WindowManager windowManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    ISequenceProvider sequenceProvider,
+    ISessionManager sessionManager,
     IMediator mediator,
     IClock clock,
     IErrorReporter errorReporter)
     : IRequestHandler<OpenTerminalConfigurationRequest>
 {
-    public Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
+    public async Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
     {
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == request.AirportIdentifier);
-        var sequence = sequenceProvider.GetReadOnlySequence(request.AirportIdentifier);
+
+        var sequence = lockedSession.Session.Sequence;
         var runwayModes = airportConfiguration.RunwayModes
-            .Select(r => r.ToMessage())
+            .Select(r => new RunwayModeViewModel(r))
             .ToArray();
 
         windowManager.FocusOrCreateWindow(
@@ -34,19 +37,21 @@ public class OpenTerminalConfigurationWindowRequestHandler(
             "TMA Configuration",
             windowHandle =>
             {
-                var lastLandingTime = sequence.LastLandingTimeForCurrentMode == default
-                    ? clock.UtcNow()
-                    : sequence.LastLandingTimeForCurrentMode;
+                var sequenceMessage = sequence.ToMessage();
 
-                var firstLandingTime = sequence.FirstLandingTimeForNextMode == default
+                var lastLandingTime = sequenceMessage.LastLandingTimeForCurrentMode == default
+                    ? clock.UtcNow()
+                    : sequenceMessage.LastLandingTimeForCurrentMode;
+
+                var firstLandingTime = sequenceMessage.FirstLandingTimeForNextMode == default
                     ? clock.UtcNow()
                     : lastLandingTime.AddMinutes(5); // Make configurable
 
                 var viewModel = new TerminalConfigurationViewModel(
                     request.AirportIdentifier,
                     runwayModes,
-                    sequence.CurrentRunwayMode,
-                    sequence.NextRunwayMode,
+                    new RunwayModeViewModel(sequenceMessage.CurrentRunwayMode),
+                    sequenceMessage.NextRunwayMode is not null ? new RunwayModeViewModel(sequenceMessage.NextRunwayMode) : null,
                     lastLandingTime,
                     firstLandingTime,
                     mediator,
@@ -56,7 +61,5 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 
                 return new TerminalConfigurationView(viewModel);
             });
-
-        return Task.CompletedTask;
     }
 }

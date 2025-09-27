@@ -1,36 +1,42 @@
-using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
-using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class MakeStableRequestHandler(ISequenceProvider sequenceProvider, IClock clock, IScheduler scheduler, IMediator mediator, ILogger logger)
+// TODO: Test cases
+// - Unstable flight becomes stable
+// - Flights in other modes are ignored
+// - Flight does not become unstable when manually stablised
+
+public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clock, IMediator mediator)
     : IRequestHandler<MakeStableRequest>
 {
     public async Task Handle(MakeStableRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSequence = await sequenceProvider.GetSequence(request.AirportIdentifier, cancellationToken);
-
-        var flight = lockedSequence.Sequence.FindTrackedFlight(request.Callsign);
-        if (flight == null)
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
+            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
+
+        var sequence = lockedSession.Session.Sequence;
+        var flight = sequence.FindTrackedFlight(request.Callsign);
+        if (flight is null)
+            return;
 
         if (flight.State is not State.Unstable)
             return;
 
         flight.SetState(State.Stable, clock);
-        scheduler.Schedule(lockedSequence.Sequence);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
-                lockedSequence.Sequence.AirportIdentifier,
-                lockedSequence.Sequence.ToMessage()),
+                sequence.AirportIdentifier,
+                sequence.ToMessage()),
             cancellationToken);
     }
 }

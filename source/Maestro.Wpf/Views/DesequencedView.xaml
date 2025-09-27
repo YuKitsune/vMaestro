@@ -9,8 +9,8 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:DesequencedViewModel}"
              mc:Ignorable="d"
-             Width="150"
-             Height="100">
+             Width="220"
+             Height="240">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -48,7 +48,7 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <ListBox
@@ -104,8 +104,9 @@
         </ListBox>
 
         <StackPanel Grid.Column="1" Orientation="Vertical">
-            <Button Content="Resume" Command="{Binding ResumeCommand}" CommandParameter="{Binding ElementName=CallsignList, Path=SelectedItems}"/>
+            <Button Content="Resequence" Command="{Binding ResumeCommand}" CommandParameter="{Binding ElementName=CallsignList, Path=SelectedItems}"/>
             <Button Content="Remove" Command="{Binding RemoveCommand}" CommandParameter="{Binding ElementName=CallsignList, Path=SelectedItems}"/>
+            <Button Content="Close" Command="{Binding CloseCommand}" />
         </StackPanel>
     </Grid>
 </UserControl>

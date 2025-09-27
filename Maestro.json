@@ -1,14 +1,44 @@
 {
   "Logging": {
-    "LogLevel": "Debug",
+    "LogLevel": "Information",
     "OutputDirectory": "MaestroLogs",
     "MaxFileAgeDays": 7
+  },
+  "Server": {
+    "Uri": "https://maestro.eoinmotherway.dev/hub",
+    "Partitions": ["VATSIM", "SweatBox-1", "SweatBox-2"],
+    "Permissions": {
+      "ChangeTerminalConfiguration": ["Flow"],
+      "ChangeLandingRates": ["Flow"],
+      "MoveFlight": ["Approach", "Flow"],
+      "ChangeFeederFixEstimate": ["Enroute", "Flow"],
+      "ManageSlots": ["Flow"],
+      "InsertOvershoot": ["Approach", "Flow"],
+      "InsertDeparture": ["Flow"],
+      "InsertDummy": ["Flow"],
+      "MakePending": ["Enroute", "Approach", "Flow"],
+      "ChangeRunway": ["Enroute", "Approach", "Flow"],
+      "ManualDelay": ["Enroute", "Approach", "Flow"],
+      "MakeStable": ["Enroute", "Flow"],
+      "Recompute": ["Enroute", "Flow"],
+      "Desequence": ["Enroute", "Approach", "Flow"],
+      "Resequence": ["Flow"],
+      "RemoveFlight": ["Enroute", "Approach", "Flow"],
+      "Coordination": ["Enroute", "Approach", "Flow"]
+    }
   },
   "Airports": [
     {
       "Identifier": "YSSY",
       "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
+      "PreferredRunways": {
+        "RIVET": ["34L", "16R"],
+        "WELSH": ["34R", "16L"],
+        "BOREE": ["34R", "16L"],
+        "YAKKA": ["34R", "16L"],
+        "MARLN": ["34R", "16L"]
+      },
       "Runways": [
         { 
           "Identifier": "16L",
@@ -301,24 +331,17 @@
           ]
         },
         {
-          "Identifier": "LAHSO",
-          "Runways": [
-            { "Identifier": "34", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]},
-            { "Identifier": "27", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "34", "SeparationSeconds": 60}] }
-          ]
-        },
-        {
           "Identifier": "34/27",
           "Runways": [
-            { "Identifier": "34", "LandingRateSeconds": 180 },
-            { "Identifier": "27", "LandingRateSeconds": 180 }
+            { "Identifier": "34", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  },
+            { "Identifier": "27", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  }
           ]
         },
         {
           "Identifier": "34/09",
           "Runways": [
-            { "Identifier": "34", "LandingRateSeconds": 180 },
-            { "Identifier": "09", "LandingRateSeconds": 180 }
+            { "Identifier": "34", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  },
+            { "Identifier": "09", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  }
           ]
         },
         {

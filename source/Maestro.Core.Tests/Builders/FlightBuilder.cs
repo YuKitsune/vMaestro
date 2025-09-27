@@ -5,19 +5,20 @@ namespace Maestro.Core.Tests.Builders;
 public class FlightBuilder(string callsign)
 {
     string _aircraftType = "B738";
+    AircraftCategory _aircraftCategory = AircraftCategory.Jet;
     WakeCategory _wakeCategory = WakeCategory.Medium;
     string _origin = "YMML";
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
-    DateTimeOffset estimatedTimeOfDeparture = DateTimeOffset.Now;
+    DateTimeOffset estimatedTimeOfDeparture = default;
     TimeSpan? _estimatedFlightTime;
     DateTimeOffset activationTime = DateTimeOffset.Now.AddHours(-1);
-    DateTimeOffset feederFixEstimate = DateTimeOffset.Now;
+    DateTimeOffset feederFixEstimate = default;
     bool manualFeederFixEstimate = false;
     DateTimeOffset feederFixTime = default;
     DateTimeOffset? passedFeederFix = null;
 
-    DateTimeOffset landingEstimate = DateTimeOffset.Now;
+    DateTimeOffset landingEstimate = default;
     DateTimeOffset landingTime = default;
     bool manualLandingTime = false;
 
@@ -30,7 +31,7 @@ public class FlightBuilder(string callsign)
 
     State _state = State.Unstable;
 
-    DateTimeOffset _lastSeen = DateTimeOffset.Now;
+    DateTimeOffset _lastSeen = default;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
     {
@@ -44,6 +45,18 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithAircraftCategory(AircraftCategory aircraftCategory)
+    {
+        _aircraftCategory = aircraftCategory;
+        return this;
+    }
+
+    public FlightBuilder WithWakeCategory(WakeCategory wakeCategory)
+    {
+        _wakeCategory = wakeCategory;
+        return this;
+    }
+
     public FlightBuilder WithFeederFix(string? feederFixIdentifier)
     {
         _feederFixIdentifier = feederFixIdentifier ?? string.Empty;
@@ -54,6 +67,14 @@ public class FlightBuilder(string callsign)
     {
         feederFixEstimate = estimate;
         manualFeederFixEstimate = manual;
+        return this;
+    }
+
+    public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate, TimeSpan arrivalInterval, bool manual = false)
+    {
+        feederFixEstimate = estimate;
+        manualFeederFixEstimate = manual;
+        landingEstimate = estimate + arrivalInterval;
         return this;
     }
 
@@ -133,10 +154,15 @@ public class FlightBuilder(string callsign)
 
     public Flight Build()
     {
-        var flight = new Flight(callsign, _destination, landingEstimate)
+        var flight = new Flight(
+            callsign,
+            _destination,
+            landingEstimate,
+            activationTime,
+            _aircraftType,
+            _aircraftCategory,
+            _wakeCategory)
         {
-            AircraftType = _aircraftType,
-            WakeCategory = _wakeCategory,
             OriginIdentifier = _origin,
             EstimatedDepartureTime = estimatedTimeOfDeparture,
             EstimatedTimeEnroute = _estimatedFlightTime,
@@ -170,6 +196,8 @@ public class FlightBuilder(string callsign)
             new FixEstimate(_feederFixIdentifier, feederFixEstimate, passedFeederFix),
             new FixEstimate(_destination, landingEstimate)
         ];
+
+        flight.ResetInitialEstimates();
 
         return flight;
     }

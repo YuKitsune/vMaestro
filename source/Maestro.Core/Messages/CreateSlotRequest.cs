@@ -2,4 +2,9 @@
 
 namespace Maestro.Core.Messages;
 
-public record CreateSlotRequest(string AirportIdentifier, DateTimeOffset StartTime, DateTimeOffset EndTime, string[] RunwayIdentifiers) : IRequest;
+public record CreateSlotRequest(
+    string AirportIdentifier,
+    DateTimeOffset StartTime,
+    DateTimeOffset EndTime,
+    string[] RunwayIdentifiers)
+    : IRequest;

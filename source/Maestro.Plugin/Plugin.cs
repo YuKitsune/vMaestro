@@ -4,12 +4,15 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Xml.Linq;
+using Microsoft.Win32;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
@@ -30,15 +33,70 @@ namespace Maestro.Plugin;
 // TODO: Need to improve the boundaries between DTOs, domain models, and view models.
 //  - Domain models and DTOs are leaking into the frontend
 
-// TODO: Hide some functions from different views (e.g: APP only and ENR only)
+// TODO: Encapsulate UI related commands into a separate service rather than using the Mediator
+
+// TODO: Smaller messages
+//  - Remove SequenceUpdatedNotification, send smaller messages as needed
+
+// TODO: Clean up DTOs
+//  - Rename them to DTOs
+//  - Move into a Contracts project
+
+// TODO: Information messages
+//  - Show information messages for important events (e.g. pending flight activated, desequenced, runway mode changes etc.)
+
+// TODO: Flight insertion
+//  - Add options to Pending DTO (i.e. departure time or arrival time)
+//  - Allow insertion on the feeder view
+//  - Different handlers for pending, overshoot, and dummy flights
+
+// TODO: Windowing
+//  - WPF's "*" size is incompatible with WinForms AutoSizing.
+
+// Bugs from MRM:
+// - Windows don't resize when the content changes.
+// - Recompute behavior is unpredictable. Need to revisit.
+// - Flights sometimes get a negative total delay, even after stabling.
+// - Insert flight window doesn't work.
+// - + symbol appears when no delay is remaining. Is this intended?
+// - System estimates are very inaccurate, they rely on TAS input by the pilot. Hybrid BRL + system estimate is confusing. (Pick one?)
+// - Connection failures are not gracefully handled.
+
+// AIS Notes:
+// - When a flight takes off from a non-departure airport, they jump in front of the sequence despite being really far away
+//    - Need to model close airports as well as departure airports I think
+// - YMML PORTS arrival not modeled correctly
+// - YMML needs different state thresholds
+
+// SOPS Notes:
+// - Document troubleshooting routes i.e. TANTA LEECE TANTA making the estimates all wrong. Re-route then recompute to fix.
+// - Procedure: Update ETA_FF before issuing flow actions.
+// - Procedure: Ask pilots for revised TAS speeds if you suspect they are inaccurate.
+// - Procedure: Ask pilots for winds at 10k and 6k ft to update Maestro winds.
+
+// TODO: Estimates and Arrivals
+// - Store processed arrival in Flight entity
+// - Set landing estimate using ETA_FF + arrival TTG
+// - Set STA_FF using STA - arrival TTG
+// - Remove BRL method from estimates
+
+// TODO: Landing estimate after STA_FF
+// - ETA should be ETA_FF + arrival TTG if ATO_FF is not set
+// - ETA should be ATO_FF + arrival TTG if ATO_FF is set (this value won't change after passing FF, this is accurate)
+
+// TODO: Custom label configurations
+// - Allow custom label configurations to be saved per airport and view
+
+// TODO: TMA Delay
+// - Separate TMA delay from enroute delay
 
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
 {
 #if DEBUG
-    const string Name = "Maestro - Debug";
+    public const string Name = "Maestro - Debug";
 #else
-    const string Name = "Maestro";
+    public const string Name = "Maestro";
 #endif
 
     string IPlugin.Name => Name;
@@ -50,12 +108,16 @@ public class Plugin : IPlugin
     {
         try
         {
+            EnsureDpiAwareness();
             ConfigureServices();
             ConfigureTheme();
             AddToolbarItem();
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
+
+            Network.Connected += NetworkOnConnected;
+            Network.Disconnected += NetworkOnDisconnected;
 
             var executingAssembly = Assembly.GetExecutingAssembly();
             var version = executingAssembly
@@ -93,7 +155,7 @@ public class Plugin : IPlugin
         Ioc.Default.ConfigureServices(
             new ServiceCollection()
                 .AddConfiguration(configuration)
-                .AddSingleton<IServerConnection, StubServerConnection>() // TODO
+                .AddSingleton(configuration.Server)
                 .AddViewModels()
                 .AddMaestro()
                 .AddMediatR(c =>
@@ -112,7 +174,6 @@ public class Plugin : IPlugin
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(new ErrorReporter(Name))
                 .AddSingleton<WindowManager>()
-                .AddSingleton(typeof(INotificationStream<>), typeof(NotificationStream<>))
                 .BuildServiceProvider());
     }
 
@@ -128,8 +189,8 @@ public class Plugin : IPlugin
 
         var configurationJson = File.ReadAllText(configFilePath);
         var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
-        // TODO: Reloadable configuration would be cool
 
+        // TODO: Reloadable configuration would be cool
         return configuration;
     }
 
@@ -144,6 +205,8 @@ public class Plugin : IPlugin
                 outputTemplate: "{Timestamp:u} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .MinimumLevel.Is(loggingConfiguration.LogLevel)
             .CreateLogger();
+
+        Log.Logger = logger;
 
         return logger;
     }
@@ -227,11 +290,11 @@ public class Plugin : IPlugin
         try
         {
             var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
-            var sequenceProvider = Ioc.Default.GetRequiredService<ISequenceProvider>();
+            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
             var windowManager = Ioc.Default.GetRequiredService<WindowManager>();
             var configurations = airportConfigurationProvider
                 .GetAirportConfigurations()
-                .Where(a => !sequenceProvider.ActiveSequences.Contains(a.Identifier))
+                .Where(a => !sessionManager.HasSessionFor(a.Identifier))
                 .ToArray();
 
             if (configurations.Length == 0)
@@ -262,6 +325,52 @@ public class Plugin : IPlugin
         catch (Exception ex)
         {
             _logger?.Error(ex, "An error occurred while opening the Setup window.");
+            Errors.Add(ex, Name);
+        }
+    }
+
+    void NetworkOnConnected(object sender, EventArgs e)
+    {
+        try
+        {
+            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
+            foreach (var airportIdentifier in sessionManager.ActiveSessions)
+            {
+                try
+                {
+                    _mediator?.Send(
+                        new StartSessionRequest(airportIdentifier, Network.Callsign),
+                        CancellationToken.None);
+                }
+                catch
+                {
+                    // Just play it safe and destroy the session if starting it fails
+                    _mediator?.Send(
+                        new DestroySessionRequest(airportIdentifier),
+                        CancellationToken.None);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.Error(ex, "An error occurred while handling Network.Connected.");
+            Errors.Add(ex, Name);
+        }
+    }
+
+    void NetworkOnDisconnected(object sender, EventArgs e)
+    {
+        try
+        {
+            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
+            foreach (var airportIdentifier in sessionManager.ActiveSessions)
+            {
+                _mediator?.Send(new StopSessionRequest(airportIdentifier), CancellationToken.None);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.Error(ex, "An error occurred while handling Network.Disconnected.");
             Errors.Add(ex, Name);
         }
     }
@@ -300,14 +409,13 @@ public class Plugin : IPlugin
 
     void PublishFlightUpdatedEvent(FDP2.FDR updated)
     {
-        var wake = updated.AircraftWake switch
-        {
-            "J" => WakeCategory.SuperHeavy,
-            "H" => WakeCategory.Heavy,
-            "M" => WakeCategory.Medium,
-            "L" => WakeCategory.Light,
-            _ => WakeCategory.Heavy
-        };
+        var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
+        if (!isActivated)
+            return;
+
+        // Estimates have not been calculated yet
+        if (!updated.ESTed)
+            return;
 
         var estimates = updated.ParsedRoute
             .Select((s, i) => new FixEstimate(
@@ -317,10 +425,6 @@ public class Plugin : IPlugin
                     ? ToDateTimeOffset(s.ATO) // BUG: If a flight has passed FF before we connect to the network, this will be MaxValue. ATO is unknown.
                     : null))
             .ToArray();
-
-        var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
-        if (!isActivated)
-            return;
 
         FlightPosition? position = null;
         if (updated.CoupledTrack is not null)
@@ -340,9 +444,23 @@ public class Plugin : IPlugin
                 track.OnGround);
         }
 
+        var aircraftCategory = updated.PerformanceData.IsJet
+            ? AircraftCategory.Jet
+            : AircraftCategory.NonJet;
+
+        var wake = updated.AircraftWake switch
+        {
+            "J" => WakeCategory.SuperHeavy,
+            "H" => WakeCategory.Heavy,
+            "M" => WakeCategory.Medium,
+            "L" => WakeCategory.Light,
+            _ => WakeCategory.Heavy
+        };
+
         var notification = new FlightUpdatedNotification(
             updated.Callsign,
             updated.AircraftType,
+            aircraftCategory,
             wake,
             updated.DepAirport,
             updated.DesAirport,
@@ -352,7 +470,7 @@ public class Plugin : IPlugin
             position,
             estimates);
 
-        _mediator?.Publish(notification);
+        _mediator?.Publish(notification, CancellationToken.None);
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
@@ -361,5 +479,74 @@ public class Plugin : IPlugin
             dateTime.Year, dateTime.Month, dateTime.Day,
             dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond,
             TimeSpan.Zero);
+    }
+
+    void EnsureDpiAwareness()
+    {
+        try
+        {
+            var vatSysPath = GetVatSysExecutablePath();
+            if (vatSysPath == null)
+                return;
+
+            const string registryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
+            const string dpiValue = "DPIUNAWARE";
+
+            using var key = Registry.CurrentUser.OpenSubKey(registryPath, writable: false);
+            var existingValue = key?.GetValue(vatSysPath) as string;
+
+            // If already set, exit early
+            if (existingValue != null && existingValue.Contains(dpiValue))
+                return;
+
+            // Set the registry key
+            using var writableKey = Registry.CurrentUser.OpenSubKey(registryPath, writable: true)
+                ?? Registry.CurrentUser.CreateSubKey(registryPath);
+
+            writableKey.SetValue(vatSysPath, dpiValue, RegistryValueKind.String);
+
+            // Restart vatSys to apply the DPI setting
+            RestartVatSys();
+        }
+        catch (Exception ex)
+        {
+            Errors.Add(ex, Name);
+        }
+    }
+
+    void RestartVatSys()
+    {
+        try
+        {
+            var vatSysPath = GetVatSysExecutablePath();
+            if (vatSysPath != null)
+            {
+                System.Diagnostics.Process.Start(vatSysPath);
+                Environment.Exit(0);
+            }
+        }
+        catch (Exception ex)
+        {
+            Errors.Add(ex, Name);
+        }
+    }
+
+    string? GetVatSysExecutablePath()
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Sawbe\vatSys");
+            var installPath = key?.GetValue("Path") as string;
+
+            if (string.IsNullOrEmpty(installPath))
+                return null;
+
+            var exePath = Path.Combine(installPath, "bin", "vatSys.exe");
+            return File.Exists(exePath) ? exePath : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

@@ -12,28 +12,43 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture)
+public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
     [Fact]
     public async Task WhenChangingRunway_TheRunwayIsChanged()
     {
+        var now = clockFixture.Instance.UtcNow();
+
         // Arrange
-        var flight = new FlightBuilder("QFA1")
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(11))
+            .WithLandingTime(now.AddMinutes(11))
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithFlight(flight)
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34R")
             .Build();
 
-        var sequenceProvider = new MockSequenceProvider(sequence);
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .Build(); // Uses default runway mode with both 34L and 34R
 
-        var scheduler = Substitute.For<IScheduler>();
+        sequence.Insert(flight1, flight1.LandingEstimate);
+        sequence.Insert(flight2, flight2.LandingEstimate);
+
+        // Verify initial runway assignments and ordering
+        flight1.AssignedRunwayIdentifier.ShouldBe("34L");
+        flight2.AssignedRunwayIdentifier.ShouldBe("34R");
+        sequence.NumberForRunway(flight1).ShouldBe(1, "QFA1 should be #1 on 34L initially");
+        sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R initially");
+
+        var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            sequenceProvider,
-            scheduler,
+            sessionManager,
             Substitute.For<IClock>(),
             mediator,
             Substitute.For<ILogger>());
@@ -44,9 +59,14 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.AssignedRunwayIdentifier.ShouldBe("34R");
-        flight.RunwayManuallyAssigned.ShouldBe(true);
+        flight1.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
+        flight1.RunwayManuallyAssigned.ShouldBe(true, "runway should be marked as manually assigned");
 
-        scheduler.Received(1).Recompute(flight, sequence);
+        flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
+        flight1.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
+
+        // Verify QFA1 is now scheduled on 34R and positioned appropriately
+        sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R");
+        sequence.NumberForRunway(flight1).ShouldBe(2, "QFA1 should be #2 on 34R after moving to 34R");
     }
 }

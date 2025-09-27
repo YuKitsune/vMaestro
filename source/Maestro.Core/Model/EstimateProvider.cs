@@ -11,7 +11,6 @@ public interface IEstimateProvider
 }
 
 public class EstimateProvider(
-    IPerformanceLookup performanceLookup,
     IArrivalLookup arrivalLookup,
     IFixLookup fixLookup,
     IClock clock)
@@ -54,11 +53,10 @@ public class EstimateProvider(
         // We need ETA_FF in order to calculate the landing time using intervals.
         // If we don't have those, defer to the system estimate.
         if (flight.FeederFixIdentifier is null ||
-            flight.EstimatedFeederFixTime is null)
+            flight.FeederFixEstimate is null)
             return systemEstimate;
 
-        var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (aircraftPerformance is null)
+        if (flight.AssignedRunwayIdentifier is null)
             return systemEstimate;
 
         var intervalToRunway = arrivalLookup.GetArrivalInterval(
@@ -66,20 +64,19 @@ public class EstimateProvider(
             flight.FeederFixIdentifier,
             flight.AssignedArrivalIdentifier,
             flight.AssignedRunwayIdentifier,
-            aircraftPerformance);
+            flight.AircraftType,
+            flight.AircraftCategory);
         if (intervalToRunway is null)
             return systemEstimate;
 
+        // TODO: How do we actually calculate the landing time once passed the FF?
+
         // If the flight has passed the feeder fix but vatSys didn't see it, we'll get a MaxValue for the ATO_FF
         // In this case, defer to the system estimate
-        if (flight.HasPassedFeederFix && flight.ActualFeederFixTime == DateTimeOffset.MaxValue)
+        if (flight.HasPassedFeederFix || flight.ActualFeederFixTime == DateTimeOffset.MaxValue)
             return systemEstimate;
 
-        var feederFixTime = flight.HasPassedFeederFix
-            ? flight.ActualFeederFixTime // Prefer ATO_FF if available
-            : flight.EstimatedFeederFixTime; // Use ETA_FF if not passed FF
-
-        var landingEstimateFromInterval = feederFixTime?.Add(intervalToRunway.Value);
+        var landingEstimateFromInterval = flight.FeederFixEstimate?.Add(intervalToRunway.Value);
         return landingEstimateFromInterval;
 
         // TODO: Calculate landing estimate based on flight trajectory
