@@ -3,6 +3,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
@@ -18,7 +19,7 @@ public record NotificationContextWrapper<T>(string ConnectionId, T Notification)
 // - When peers exist, they are are notified
 // - When peers exist, and a flow controller joins, they become the master, and the other master is demoted
 
-public class ConnectRequestHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubContext hubContext, ILogger logger)
+public class ConnectRequestHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubContext<MaestroHub> hubContext, ILogger logger)
     : IRequestHandler<RequestContextWrapper<ConnectRequest>>
 {
     public async Task Handle(
@@ -36,30 +37,32 @@ public class ConnectRequestHandler(IConnectionManager connectionManager, Sequenc
             request.Callsign,
             request.Role);
 
-        logger.LogInformation("{Connection} tracked", connection);
+        logger.Information("{Connection} tracked", connection);
 
         if (request.Role == Role.Flow)
         {
             // Demote the current master
-            var currentMaster = peers.Single(c => c.IsMaster);
+            var currentMaster = peers.SingleOrDefault(c => c.IsMaster);
+            if (currentMaster is not null)
+            {
+                logger.Information("Re-assigning master from {PreviousMaster} to {NewMaster}",
+                    currentMaster, connection);
+                currentMaster.IsMaster = false;
 
-            logger.LogInformation("Re-assigning master from {PreviousMaster} to {NewMaster}",
-                currentMaster, connection);
-
-            currentMaster.IsMaster = false;
-            await hubContext.Clients
-                .Client(connectionId)
-                .SendAsync(
-                    "OwnershipRevoked",
-                    new OwnershipRevokedNotification(request.AirportIdentifier),
-                    cancellationToken);
+                await hubContext.Clients
+                    .Client(connectionId)
+                    .SendAsync(
+                        "OwnershipRevoked",
+                        new OwnershipRevokedNotification(request.AirportIdentifier),
+                        cancellationToken);
+            }
 
             connection.IsMaster = true;
         }
         else if (peers.Length == 0 && connection.Role != Role.Observer)
         {
             // The first connection always becomes the master
-            logger.LogInformation("Assigning {Connection} as master", connection);
+            logger.Information("Assigning {Connection} as master", connection);
             connection.IsMaster = true;
         }
 

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
@@ -8,7 +9,7 @@ namespace Maestro.Server.Handlers;
 // - When the connection is the mater, exception is thrown
 // - Flight updates are relayed to the master
 
-public class FlightUpdatedNotificationHandler(IConnectionManager connectionManager, IHubContext hubContext, ILogger logger)
+public class FlightUpdatedNotificationHandler(IConnectionManager connectionManager, IHubContext<MaestroHub> hubContext, ILogger logger)
     : INotificationHandler<NotificationContextWrapper<FlightUpdatedNotificationHandler>>
 {
     public async Task Handle(NotificationContextWrapper<FlightUpdatedNotificationHandler> wrappedNotification, CancellationToken cancellationToken)
@@ -32,7 +33,7 @@ public class FlightUpdatedNotificationHandler(IConnectionManager connectionManag
             throw new InvalidOperationException("No master found");
         }
 
-        logger.LogInformation("{Connection} relaying flight update to {Master}", connection, master);
+        logger.Information("{Connection} relaying flight update to {Master}", connection, master);
         await hubContext.Clients
             .Client(master.Id)
             .SendAsync("FlightUpdated", notification, cancellationToken);

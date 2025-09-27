@@ -3,6 +3,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
@@ -14,7 +15,7 @@ public record ClientDisconnectedNotification(string ConnectionId) : INotificatio
 // - When master leaves the sequence, and another flow controller exists, the flow controller is promoted
 // - When master leaves the sequence, and no flow controller exists, the next available connection is promoted
 
-public class ClientDisconnectedNotificationHandler(IConnectionManager connectionManager, IHubContext hubContext, ILogger logger)
+public class ClientDisconnectedNotificationHandler(IConnectionManager connectionManager, IHubContext<MaestroHub> hubContext, ILogger logger)
     : INotificationHandler<ClientDisconnectedNotification>
 {
     public async Task Handle(ClientDisconnectedNotification notification, CancellationToken cancellationToken)
@@ -24,7 +25,7 @@ public class ClientDisconnectedNotificationHandler(IConnectionManager connection
             throw new InvalidOperationException($"Connection {notification.ConnectionId} is not tracked");
         }
 
-        logger.LogInformation("{Connection} untracked", connection);
+        logger.Information("{Connection} untracked", connection);
         connectionManager.Remove(connection);
 
         var remainingPeers = connectionManager.GetPeers(connection);
@@ -37,17 +38,20 @@ public class ClientDisconnectedNotificationHandler(IConnectionManager connection
 
             // Master has left, need to re-assign to someone else
             // Prefer the flow controller, otherwise the next available connection
-            var newMaster = eligiblePeers.FirstOrDefault(c => c.Role == Role.Flow) ?? eligiblePeers.First();
-            newMaster.IsMaster = true;
+            var newMaster = eligiblePeers.FirstOrDefault(c => c.Role == Role.Flow) ?? eligiblePeers.FirstOrDefault();
+            if (newMaster is not null)
+            {
+                newMaster.IsMaster = true;
 
-            await hubContext.Clients
-                .Client(newMaster.Id)
-                .SendAsync(
-                    "OwnershipGranted",
-                    new OwnershipGrantedNotification(connection.AirportIdentifier),
-                    cancellationToken);
+                await hubContext.Clients
+                    .Client(newMaster.Id)
+                    .SendAsync(
+                        "OwnershipGranted",
+                        new OwnershipGrantedNotification(connection.AirportIdentifier),
+                        cancellationToken);
 
-            logger.LogInformation("Promoting {Connection} to master", newMaster);
+                logger.Information("Promoting {Connection} to master", newMaster);
+            }
         }
 
         // Broadcast to remaining clients that this client has disconnected

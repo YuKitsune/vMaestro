@@ -1,6 +1,7 @@
 using Maestro.Core.Messages;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
@@ -10,7 +11,7 @@ namespace Maestro.Server.Handlers;
 // - When the client is not the master, exception is thrown
 // - When the sequence is updated, the cache is updated, and all other clients are notified
 
-public class SequenceUpdatedNotificationHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubContext hubContext, ILogger logger)
+public class SequenceUpdatedNotificationHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubContext<MaestroHub> hubContext, ILogger logger)
     : INotificationHandler<NotificationContextWrapper<SequenceUpdatedNotification>>
 {
     public async Task Handle(NotificationContextWrapper<SequenceUpdatedNotification> wrappedNotification, CancellationToken cancellationToken)
@@ -31,7 +32,7 @@ public class SequenceUpdatedNotificationHandler(IConnectionManager connectionMan
             throw new InvalidOperationException("Only the master can update the sequence");
         }
 
-        logger.LogInformation("{Connection} updating sequence", connection);
+        logger.Information("{Connection} updating sequence", connection);
 
         sequenceCache.Set(connection.Partition, notification.AirportIdentifier, notification.Sequence);
 

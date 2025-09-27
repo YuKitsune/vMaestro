@@ -4,24 +4,25 @@ using Maestro.Core.Messages;
 using Maestro.Server.Handlers;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server;
 
-public class MaestroHub(IMediator mediator, ILogger<MaestroHub> logger) : Hub
+public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 {
     public async Task SequenceUpdated(SequenceUpdatedNotification sequenceUpdatedNotification)
     {
-        await mediator.Send(new NotificationContextWrapper<SequenceUpdatedNotification>(Context.ConnectionId, sequenceUpdatedNotification));
+        await mediator.Publish(new NotificationContextWrapper<SequenceUpdatedNotification>(Context.ConnectionId, sequenceUpdatedNotification));
     }
 
     public async Task FlightUpdated(FlightUpdatedNotification flightUpdatedNotification)
     {
-        await mediator.Send(new NotificationContextWrapper<FlightUpdatedNotification>(Context.ConnectionId, flightUpdatedNotification));
+        await mediator.Publish(new NotificationContextWrapper<FlightUpdatedNotification>(Context.ConnectionId, flightUpdatedNotification));
     }
 
     public async Task Information(InformationNotification informationNotification)
     {
-        await mediator.Send(new NotificationContextWrapper<InformationNotification>(Context.ConnectionId, informationNotification));
+        await mediator.Publish(new NotificationContextWrapper<InformationNotification>(Context.ConnectionId, informationNotification));
     }
 
     public async Task<RelayResponse> InsertFlight(InsertFlightRequest request)
@@ -135,7 +136,7 @@ public class MaestroHub(IMediator mediator, ILogger<MaestroHub> logger) : Hub
         var partition = httpContext.Request.Query["partition"].FirstOrDefault();
         if (string.IsNullOrEmpty(partition))
         {
-            logger.LogWarning("{ConnectionId} attempted to connect with an empty partition", Context.ConnectionId);
+            logger.Warning("{ConnectionId} attempted to connect with an empty partition", Context.ConnectionId);
             Context.Abort();
             return;
         }
@@ -143,7 +144,7 @@ public class MaestroHub(IMediator mediator, ILogger<MaestroHub> logger) : Hub
         var airportIdentifier = httpContext.Request.Query["airportIdentifier"].FirstOrDefault();
         if (string.IsNullOrEmpty(airportIdentifier))
         {
-            logger.LogWarning("{ConnectionId} attempted to connect with an empty airport identifier", Context.ConnectionId);
+            logger.Warning("{ConnectionId} attempted to connect with an empty airport identifier", Context.ConnectionId);
             Context.Abort();
             return;
         }
@@ -151,7 +152,7 @@ public class MaestroHub(IMediator mediator, ILogger<MaestroHub> logger) : Hub
         var callsign = httpContext.Request.Query["callsign"].FirstOrDefault();
         if (string.IsNullOrEmpty(callsign))
         {
-            logger.LogWarning("{ConnectionId} attempted to connect with an empty callsign", Context.ConnectionId);
+            logger.Warning("{ConnectionId} attempted to connect with an empty callsign", Context.ConnectionId);
             Context.Abort();
             return;
         }
@@ -159,12 +160,12 @@ public class MaestroHub(IMediator mediator, ILogger<MaestroHub> logger) : Hub
         var roleString = httpContext.Request.Query["role"].FirstOrDefault();
         if (!Enum.TryParse<Role>(roleString, out var role))
         {
-            logger.LogWarning("{ConnectionId} attempted to connect with an invalid role {Role}", Context.ConnectionId, roleString);
+            logger.Warning("{ConnectionId} attempted to connect with an invalid role {Role}", Context.ConnectionId, roleString);
             Context.Abort();
             return;
         }
 
-        logger.LogInformation("{ConnectionId} connected", Context.ConnectionId);
+        logger.Information("{ConnectionId} connected", Context.ConnectionId);
 
         var request = new ConnectRequest(
             partition,
@@ -181,11 +182,11 @@ public class MaestroHub(IMediator mediator, ILogger<MaestroHub> logger) : Hub
     {
         if (exception is not null)
         {
-            logger.LogError(exception, "{ConnectionId} disconnected", Context.ConnectionId);
+            logger.Error(exception, "{ConnectionId} disconnected", Context.ConnectionId);
         }
         else
         {
-            logger.LogInformation("{ConnectionId} disconnected", Context.ConnectionId);
+            logger.Information("{ConnectionId} disconnected", Context.ConnectionId);
         }
 
         await mediator.Publish(new ClientDisconnectedNotification(Context.ConnectionId));
