@@ -26,15 +26,21 @@ public partial class ConnectionViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ConnectButtonText))]
     bool _isConnected;
 
-    public bool CanChangeServer => !IsConnected;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanChangeServer))]
+    [NotifyPropertyChangedFor(nameof(ConnectButtonText))]
+    bool _isReady;
 
-    public string ConnectButtonText => IsConnected ? "Disconnect" : "Connect";
+    public bool CanChangeServer => !IsConnected && !IsReady;
+
+    public string ConnectButtonText => IsConnected || IsReady ? "Disconnect" : "Connect";
 
     public ConnectionViewModel(
         string airportIdentifier,
         ServerConfiguration serverConfiguration,
         string partition,
         bool isConnected,
+        bool isReady,
         IMediator mediator,
         IWindowHandle windowHandle,
         IErrorReporter errorReporter)
@@ -43,6 +49,7 @@ public partial class ConnectionViewModel : ObservableObject
         Servers = serverConfiguration.Partitions;
         SelectedServer = !string.IsNullOrEmpty(partition) ? partition : serverConfiguration.Partitions.First();
         IsConnected = isConnected;
+        IsReady = isReady;
 
         _mediator = mediator;
         _windowHandle = windowHandle;
@@ -54,7 +61,7 @@ public partial class ConnectionViewModel : ObservableObject
     {
         try
         {
-            if (IsConnected)
+            if (IsConnected || IsReady)
             {
                 _mediator.Send(new DisconnectSessionRequest(_airportIdentifier));
             }

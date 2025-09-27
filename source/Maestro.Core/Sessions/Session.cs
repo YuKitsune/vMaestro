@@ -11,6 +11,7 @@ public interface ISession
     Sequence Sequence { get; }
     MaestroConnection? Connection { get; }
     SemaphoreSlim Semaphore { get; }
+    ConnectionInfo? ConnectionInfo { get; }
     bool OwnsSequence { get; }
     Role Role { get; }
     bool IsActive { get; }
@@ -81,8 +82,7 @@ public class Session : ISession, IAsyncDisposable
         var maestroConnection = _maestroConnectionFactory.Create(
             connectionInfo.Partition,
             AirportIdentifier,
-            position,
-            RoleHelper.GetRoleFromCallsign(position));
+            position);
 
         await maestroConnection.Start(cancellationToken);
         Connection = maestroConnection;
@@ -94,6 +94,9 @@ public class Session : ISession, IAsyncDisposable
     {
         if (Connection is not null && Connection.IsConnected)
             await Connection.Stop(cancellationToken);
+
+        Connection = null;
+        ConnectionInfo = null;
 
         // When disconnecting from server, revert to offline mode where all roles can own sequences
         await TakeOwnership(cancellationToken);

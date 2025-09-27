@@ -6,7 +6,7 @@ using MediatR;
 namespace Maestro.Core.Handlers;
 
 public class SessionConnectedNotificationHandler(ISessionManager sessionManager, IPeerTracker peerTracker, IMediator mediator)
-    : INotificationHandler<SessionConnectedNotification>, INotificationHandler<SessionStartedNotification>
+    : INotificationHandler<SessionConnectedNotification>
 {
     public async Task Handle(SessionConnectedNotification notification, CancellationToken cancellationToken)
     {
@@ -15,11 +15,6 @@ public class SessionConnectedNotificationHandler(ISessionManager sessionManager,
             peerTracker.AddPeer(notification.AirportIdentifier, connectedPeer);
         }
 
-        await TryPublishInformationNotification(notification.AirportIdentifier, cancellationToken);
-    }
-
-    public async Task Handle(SessionStartedNotification notification, CancellationToken cancellationToken)
-    {
         await TryPublishInformationNotification(notification.AirportIdentifier, cancellationToken);
     }
 

@@ -16,6 +16,9 @@ public class ConnectSessionRequestHandler(ISessionManager sessionManager, IMedia
             // This will take care of connecting (or re-connecting) to the server if the session is active
             await lockedSession.Session.SetConnectionInfo(new ConnectionInfo(request.Partition), cancellationToken);
 
+            if (!lockedSession.Session.IsActive)
+                await mediator.Publish(new ConnectionReadyNotification(request.AirportIdentifier), cancellationToken);
+
             await mediator.Publish(
                 new SequenceUpdatedNotification(request.AirportIdentifier, lockedSession.Session.Sequence.ToMessage()),
                 cancellationToken);

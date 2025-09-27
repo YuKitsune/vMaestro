@@ -34,20 +34,22 @@ public class OpenConnectionWindowRequestHandler(ISessionManager sessionManager, 
 {
     public Task Handle(OpenConnectionWindowRequest request, CancellationToken cancellationToken)
     {
-        var (partition, isConnected) = GetConnectionStatus(request.AirportIdentifier, cancellationToken).GetAwaiter().GetResult();
+        var (partition, isConnected, isReady) = GetConnectionStatus(request.AirportIdentifier, cancellationToken).GetAwaiter().GetResult();
         windowManager.FocusOrCreateWindow(
             WindowKeys.Connection(request.AirportIdentifier),
             "Setup",
-            windowHandle => new ConnectionView(new ConnectionViewModel(request.AirportIdentifier, serverConfiguration, partition, isConnected, mediator, windowHandle, errorReporter)));
+            windowHandle => new ConnectionView(new ConnectionViewModel(request.AirportIdentifier, serverConfiguration, partition, isConnected, isReady, mediator, windowHandle, errorReporter)));
 
         return Task.CompletedTask;
     }
 
-    async Task<(string, bool)> GetConnectionStatus(string airportIdentifier, CancellationToken cancellationToken)
+    async Task<(string, bool, bool)> GetConnectionStatus(string airportIdentifier, CancellationToken cancellationToken)
     {
         using var lockedSession = await sessionManager.AcquireSession(airportIdentifier, cancellationToken);
-        return lockedSession.Session.IsConnected
-            ? (lockedSession.Session.Connection?.Partition ?? string.Empty, true)
-            : (string.Empty, false);
+        var partition = lockedSession.Session.Connection?.Partition ?? string.Empty;
+        var isConnected = lockedSession.Session.IsConnected;
+        var isReady = lockedSession.Session.ConnectionInfo is not null;
+
+        return (partition, isConnected, isReady);
     }
 }

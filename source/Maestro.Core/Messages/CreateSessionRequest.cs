@@ -10,11 +10,16 @@ public record SessionCreatedNotification(string AirportIdentifier) : INotificati
 public record StartSessionRequest(string AirportIdentifier, string Position) : IRequest;
 public record SessionStartedNotification(string AirportIdentifier, string Position) : INotification;
 
+public record ConnectionReadyNotification(string AirportIdentifier) : INotification;
+public record ConnectionUnreadyNotification(string AirportIdentifier) : INotification;
+
 public record ConnectSessionRequest(string AirportIdentifier, string Partition) : IRequest;
 public record SessionConnectedNotification(string AirportIdentifier, Role Role, IReadOnlyList<PeerInfo> Peers) : INotification;
 
+public record SessionReconnectingNotification(string AirportIdentifier) : INotification;
+
 public record DisconnectSessionRequest(string AirportIdentifier) : IRequest;
-public record SessionDisconnectedNotification(string AirportIdentifier) : INotification;
+public record SessionDisconnectedNotification(string AirportIdentifier, bool IsReady) : INotification;
 
 public record StopSessionRequest(string AirportIdentifier) : IRequest;
 public record SessionStoppedNotification(string AirportIdentifier) : INotification;

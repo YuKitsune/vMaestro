@@ -34,5 +34,12 @@ public class ConnectionInitializedNotificationHandler(ISessionManager sessionMan
                 new SequenceUpdatedNotification(notification.AirportIdentifier, lockedSession.Session.Sequence.ToMessage()),
                 cancellationToken);
         }
+
+        await mediator.Publish(
+            new SessionConnectedNotification(
+                notification.AirportIdentifier,
+                lockedSession.Session.Connection.Role,
+                notification.ConnectedPeers),
+            cancellationToken);
     }
 }

@@ -9,11 +9,26 @@ using MediatR;
 namespace Maestro.Wpf.Handlers;
 
 public class ConnectionNotificationHandler(IPeerTracker peerTracker, ISessionManager sessionManager)
-    : INotificationHandler<SessionConnectedNotification>,
+    : INotificationHandler<ConnectionReadyNotification>,
+        INotificationHandler<ConnectionUnreadyNotification>,
+        INotificationHandler<SessionConnectedNotification>,
+        INotificationHandler<SessionReconnectingNotification>,
         INotificationHandler<SessionDisconnectedNotification>,
         INotificationHandler<PeerConnectedNotification>,
         INotificationHandler<PeerDisconnectedNotification>
 {
+    public Task Handle(ConnectionReadyNotification notification, CancellationToken cancellationToken)
+    {
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "READY"));
+        return Task.CompletedTask;
+    }
+
+    public Task Handle(ConnectionUnreadyNotification notification, CancellationToken cancellationToken)
+    {
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "OFFLINE"));
+        return Task.CompletedTask;
+    }
+
     public Task Handle(SessionConnectedNotification notification, CancellationToken cancellationToken)
     {
         var flowIsOnline = peerTracker.IsFlowControllerOnline(notification.AirportIdentifier);
@@ -21,9 +36,23 @@ public class ConnectionNotificationHandler(IPeerTracker peerTracker, ISessionMan
         return Task.CompletedTask;
     }
 
+    public Task Handle(SessionReconnectingNotification notification, CancellationToken cancellationToken)
+    {
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "RECONN"));
+        return Task.CompletedTask;
+    }
+
     public Task Handle(SessionDisconnectedNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "OFFLINE"));
+        if (notification.IsReady)
+        {
+            WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "READY"));
+        }
+        else
+        {
+            WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "OFFLINE"));
+        }
+
         return Task.CompletedTask;
     }
 

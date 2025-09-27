@@ -4,6 +4,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using MediatR;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace Maestro.Core.Infrastructure;
@@ -19,37 +20,48 @@ namespace Maestro.Core.Infrastructure;
 
 public class MaestroConnection : IAsyncDisposable
 {
-    readonly ServerConfiguration _serverConfiguration;
     readonly CancellationTokenSource _rootCancellationTokenSource = new();
     readonly string _partition;
     readonly string _airportIdentifier;
+    readonly string _callsign;
+    readonly Role _role;
     readonly HubConnection _hubConnection;
     readonly IMediator _mediator;
     readonly ILogger _logger;
 
     public bool IsConnected => _hubConnection.State is not HubConnectionState.Disconnected;
     public string Partition => _partition;
+    public string AirportIdentifier => _airportIdentifier;
+    public string Callsign => _callsign;
+    public Role Role => _role;
 
     public MaestroConnection(
+        ServerConfiguration serverConfiguration,
         string partition,
         string airportIdentifier,
-        ServerConfiguration serverConfiguration,
-        HubConnection hubConnection,
+        string callsign,
         IMediator mediator,
         ILogger logger)
     {
         _partition = partition;
         _airportIdentifier = airportIdentifier;
-        _serverConfiguration = serverConfiguration;
-        _hubConnection = hubConnection;
+        _callsign = callsign;
+        _role = RoleHelper.GetRoleFromCallsign(callsign);
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(serverConfiguration.Uri + $"?partition={partition}&airportIdentifier={airportIdentifier}&callsign={callsign}&role={_role}")
+            .WithServerTimeout(TimeSpan.FromSeconds(serverConfiguration.TimeoutSeconds))
+            .WithAutomaticReconnect()
+            .WithStatefulReconnect()
+            .AddNewtonsoftJsonProtocol()
+            .Build();
+
         _mediator = mediator;
         _logger = logger;
-        AirportIdentifier = airportIdentifier;
+
         SubscribeToNotifications();
         SubscribeToConnectionEvents();
     }
-
-    public string AirportIdentifier { get; }
 
     public async Task Start(CancellationToken cancellationToken)
     {
@@ -140,6 +152,14 @@ public class MaestroConnection : IAsyncDisposable
 
     void SubscribeToNotifications()
     {
+        _hubConnection.On<ConnectionInitializedNotification>("ConnectionInitialized", async notification =>
+        {
+            if (notification.AirportIdentifier != _airportIdentifier)
+                return;
+
+            await _mediator.Publish(notification, GetMessageCancellationToken());
+        });
+
         _hubConnection.On<OwnershipGrantedNotification>("OwnershipGranted", async request =>
         {
             if (request.AirportIdentifier != _airportIdentifier)
@@ -337,7 +357,7 @@ public class MaestroConnection : IAsyncDisposable
     {
         _hubConnection.Closed += async (exception) =>
         {
-            await _mediator.Publish(new SessionDisconnectedNotification(_airportIdentifier), CancellationToken.None);
+            await _mediator.Publish(new SessionDisconnectedNotification(_airportIdentifier, IsReady: true), CancellationToken.None);
 
             // If the connection was closed due to an error, take ownership of the sequence and report the error
             if (exception != null && !_rootCancellationTokenSource.Token.IsCancellationRequested)
@@ -352,10 +372,10 @@ public class MaestroConnection : IAsyncDisposable
             }
         };
 
-        _hubConnection.Reconnecting += exception =>
+        _hubConnection.Reconnecting += async exception =>
         {
             _logger.Warning(exception, "Connection for {AirportIdentifier} reconnecting", _airportIdentifier);
-            return Task.CompletedTask;
+            await _mediator.Publish(new SessionReconnectingNotification(_airportIdentifier), CancellationToken.None);
         };
 
         _hubConnection.Reconnected += connectionId =>
