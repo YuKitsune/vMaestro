@@ -17,7 +17,11 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}">
+                <Style.Setters>
+                    <Setter Property="VerticalAlignment" Value="Top"/>
+                </Style.Setters>
+            </Style>
 
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}">
                 <Setter Property="Margin" Value="2" />
