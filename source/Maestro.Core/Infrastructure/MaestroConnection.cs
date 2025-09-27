@@ -365,6 +365,8 @@ public class MaestroConnection : IAsyncDisposable
                 _logger.Error(exception, "Connection for {AirportIdentifier} lost", _airportIdentifier);
                 // await _mediator.Publish(new OwnershipGrantedNotification(_airportIdentifier), CancellationToken.None);
                 await _mediator.Publish(new ErrorNotification(exception), CancellationToken.None);
+
+                // BUG: UI still says "READY" after disconnecting here. Need to remove connection details and connection from Session
             }
             else
             {

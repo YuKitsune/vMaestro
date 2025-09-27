@@ -83,6 +83,6 @@ public class ConnectionNotificationHandler(IPeerTracker peerTracker, ISessionMan
     async Task<Role> GetCurrentRole(string airportIdentifier, CancellationToken cancellationToken)
     {
         using var lockedSession = await sessionManager.AcquireSession(airportIdentifier, cancellationToken);
-        return lockedSession.Session.Role;
+        return lockedSession.Session.Connection?.Role ?? Role.Observer;
     }
 }

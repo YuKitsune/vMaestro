@@ -2,7 +2,6 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
@@ -13,13 +12,7 @@ public record RequestContextWrapper<TRequest, TResponse>(string ConnectionId, TR
 
 public record NotificationContextWrapper<T>(string ConnectionId, T Notification) : INotification;
 
-// TODO: Test Cases
-// - When no peers exists, the first connection becomes the master
-// - When no peers exist, and the first connection is an observer, the observer does not become the master
-// - When peers exist, they are are notified
-// - When peers exist, and a flow controller joins, they become the master, and the other master is demoted
-
-public class ConnectRequestHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubContext<MaestroHub> hubContext, ILogger logger)
+public class ConnectRequestHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubProxy hubProxy, ILogger logger)
     : IRequestHandler<RequestContextWrapper<ConnectRequest>>
 {
     public async Task Handle(
@@ -49,12 +42,11 @@ public class ConnectRequestHandler(IConnectionManager connectionManager, Sequenc
                     currentMaster, connection);
                 currentMaster.IsMaster = false;
 
-                await hubContext.Clients
-                    .Client(connectionId)
-                    .SendAsync(
-                        "OwnershipRevoked",
-                        new OwnershipRevokedNotification(request.AirportIdentifier),
-                        cancellationToken);
+                await hubProxy.Send(
+                    connectionId,
+                    "OwnershipRevoked",
+                    new OwnershipRevokedNotification(request.AirportIdentifier),
+                    cancellationToken);
             }
 
             connection.IsMaster = true;
@@ -69,27 +61,25 @@ public class ConnectRequestHandler(IConnectionManager connectionManager, Sequenc
         // Broadcast to other clients that this client has connected
         foreach (var peer in peers)
         {
-            await hubContext.Clients
-                .Client(peer.Id)
-                .SendAsync(
-                    "PeerConnected",
-                    new PeerConnectedNotification(request.AirportIdentifier, request.Callsign, request.Role),
-                    cancellationToken);
+            await hubProxy.Send(
+                peer.Id,
+                "PeerConnected",
+                new PeerConnectedNotification(request.AirportIdentifier, request.Callsign, request.Role),
+                cancellationToken);
         }
 
         var latestSequence = sequenceCache.Get(request.Partition, request.AirportIdentifier);
 
-        await hubContext.Clients
-            .Client(connectionId)
-            .SendAsync(
-                "ConnectionInitialized",
-                new ConnectionInitializedNotification(
-                    connectionId,
-                    request.Partition,
-                    request.AirportIdentifier,
-                    connection.IsMaster,
-                    latestSequence,
-                    peers.Select(c => new PeerInfo(c.Callsign, c.Role)).ToArray()),
-                cancellationToken);
+        await hubProxy.Send(
+            connectionId,
+            "ConnectionInitialized",
+            new ConnectionInitializedNotification(
+                connectionId,
+                request.Partition,
+                request.AirportIdentifier,
+                connection.IsMaster,
+                latestSequence,
+                peers.Select(c => new PeerInfo(c.Callsign, c.Role)).ToArray()),
+            cancellationToken);
     }
 }

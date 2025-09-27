@@ -1,17 +1,10 @@
 using Maestro.Core.Messages;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
-// TODO: Test cases
-// - When the client is not tracked, exception is thrown
-// - When the airport identifiers mismatch, exception is thrown
-// - When the client is not the master, exception is thrown
-// - When the sequence is updated, the cache is updated, and all other clients are notified
-
-public class SequenceUpdatedNotificationHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubContext<MaestroHub> hubContext, ILogger logger)
+public class SequenceUpdatedNotificationHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubProxy hubProxy, ILogger logger)
     : INotificationHandler<NotificationContextWrapper<SequenceUpdatedNotification>>
 {
     public async Task Handle(NotificationContextWrapper<SequenceUpdatedNotification> wrappedNotification, CancellationToken cancellationToken)
@@ -40,9 +33,7 @@ public class SequenceUpdatedNotificationHandler(IConnectionManager connectionMan
         var peers = connectionManager.GetPeers(connection);
         foreach (var peer in peers)
         {
-            await hubContext.Clients
-                .Client(peer.Id)
-                .SendAsync("SequenceUpdated", notification, cancellationToken);
+            await hubProxy.Send(peer.Id, "SequenceUpdated", notification, cancellationToken);
         }
     }
 }

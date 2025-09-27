@@ -3,7 +3,6 @@ using Maestro.Server.Handlers;
 using MediatR;
 using Newtonsoft.Json.Serialization;
 using Serilog;
-using ILogger = Serilog.ILogger;
 
 var loggerConfig = new LoggerConfiguration()
     .WriteTo.Console();
@@ -39,7 +38,7 @@ try
         .AddNewtonsoftJsonProtocol(x => x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver());
 
     builder.Services.AddSerilog();
-    builder.Services.AddSingleton<ILogger>(Log.Logger);
+    builder.Services.AddSingleton(Log.Logger);
 
     builder.Services.AddMediatR(c =>
     {
@@ -50,6 +49,7 @@ try
 
     builder.Services.AddSingleton<SequenceCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
+    builder.Services.AddTransient<IHubProxy, HubProxy>();
 
     var app = builder.Build();
 

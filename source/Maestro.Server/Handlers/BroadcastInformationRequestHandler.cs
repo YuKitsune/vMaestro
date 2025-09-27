@@ -1,6 +1,5 @@
 using Maestro.Core.Handlers;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
@@ -10,7 +9,7 @@ namespace Maestro.Server.Handlers;
 // - When the connection is the mater, exception is thrown
 // - Information messages are broadcast to all peers
 
-public class BroadcastInformationRequestHandler(IConnectionManager connectionManager, IHubContext<MaestroHub> hubContext, ILogger logger)
+public class BroadcastInformationRequestHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
     : INotificationHandler<NotificationContextWrapper<InformationNotification>>
 {
     public async Task Handle(NotificationContextWrapper<InformationNotification> wrappedNotification, CancellationToken cancellationToken)
@@ -32,9 +31,7 @@ public class BroadcastInformationRequestHandler(IConnectionManager connectionMan
 
         foreach (var peer in peers)
         {
-            await hubContext.Clients
-                .Client(peer.Id)
-                .SendAsync("Information", notification, cancellationToken);
+            await hubProxy.Send(peer.Id, "Information", notification, cancellationToken);
         }
     }
 }

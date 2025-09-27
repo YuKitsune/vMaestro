@@ -13,7 +13,6 @@ public interface ISession
     SemaphoreSlim Semaphore { get; }
     ConnectionInfo? ConnectionInfo { get; }
     bool OwnsSequence { get; }
-    Role Role { get; }
     bool IsActive { get; }
     bool IsConnected { get; }
 
@@ -38,7 +37,6 @@ public class Session : ISession, IAsyncDisposable
     public MaestroConnection? Connection { get; private set; }
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public string Position { get; private set; } = string.Empty;
-    public Role Role { get; private set; } = Role.Observer;
     public bool OwnsSequence { get; private set; } = true;
     public bool IsActive { get; private set; }
     public bool IsConnected => Connection?.IsConnected ?? false;

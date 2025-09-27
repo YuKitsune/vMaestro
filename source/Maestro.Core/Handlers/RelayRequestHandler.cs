@@ -57,7 +57,7 @@ public class RelayRequestHandler(ISessionManager sessionManager, ServerConfigura
     bool CanPerformAction(ISession session, Role userRole, string actionKey)
     {
         // If we're the flow controller, we need to enforce permission checks
-        if (session is { OwnsSequence: true, Role: Role.Flow })
+        if (session is { OwnsSequence: true, Connection.Role: Role.Flow })
         {
             var permissions = serverConfiguration.Permissions;
             return permissions.TryGetValue(actionKey, out var allowedRoles) && allowedRoles.Contains(userRole);

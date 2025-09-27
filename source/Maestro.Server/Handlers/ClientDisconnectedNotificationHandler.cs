@@ -2,7 +2,6 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
 using Maestro.Core.Messages.Connectivity;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
@@ -15,7 +14,7 @@ public record ClientDisconnectedNotification(string ConnectionId) : INotificatio
 // - When master leaves the sequence, and another flow controller exists, the flow controller is promoted
 // - When master leaves the sequence, and no flow controller exists, the next available connection is promoted
 
-public class ClientDisconnectedNotificationHandler(IConnectionManager connectionManager, IHubContext<MaestroHub> hubContext, ILogger logger)
+public class ClientDisconnectedNotificationHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
     : INotificationHandler<ClientDisconnectedNotification>
 {
     public async Task Handle(ClientDisconnectedNotification notification, CancellationToken cancellationToken)
@@ -43,12 +42,11 @@ public class ClientDisconnectedNotificationHandler(IConnectionManager connection
             {
                 newMaster.IsMaster = true;
 
-                await hubContext.Clients
-                    .Client(newMaster.Id)
-                    .SendAsync(
-                        "OwnershipGranted",
-                        new OwnershipGrantedNotification(connection.AirportIdentifier),
-                        cancellationToken);
+                await hubProxy.Send(
+                    newMaster.Id,
+                    "OwnershipGranted",
+                    new OwnershipGrantedNotification(connection.AirportIdentifier),
+                    cancellationToken);
 
                 logger.Information("Promoting {Connection} to master", newMaster);
             }
@@ -57,12 +55,11 @@ public class ClientDisconnectedNotificationHandler(IConnectionManager connection
         // Broadcast to remaining clients that this client has disconnected
         foreach (var remainingConnection in remainingPeers)
         {
-            await hubContext.Clients
-                .Client(remainingConnection.Id)
-                .SendAsync(
-                    "PeerDisconnected",
-                    new PeerDisconnectedNotification(connection.AirportIdentifier, connection.Callsign),
-                    cancellationToken);
+            await hubProxy.Send(
+                remainingConnection.Id,
+                "PeerDisconnected",
+                new PeerDisconnectedNotification(connection.AirportIdentifier, connection.Callsign),
+                cancellationToken);
         }
     }
 }

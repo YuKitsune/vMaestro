@@ -39,13 +39,14 @@ public class MockSession(Sequence sequence) : ISession
     public Sequence Sequence => sequence;
     public MaestroConnection? Connection => null;
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
+    public ConnectionInfo? ConnectionInfo => null;
     public bool OwnsSequence => true;
     public Role Role => Role.Flow;
     public bool IsActive => true;
     public bool IsConnected => false;
     public Task Start(string position, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task Stop(CancellationToken cancellationToken) => throw new NotImplementedException();
-    public Task Connect(MaestroConnection maestroConnection, CancellationToken cancellationToken) => throw new NotImplementedException();
+    public Task SetConnectionInfo(ConnectionInfo connectionInfo, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task Disconnect(CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task TakeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task RevokeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
