@@ -1,0 +1,107 @@
+# vMaestro Roadmap
+
+## Fix failing unit tests
+
+Various unit tests are failing. Fix em.
+
+## Fix Flight Insertion
+
+- [ ] Investigate why inserting flights does not work reliably, both from the pending list, and when inserting dummy flights.
+- [ ] Consider adding an `Options` property to the Pending DTO (departure time or arrival time)
+- [ ] Allow insertion from the feeder view
+- [ ] Consider further separating or combining the insertion handlers
+
+## Investigate Diversions
+
+During testing, flights that diverted to a managed airport would not appear in the ladder. They could not be inserted manually either. This might be fixed by the above.
+
+## Remove Flights
+
+- [ ] Figure out the difference between removing and desequencing a flight
+- [ ] Move "Removed" flights into the pending list
+- [ ] Delete flights when they disconnect from VATSIM
+
+## Remove hybrid estimate calculations
+
+Estimates are sourced from system estimates until `MinimumRadarEstimateRange`, then the average between a BRL estimate (GS / dist) and the system estimate is used. This tends to be somewhat inaccurate.
+
+- [ ] Remove hybrid estimate calculation
+- [ ] Allow either the BRL method, or the system estimate method in the configuration
+- [ ] Source winds from GRIB and factor them into system estimates (include a feature toggle for testing)
+
+## Arrival Configuration Overhaul
+
+- [ ] Move arrival configurations into a separate `csv` file
+- [ ] Introduce transition fixes
+- [ ] Introduce an approach types
+    - [ ] Introduce "Change Approach Type" request and handler
+- [ ] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
+    - [ ] Filter runway options based on feeder fix in the UI
+- [ ] Remove runway requirements and preferences
+- [ ] Store the processed arrival and runway mode on the Flight
+    - [ ] Set landing estimate based on ETA_FF + arrival TTG
+    - [ ] Set STA_FF using STA - arrival TTG
+    - [ ] If ATO_FF is set, ETA should be ATO_FF + arrival TTG (this value won't change after passing FF, this is accurate)
+
+## Coordination System
+
+- [ ] Implement the coordination system with pre-canned messages
+
+## Account for "Close" airports
+
+- [ ] Flights within 25 mins flight time of the FF are from "Close" airports (e.g: Inside the TMA)
+- [ ] Flights from "Close" airports will be added to the pending list
+
+## Manual Delay
+
+- [ ] Replace the `ZeroDelay` field with a `ManualDelay` field. This should be a `TimeSpan` representing the maximum delay that can be allocated to a flight.
+
+## DTO overhaul
+
+Domain models and DTOs are leaking into the frontend. Need to improve the separation here.
+Also would be good to rename Messages to DTOs.
+
+- [ ] Improve separation between domain models, DTOs, and view models
+- [ ] Remove (or trim down) SequenceMessage and introduce smaller DTOs or notifications (consider CRDTs) to reduce the size of the sequence when serialised
+
+## TMA Delay
+
+- [ ] Include TMA pressure in arrival/runway mode configuration
+- [ ] Separate enroute and TMA delay
+
+## Session Management Overhaul
+
+- [ ] Decouple Session from `MaestroConnection`
+- [ ] Remove IMediator from `MaestroConnection` and make it observable
+- [ ] Reconsider how messages get routed to the server (custom middleware, custom mediator, intermediate dispatcher, etc.)
+- [ ] Show server options when starting a session initially
+- [ ] Allow flow to declare their offline sequence as the source of truth before connecting, so they don't inherit a dirty sequence
+- [ ] Show red background when in offline mode
+- [ ] Show amber background when reconnecting
+
+## Sequence interaction overhaul
+
+Consider moving some of the sequence logic into the individual handlers so they can be tested more easily.
+
+## Ladder and Timeline enhancements
+
+- [ ] Add support for multiple ladders and timelines
+- [ ] Implement configuration for custom label layout and colors
+- [ ] Implement ladder scrolling
+
+## Configuration Zone enhancements
+
+- [ ] 10,000 ft and 6,000 ft winds (with configuration view)
+- [ ] Achieved rates
+- [ ] Units selector (NM, aircraft/hr, seconds)
+- [ ] UTC time
+
+## WinForms Compatibility
+
+- [ ] Revisit the `*` WPF size, and it's compatibility with WinForms.
+
+## Documentation
+
+- [ ] Write documentation for ATC usage
+- [ ] Write documentation for configuration
+- [ ] Architecture decision record

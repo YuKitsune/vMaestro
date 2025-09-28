@@ -26,12 +26,6 @@ If you have a large screen resolution, you may need to run the `dpiaware-fix.bat
 
 Logs will be written to the vatSys installation directory under `MaestroLogs`.
 
-# Known Issues
-
-- When the Maestro.json file is missing, vatSys gets flooded with exceptions
-- Desequence and Information windows do not re-draw
-- Window can be re-opened multiple times
-
 # Roadmap
 
 - [X] Publish notifications on FDP updates
@@ -44,8 +38,8 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 - [X] Desequence
 - [X] Change runway
 - [X] Move flight (click and drag)
-- [ ] Move flight (single click)
-- [ ] Swap flights
+- [X] Move flight (single click)
+- [X] Swap flights
 - [X] Change runway mode
 - [X] Change ETA FF
 - [X] Zero Delay and priority flights
@@ -56,9 +50,9 @@ Logs will be written to the vatSys installation directory under `MaestroLogs`.
 - [ ] Unit selector
 - [ ] Approach types
 - [ ] Separate enroute and TMA delays
-- [ ] Coordination window
+- [ ] Coordination system
 - [ ] Start sequencing on-demand
-- [ ] Online mode
+- [X] Online mode
 - [ ] Ladder scrolling
 - [ ] GitHub actions CI
 - [ ] Architecture Decision Record

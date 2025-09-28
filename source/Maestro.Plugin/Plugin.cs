@@ -30,66 +30,6 @@ using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace Maestro.Plugin;
 
-// TODO: Need to improve the boundaries between DTOs, domain models, and view models.
-//  - Domain models and DTOs are leaking into the frontend
-
-// TODO: Encapsulate UI related commands into a separate service rather than using the Mediator
-
-// TODO: Smaller messages
-//  - Remove SequenceUpdatedNotification, send smaller messages as needed
-
-// TODO: Clean up DTOs
-//  - Rename them to DTOs
-//  - Move into a Contracts project
-
-// TODO: Information messages
-//  - Show information messages for important events (e.g. pending flight activated, desequenced, runway mode changes etc.)
-
-// TODO: Flight insertion
-//  - Add options to Pending DTO (i.e. departure time or arrival time)
-//  - Allow insertion on the feeder view
-//  - Different handlers for pending, overshoot, and dummy flights
-
-// TODO: Windowing
-//  - WPF's "*" size is incompatible with WinForms AutoSizing.
-
-// Bugs from MRM:
-// - Windows don't resize when the content changes.
-// - Recompute behavior is unpredictable. Need to revisit.
-// - Flights sometimes get a negative total delay, even after stabling.
-// - Insert flight window doesn't work.
-// - + symbol appears when no delay is remaining. Is this intended?
-// - System estimates are very inaccurate, they rely on TAS input by the pilot. Hybrid BRL + system estimate is confusing. (Pick one?)
-// - Connection failures are not gracefully handled.
-
-// AIS Notes:
-// - When a flight takes off from a non-departure airport, they jump in front of the sequence despite being really far away
-//    - Need to model close airports as well as departure airports I think
-// - YMML PORTS arrival not modeled correctly
-// - YMML needs different state thresholds
-
-// SOPS Notes:
-// - Document troubleshooting routes i.e. TANTA LEECE TANTA making the estimates all wrong. Re-route then recompute to fix.
-// - Procedure: Update ETA_FF before issuing flow actions.
-// - Procedure: Ask pilots for revised TAS speeds if you suspect they are inaccurate.
-// - Procedure: Ask pilots for winds at 10k and 6k ft to update Maestro winds.
-
-// TODO: Estimates and Arrivals
-// - Store processed arrival in Flight entity
-// - Set landing estimate using ETA_FF + arrival TTG
-// - Set STA_FF using STA - arrival TTG
-// - Remove BRL method from estimates
-
-// TODO: Landing estimate after STA_FF
-// - ETA should be ETA_FF + arrival TTG if ATO_FF is not set
-// - ETA should be ATO_FF + arrival TTG if ATO_FF is set (this value won't change after passing FF, this is accurate)
-
-// TODO: Custom label configurations
-// - Allow custom label configurations to be saved per airport and view
-
-// TODO: TMA Delay
-// - Separate TMA delay from enroute delay
-
 [Export(typeof(IPlugin))]
 public class Plugin : IPlugin
 {

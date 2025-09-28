@@ -1,9 +1,10 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
-using Serilog;
 
 namespace Maestro.Core.Sessions;
+
+// TODO: Refactor this so that the Session does not directly manage the MaestroConnection
+// - Make MaestroConnection an IObservable that the Session can subscribe to
 
 public interface ISession
 {
@@ -29,7 +30,6 @@ public interface ISession
 public class Session : ISession, IAsyncDisposable
 {
     readonly IMaestroConnectionFactory _maestroConnectionFactory;
-    readonly ILogger _logger;
 
     public string AirportIdentifier => Sequence.AirportIdentifier;
     public Sequence Sequence { get; private set; }
@@ -41,13 +41,9 @@ public class Session : ISession, IAsyncDisposable
     public bool IsActive { get; private set; }
     public bool IsConnected => Connection?.IsConnected ?? false;
 
-    readonly BackgroundTask _schedulerTask;
-
-    public Session(Sequence sequence, IMaestroConnectionFactory maestroConnectionFactory, ILogger logger)
+    public Session(Sequence sequence, IMaestroConnectionFactory maestroConnectionFactory)
     {
         _maestroConnectionFactory = maestroConnectionFactory;
-        _logger = logger;
-        _schedulerTask = new BackgroundTask(SchedulerLoop);
 
         Sequence = sequence;
     }
@@ -58,10 +54,6 @@ public class Session : ISession, IAsyncDisposable
         if (ConnectionInfo is not null)
         {
             await Connect(ConnectionInfo, position, cancellationToken);
-        }
-        else
-        {
-            await StartOwnershipTasks(cancellationToken);
         }
 
         IsActive = true;
@@ -105,60 +97,25 @@ public class Session : ISession, IAsyncDisposable
         if (Connection is not null && Connection.IsConnected)
             await Connection.Stop(cancellationToken);
 
-        if (_schedulerTask.IsRunning)
-            await _schedulerTask.Stop(cancellationToken);
-
         IsActive = false;
     }
 
-    public async Task TakeOwnership(CancellationToken cancellationToken)
+    public Task TakeOwnership(CancellationToken cancellationToken)
     {
         OwnsSequence = true;
-        await StartOwnershipTasks(cancellationToken);
+        return Task.CompletedTask;
     }
 
-    public async Task RevokeOwnership(CancellationToken cancellationToken)
+    public Task RevokeOwnership(CancellationToken cancellationToken)
     {
         OwnsSequence = false;
-        await StopOwnershipTasks(cancellationToken);
-    }
-
-    async Task StartOwnershipTasks(CancellationToken cancellationToken)
-    {
-        if (!_schedulerTask.IsRunning)
-            await _schedulerTask.Start(cancellationToken);
-    }
-
-    async Task StopOwnershipTasks(CancellationToken cancellationToken)
-    {
-        if (_schedulerTask.IsRunning)
-            await _schedulerTask.Stop(cancellationToken);
-    }
-
-    async Task SchedulerLoop(CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-            }
-            catch (TaskCanceledException)
-            {
-                // Ignored
-            }
-            catch (Exception exception)
-            {
-                _logger.Error(exception, "Error scheduling {AirportIdentifier}.", AirportIdentifier);
-            }
-        }
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
     {
         if (Connection != null)
             await Connection.DisposeAsync();
-        await _schedulerTask.DisposeAsync();
         Semaphore.Dispose();
     }
 }
