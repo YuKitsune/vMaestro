@@ -1,5 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
-using Maestro.Core.Integration;
+﻿using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -7,13 +7,21 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
+// TODO:
+// - [X] Refactor dummy flight into a separate type
+// - [X] Separate pending flight insertion from dummy flight insertion
+// - [ ] Support InsertPendingRequest in server and WPF
+// - [ ] Fix Overshoot insertion
+// - [ ] Test
+
 public class InsertFlightRequestHandler(
     ISessionManager sessionManager,
     IClock clock,
-    IPerformanceLookup performanceLookup,
     IMediator mediator)
-    : IRequestHandler<InsertFlightRequest>, IRequestHandler<InsertOvershootRequest>
+    : IRequestHandler<InsertFlightRequest>, IRequestHandler<InsertPendingRequest>, IRequestHandler<InsertOvershootRequest>
 {
+    const int MaxCallsignLength = 12; // TODO: Verify the VATSIM limit
+
     public async Task Handle(InsertFlightRequest request, CancellationToken cancellationToken)
     {
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
@@ -25,86 +33,70 @@ public class InsertFlightRequestHandler(
 
         var sequence = lockedSession.Session.Sequence;
 
+        var callsign = request.Callsign?.ToUpperInvariant().Truncate(MaxCallsignLength) ?? sequence.NewDummyCallsign();
         var state = State.Frozen; // TODO: Make this configurable
 
-        // If the callsign was blank, create a dummy flight
-        if (string.IsNullOrWhiteSpace(request.Callsign))
+        switch (request.Options)
         {
-            switch (request.Options)
-            {
-                case ExactInsertionOptions exactInsertionOptions:
-                    sequence.AddDummyFlight(exactInsertionOptions.TargetLandingTime, exactInsertionOptions.RunwayIdentifiers);
-                    break;
-                case RelativeInsertionOptions relativeInsertionOptions:
-                    sequence.AddDummyFlight(relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            case ExactInsertionOptions exactInsertionOptions:
+                sequence.InsertDummyFlight(
+                    callsign,
+                    request.AircraftType ?? string.Empty,
+                    exactInsertionOptions.TargetLandingTime,
+                    exactInsertionOptions.RunwayIdentifiers,
+                    state);
+                break;
+            case RelativeInsertionOptions relativeInsertionOptions:
+                sequence.InsertDummyFlight(
+                    callsign,
+                    request.AircraftType ?? string.Empty,
+                    relativeInsertionOptions.Position,
+                    relativeInsertionOptions.ReferenceCallsign,
+                    state);
+                break;
 
-            await mediator.Publish(
-                new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
-                cancellationToken);
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        await mediator.Publish(
+            new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
+            cancellationToken);
+    }
+
+    public async Task Handle(InsertPendingRequest request, CancellationToken cancellationToken)
+    {
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        {
+            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
+
+        var sequence = lockedSession.Session.Sequence;
 
         var pendingFlight = sequence.PendingFlights.FirstOrDefault(f => f.Callsign == request.Callsign);
-        if (pendingFlight is not null)
+        if (pendingFlight is null)
         {
-            switch (request.Options)
-            {
-                case ExactInsertionOptions exactInsertionOptions:
-                    sequence.Insert(pendingFlight, exactInsertionOptions.TargetLandingTime);
-                    break;
-                case RelativeInsertionOptions relativeInsertionOptions:
-                    sequence.Insert(pendingFlight, relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            pendingFlight.SetState(State.Stable, clock);
-            await mediator.Publish(
-                new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
-                cancellationToken);
-            return;
+            throw new MaestroException($"{request.Callsign} not found in pending list");
         }
 
-        // Create a new flight if it does not exist
-        if (!string.IsNullOrWhiteSpace(request.Callsign))
+        switch (request.Options)
         {
-            // TODO: Make a default for this somewhere
-            var performanceInfo = !string.IsNullOrEmpty(request.AircraftType)
-                ? performanceLookup.GetPerformanceDataFor(request.AircraftType)
-                : AircraftPerformanceData.Default;
-
-            var flight = new Flight(
-                request.Callsign,
-                request.AirportIdentifier,
-                DateTimeOffset.MinValue,
-                clock.UtcNow(),
-                performanceInfo.TypeCode,
-                performanceInfo.AircraftCategory,
-                performanceInfo.WakeCategory);
-
-            flight.SetState(state, clock);
-
-            switch (request.Options)
-            {
-                case ExactInsertionOptions exactInsertionOptions:
-                    sequence.Insert(flight, exactInsertionOptions.TargetLandingTime);
-                    break;
-                case RelativeInsertionOptions relativeInsertionOptions:
-                    sequence.Insert(flight, relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            await mediator.Publish(
-                new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
-                cancellationToken);
+            case ExactInsertionOptions exactInsertionOptions:
+                sequence.Insert(pendingFlight, exactInsertionOptions.TargetLandingTime);
+                break;
+            case RelativeInsertionOptions relativeInsertionOptions:
+                sequence.Insert(pendingFlight, relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
+
+        pendingFlight.SetState(State.Stable, clock);
+        await mediator.Publish(
+            new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
+            cancellationToken);
     }
 
     public async Task Handle(InsertOvershootRequest request, CancellationToken cancellationToken)
