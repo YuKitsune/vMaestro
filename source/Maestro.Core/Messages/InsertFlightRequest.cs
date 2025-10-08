@@ -8,8 +8,6 @@ public enum RelativePosition
     After
 }
 
-// TODO: Split this up into separate requests for overshoot and dummies
-
 public record InsertFlightRequest(
     string AirportIdentifier,
     string? Callsign,
@@ -19,12 +17,8 @@ public record InsertFlightRequest(
 
 public interface IInsertFlightOptions;
 
-public record RelativeInsertionOptions(
-    string ReferenceCallsign,
-    RelativePosition Position)
-    : IInsertFlightOptions;
+public record RelativeInsertionOptions(string ReferenceCallsign, RelativePosition Position) : IInsertFlightOptions;
 
-public record ExactInsertionOptions(
-    DateTimeOffset TargetLandingTime,
-    string[] RunwayIdentifiers)
-    : IInsertFlightOptions;
+public record ExactInsertionOptions(DateTimeOffset TargetLandingTime, string[] RunwayIdentifiers) : IInsertFlightOptions;
+
+public record DepartureInsertionOptions(DateTimeOffset TakeoffTime) : IInsertFlightOptions;

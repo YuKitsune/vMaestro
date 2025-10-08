@@ -31,7 +31,6 @@ public static class FlightExtensionMethods
             InitialDelay = flight.TotalDelay,
             RemainingDelay = flight.RemainingDelay,
             FlowControls = flight.FlowControls,
-            IsDummy = flight.IsDummy,
             ActivatedTime = flight.ActivatedTime,
             HighPriority = flight.HighPriority,
             NoDelay = flight.NoDelay,

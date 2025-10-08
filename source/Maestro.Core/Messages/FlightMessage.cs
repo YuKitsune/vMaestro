@@ -35,7 +35,6 @@ public class FlightMessage
     public required TimeSpan InitialDelay { get; init; }
     public required TimeSpan RemainingDelay { get; init; }
     public required FlowControls FlowControls { get; init; }
-    public required bool IsDummy { get; init; }
     public required DateTimeOffset LastSeen { get; init; }
     public required FixEstimate[] Fixes { get; init; } = []; // TODO: DTO
     public required FlightPosition? Position { get; init; } // TODO: DTO

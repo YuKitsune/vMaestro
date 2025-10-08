@@ -9,7 +9,6 @@ namespace Maestro.Core.Handlers;
 
 public class InsertDepartureRequestHandler(
     ISessionManager sessionManager,
-    IPerformanceLookup performanceLookup,
     IArrivalLookup arrivalLookup,
     IClock clock,
     IMediator mediator)
@@ -36,12 +35,7 @@ public class InsertDepartureRequestHandler(
             throw new MaestroException($"{request.Callsign} was not found in the pending list.");
         }
 
-        if (flight.EstimatedTimeEnroute is null)
-        {
-            throw new MaestroException($"{request.Callsign} does not have an ETE.");
-        }
-
-        sequence.Depart(flight, request.TakeOffTime);
+        sequence.Depart(flight, request.Options);
         flight.SetState(State.Stable, clock);
 
         // Calculate feeder fix estimate based on landing time
@@ -59,10 +53,6 @@ public class InsertDepartureRequestHandler(
 
     DateTimeOffset? GetFeederFixTime(Flight flight)
     {
-        var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (aircraftPerformance is null)
-            return null;
-
         var arrivalInterval = arrivalLookup.GetArrivalInterval(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,

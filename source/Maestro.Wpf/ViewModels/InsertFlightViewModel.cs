@@ -97,6 +97,18 @@ public partial class InsertFlightViewModel : ObservableObject
                 return;
             }
 
+            if (PendingFlights.Any(f => f.Callsign == Callsign))
+            {
+                _mediator.Send(
+                    new InsertDepartureRequest(
+                        _airportIdentifier,
+                        Callsign,
+                        string.Empty,
+                        string.Empty,
+                        _options),
+                    CancellationToken.None);
+            }
+
             _mediator.Send(
                 new InsertFlightRequest(
                     _airportIdentifier,

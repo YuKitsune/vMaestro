@@ -121,12 +121,14 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         var originalLandingTime = flight1.LandingTime;
 
         // Act: Add a dummy flight at the same time as the existing flight
-        sequence.AddDummyFlight(flight1.LandingTime, ["34L"]);
+        sequence.InsertDummyFlight("ABC123", "A320", flight1.LandingTime, ["34L"], State.Frozen);
 
         // Assert
         var sequenceMessage = sequence.ToMessage();
-        var dummyFlight = sequenceMessage.Flights.FirstOrDefault(f => f.IsDummy);
+        var dummyFlight = sequenceMessage.DummyFlights.SingleOrDefault();
         dummyFlight.ShouldNotBeNull("dummy flight should be added to sequence");
+        dummyFlight.Callsign.ShouldBe("ABC123", "dummy flight should have specified callsign");
+        dummyFlight.AircraftType.ShouldBe("A320", "dummy flight should have specified aircraft type");
         dummyFlight.LandingTime.ShouldBe(_time.AddMinutes(5), "dummy flight should land at specified time");
         dummyFlight.State.ShouldBe(State.Frozen, "dummy flight should be frozen");
 
@@ -157,12 +159,14 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         var originalLandingTime = flight1.LandingTime;
 
         // Act: Add a dummy flight before the first flight
-        sequence.AddDummyFlight(RelativePosition.Before, "ABC123");
+        sequence.InsertDummyFlight("ABC123", "B738", RelativePosition.Before, "ABC123", State.Frozen);
 
         // Assert
         var sequenceMessage = sequence.ToMessage();
-        var dummyFlight = sequenceMessage.Flights.FirstOrDefault(f => f.IsDummy);
+        var dummyFlight = sequenceMessage.DummyFlights.SingleOrDefault();
         dummyFlight.ShouldNotBeNull("dummy flight should be added to sequence");
+        dummyFlight.Callsign.ShouldBe("ABC123", "dummy flight should have specified callsign");
+        dummyFlight.AircraftType.ShouldBe("A320", "dummy flight should have specified aircraft type");
         dummyFlight.LandingTime.ShouldBe(originalLandingTime, "dummy flight should take the first flight's original time");
         dummyFlight.State.ShouldBe(State.Frozen, "dummy flight should be frozen");
 
@@ -193,12 +197,14 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         var originalFlight1LandingTime = flight1.LandingTime;
 
         // Act: Add a dummy flight after the first flight
-        sequence.AddDummyFlight(RelativePosition.After, "ABC123");
+        sequence.InsertDummyFlight("DEF", "C172", RelativePosition.After, "ABC123", State.Frozen);
 
         // Assert
         var sequenceMessage = sequence.ToMessage();
-        var dummyFlight = sequenceMessage.Flights.FirstOrDefault(f => f.IsDummy);
+        var dummyFlight = sequenceMessage.DummyFlights.SingleOrDefault();
         dummyFlight.ShouldNotBeNull("dummy flight should be added to sequence");
+        dummyFlight.Callsign.ShouldBe("DEF", "dummy flight should have specified callsign");
+        dummyFlight.AircraftType.ShouldBe("C172", "dummy flight should have specified aircraft type");
         dummyFlight.LandingTime.ShouldBe(flight1.LandingTime.Add(_landingRate), "dummy flight should be positioned just behind the first flight");
         dummyFlight.State.ShouldBe(State.Frozen, "dummy flight should be frozen");
 
@@ -1277,7 +1283,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         // This would result in arrival at 2 + 7 = 9 minutes, which conflicts with existing flight at 10 minutes
 
         // Act: Depart the pending flight
-        sequence.Depart(pendingFlight, takeOffTime);
+        sequence.Depart(pendingFlight, new DepartureInsertionOptions(takeOffTime));
 
         // Assert
         var sequenceMessage = sequence.ToMessage();
@@ -1322,7 +1328,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         // This would result in arrival at 2 + 7 = 9 minutes, which conflicts with existing flight at 10 minutes
 
         // Act: Depart the pending flight
-        sequence.Depart(pendingFlight, takeOffTime);
+        sequence.Depart(pendingFlight, new DepartureInsertionOptions(takeOffTime));
 
         // Assert
         var sequenceMessage = sequence.ToMessage();

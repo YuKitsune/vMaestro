@@ -493,18 +493,75 @@ public class Sequence
         _sequence.RemoveAll(i => i is FlightSequenceItem flightSequenceItem && flightSequenceItem.Flight == flight);
     }
 
-    public void Depart(Flight flight, DateTimeOffset takeOffTime)
+    public void Depart(Flight flight, IInsertFlightOptions options)
     {
+        // TODO: Move some of this into the handler
         _pendingFlights.Remove(flight);
 
-        if (flight.EstimatedTimeEnroute is null)
-            throw new MaestroException("Flight has no EET");
+        int index;
+        switch (options)
+        {
+            case ExactInsertionOptions landingTimeOption:
+                flight.SetLandingTime(landingTimeOption.TargetLandingTime, manual: true);
 
-        // TODO: Combine with handler
-        var targetTime = takeOffTime.Add(flight.EstimatedTimeEnroute.Value);
-        flight.UpdateLandingEstimate(targetTime);
+                var runwayMode = GetRunwayModeAt(landingTimeOption.TargetLandingTime);
+                var runwayIdentifier = runwayMode.Runways.FirstOrDefault(r => landingTimeOption.RunwayIdentifiers.Contains(r.Identifier))?.Identifier
+                    ?? runwayMode.Default.Identifier;
+                flight.SetRunway(runwayIdentifier, manual: true);
+                index = InsertByTime(new FlightSequenceItem(flight), landingTimeOption.TargetLandingTime, _sequence);
+                break;
 
-        var index = InsertByTime(new FlightSequenceItem(flight), targetTime, _sequence);
+            case RelativeInsertionOptions relativeInsertionOptions:
+                // TODO: Copied from InsertRelative, but extracted so we can adjust the landing time.
+                // Needs refactoring.
+
+                // Check for duplicate flights - prevent the same flight from being inserted multiple times
+                var existingFlight = _sequence.OfType<FlightSequenceItem>()
+                    .FirstOrDefault(f => f.Flight.Callsign == flight.Callsign);
+
+                if (existingFlight is not null)
+                {
+                    throw new MaestroException($"Flight {flight.Callsign} already exists in sequence at position {_sequence.IndexOf(existingFlight)}.");
+                }
+
+                var referenceFlightItem = _sequence
+                    .OfType<FlightSequenceItem>()
+                    .FirstOrDefault(i => i.Flight.Callsign == relativeInsertionOptions.ReferenceCallsign);
+                if (referenceFlightItem is null)
+                    throw new MaestroException(
+                        $"Reference flight {relativeInsertionOptions.ReferenceCallsign} not found");
+
+                var referenceIndex = _sequence.IndexOf(referenceFlightItem);
+                if (referenceIndex == -1)
+                    throw new MaestroException("Reference flight not found in sequence");
+
+                var insertionIndex = relativeInsertionOptions.Position switch
+                {
+                    RelativePosition.Before => referenceIndex,
+                    RelativePosition.After => referenceIndex + 1,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                _sequence.Insert(insertionIndex, new FlightSequenceItem(flight));
+                flight.SetLandingTime(referenceFlightItem.Flight.LandingTime, manual: true);
+
+                index = insertionIndex;
+
+                break;
+
+            case DepartureInsertionOptions departureInsertionOptions:
+                if (flight.EstimatedTimeEnroute is null)
+                    throw new MaestroException("Flight has no EET");
+
+                var landingEstimate = departureInsertionOptions.TakeoffTime.Add(flight.EstimatedTimeEnroute.Value);
+                flight.UpdateLandingEstimate(landingEstimate);
+                index = InsertByTime(new FlightSequenceItem(flight), landingEstimate, _sequence);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(options));
+        }
+
         Schedule(index, [flight.AssignedRunwayIdentifier], forceRescheduleStable: true, insertingFlights: [flight.Callsign]);
     }
 

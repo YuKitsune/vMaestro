@@ -102,7 +102,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
                     Callsign,
                     AircraftType,
                     DepartureIdentifier,
-                    TakeoffTime),
+                    new DepartureInsertionOptions(TakeoffTime)),
                 CancellationToken.None);
             CloseWindow();
         }
