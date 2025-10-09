@@ -6,6 +6,17 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
+// TODO: Test cases
+// - When a flight is inserted, the state is set
+// - When a flight is inserted, and it does not exist in the overshoot list, an exception is thrown
+// - When a flight is inserted, with exact insertion options, the position in the sequence is updated
+// - When a flight is inserted, with exact insertion options, the landing time and runway are updated
+// - When a flight is inserted, before another flight, the position in the sequence is updated
+// - When a flight is inserted, before another flight, the flight is inserted before the reference flight, and the reference flight and any trailing conflicts are delayed
+// - When a flight is inserted, after another flight, the position in the sequence is updated
+// - When a flight is inserted, after another flight, the flight is inserted behind the reference flight, and any trailing conflicts are delayed
+// - When a flight is inserted, between two frozen flights, without enough space between them (2x landing rate), an exception is thrown
+
 public class InsertOvershootRequestHandler(
     ISessionManager sessionManager,
     IClock clock,

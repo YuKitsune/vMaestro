@@ -12,6 +12,20 @@ namespace Maestro.Core.Handlers;
 // - [ ] Update WPF to support new DummyFlight type
 // - [ ] Test
 
+
+// TODO: Test cases
+// - When a flight is inserted, the state is set
+// - When a flight is inserted, and a callsign is provided, the provided callsign is used
+// - When a flight is inserted, and an invalid callsign is provided, it is made uppercase and truncated
+// - When a flight is inserted, and an aircraft type is provided, the provided aircraft type is used
+// - When a flight is inserted, with exact insertion options, the position in the sequence is updated
+// - When a flight is inserted, with exact insertion options, the landing time and runway are updated
+// - When a flight is inserted, before another flight, the position in the sequence is updated
+// - When a flight is inserted, before another flight, the flight is inserted before the reference flight, and the reference flight and any trailing conflicts are delayed
+// - When a flight is inserted, after another flight, the position in the sequence is updated
+// - When a flight is inserted, after another flight, the flight is inserted behind the reference flight, and any trailing conflicts are delayed
+// - When a flight is inserted, between two frozen flights, without enough space between them (2x landing rate), an exception is thrown
+
 public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediator mediator)
     : IRequestHandler<InsertFlightRequest>
 {
