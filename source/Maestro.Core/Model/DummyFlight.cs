@@ -76,7 +76,7 @@ public class DummyFlight : IEquatable<DummyFlight>, IComparable<DummyFlight>
         return !Equals(left, right);
     }
 
-    public DummyFlightMessage ToMessage()
+    public DummyFlightMessage ToMessage(Sequence sequence)
     {
         return new DummyFlightMessage
         {
@@ -84,7 +84,9 @@ public class DummyFlight : IEquatable<DummyFlight>, IComparable<DummyFlight>
             AircraftType = AircraftType,
             AssignedRunwayIdentifier = AssignedRunwayIdentifier,
             LandingTime = LandingTime,
-            State = State
+            State = State,
+            NumberInSequence = sequence.NumberInSequence(this),
+            NumberToLandOnRunway = sequence.NumberForRunway(this)
         };
     }
 }

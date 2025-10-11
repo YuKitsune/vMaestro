@@ -9,4 +9,6 @@ public class DummyFlightMessage
     public required string AssignedRunwayIdentifier { get; init; }
     public required DateTimeOffset LandingTime { get; init; }
     public required State State { get; init; }
+    public required int NumberInSequence { get; init; }
+    public required int NumberToLandOnRunway { get; init; }
 }

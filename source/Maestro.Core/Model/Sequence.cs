@@ -6,6 +6,8 @@ using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
 
+// TODO: Need to consolidate all of these methods here. Maybe move them into individual handlers?
+
 // TODO Test cases:
 // - Desequencing a flight, deallocates the slot and adds the flight to desequenced flights
 // - AddPendingFlight adds a flight to pending flights
@@ -135,11 +137,23 @@ public class Sequence
             _ => throw new ArgumentOutOfRangeException()
         };
 
+        // TODO: Source the runway mode from the flight instead of calculating it
+        var runwayMode = GetRunwayModeAt(referenceFlightItem.Time);
+        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlightItem.Flight.AssignedRunwayIdentifier);
+
+        var landingTime = relativePosition switch
+        {
+            RelativePosition.Before => referenceFlightItem.Flight.LandingTime,
+            RelativePosition.After when runway is not null => referenceFlightItem.Flight.LandingTime.Add(
+                runway.AcceptanceRate),
+            _ => throw new ArgumentOutOfRangeException(nameof(relativePosition), relativePosition, null)
+        };
+
         var dummyFlight = new DummyFlight(
             callsign,
             aircraftTypeCode,
             referenceFlightItem.Flight.AssignedRunwayIdentifier,
-            referenceFlightItem.Flight.LandingTime,
+            landingTime,
             state);
 
         _sequence.Insert(dummyFlightInsertionIndex, new DummyFlightSequenceItem(dummyFlight));
@@ -147,8 +161,7 @@ public class Sequence
         Schedule(
             dummyFlightInsertionIndex,
             [dummyFlight.AssignedRunwayIdentifier],
-            forceRescheduleStable: true,
-            insertingFlights: [dummyFlight.Callsign]);
+            forceRescheduleStable: true);
     }
 
     public string NewDummyCallsign()
@@ -298,27 +311,48 @@ public class Sequence
         Schedule(index, slotItem.Slot.RunwayIdentifiers.ToHashSet(), forceRescheduleStable: true);
     }
 
-    public int NumberInSequence(Flight flight)
+    public int NumberInSequence(Flight flight) => NumberInSequence(flight.Callsign);
+    public int NumberInSequence(DummyFlight flight) => NumberInSequence(flight.Callsign);
+
+    public int NumberForRunway(Flight flight) => NumberForRunway(flight.Callsign, flight.AssignedRunwayIdentifier);
+    public int NumberForRunway(DummyFlight flight) => NumberForRunway(flight.Callsign, flight.AssignedRunwayIdentifier);
+
+    int NumberInSequence(string callsign)
     {
-        return _sequence
-            .OfType<FlightSequenceItem>()
-            .Select(i => i.Flight)
-            .Where(f => f.State is not State.Landed)
-            .OrderBy(f => f.LandingTime)
-            .ToList()
-            .IndexOf(flight) + 1;
+        // Get all flights and dummy flights that are not landed, ordered by landing time
+        var allItems = _sequence
+            .Where(i =>
+                i is FlightSequenceItem { Flight.State: not State.Landed } or DummyFlightSequenceItem { DummyFlight.State: not State.Landed })
+            .OrderBy(i => i.Time)
+            .ToList();
+
+        var index = allItems.FindIndex(i =>
+            i is DummyFlightSequenceItem dfs && dfs.DummyFlight.Callsign == callsign ||
+            i is FlightSequenceItem fsi && fsi.Flight.Callsign == callsign);
+
+        if (index == -1)
+            return -1;
+
+        return index + 1;
     }
 
-    public int NumberForRunway(Flight flight)
+    int NumberForRunway(string callsign, string runwayIdentifier)
     {
-        return _sequence
-            .OfType<FlightSequenceItem>()
-            .Select(i => i.Flight)
-            .Where(f => f.State is not State.Landed)
-            .Where(f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier)
-            .OrderBy(f => f.LandingTime)
-            .ToList()
-            .IndexOf(flight) + 1;
+        // Get all flights and dummy flights on the same runway that are not landed, ordered by landing time
+        var allItems = _sequence
+            .Where(i => i switch
+            {
+                FlightSequenceItem { Flight.State: not State.Landed } fs when fs.Flight.AssignedRunwayIdentifier == runwayIdentifier => true,
+                DummyFlightSequenceItem { DummyFlight.State: not State.Landed } dfs when dfs.DummyFlight.AssignedRunwayIdentifier == runwayIdentifier => true,
+                _ => false
+            })
+            .OrderBy(i => i.Time)
+            .ToList();
+
+        var index = allItems.FindIndex(i =>
+            i is DummyFlightSequenceItem dfs && dfs.DummyFlight.Callsign == callsign ||
+            i is FlightSequenceItem fsi && fsi.Flight.Callsign == callsign);
+        return index + 1;
     }
 
     // TODO: Rename to snapshot
@@ -331,7 +365,7 @@ public class Sequence
 
         var dummyFlights = _sequence
             .OfType<DummyFlightSequenceItem>()
-            .Select(i => i.DummyFlight.ToMessage())
+            .Select(i => i.DummyFlight.ToMessage(this))
             .ToArray();
 
         var slots = _sequence
@@ -640,6 +674,43 @@ public class Sequence
         var reschedulePoint = Math.Min(oldIndex, newIndex);
 
         Schedule(reschedulePoint, [flight.AssignedRunwayIdentifier]);
+    }
+
+    public void Reposition(Flight flight, RelativePosition relativePosition, string referenceCallsign)
+    {
+        var existingFlightItem = _sequence.OfType<FlightSequenceItem>()
+            .SingleOrDefault(f => f.Flight == flight);
+        if (existingFlightItem is null)
+            throw new MaestroException($"{flight.Callsign} not found in sequence");
+
+        var referenceFlightItem = _sequence.OfType<FlightSequenceItem>()
+            .SingleOrDefault(f => f.Flight.Callsign == referenceCallsign);
+        if (referenceFlightItem is null)
+            throw new MaestroException($"{referenceCallsign} not found in sequence");
+
+        // TODO: Source the runway mode from the flight instead of calculating it
+        var runwayMode = GetRunwayModeAt(referenceFlightItem.Time);
+        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlightItem.Flight.AssignedRunwayIdentifier);
+
+        var landingTime = relativePosition switch
+        {
+            RelativePosition.Before => referenceFlightItem.Flight.LandingTime,
+            RelativePosition.After when runway is not null => referenceFlightItem.Flight.LandingTime.Add(
+                runway.AcceptanceRate),
+            _ => throw new ArgumentOutOfRangeException(nameof(relativePosition), relativePosition, null)
+        };
+
+        existingFlightItem.Flight.SetRunway(referenceFlightItem.Flight.AssignedRunwayIdentifier, manual: true);
+        existingFlightItem.Flight.SetLandingTime(landingTime);
+
+        var oldIndex = _sequence.IndexOf(existingFlightItem);
+
+        _sequence.Remove(existingFlightItem);
+        var newIndex = InsertByTime(existingFlightItem, landingTime, _sequence);
+
+        var recomputeIndex = Math.Min(oldIndex, newIndex);
+
+        Schedule(recomputeIndex, [flight.AssignedRunwayIdentifier], forceRescheduleStable: true);
     }
 
     void Schedule(
@@ -959,6 +1030,11 @@ public class Sequence
     interface ISequenceItem
     {
         DateTimeOffset Time { get; }
+    }
+
+    interface IFlightSequenceItem : ISequenceItem
+    {
+        State State { get; }
     }
 
     record FlightSequenceItem(Flight Flight) : ISequenceItem
