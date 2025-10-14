@@ -114,6 +114,7 @@ public class Plugin : IPlugin
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(new ErrorReporter(Name))
                 .AddSingleton<WindowManager>()
+                .AddSingleton<IArrivalConfigurationLookup>(new ArrivalConfigurationLookup(configuration.ArrivalConfigurationPath))
                 .BuildServiceProvider());
     }
 
