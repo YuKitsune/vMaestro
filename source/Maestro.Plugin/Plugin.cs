@@ -114,7 +114,7 @@ public class Plugin : IPlugin
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(new ErrorReporter(Name))
                 .AddSingleton<WindowManager>()
-                .AddSingleton<IArrivalConfigurationLookup>(new ArrivalConfigurationLookup(configuration.ArrivalConfigurationPath))
+                .AddSingleton<IArrivalConfigurationLookup>(new ArrivalConfigurationLookup(Path.Combine(FindProfileDirectory(), "arrivals.csv"))) // TODO: Move this somewhere
                 .BuildServiceProvider());
     }
 

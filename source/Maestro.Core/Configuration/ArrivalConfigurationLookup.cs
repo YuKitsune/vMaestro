@@ -43,25 +43,25 @@ public class ArrivalConfigurationLookup : IArrivalConfigurationLookup
             if (columns.Length != 9)
                 throw new MaestroException($"{_configurationPath} line {i}: Found {columns.Length} columns, expected 9.");
 
-            var airportIdentifier = columns[0];
-            var feederFixIdentifier = columns[1];
-            var transitionFixIdentifier = columns[2];
-            var runwayIdentifier = columns[3];
-            var approachType = columns[4];
-            var aircraftCategory = columns[5] switch
+            var airportIdentifier = columns[0].Trim();
+            var feederFixIdentifier = columns[1].Trim();
+            var transitionFixIdentifier = columns[2].Trim();
+            var runwayIdentifier = columns[3].Trim();
+            var approachType = columns[4].Trim();
+            var aircraftCategory = columns[5].Trim() switch
             {
                 "JET" => AircraftCategory.Jet,
                 "NONJET" => AircraftCategory.NonJet,
                 _ => throw new MaestroException($"{_configurationPath} line {i}: Unexpected aircraft category \"{columns[4]}\"")
             };
-            var aircraftTypes = columns[6].Split(';');
+            var aircraftTypes = columns[6].Split(';').Select(s => s.Trim()).ToArray();
 
-            if (!int.TryParse(columns[7], out var intervalSeconds))
+            if (!int.TryParse(columns[7].Trim(), out var intervalSeconds))
                 throw new MaestroException($"{_configurationPath} line {i}: Couldn't parse interval \"{columns[7]}\"");
 
             var interval = TimeSpan.FromSeconds(intervalSeconds);
 
-            if (!int.TryParse(columns[8], out var trackMiles))
+            if (!int.TryParse(columns[8].Trim(), out var trackMiles))
             {
                 trackMiles = 0;
             }
