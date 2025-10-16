@@ -65,11 +65,13 @@ We'll need to provide a method for looking up the available approach types based
 - [X] Add Approach Type to Flight
     - [X] DTOs and ViewModels
     - [X] Change Approach Type function
-- [ ] Store Runway model on Flight model, not just the ID
-    - [ ] Use the stored Runway for scheduling calculations
-- [ ] Introduce new arrival configuration
-    - [ ] Introduce new type
-    - [ ] Load from CSV file
-- [ ] Return new arrival configuration from arrival lookup
-    - [ ] Store processed arrival configuration on Flight model
-    - [ ] Calculate estimates internally rather than using ad-hoc lookups
+- [X] Introduce new arrival configuration
+    - [X] Introduce new type
+    - [X] Load from CSV file
+- [ ] Lookup TTG from arrival configuration (30 mins)
+    - [ ] Replace existing lookups with new configuration
+- [ ] Clean up runway types (1 hr)
+    - [ ] Split root runway config from runway mode runways
+    - [ ] Specify a default or off-mode landing rate
+- [ ] Revisit domain modelling (1hr)
+    - [ ] Try storing the required separation and TTG on the flight model to prevent runtime lookups
