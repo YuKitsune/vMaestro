@@ -807,7 +807,8 @@ public partial class MaestroView
                     Ioc.Default.GetRequiredService<IErrorReporter>(),
                     ViewModel,
                     flight,
-                    ViewModel.Runways);
+                    ViewModel.Runways,
+                    ViewModel.ApproachTypes[flight.AssignedRunwayIdentifier!]);
 
                 flightLabel = new FlightLabelView
                 {

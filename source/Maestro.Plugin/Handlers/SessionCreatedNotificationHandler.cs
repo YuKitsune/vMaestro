@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
+using Maestro.Core.Model;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.ViewModels;
@@ -26,6 +27,9 @@ public class SessionCreatedNotificationHandler(
             .Select(rm => new RunwayModeViewModel(rm))
             .ToArray();
 
+        // TODO: Lookup approach types from arrival lookup
+        var approachTypes = new Dictionary<string, string[]>();
+
         windowManager.FocusOrCreateWindow(
             WindowKeys.Maestro(notification.AirportIdentifier),
             $"TFMS: {notification.AirportIdentifier}",
@@ -33,6 +37,7 @@ public class SessionCreatedNotificationHandler(
                 new MaestroViewModel(
                     notification.AirportIdentifier,
                     airportConfiguration.Runways.Select(r => r.Identifier).ToArray(),
+                    approachTypes,
                     runwayModes,
                     airportConfiguration.Views,
                     mediator,

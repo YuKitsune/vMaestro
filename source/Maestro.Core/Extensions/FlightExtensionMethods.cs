@@ -40,6 +40,7 @@ public static class FlightExtensionMethods
             ActualFeederFixTime = flight.ActualFeederFixTime,
             RunwayManuallyAssigned = flight.RunwayManuallyAssigned,
             AssignedArrivalIdentifier = flight.AssignedArrivalIdentifier,
+            ApproachType = flight.ApproachType,
             ManualLandingTime = flight.ManualLandingTime,
             LastSeen = flight.LastSeen,
             Fixes = flight.Fixes,

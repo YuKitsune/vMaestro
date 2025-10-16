@@ -14,7 +14,8 @@ public partial class FlightLabelViewModel(
     IErrorReporter errorReporter,
     MaestroViewModel maestroViewModel,
     FlightMessage flightViewModel,
-    string[] availableRunways)
+    string[] availableRunways,
+    string[] availableApproachTypes)
     : ObservableObject
 {
     [ObservableProperty]
@@ -26,6 +27,8 @@ public partial class FlightLabelViewModel(
     bool _isSelected = false;
 
     public string[] AvailableRunways => availableRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
+
+    public string[] AvailableApproachTypes => availableApproachTypes.Where(a => a != FlightViewModel.ApproachType).ToArray();
 
     public bool CanInsertBefore => FlightViewModel.State != State.Frozen;
 
@@ -248,6 +251,19 @@ public partial class FlightLabelViewModel(
         try
         {
             mediator.Send(new OpenCoordinationWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void ChangeApproachType(string approachType)
+    {
+        try
+        {
+            mediator.Send(new ChangeApproachTypeRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, approachType));
         }
         catch (Exception ex)
         {

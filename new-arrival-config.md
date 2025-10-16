@@ -59,3 +59,17 @@ If a runway is selected that is off-mode, the default acceptance rate should be 
 When the approach type is changed, the arrival should be updated to the first matching arrival based on the selected approach type and runway.
 
 We'll need to provide a method for looking up the available approach types based on the runway, so that we can populate the dropdown in the UI with valid approach types.
+
+## TODOs
+
+- [X] Add Approach Type to Flight
+    - [X] DTOs and ViewModels
+    - [X] Change Approach Type function
+- [ ] Store Runway model on Flight model, not just the ID
+    - [ ] Use the stored Runway for scheduling calculations
+- [ ] Introduce new arrival configuration
+    - [ ] Introduce new type
+    - [ ] Load from CSV file
+- [ ] Return new arrival configuration from arrival lookup
+    - [ ] Store processed arrival configuration on Flight model
+    - [ ] Calculate estimates internally rather than using ad-hoc lookups

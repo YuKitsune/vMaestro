@@ -70,6 +70,7 @@ public partial class MaestroViewModel : ObservableObject
 
     public string AirportIdentifier { get;}
     public string[] Runways { get; }
+    public Dictionary<string, string[]> ApproachTypes { get; }
 
     public string TerminalConfiguration =>
         NextRunwayMode is not null
@@ -85,6 +86,7 @@ public partial class MaestroViewModel : ObservableObject
     public MaestroViewModel(
         string airportIdentifier,
         string[] runways,
+        Dictionary<string, string[]> approachTypes,
         RunwayModeViewModel[] runwayModes,
         ViewConfiguration[] views,
         IMediator mediator,
@@ -95,6 +97,7 @@ public partial class MaestroViewModel : ObservableObject
 
         AirportIdentifier = airportIdentifier;
         Runways = runways;
+        ApproachTypes = approachTypes;
         RunwayModes = runwayModes;
         CurrentRunwayMode = runwayModes.First();
         Views = views;

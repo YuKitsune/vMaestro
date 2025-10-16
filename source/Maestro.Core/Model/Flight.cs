@@ -64,6 +64,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         ManualLandingTime = message.ManualLandingTime;
         FlowControls = message.FlowControls;
         AssignedArrivalIdentifier = message.AssignedArrivalIdentifier;
+        ApproachType = message.ApproachType;
         Fixes = message.Fixes.ToArray();
         LastSeen = message.LastSeen;
         Position = message.Position;
@@ -110,6 +111,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
 
     public string? AssignedArrivalIdentifier { get; set; }
+    public string ApproachType { get; private set; }
     public FixEstimate[] Fixes { get; set; } = [];
     public DateTimeOffset LastSeen { get; private set; }
     public FlightPosition? Position { get; private set; }
@@ -124,6 +126,17 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     {
         AssignedRunwayIdentifier = runwayIdentifier;
         RunwayManuallyAssigned = manual;
+    }
+
+    // TODO: Consider combining with SetRunway
+    public void ChangeApproachType(string approachType)
+    {
+        // TODO: Update TimeToGo, Pressure, and MaxPressure
+        ApproachType = approachType;
+
+        // Maybe: Throw of approach type does not exist for assigned runway
+        // TODO: Consider how this should be modeled.
+        // - Runways have an approach type,
     }
 
     public void SetFlowControls(FlowControls flowControls)

@@ -142,6 +142,18 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </MenuItem>
+                <MenuItem Header="Change Approach Type">
+                    <ItemsControl ItemsSource="{Binding AvailableApproachTypes}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <MenuItem
+                                    Header="{Binding .}"
+                                    Command="{Binding Path=DataContext.ChangeApproachTypeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding .}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </MenuItem>
                 <MenuItem Header="Insert Flight">
                     <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" IsEnabled="{Binding CanInsertBefore}"/>
                     <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}"/>
