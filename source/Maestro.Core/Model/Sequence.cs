@@ -24,6 +24,7 @@ public class Sequence
 {
     readonly AirportConfiguration _airportConfiguration;
 
+    readonly IArrivalConfigurationLookup _arrivalConfigurationLookup;
     readonly IArrivalLookup _arrivalLookup;
     readonly IClock _clock;
 
@@ -45,11 +46,12 @@ public class Sequence
 
     // public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
 
-    public Sequence(Configuration.AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
+    public Sequence(Configuration.AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock, IArrivalConfigurationLookup arrivalConfigurationLookup)
     {
         _airportConfiguration = airportConfiguration;
         _arrivalLookup = arrivalLookup;
         _clock = clock;
+        _arrivalConfigurationLookup = arrivalConfigurationLookup;
 
         AirportIdentifier = airportConfiguration.Identifier;
         // CurrentRunwayMode = new RunwayMode(airportConfiguration.RunwayModes.First());
@@ -566,28 +568,51 @@ public class Sequence
 
             var currentRunwayMode = runwayModeItem.RunwayMode;
 
-            // If the assigned runway isn't in the current mode, use the default
-            // TODO: Need to use the preferred runway for the FF
+            // Assign a runway if not already assigned
+            // TODO: It'd be nice to hide this away somewhere else
             Runway runway;
-            if (currentFlight.FeederFixIdentifier is not null && !currentFlight.RunwayManuallyAssigned)
+            if (string.IsNullOrEmpty(currentFlight.AssignedRunwayIdentifier))
             {
-                if (_airportConfiguration.PreferredRunways.TryGetValue(currentFlight.FeederFixIdentifier,
-                        out var preferredRunways))
-                {
-                    runway = currentRunwayMode.Runways
-                                 .FirstOrDefault(r => preferredRunways.Contains(r.Identifier))
-                             ?? currentRunwayMode.Default;
-                }
-                else
+                if (string.IsNullOrEmpty(currentFlight.FeederFixIdentifier))
                 {
                     runway = currentRunwayMode.Default;
                 }
+                else
+                {
+                    var matchingArrival = _arrivalConfigurationLookup
+                        .GetArrivals()
+                        .Where(a => a.AirportIdentifier == _airportConfiguration.Identifier)
+                        .Where(a => a.FeederFixIdentifier == currentFlight.FeederFixIdentifier)
+                        .Where(a => a.Category == currentFlight.AircraftCategory || a.AircraftTypes.Contains(currentFlight.AircraftType))
+                        .Where(a => currentRunwayMode.Runways.Any(r => r.Identifier == a.RunwayIdentifier && r.ApproachType == a.ApproachType))
+                        .FirstOrDefault();
+
+                    if (matchingArrival is null)
+                    {
+                        // TODO: Log a warning
+                    }
+
+                    runway = matchingArrival is not null
+                        ? currentRunwayMode.Runways.First(r => r.Identifier == matchingArrival.RunwayIdentifier && r.ApproachType == matchingArrival.ApproachType)
+                        : currentRunwayMode.Default;
+                }
+
+                currentFlight.SetRunway(runway.Identifier, manual: false);
+                currentFlight.ChangeApproachType(runway.ApproachType);
             }
             else
             {
                 runway = currentRunwayMode.Runways
-                             .FirstOrDefault(r => r.Identifier == currentFlight.AssignedRunwayIdentifier)
-                         ?? currentRunwayMode.Default;
+                    .FirstOrDefault(r => r.Identifier == currentFlight.AssignedRunwayIdentifier);
+                if (runway is null)
+                {
+                    // Assigned to off-mode runway, fudge the details
+                    runway = new Runway(
+                        currentFlight.AssignedRunwayIdentifier,
+                        currentFlight.ApproachType,
+                        currentRunwayMode.OffModeSeparation,
+                        _airportConfiguration.Runways.Select(s => new RunwayDependency(s, currentRunwayMode.OffModeSeparation)).ToArray());
+                }
             }
 
             // Determine the earliest possible landing time based on the preceding item on this runway

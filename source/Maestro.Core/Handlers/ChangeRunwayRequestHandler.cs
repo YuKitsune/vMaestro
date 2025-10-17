@@ -7,7 +7,7 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IClock clock, IMediator mediator, ILogger logger)
+public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IArrivalLookup arrivalLookup, IClock clock, IMediator mediator, ILogger logger)
     : IRequestHandler<ChangeRunwayRequest>
 {
     public async Task Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
@@ -27,7 +27,11 @@ public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IClock c
             return;
         }
 
-        flight.SetRunway(request.RunwayIdentifier, true);
+        // TODO: These changes need to be atomic.
+        flight.SetRunway(request.Runway.Identifier, true);
+        flight.ChangeApproachType(request.Runway.ApproachType);
+        RecomputeEstimates(flight);
+
         sequence.Recompute(flight);
 
         // Unstable flights become Stable when changing runway
@@ -39,5 +43,23 @@ public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IClock c
                 sequence.AirportIdentifier,
                 sequence.ToMessage()),
             cancellationToken);
+    }
+
+    void RecomputeEstimates(Flight flight)
+    {
+        if (string.IsNullOrEmpty(flight.FeederFixIdentifier))
+            return;
+
+        var timeToGo = arrivalLookup.GetTimeToGo(flight);
+
+        if (flight.HasPassedFeederFix)
+        {
+            flight.UpdateLandingEstimate(flight.ActualFeederFixTime!.Value.Add(timeToGo));
+        }
+        else
+        {
+            var landingEstimate = flight.FeederFixEstimate!.Value.Add(timeToGo);
+            flight.UpdateLandingEstimate(landingEstimate);
+        }
     }
 }

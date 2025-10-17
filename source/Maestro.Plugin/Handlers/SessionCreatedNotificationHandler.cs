@@ -41,7 +41,7 @@ public class SessionCreatedNotificationHandler(
             _ => new MaestroView(
                 new MaestroViewModel(
                     notification.AirportIdentifier,
-                    airportConfiguration.Runways.Select(r => r.Identifier).ToArray(),
+                    airportConfiguration.Runways,
                     approachTypes,
                     runwayModes,
                     airportConfiguration.Views,

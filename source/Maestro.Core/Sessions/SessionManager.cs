@@ -14,6 +14,7 @@ public class SessionManager(
     IMediator mediator,
     ILogger logger,
     IArrivalLookup arrivalLookup,
+    IArrivalConfigurationLookup arrivalConfigurationLookup,
     IClock clock)
     : ISessionManager
 {
@@ -63,6 +64,6 @@ public class SessionManager(
         if (airportConfiguration is null)
             throw new MaestroException($"No configuration found for {airportIdentifier}");
 
-        return new Sequence(airportConfiguration, arrivalLookup, clock);
+        return new Sequence(airportConfiguration, arrivalLookup, clock, arrivalConfigurationLookup);
     }
 }

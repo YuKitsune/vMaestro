@@ -32,43 +32,7 @@
       "Identifier": "YSSY",
       "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
-      "PreferredRunways": {
-        "RIVET": ["34L", "16R"],
-        "WELSH": ["34R", "16L"],
-        "BOREE": ["34R", "16L"],
-        "YAKKA": ["34R", "16L"],
-        "MARLN": ["34R", "16L"]
-      },
-      "Runways": [
-        { 
-          "Identifier": "16L",
-          "Preferences": {
-            "FeederFixes": ["BOREE", "YAKKA", "MARLN"]
-          }
-        },
-        { 
-          "Identifier": "34L",
-          "Preferences": {
-            "FeederFixes": ["RIVET", "WELSH"],
-            "WakeCategories": ["SuperHeavy", "Heavy"]
-          } 
-        },
-        { "Identifier": "07" },
-        {
-          "Identifier": "16R",
-          "Preferences": {
-            "FeederFixes": ["RIVET", "WELSH"],
-            "WakeCategories": ["SuperHeavy", "Heavy"]
-          } 
-        },
-        { 
-          "Identifier": "34R",
-          "Preferences": {
-            "FeederFixes": ["BOREE", "YAKKA", "MARLN"]
-          }
-        },
-        { "Identifier": "25" }
-      ],
+      "Runways": ["34L", "34R", "16R","16L", "07", "25" ],
       "RunwayModes": [
         {
           "Identifier": "34IVA",
@@ -160,247 +124,59 @@
     {
       "Identifier": "YMML",
       "FeederFixes": ["ARBEY", "BOYSE", "BOOIN", "RAZZI", "PORTS", "ALAXO"],
-      "Runways": [
-        { "Identifier": "09" },
-        { "Identifier": "16" },
-        { "Identifier": "27" },
-        { "Identifier": "34" }
-      ],
+      "Runways": ["09", "16", "27", "34" ],
       "RunwayModes": [
         {
           "Identifier": "09",
           "Runways": [
-            { "Identifier": "09", "LandingRateSeconds": 180 }
+            { "Identifier": "09", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "16",
           "Runways": [
-            { "Identifier": "16", "LandingRateSeconds": 180 }
+            { "Identifier": "16", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "27",
           "Runways": [
-            { "Identifier": "27", "LandingRateSeconds": 180 }
+            { "Identifier": "27", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "34",
           "Runways": [
-            { "Identifier": "34", "LandingRateSeconds": 180 }
+            { "Identifier": "34", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "34/27",
           "Runways": [
-            { "Identifier": "34", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  },
-            { "Identifier": "27", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  }
+            { "Identifier": "34", "ApproachType": "A", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  },
+            { "Identifier": "27", "ApproachType": "A", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  }
           ]
         },
         {
           "Identifier": "34/09",
           "Runways": [
-            { "Identifier": "34", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  },
-            { "Identifier": "09", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  }
+            { "Identifier": "34", "ApproachType": "A", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  },
+            { "Identifier": "09", "ApproachType": "A", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "27", "SeparationSeconds": 60}]  }
           ]
         },
         {
           "Identifier": "16/27",
           "Runways": [
-            { "Identifier": "16", "LandingRateSeconds": 180 },
-            { "Identifier": "27", "LandingRateSeconds": 180 }
+            { "Identifier": "16", "ApproachType": "A", "LandingRateSeconds": 180 },
+            { "Identifier": "27", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "16/09",
           "Runways": [
-            { "Identifier": "16", "LandingRateSeconds": 180 },
-            { "Identifier": "09", "LandingRateSeconds": 180 }
+            { "Identifier": "16", "ApproachType": "A", "LandingRateSeconds": 180 },
+            { "Identifier": "09", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
-        }
-      ],
-      "Arrivals": [
-        {
-          "FeederFix": "ARBEY",
-          "ArrivalRegex": "/ARBE\\dA/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "09": 11,
-            "16": 9,
-            "27": 12,
-            "34": 13
-          }
-        },
-        {
-          "FeederFix": "ARBEY",
-          "ArrivalRegex": "/ARBE\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "09": 12,
-            "16": 10,
-            "27": 14,
-            "34": 15
-          }
-        },
-        {
-          "FeederFix": "BOOIN",
-          "ArrivalRegex": "/BOIN\\dA/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "09": 15,
-            "16": 12,
-            "27": 10,
-            "34": 13
-          }
-        },
-        {
-            "FeederFix": "BOOIN",
-            "ArrivalRegex": "/BOIN\\dV/",
-            "Category": "Jet",
-            "AdditionalAircraftTypes": ["DH8D"],
-            "RunwayIntervals": {
-              "34": 12
-            }
-        },
-        {
-          "FeederFix": "BOOIN",
-          "ArrivalRegex": "/BOIN\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "09": 17,
-            "16": 14,
-            "27": 11,
-            "34": 15
-          }
-        },
-        {
-            "FeederFix": "BOOIN",
-            "ArrivalRegex": "/BOIN\\dV/",
-            "Category": "NonJet",
-            "RunwayIntervals": {
-              "34": 14
-            }
-        },
-        {
-          "FeederFix": "BOYSE",
-          "ArrivalRegex": "/BOYS\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "09": 18,
-            "16": 15,
-            "27": 13,
-            "34": 16
-          }
-        },
-        {
-          "FeederFix": "BOYSE",
-          "ArrivalRegex": "/BOYS\\dV/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "34": 15
-          }
-        },
-        {
-          "FeederFix": "RAZZI",
-          "ArrivalRegex": "/RAZI\\d[AV]/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "09": 16,
-            "16": 13,
-            "27": 9,
-            "34": 10
-          }
-        },
-        {
-          "FeederFix": "RAZZI",
-          "ArrivalRegex": "/RAZI\\d[AV]/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "09": 18,
-            "16": 15,
-            "27": 10,
-            "34": 11
-          }
-        },
-        {
-          "FeederFix": "RAZZI",
-          "ArrivalRegex": "/RAZI\\dM/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "16": 11
-          }
-        },
-        {
-          "FeederFix": "RAZZI",
-          "ArrivalRegex": "/RAZI\\dM/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "16": 13
-          }
-        },
-        {
-          "FeederFix": "PORTS",
-          "ArrivalRegex": "/PORT\\dA/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "09": 11,
-            "34": 7
-          }
-        },
-        {
-          "FeederFix": "PORTS",
-          "ArrivalRegex": "/PORT\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "09": 12,
-            "34": 8
-          }
-        },
-        {
-          "FeederFix": "ALAXO",
-          "ArrivalRegex": "/ALAX\\dA/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "09": 11,
-            "16": 17,
-            "27": 15,
-            "34": 12
-          }
-        },
-        {
-          "FeederFix": "ALAXO",
-          "ArrivalRegex": "/ALAX\\dA/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "09": 12,
-            "16": 19,
-            "27": 17,
-            "34": 14
-          }
-        },
-        {
-          "FeederFix": "ALAXO",
-          "ArrivalRegex": "/ALAX\\dP/",
-          "Category": "Jet",
-          "AdditionalAircraftTypes": ["DH8D"],
-          "RunwayIntervals": {
-            "16": 15
-          }
-        },
-        {
-          "FeederFix": "ALAXO",
-          "ArrivalRegex": "/ALAX\\dP/",
-          "Category": "NonJet",
-          "RunwayIntervals": {
-            "16": 17
-          }
         }
       ],
       "Views": [
@@ -441,58 +217,33 @@
       "Identifier": "YBBN",
       "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["BLAKA", "GOMOL", "ENLIP", "MORBI", "SMOKA", "TEBOT", "UGTUG", "WOODY"],
-      "Runways": [
-        { 
-          "Identifier": "01L",
-          "Requirements":{
-            "FeederFixes": ["ENLIP", "WOODY", "MORBI", "SMOKA"]
-          }
-        },
-        { 
-          "Identifier": "01R",
-          "Requirements":{
-            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
-          }
-        },
-        { 
-          "Identifier": "19L",
-          "Requirements":{
-            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
-          }
-        },
-        { 
-          "Identifier": "19R",
-          "Requirements": {
-            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
-          }
-        }
-      ],
+      "Runways": [ "01L", "01R", "19L", "19R"],
       "RunwayModes": [
         {
           "Identifier": "19",
           "Runways": [
-            { "Identifier": "19L", "LandingRateSeconds": 180 },
-            { "Identifier": "19R", "LandingRateSeconds": 180 }
+            { "Identifier": "19L", "ApproachType": "A", "LandingRateSeconds": 180 },
+            { "Identifier": "19R", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "01",
           "Runways": [
-            { "Identifier": "01L", "LandingRateSeconds": 180 },
-            { "Identifier": "01R", "LandingRateSeconds": 180 }
+            { "Identifier": "01L", "ApproachType": "A", "LandingRateSeconds": 180 },
+            { "Identifier": "01R", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "SODPROPS",
           "Runways": [
-            { "Identifier": "19R", "LandingRateSeconds": 300 }
+            { "Identifier": "19R", "ApproachType": "A", "LandingRateSeconds": 300 }
           ]
         },
         {
           "Identifier": "RECIP",
           "Runways": [
-            { "Identifier": "19L", "LandingRateSeconds": 240 },
-            { "Identifier": "19R", "LandingRateSeconds": 240 }
+            { "Identifier": "19L", "ApproachType": "A", "LandingRateSeconds": 240 },
+            { "Identifier": "19R", "ApproachType": "A", "LandingRateSeconds": 240 }
           ]
         }
       ],
@@ -980,42 +731,37 @@
     {
       "Identifier": "YPPH",
       "FeederFixes": ["KAGMI", "JULIM", "KABLI", "SOLUS", "DAYLR", "LAVEX", "SAPKO"],
-      "Runways": [
-        { "Identifier": "03" },
-        { "Identifier": "06" },
-        { "Identifier": "21" },
-        { "Identifier": "24" }
-      ],
+      "Runways": [ "03", "06", "21", "24"],
       "RunwayModes": [
         {
           "Identifier": "SW PLN",
           "Runways": [
-            { "Identifier": "21", "LandingRateSeconds": 180 },
-            { "Identifier": "24", "LandingRateSeconds": 180 }
+            { "Identifier": "21", "ApproachType": "A", "LandingRateSeconds": 180 },
+            { "Identifier": "24", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "NE PLN",
           "Runways": [
-            { "Identifier": "03", "LandingRateSeconds": 180 }
+            { "Identifier": "03", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "06",
           "Runways": [
-            { "Identifier": "06", "LandingRateSeconds": 180 }
+            { "Identifier": "06", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "21",
           "Runways": [
-            { "Identifier": "21", "LandingRateSeconds": 180 }
+            { "Identifier": "21", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         },
         {
           "Identifier": "24",
           "Runways": [
-            { "Identifier": "24", "LandingRateSeconds": 180 }
+            { "Identifier": "24", "ApproachType": "A", "LandingRateSeconds": 180 }
           ]
         }
       ],
@@ -1391,7 +1137,7 @@
           "RightLadder": ["06", "24"]
         }
       ],
-      "DepartureAirports": ["YPKG", "YESP", "YABA", "YGEL"]
+      "DepartureAirports": ["YPKG", "YESP", "YABA", "YGEL", "YBLN"]
     }
   ]
 }

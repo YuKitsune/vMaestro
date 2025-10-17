@@ -2,86 +2,88 @@
 
 namespace Maestro.Core.Model;
 
-// TODO: Need to clean this up a good bit.
-// Mixing Domain types and config in here makes the tests real messy.
-
 public class RunwayMode
 {
-    public RunwayMode(Configuration.RunwayModeConfiguration runwayModeConfigurationConfiguration)
+    public RunwayMode(Configuration.RunwayModeConfiguration configuration)
     {
-        Identifier = runwayModeConfigurationConfiguration.Identifier;
-        Runways = runwayModeConfigurationConfiguration.Runways
+        Identifier = configuration.Identifier;
+        Runways = configuration.Runways
             .Select(r => new Runway(r))
             .ToArray();
+        OffModeSeparation = TimeSpan.FromSeconds(configuration.OffModeSeparationSeconds);
     }
 
-    public RunwayMode(RunwayModeDto runwayModeDto)
+    public RunwayMode(RunwayModeDto dto)
     {
-        Identifier = runwayModeDto.Identifier;
-        Runways = runwayModeDto.AcceptanceRates.Select(kvp => new Runway(kvp.Key, TimeSpan.FromSeconds(kvp.Value)))
+        Identifier = dto.Identifier;;
+        Runways = dto.Runways
+            .Select(r => new Runway(r))
             .ToArray();
+        OffModeSeparation = TimeSpan.FromSeconds(dto.OffModeSeparationSeconds);
     }
 
     public string Identifier { get; }
     public Runway[] Runways { get; }
     public Runway Default => Runways.First();
+    public TimeSpan OffModeSeparation { get; }
 }
 
 public class Runway
 {
-    public Runway(Configuration.RunwayConfiguration runwayConfiguration)
+    public Runway(Configuration.RunwayConfiguration configuration)
     {
-        Identifier = runwayConfiguration.Identifier;
-        AcceptanceRate = TimeSpan.FromSeconds(runwayConfiguration.LandingRateSeconds);
-        Dependencies = runwayConfiguration.Dependencies
+        Identifier = configuration.Identifier;
+        ApproachType = configuration.ApproachType;
+        AcceptanceRate = TimeSpan.FromSeconds(configuration.LandingRateSeconds);
+        Dependencies = configuration.Dependencies
             .Select(d => new RunwayDependency(d))
             .ToArray();
-        Requirements = runwayConfiguration.Requirements is not null
-            ? new RunwayRequirements(runwayConfiguration.Requirements)
-            : null;
-        Preferences = runwayConfiguration.Preferences is not null
-            ? new RunwayPreferences(runwayConfiguration.Preferences)
-            : null;
     }
 
-    // DTO ctor. Need to extend for dependencies, requirements, preferences.
-    public Runway(string identifier, TimeSpan acceptance)
+    public Runway(RunwayDto dto)
+    {
+        Identifier = dto.Identifier;
+        ApproachType = dto.ApproachType;
+        AcceptanceRate = TimeSpan.FromSeconds(dto.AcceptanceRateSeconds);
+        Dependencies = dto.Dependencies
+            .Select(d => new RunwayDependency(d))
+            .ToArray();
+    }
+
+    public Runway(string identifier, string approachType, TimeSpan acceptanceRate, RunwayDependency[] dependencies)
     {
         Identifier = identifier;
-        AcceptanceRate = acceptance;
-        Dependencies = [];
-        Requirements = null;
-        Preferences = null;
+        ApproachType = approachType;
+        AcceptanceRate = acceptanceRate;
+        Dependencies = dependencies;
     }
 
     public string Identifier { get; }
-    public TimeSpan AcceptanceRate { get; private set; }
+    public string ApproachType { get; }
+    public TimeSpan AcceptanceRate { get; }
     public RunwayDependency[] Dependencies { get; }
-    public RunwayRequirements? Requirements { get; }
-    public RunwayPreferences? Preferences { get; }
+}
 
-    public void ChangeAcceptanceRate(TimeSpan acceptanceRate)
+public class RunwayDependency
+{
+    public RunwayDependency(Configuration.RunwayDependency configuration)
     {
-        AcceptanceRate = acceptanceRate;
+        RunwayIdentifier = configuration.RunwayIdentifier;
+        Separation = TimeSpan.FromSeconds(configuration.SeparationSeconds);
     }
-}
 
-public class RunwayDependency(Configuration.RunwayDependency runwayDependency)
-{
-    public string RunwayIdentifier { get; } = runwayDependency.RunwayIdentifier;
+    public RunwayDependency(RunwayDependencyDto dto)
+    {
+        RunwayIdentifier = dto.RunwayIdentifier;
+        Separation = TimeSpan.FromSeconds(dto.SeparationSeconds);
+    }
 
-    public TimeSpan? Separation { get; } = runwayDependency.SeparationSeconds.HasValue
-        ? TimeSpan.FromSeconds(runwayDependency.SeparationSeconds.Value)
-        : null;
-}
+    public RunwayDependency(string runwayIdentifier, TimeSpan separation)
+    {
+        RunwayIdentifier = runwayIdentifier;
+        Separation = separation;
+    }
 
-public class RunwayRequirements(Configuration.RunwayRequirements runwayRequirements)
-{
-    public string[] FeederFixes { get; } = runwayRequirements.FeederFixes;
-}
-
-public class RunwayPreferences(Configuration.RunwayPreferences runwayPreferences)
-{
-    public WakeCategory[] WakeCategories { get; } = runwayPreferences.WakeCategories;
-    public string[] FeederFixes { get; } = runwayPreferences.FeederFixes;
+    public string RunwayIdentifier { get; }
+    public TimeSpan Separation { get; }
 }

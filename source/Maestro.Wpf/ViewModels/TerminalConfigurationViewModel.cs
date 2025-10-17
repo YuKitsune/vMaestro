@@ -85,7 +85,12 @@ public partial class TerminalConfigurationViewModel : ObservableObject
             var runwayModeDto = new RunwayModeDto(
                 SelectedRunwayMode.Identifier,
                 SelectedRunwayMode.Runways
-                    .ToDictionary(r => r.Identifier, r => r.LandingRateSeconds));
+                    .Select(r => new RunwayDto(
+                        r.Identifier,
+                        r.ApproachType,
+                        r.LandingRateSeconds,
+                        r.Dependencies.Select(d => new RunwayDependencyDto(d.Key, d.Value)).ToArray()))
+                    .ToArray());
 
             _mediator.Send(
                 new ChangeRunwayModeRequest(

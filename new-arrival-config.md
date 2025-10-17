@@ -70,8 +70,11 @@ We'll need to provide a method for looking up the available approach types based
     - [X] Load from CSV file
 - [X] Lookup TTG from arrival configuration (30 mins)
     - [X] Replace existing lookups with new configuration
-- [ ] Clean up runway types (1 hr)
-    - [ ] Split root runway config from runway mode runways
-    - [ ] Specify a default or off-mode landing rate
-- [ ] Revisit domain modelling (1hr)
-    - [ ] Try storing the required separation and TTG on the flight model to prevent runtime lookups
+- [X] Clean up runway types (1.5 hr)
+- [ ] Revisit modelling (2hr)
+    - [ ] Combine runway and approach type
+    - [ ] Store the required separation and TTG on the flight model to prevent runtime lookups
+    - [ ] Simplify runway assignment mode lookups
+- [ ] Fix up config files
+- [ ] Testing
+    - [ ] Fix the tests

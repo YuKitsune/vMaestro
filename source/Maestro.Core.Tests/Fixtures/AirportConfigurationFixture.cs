@@ -1,7 +1,5 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
-using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
 
 [assembly: AssemblyFixture(typeof(AirportConfigurationFixture))]
 
@@ -15,28 +13,7 @@ public class AirportConfigurationFixture
         {
             Identifier = "YSSY",
             MinimumRadarEstimateRange = 200,
-            Runways =
-            [
-                new RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayPreferences
-                    {
-                        FeederFixes = ["RIVET", "WELSH"],
-                        WakeCategories = [WakeCategory.SuperHeavy, WakeCategory.Heavy]
-                    }
-                },
-                new RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayPreferences
-                    {
-                        FeederFixes = ["BOREE", "YAKKA", "MARLN"]
-                    }
-                }
-            ],
+            Runways = ["34L", "34R"],
             RunwayModes =
             [
                 new RunwayModeConfiguration
@@ -47,11 +24,13 @@ public class AirportConfigurationFixture
                         new RunwayConfiguration
                         {
                             Identifier = "34L",
+                            ApproachType = string.Empty,
                             LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         },
                         new RunwayConfiguration
                         {
                             Identifier = "34R",
+                            ApproachType = string.Empty,
                             LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         }
                     ]
@@ -68,7 +47,6 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "WELSH"],
-            PreferredRunways = [],
             DepartureAirports = ["YSCB"]
         };
 }

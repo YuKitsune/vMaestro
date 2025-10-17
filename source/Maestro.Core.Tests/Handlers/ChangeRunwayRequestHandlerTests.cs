@@ -49,11 +49,12 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
 
         var handler = new ChangeRunwayRequestHandler(
             sessionManager,
+            Substitute.For<IArrivalLookup>(),
             Substitute.For<IClock>(),
             mediator,
             Substitute.For<ILogger>());
 
-        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", new RunwayDto("34L", "V", 180, []));
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -61,6 +62,8 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         // Assert
         flight1.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
         flight1.RunwayManuallyAssigned.ShouldBe(true, "runway should be marked as manually assigned");
+
+        flight1.ApproachType.ShouldBe("V", "QFA1 should have the correct approach type for 34R");
 
         flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
         flight1.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));

@@ -30,27 +30,59 @@ public partial class RunwayModeViewModel : ObservableObject
     RunwayViewModel[] _runways = [];
 
     public RunwayModeViewModel(RunwayModeConfiguration runwayModeConfiguration)
-        : this(runwayModeConfiguration.Identifier, runwayModeConfiguration.Runways.Select(r => new RunwayViewModel(r.Identifier, r.LandingRateSeconds)).ToArray())
+        : this(
+            runwayModeConfiguration.Identifier,
+            runwayModeConfiguration.Runways.Select(r =>
+                new RunwayViewModel(
+                    r.Identifier,
+                    r.LandingRateSeconds,
+                    r.ApproachType,
+                    r.Dependencies.ToDictionary(
+                        d => d.RunwayIdentifier,
+                        d => d.SeparationSeconds)))
+                .ToArray(),
+            runwayModeConfiguration.OffModeSeparationSeconds)
     {
     }
 
     public RunwayModeViewModel(RunwayModeDto runwayModeDto)
-        : this(runwayModeDto.Identifier, runwayModeDto.AcceptanceRates.Select(r => new RunwayViewModel(r.Key, r.Value)).ToArray())
+        : this(
+            runwayModeDto.Identifier,
+            runwayModeDto.Runways.Select(r =>
+                new RunwayViewModel(
+                    r.Identifier,
+                    r.AcceptanceRateSeconds,
+                    r.ApproachType,
+                    r.Dependencies.ToDictionary(
+                        d => d.RunwayIdentifier,
+                        d => d.SeparationSeconds)))
+                .ToArray(),
+            runwayModeDto.OffModeSeparationSeconds)
     {
     }
 
     public RunwayModeViewModel(RunwayModeViewModel runwayModeViewModel)
-        : this(runwayModeViewModel.Identifier, runwayModeViewModel.Runways.Select(r => new RunwayViewModel(r.Identifier, r.LandingRateSeconds)).ToArray())
+        : this(
+            runwayModeViewModel.Identifier,
+            runwayModeViewModel.Runways.Select(r => new RunwayViewModel(
+                    r.Identifier,
+                    r.LandingRateSeconds,
+                    r.ApproachType,
+                    r.Dependencies))
+                .ToArray(),
+            runwayModeViewModel.OffModeSeparationSeconds)
     {
     }
 
-    public RunwayModeViewModel(string identifier, RunwayViewModel[] runways)
+    public RunwayModeViewModel(string identifier, RunwayViewModel[] runways, int offModeSeparationSeconds)
     {
         Identifier = identifier;
         Runways = runways;
+        OffModeSeparationSeconds = offModeSeparationSeconds;
     }
 
     public string Identifier { get; }
+    public int OffModeSeparationSeconds { get; }
 }
 
 public partial class RunwayViewModel : ObservableObject
@@ -58,11 +90,16 @@ public partial class RunwayViewModel : ObservableObject
     [ObservableProperty]
     int _landingRateSeconds;
 
-    public RunwayViewModel(string identifier, int landingRateSeconds)
+    public RunwayViewModel(string identifier, int landingRateSeconds, string approachType, IReadOnlyDictionary<string, int> dependencies)
     {
         Identifier = identifier;
         LandingRateSeconds = landingRateSeconds;
+        ApproachType = approachType;
+        Dependencies = dependencies;
     }
 
     public string Identifier { get; }
+    public string ApproachType { get; }
+
+    public IReadOnlyDictionary<string, int> Dependencies { get; }
 }
