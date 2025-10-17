@@ -1,60 +1,58 @@
 ﻿using Maestro.Core.Configuration;
-using Serilog;
 
 namespace Maestro.Core.Model;
 
 public interface IArrivalLookup
 {
-    public TimeSpan? GetArrivalInterval(
-        string airportIdentifier,
-        string feederFixIdentifier,
-        string? arrivalIdentifier,
-        string runwayIdentifier,
-        string aircraftTypeCode,
-        AircraftCategory aircraftCategory);
+    public TimeSpan GetTimeToGo(Flight flight);
 }
 
-public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
-    : IArrivalLookup
+// TODO: Test cases:
+// - No feeder fix, throws
+// - Airport mismatch, no match
+// - Feeder fix mismatch, no match
+// - Runway mismatch, no match
+// - Has transition fix, flight route missing it, no match
+// - Has transition fix, flight route includes it, match
+// - Category match, match
+// - Specific aircraft type match, match
+// - Approach type mismatch, no match
+// - All criteria match, returns interval
+
+public class ArrivalLookup(IArrivalConfigurationLookup arrivalConfigurationLookup) : IArrivalLookup
 {
-    public TimeSpan? GetArrivalInterval(
-        string airportIdentifier,
-        string feederFixIdentifier,
-        string? arrivalIdentifier,
-        string runwayIdentifier,
-        string aircraftTypeCode,
-        AircraftCategory aircraftCategory)
+    public TimeSpan GetTimeToGo(Flight flight)
     {
-        var airportConfiguration = airportConfigurationProvider
-            .GetAirportConfigurations()
-            .SingleOrDefault(x => x.Identifier == airportIdentifier);
-        if (airportConfiguration is null)
-            return null;
+        // TODO: Eventually, we might want to return the entire arrival as a domain type and store it on the flight.
 
-        var foundArrivalConfigurations = airportConfiguration.Arrivals
-            .Where(x => x.FeederFix == feederFixIdentifier)
-            .Where(x =>
-                (string.IsNullOrEmpty(x.AircraftType) || x.AircraftType == aircraftTypeCode) &&
-                (x.AdditionalAircraftTypes.Contains(aircraftTypeCode) || x.Category is null || x.Category == aircraftCategory) &&
-                (string.IsNullOrEmpty(arrivalIdentifier) || x.ArrivalRegex.IsMatch(arrivalIdentifier)))
-            .ToArray();
+        if (string.IsNullOrEmpty(flight.FeederFixIdentifier))
+            throw new MaestroException("Cannot lookup arrival without a feeder fix");
 
-        // No matches, nothing to do
-        if (foundArrivalConfigurations.Length == 0)
-            return null;
-
-        if (foundArrivalConfigurations.Length > 1)
+        foreach (var arrival in arrivalConfigurationLookup.GetArrivals())
         {
-            // TODO: Show vatSys error
-            logger.Warning(
-                "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; STAR = {ArrivalIdentifier}; Type = {Type}",
-                airportIdentifier,
-                feederFixIdentifier,
-                runwayIdentifier,
-                arrivalIdentifier,
-                aircraftTypeCode);
+            if (arrival.AirportIdentifier != flight.DestinationIdentifier)
+                continue;
+
+            if (arrival.FeederFixIdentifier != flight.FeederFixIdentifier)
+                continue;
+
+            if (arrival.RunwayIdentifier != flight.AssignedRunwayIdentifier)
+                continue;
+
+            // If this arrival has a transition fix, ensure the flight's route includes it
+            if (!string.IsNullOrEmpty(arrival.TransitionFixIdentifier) && flight.Fixes.All(f => f.FixIdentifier != arrival.TransitionFixIdentifier))
+                continue;
+
+            // Match either by category or specific aircraft type
+            if (arrival.Category != flight.AircraftCategory && !arrival.AircraftTypes.Contains(flight.AircraftType))
+                continue;
+
+            if (arrival.ApproachType != flight.ApproachType)
+                continue;
+
+            return arrival.TimeToGo;
         }
 
-        return TimeSpan.FromMinutes(foundArrivalConfigurations.First().RunwayIntervals[runwayIdentifier]);
+        throw new MaestroException($"No matching arrival found for flight {flight.Callsign} to {flight.DestinationIdentifier}/{flight.AssignedRunwayIdentifier} via {flight.FeederFixIdentifier}");
     }
 }

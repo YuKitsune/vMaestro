@@ -17,7 +17,7 @@ public class EstimateProviderTests
     readonly IArrivalLookup _arrivalLookup;
     readonly IFixLookup _fixLookup;
     readonly DateTimeOffset _currentTime = new(2025, 04, 12, 12, 00, 00, TimeSpan.Zero);
-    readonly TimeSpan _arrivalInterval = TimeSpan.FromMinutes(12);
+    readonly TimeSpan _arrivalTimeToGo = TimeSpan.FromMinutes(12);
 
     public EstimateProviderTests(AirportConfigurationFixture airportConfigurationFixture)
     {
@@ -26,14 +26,7 @@ public class EstimateProviderTests
         _airportConfigurationFixture = airportConfigurationFixture;
 
         _arrivalLookup = Substitute.For<IArrivalLookup>();
-        _arrivalLookup.GetArrivalInterval(
-                Arg.Is("YSSY"),
-                Arg.Is("RIVET"),
-                Arg.Is("RIVET4"),
-                Arg.Is("34L"),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(_arrivalInterval);
+        _arrivalLookup.GetTimeToGo(Arg.Any<Flight>()).Returns(_arrivalTimeToGo);
 
         _fixLookup = Substitute.For<IFixLookup>();
         _fixLookup.FindFix(Arg.Is("RIVET")).Returns(new Fix("RIVET", new Coordinate(0, 0)));
@@ -136,7 +129,7 @@ public class EstimateProviderTests
             systemEstimate);
 
         // Assert
-        var expectedEstimate = feederFixEstimate.Add(_arrivalInterval);
+        var expectedEstimate = feederFixEstimate.Add(_arrivalTimeToGo);
         estimate.ShouldNotBeNull();
         estimate.Value.ShouldBe(expectedEstimate, TimeSpan.FromSeconds(30));
     }
@@ -163,7 +156,7 @@ public class EstimateProviderTests
         var estimate = estimateProvider.GetLandingEstimate(flight, systemEstimate);
 
         // Assert
-        var expectedEstimate = actualFeederFixTime.Add(_arrivalInterval);
+        var expectedEstimate = actualFeederFixTime.Add(_arrivalTimeToGo);
         estimate.ShouldNotBeNull();
         estimate.Value.ShouldBe(expectedEstimate, TimeSpan.FromSeconds(30));
     }

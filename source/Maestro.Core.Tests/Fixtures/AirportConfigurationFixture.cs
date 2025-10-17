@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
 using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
@@ -56,31 +55,6 @@ public class AirportConfigurationFixture
                             LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         }
                     ]
-                }
-            ],
-            Arrivals =
-            [
-                new ArrivalConfiguration
-                {
-                    FeederFix = "RIVET",
-                    ArrivalRegex = new Regex(@"RIVET\d"),
-                    Category = AircraftCategory.Jet,
-                    RunwayIntervals = new Dictionary<string, int>
-                    {
-                        { "34L", 16 },
-                        { "34R", 20 },
-                    }
-                },
-                new ArrivalConfiguration
-                {
-                    FeederFix = "WELSH",
-                    ArrivalRegex = new Regex(@"ODALE\d"),
-                    Category = AircraftCategory.Jet,
-                    RunwayIntervals = new Dictionary<string, int>
-                    {
-                        { "34L", 16 },
-                        { "34R", 20 },
-                    }
                 }
             ],
             Views =

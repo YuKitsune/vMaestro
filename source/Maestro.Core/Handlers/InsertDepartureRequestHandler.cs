@@ -41,14 +41,17 @@ public class InsertDepartureRequestHandler(
             throw new MaestroException($"{request.Callsign} does not have an ETE.");
         }
 
+        // TODO: Depart method should probably be moved to Flight
         sequence.Depart(flight, request.TakeOffTime);
-        flight.SetState(State.Stable, clock);
 
         // Calculate feeder fix estimate based on landing time
         // Need to do this after so that the runway gets assigned
         var feederFixEstimate = GetFeederFixTime(flight);
         if (feederFixEstimate is not null)
             flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
+
+
+        flight.SetState(State.Stable, clock);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
@@ -59,20 +62,10 @@ public class InsertDepartureRequestHandler(
 
     DateTimeOffset? GetFeederFixTime(Flight flight)
     {
-        var aircraftPerformance = performanceLookup.GetPerformanceDataFor(flight.AircraftType);
-        if (aircraftPerformance is null)
+        if (string.IsNullOrEmpty(flight.FeederFixIdentifier))
             return null;
 
-        var arrivalInterval = arrivalLookup.GetArrivalInterval(
-            flight.DestinationIdentifier,
-            flight.FeederFixIdentifier,
-            flight.AssignedArrivalIdentifier,
-            flight.AssignedRunwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
-        if (arrivalInterval is null)
-            return null;
-
-        return flight.LandingEstimate.Subtract(arrivalInterval.Value);
+        var timeToGo = arrivalLookup.GetTimeToGo(flight);
+        return flight.LandingEstimate.Subtract(timeToGo);
     }
 }

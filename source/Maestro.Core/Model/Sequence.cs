@@ -809,18 +809,9 @@ public class Sequence
 
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && flight.FeederFixEstimate is not null && !flight.HasPassedFeederFix)
         {
-            var arrivalInterval = _arrivalLookup.GetArrivalInterval(
-                flight.DestinationIdentifier,
-                flight.FeederFixIdentifier,
-                flight.AssignedArrivalIdentifier,
-                flight.AssignedRunwayIdentifier,
-                flight.AircraftType,
-                flight.AircraftCategory);
-            if (arrivalInterval is not null)
-            {
-                var feederFixTime = flight.LandingTime.Subtract(arrivalInterval.Value);
-                flight.SetFeederFixTime(feederFixTime);
-            }
+            var timeToGo = _arrivalLookup.GetTimeToGo(flight);
+            var feederFixTime = flight.LandingTime.Subtract(timeToGo);
+            flight.SetFeederFixTime(feederFixTime);
         }
 
         flight.ResetInitialEstimates();

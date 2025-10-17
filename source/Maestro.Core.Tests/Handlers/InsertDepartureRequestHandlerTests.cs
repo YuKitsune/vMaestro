@@ -18,7 +18,7 @@ public class InsertDepartureRequestHandlerTests(
 {
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
-    readonly TimeSpan _arrivalDuration = TimeSpan.FromMinutes(10);
+    readonly TimeSpan _arrivalTimeToGo = TimeSpan.FromMinutes(10);
 
     [Fact]
     public async Task WhenInsertingAFlight_ItShouldBeBecomeStable()
@@ -109,7 +109,7 @@ public class InsertDepartureRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.FeederFixEstimate.ShouldBe(takeOffTime.Add(flightTime).Add(-_arrivalDuration));
+        pendingFlight.FeederFixEstimate.ShouldBe(takeOffTime.Add(flightTime).Add(-_arrivalTimeToGo));
     }
 
     [Fact]
@@ -196,14 +196,7 @@ public class InsertDepartureRequestHandlerTests(
         var sessionManager = new MockLocalSessionManager(sequence);
 
         var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(_arrivalDuration);
+        arrivalLookup.GetTimeToGo(Arg.Any<Flight>()).Returns(_arrivalTimeToGo);
 
         var mediator = Substitute.For<IMediator>();
 

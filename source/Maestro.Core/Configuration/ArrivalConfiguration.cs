@@ -1,23 +1,8 @@
-﻿using System.Text.RegularExpressions;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 
 namespace Maestro.Core.Configuration;
 
-// TODO: Transitions
-
 public class ArrivalConfiguration
-{
-    public required string FeederFix { get; init; }
-    public required Regex ArrivalRegex { get; init; }
-    public AircraftCategory? Category { get; init; }
-    public string[] AdditionalAircraftTypes { get; init; } = [];
-    public string AircraftType { get; init; } = string.Empty;
-
-    // TODO: Distance-based calculations.
-    public required IReadOnlyDictionary<string, int> RunwayIntervals { get; init; }
-}
-
-public class ArrivalConfigurationV2
 {
     public required string AirportIdentifier { get; init; }
 
@@ -30,6 +15,6 @@ public class ArrivalConfigurationV2
     public required AircraftCategory Category { get; init; }
     public string[] AircraftTypes { get; init; } = [];
 
-    public required TimeSpan Interval { get; init; }
+    public required TimeSpan TimeToGo { get; init; }
     public int TrackMiles { get; init; }
 }

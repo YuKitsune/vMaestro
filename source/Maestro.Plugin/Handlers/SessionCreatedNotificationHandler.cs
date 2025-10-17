@@ -13,6 +13,7 @@ namespace Maestro.Plugin.Handlers;
 
 public class SessionCreatedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
+    IArrivalConfigurationLookup arrivalConfigurationLookup,
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter)
@@ -27,8 +28,12 @@ public class SessionCreatedNotificationHandler(
             .Select(rm => new RunwayModeViewModel(rm))
             .ToArray();
 
-        // TODO: Lookup approach types from arrival lookup
-        var approachTypes = new Dictionary<string, string[]>();
+        // TODO: EW
+        var approachTypes = arrivalConfigurationLookup
+            .GetArrivals()
+            .Where(a => a.AirportIdentifier == notification.AirportIdentifier)
+            .GroupBy(a => a.RunwayIdentifier, a => a.ApproachType)
+            .ToDictionary(g => g.Key, g => g.Distinct().Where(s => !string.IsNullOrEmpty(s)).ToArray());
 
         windowManager.FocusOrCreateWindow(
             WindowKeys.Maestro(notification.AirportIdentifier),

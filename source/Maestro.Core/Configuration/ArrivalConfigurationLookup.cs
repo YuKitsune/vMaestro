@@ -4,30 +4,30 @@ namespace Maestro.Core.Configuration;
 
 public interface IArrivalConfigurationLookup
 {
-    ArrivalConfigurationV2[] GetArrivals();
+    ArrivalConfiguration[] GetArrivals();
 }
 
 public class ArrivalConfigurationLookup : IArrivalConfigurationLookup
 {
     readonly string _configurationPath;
-    readonly Lazy<ArrivalConfigurationV2[]> _lazyArrivals;
+    readonly Lazy<ArrivalConfiguration[]> _lazyArrivals;
 
     public ArrivalConfigurationLookup(string configurationPath)
     {
         _configurationPath = configurationPath;
-        _lazyArrivals = new Lazy<ArrivalConfigurationV2[]>(GetArrivalsInternal);
+        _lazyArrivals = new Lazy<ArrivalConfiguration[]>(GetArrivalsInternal);
     }
 
-    public ArrivalConfigurationV2[] GetArrivals()
+    public ArrivalConfiguration[] GetArrivals()
     {
         return _lazyArrivals.Value;
     }
 
-    ArrivalConfigurationV2[] GetArrivalsInternal()
+    ArrivalConfiguration[] GetArrivalsInternal()
     {
         var lines = File.ReadAllLines(_configurationPath);
 
-        var arrivals = new List<ArrivalConfigurationV2>();
+        var arrivals = new List<ArrivalConfiguration>();
 
         for (var i = 0; i < lines.Length; i++)
         {
@@ -56,17 +56,17 @@ public class ArrivalConfigurationLookup : IArrivalConfigurationLookup
             };
             var aircraftTypes = columns[6].Split(';').Select(s => s.Trim()).ToArray();
 
-            if (!int.TryParse(columns[7].Trim(), out var intervalSeconds))
-                throw new MaestroException($"{_configurationPath} line {i}: Couldn't parse interval \"{columns[7]}\"");
+            if (!int.TryParse(columns[7].Trim(), out var timeToGoSeconds))
+                throw new MaestroException($"{_configurationPath} line {i}: Couldn't parse time-to-go \"{columns[7]}\"");
 
-            var interval = TimeSpan.FromSeconds(intervalSeconds);
+            var timeToGo = TimeSpan.FromSeconds(timeToGoSeconds);
 
             if (!int.TryParse(columns[8].Trim(), out var trackMiles))
             {
                 trackMiles = 0;
             }
 
-            arrivals.Add(new ArrivalConfigurationV2
+            arrivals.Add(new ArrivalConfiguration
             {
                 AirportIdentifier = airportIdentifier,
                 FeederFixIdentifier = feederFixIdentifier,
@@ -75,7 +75,7 @@ public class ArrivalConfigurationLookup : IArrivalConfigurationLookup
                 ApproachType = approachType,
                 Category = aircraftCategory,
                 AircraftTypes = aircraftTypes,
-                Interval = interval,
+                TimeToGo = timeToGo,
                 TrackMiles = trackMiles,
             });
         }

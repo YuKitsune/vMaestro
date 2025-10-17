@@ -20,6 +20,13 @@ public sealed class FlightComparer : IComparer<Flight>
     }
 }
 
+// TODO: Store sequencing parameters here so they don't need to be recalculated
+// - Assigned runway
+// - Approach type
+// - Required separation (to assigned and dependant runways)
+// - Time to go (TTG from FF to runway)
+// - Pressure and max pressure
+
 public class Flight : IEquatable<Flight>, IComparable<Flight>
 {
     public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate, DateTimeOffset activatedTime, string aircraftType, AircraftCategory aircraftCategory, WakeCategory wakeCategory)

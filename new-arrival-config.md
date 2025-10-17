@@ -68,8 +68,8 @@ We'll need to provide a method for looking up the available approach types based
 - [X] Introduce new arrival configuration
     - [X] Introduce new type
     - [X] Load from CSV file
-- [ ] Lookup TTG from arrival configuration (30 mins)
-    - [ ] Replace existing lookups with new configuration
+- [X] Lookup TTG from arrival configuration (30 mins)
+    - [X] Replace existing lookups with new configuration
 - [ ] Clean up runway types (1 hr)
     - [ ] Split root runway config from runway mode runways
     - [ ] Specify a default or off-mode landing rate
