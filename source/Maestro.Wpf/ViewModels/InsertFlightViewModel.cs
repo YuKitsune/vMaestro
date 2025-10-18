@@ -85,7 +85,6 @@ public partial class InsertFlightViewModel : ObservableObject
     {
         try
         {
-            // Overshoot flights get a different request
             if (LandedFlights.Any(f => f.Callsign == Callsign))
             {
                 _mediator.Send(
@@ -94,10 +93,8 @@ public partial class InsertFlightViewModel : ObservableObject
                         Callsign,
                         _options),
                     CancellationToken.None);
-                return;
             }
-
-            if (PendingFlights.Any(f => f.Callsign == Callsign))
+            else if (PendingFlights.Any(f => f.Callsign == Callsign))
             {
                 _mediator.Send(
                     new InsertDepartureRequest(
@@ -108,14 +105,16 @@ public partial class InsertFlightViewModel : ObservableObject
                         _options),
                     CancellationToken.None);
             }
-
-            _mediator.Send(
-                new InsertFlightRequest(
-                    _airportIdentifier,
-                    Callsign,
-                    AircraftType,
-                    _options),
-                CancellationToken.None);
+            else
+            {
+                _mediator.Send(
+                    new InsertFlightRequest(
+                        _airportIdentifier,
+                        Callsign,
+                        AircraftType,
+                        _options),
+                    CancellationToken.None);
+            }
 
             CloseWindow();
         }
