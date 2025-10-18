@@ -580,30 +580,28 @@
       "Identifier": "YBBN",
       "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["BLAKA", "GOMOL", "ENLIP", "MORBI", "SMOKA", "TEBOT", "UGTUG", "WOODY"],
+      "PreferredRunways": {
+        "ENLIP": ["01L", "19R"],
+        "WOODY": ["01L", "19R"],
+        "MORBI": ["01L", "19R"],
+        "SMOKA": ["01L", "19R"],
+        "BLAKA": ["01R", "19L"],
+        "GOMOL": ["01R", "19L"],
+        "TEBOT": ["01R", "19L"],
+        "UGTUG": ["01R", "19L"]
+      },
       "Runways": [
         { 
-          "Identifier": "01L",
-          "Requirements":{
-            "FeederFixes": ["ENLIP", "WOODY", "MORBI", "SMOKA"]
-          }
+          "Identifier": "01L"
         },
         { 
-          "Identifier": "01R",
-          "Requirements":{
-            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
-          }
+          "Identifier": "01R"
         },
         { 
-          "Identifier": "19L",
-          "Requirements":{
-            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
-          }
+          "Identifier": "19L"
         },
         { 
-          "Identifier": "19R",
-          "Requirements": {
-            "FeederFixes": ["BLAKA", "GOMOL", "TEBOT", "UGTUG"]
-          }
+          "Identifier": "19R"
         }
       ],
       "RunwayModes": [
