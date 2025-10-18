@@ -32,6 +32,23 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         AircraftCategory = aircraftCategory;
         WakeCategory = wakeCategory;
         UpdateLandingEstimate(initialLandingEstimate);
+        IsManuallyInserted = false;
+    }
+
+    // Constructor for manually inserted flights (formerly DummyFlight)
+    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset landingTime, State state)
+    {
+        Callsign = callsign;
+        AircraftType = aircraftType ?? string.Empty;
+        DestinationIdentifier = destinationIdentifier;
+        AssignedRunwayIdentifier = runwayIdentifier;
+        LandingTime = landingTime;
+        InitialLandingEstimate = landingTime;
+        LandingEstimate = landingTime;
+        State = state;
+        IsManuallyInserted = true;
+        AircraftCategory = AircraftCategory.Jet;
+        WakeCategory = WakeCategory.Medium;
     }
 
     // TODO: Use memento pattern
@@ -67,6 +84,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         Fixes = message.Fixes.ToArray();
         LastSeen = message.LastSeen;
         Position = message.Position;
+        IsManuallyInserted = message.IsManuallyInserted;
     }
 
     public string Callsign { get; }
@@ -75,6 +93,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public WakeCategory WakeCategory { get; set; }
     public string? OriginIdentifier { get; set; }
     public string DestinationIdentifier { get; }
+    public bool IsManuallyInserted { get; }
     public DateTimeOffset? EstimatedDepartureTime { get; set; }
     public TimeSpan? EstimatedTimeEnroute { get; set; }
 
@@ -219,6 +238,10 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public void UpdateStateBasedOnTime(IClock clock)
     {
+        // Manually-inserted flights don't auto-update their state
+        if (IsManuallyInserted)
+            return;
+
         if (ActivatedTime is null ||
             LandingTime == default ||
             InitialFeederFixEstimate is null ||

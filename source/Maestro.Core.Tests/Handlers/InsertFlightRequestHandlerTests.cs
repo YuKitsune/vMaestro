@@ -32,8 +32,9 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
         dummyFlight.State.ShouldBe(State.Frozen, "dummy flight state should be set to Frozen when inserted");
+        dummyFlight.IsManuallyInserted.ShouldBeTrue("manually-inserted flight should have IsManuallyInserted set to true");
     }
 
     [Fact]
@@ -56,8 +57,9 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single();
+        var dummyFlight = sequence.Flights.Single();
         dummyFlight.Callsign.ShouldBe("MYCALL123", "provided callsign should be used");
+        dummyFlight.IsManuallyInserted.ShouldBeTrue("manually-inserted flight should have IsManuallyInserted set to true");
     }
 
     [Fact]
@@ -80,7 +82,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single();
+        var dummyFlight = sequence.Flights.Single();
         dummyFlight.Callsign.ShouldBe("LOWERCASE_VE", "callsign should be uppercase and truncated to 12 characters");
         dummyFlight.Callsign.Length.ShouldBeLessThanOrEqualTo(12, "callsign should not exceed 12 characters");
     }
@@ -105,8 +107,9 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
         dummyFlight.AircraftType.ShouldBe("A388", "provided aircraft type should be used");
+        dummyFlight.IsManuallyInserted.ShouldBeTrue("manually-inserted flight should have IsManuallyInserted set to true");
     }
 
     [Fact]
@@ -139,7 +142,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // Verify the dummy flight is first in the sequence
         sequence.NumberInSequence(dummyFlight).ShouldBeLessThan(sequence.NumberInSequence(existingFlight),
@@ -168,11 +171,12 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
         dummyFlight.LandingTime.ShouldBe(targetLandingTime, "landing time should be set to target time");
 
         // TODO: Assert that the runway is assigned to something in mode
         dummyFlight.AssignedRunwayIdentifier.ShouldBe("34R", "runway should be set to 34R");
+        dummyFlight.IsManuallyInserted.ShouldBeTrue("manually-inserted flight should have IsManuallyInserted set to true");
     }
 
     [Fact]
@@ -205,7 +209,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // Verify the dummy flight is first in the sequence
         sequence.NumberInSequence(dummyFlight).ShouldBeLessThan(sequence.NumberInSequence(existingFlight),
@@ -251,7 +255,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // The reference flight and trailing flights should be delayed
         flight1.LandingTime.ShouldBe(dummyFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
@@ -290,7 +294,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // Verify the dummy flight is after the existing flight
         sequence.NumberInSequence(dummyFlight).ShouldBeGreaterThan(sequence.NumberInSequence(existingFlight),
@@ -336,7 +340,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var dummyFlight = sequence.DummyFlights.Single(f => f.Callsign == "TEST123");
+        var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // The inserted dummy flight should be positioned behind the reference flight with proper separation
         dummyFlight.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),

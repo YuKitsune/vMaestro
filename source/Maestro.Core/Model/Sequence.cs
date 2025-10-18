@@ -39,7 +39,6 @@ public class Sequence
     public IReadOnlyList<Flight> PendingFlights => _pendingFlights.AsReadOnly();
     public IReadOnlyList<Flight> DeSequencedFlights => _deSequencedFlights.AsReadOnly();
     public IReadOnlyList<Flight> Flights => _sequence.OfType<FlightSequenceItem>().Select(x => x.Flight).ToList().AsReadOnly();
-    public IReadOnlyList<DummyFlight> DummyFlights => _sequence.OfType<DummyFlightSequenceItem>().Select(x => x.DummyFlight).ToList().AsReadOnly();
 
     // public RunwayMode CurrentRunwayMode { get; private set; }
     // public DateTimeOffset LastLandingTimeForCurrentMode { get; private set; }
@@ -105,15 +104,16 @@ public class Sequence
         var runwayIdentifier = runwayIdentifiers.FirstOrDefault(r => runwayMode.Runways.Any(rm => rm.Identifier == r))
                      ?? runwayMode.Default.Identifier;
 
-        var dummyFlight = new DummyFlight(
+        var flight = new Flight(
             callsign,
             aircraftTypeCode,
+            AirportIdentifier,
             runwayIdentifier,
             landingTime,
             state);
 
-        var index = InsertByTime(new DummyFlightSequenceItem(dummyFlight), landingTime, _sequence);
-        Schedule(index, [runwayIdentifier], forceRescheduleStable: true, insertingFlights: [dummyFlight.Callsign]);
+        var index = InsertByTime(new FlightSequenceItem(flight), landingTime, _sequence);
+        Schedule(index, [runwayIdentifier], forceRescheduleStable: true, insertingFlights: [flight.Callsign]);
     }
 
     public void InsertDummyFlight(
@@ -130,7 +130,7 @@ public class Sequence
             throw new MaestroException($"{referenceCallsign} not found");
 
         var referenceFlightIndex = _sequence.IndexOf(referenceFlightItem);
-        var dummyFlightInsertionIndex = relativePosition switch
+        var flightInsertionIndex = relativePosition switch
         {
             RelativePosition.Before => referenceFlightIndex,
             RelativePosition.After => referenceFlightIndex + 1,
@@ -149,18 +149,19 @@ public class Sequence
             _ => throw new ArgumentOutOfRangeException(nameof(relativePosition), relativePosition, null)
         };
 
-        var dummyFlight = new DummyFlight(
+        var flight = new Flight(
             callsign,
             aircraftTypeCode,
+            AirportIdentifier,
             referenceFlightItem.Flight.AssignedRunwayIdentifier,
             landingTime,
             state);
 
-        _sequence.Insert(dummyFlightInsertionIndex, new DummyFlightSequenceItem(dummyFlight));
+        _sequence.Insert(flightInsertionIndex, new FlightSequenceItem(flight));
 
         Schedule(
-            dummyFlightInsertionIndex,
-            [dummyFlight.AssignedRunwayIdentifier],
+            flightInsertionIndex,
+            [flight.AssignedRunwayIdentifier],
             forceRescheduleStable: true);
     }
 
@@ -218,22 +219,13 @@ public class Sequence
 
     public void Remove(string callsign)
     {
-        // Regular flights
+        // Sequenced flights (both real and manually-inserted)
         var flightItem = _sequence.OfType<FlightSequenceItem>()
             .FirstOrDefault(i => i.Flight.Callsign == callsign);
         if (flightItem is not null)
         {
             // TODO: Reset the flight and place it into the pending list
             Remove(flightItem);
-            return;
-        }
-
-        // Dummy flights
-        var dummyFlightItem = _sequence.OfType<DummyFlightSequenceItem>()
-            .FirstOrDefault(i => i.DummyFlight.Callsign == callsign);
-        if (dummyFlightItem is not null)
-        {
-            Remove(dummyFlightItem);
             return;
         }
 
@@ -267,7 +259,6 @@ public class Sequence
         var runwayIdentifiers = sequenceItem switch
         {
             FlightSequenceItem flightItem => [flightItem.Flight.AssignedRunwayIdentifier],
-            DummyFlightSequenceItem dummyFlightItem => [dummyFlightItem.DummyFlight.AssignedRunwayIdentifier],
             SlotSequenceItem slotItem => slotItem.Slot.RunwayIdentifiers.ToHashSet(),
             RunwayModeChangeSequenceItem runwayModeChangeItem => runwayModeChangeItem.RunwayMode.Runways.Select(r => r.Identifier).ToHashSet(),
             _ => []
@@ -312,22 +303,18 @@ public class Sequence
     }
 
     public int NumberInSequence(Flight flight) => NumberInSequence(flight.Callsign);
-    public int NumberInSequence(DummyFlight flight) => NumberInSequence(flight.Callsign);
 
     public int NumberForRunway(Flight flight) => NumberForRunway(flight.Callsign, flight.AssignedRunwayIdentifier);
-    public int NumberForRunway(DummyFlight flight) => NumberForRunway(flight.Callsign, flight.AssignedRunwayIdentifier);
 
     int NumberInSequence(string callsign)
     {
-        // Get all flights and dummy flights that are not landed, ordered by landing time
+        // Get all flights (real and manually-inserted) that are not landed, ordered by landing time
         var allItems = _sequence
-            .Where(i =>
-                i is FlightSequenceItem { Flight.State: not State.Landed } or DummyFlightSequenceItem { DummyFlight.State: not State.Landed })
+            .Where(i => i is FlightSequenceItem { Flight.State: not State.Landed })
             .OrderBy(i => i.Time)
             .ToList();
 
         var index = allItems.FindIndex(i =>
-            i is DummyFlightSequenceItem dfs && dfs.DummyFlight.Callsign == callsign ||
             i is FlightSequenceItem fsi && fsi.Flight.Callsign == callsign);
 
         if (index == -1)
@@ -338,19 +325,17 @@ public class Sequence
 
     int NumberForRunway(string callsign, string runwayIdentifier)
     {
-        // Get all flights and dummy flights on the same runway that are not landed, ordered by landing time
+        // Get all flights (real and manually-inserted) on the same runway that are not landed, ordered by landing time
         var allItems = _sequence
             .Where(i => i switch
             {
                 FlightSequenceItem { Flight.State: not State.Landed } fs when fs.Flight.AssignedRunwayIdentifier == runwayIdentifier => true,
-                DummyFlightSequenceItem { DummyFlight.State: not State.Landed } dfs when dfs.DummyFlight.AssignedRunwayIdentifier == runwayIdentifier => true,
                 _ => false
             })
             .OrderBy(i => i.Time)
             .ToList();
 
         var index = allItems.FindIndex(i =>
-            i is DummyFlightSequenceItem dfs && dfs.DummyFlight.Callsign == callsign ||
             i is FlightSequenceItem fsi && fsi.Flight.Callsign == callsign);
         return index + 1;
     }
@@ -361,11 +346,6 @@ public class Sequence
         var sequencedFlights = _sequence
             .OfType<FlightSequenceItem>()
             .Select(i => i.Flight.ToMessage(this))
-            .ToArray();
-
-        var dummyFlights = _sequence
-            .OfType<DummyFlightSequenceItem>()
-            .Select(i => i.DummyFlight.ToMessage(this))
             .ToArray();
 
         var slots = _sequence
@@ -382,7 +362,6 @@ public class Sequence
         {
             AirportIdentifier = AirportIdentifier,
             Flights = sequencedFlights,
-            DummyFlights = dummyFlights,
             PendingFlights = _pendingFlights.Select(f => f.ToMessage(this)).ToArray(),
             DeSequencedFlights = _deSequencedFlights.Select(f => f.ToMessage(this)).ToArray(),
             CurrentRunwayMode = currentRunwayMode.ToMessage(),
@@ -428,18 +407,11 @@ public class Sequence
             InsertByTime(new SlotSequenceItem(slot), slot.StartTime, _sequence);
         }
 
-        // Restore sequenced flights
+        // Restore sequenced flights (both real and manually-inserted)
         foreach (var flightMessage in message.Flights)
         {
             var flight = new Flight(flightMessage);
             InsertByTime(new FlightSequenceItem(flight), flight.LandingTime, _sequence);
-        }
-
-        // Restore dummy flights
-        foreach (var dummyFlightMessage in message.DummyFlights)
-        {
-            var dummyFlight = new DummyFlight(dummyFlightMessage);
-            InsertByTime(new DummyFlightSequenceItem(dummyFlight), dummyFlight.LandingTime, _sequence);
         }
 
         // Restore pending flights
@@ -794,14 +766,13 @@ public class Sequence
             var earliestLandingTimeFromPrevious = previousItem switch
             {
                 FlightSequenceItem previousFlightItem => previousFlightItem.Flight.LandingTime.Add(runway.AcceptanceRate),
-                DummyFlightSequenceItem previousDummyFlightItem => previousDummyFlightItem.DummyFlight.LandingTime.Add(runway.AcceptanceRate),
                 SlotSequenceItem slotItem => slotItem.Slot.EndTime,
                 RunwayModeChangeSequenceItem runwayModeChange => runwayModeChange.FirstLandingTimeInNewMode,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             // If the previous item is a frozen flight, look ahead for any slots they may be occupying
-            if (previousItem is FlightSequenceItem { Flight.State: State.Frozen } or DummyFlightSequenceItem { DummyFlight.State: State.Frozen })
+            if (previousItem is FlightSequenceItem { Flight.State: State.Frozen })
             {
                 var lastSlot = precedingItemsOnRunway
                     .OfType<SlotSequenceItem>()
@@ -834,7 +805,6 @@ public class Sequence
                 var earliestTimeToTrailer = nextItem switch
                 {
                     FlightSequenceItem nextFlightItem => nextFlightItem.Flight.LandingTime.Subtract(runway.AcceptanceRate),
-                    DummyFlightSequenceItem nextDummyFlightItem => nextDummyFlightItem.DummyFlight.LandingTime.Subtract(runway.AcceptanceRate),
                     _ => nextItem.Time
                 };
 
@@ -848,9 +818,9 @@ public class Sequence
                         SlotSequenceItem => false,
                         RunwayModeChangeSequenceItem => false,
 
-                        // Dummy flights can't be delayed
+                        // Manually-inserted flights can't be delayed
                         // TODO: Verify this behaviour is correct
-                        DummyFlightSequenceItem => false,
+                        FlightSequenceItem { Flight.IsManuallyInserted: true } => false,
 
                         // New flights can delay stable flights
                         FlightSequenceItem { Flight.State: State.Stable } when isNewFlight => true,
@@ -904,7 +874,6 @@ public class Sequence
                     case RunwayModeChangeSequenceItem:
                     case SlotSequenceItem slotItem when slotItem.Slot.RunwayIdentifiers.Any(r => relevantRunways.Contains(r)):
                     case FlightSequenceItem flightItem when relevantRunways.Contains(flightItem.Flight.AssignedRunwayIdentifier):
-                    case DummyFlightSequenceItem dummyFlightItem when relevantRunways.Contains(dummyFlightItem.DummyFlight.AssignedRunwayIdentifier):
                         return true;
                     default:
                         return false;
@@ -1041,11 +1010,6 @@ public class Sequence
     {
         // Always use LandingTime for sequence positioning to prevent discontinuities during state transitions
         public DateTimeOffset Time => Flight.LandingTime;
-    }
-
-    record DummyFlightSequenceItem(DummyFlight DummyFlight) : ISequenceItem
-    {
-        public DateTimeOffset Time => DummyFlight.LandingTime;
     }
 
     record SlotSequenceItem(Slot Slot) : ISequenceItem

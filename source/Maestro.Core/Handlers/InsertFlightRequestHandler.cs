@@ -28,7 +28,10 @@ public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediato
 
         var sequence = lockedSession.Session.Sequence;
 
-        var callsign = request.Callsign?.ToUpperInvariant().Truncate(MaxCallsignLength) ?? sequence.NewDummyCallsign();
+        var callsign = request.Callsign?.ToUpperInvariant().Truncate(MaxCallsignLength)!;
+        if (string.IsNullOrEmpty(callsign))
+            callsign = sequence.NewDummyCallsign();
+
         var state = State.Frozen; // TODO: Make this configurable
 
         switch (request.Options)

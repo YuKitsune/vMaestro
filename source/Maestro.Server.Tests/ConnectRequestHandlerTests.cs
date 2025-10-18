@@ -199,7 +199,6 @@ public class ConnectRequestHandlerTests
             LastLandingTimeForCurrentMode = default,
             FirstLandingTimeForNextMode = default,
             Flights = [],
-            DummyFlights = [],
             PendingFlights = [],
             DeSequencedFlights = [],
             Slots = [],

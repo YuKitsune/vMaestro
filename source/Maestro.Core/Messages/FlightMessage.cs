@@ -38,4 +38,5 @@ public class FlightMessage
     public required DateTimeOffset LastSeen { get; init; }
     public required FixEstimate[] Fixes { get; init; } = []; // TODO: DTO
     public required FlightPosition? Position { get; init; } // TODO: DTO
+    public required bool IsManuallyInserted { get; init; }
 }

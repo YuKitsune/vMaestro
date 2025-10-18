@@ -43,6 +43,7 @@ public static class FlightExtensionMethods
             LastSeen = flight.LastSeen,
             Fixes = flight.Fixes,
             Position = flight.Position,
+            IsManuallyInserted = flight.IsManuallyInserted,
         };
     }
 }

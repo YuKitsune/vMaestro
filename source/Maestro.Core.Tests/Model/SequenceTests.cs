@@ -125,14 +125,14 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
 
         // Assert
         var sequenceMessage = sequence.ToMessage();
-        var dummyFlight = sequenceMessage.DummyFlights.SingleOrDefault();
-        dummyFlight.ShouldNotBeNull("dummy flight should be added to sequence");
-        dummyFlight.Callsign.ShouldBe("ABC123", "dummy flight should have specified callsign");
-        dummyFlight.AircraftType.ShouldBe("A320", "dummy flight should have specified aircraft type");
-        dummyFlight.LandingTime.ShouldBe(_time.AddMinutes(5), "dummy flight should land at specified time");
-        dummyFlight.State.ShouldBe(State.Frozen, "dummy flight should be frozen");
+        var manualFlight = sequenceMessage.Flights.SingleOrDefault(f => f.IsManuallyInserted);
+        manualFlight.ShouldNotBeNull("manually-inserted flight should be added to sequence");
+        manualFlight.Callsign.ShouldBe("ABC123", "manually-inserted flight should have specified callsign");
+        manualFlight.AircraftType.ShouldBe("A320", "manually-inserted flight should have specified aircraft type");
+        manualFlight.LandingTime.ShouldBe(_time.AddMinutes(5), "manually-inserted flight should land at specified time");
+        manualFlight.State.ShouldBe(State.Frozen, "manually-inserted flight should be frozen");
 
-        flight1.LandingTime.ShouldBe(dummyFlight.LandingTime.Add(_landingRate), "existing flight should be delayed behind dummy flight");
+        flight1.LandingTime.ShouldBe(manualFlight.LandingTime.Add(_landingRate), "existing flight should be delayed behind manually-inserted flight");
         flight1.LandingTime.ShouldBeGreaterThan(originalLandingTime, "existing flight should be delayed");
     }
 
@@ -163,14 +163,14 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
 
         // Assert
         var sequenceMessage = sequence.ToMessage();
-        var dummyFlight = sequenceMessage.DummyFlights.SingleOrDefault();
-        dummyFlight.ShouldNotBeNull("dummy flight should be added to sequence");
-        dummyFlight.Callsign.ShouldBe("ABC123", "dummy flight should have specified callsign");
-        dummyFlight.AircraftType.ShouldBe("A320", "dummy flight should have specified aircraft type");
-        dummyFlight.LandingTime.ShouldBe(originalLandingTime, "dummy flight should take the first flight's original time");
-        dummyFlight.State.ShouldBe(State.Frozen, "dummy flight should be frozen");
+        var manualFlight = sequenceMessage.Flights.SingleOrDefault(f => f.IsManuallyInserted);
+        manualFlight.ShouldNotBeNull("manually-inserted flight should be added to sequence");
+        manualFlight.Callsign.ShouldBe("ABC123", "manually-inserted flight should have specified callsign");
+        manualFlight.AircraftType.ShouldBe("B738", "manually-inserted flight should have specified aircraft type");
+        manualFlight.LandingTime.ShouldBe(originalLandingTime, "manually-inserted flight should take the first flight's original time");
+        manualFlight.State.ShouldBe(State.Frozen, "manually-inserted flight should be frozen");
 
-        flight1.LandingTime.ShouldBe(dummyFlight.LandingTime.Add(_landingRate), "first flight should be delayed behind dummy flight");
+        flight1.LandingTime.ShouldBe(manualFlight.LandingTime.Add(_landingRate), "first flight should be delayed behind manually-inserted flight");
         flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(_landingRate), "second flight should be delayed behind first flight");
     }
 
@@ -201,15 +201,15 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
 
         // Assert
         var sequenceMessage = sequence.ToMessage();
-        var dummyFlight = sequenceMessage.DummyFlights.SingleOrDefault();
-        dummyFlight.ShouldNotBeNull("dummy flight should be added to sequence");
-        dummyFlight.Callsign.ShouldBe("DEF", "dummy flight should have specified callsign");
-        dummyFlight.AircraftType.ShouldBe("C172", "dummy flight should have specified aircraft type");
-        dummyFlight.LandingTime.ShouldBe(flight1.LandingTime.Add(_landingRate), "dummy flight should be positioned just behind the first flight");
-        dummyFlight.State.ShouldBe(State.Frozen, "dummy flight should be frozen");
+        var manualFlight = sequenceMessage.Flights.SingleOrDefault(f => f.IsManuallyInserted);
+        manualFlight.ShouldNotBeNull("manually-inserted flight should be added to sequence");
+        manualFlight.Callsign.ShouldBe("DEF", "manually-inserted flight should have specified callsign");
+        manualFlight.AircraftType.ShouldBe("C172", "manually-inserted flight should have specified aircraft type");
+        manualFlight.LandingTime.ShouldBe(flight1.LandingTime.Add(_landingRate), "manually-inserted flight should be positioned just behind the first flight");
+        manualFlight.State.ShouldBe(State.Frozen, "manually-inserted flight should be frozen");
 
         flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "first flight should remain unchanged");
-        flight2.LandingTime.ShouldBe(dummyFlight.LandingTime.Add(_landingRate), "second flight should be delayed behind dummy flight");
+        flight2.LandingTime.ShouldBe(manualFlight.LandingTime.Add(_landingRate), "second flight should be delayed behind manually-inserted flight");
     }
 
     [Fact]

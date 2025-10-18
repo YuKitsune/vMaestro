@@ -44,7 +44,7 @@ public partial class FlightLabelViewModel(
 
     bool CanShowInformation()
     {
-        return !FlightViewModel.IsDummy;
+        return !FlightViewModel.IsManuallyInserted;
     }
 
     [RelayCommand(CanExecute = nameof(CanRecompute))]
@@ -64,7 +64,7 @@ public partial class FlightLabelViewModel(
 
     bool CanRecompute()
     {
-        return !FlightViewModel.IsDummy;
+        return !FlightViewModel.IsManuallyInserted;
     }
 
     [RelayCommand]
@@ -113,7 +113,7 @@ public partial class FlightLabelViewModel(
             mediator.Send(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
-                    new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
+                    new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.After),
                     maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
                     maestroViewModel.PendingFlights.ToArray()));
         }
