@@ -406,12 +406,10 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             new RelativeInsertionOptions("QFA456", RelativePosition.After));
 
         // Act & Assert
-        // TODO: This should throw an exception when the validation is implemented
-        // For now, this test documents the expected behavior but will fail until implemented
         var exception = await Should.ThrowAsync<MaestroException>(async () =>
             await handler.Handle(request, CancellationToken.None));
 
-        exception.Message.ShouldContain("frozen", Case.Insensitive);
+        exception.Message.ShouldContain("Cannot insert flight", Case.Insensitive);
     }
 
     IArrivalLookup GetArrivalLookup()

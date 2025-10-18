@@ -112,6 +112,10 @@ public class Sequence
             landingTime,
             state);
 
+        var insertionIndex = CalculateInsertionIndex(landingTime);
+        ValidateInsertionBetweenImmovableFlights(insertionIndex, runwayIdentifier);
+
+        // Now perform the actual insertion
         var index = InsertByTime(new FlightSequenceItem(flight), landingTime, _sequence);
         Schedule(index, [runwayIdentifier], forceRescheduleStable: true, insertingFlights: [flight.Callsign]);
     }
@@ -137,6 +141,8 @@ public class Sequence
             _ => throw new ArgumentOutOfRangeException()
         };
 
+        ValidateInsertionBetweenImmovableFlights(flightInsertionIndex, referenceFlightItem.Flight.AssignedRunwayIdentifier);
+
         // TODO: Source the runway mode from the flight instead of calculating it
         var runwayMode = GetRunwayModeAt(referenceFlightItem.Time);
         var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlightItem.Flight.AssignedRunwayIdentifier);
@@ -157,6 +163,7 @@ public class Sequence
             landingTime,
             state);
 
+        // Now perform the actual insertion
         _sequence.Insert(flightInsertionIndex, new FlightSequenceItem(flight));
 
         Schedule(
@@ -548,6 +555,8 @@ public class Sequence
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
+                ValidateInsertionBetweenImmovableFlights(insertionIndex, flight.AssignedRunwayIdentifier);
+
                 _sequence.Insert(insertionIndex, new FlightSequenceItem(flight));
                 flight.SetLandingTime(referenceFlightItem.Flight.LandingTime, manual: true);
 
@@ -882,6 +891,19 @@ public class Sequence
         }
     }
 
+    int CalculateInsertionIndex(DateTimeOffset dateTimeOffset)
+    {
+        for (var i = 0; i < _sequence.Count; i++)
+        {
+            if (dateTimeOffset > _sequence[i].Time)
+                continue;
+
+            return i;
+        }
+
+        return _sequence.Count;
+    }
+
     int InsertByTime(ISequenceItem item, DateTimeOffset dateTimeOffset, List<ISequenceItem> sequence)
     {
         // Check for duplicate flights - prevent the same flight from being inserted multiple times
@@ -901,6 +923,9 @@ public class Sequence
         {
             if (dateTimeOffset > sequence[i].Time)
                 continue;
+
+            if (item is FlightSequenceItem flightSequenceItem)
+                ValidateInsertionBetweenImmovableFlights(i, flightSequenceItem.Flight.AssignedRunwayIdentifier);
 
             sequence.Insert(i, item);
             return i;
@@ -970,6 +995,61 @@ public class Sequence
         }
 
         return false;
+    }
+
+    void ValidateInsertionBetweenImmovableFlights(int insertionIndex, string runwayIdentifier)
+    {
+        // Get the flights before and after the inserted item (excluding the inserted item itself)
+        var previousFlight = GetPreviousFlightOnRunway();
+        var nextFlight = GetNextFlightOnRunway();
+
+        // Only validate if we're between two flights
+        if (previousFlight == null || nextFlight == null)
+            return;
+
+        // Check if both are immovable (Frozen or manually inserted)
+        // TODO: Trial ignoring manually inserted flights and allowing them to be delayed
+        var isPreviousImmovable = previousFlight.State == State.Frozen || previousFlight.IsManuallyInserted;
+        var isNextImmovable = nextFlight.State == State.Frozen || nextFlight.IsManuallyInserted;
+
+        if (!isPreviousImmovable || !isNextImmovable)
+            return;
+
+        // Get runway acceptance rate
+        var runwayMode = GetRunwayModeAt(nextFlight.LandingTime);
+        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier);
+        if (runway == null)
+            throw new MaestroException($"Runway {runwayIdentifier} not found in current runway mode");
+
+        var minimumGap = runway.AcceptanceRate.Add(runway.AcceptanceRate); // 2x acceptance rate
+        var actualGap = nextFlight.LandingTime - previousFlight.LandingTime;
+
+        if (actualGap < minimumGap)
+        {
+            throw new MaestroException(
+                $"Cannot insert flight on runway {runwayIdentifier} between frozen flights {previousFlight.Callsign} and {nextFlight.Callsign}. " +
+                $"Gap of {actualGap.TotalMinutes:F1} minutes is less than minimum required separation of {minimumGap.TotalMinutes:F1} minutes.");
+        }
+
+        Flight? GetPreviousFlightOnRunway()
+        {
+            return _sequence
+                .Take(insertionIndex)
+                .OfType<FlightSequenceItem>()
+                .Where(f => f.Flight.AssignedRunwayIdentifier == runwayIdentifier)
+                .LastOrDefault()
+                ?.Flight;
+        }
+
+        Flight? GetNextFlightOnRunway()
+        {
+            return _sequence
+                .Skip(insertionIndex)
+                .OfType<FlightSequenceItem>()
+                .Where(f => f.Flight.AssignedRunwayIdentifier == runwayIdentifier)
+                .FirstOrDefault()
+                ?.Flight;
+        }
     }
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
