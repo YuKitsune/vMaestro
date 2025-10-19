@@ -253,20 +253,10 @@
                             </Style.Triggers>
                         </Style>
                     </ContextMenu.Style>
-                    <MenuItem Header="Insert Flight" Click="InsertFlight"/>
+                    <MenuItem Header="Insert Flight" Click="InsertFlight" />
                     <MenuItem Header="Insert Slot">
                         <MenuItem Header="Before" Click="BeginInsertingSlotBefore"/>
                         <MenuItem Header="After" Click="BeginInsertingSlotAfter"/>
-                        <MenuItem.Style>
-                            <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedView.ViewMode}" Value="Approach">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </MenuItem.Style>
                     </MenuItem>
                 </ContextMenu>
             </Canvas.ContextMenu>

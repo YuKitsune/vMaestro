@@ -4,13 +4,6 @@
 
 Various unit tests are failing. Fix em.
 
-## Fix Flight Insertion
-
-- [ ] Investigate why inserting flights does not work reliably, both from the pending list, and when inserting dummy flights.
-- [ ] Consider adding an `Options` property to the Pending DTO (departure time or arrival time)
-- [ ] Allow insertion from the feeder view
-- [ ] Consider further separating or combining the insertion handlers
-
 ## Investigate Diversions
 
 During testing, flights that diverted to a managed airport would not appear in the ladder. They could not be inserted manually either. This might be fixed by the above.
@@ -105,3 +98,11 @@ Consider moving some of the sequence logic into the individual handlers so they 
 - [ ] Write documentation for ATC usage
 - [ ] Write documentation for configuration
 - [ ] Architecture decision record
+
+## Things to revisit after release
+
+- [ ] Insert flight from feeder-fix ladders
+
+## Refactoring
+
+- [ ] Refactor flight insertion handlers (Consider combining or separating them)

@@ -442,6 +442,12 @@ public partial class MaestroView
             _suppressContextMenu = true;
         }
 
+        // No context menu in Enroute mode
+        if (ViewModel.SelectedView.ViewMode == ViewMode.Enroute)
+        {
+            _suppressContextMenu = true;
+        }
+
         e.Handled = true;
     }
 
