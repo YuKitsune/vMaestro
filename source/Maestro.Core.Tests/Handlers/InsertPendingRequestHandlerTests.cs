@@ -1,6 +1,5 @@
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -12,43 +11,8 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
-    readonly TimeSpan _arrivalInterval = TimeSpan.FromMinutes(16);
-
-    [Fact]
-    public async Task WhenFlightIsInserted_TheStateIsSet()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
-            .WithLandingEstimate(now.AddMinutes(20))
-            .WithFeederFixEstimate(now.AddMinutes(8))
-            .WithState(State.Unstable)
-            .Build();
-
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
-            .Build();
-        sequence.AddPendingFlight(pendingFlight);
-
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
-            "YSSY",
-            "QFA123",
-            "B738",
-            "YSCB",
-            new ExactInsertionOptions(now.AddMinutes(20), ["34L"]));
-
-        // Act
-        await handler.Handle(request, CancellationToken.None);
-
-        // Assert
-        pendingFlight.State.ShouldBe(State.Stable, "flight state should be set to Stable when inserted");
-    }
-
     [Fact]
     public async Task WhenFlightIsInserted_AndItDoesNotExistInThePendingList_AnExceptionIsThrown()
     {
@@ -56,15 +20,12 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         var now = clockFixture.Instance.UtcNow();
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA999",
-            "B738",
-            "YSCB",
             new ExactInsertionOptions(now.AddMinutes(20), ["34L"]));
 
         // Act and Assert
@@ -75,7 +36,7 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     }
 
     [Fact]
-    public async Task WhenFlightIsInserted_AndItIsNotFromDepartureAirport_AnExceptionIsThrown()
+    public async Task WhenFlightIsInserted_TheStateIsSet()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -87,23 +48,20 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new ExactInsertionOptions(now.AddMinutes(20), ["34L"]));
 
-        // Act and Assert
-        var exception = await Should.ThrowAsync<MaestroException>(async () =>
-            await handler.Handle(request, CancellationToken.None));
+        // Act
+        await handler.Handle(request, CancellationToken.None);
 
-        exception.Message.ShouldBe("QFA123 is not from a departure airport.");
+        // Assert
+        pendingFlight.State.ShouldBe(State.Stable, "flight state should be set to Stable when inserted");
     }
 
     [Fact]
@@ -121,7 +79,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithLandingEstimate(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
@@ -129,17 +86,14 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.Insert(existingFlight, existingFlight.LandingEstimate);
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new ExactInsertionOptions(now.AddMinutes(20), ["34L"]));
 
         // Act
@@ -158,7 +112,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         var targetLandingTime = now.AddMinutes(20);
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithLandingEstimate(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
@@ -166,16 +119,13 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new ExactInsertionOptions(targetLandingTime, ["34R"]));
 
         // Act
@@ -183,8 +133,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         // Assert
         pendingFlight.LandingTime.ShouldBe(targetLandingTime, "landing time should be set to target time");
-
-        // TODO: Assert that the runway is assigned to something in mode
         pendingFlight.AssignedRunwayIdentifier.ShouldBe("34R", "runway should be set to 34R");
         pendingFlight.RunwayManuallyAssigned.ShouldBe(true, "runway should be marked as manually assigned");
     }
@@ -204,7 +152,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithLandingEstimate(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
@@ -212,17 +159,14 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.Insert(existingFlight, existingFlight.LandingEstimate);
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new RelativeInsertionOptions("QFA456", RelativePosition.Before));
 
         // Act
@@ -234,7 +178,7 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     }
 
     [Fact]
-    public async Task WhenFlightIsInserted_BeforeAnotherFlight_TheFlightIsInsertedBeforeTheReferenceFlightAndTheReferenceFlightAndAnyTrailingConflictsAreDelayed()
+    public async Task WhenFlightIsInserted_BeforeAnotherFlight_TheFlightIsInsertedBeforeTheReferenceFlightAndAnyTrailingConflictsAreDelayed()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -256,7 +200,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithLandingEstimate(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
@@ -264,18 +207,15 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.Insert(flight1, flight1.LandingEstimate);
         sequence.Insert(flight2, flight2.LandingEstimate);
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new RelativeInsertionOptions("QFA456", RelativePosition.Before));
 
         // Act
@@ -308,7 +248,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithLandingEstimate(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
@@ -316,17 +255,14 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.Insert(existingFlight, existingFlight.LandingEstimate);
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new RelativeInsertionOptions("QFA456", RelativePosition.After));
 
         // Act
@@ -336,6 +272,11 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         sequence.NumberInSequence(existingFlight).ShouldBe(1, "QFA456 should be first in sequence");
         sequence.NumberInSequence(pendingFlight).ShouldBe(2, "QFA123 should be second in sequence");
     }
+
+    // TODO: This test exemplifies a bug in the ordering logic.
+    // In this case, the pending flight will be inserted behind QFA456, but because the landing estimate is not in conflict with the leading QFA,
+    // QFA789 receives a large delay.
+    // What should happen in this case? Should QFA789 jump forward? Should QFA123 be inserted based on their landing estimate instead of relying on the reference flight?
 
     [Fact]
     public async Task WhenFlightIsInserted_AfterAnotherFlight_TheFlightIsInsertedBehindTheReferenceFlightAndAnyTrailingConflictsAreDelayed()
@@ -360,7 +301,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithLandingEstimate(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
@@ -368,18 +308,15 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.Insert(flight1, flight1.LandingEstimate);
         sequence.Insert(flight2, flight2.LandingEstimate);
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new RelativeInsertionOptions("QFA456", RelativePosition.After));
 
         // Act
@@ -423,7 +360,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithLandingEstimate(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
@@ -431,18 +367,15 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
         sequence.Insert(frozenFlight1, frozenFlight1.LandingEstimate);
         sequence.Insert(frozenFlight2, frozenFlight2.LandingEstimate);
         sequence.AddPendingFlight(pendingFlight);
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
-        var request = new InsertDepartureRequest(
+        var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
-            "B738",
-            "YSCB",
             new RelativeInsertionOptions("QFA456", RelativePosition.After));
 
         // Act & Assert
@@ -452,25 +385,10 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         exception.Message.ShouldContain("Cannot insert flight", Case.Insensitive);
     }
 
-    IArrivalLookup GetArrivalLookup()
-    {
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
-                Arg.Is("YSSY"),
-                Arg.Is("RIVET"),
-                Arg.Is("RIVET4"),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(_arrivalInterval);
-        return arrivalLookup;
-    }
-
-    InsertDepartureRequestHandler GetRequestHandler(Sequence sequence, IClock clock)
+    InsertPendingRequestHandler GetRequestHandler(Sequence sequence, IClock clock)
     {
         var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
-        var arrivalLookup = GetArrivalLookup();
-        return new InsertDepartureRequestHandler(sessionManager, arrivalLookup, clock, mediator);
+        return new InsertPendingRequestHandler(sessionManager, clock, mediator);
     }
 }

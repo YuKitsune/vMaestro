@@ -20,7 +20,7 @@ public class OpenPendingDeparturesWindowRequestHandler(WindowManager windowManag
             {
                 var viewModel = new PendingDeparturesViewModel(
                     request.AirportIdentifier,
-                    request.PendingFlights,
+                    request.PendingFlights.Where(f => f.IsFromDepartureAirport).ToArray(),
                     windowHandle,
                     mediator,
                     clock,

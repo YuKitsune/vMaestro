@@ -2,17 +2,13 @@
 
 ## Fix failing unit tests
 
-Various unit tests are failing. Fix em.
+Various unit tests are failing. Fix them.
 
-## Investigate Diversions
+## Investigate flight ordering
 
-During testing, flights that diverted to a managed airport would not appear in the ladder. They could not be inserted manually either. This might be fixed by the above.
+Revisit WhenFlightIsInserted_AfterAnotherFlight_TheFlightIsInsertedBehindTheReferenceFlightAndAnyTrailingConflictsAreDelayed.
 
-## Remove Flights
-
-- [ ] Figure out the difference between removing and desequencing a flight
-- [ ] Move "Removed" flights into the pending list
-- [ ] Delete flights when they disconnect from VATSIM
+Consider re-ordering flights to reduce delays.
 
 ## Remove hybrid estimate calculations
 

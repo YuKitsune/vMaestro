@@ -34,6 +34,9 @@ public class InsertDepartureRequestHandler(
             throw new MaestroException($"{request.Callsign} was not found in the pending list.");
         }
 
+        if (!flight.IsFromDepartureAirport)
+            throw new MaestroException($"{request.Callsign} is not from a departure airport.");
+
         sequence.Depart(flight, request.Options);
         flight.SetState(State.Stable, clock);
 

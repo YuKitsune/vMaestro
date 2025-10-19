@@ -241,14 +241,8 @@ public class Sequence
         {
             // TODO: Reset the flight and place it into the pending list
             Remove(flightItem);
-            return;
-        }
-
-        // Pending flights
-        var pendingFlight = _pendingFlights.FirstOrDefault(f => f.Callsign == callsign);
-        if (pendingFlight is not null)
-        {
-            _pendingFlights.Remove(pendingFlight);
+            flightItem.Flight.Reset();
+            _pendingFlights.Add(flightItem.Flight);
             return;
         }
 
@@ -257,6 +251,8 @@ public class Sequence
         if (desequencedFlight is not null)
         {
             _deSequencedFlights.Remove(desequencedFlight);
+            desequencedFlight.Reset();
+            _pendingFlights.Add(desequencedFlight);
             return;
         }
 
@@ -454,6 +450,9 @@ public class Sequence
         if (!string.IsNullOrEmpty(newFlight.AssignedRunwayIdentifier))
             ValidateInsertionBetweenImmovableFlights(index, newFlight.AssignedRunwayIdentifier!);
 
+        // If the flight is pending, remove it from there
+        _pendingFlights.Remove(newFlight);
+
         InsertAt(index, new FlightSequenceItem(newFlight));
 
         // TODO: Which runway?
@@ -470,6 +469,43 @@ public class Sequence
         InsertAt(index, new FlightSequenceItem(newFlight));
 
         Schedule(index, forceRescheduleStable: true, insertingFlights: [newFlight.Callsign]);
+    }
+
+    public void InsertPending(string callsign, DateTimeOffset landingTime, string[] runwayIdentifiers)
+    {
+        var pendingFlight = _pendingFlights.FirstOrDefault(f => f.Callsign == callsign);
+        if (pendingFlight is null)
+            throw new MaestroException($"{callsign} not found in pending list");
+
+        var index = CalculateInsertionIndex(landingTime);
+        if (!string.IsNullOrEmpty(pendingFlight.AssignedRunwayIdentifier))
+            ValidateInsertionBetweenImmovableFlights(index, pendingFlight.AssignedRunwayIdentifier!);
+
+        var runwayMode = GetRunwayModeAt(landingTime);
+        var runwayIdentifier = runwayIdentifiers.FirstOrDefault(r => runwayMode.Runways.Any(rm => rm.Identifier == r))
+                               ?? runwayMode.Default.Identifier;
+
+        _pendingFlights.Remove(pendingFlight);
+        pendingFlight.SetRunway(runwayIdentifier, manual: true);
+
+        InsertAt(index, new FlightSequenceItem(pendingFlight));
+        Schedule(index, forceRescheduleStable: true, insertingFlights: [pendingFlight.Callsign], affectedRunways: [runwayIdentifier]);
+    }
+
+    public void InsertPending(string callsign, RelativePosition relativePosition, string referenceCallsign)
+    {
+        var pendingFlight = _pendingFlights.FirstOrDefault(f => f.Callsign == callsign);
+        if (pendingFlight is null)
+            throw new MaestroException($"{callsign} not found in pending list");
+
+        var index = CalculateInsertionIndex(relativePosition, referenceCallsign);
+        if (!string.IsNullOrEmpty(pendingFlight.AssignedRunwayIdentifier))
+            ValidateInsertionBetweenImmovableFlights(index, pendingFlight.AssignedRunwayIdentifier!);
+
+        _pendingFlights.Remove(pendingFlight);
+
+        InsertAt(index, new FlightSequenceItem(pendingFlight));
+        Schedule(index, forceRescheduleStable: true, insertingFlights: [pendingFlight.Callsign]);
     }
 
     int CalculateInsertionIndex(RelativePosition relativePosition, string referenceCallsign)
@@ -593,7 +629,6 @@ public class Sequence
         }
 
         InsertAt(index, new FlightSequenceItem(flight));
-
         Schedule(index, [flight.AssignedRunwayIdentifier], forceRescheduleStable: true, insertingFlights: [flight.Callsign]);
     }
 

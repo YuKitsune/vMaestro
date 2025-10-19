@@ -32,6 +32,7 @@ public class FlightBuilder(string callsign)
     State _state = State.Unstable;
 
     DateTimeOffset _lastSeen = default;
+    bool _isFromDepartureAirport = false;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
     {
@@ -152,6 +153,12 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder FromDepartureAirport(bool value = true)
+    {
+        _isFromDepartureAirport = value;
+        return this;
+    }
+
     public Flight Build()
     {
         var flight = new Flight(
@@ -198,6 +205,8 @@ public class FlightBuilder(string callsign)
         ];
 
         flight.ResetInitialEstimates();
+
+        flight.IsFromDepartureAirport = _isFromDepartureAirport;
 
         return flight;
     }

@@ -229,11 +229,14 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         FeederFixEstimate = null;
         InitialFeederFixEstimate = null;
         FeederFixTime = null;
+        AssignedRunwayIdentifier = null;
+        RunwayManuallyAssigned = false;
         LandingEstimate = default;
         InitialLandingEstimate = default;
         LandingTime = default;
         ManualLandingTime = false;
         State = State.Unstable;
+        FlowControls = FlowControls.ProfileSpeed;
     }
 
     public void UpdateStateBasedOnTime(IClock clock)

@@ -25,6 +25,9 @@ public class MakePendingRequestHandler(ISessionManager sessionManager, IMediator
             return;
         }
 
+        if (!flight.IsFromDepartureAirport)
+            throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
+
         sequence.MakePending(flight);
 
         await mediator.Publish(
