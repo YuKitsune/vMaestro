@@ -703,12 +703,16 @@ public class Sequence
             throw new MaestroException($"{flight.Callsign} not found in sequence");
 
         // Validate BEFORE removing - exclude the flight being moved
-        var newIndex = CalculateInsertionIndex(flight.LandingEstimate);
+        var newIndex = CalculateInsertionIndex(time);
         if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
             ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier!);
 
         var oldIndex = _sequence.IndexOf(existingFlight);
         _sequence.RemoveAt(oldIndex);
+
+        if (newIndex > oldIndex)
+            newIndex--;
+
         InsertAt(newIndex, existingFlight);
 
         var reschedulePoint = Math.Min(oldIndex, newIndex);
