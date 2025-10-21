@@ -285,24 +285,21 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         var now = clockFixture.Instance.UtcNow();
 
         var flight1 = new FlightBuilder("QFA456")
-            .WithLandingEstimate(now.AddMinutes(10))
-            .WithLandingTime(now.AddMinutes(10))
-            .WithFeederFixEstimate(now.AddMinutes(-2))
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(20))
             .WithState(State.Stable)
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA789")
-            .WithLandingEstimate(now.AddMinutes(11))
-            .WithLandingTime(now.AddMinutes(13))
-            .WithFeederFixEstimate(now.AddMinutes(-1))
+            .WithLandingEstimate(now.AddMinutes(26))
+            .WithLandingTime(now.AddMinutes(26))
             .WithState(State.Stable)
             .WithRunway("34L")
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
             .WithLandingEstimate(now.AddMinutes(20))
-            .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
             .Build();
 
@@ -334,6 +331,118 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         // Trailing flight should be delayed further
         flight2.LandingTime.ShouldBe(pendingFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
             "QFA789 should be delayed to maintain separation behind QFA123");
+    }
+
+    [Fact]
+    public async Task WhenFlightIsInserted_BeforeAnotherFlight_ButEstimateIsFurtherAhead_TheFlightIsRepositionedAhead()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        // Create a sequence with multiple flights
+        var flight1 = new FlightBuilder("QFA123")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA456")
+            .WithLandingEstimate(now.AddMinutes(13))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        // Pending flight has estimate way ahead (T-8) of the reference flight (T+13)
+        var pendingFlight = new FlightBuilder("QFA789")
+            .WithLandingEstimate(now.AddMinutes(5))
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .WithClock(clockFixture.Instance)
+            .Build();
+        sequence.Insert(flight1, flight1.LandingEstimate);
+        sequence.Insert(flight2, flight2.LandingEstimate);
+        sequence.AddPendingFlight(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var request = new InsertPendingRequest(
+            "YSSY",
+            "QFA789",
+            new RelativeInsertionOptions("QFA456", RelativePosition.Before));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        // The pending flight should be repositioned to minimize delays
+        // Since its estimate (T+25) is way ahead of flight2 (T+13), it should end up after flight3
+        sequence.NumberInSequence(pendingFlight).ShouldBe(1, "QFA789 should be first in sequence after repositioning");
+        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second in sequence");
+        sequence.NumberInSequence(flight2).ShouldBe(3, "QFA456 should be third in sequence");
+
+        // Times should be optimized - no unnecessary delays
+        pendingFlight.LandingTime.ShouldBe(now.AddMinutes(5), "QFA789 should be at its estimate");
+        flight1.LandingTime.ShouldBe(now.AddMinutes(10), "QFA123 should remain at its original time");
+        flight2.LandingTime.ShouldBe(now.AddMinutes(13), "QFA456 should remain at its original time");
+    }
+
+    [Fact]
+    public async Task WhenFlightIsInserted_AfterAnotherFlight_ButEstimateIsWayBehind_TheFlightIsRepositionedBehind()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        // Create a sequence with multiple flights
+        var flight1 = new FlightBuilder("QFA123")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA456")
+            .WithLandingEstimate(now.AddMinutes(13))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        // Pending flight has estimate way ahead (T-8) of the reference flight (T+13)
+        var pendingFlight = new FlightBuilder("QFA789")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithState(State.Unstable)
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+            .WithClock(clockFixture.Instance)
+            .Build();
+        sequence.Insert(flight1, flight1.LandingEstimate);
+        sequence.Insert(flight2, flight2.LandingEstimate);
+        sequence.AddPendingFlight(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var request = new InsertPendingRequest(
+            "YSSY",
+            "QFA789",
+            new RelativeInsertionOptions("QFA123", RelativePosition.After));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        // The pending flight should be repositioned to minimize delays
+        // Since its estimate (T+25) is way ahead of flight2 (T+13), it should end up after flight3
+        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first in sequence");
+        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second in sequence");
+        sequence.NumberInSequence(pendingFlight).ShouldBe(3, "QFA789 should be third in sequence after repositioning");
+
+        // Times should be optimized - no unnecessary delays
+        flight1.LandingTime.ShouldBe(now.AddMinutes(10), "QFA123 should remain at its original time");
+        flight2.LandingTime.ShouldBe(now.AddMinutes(13), "QFA456 should remain at its original time");
+        pendingFlight.LandingTime.ShouldBe(now.AddMinutes(16), "QFA789 should be delayed behind QFA456");
     }
 
     [Fact]

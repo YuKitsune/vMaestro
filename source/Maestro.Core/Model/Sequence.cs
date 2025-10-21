@@ -463,6 +463,17 @@ public class Sequence
     {
         // BUG: No times for dummy flights, need to force a landing time and schedule everyone behind
         var index = CalculateInsertionIndex(relativePosition, referenceCallsign);
+
+        // Experiment: Don't put the flight directly before/after the reference flight if it's estimate is way out
+        // Try to move it closer to its estimate while still respecting the relative position
+        var indexByEstimate = CalculateInsertionIndex(newFlight.LandingEstimate);
+        index = relativePosition switch
+        {
+            RelativePosition.Before when indexByEstimate < index => indexByEstimate,
+            RelativePosition.After when indexByEstimate > index => indexByEstimate,
+            _ => index
+        };
+
         if (!string.IsNullOrEmpty(newFlight.AssignedRunwayIdentifier))
             ValidateInsertionBetweenImmovableFlights(index, newFlight.AssignedRunwayIdentifier!);
 
@@ -499,6 +510,17 @@ public class Sequence
             throw new MaestroException($"{callsign} not found in pending list");
 
         var index = CalculateInsertionIndex(relativePosition, referenceCallsign);
+
+        // Experiment: Don't put the flight directly before/after the reference flight if it's estimate is way out
+        // Try to move it closer to its estimate while still respecting the relative position
+        var indexByEstimate = CalculateInsertionIndex(pendingFlight.LandingEstimate);
+        index = relativePosition switch
+        {
+            RelativePosition.Before when indexByEstimate < index => indexByEstimate,
+            RelativePosition.After when indexByEstimate > index => indexByEstimate,
+            _ => index
+        };
+
         if (!string.IsNullOrEmpty(pendingFlight.AssignedRunwayIdentifier))
             ValidateInsertionBetweenImmovableFlights(index, pendingFlight.AssignedRunwayIdentifier!);
 

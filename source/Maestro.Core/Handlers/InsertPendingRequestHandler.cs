@@ -6,16 +6,6 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-// TODO test cases:
-// - When inserting a pending flight, and the flight is not in the pending list, an error is thrown
-// - When inserting a pending flight, the state is set
-// - When inserting a pending flight with exact insertion options, the flight is inserted at the correct position with the correct runway
-// - When inserting a pending flight, before another flight, the position in the sequence is updated
-// - When inserting a pending flight, before another flight, trailing conflicts are resolved
-// - When inserting a pending flight, before another flight, the position in the sequence is updated
-// - When inserting a pending flight, before another flight, trailing conflicts are resolved
-// - When inserting a pending flight, between two frozen flights, without enough space between them, an error is thrown
-
 public class InsertPendingRequestHandler(
     ISessionManager sessionManager,
     IClock clock,
