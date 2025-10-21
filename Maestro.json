@@ -30,7 +30,6 @@
   "Airports": [
     {
       "Identifier": "YSSY",
-      "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
       "PreferredRunways": {
         "RIVET": ["34L", "16R"],
@@ -578,7 +577,6 @@
     },
     {
       "Identifier": "YBBN",
-      "MinimumRadarEstimateRange": 150,
       "FeederFixes": ["BLAKA", "GOMOL", "ENLIP", "MORBI", "SMOKA", "TEBOT", "UGTUG", "WOODY"],
       "PreferredRunways": {
         "ENLIP": ["01L", "19R"],

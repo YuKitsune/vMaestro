@@ -3,7 +3,6 @@
 public class AirportConfiguration
 {
     public required string Identifier { get; init; }
-    public required double MinimumRadarEstimateRange { get; init; } = 150;
     public required string[] FeederFixes { get; init; }
     public required Dictionary<string, string[]> PreferredRunways { get; init; } = new();
     public required RunwayConfiguration[] Runways { get; init; }
