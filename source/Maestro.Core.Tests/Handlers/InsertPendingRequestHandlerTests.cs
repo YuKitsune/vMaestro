@@ -273,11 +273,6 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         sequence.NumberInSequence(pendingFlight).ShouldBe(2, "QFA123 should be second in sequence");
     }
 
-    // TODO: This test exemplifies a bug in the ordering logic.
-    // In this case, the pending flight will be inserted behind QFA456, but because the landing estimate is not in conflict with the leading QFA,
-    // QFA789 receives a large delay.
-    // What should happen in this case? Should QFA789 jump forward? Should QFA123 be inserted based on their landing estimate instead of relying on the reference flight?
-
     [Fact]
     public async Task WhenFlightIsInserted_AfterAnotherFlight_TheFlightIsInsertedBehindTheReferenceFlightAndAnyTrailingConflictsAreDelayed()
     {
