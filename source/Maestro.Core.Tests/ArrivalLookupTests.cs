@@ -103,7 +103,6 @@ public class ArrivalLookupTests
                     }
                 }
             ],
-            MinimumRadarEstimateRange = 0,
             FeederFixes = [],
             Runways = [],
             RunwayModes = [],

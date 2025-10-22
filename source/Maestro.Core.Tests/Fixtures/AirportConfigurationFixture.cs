@@ -15,7 +15,6 @@ public class AirportConfigurationFixture
         new()
         {
             Identifier = "YSSY",
-            MinimumRadarEstimateRange = 200,
             Runways =
             [
                 new RunwayConfiguration
