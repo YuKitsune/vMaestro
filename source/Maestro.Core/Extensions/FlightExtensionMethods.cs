@@ -33,7 +33,7 @@ public static class FlightExtensionMethods
             FlowControls = flight.FlowControls,
             ActivatedTime = flight.ActivatedTime,
             HighPriority = flight.HighPriority,
-            NoDelay = flight.NoDelay,
+            MaximumDelay = flight.MaximumDelay,
             EstimatedTimeEnroute = flight.EstimatedTimeEnroute,
             ManualFeederFixEstimate = flight.ManualFeederFixEstimate,
             ActualFeederFixTime = flight.ActualFeederFixTime,

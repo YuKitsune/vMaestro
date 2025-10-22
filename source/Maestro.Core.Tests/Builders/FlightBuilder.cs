@@ -26,8 +26,9 @@ public class FlightBuilder(string callsign)
     string _assignedRunway = "34L";
     bool _manualRunway = false;
 
-    bool _noDelay = false;
     bool _highPriority = false;
+
+    TimeSpan? _manualDelay = null;
 
     State _state = State.Unstable;
 
@@ -104,9 +105,9 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder NoDelay(bool value = true)
+    public FlightBuilder ManualDelay(TimeSpan value)
     {
-        _noDelay = value;
+        _manualDelay = value;
         return this;
     }
 
@@ -195,7 +196,7 @@ public class FlightBuilder(string callsign)
 
         flight.SetState(_state, new FixedClock(activationTime));
 
-        flight.NoDelay = _noDelay;
+        flight.SetMaximumDelay(_manualDelay);
         flight.HighPriority = _highPriority;
 
         flight.Fixes =

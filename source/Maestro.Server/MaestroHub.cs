@@ -80,9 +80,9 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         return await RelayToMaster("ResumeSequencing", request);
     }
 
-    public async Task<RelayResponse> ZeroDelay(ZeroDelayRequest request)
+    public async Task<RelayResponse> ManualDelay(ManualDelayRequest request)
     {
-        return await RelayToMaster("ZeroDelay", request);
+        return await RelayToMaster("ManualDelay", request);
     }
 
     public async Task<RelayResponse> ChangeRunway(ChangeRunwayRequest request)

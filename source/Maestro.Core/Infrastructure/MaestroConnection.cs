@@ -142,7 +142,7 @@ public class MaestroConnection : IAsyncDisposable
             MakeStableRequest => "MakeStable",
             RecomputeRequest => "Recompute",
             ResumeSequencingRequest => "ResumeSequencing",
-            ZeroDelayRequest => "ZeroDelay",
+            ManualDelayRequest => "ManualDelay",
             CreateSlotRequest => "CreateSlot",
             ModifySlotRequest => "ModifySlot",
             DeleteSlotRequest => "DeleteSlot",
@@ -296,7 +296,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.Resequence);
         });
 
-        _hubConnection.On<RequestEnvelope<ZeroDelayRequest>, RelayResponse>("ZeroDelay", async envelope =>
+        _hubConnection.On<RequestEnvelope<ManualDelayRequest>, RelayResponse>("ManualDelay", async envelope =>
         {
             if (envelope.Request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");

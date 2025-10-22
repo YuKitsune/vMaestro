@@ -14,7 +14,7 @@ public class FlightMessage
     public required State State { get; init; } // TODO: DTO
     public required DateTimeOffset? ActivatedTime { get; init; }
     public required bool HighPriority { get; init; }
-    public required bool NoDelay { get; init; }
+    public required TimeSpan? MaximumDelay { get; init; }
     public required int NumberInSequence { get; init; }
     public required string? FeederFixIdentifier { get; init; }
     public required DateTimeOffset? EstimatedDepartureTime { get; init; }

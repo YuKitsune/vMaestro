@@ -67,7 +67,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         RunwayManuallyAssigned = message.RunwayManuallyAssigned;
         State = message.State;
         HighPriority = message.HighPriority;
-        NoDelay = message.NoDelay;
+        MaximumDelay = message.MaximumDelay;
         ActivatedTime = message.ActivatedTime;
         FeederFixIdentifier = message.FeederFixIdentifier;
         InitialFeederFixEstimate = message.InitialFeederFixEstimate;
@@ -106,7 +106,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public State State { get; private set; }
     public bool HighPriority { get; set; }
-    public bool NoDelay { get; set; }
+    public TimeSpan? MaximumDelay { get; private set; }
     public DateTimeOffset? ActivatedTime { get; private set; }
 
     public string? FeederFixIdentifier { get; private set; }
@@ -220,6 +220,11 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         Position = position;
     }
 
+    public void SetMaximumDelay(TimeSpan? maximumDelay)
+    {
+        MaximumDelay = maximumDelay;
+    }
+
     public void Reset()
     {
         // TODO: Prevent if the flight has departed
@@ -237,6 +242,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         ManualLandingTime = false;
         State = State.Unstable;
         FlowControls = FlowControls.ProfileSpeed;
+        MaximumDelay = null;
     }
 
     public void UpdateStateBasedOnTime(IClock clock)

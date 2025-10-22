@@ -1,14 +1,13 @@
 ﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
-using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ZeroDelayRequestHandler(ISessionManager sessionManager, IMediator mediator, ILogger logger)
-    : IRequestHandler<ZeroDelayRequest>
+public class ManualDelayRequestHandler(ISessionManager sessionManager, IMediator mediator)
+    : IRequestHandler<ManualDelayRequest>
 {
-    public async Task Handle(ZeroDelayRequest request, CancellationToken cancellationToken)
+    public async Task Handle(ManualDelayRequest request, CancellationToken cancellationToken)
     {
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
@@ -21,11 +20,11 @@ public class ZeroDelayRequestHandler(ISessionManager sessionManager, IMediator m
         var flight = sequence.FindTrackedFlight(request.Callsign);
         if (flight == null)
         {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return;
+            throw new MaestroException($"{request.Callsign} not found");
         }
 
-        flight.NoDelay = true;
+        var maximumDelay = TimeSpan.FromMinutes(request.MaximumDelayMinutes);
+        flight.SetMaximumDelay(maximumDelay);
 
         sequence.Recompute(flight);
 

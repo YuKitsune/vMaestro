@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Text;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
@@ -19,15 +20,59 @@ public partial class FlightLabelViewModel(
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AvailableRunways))]
+    [NotifyPropertyChangedFor(nameof(Indicators))]
     [NotifyCanExecuteChangedFor(nameof(ShowInformationWindowCommand))]
     FlightMessage _flightViewModel = flightViewModel;
 
     [ObservableProperty]
     bool _isSelected = false;
 
+    public string Indicators => BuildIndicators();
+
     public string[] AvailableRunways => availableRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
 
     public bool CanInsertBefore => FlightViewModel.State != State.Frozen;
+
+    string BuildIndicators()
+    {
+        var sb = new StringBuilder();
+
+        if (FlightViewModel.MaximumDelay is not null)
+        {
+            if (FlightViewModel.MaximumDelay == TimeSpan.Zero)
+            {
+                sb.Append("#");
+            }
+            else
+            {
+                sb.Append("%");
+            }
+        }
+        else
+        {
+            sb.Append(" ");
+        }
+
+        if (FlightViewModel.FlowControls == FlowControls.ReduceSpeed)
+        {
+            sb.Append("+");
+        }
+        else
+        {
+            sb.Append(" ");
+        }
+
+        if (FlightViewModel.Position is null)
+        {
+            sb.Append("*");
+        }
+        else
+        {
+            sb.Append(" ");
+        }
+
+        return sb.ToString();
+    }
 
     [RelayCommand(CanExecute = nameof(CanShowInformation))]
     void ShowInformationWindow()
@@ -228,12 +273,20 @@ public partial class FlightLabelViewModel(
     }
 
     [RelayCommand]
-    void ZeroDelay()
+    void ManualDelay(object parameter)
     {
         try
         {
+            // Handle both string and int parameters from XAML
+            var maximumDelayMinutes = parameter switch
+            {
+                int intValue => intValue,
+                string strValue when int.TryParse(strValue, out var parsed) => parsed,
+                _ => throw new ArgumentException($"Invalid parameter type: {parameter?.GetType().Name ?? "null"}")
+            };
+
             mediator.Send(
-                new ZeroDelayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
+                new ManualDelayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, maximumDelayMinutes),
                 CancellationToken.None);
         }
         catch (Exception ex)

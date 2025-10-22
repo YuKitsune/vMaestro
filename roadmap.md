@@ -1,9 +1,5 @@
 # vMaestro Roadmap
 
-## Manual Delay
-
-- [ ] Replace the `ZeroDelay` field with a `ManualDelay` field. This should be a `TimeSpan` representing the maximum delay that can be allocated to a flight.
-
 ## Coordination System
 
 - [ ] Implement the coordination system with pre-canned messages

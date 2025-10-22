@@ -46,7 +46,7 @@ public class RecomputeRequestHandler(
             flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
 
         flight.HighPriority = feederFix is null;
-        flight.NoDelay = false;
+        flight.SetMaximumDelay(null);
 
         // Re-calculate estimates
         CalculateEstimates(airportConfiguration, flight);

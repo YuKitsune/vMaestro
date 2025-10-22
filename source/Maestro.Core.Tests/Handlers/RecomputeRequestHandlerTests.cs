@@ -238,14 +238,14 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     }
 
     [Fact]
-    public async Task WhenRecomputingAFlight_NoDelayIsResetToFalse()
+    public async Task WhenRecomputingAFlight_MaximumDelayIsReset()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(10))
-            .NoDelay()
+            .ManualDelay(TimeSpan.FromMinutes(5))
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
@@ -260,7 +260,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.NoDelay.ShouldBeFalse();
+        flight.MaximumDelay.ShouldBeNull();
     }
 
     [Fact]

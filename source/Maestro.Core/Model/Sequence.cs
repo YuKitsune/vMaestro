@@ -909,6 +909,33 @@ public class Sequence
                 ? earliestLandingTimeFromPrevious
                 : earliestAllowedTime;
 
+            // Ensure manual delay flights aren't delayed by more than their maximum delay
+            if (currentFlight.MaximumDelay is not null)
+            {
+                var totalDelay = landingTime - currentFlight.LandingEstimate;
+
+                // Zero delay flights can be delayed within the acceptance rate, but no more
+                // E.g. QFA1 lands at T15, QFA2 is Zero delay estimating at T17. Rather than moving QFA1 back and giving them a 5-minute delay, give QFA2 a 1-minute delay instead
+                if (currentFlight.MaximumDelay == TimeSpan.Zero && totalDelay < runway.AcceptanceRate)
+                {
+                }
+                else if (previousItem is FlightSequenceItem { Flight.State: State.Frozen or State.Landed })
+                {
+                    // Don't move in front of frozen or landed flights
+                }
+                else if (totalDelay > currentFlight.MaximumDelay)
+                {
+                    // Delay exceeds the maximum, move this flight forward one space and reprocess
+                    var previousItemIndex = _sequence.IndexOf(previousItem);
+                    if (previousItemIndex != -1)
+                    {
+                        (_sequence[i], _sequence[previousItemIndex]) = (_sequence[previousItemIndex], _sequence[i]);
+                        i = previousItemIndex - 1;
+                        continue;
+                    }
+                }
+            }
+
             // Check if this landing time would conflict with the next item in the sequence
             var nextItem = _sequence
                 .Skip(i + 1)

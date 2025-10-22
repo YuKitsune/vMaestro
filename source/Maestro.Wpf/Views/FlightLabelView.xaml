@@ -95,21 +95,9 @@
                     Width="80"/>
 
                 <TextBlock
-                    Text="+"
+                    Text="{Binding Indicators}"
                     Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
-                    Width="24">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Hidden"/>
-
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding FlightViewModel.FlowControls}" Value="ProfileSpeed">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                    Width="32"/>
 
                 <TextBlock
                     Text="{Binding FlightViewModel.InitialDelay, Converter={StaticResource MinutesConverter}}"
@@ -157,7 +145,13 @@
                     Header="Make Pending"
                     Command="{Binding MakePendingCommand}"
                     Visibility="{Binding FlightViewModel.IsFromDepartureAirport, Converter={StaticResource BoolToVisibilityConverter}}" />
-                <MenuItem Header="Zero Delay" Command="{Binding ZeroDelayCommand}" />
+                <MenuItem Header="Manual Delay">
+                    <MenuItem Header="00" Command="{Binding ManualDelayCommand}" CommandParameter="0"/>
+                    <MenuItem Header="05" Command="{Binding ManualDelayCommand}" CommandParameter="5"/>
+                    <MenuItem Header="10" Command="{Binding ManualDelayCommand}" CommandParameter="10"/>
+                    <MenuItem Header="15" Command="{Binding ManualDelayCommand}" CommandParameter="15"/>
+                    <MenuItem Header="20" Command="{Binding ManualDelayCommand}" CommandParameter="20"/>
+                </MenuItem>
                 <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" IsEnabled="False" />
             </ContextMenu>
         </Border.ContextMenu>
