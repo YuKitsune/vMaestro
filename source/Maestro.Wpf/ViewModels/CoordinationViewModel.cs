@@ -28,11 +28,8 @@ public partial class CoordinationViewModel : ObservableObject
     ObservableCollection<string> _destinations = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDestinationSelected))]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     string? _selectedDestination;
-
-    public bool IsDestinationSelected => SelectedDestination is not null;
 
     public bool IsFlightSpecific => _flightCallsign is not null;
     public bool ShowSendButton => IsFlightSpecific;

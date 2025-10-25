@@ -95,8 +95,7 @@
                     Text="DESTINATION"
                     IsHitTestVisible="False"
                     TextAlignment="Center"
-                    Style="{StaticResource InteractiveTextStyle}"
-                    Visibility="{Binding IsDestinationSelected, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    Style="{StaticResource InteractiveTextStyle}"/>
             </Grid>
             <Button Content="SEND" Command="{Binding SendCommand}" Visibility="{Binding ShowSendButton, Converter={StaticResource BoolToVisibilityConverter}}"/>
             <Button Content="CANCEL" Command="{Binding CancelCommand}"/>
