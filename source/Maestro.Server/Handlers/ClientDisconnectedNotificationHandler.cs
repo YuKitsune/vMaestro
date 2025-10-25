@@ -14,7 +14,7 @@ public record ClientDisconnectedNotification(string ConnectionId) : INotificatio
 // - When master leaves the sequence, and another flow controller exists, the flow controller is promoted
 // - When master leaves the sequence, and no flow controller exists, the next available connection is promoted
 
-public class ClientDisconnectedNotificationHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
+public class ClientDisconnectedNotificationHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubProxy hubProxy, ILogger logger)
     : INotificationHandler<ClientDisconnectedNotification>
 {
     public async Task Handle(ClientDisconnectedNotification notification, CancellationToken cancellationToken)
@@ -50,6 +50,11 @@ public class ClientDisconnectedNotificationHandler(IConnectionManager connection
 
                 logger.Information("Promoting {Connection} to master", newMaster);
             }
+        }
+
+        if (remainingPeers.Length == 0 || remainingPeers.All(p => p.Role == Role.Observer))
+        {
+            sequenceCache.Evict(connection.Partition, connection.AirportIdentifier);
         }
 
         // Broadcast to remaining clients that this client has disconnected
