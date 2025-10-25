@@ -723,8 +723,11 @@ public partial class MaestroView
             ViewModel.DeselectFlight();
             _suppressContextMenu = true; // Flag to suppress context menu
             DrawTimelineIfAllowed(); // Immediately update UI to reflect deselection
-            e.Handled = true;
         }
+
+        // Always handle the event to prevent it from bubbling to the canvas
+        // (which would suppress the context menu in Enroute mode)
+        e.Handled = true;
     }
 
     void SuppressContextMenuIfRequired(object sender, ContextMenuEventArgs e)
