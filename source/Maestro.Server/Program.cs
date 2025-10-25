@@ -49,8 +49,6 @@ try
         c.RegisterServicesFromAssemblies(typeof(AssemblyMarker).Assembly);
     });
 
-    builder.Services.AddTransient(typeof(IRequestHandler<>), typeof(RelayToMasterRequestHandler<>));
-
     builder.Services.AddSingleton<SequenceCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();

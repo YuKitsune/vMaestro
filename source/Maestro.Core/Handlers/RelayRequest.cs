@@ -3,12 +3,6 @@ using MediatR;
 
 namespace Maestro.Core.Handlers;
 
-public class RelayRequest<T> : IRequest<RelayResponse> where T : class
-{
-    public required RequestEnvelope<T> Envelope { get; init; }
-    public required string ActionKey { get; init; }
-}
-
 public class RelayRequest : IRequest<RelayResponse>
 {
     public required RequestEnvelope Envelope { get; init; }

@@ -222,137 +222,154 @@ public class MaestroConnection : IAsyncDisposable
             await _mediator.Publish(clientDisconnectedNotification, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<RequestEnvelope<InsertFlightRequest>, RelayResponse>("InsertFlight", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("InsertFlight", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (InsertFlightRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDummy);
         });
 
-        _hubConnection.On<RequestEnvelope<InsertDepartureRequest>, RelayResponse>("InsertDeparture", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("InsertDeparture", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (InsertDepartureRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDeparture);
         });
 
-        _hubConnection.On<RequestEnvelope<MoveFlightRequest>, RelayResponse>("MoveFlight", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("MoveFlight", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (MoveFlightRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MoveFlight);
         });
 
-        _hubConnection.On<RequestEnvelope<SwapFlightsRequest>, RelayResponse>("SwapFlights", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("SwapFlights", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (SwapFlightsRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MoveFlight);
         });
 
-        _hubConnection.On<RequestEnvelope<RemoveRequest>, RelayResponse>("Remove", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("Remove", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (RemoveRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.RemoveFlight);
         });
 
-        _hubConnection.On<RequestEnvelope<DesequenceRequest>, RelayResponse>("Desequence", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("Desequence", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (DesequenceRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.Desequence);
         });
 
-        _hubConnection.On<RequestEnvelope<MakePendingRequest>, RelayResponse>("MakePending", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("MakePending", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (MakePendingRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MakePending);
         });
 
-        _hubConnection.On<RequestEnvelope<MakeStableRequest>, RelayResponse>("MakeStable", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("MakeStable", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (MakeStableRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MakeStable);
         });
 
-        _hubConnection.On<RequestEnvelope<RecomputeRequest>, RelayResponse>("Recompute", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("Recompute", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (RecomputeRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.Recompute);
         });
 
-        _hubConnection.On<RequestEnvelope<ResumeSequencingRequest>, RelayResponse>("ResumeSequencing", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("ResumeSequencing", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (ResumeSequencingRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.Resequence);
         });
 
-        _hubConnection.On<RequestEnvelope<ManualDelayRequest>, RelayResponse>("ManualDelay", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("ManualDelay", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (ManualDelayRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManualDelay);
         });
 
-        _hubConnection.On<RequestEnvelope<ChangeRunwayRequest>, RelayResponse>("ChangeRunway", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("ChangeRunway", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (ChangeRunwayRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeRunway);
         });
 
-        _hubConnection.On<RequestEnvelope<ChangeRunwayModeRequest>, RelayResponse>("ChangeRunwayMode", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("ChangeRunwayMode", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (ChangeRunwayModeRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeTerminalConfiguration);
         });
 
-        _hubConnection.On<RequestEnvelope<ChangeFeederFixEstimateRequest>, RelayResponse>("ChangeFeederFixEstimate", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("ChangeFeederFixEstimate", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (ChangeFeederFixEstimateRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeFeederFixEstimate);
         });
 
-        _hubConnection.On<RequestEnvelope<CreateSlotRequest>, RelayResponse>("CreateSlot", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("CreateSlot", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (CreateSlotRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
         });
 
-        _hubConnection.On<RequestEnvelope<ModifySlotRequest>, RelayResponse>("ModifySlot", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("ModifySlot", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (ModifySlotRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
         });
 
-        _hubConnection.On<RequestEnvelope<DeleteSlotRequest>, RelayResponse>("DeleteSlot", async envelope =>
+        _hubConnection.On<RequestEnvelope, RelayResponse>("DeleteSlot", async envelope =>
         {
-            if (envelope.Request.AirportIdentifier != _airportIdentifier)
+            var request = (DeleteSlotRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
                 return RelayResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
@@ -404,7 +421,7 @@ public class MaestroConnection : IAsyncDisposable
         return linkedSource.Token;
     }
 
-    async Task<RelayResponse> ProcessEnvelopedRequest<T>(RequestEnvelope<T> envelope, string actionKey) where T : class, IRequest
+    async Task<RelayResponse> ProcessEnvelopedRequest(RequestEnvelope envelope, string actionKey)
     {
         var cancellationToken = GetMessageCancellationToken();
 

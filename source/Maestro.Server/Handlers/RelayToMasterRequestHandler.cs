@@ -5,12 +5,12 @@ using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
-public record RelayToMasterRequest<T>(string MethodName, T Message) : IRequest;
+public record RelayToMasterRequest(string MethodName, IRequest Message) : IRequest;
 
-public class RelayToMasterRequestHandler<T>(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
-    : IRequestHandler<RequestContextWrapper<RelayToMasterRequest<T>, RelayResponse>, RelayResponse>
+public class RelayToMasterRequestHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
+    : IRequestHandler<RequestContextWrapper<RelayToMasterRequest, RelayResponse>, RelayResponse>
 {
-    public async Task<RelayResponse> Handle(RequestContextWrapper<RelayToMasterRequest<T>, RelayResponse> wrappedRequest, CancellationToken cancellationToken)
+    public async Task<RelayResponse> Handle(RequestContextWrapper<RelayToMasterRequest, RelayResponse> wrappedRequest, CancellationToken cancellationToken)
     {
         var (connectionId, request) = wrappedRequest;
         if (!connectionManager.TryGetConnection(connectionId, out var connection))
@@ -32,8 +32,15 @@ public class RelayToMasterRequestHandler<T>(IConnectionManager connectionManager
             return RelayResponse.CreateFailure("No master found");
         }
 
-        var envelope = RequestEnvelopeHelper.CreateEnvelope(request.Message, connection.Callsign, connectionId, connection.Role);
-        var response = await hubProxy.Invoke<RequestEnvelope<T>, RelayResponse>(master.Id, request.MethodName, envelope, cancellationToken);
+        var envelope = new RequestEnvelope
+        {
+            OriginatingCallsign = connection.Callsign,
+            OriginatingConnectionId = connectionId,
+            OriginatingRole = connection.Role,
+            Request = request.Message
+        };
+
+        var response = await hubProxy.Invoke<RequestEnvelope, RelayResponse>(master.Id, request.MethodName, envelope, cancellationToken);
         if (!response.Success)
         {
             logger.Warning("Received error response from {Connection}: {Error}", master, response.ErrorMessage);

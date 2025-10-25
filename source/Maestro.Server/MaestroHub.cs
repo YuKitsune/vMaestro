@@ -115,12 +115,12 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         return await RelayToMaster("DeleteSlot", request);
     }
 
-    async Task<RelayResponse> RelayToMaster<T>(string methodName, T request)
+    async Task<RelayResponse> RelayToMaster(string methodName, IRequest request)
     {
         return await mediator.Send(
-            new RequestContextWrapper<RelayToMasterRequest<T>, RelayResponse>(
+            new RequestContextWrapper<RelayToMasterRequest, RelayResponse>(
                 Context.ConnectionId,
-                new RelayToMasterRequest<T>(methodName, request)));
+                new RelayToMasterRequest(methodName, request)));
     }
 
     public override async Task OnConnectedAsync()
