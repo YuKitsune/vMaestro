@@ -35,7 +35,11 @@ try
             x.MaximumReceiveMessageSize = 32_000_000; // TODO: Just send smaller messages!!!
             x.EnableDetailedErrors = true;
         })
-        .AddNewtonsoftJsonProtocol(x => x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver());
+        .AddNewtonsoftJsonProtocol(x =>
+        {
+            x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver();
+            x.PayloadSerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto;
+        });
 
     builder.Services.AddSerilog();
     builder.Services.AddSingleton(Log.Logger);

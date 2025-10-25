@@ -38,13 +38,13 @@ public class AsyncNotificationPublisher : INotificationPublisher, IAsyncDisposab
 
     private async Task ProcessNotificationsAsync(CancellationToken cancellationToken)
     {
-        await foreach (var workItem in _channel.Reader.ReadAllAsync(cancellationToken))
+        await foreach (var workItem in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
             try
             {
                 foreach (var notificationHandlerExecutor in workItem.Handlers)
                 {
-                    await notificationHandlerExecutor.HandlerCallback(workItem.Notification, cancellationToken);
+                    await notificationHandlerExecutor.HandlerCallback(workItem.Notification, cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)

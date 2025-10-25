@@ -1528,5 +1528,18 @@
       ],
       "DepartureAirports": ["YPKG", "YESP", "YABA", "YGEL"]
     }
-  ]
+  ],
+  "CoordinationMessages": {
+    "Templates": [
+    "WX Dev have commenced.",
+    "Standby for configuration change.",
+    "Flow Planning in progress - do not use delay times until advised.",
+    "Maestro delay times accurate.",
+    "Contingency - No FMP.",
+    "General Holding.",
+    "{Callsign} MEDEVAC",
+    "{Callsign} diverting",
+    "{Callsign} request high speed descent"
+    ]
+  }
 }

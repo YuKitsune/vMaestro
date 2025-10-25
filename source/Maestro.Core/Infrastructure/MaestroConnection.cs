@@ -5,6 +5,7 @@ using Maestro.Core.Messages.Connectivity;
 using MediatR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Serialization;
 using Serilog;
 
 namespace Maestro.Core.Infrastructure;
@@ -16,7 +17,7 @@ namespace Maestro.Core.Infrastructure;
 // - [X] Test with two clients connected at once, what breaks?
 // - [X] Restrict access to certain functions from certain clients
 // - [X] Show information messages when things happen
-// - [ ] Coordination messages
+// - [X] Coordination messages
 
 public class MaestroConnection : IAsyncDisposable
 {
@@ -53,7 +54,11 @@ public class MaestroConnection : IAsyncDisposable
             .WithServerTimeout(TimeSpan.FromSeconds(serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
-            .AddNewtonsoftJsonProtocol()
+            .AddNewtonsoftJsonProtocol(x =>
+            {
+                x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver();
+                x.PayloadSerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto;
+            })
             .Build();
 
         _mediator = mediator;
@@ -125,7 +130,7 @@ public class MaestroConnection : IAsyncDisposable
             // Notifications
             SequenceUpdatedNotification => "SequenceUpdated",
             FlightUpdatedNotification => "FlightUpdated",
-            InformationNotification => "Information",
+            CoordinationNotification => "Coordination",
 
             // Requests
             ChangeRunwayRequest => "ChangeRunway",
@@ -192,12 +197,13 @@ public class MaestroConnection : IAsyncDisposable
             await _mediator.Publish(flightUpdatedNotification, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<InformationNotification>("Information", async infoNotification =>
+        _hubConnection.On<CoordinationNotification>("Coordination", async coordinationNotification =>
         {
-            if (infoNotification.AirportIdentifier != _airportIdentifier)
+            if (coordinationNotification.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Publish(infoNotification, GetMessageCancellationToken());
+            _logger.Information("Received coordination message {Message}", coordinationNotification.Message);
+            await _mediator.Publish(coordinationNotification, GetMessageCancellationToken());
         });
 
         _hubConnection.On<PeerConnectedNotification>("PeerConnected", async clientConnectedNotification =>

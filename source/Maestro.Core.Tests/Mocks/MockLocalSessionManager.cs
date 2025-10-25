@@ -37,6 +37,7 @@ public class MockSession(Sequence sequence) : ISession
 {
     public string AirportIdentifier => sequence.AirportIdentifier;
     public Sequence Sequence => sequence;
+    public string Position => "MockPosition";
     public MaestroConnection? Connection => null;
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public ConnectionInfo? ConnectionInfo => null;

@@ -161,7 +161,7 @@
             </StackPanel.Resources>
 
             <Button Content="DEPS" Command="{Binding OpenPendingDeparturesWindowCommand}" Style="{StaticResource TabBarButtonStyle}"/>
-            <Button Content="COORD" IsEnabled="False" Style="{StaticResource TabBarButtonStyle}" />
+            <Button Content="COORD" Command="{Binding OpenCoordinationWindowCommand}" Style="{StaticResource TabBarButtonStyle}" />
             <Button Command="{Binding OpenDesequencedWindowCommand}" Style="{StaticResource TabBarButtonStyle}">
                 <TextBlock Text="DESQ">
                     <TextBlock.Style>

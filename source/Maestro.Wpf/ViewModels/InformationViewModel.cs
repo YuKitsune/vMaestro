@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 
 namespace Maestro.Wpf.ViewModels;
@@ -15,12 +16,13 @@ public partial class InformationViewModel : ObservableObject
     [ObservableProperty]
     string _messageText = string.Empty;
 
-    public InformationViewModel(string airportIdentifier, IWindowHandle windowHandle)
+    public InformationViewModel(string airportIdentifier, IWindowHandle windowHandle, CoordinationNotification initialNotification)
     {
         _airportIdentifier = airportIdentifier;
         _windowHandle = windowHandle;
+        AppendMessage(initialNotification);
 
-        WeakReferenceMessenger.Default.Register<InformationNotification>(this, (s, m) =>
+        WeakReferenceMessenger.Default.Register<CoordinationNotification>(this, (s, m) =>
         {
             if (m.AirportIdentifier != _airportIdentifier)
                 return;
@@ -29,7 +31,7 @@ public partial class InformationViewModel : ObservableObject
         });
     }
 
-    void AppendMessage(InformationNotification notification)
+    void AppendMessage(CoordinationNotification notification)
     {
         if (string.IsNullOrEmpty(MessageText))
         {

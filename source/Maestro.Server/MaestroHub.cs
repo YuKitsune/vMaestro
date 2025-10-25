@@ -20,9 +20,9 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         await mediator.Publish(new NotificationContextWrapper<FlightUpdatedNotification>(Context.ConnectionId, flightUpdatedNotification));
     }
 
-    public async Task Information(InformationNotification informationNotification)
+    public async Task Coordination(CoordinationNotification coordinationNotification)
     {
-        await mediator.Publish(new NotificationContextWrapper<InformationNotification>(Context.ConnectionId, informationNotification));
+        await mediator.Publish(new NotificationContextWrapper<CoordinationNotification>(Context.ConnectionId, coordinationNotification));
     }
 
     public async Task<RelayResponse> InsertFlight(InsertFlightRequest request)

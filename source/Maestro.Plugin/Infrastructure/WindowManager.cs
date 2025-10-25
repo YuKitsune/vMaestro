@@ -16,31 +16,33 @@ public class WindowManager(GuiInvoker guiInvoker)
         Size? size = null,
         Action<VatSysForm>? configureForm = null)
     {
-        if (_windows.TryGetValue(key, out var existingWindowHandle))
+        guiInvoker.InvokeOnUiThread(mainForm =>
         {
-            existingWindowHandle.Focus();
-            return;
-        }
+            if (_windows.TryGetValue(key, out var existingWindowHandle))
+            {
+                existingWindowHandle.Focus();
+                return;
+            }
 
-        var form = new VatSysForm(title, createView, shrinkToContent)
-        {
-            StartPosition = FormStartPosition.CenterParent
-        };
+            var form = new VatSysForm(title, createView, shrinkToContent)
+            {
+                StartPosition = FormStartPosition.CenterParent
+            };
 
-        if (size.HasValue)
-        {
-            form.Width = (int)size.Value.Width;
-            form.Height = (int)size.Value.Height;
-        }
+            if (size.HasValue)
+            {
+                form.Width = (int)size.Value.Width;
+                form.Height = (int)size.Value.Height;
+            }
 
-        form.PerformLayout();
-        form.Closed += (_, _) => RemoveWindow(key);
+            form.PerformLayout();
+            form.Closed += (_, _) => RemoveWindow(key);
+            form.Show(mainForm);
 
-        guiInvoker.InvokeOnUiThread(mainForm => form.Show(mainForm));
+            configureForm?.Invoke(form);
 
-        configureForm?.Invoke(form);
-
-        _windows[key] = form;
+            _windows[key] = form;
+        });
     }
 
     public bool TryGetWindow(string key, out IWindowHandle? windowHandle)

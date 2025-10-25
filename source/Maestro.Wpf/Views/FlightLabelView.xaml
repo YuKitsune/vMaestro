@@ -152,7 +152,7 @@
                     <MenuItem Header="15" Command="{Binding ManualDelayCommand}" CommandParameter="15"/>
                     <MenuItem Header="20" Command="{Binding ManualDelayCommand}" CommandParameter="20"/>
                 </MenuItem>
-                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" IsEnabled="False" />
+                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" />
             </ContextMenu>
         </Border.ContextMenu>
     </Border>

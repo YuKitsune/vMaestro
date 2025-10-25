@@ -7,4 +7,5 @@ public class PluginConfiguration
     public required ServerConfiguration Server { get; init; }
     public required LoggingConfiguration Logging { get; init; }
     public required AirportConfiguration[] Airports { get; init; }
+    public required CoordinationMessageConfiguration CoordinationMessages { get; init; }
 }

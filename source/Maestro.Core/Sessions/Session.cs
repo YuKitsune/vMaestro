@@ -10,6 +10,7 @@ public interface ISession
 {
     string AirportIdentifier { get; }
     Sequence Sequence { get; }
+    string Position { get; }
     MaestroConnection? Connection { get; }
     SemaphoreSlim Semaphore { get; }
     ConnectionInfo? ConnectionInfo { get; }

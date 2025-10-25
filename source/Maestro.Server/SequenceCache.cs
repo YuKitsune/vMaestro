@@ -20,6 +20,7 @@ public class SequenceCache
         _sequence[key] = sequenceMessage;
     }
 
+    // BUG: Need to remove old entries after the last client disconnects
     public void Evict(string partition, string airportIdentifier)
     {
         var key = CreateKey(partition, airportIdentifier);

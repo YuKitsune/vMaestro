@@ -344,4 +344,17 @@ public partial class MaestroViewModel : ObservableObject
             _errorReporter.ReportError(ex);
         }
     }
+
+    [RelayCommand]
+    void OpenCoordinationWindow()
+    {
+        try
+        {
+            _mediator.Send(new OpenCoordinationWindowRequest(AirportIdentifier, null));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
 }
