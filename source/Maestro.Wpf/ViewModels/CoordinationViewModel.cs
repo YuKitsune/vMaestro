@@ -1,11 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Configuration;
-using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
@@ -13,6 +9,8 @@ namespace Maestro.Wpf.ViewModels;
 
 public partial class CoordinationViewModel : ObservableObject
 {
+    const string AllPeers = "ALL";
+
     readonly IWindowHandle _windowHandle;
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
@@ -55,10 +53,10 @@ public partial class CoordinationViewModel : ObservableObject
         _mediator = mediator;
         _errorReporter = errorReporter;
         Messages = new ObservableCollection<string>(messageTemplates);
-        Destinations = ["ALL", ..peers];
+        Destinations = [AllPeers, ..peers.Distinct()]; // BUG: We somehow end up with duplicate peers.
 
         if (IsFlightSpecific)
-            SelectedDestination = "ALL";
+            SelectedDestination = AllPeers;
     }
 
     [RelayCommand(CanExecute = nameof(CanSend))]
@@ -69,7 +67,7 @@ public partial class CoordinationViewModel : ObservableObject
 
         try
         {
-            CoordinationDestination destination = IsFlightSpecific || SelectedDestination == "ALL"
+            CoordinationDestination destination = IsFlightSpecific || SelectedDestination == AllPeers
                 ? new CoordinationDestination.Broadcast()
                 : new CoordinationDestination.Controller(SelectedDestination!);
 
