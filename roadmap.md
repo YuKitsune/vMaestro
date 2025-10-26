@@ -1,9 +1,5 @@
 # vMaestro Roadmap
 
-## Coordination System
-
-- [ ] Implement the coordination system with pre-canned messages
-
 ## Documentation
 
 - [ ] Write documentation for ATC usage
@@ -51,7 +47,6 @@
 
 - [ ] Add support for multiple ladders and timelines
 - [ ] Implement configuration for custom label layout and colors
-- [ ] Implement ladder scrolling
 
 ### WinForms Compatibility
 
