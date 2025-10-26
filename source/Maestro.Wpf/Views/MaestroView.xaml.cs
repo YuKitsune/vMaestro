@@ -60,7 +60,7 @@ public partial class MaestroView
 
     void TimerTick(object sender, EventArgs args)
     {
-        ClockText.Text = DateTimeOffset.UtcNow.ToString("HH:mm:ss");
+        ClockText.Text = DateTimeOffset.UtcNow.Add(ViewModel.ScrollOffset).ToString("HH:mm:ss");
         DrawTimelineIfAllowed();
     }
 
@@ -79,7 +79,7 @@ public partial class MaestroView
         if (_isDragging) return;
         Dispatcher.Invoke(() =>
         {
-            var now = DateTimeOffset.UtcNow;
+            var now = DateTimeOffset.UtcNow.Add(ViewModel.ScrollOffset);
             RedrawLadder(now);
             UpdateLabels(now);
             InvalidateVisual();
@@ -116,7 +116,7 @@ public partial class MaestroView
         return null;
     }
 
-    void RedrawLadder(DateTimeOffset currentTime)
+    void RedrawLadder(DateTimeOffset referenceTime)
     {
         // Remove all elements that are NOT flight labels
         for (int i = LadderCanvas.Children.Count - 1; i >= 0; i--)
@@ -167,8 +167,8 @@ public partial class MaestroView
         LadderCanvas.Children.Add(rightLine);
 
         // Draw a tick for every minute
-        var nextMinute = currentTime.Add(new TimeSpan(0, 0, 60 - currentTime.Second));
-        var yOffset = GetYOffsetForTime(currentTime, nextMinute);
+        var nextMinute = referenceTime.Add(new TimeSpan(0, 0, 60 - referenceTime.Second));
+        var yOffset = GetYOffsetForTime(referenceTime, nextMinute);
         while (yOffset <= canvasHeight)
         {
             var yPosition = canvasHeight - yOffset;
@@ -203,8 +203,8 @@ public partial class MaestroView
         }
 
         // At each 5-minute interval, draw text with 2-digit minutes
-        var nextTime = GetNearest5Minutes(currentTime);
-        yOffset = GetYOffsetForTime(currentTime, nextTime);
+        var nextTime = GetNearest5Minutes(referenceTime);
+        yOffset = GetYOffsetForTime(referenceTime, nextTime);
         while (yOffset <= canvasHeight)
         {
             var yPosition = canvasHeight - yOffset;
@@ -224,7 +224,7 @@ public partial class MaestroView
         }
 
         // Draw slots
-        DrawSlots(currentTime);
+        DrawSlots(referenceTime);
     }
 
     void DrawSlots(DateTimeOffset currentTime)
@@ -739,7 +739,7 @@ public partial class MaestroView
         _suppressContextMenu = false;
     }
 
-    void UpdateLabels(DateTimeOffset currentTime)
+    void UpdateLabels(DateTimeOffset referenceTime)
     {
         var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
@@ -767,11 +767,11 @@ public partial class MaestroView
             switch (ViewModel.SelectedView.ViewMode)
             {
                 case ViewMode.Enroute when flight.FeederFixTime.HasValue:
-                    yOffset = GetYOffsetForTime(currentTime, flight.FeederFixTime.Value);
+                    yOffset = GetYOffsetForTime(referenceTime, flight.FeederFixTime.Value);
                     break;
 
                 case ViewMode.Approach:
-                    yOffset = GetYOffsetForTime(currentTime, flight.LandingTime);
+                    yOffset = GetYOffsetForTime(referenceTime, flight.LandingTime);
                     break;
 
                 // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)

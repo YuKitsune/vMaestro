@@ -222,12 +222,44 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Button Grid.Row="0" Margin="0,1,0,1" IsEnabled="False">
+            <Button Grid.Row="0" Margin="0,1,0,1" Command="{Binding ScrollUpCommand}">
                 <controls:Chevron Direction="Up" />
+
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsScrollingUp}" Value="True">
+                                <Setter Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}" />
+                                <Setter Property="Foreground" Value="{x:Static local:Theme.BackgroundColor}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
             </Button>
-            <Button Grid.Row="1" Margin="0,1,0,1" Background="{x:Static local:Theme.SelectedButtonColor}"/>
-            <Button Grid.Row="2" Margin="0,1,0,0" IsEnabled="False">
+            <Button Grid.Row="1" Margin="0,1,0,1" Command="{Binding ResetScrollCommand}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsScrolling}" Value="False">
+                                <Setter Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Grid.Row="2" Margin="0,1,0,0" Command="{Binding ScrollDownCommand}">
                 <controls:Chevron Direction="Down" />
+
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsScrollingDown}" Value="True">
+                                <Setter Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}" />
+                                <Setter Property="Foreground" Value="{x:Static local:Theme.BackgroundColor}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
             </Button>
         </Grid>
 
@@ -299,7 +331,17 @@
             </StackPanel>
 
             <controls:BeveledBorder Grid.Column="1" BevelType="Outline" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
-                <TextBlock x:Name="ClockText" TextAlignment="Center" VerticalAlignment="Center" Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
+                <TextBlock x:Name="ClockText" TextAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource GenericTextStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsScrolling}" Value="True">
+                                    <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </controls:BeveledBorder>
 
             <StackPanel Grid.Column="2" HorizontalAlignment="Left" Margin="12,0,0,0">

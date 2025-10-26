@@ -82,6 +82,12 @@ public partial class MaestroViewModel : ObservableObject
 
     [ObservableProperty] string _status = "OFFLINE";
 
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
+    TimeSpan _scrollOffset = TimeSpan.Zero;
+    public bool IsScrolling => ScrollOffset != TimeSpan.Zero;
+    public bool IsScrollingUp => ScrollOffset > TimeSpan.Zero;
+    public bool IsScrollingDown => ScrollOffset < TimeSpan.Zero;
+
     public MaestroViewModel(
         string airportIdentifier,
         string[] runways,
@@ -123,6 +129,24 @@ public partial class MaestroViewModel : ObservableObject
             Flights = notification.Sequence.Flights.ToList();
             Slots = notification.Sequence.Slots.ToList();
         });
+    }
+
+    [RelayCommand]
+    void ScrollDown()
+    {
+        ScrollOffset = ScrollOffset.Subtract(TimeSpan.FromMinutes(15));
+    }
+
+    [RelayCommand]
+    void ScrollUp()
+    {
+        ScrollOffset = ScrollOffset.Add(TimeSpan.FromMinutes(15));
+    }
+
+    [RelayCommand]
+    void ResetScroll()
+    {
+        ScrollOffset = TimeSpan.Zero;
     }
 
     [RelayCommand]
