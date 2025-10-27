@@ -39,6 +39,8 @@ public partial class MaestroView
     // Flight label reuse pool
     private readonly Dictionary<string, FlightLabelView> _flightLabels = new();
 
+    DateTimeOffset ReferenceTime => DateTimeOffset.UtcNow.Add(ViewModel.ScrollOffset);
+
     public MaestroView(MaestroViewModel maestroViewModel)
     {
         InitializeComponent();
@@ -60,7 +62,7 @@ public partial class MaestroView
 
     void TimerTick(object sender, EventArgs args)
     {
-        ClockText.Text = DateTimeOffset.UtcNow.Add(ViewModel.ScrollOffset).ToString("HH:mm:ss");
+        ClockText.Text = ReferenceTime.ToString("HH:mm:ss");
         DrawTimelineIfAllowed();
     }
 
@@ -79,9 +81,8 @@ public partial class MaestroView
         if (_isDragging) return;
         Dispatcher.Invoke(() =>
         {
-            var now = DateTimeOffset.UtcNow.Add(ViewModel.ScrollOffset);
-            RedrawLadder(now);
-            UpdateLabels(now);
+            RedrawLadder(ReferenceTime);
+            UpdateLabels(ReferenceTime);
             InvalidateVisual();
         });
     }
@@ -365,11 +366,11 @@ public partial class MaestroView
         return nextInterval;
     }
 
-    DateTimeOffset GetTimeForYOffset(DateTimeOffset currentTime, double yOffset)
+    DateTimeOffset GetTimeForYOffset(DateTimeOffset referenceTime, double yOffset)
     {
         // Convert the Y offset back to a time
         var minutes = yOffset / MinuteHeight;
-        var newTime = currentTime.AddMinutes(minutes);
+        var newTime = referenceTime.AddMinutes(minutes);
         return newTime;
     }
 
@@ -382,8 +383,7 @@ public partial class MaestroView
             var canvasHeight = LadderCanvas.ActualHeight;
             var canvasWidth = LadderCanvas.ActualWidth;
             var yOffset = canvasHeight - clickPosition.Y;
-            var currentTime = DateTimeOffset.UtcNow;
-            var clickTime = GetTimeForYOffset(currentTime, yOffset);
+            var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
 
             // Determine which side of the ladder was clicked to get the correct runways
             var middlePoint = canvasWidth / 2;
@@ -434,8 +434,7 @@ public partial class MaestroView
             var clickPosition = e.GetPosition(LadderCanvas);
             var canvasHeight = LadderCanvas.ActualHeight;
             var yOffset = canvasHeight - clickPosition.Y;
-            var currentTime = DateTimeOffset.UtcNow;
-            var clickTime = GetTimeForYOffset(currentTime, yOffset);
+            var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
             ViewModel.EndSlotCreation(clickTime);
 
             // Prevent the context menu from opening as we're ending the slot creation
@@ -520,8 +519,7 @@ public partial class MaestroView
         var mousePosition = _contextMenuPosition.Value;
         var canvasHeight = canvas.ActualHeight;
         var yOffset = canvasHeight - mousePosition.Y;
-        var currentTime = DateTimeOffset.UtcNow;
-        var clickTime = GetTimeForYOffset(currentTime, yOffset);
+        var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
 
         // Determine which side of the ladder was clicked to get the correct runways
         var canvasWidth = canvas.ActualWidth;
@@ -622,10 +620,9 @@ public partial class MaestroView
         {
             // This was a drag operation - move the flight
             var finalTop = Canvas.GetTop(flightLabel);
-            var currentTime = DateTimeOffset.UtcNow;
             var canvasHeight = LadderCanvas.ActualHeight;
             var newYOffset = canvasHeight - finalTop;
-            var newTime = GetTimeForYOffset(currentTime, newYOffset);
+            var newTime = GetTimeForYOffset(ReferenceTime, newYOffset);
 
             // Get the flight from the flight label's data context
             if (flightLabel.DataContext is FlightLabelViewModel flightLabelViewModel)
