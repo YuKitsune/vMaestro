@@ -1,6 +1,6 @@
 # System Overview
 
-<!-- TODO: ChatGPT, please fill this in. -->
+<!-- TODO: Claude, please fill this in. -->
 
 ## Terminology and Abbreviations
 
@@ -11,6 +11,9 @@
 | `STA` | **Scheduled** time of arrival at the runway (landing time) calculated by Maestro. |
 | `ETA_FF`[^1] | Estimated time of arrival at the **feeder fix**. |
 | `STA_FF` | **Scheduled** time of arrival at the feeder fix calculated by Maestro. |
+| Managed Airport | The airport Maestro is sequencing arrivals for. |
+| Departure Airport | An airport typically within 30 minutes flight time of the managed airport. |
+| Close Airport | An airport within close proximity to the managed airport. |
 
 [^1]: The `ETA_FF` is derived from the route estimate provided by vatSys (this is also called a "system estimate")
 [^2]: The `ETA` is derived by adding a pre-configured ETI to the `ETA_FF`
@@ -19,13 +22,13 @@
 
 A Maestro flight is created when:
 
-- a vatSys flight is within 2 hours flight time of the Feeder Fix
-- on entry into the Pending List when an FDR is activated for a flight from a Departure Airport
+- a vatSys flight is within 2 hours flight time of the feeder fix
+- on entry into the Pending List when an FDR is activated for a flight from a departure airport or a close airport
 
 Once a flight is tracked by Maestro, vatSys will provide Maestro with updated position information and estimates every 30 seconds.
 
 At each update, the estimates are re-calculated.
-The flights position in the sequence, `STA_FF`, and `STA` may change depending on its [State](#flight-states).
+The flights position in the sequence, `STA_FF`, and `STA` may be re-calculated depending on its [State](#flight-states).
 
 When the flight has reached its STA, it will no longer be processed by Maestro, but it will remain available for a short period of time in case of an overshoot.
 
@@ -42,22 +45,35 @@ Wind can be manually entered, but the next automatic update will override it. --
 
 ## Estimate Calculation
 
-<!-- TODO: ETA_FF is sourced from vatSys route estimates ("System Estimates") -->
-<!-- TODO: ETA is derived from ETA_FF + STAR ETI -->
-<!-- TODO: When passed the FF, the ETA will no longer update. Delay figured will not change inside the TMA. -->
+The Feeder Fix estimate (`ETA_FF`) is sourced from the vatSys route estimates (These are often referred to as "system estimates").
+
+Maestro uses the `ETA_FF`, plus a pre-defined `ETI` (estimated time interval) to calculate the landing estimate (`ETA`).
+
+The arrival `ETI` is defined per-feeder fix, approach type, aircraft type, and runway (see [Arrival Configuration](./../configuration-guide/index.md#arrivals)).
+
+![Diagram of ETA_FF calculation](../../static/img/eta_ff.png)
+
+:::info
+Once a flight has passed the feeder fix, the `ATO` (actual time over) is used to calculate the landing estimate.
+The `ATO` cannot change, so the `ETA` and remaining delay values **will not change** once a flight has passed the feeder fix.
+:::
 
 ## `STA` and `STA_FF` calculation
 
-<!-- TODO: STA will never be earlier than ETA -->
-<!-- TODO: STA will be STAn - 1 + Acceptance Rate if there is preceeding traffic -->
-<!-- TODO: STA_FF is derived from STA - STAR ETI -->
-<!-- TODO: Note that flights may overlap on enroute views when their feeder fix times are close, but they have different STAR ETIs -->
+Landing time (`STA`) is calculated initially based on the landing estimate (`ETA`).
+Once the estimate has been calculated, Maestro will check if the preceeding flight is within the acceptance rate of the current TMA configuration.
+If the time between the two flights is less than the acceptance rate, the later flight is delayed to achieve the desired acceptance rate.
+The `STA` will never be earlier than the `ETA` unless a flight is moved by controller input.
 
-## Airports
+Once the `STA` has been calculated, the arrival `ETI` is subtracted from the `STA` to determine the `STA_FF`.
 
-<!-- TODO: Managed airport -->
-<!-- TODO: Departure airport -->
-<!-- TODO: Close airport -->
+:::info
+It's possible for multiple flights tracking via the same feeder fix to share the same `STA_FF`.
+This can occur when the arrival `ETI` for the two flights differs (i.e. different aircraft caterogies), resulting in different landing times.
+
+When this happens, the enroute ladders will display the two flight labels on top of each other.
+The labels will be separated on the runway ladders.
+:::
 
 ## Flight States
 
@@ -67,13 +83,13 @@ Maestro uses various "States" for flights that affect how they are processed.
 
 ### Unstable
 
-After each update from vatSys, Unstable flights are re-positioned in the sequence based on their estimates, and their `STA_FF` and `STA` times are re-calculated.
+After each update from vatSys, unstable flights are re-positioned in the sequence based on their calculated `ETA`, and their `STA_FF` and `STA` times are re-calculated.
 
-All new flights will remain Unstable for at least 5 minutes before they progress into one of the following states.
+All new flights will remain unstable for at least 5 minutes before they progress into one of the following states.
 
 ### Stable
 
-Flights become Stable 25 minutes prior to the `ETA_FF`.
+Flights become stable 25 minutes prior to the `ETA_FF`.
 
 Stable flights will keep their position in the sequence unless a flight appears, disappears, or moves before it.
 
@@ -91,22 +107,22 @@ Controllers may need to regularly review the Maestro delay figure to recognise c
 
 ### Super Stable
 
-Flights will become Super Stable at the original `ETA_FF`.
+Flights become super stable at the original `ETA_FF`.
 
-Super Stable flights are "fixed" in position.
-All new flights are positioned after Super Stable flights.
+Super stable flights are "fixed" in position.
+All new flights are positioned after super stable flights.
 
-Super Stable flights can be moved manually by controller interaction.
+Super stable flights can be moved manually by controller interaction.
 
 ### Frozen
 
-Flights become Frozen within 15 minutes of the `STA`.
+Flights become frozen within 15 minutes of the `STA`.
 
 No changes can be made to Frozen flights.
 
 ### Landed
 
-Flights will become Landed at the `STA`.
+Flights become landed at the `STA`.
 
 No changes can be made to Landed flights.
 
@@ -114,11 +130,11 @@ The last 5 landed flights remain in the system in case of an overshoot.
 
 ## Pending List
 
-The Pending List contains flights that cannot be automatically inserted into the sequence, and must be inserted manually.
+The Pending list contains flights that cannot be automatically inserted into the sequence, and must be inserted manually.
 
-Flights from Departure Airports, or flights not tracking via a Feeder Fix are automatically inserted into the Pending List when their FDR is activated.
+Flights from departure airports, or flights not tracking via a feeder fix are automatically inserted into the pending list when their FDR is activated.
 
-Flights from a Departure Airport can be inserted prior to departure to allow the pilot to absorb any required delay on the ground if possible.
+Flights from a departure airport can be inserted prior to departure to allow the pilot to absorb any required delay on the ground if possible.
 
 <!-- Flights from airports within the TMA must be manually inserted into the sequence. -->
 
@@ -129,9 +145,9 @@ The recommended delaying action is represented by various colours:
 
 | Colour | Suggested Actions |
 | ------ | ----------------- |
-| Green | Speed increase. The flight needs to make up the time shown (i.e. they have slowed down too much).|
+| Green | Speed increase. The flight needs to make up the time shown (i.e. they will be late).|
 | Dark Blue | No delay required. |
-| Cyan | Speed reduction. The flight needs to loose the time shown (i.e. they are too early and need to be delayed). |
+| Cyan | Speed reduction. The flight needs to loose the time shown (i.e. they will be early). |
 <!-- | White | TMA pressure and initial enroute delay absorbed. Delay includes the use of extended TMA delay. | -->
 | Yellow | Holding recommended. |
 
