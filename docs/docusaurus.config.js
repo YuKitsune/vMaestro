@@ -48,14 +48,13 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          routeBasePath: '/', // Docs at the root
           sidebarPath: './sidebars.js',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl: 'https://github.com/yukitsune/vMaestro/',
         },
-        theme: {
-          customCss: './src/css/custom.css',
-        },
+        blog: false // Disable the blog
       }),
     ],
   ],
@@ -63,14 +62,8 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
       navbar: {
         title: 'vMaestro',
-        logo: {
-          alt: 'vMaestro Logo',
-          src: 'img/logo.svg',
-        },
         items: [
           {
             type: 'docSidebar',

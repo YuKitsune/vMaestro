@@ -1,5 +1,8 @@
 # System Operation
 
+<!-- TODO: Re-structure based on Claudes suggestions. Remove UI-reference stuff. -->
+<!-- Separate sections for Workflows and UI reference. -->
+
 ## Starting Maestro
 
 Maestro can be started by clicking the `TFMS` button on the vatSys menu bar, then clicking `New TFMS Window`.
@@ -44,6 +47,8 @@ The **Sequence Display Zone** provides access to:
 #### Online Status Indicator
 
 The Online Status Indicator displays the status of the connection to the Maestro server.
+
+<!-- Move to online-operation -->
 
 | Status | Meaning |
 | ------ | ------- |

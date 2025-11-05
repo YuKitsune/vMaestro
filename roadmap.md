@@ -2,7 +2,7 @@
 
 ## Documentation
 
-- [ ] Write documentation for ATC usage
+- [X] Write documentation for ATC usage
 - [ ] Write documentation for configuration
 - [ ] Architecture decision record
 
