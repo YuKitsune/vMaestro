@@ -22,20 +22,22 @@ The Maestro window is divided into two sections.
 
 The **Configuration Zone** provides access to:
 
-- Online status (see [Online Operation](#online-operation))
+- Online status (see [Online Operation](./04-online-operation.md))
 - TMA configuration
 - Runways in use and relevent acceptance rates
+- Online setup
 <!-- - Wind speed and direction (6,000 ft and surface level winds) -->
 <!-- - Achieved landing rates -->
 <!-- - Units selector -->
 <!-- - UTC time -->
-- Online setup
 
 The **Sequence Display Zone** provides access to:
 
 - Buttons for interacting with the sequence
 - View selection buttons
-- Sequence ladders
+- Sequence timelines
+
+![Diagram of the Maestro window](../../static/img/window_diagram.png)
 
 ### Configuration Zone
 
@@ -126,7 +128,10 @@ Reading from innermost to outermost, the flight label contains:
 8. Total delay required (based on the initial `ETA`)
 9. Delay remaining (based on the current `ETA`)
 
-Note the two separate delay values. The total delay required is the total delay Maestro has assigned to the flight. As the flight absorbs the delay (i.e. speed reduction, vectors, or holding), this value will remain unchanged. The remaining delay will progressively reduce as the flight absorbs the total delay required. In the below example, QFA501 has been assigned a 2 minute delay, of which they have 1 minute left to losse. 
+Note the two separate delay values. The total delay required is the total delay Maestro has assigned to the flight. As the flight absorbs the delay (i.e. speed reduction, vectors, or holding), this value will remain unchanged.
+The remaining delay will progressively reduce as the flight absorbs the total delay required. When the remaining delay reads `00`, all required delay has been absorbed.
+
+In the below example, QFA501 has been assigned a 2 minute delay. They have absorbed one minute of the delay, and need to loose one more minute.
 
 ![Flight label with delay](../../static/img/flight_label_delay.png)
 
@@ -192,11 +197,11 @@ The single-arrow buttons change the time in 1 minute increments, and the two-arr
 
 ![Image of the TMA Configuration window](../../static/img/tma_config.png)
 
-:::note
+:::info
 Flights scheduled to land after the `First STA in configuration ...` time will be processed using the new configuration.
 :::
 
-:::note
+:::info
 When a gap exists between the `Last STA ...` and `First STA ...` times, no flights may land during that period of time. Any flight with an estimate within this gap will be delayed until after the `First STA ...` time.
 :::
 
@@ -215,8 +220,6 @@ Flights scheduled to land after the `Change rates at` time will be processed usi
 <!-- ## Change displayed units -->
 
 ## Inserting Flights
-
-There are three ways to insert a flight.
 
 ### Inserting a flight from a departure airport
 
@@ -325,21 +328,43 @@ A drop-down will appear with various delay values.
 ![Manual Delay dropdown](../../static/img/manual_delay.png)
 
 When a manual delay is specified:
-- the flight will be positioned in the sequence such that the specified delay is not exceeded
-- the rest of the sequence will be re-computed
+- the flight is positioned in the sequence such that the specified delay is not exceeded
+- the rest of the sequence is re-calculated
 - new flights entering the sequence ahead of this one will not cause a delay in excess of the specified delay
 
 Manual delay can be cancelled using the [Recompute](#recompute) function.
 
-:::note
+:::info
 If a delay of `00` is specified, the flight can still be delayed up to the runways acceptance rate.
 :::
 
 ### Moving Flights
 
-Flights can be manually moved throughout the sequence.
+Flights can be moved throughout the sequence from a runway view.
 
-<!-- TODO -->
+Left-click a flight label to select it, a frame will be displayed around the selected flight.
+The flight can be de-selected by left-clicking it again.
+
+![Flight with selection frame](../../static/img/flight_selected.png)
+
+Left-click on the timeline where the flight should be moved to.
+A confirmation will appear. Click `Confirm` to move the flight.
+
+When a flight is moved:
+- the `STA` is set to the time corresponding to where the second left-click occurred
+- if another timeline was clicked, the flight will be re-assigned to the runway corresponding to that timeline
+- if the flight was `Unstable`, it becomes stable
+- the rest of the sequence is re-calculated
+
+If a second flight is clicked, the `STA` and runways of the two flights are swapped.
+
+:::info
+Flights cannot be moved between two `Frozen` flights when the time between them is less than twice the acceptance rate.
+:::
+
+Alternatively, flights can be dragged up and down the ladder by left-clicking the flight and holding the mouse button down while moving the mouse cursor.
+When the button is released, a confirmation window will appear as before.
+Clicking `Confirm` will move the flight to the specified time.
 
 ### Recomputing
 
@@ -396,24 +421,58 @@ Select the flight to re-sequence, then click `RESEQUENCE`.
 When a flight is re-sequenced:
 - it is placed placed in the sequence at a position based on its last `ETA_FF` received from vatSys
 - it immediately becomes `Stable`
-- the rest of the sequence will be re-computed
+- the rest of the sequence is re-calculated
 
 ![Desequenced Window](../../static/img/desequenced_window.png)
 
 ## Slots
 
-<!-- TODO: Creating, modifying, and deleting slots -->
+Slots can be inserted and removed from the sequence from the runway view.
+
+To insert a slot, right-click the timeline, then select `Insert Slot`.
+Right-click at a position on the timeline where the insertion is required.
+This will display the `Insert Slot Window`.
+
+![Insert Slot Window](../../static/img/insert_slot_window.png)
+
+Adjust the start and end times as necessary, then click `OK` to insert the slot.
+
+The slot will be displayed on the timeline based on the runway filters for that timeline.
+
+![Slot displayed on the timeline](../../static/img/timeline_slot.png)
+
+The slot can be adjusted by left-clicking on the slot to open the `Insert Slot Window` again.
+The start and end times can be adjusted ad required.
+Pressing `OK` will update the start and end times of the slot.
+Pressing the `Remove` button removes the slot from the sequence.
+
+When a slot is created (or changed):
+- any non-frozen flights within the slot are delayed until after the slot has ended
+- the rest of the sequence after the slot ends is re-calculated
 
 ## Coordination
 
-Coordination messages can be sent to other controllers in one of two ways.
+Coordination messages can be sent by clicking the `COORD` button in the Sequence Display Zone.
+This will open the `Coordination` window with a list of general coordination messages.
 
-#### General Coordination Messages
+![General Coordination window](../../static/img/general_coord.png)
 
-General coordination messages can be sent by clicking the `COORD` button in the Sequence Display Zone. This will open the `Coordination` window with a list of general coordination messages.
+Select one of the messages, then left-click the `DESTINATION` button.
+This will present a dropdown of other controllers connected to the Maestro server.
+Left-clicking one of the dropdown menu items will send the coordination message to that controller.
 
-<!-- TODO: -->
+Coordination messages are displayed in the `Information` window.
 
-## Online Operation
+![Coordination messages window](../../static/img/coord_messages.png)
 
-<!-- TODO: Connect to a server, defer to separate docs -->
+Left-click the `ACK` button to close the window and clear the messages.
+Once messages have been `ACK`-ed, they cannot be restored.
+
+### Flight-Specific Coordination
+
+Coordination can also be initiated from the flight label by right-clicking the flight, then selecting `Coordination`.
+
+![Flight Coordination window](../../static/img/flight_coord.png)
+
+Select one of the messages, then left-click the `SEND` button.
+This will send the coordination message to all relevent units.

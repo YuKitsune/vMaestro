@@ -7,30 +7,27 @@
 | Term | Meaning |
 | ---- | ------- |
 | Feeder Fix (FF) | A point on the TMA boundary. |
-| `ETA`[^2] | Estimated time of arrival **at the runway**. |
+| `ETA` | Estimated time of arrival **at the runway**. |
 | `STA` | **Scheduled** time of arrival at the runway (landing time) calculated by Maestro. |
-| `ETA_FF`[^1] | Estimated time of arrival at the **feeder fix**. |
+| `ETA_FF` | Estimated time of arrival at the **feeder fix**. |
 | `STA_FF` | **Scheduled** time of arrival at the feeder fix calculated by Maestro. |
 | Managed Airport | The airport Maestro is sequencing arrivals for. |
 | Departure Airport | An airport typically within 30 minutes flight time of the managed airport. |
 | Close Airport | An airport within close proximity to the managed airport. |
 
-[^1]: The `ETA_FF` is derived from the route estimate provided by vatSys (this is also called a "system estimate")
-[^2]: The `ETA` is derived by adding a pre-configured ETI to the `ETA_FF`
-
 ## Flight Thread
 
-A Maestro flight is created when:
+Flights are tracked by Maestro when:
 
-- a vatSys flight is within 2 hours flight time of the feeder fix
-- on entry into the Pending List when an FDR is activated for a flight from a departure airport or a close airport
+- within 2 hours flight time of the feeder fix
+- an FDR is activated for a flight from a departure airport or a close airport
 
 Once a flight is tracked by Maestro, vatSys will provide Maestro with updated position information and estimates every 30 seconds.
 
 At each update, the estimates are re-calculated.
 The flights position in the sequence, `STA_FF`, and `STA` may be re-calculated depending on its [State](#flight-states).
 
-When the flight has reached its STA, it will no longer be processed by Maestro, but it will remain available for a short period of time in case of an overshoot.
+When the flight has reached its `STA`, it will no longer be processed by Maestro, but it will remain available for a short period of time in case of an overshoot.
 
 <!-- ## Wind
 
@@ -79,7 +76,7 @@ The labels will be separated on the runway ladders.
 
 Maestro uses various "States" for flights that affect how they are processed.
 
-![Diagram of Flight States](../static/img/states.png)
+![Diagram of Flight States](../../static/img/states.png)
 
 ### Unstable
 
@@ -138,17 +135,10 @@ Flights from a departure airport can be inserted prior to departure to allow the
 
 <!-- Flights from airports within the TMA must be manually inserted into the sequence. -->
 
-## Delaying Action
+## Slots
 
-Maestro will display the delay required for each flight on the ladder.
-The recommended delaying action is represented by various colours:
+Slots are periods of time where no flights can be scheduled to land on the concerned runway.
 
-| Colour | Suggested Actions |
-| ------ | ----------------- |
-| Green | Speed increase. The flight needs to make up the time shown (i.e. they will be late).|
-| Dark Blue | No delay required. |
-| Cyan | Speed reduction. The flight needs to loose the time shown (i.e. they will be early). |
-<!-- | White | TMA pressure and initial enroute delay absorbed. Delay includes the use of extended TMA delay. | -->
-| Yellow | Holding recommended. |
+Maestro will not schedule flights to land within a slot, but may schedule them to land at the beginning or end of a slot.
 
-<!-- TODO: Add an image of different delay figures -->
+`Frozen` flights are the only flights allowed to land during a slot.
