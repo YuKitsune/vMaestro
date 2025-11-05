@@ -29,6 +29,6 @@ Using real-time data from vatSys, vMaestro provides comprehensive traffic flow m
 
 This documentation is organized into three main sections:
 
-- **[User Guide](user-guide/01-installation)** - How to install, configure, and use vMaestro
-- **[Configuration Guide](configuration-guide/)** - Detailed configuration options and airport setup
-- **[Developer Guide](developer-guide/)** - Technical documentation for developers and contributors
+- **[User Guide](./user-guide/01-installation.md)** - How to install, configure, and use vMaestro
+- **[Configuration Guide](./configuration-guide)** - Detailed configuration options and airport setup
+- **[Developer Guide](./developer-guide)** - Technical documentation for developers and contributors
