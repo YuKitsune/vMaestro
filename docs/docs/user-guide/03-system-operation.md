@@ -2,7 +2,7 @@
 
 ## Starting Maestro
 
-Maestro can be started by clicking the `TFMS` button on the vatSys menu bar, then click `New TFMS Window`.
+Maestro can be started by clicking the `TFMS` button on the vatSys menu bar, then clicking `New TFMS Window`.
 
 A `Maestro Setup` window will appear. Select the desired airport, then click `Start`.
 
@@ -24,7 +24,7 @@ The **Configuration Zone** provides access to:
 
 - Online status (see [Online Operation](./04-online-operation.md))
 - TMA configuration
-- Runways in use and relevent acceptance rates
+- Runways in use and relevant acceptance rates
 - Online setup
 <!-- - Wind speed and direction (6,000 ft and surface level winds) -->
 <!-- - Achieved landing rates -->
@@ -47,7 +47,7 @@ The Online Status Indicator displays the status of the connection to the Maestro
 
 | Status | Meaning |
 | ------ | ------- |
-| `OFFLINE` | **The sequence is not synchronused with other clients.** All processing is done locally, and all functions are available. |
+| `OFFLINE` | **The sequence is not synchronised with other clients.** All processing is done locally, and all functions are available. |
 | `READY` | A connection to the Maestro server has been established, but no data is synchronised. This will appear when connecting to the server before connecting to the VATSIM network. |
 | `FMP` | Connected to the server with the `Flow` role. All processing is done locally and the sequence is shared to all other connected clients. |
 | `APP` | Connected to the server with the `Approach` role. Access to certain functions may be restricted. |
@@ -91,7 +91,7 @@ The top of the Sequence Display Zone contains various buttons with the following
 
 | Button | Purpose |
 | ------ | ------- |
-| `DEPS` | Opens the `Insert a Flight` window, allowing pending flights from departure airports to be manually inserted into the sequeuce. |
+| `DEPS` | Opens the `Insert a Flight` window, allowing pending flights from departure airports to be manually inserted into the sequence. |
 | `COORD` | Opens the `Coordination` window for sending pre-defined messages to other controllers. |
 | `DESQ` | Opens the `Desequenced` window, showing a list of flights that have been de-sequenced. The text of this button will become white when at least one flight exists in the list. |
 | View Selectors | The remaining buttons correspond to pre-defined views that control what is displayed in the lower part of the Sequence Display Zone. |
@@ -104,7 +104,7 @@ Each view contains two timelines.
 
 Each tick on the ladder corresponds to one minute.
 
-There are three buttons to the left of the timelines allowing the timelines to be scrolled up or down in 15 minute increments.
+There are three buttons to the left of the timelines allowing the timelines to be scrolled up or down in 15-minute increments.
 The center button will reset to the current time. If the timelines are scrolled, the axis reference time at the bottom <!-- (or top) --> of the timeline will turn blue.
 
 #### Flight Labels
@@ -131,7 +131,7 @@ Reading from innermost to outermost, the flight label contains:
 Note the two separate delay values. The total delay required is the total delay Maestro has assigned to the flight. As the flight absorbs the delay (i.e. speed reduction, vectors, or holding), this value will remain unchanged.
 The remaining delay will progressively reduce as the flight absorbs the total delay required. When the remaining delay reads `00`, all required delay has been absorbed.
 
-In the below example, QFA501 has been assigned a 2 minute delay. They have absorbed one minute of the delay, and need to loose one more minute.
+In the below example, QFA501 has been assigned a 2-minute delay. They have absorbed one minute of the delay, and need to lose one more minute.
 
 ![Flight label with delay](../../static/img/flight_label_delay.png)
 
@@ -148,9 +148,9 @@ Right-clicking on a flight label will open a context menu with the following opt
 | Information | Displays detailed sequencing information related to this flight. |
 | Manual Delay | Assign a manual delay to this flight. |
 | Remove | Remove the flight from the sequence. |
-| Recompute | Re-compute the flights position and landing time as if it were a new flight. |
+| Recompute | Re-compute the flight's position and landing time as if it were a new flight. |
 | Desequence | Move the flight to the De-sequenced list, removing it from the sequence. |
-| Make Penidng | If this flight is departing from a departure airport, and has not yet departed, places them back into the pending list and removes them from the sequence. |
+| Make Pending | If this flight is departing from a departure airport, and has not yet departed, places them back into the pending list and removes them from the sequence. |
 
 <!-- #### View Configuration
 
@@ -188,12 +188,12 @@ Each of the flight label fields can be color coded depending on:
 
 ## Modifying the TMA Configuration
 
-To change the TMA Configuration, click the TMA Configuration button in the Configuration Zone. This will open the `TMA Configuration` Window.
+To change the TMA Configuration, click the TMA Configuration button in the Configuration Zone. This will open the `TMA Configuration` window.
 Here, a pre-defined TMA configuration can be selected, or the current configuration can be modified.
 Runway acceptance rates can be changed by adjusting the sliders for each runway.
 
 The validity period of the configuration can be adjusted using the `Last STA in configuration ...` and `First STA in configuration ...` times.
-The single-arrow buttons change the time in 1 minute increments, and the two-arrow buttons in 5 minute increments.
+The single-arrow buttons change the time in 1-minute increments, and the two-arrow buttons in 5-minute increments.
 
 ![Image of the TMA Configuration window](../../static/img/tma_config.png)
 
@@ -225,7 +225,7 @@ Flights scheduled to land after the `Change rates at` time will be processed usi
 
 Flights from departure airports must be manually inserted into the sequence.
 
-To insert a departure, click the `DEPS` button in the Sequence Display Zone, and the `Insert a Flight` window will appear. Select the flight from the `Pending` list, and set the `Take Off` time to their expected take-off time. 
+To insert a departure, click the `DEPS` button in the Sequence Display Zone, and the `Insert a Flight` window will appear. Select the flight from the `Pending` list, and set the `Take Off` time to its expected take-off time. 
 
 ![Insert a Flight window with a pending departure](../../static/img/insert_departure_window.png)
 
@@ -259,7 +259,7 @@ Flights cannot be inserted between two `Frozen` flights when the time between th
 Dummy flights are placeholders not coupled to a real flight tracked by vatSys.
 They can be used to represent flights conducting airwork, practice approaches, etc.
 
-To insert a dummy flight right-click on another flight (or on the ladder if a runway view is selected), then select the `Insert Flight > Before/After` option. This will open the `Insert a Flight` window.
+To insert a dummy flight, right-click on another flight (or on the ladder if a runway view is selected), then select the `Insert Flight > Before/After` option. This will open the `Insert a Flight` window.
 
 Enter the details of the flight, then press `OK` to insert the flight. The dummy flight will immediately become `Frozen`. If the details are omitted, the callsign will default to `****xx*` where `xx` is a two-digit number.
 
@@ -302,7 +302,7 @@ Select the desired time, then press `OK`.
 When a manual `ETA_FF` has been specified:
 - the `ETA` is recalculated
 - the flight is re-inserted into the sequence based on the new `ETA`
-- if the flight was `Unstable`, it becomes stable
+- if the flight was `Unstable`, it becomes `Stable`
 - the rest of the sequence is re-calculated
 - any updates to the `ETA_FF` from vatSys will be ignored
 
@@ -335,7 +335,7 @@ When a manual delay is specified:
 Manual delay can be cancelled using the [Recompute](#recompute) function.
 
 :::info
-If a delay of `00` is specified, the flight can still be delayed up to the runways acceptance rate.
+If a delay of `00` is specified, the flight can still be delayed up to the runway's acceptance rate.
 :::
 
 ### Moving Flights
@@ -353,7 +353,7 @@ A confirmation will appear. Click `Confirm` to move the flight.
 When a flight is moved:
 - the `STA` is set to the time corresponding to where the second left-click occurred
 - if another timeline was clicked, the flight will be re-assigned to the runway corresponding to that timeline
-- if the flight was `Unstable`, it becomes stable
+- if the flight was `Unstable`, it becomes `Stable`
 - the rest of the sequence is re-calculated
 
 If a second flight is clicked, the `STA` and runways of the two flights are swapped.
@@ -368,7 +368,7 @@ Clicking `Confirm` will move the flight to the specified time.
 
 ### Recomputing
 
-Re-computing a flight will re-calculate the flights parameters as if it were a new flight.
+Re-computing a flight will re-calculate the flight's parameters as if it were a new flight.
 
 Re-computing a flight will:
 - remove it from the sequence
@@ -419,7 +419,7 @@ To re-insert a de-sequenced flight, click the `DESQ` button in the Sequence Disp
 Select the flight to re-sequence, then click `RESEQUENCE`.
 
 When a flight is re-sequenced:
-- it is placed placed in the sequence at a position based on its last `ETA_FF` received from vatSys
+- it is placed in the sequence at a position based on its last `ETA_FF` received from vatSys
 - it immediately becomes `Stable`
 - the rest of the sequence is re-calculated
 
@@ -442,7 +442,7 @@ The slot will be displayed on the timeline based on the runway filters for that 
 ![Slot displayed on the timeline](../../static/img/timeline_slot.png)
 
 The slot can be adjusted by left-clicking on the slot to open the `Insert Slot Window` again.
-The start and end times can be adjusted ad required.
+The start and end times can be adjusted as required.
 Pressing `OK` will update the start and end times of the slot.
 Pressing the `Remove` button removes the slot from the sequence.
 
@@ -475,4 +475,4 @@ Coordination can also be initiated from the flight label by right-clicking the f
 ![Flight Coordination window](../../static/img/flight_coord.png)
 
 Select one of the messages, then left-click the `SEND` button.
-This will send the coordination message to all relevent units.
+This will send the coordination message to all relevant units.
