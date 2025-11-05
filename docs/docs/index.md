@@ -12,7 +12,7 @@ vMaestro is a [vatSys](https://virtualairtrafficsystem.com) plugin that emulates
 
 ## Quick Start
 
-Ready to get started? Follow the [Installation Guide](user-guide/01-installation) to install and configure the vMaestro plugin.
+Ready to get started? Follow the [Installation Guide](./user-guide/01-installation.md) to install and configure the vMaestro plugin.
 
 ## Key Features
 
