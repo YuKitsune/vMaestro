@@ -25,9 +25,13 @@
       "type": "string",
       "enum": [
         "Compile",
+        "DownloadVatSys",
         "Install",
         "Package",
-        "Repack",
+        "Release",
+        "Test",
+        "TestCore",
+        "TestServer",
         "Uninstall"
       ]
     },
@@ -110,12 +114,21 @@
             "Release"
           ]
         },
+        "GitHubToken": {
+          "type": "string",
+          "description": "GitHub token for creating releases",
+          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
+        },
         "ProfileName": {
           "type": "string"
         },
         "repack": {
           "type": "boolean",
           "description": "Merges all dependencies into a single assembly"
+        },
+        "VatSysPath": {
+          "type": "string",
+          "description": "Path to vatSys installation"
         }
       }
     },

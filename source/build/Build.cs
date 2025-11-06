@@ -18,7 +18,8 @@ using Serilog;
     "build",
     GitHubActionsImage.WindowsLatest,
     OnPushBranches = ["main"],
-    InvokedTargets = [nameof(Compile)],
+    OnPullRequestBranches = ["main"],
+    InvokedTargets = [nameof(Compile), nameof(Test)],
     FetchDepth = 0)]
 [GitHubActions(
     "release",
@@ -61,6 +62,8 @@ class Build : NukeBuild
     string PluginName => Configuration == Configuration.Debug ? DebugPluginName : ReleasePluginName;
 
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
+    AbsolutePath CoreTestsProjectPath => RootDirectory / "source" / "Maestro.Core.Tests" / "Maestro.Core.Tests.csproj";
+    AbsolutePath ServerTestsProjectPath => RootDirectory / "source" / "Maestro.Server.Tests" / "Maestro.Server.Tests.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
     AbsolutePath RepackDirectory => TemporaryDirectory / "repack";
     AbsolutePath PluginAssembliesPath => ShouldRepack ? RepackDirectory : BuildOutputDirectory;
@@ -145,6 +148,28 @@ class Build : NukeBuild
                 .SetInformationalVersion(version)
                 .SetProperty("VatSysPath", VatSysExePath.Parent.Parent));
         });
+
+    Target TestCore => _ => _
+        .Executes(() =>
+        {
+            Log.Information("Running Core tests");
+            DotNetTasks.DotNetTest(s => s
+                .SetProjectFile(CoreTestsProjectPath)
+                .SetConfiguration(Configuration));
+        });
+
+    Target TestServer => _ => _
+        .Executes(() =>
+        {
+            Log.Information("Running Server tests");
+            DotNetTasks.DotNetTest(s => s
+                .SetProjectFile(ServerTestsProjectPath)
+                .SetConfiguration(Configuration));
+        });
+
+    Target Test => _ => _
+        .DependsOn(TestCore)
+        .DependsOn(TestServer);
 
     Target Uninstall => _ => _
         .Requires(() => ProfileName)
