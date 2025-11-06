@@ -1,15 +1,31 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.IO.Compression;
+using System.Net.Http;
 using System.Runtime.Versioning;
 using Nuke.Common;
+using Nuke.Common.CI.GitHubActions;
+using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.GitVersion;
-using Nuke.Common.Tools.ILRepack;
+using Octokit;
 using Serilog;
 
 [SupportedOSPlatform("Windows")]
+[GitHubActions(
+    "build",
+    GitHubActionsImage.WindowsLatest,
+    OnPushBranches = ["main"],
+    InvokedTargets = [nameof(Compile)])]
+[GitHubActions(
+    "release",
+    GitHubActionsImage.WindowsLatest,
+    OnPushTags = ["v*"],
+    InvokedTargets = [nameof(Release)],
+    ImportSecrets = [nameof(GitHubToken)],
+    EnableGitHubToken = true)]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -25,6 +41,13 @@ class Build : NukeBuild
 
     [Parameter("Merges all dependencies into a single assembly", Name = "repack")]
     bool ShouldRepack = false;
+
+    [Parameter("GitHub token for creating releases")]
+    [Secret]
+    readonly string GitHubToken;
+
+    [GitRepository]
+    readonly GitRepository GitRepository;
 
     [GitVersion]
     readonly GitVersion GitVersion;
@@ -45,7 +68,62 @@ class Build : NukeBuild
     [Parameter]
     string ProfileName { get; }
 
+    [Parameter("Path to vatSys installation")]
+    AbsolutePath VatSysPath { get; }
+
+    AbsolutePath VatSysSetupDirectory => TemporaryDirectory / "vatsys-setup";
+    AbsolutePath VatSysExePath => VatSysPath ?? VatSysSetupDirectory / "bin" / "vatSys.exe";
+
+    Target DownloadVatSys => _ => _
+        .OnlyWhenStatic(() => VatSysPath == null && !VatSysExePath.FileExists())
+        .Executes(async () =>
+        {
+            var vatSysSetupUrl = "https://vatsys.sawbe.com/downloads/vatSysSetup.zip";
+            var zipPath = TemporaryDirectory / "vatSysSetup.zip";
+            var msiPath = TemporaryDirectory / "vatSysSetup.msi";
+
+            Log.Information("Downloading vatSys from {Url}", vatSysSetupUrl);
+            using var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(vatSysSetupUrl);
+            response.EnsureSuccessStatusCode();
+            await using var fileStream = File.Create(zipPath);
+            await response.Content.CopyToAsync(fileStream);
+            fileStream.Close();
+
+            Log.Information("Extracting vatSysSetup.zip");
+            ZipFile.ExtractToDirectory(zipPath, TemporaryDirectory, overwriteFiles: true);
+
+            Log.Information("Extracting vatSysSetup.msi");
+            VatSysSetupDirectory.CreateOrCleanDirectory();
+
+            // Use msiexec to extract the MSI contents
+            var msiExtractProcess = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "msiexec",
+                Arguments = $"/a \"{msiPath}\" /qn TARGETDIR=\"{VatSysSetupDirectory}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            });
+
+            if (msiExtractProcess != null)
+            {
+                await msiExtractProcess.WaitForExitAsync();
+                if (msiExtractProcess.ExitCode != 0)
+                {
+                    var error = await msiExtractProcess.StandardError.ReadToEndAsync();
+                    throw new Exception($"Failed to extract MSI: {error}");
+                }
+            }
+
+            if (!VatSysExePath.FileExists())
+                throw new Exception($"vatSys.exe not found at {VatSysExePath}");
+
+            Log.Information("vatSys.exe extracted to {Path}", VatSysExePath);
+        });
+
     Target Compile => _ => _
+        .DependsOn(DownloadVatSys)
         .Executes(() =>
         {
             var version = GetSemanticVersion();
@@ -62,27 +140,8 @@ class Build : NukeBuild
                 .SetVersion(version)
                 .SetAssemblyVersion(GitVersion.MajorMinorPatch)
                 .SetFileVersion(GitVersion.MajorMinorPatch)
-                .SetInformationalVersion(version));
-        });
-
-    Target Repack => _ => _
-        .DependsOn(Compile)
-        .OnlyWhenStatic(() => ShouldRepack)
-        .Executes(() =>
-        {
-            // Get all DLLs in the build output directory
-            var allDlls = BuildOutputDirectory.GlobFiles("*.dll");
-
-            // BUG: MVVM Toolkit cannot be merged because WPF needs to load it from disk apparently
-            // Consider removing the dependency if possible
-
-            var repackAssemblyPath = RepackDirectory / PluginAssemblyFileName;
-
-            Log.Information("Merging {Count} assemblies into {RepackPath}", allDlls.Count, repackAssemblyPath);
-            ILRepackTasks.ILRepack(s => s
-                .SetAssemblies(allDlls.Select(dll => dll.ToString()))
-                .SetOutput(repackAssemblyPath)
-                .SetLib(BuildOutputDirectory));
+                .SetInformationalVersion(version)
+                .SetProperty("VatSysPath", VatSysExePath.Parent.Parent));
         });
 
     Target Uninstall => _ => _
@@ -107,7 +166,6 @@ class Build : NukeBuild
         .Requires(() => ProfileName)
         .DependsOn(Compile)
         .DependsOn(Uninstall)
-        .DependsOn(Repack)
         .Executes(() =>
         {
             var pluginsDirectory = GetVatSysPluginsDirectory(ProfileName);
@@ -136,7 +194,6 @@ class Build : NukeBuild
 
     Target Package => _ => _
         .DependsOn(Compile)
-        .DependsOn(Repack)
         .Requires(() => Configuration == Configuration.Release)
         .Executes(() =>
         {
@@ -167,6 +224,50 @@ class Build : NukeBuild
 
             Log.Information("Packaging {OutputDirectory} to {ZipPath}", PackageDirectory, ZipPath);
             PackageDirectory.ZipTo(ZipPath);
+        });
+
+    Target Release => _ => _
+        .DependsOn(Package)
+        .Requires(() => GitHubToken)
+        .Requires(() => GitRepository)
+        .Requires(() => Configuration == Configuration.Release)
+        .Executes(async () =>
+        {
+            var version = GetSemanticVersion();
+            var tagName = $"v{version}";
+
+            Log.Information("Creating GitHub release {TagName}", tagName);
+
+            var credentials = new Credentials(GitHubToken);
+            var githubClient = new GitHubClient(new ProductHeaderValue("nuke-build"))
+            {
+                Credentials = credentials
+            };
+
+            var repositoryOwner = GitRepository.GetGitHubOwner();
+            var repositoryName = GitRepository.GetGitHubName();
+
+            var newRelease = new NewRelease(tagName)
+            {
+                Name = version,
+                Draft = false,
+                Prerelease = false
+            };
+
+            var release = await githubClient.Repository.Release.Create(repositoryOwner, repositoryName, newRelease);
+            Log.Information("Release created: {ReleaseUrl}", release.HtmlUrl);
+
+            // Upload the zip file as an asset
+            using var zipStream = File.OpenRead(ZipPath);
+            var assetUpload = new ReleaseAssetUpload
+            {
+                FileName = ZipPath.Name,
+                ContentType = "application/zip",
+                RawData = zipStream
+            };
+
+            var asset = await githubClient.Repository.Release.UploadAsset(release, assetUpload);
+            Log.Information("Asset uploaded: {AssetUrl}", asset.BrowserDownloadUrl);
         });
 
     static AbsolutePath GetVatSysPluginsDirectory(string profileName)

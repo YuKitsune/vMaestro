@@ -28,12 +28,16 @@
 	  <ProjectReference Include="..\Maestro.Wpf\Maestro.Wpf.csproj" />
 	</ItemGroup>
 
+	<PropertyGroup>
+		<VatSysPath Condition="'$(VatSysPath)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)</VatSysPath>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<Reference Include="PresentationCore" />
 		<Reference Include="PresentationFramework" />
 		<Reference Include="System.ComponentModel.Composition" />
 		<Reference Include="vatSys">
-			<HintPath>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Sawbe\vatSys@Path)\bin\vatSys.exe</HintPath>
+			<HintPath>$(VatSysPath)\bin\vatSys.exe</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="System.Windows.Forms" />
