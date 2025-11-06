@@ -18,14 +18,16 @@ using Serilog;
     "build",
     GitHubActionsImage.WindowsLatest,
     OnPushBranches = ["main"],
-    InvokedTargets = [nameof(Compile)])]
+    InvokedTargets = [nameof(Compile)],
+    FetchDepth = 0)]
 [GitHubActions(
     "release",
     GitHubActionsImage.WindowsLatest,
     OnPushTags = ["v*"],
     InvokedTargets = [nameof(Release)],
     ImportSecrets = [nameof(GitHubToken)],
-    EnableGitHubToken = true)]
+    EnableGitHubToken = true,
+    FetchDepth = 0)]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
