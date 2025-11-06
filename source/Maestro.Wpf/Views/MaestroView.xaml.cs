@@ -423,57 +423,22 @@ public partial class MaestroView
             return;
         }
 
-        if (!ViewModel.IsCreatingSlot)
-        {
-            // Store the right-click position so we can reference it later when creating slots
-            _contextMenuPosition = e.GetPosition(LadderCanvas);
-        }
-        else
-        {
-            // End the current slot creation if the user right-clicks while inserting a slot
-            var clickPosition = e.GetPosition(LadderCanvas);
-            var canvasHeight = LadderCanvas.ActualHeight;
-            var yOffset = canvasHeight - clickPosition.Y;
-            var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
-            ViewModel.EndSlotCreation(clickTime);
-
-            // Prevent the context menu from opening as we're ending the slot creation
-            _suppressContextMenu = true;
-        }
-
         // No context menu in Enroute mode
         if (ViewModel.SelectedView.ViewMode == ViewMode.Enroute)
         {
             _suppressContextMenu = true;
         }
 
+        _contextMenuPosition = e.GetPosition(LadderCanvas);
+
         e.Handled = true;
     }
 
-    void BeginInsertingSlotBefore(object sender, RoutedEventArgs e)
+    void InsertSlot(object sender, RoutedEventArgs routedEventArgs)
     {
-        if (sender is not MenuItem beforeMenuItem)
+        if (sender is not MenuItem menuItem)
             return;
 
-        if (beforeMenuItem.Parent is not MenuItem menuItem)
-            return;
-
-        BeginInsertingSlot(menuItem, SlotCreationReferencePoint.Before);
-    }
-
-    void BeginInsertingSlotAfter(object sender, RoutedEventArgs e)
-    {
-        if (sender is not MenuItem afterMenuItem)
-            return;
-
-        if (afterMenuItem.Parent is not MenuItem menuItem)
-            return;
-
-        BeginInsertingSlot(menuItem, SlotCreationReferencePoint.After);
-    }
-
-    void BeginInsertingSlot(MenuItem menuItem, SlotCreationReferencePoint referencePoint)
-    {
         var clickData = GetClickDataFor(menuItem);
         if (clickData is null)
             return;
@@ -481,9 +446,9 @@ public partial class MaestroView
         if (clickData.ViewMode == ViewMode.Enroute)
             return;
 
-        ViewModel.BeginSlotCreation(
+        ViewModel.ShowSlotWindow(
             clickData.ClickTime,
-            referencePoint,
+            clickData.ClickTime.Add(TimeSpan.FromMinutes(5)),
             clickData.FilterItems);
 
         _contextMenuPosition = null;

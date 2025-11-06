@@ -48,15 +48,6 @@ public partial class MaestroViewModel : ObservableObject
     List<SlotMessage> _slots = [];
 
     [ObservableProperty]
-    bool _isCreatingSlot;
-
-    [ObservableProperty]
-    SlotCreationReferencePoint _slotCreationReferencePoint = SlotCreationReferencePoint.Before;
-
-    [ObservableProperty]
-    string[] _slotRunwayIdentifiers = [];
-
-    [ObservableProperty]
     DateTimeOffset? _firstSlotTime;
 
     [ObservableProperty]
@@ -205,34 +196,7 @@ public partial class MaestroViewModel : ObservableObject
         }
     }
 
-    public void BeginSlotCreation(DateTimeOffset firstSlotTime, SlotCreationReferencePoint slotCreationReferencePoint, string[] runwayIdentifiers)
-    {
-        IsCreatingSlot = true;
-        SlotCreationReferencePoint = slotCreationReferencePoint;
-
-        // Round time based on reference point:
-        // Before: round down to the previous minute
-        // After: round up to the next minute
-        FirstSlotTime = slotCreationReferencePoint == SlotCreationReferencePoint.Before
-            ? new DateTimeOffset(firstSlotTime.Year, firstSlotTime.Month, firstSlotTime.Day,
-                                firstSlotTime.Hour, firstSlotTime.Minute, 0, firstSlotTime.Offset)
-            : new DateTimeOffset(firstSlotTime.Year, firstSlotTime.Month, firstSlotTime.Day,
-                                firstSlotTime.Hour, firstSlotTime.Minute, 0, firstSlotTime.Offset).AddMinutes(1);
-        SlotRunwayIdentifiers = runwayIdentifiers;
-    }
-
-    public void EndSlotCreation(DateTimeOffset secondSlotTime)
-    {
-        IsCreatingSlot = false;
-        SecondSlotTime = secondSlotTime.Rounded();
-
-        var startTime = FirstSlotTime!.Value.IsSameOrBefore(SecondSlotTime.Value) ? FirstSlotTime.Value : SecondSlotTime.Value;
-        var endTime = FirstSlotTime!.Value.IsSameOrBefore(SecondSlotTime.Value) ? SecondSlotTime.Value : FirstSlotTime.Value;
-
-        ShowSlotWindow(startTime, endTime, SlotRunwayIdentifiers);
-    }
-
-    async void ShowSlotWindow(DateTimeOffset startTime, DateTimeOffset endTime, string[] runwayIdentifiers)
+    public async void ShowSlotWindow(DateTimeOffset startTime, DateTimeOffset endTime, string[] runwayIdentifiers)
     {
         try
         {

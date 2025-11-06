@@ -435,7 +435,6 @@ When a flight is re-sequenced:
 Slots can be inserted and removed from the sequence from the runway view.
 
 To insert a slot, right-click the timeline, then select `Insert Slot`.
-Right-click at a position on the timeline where the insertion is required.
 This will display the `Insert Slot Window`.
 
 ![Insert Slot Window](../../static/img/insert_slot_window.png)
@@ -446,7 +445,7 @@ The slot will be displayed on the timeline based on the runway filters for that 
 
 ![Slot displayed on the timeline](../../static/img/timeline_slot.png)
 
-The slot can be adjusted by left-clicking on the slot to open the `Insert Slot Window` again.
+The slot can be adjusted by left-clicking on the slot on the timeline to open the `Insert Slot Window` again.
 The start and end times can be adjusted as required.
 Pressing `OK` will update the start and end times of the slot.
 Pressing the `Remove` button removes the slot from the sequence.

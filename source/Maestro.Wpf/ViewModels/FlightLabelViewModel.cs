@@ -174,11 +174,12 @@ public partial class FlightLabelViewModel(
         try
         {
             mediator.Send(
-                new BeginSlotCreationRequest(
+                new OpenSlotWindowRequest(
                     FlightViewModel.DestinationIdentifier,
-                    [FlightViewModel.AssignedRunwayIdentifier],
-                    FlightViewModel.LandingTime,
-                    SlotCreationReferencePoint.Before));
+                    SlotId: null, // slotId is null for new slots
+                    StartTime: FlightViewModel.LandingTime.Subtract(TimeSpan.FromMinutes(5)),
+                    EndTime: FlightViewModel.LandingTime,
+                    [FlightViewModel.AssignedRunwayIdentifier]));
         }
         catch (Exception ex)
         {
@@ -192,11 +193,12 @@ public partial class FlightLabelViewModel(
         try
         {
             mediator.Send(
-                new BeginSlotCreationRequest(
+                new OpenSlotWindowRequest(
                     FlightViewModel.DestinationIdentifier,
-                    [FlightViewModel.AssignedRunwayIdentifier],
-                    FlightViewModel.LandingTime,
-                    SlotCreationReferencePoint.After));
+                    SlotId: null, // slotId is null for new slots
+                    StartTime: FlightViewModel.LandingTime.Add(TimeSpan.FromMinutes(1)),
+                    EndTime: FlightViewModel.LandingTime.Add(TimeSpan.FromMinutes(6)),
+                    [FlightViewModel.AssignedRunwayIdentifier]));
         }
         catch (Exception ex)
         {

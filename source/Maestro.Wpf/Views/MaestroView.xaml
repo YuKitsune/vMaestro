@@ -286,10 +286,7 @@
                         </Style>
                     </ContextMenu.Style>
                     <MenuItem Header="Insert Flight" Click="InsertFlight" />
-                    <MenuItem Header="Insert Slot">
-                        <MenuItem Header="Before" Click="BeginInsertingSlotBefore"/>
-                        <MenuItem Header="After" Click="BeginInsertingSlotAfter"/>
-                    </MenuItem>
+                    <MenuItem Header="Insert Slot" Click="InsertSlot"/>
                 </ContextMenu>
             </Canvas.ContextMenu>
         </Canvas>
