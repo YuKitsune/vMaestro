@@ -116,8 +116,6 @@
 
         <Border.ContextMenu>
             <ContextMenu Name="ContextMenu">
-                <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
-                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" />
                 <MenuItem Header="Change Runway">
                     <ItemsControl ItemsSource="{Binding AvailableRunways}">
                         <ItemsControl.ItemTemplate>
@@ -130,21 +128,18 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </MenuItem>
-                <MenuItem Header="Insert Flight">
-                    <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" IsEnabled="{Binding CanInsertBefore}"/>
-                    <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}"/>
-                </MenuItem>
+                <!-- TODO: Change Approach Type -->
                 <MenuItem Header="Insert Slot">
                     <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>
                     <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
                 </MenuItem>
+                <MenuItem Header="Insert Flight">
+                    <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" IsEnabled="{Binding CanInsertBefore}"/>
+                    <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}"/>
+                </MenuItem>
+                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" />
                 <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" />
-                <MenuItem Header="Remove" Command="{Binding RemoveCommand}" />
-                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" />
-                <MenuItem
-                    Header="Make Pending"
-                    Command="{Binding MakePendingCommand}"
-                    Visibility="{Binding FlightViewModel.IsFromDepartureAirport, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
                 <MenuItem Header="Manual Delay">
                     <MenuItem Header="00" Command="{Binding ManualDelayCommand}" CommandParameter="0"/>
                     <MenuItem Header="05" Command="{Binding ManualDelayCommand}" CommandParameter="5"/>
@@ -152,7 +147,14 @@
                     <MenuItem Header="15" Command="{Binding ManualDelayCommand}" CommandParameter="15"/>
                     <MenuItem Header="20" Command="{Binding ManualDelayCommand}" CommandParameter="20"/>
                 </MenuItem>
-                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" />
+                <MenuItem Header="Remove" Command="{Binding RemoveCommand}" />
+                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" />
+                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" />
+                <MenuItem
+                    Header="Make Pending"
+                    Command="{Binding MakePendingCommand}"
+                    Visibility="{Binding FlightViewModel.IsFromDepartureAirport, Converter={StaticResource BoolToVisibilityConverter}}" />
+
             </ContextMenu>
         </Border.ContextMenu>
     </Border>
