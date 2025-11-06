@@ -5,55 +5,26 @@
 <h3 align="center">
   A vatSys plugin emulating the Maestro Traffic Flow Management System.
 
-  [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yukitsune/vmaestro/CI.yml?branch=main)](https://github.com/YuKitsune/vMaestro/actions/workflows/CI.yml)
+  [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yukitsune/vmaestro/build.yml?branch=main)](https://github.com/YuKitsune/vMaestro/actions/workflows/build.yml)
   [![License](https://img.shields.io/github/license/YuKitsune/vMaestro)](https://github.com/YuKitsune/vMaestro/blob/main/LICENSE)
   [![Latest Release](https://img.shields.io/github/v/release/YuKitsune/vMaestro?include_prereleases)](https://github.com/YuKitsune/vMaestro/releases)
 
   <img src="./README-screenshot.png" width="320" />
 </h3>
 
-> [!WARNING]
-> This project is under active development and is not ready for active use on the VATSIM network.
+vMaestro is a [vatSys](https://virtualairtrafficsystem.com) plugin that emulates the Maestro Traffic Flow Management System used by air traffic controllers. It provides automated aircraft sequencing, runway assignment, and traffic flow management capabilities for virtual ATC operations.
 
-# Installation
+## Documentation
 
-If you're building the project from source, the project files are configured to output the build artifacts to the Australian vatSys profile.
-Building the project should automatically install the plugin for you.
+For installation instructions, configuration guides, and usage documentation, visit:
 
-Otherwise, place the plugin files into your vatSys plugins directory (`%documents%\vatSys Files\Profiles\Australia\Plugins\Maestro`).
-You will also need to copy the `Maestro.json` file into your profile directory (`%documents%\vatSys Files\Profiles\Australia`).
-If you have a large screen resolution, you may need to run the `dpiaware-fix.bat` file to disable DPI awareness for vatSys.
+**[https://maestro.eoinmotherway.dev/](https://maestro.eoinmotherway.dev/)**
 
-Logs will be written to the vatSys installation directory under `MaestroLogs`.
+## Quick Start
 
-# Roadmap
+1. Download the latest release from [GitHub Releases](https://github.com/YuKitsune/vMaestro/releases)
+2. Extract to your vatSys plugins directory
+3. Copy `Maestro.json` to your vatSys profile directory
+4. Restart vatSys
 
-- [X] Publish notifications on FDP updates
-- [X] Information window
-- [X] Basic sequencing algorithm
-- [X] Automatic runway assignment
-- [X] Dependant runways
-- [X] Recompute
-- [X] Remove from sequence
-- [X] Desequence
-- [X] Change runway
-- [X] Move flight (click and drag)
-- [X] Move flight (single click)
-- [X] Swap flights
-- [X] Change runway mode
-- [X] Change ETA FF
-- [X] Zero Delay and priority flights
-- [X] Insert slot
-- [X] Insert flight
-- [X] Insert departure
-- [ ] Maximum delay (revisit High Priority and Zero Delay)
-- [ ] Unit selector
-- [ ] Approach types
-- [ ] Separate enroute and TMA delays
-- [ ] Coordination system
-- [ ] Start sequencing on-demand
-- [X] Online mode
-- [ ] Ladder scrolling
-- [ ] GitHub actions CI
-- [ ] Architecture Decision Record
-- [ ] Docs
+For detailed setup and configuration, see the [official documentation](https://maestro.eoinmotherway.dev/).
