@@ -228,7 +228,6 @@ class Build : NukeBuild
             var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
             var readmeFile = RootDirectory / "README.md";
             var configFile = RootDirectory / "Maestro.json";
-            // var changelogFile = RootDirectory / "CHANGELOG.md";
 
             PackageDirectory.CreateOrCleanDirectory();
 
@@ -244,7 +243,6 @@ class Build : NukeBuild
             unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             readmeFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
-            // changelogFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
 
             if (ZipPath.FileExists())
                 ZipPath.DeleteFile();
@@ -278,7 +276,8 @@ class Build : NukeBuild
             {
                 Name = version,
                 Draft = false,
-                Prerelease = false
+                Prerelease = false,
+                GenerateReleaseNotes = true
             };
 
             var release = await githubClient.Repository.Release.Create(repositoryOwner, repositoryName, newRelease);
