@@ -28,7 +28,8 @@ using Serilog;
     InvokedTargets = [nameof(Release)],
     ImportSecrets = [nameof(GitHubToken)],
     EnableGitHubToken = true,
-    FetchDepth = 0)]
+    FetchDepth = 0,
+    WritePermissions = [GitHubActionsPermissions.Contents])]
 class Build : NukeBuild
 {
     /// Support plugins are available for:

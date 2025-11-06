@@ -21,6 +21,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   windows-latest:
     name: windows-latest
