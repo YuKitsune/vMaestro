@@ -1,6 +1,7 @@
 using Maestro.Server;
 using Maestro.Server.Handlers;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json.Serialization;
 using Serilog;
 
@@ -29,7 +30,10 @@ Log.Logger = loggerConfig.CreateLogger();
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-    builder.Services.AddSignalR()
+    builder.Services.AddSignalR(options =>
+        {
+            options.AddFilter<SignalRLoggingFilter>();
+        })
         .AddHubOptions<MaestroHub>(x =>
         {
             x.MaximumReceiveMessageSize = 32_000_000; // TODO: Just send smaller messages!!!
@@ -52,12 +56,14 @@ try
     builder.Services.AddSingleton<SequenceCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();
+    builder.Services.AddHostedService<SystemMetricsService>();
 
     var app = builder.Build();
 
     app.UseStaticFiles();
 
     app.MapHub<MaestroHub>("/hub");
+    app.MapHub<DashboardHub>("/dashboard-hub");
     app.MapGet("/health", () => Results.Ok());
     app.MapFallbackToFile("index.html");
     app.Run();

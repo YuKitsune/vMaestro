@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maestro Server Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha256-SERKgtTty1vsDxll+qzd4Y2cF9swY9BCq62i9wXJ9Uo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@9.0.6/dist/browser/signalr.min.js" integrity="sha256-jraBfD/OIUtdfdCuNkkhYV/bu9rQjvBwP9SvJjPfNFA=" crossorigin="anonymous"></script>
+</head>
+<body class="bg-dark text-light">
+    <nav class="navbar navbar-dark bg-dark border-bottom">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Maestro Server Dashboard</span>
+            <span class="navbar-text">
+                Status: <span id="connectionStatus" class="text-danger">Disconnected</span>
+            </span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- CPU Usage -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">CPU Usage</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="cpuChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Usage -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Memory Usage</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="memoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Active Connections -->
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Active Connections (<span id="connectionCount">0</span>)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Callsign</th>
+                                        <th>Partition</th>
+                                        <th>Airport</th>
+                                        <th>Role</th>
+                                        <th>Connection ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="connectionsTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No active connections</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- SignalR Message Log -->
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">SignalR Message Log</h5>
+                        <button class="btn btn-sm btn-secondary" onclick="clearLogs()">Clear</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="logMessages" class="overflow-auto font-monospace small" style="max-height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // SignalR Connection
+        let connection = null;
+        const maxDataPoints = 30;
+        const maxLogEntries = 100;
+
+        // CPU Chart
+        const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+        const cpuChart = new Chart(cpuCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'CPU Usage (%)',
+                    data: [],
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { color: '#e0e0e0' },
+                        grid: { color: '#404040' }
+                    },
+                    x: {
+                        ticks: { color: '#e0e0e0' },
+                        grid: { color: '#404040' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#e0e0e0' }
+                    }
+                }
+            }
+        });
+
+        // Memory Chart
+        const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+        const memoryChart = new Chart(memoryCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Memory Usage (MB)',
+                    data: [],
+                    borderColor: '#2196f3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#e0e0e0' },
+                        grid: { color: '#404040' }
+                    },
+                    x: {
+                        ticks: { color: '#e0e0e0' },
+                        grid: { color: '#404040' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#e0e0e0' }
+                    }
+                }
+            }
+        });
+
+        function updateChart(chart, label, value) {
+            if (chart.data.labels.length >= maxDataPoints) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(value);
+            chart.update('none');
+        }
+
+        function updateConnections(connections) {
+            const tbody = document.getElementById('connectionsTable');
+            const count = document.getElementById('connectionCount');
+
+            count.textContent = connections.length;
+
+            if (connections.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No active connections</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = connections.map(conn => {
+                let badgeClass = 'badge';
+                if (conn.isMaster) {
+                    badgeClass += ' bg-warning text-dark';
+                } else if (conn.role.toLowerCase() === 'flow') {
+                    badgeClass += ' bg-primary';
+                } else if (conn.role.toLowerCase() === 'pseudo') {
+                    badgeClass += ' bg-info';
+                } else {
+                    badgeClass += ' bg-secondary';
+                }
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(conn.callsign)}</td>
+                        <td>${escapeHtml(conn.partition)}</td>
+                        <td>${escapeHtml(conn.airportIdentifier)}</td>
+                        <td>
+                            <span class="${badgeClass}">
+                                ${conn.role}${conn.isMaster ? ' (Master)' : ''}
+                            </span>
+                        </td>
+                        <td><small class="text-muted">${escapeHtml(conn.id)}</small></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function addLogEntry(type, method, data) {
+            const logContainer = document.getElementById('logMessages');
+            const time = new Date().toLocaleTimeString();
+
+            const entry = document.createElement('div');
+            entry.className = 'p-2 border-bottom';
+
+            let typeColor = 'text-success';
+            if (type.toLowerCase() === 'sent') {
+                typeColor = 'text-success';
+            } else if (type.toLowerCase() === 'received') {
+                typeColor = 'text-info';
+            } else if (type.toLowerCase() === 'connected') {
+                typeColor = 'text-primary';
+            } else if (type.toLowerCase() === 'disconnected') {
+                typeColor = 'text-warning';
+            }
+
+            entry.innerHTML = `
+                <span class="text-muted small">${time}</span>
+                <span class="fw-bold ${typeColor} ms-2">${type}</span>
+                <strong class="ms-2">${escapeHtml(method)}</strong>
+                ${data ? '<br><small class="text-muted">' + escapeHtml(JSON.stringify(data, null, 2)) + '</small>' : ''}
+            `;
+
+            logContainer.insertBefore(entry, logContainer.firstChild);
+
+            // Limit log entries
+            while (logContainer.children.length > maxLogEntries) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logMessages').innerHTML = '';
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = text.toString();
+            return div.innerHTML;
+        }
+
+        async function startConnection() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/dashboard-hub")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("UpdateMetrics", (cpuUsage, memoryUsageMB) => {
+                const time = new Date().toLocaleTimeString();
+                updateChart(cpuChart, time, cpuUsage);
+                updateChart(memoryChart, time, memoryUsageMB);
+            });
+
+            connection.on("UpdateConnections", (connections) => {
+                updateConnections(connections);
+            });
+
+            connection.on("LogMessage", (type, method, data) => {
+                addLogEntry(type, method, data);
+            });
+
+            connection.onreconnecting(() => {
+                document.getElementById('connectionStatus').textContent = 'Reconnecting...';
+                document.getElementById('connectionStatus').className = 'text-warning';
+            });
+
+            connection.onreconnected(() => {
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('connectionStatus').className = 'text-success';
+            });
+
+            connection.onclose(() => {
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+                document.getElementById('connectionStatus').className = 'text-danger';
+                setTimeout(() => startConnection(), 5000);
+            });
+
+            try {
+                await connection.start();
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('connectionStatus').className = 'text-success';
+                console.log("Connected to dashboard hub");
+            } catch (err) {
+                console.error("Error connecting to dashboard hub:", err);
+                setTimeout(() => startConnection(), 5000);
+            }
+        }
+
+        // Start connection on page load
+        startConnection();
+    </script>
+</body>
+</html>
