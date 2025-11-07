@@ -323,8 +323,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
-            _logger?.Error(ex, "An error occurred while handling OnFDRUpdate.");
-            Errors.Add(ex, Name);
+            _logger?.Error(ex, "Failed to handle OnFDRUpdate for {Callsign}.", updated.Callsign);
         }
     }
 
@@ -342,8 +341,7 @@ public class Plugin : IPlugin
         }
         catch (Exception ex)
         {
-            _logger?.Error(ex, "An error occurred while handling OnRadarTrackUpdate.");
-            Errors.Add(ex, Name);
+            _logger?.Error(ex, "Failed to handle OnRadarTrackUpdate for {Callsign}.", updated.CoupledFDR?.Callsign);
         }
     }
 
@@ -384,7 +382,8 @@ public class Plugin : IPlugin
                 track.OnGround);
         }
 
-        var aircraftCategory = updated.PerformanceData.IsJet
+        // PerformanceData can be null
+        var aircraftCategory = updated.PerformanceData is null || updated.PerformanceData.IsJet
             ? AircraftCategory.Jet
             : AircraftCategory.NonJet;
 
