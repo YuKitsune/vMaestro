@@ -12,7 +12,11 @@ public record RequestContextWrapper<TRequest, TResponse>(string ConnectionId, TR
 
 public record NotificationContextWrapper<T>(string ConnectionId, T Notification) : INotification;
 
-public class ConnectRequestHandler(IConnectionManager connectionManager, SequenceCache sequenceCache, IHubProxy hubProxy, ILogger logger)
+public class ConnectRequestHandler(
+    IConnectionManager connectionManager,
+    SequenceCache sequenceCache,
+    IHubProxy hubProxy,
+    ILogger logger)
     : IRequestHandler<RequestContextWrapper<ConnectRequest>>
 {
     public async Task Handle(

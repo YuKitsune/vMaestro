@@ -76,12 +76,7 @@ public class SystemMetricsService : BackgroundService
 
     object[] GetAllConnections()
     {
-        // Access internal connection list via reflection
-        var type = _connectionManager.GetType();
-        var field = type.GetField("_connections", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-        if (field?.GetValue(_connectionManager) is not List<Connection> connections)
-            return [];
+        var connections = _connectionManager.GetAllConnections();
 
         return connections.Select(c => new
         {

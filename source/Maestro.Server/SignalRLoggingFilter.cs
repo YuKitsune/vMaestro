@@ -5,10 +5,14 @@ namespace Maestro.Server;
 public class SignalRLoggingFilter : IHubFilter
 {
     readonly IHubContext<DashboardHub> _dashboardHub;
+    readonly IConnectionManager _connectionManager;
 
-    public SignalRLoggingFilter(IHubContext<DashboardHub> dashboardHub)
+    public SignalRLoggingFilter(
+        IHubContext<DashboardHub> dashboardHub,
+        IConnectionManager connectionManager)
     {
         _dashboardHub = dashboardHub;
+        _connectionManager = connectionManager;
     }
 
     public async ValueTask<object?> InvokeMethodAsync(
@@ -21,12 +25,19 @@ public class SignalRLoggingFilter : IHubFilter
 
         try
         {
+            var connectionId = invocationContext.Context.ConnectionId;
+            var clientInfo = GetConnectionInfo(connectionId);
+
             // Log incoming message
             await _dashboardHub.Clients.All.SendAsync(
                 "LogMessage",
                 "Received",
                 invocationContext.HubMethodName,
-                SimplifyArguments(invocationContext.HubMethodArguments));
+                new
+                {
+                    Client = clientInfo,
+                    Arguments = SimplifyArguments(invocationContext.HubMethodArguments)
+                });
         }
         catch
         {
@@ -103,5 +114,20 @@ public class SignalRLoggingFilter : IHubFilter
 
         // For complex types, return type name to avoid large serialization
         return $"[{type.Name}]";
+    }
+
+    object? GetConnectionInfo(string connectionId)
+    {
+        if (!_connectionManager.TryGetConnection(connectionId, out var connection))
+            return null;
+
+        return new
+        {
+            connection.Callsign,
+            connection.Partition,
+            connection.AirportIdentifier,
+            Role = connection.Role.ToString(),
+            connection.IsMaster
+        };
     }
 }

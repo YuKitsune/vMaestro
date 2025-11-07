@@ -242,11 +242,29 @@
                 typeColor = 'text-warning';
             }
 
+            let clientInfo = '';
+            let argsInfo = '';
+
+            if (data && data.Client) {
+                const client = data.Client;
+                const roleBadge = client.IsMaster
+                    ? '<span class="badge bg-warning text-dark ms-1">Master</span>'
+                    : '';
+                clientInfo = `<span class="text-info ms-2">${escapeHtml(client.Callsign)}</span> <span class="text-muted small">(${escapeHtml(client.Partition)}/${escapeHtml(client.AirportIdentifier)} - ${escapeHtml(client.Role)})</span>${roleBadge}`;
+
+                if (data.Arguments) {
+                    argsInfo = '<br><small class="text-muted">' + escapeHtml(JSON.stringify(data.Arguments, null, 2)) + '</small>';
+                }
+            } else if (data) {
+                argsInfo = '<br><small class="text-muted">' + escapeHtml(JSON.stringify(data, null, 2)) + '</small>';
+            }
+
             entry.innerHTML = `
                 <span class="text-muted small">${time}</span>
                 <span class="fw-bold ${typeColor} ms-2">${type}</span>
                 <strong class="ms-2">${escapeHtml(method)}</strong>
-                ${data ? '<br><small class="text-muted">' + escapeHtml(JSON.stringify(data, null, 2)) + '</small>' : ''}
+                ${clientInfo}
+                ${argsInfo}
             `;
 
             logContainer.insertBefore(entry, logContainer.firstChild);

@@ -13,6 +13,7 @@ public interface IConnectionManager
 
     Connection[] GetPeers(Connection connection);
     Connection[] GetConnections(string partition, string airportIdentifier);
+    Connection[] GetAllConnections();
     void Remove(Connection connection);
 }
 
@@ -50,6 +51,11 @@ public class ConnectionManager : IConnectionManager
         return _connections
             .Where(c => c.Partition == partition && c.AirportIdentifier == airportIdentifier)
             .ToArray();
+    }
+
+    public Connection[] GetAllConnections()
+    {
+        return [.. _connections];
     }
 
     public void Remove(Connection connection)
