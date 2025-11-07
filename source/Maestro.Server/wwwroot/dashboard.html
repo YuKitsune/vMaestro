@@ -198,11 +198,11 @@
 
             tbody.innerHTML = connections.map(conn => {
                 let badgeClass = 'badge';
-                if (conn.isMaster) {
+                if (conn.IsMaster) {
                     badgeClass += ' bg-warning text-dark';
-                } else if (conn.role.toLowerCase() === 'flow') {
+                } else if (conn.Role.toLowerCase() === 'flow') {
                     badgeClass += ' bg-primary';
-                } else if (conn.role.toLowerCase() === 'pseudo') {
+                } else if (conn.Role.toLowerCase() === 'pseudo') {
                     badgeClass += ' bg-info';
                 } else {
                     badgeClass += ' bg-secondary';
@@ -210,15 +210,15 @@
 
                 return `
                     <tr>
-                        <td>${escapeHtml(conn.callsign)}</td>
-                        <td>${escapeHtml(conn.partition)}</td>
-                        <td>${escapeHtml(conn.airportIdentifier)}</td>
+                        <td>${escapeHtml(conn.Callsign)}</td>
+                        <td>${escapeHtml(conn.Partition)}</td>
+                        <td>${escapeHtml(conn.AirportIdentifier)}</td>
                         <td>
                             <span class="${badgeClass}">
-                                ${conn.role}${conn.isMaster ? ' (Master)' : ''}
+                                ${conn.Role}${conn.IsMaster ? ' (Master)' : ''}
                             </span>
                         </td>
-                        <td><small class="text-muted">${escapeHtml(conn.id)}</small></td>
+                        <td><small class="text-muted">${escapeHtml(conn.Id)}</small></td>
                     </tr>
                 `;
             }).join('');
