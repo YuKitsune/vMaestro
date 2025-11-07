@@ -53,7 +53,7 @@ public partial class FlightLabelViewModel(
             sb.Append(" ");
         }
 
-        if (FlightViewModel.FlowControls == FlowControls.ReduceSpeed)
+        if (FlightViewModel.FlowControls == FlowControls.ProfileSpeed)
         {
             sb.Append("+");
         }
