@@ -41,19 +41,31 @@ public class FlightUpdatedHandler(
                 return;
 
             using var lockedSession = await sessionManager.AcquireSession(notification.Destination, cancellationToken);
+
+            // Rate-limit updates for existing flights
+            var sequence = lockedSession.Session.Sequence;
+            var flight = sequence.FindTrackedFlight(notification.Callsign);
+            if (flight is not null)
+            {
+                var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight);
+                if (!shouldUpdate)
+                {
+                    logger.Verbose("Rate limiting {Callsign}", notification.Callsign);
+                    return;
+                }
+            }
+
             if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
             {
                 await lockedSession.Session.Connection.Send(notification, cancellationToken);
                 return;
             }
 
-            var sequence = lockedSession.Session.Sequence;
             logger.Debug("Received update for {Callsign}", notification.Callsign);
 
             var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
                 .Single(a => a.Identifier == notification.Destination);
 
-            var flight = sequence.FindTrackedFlight(notification.Callsign);
             if (flight is null)
             {
                 // TODO: Make configurable
@@ -118,17 +130,7 @@ public class FlightUpdatedHandler(
             if (flight is null)
                 return;
 
-            // Only apply rate limiting if a position is available
-            // When no position is available (i.e. Not coupled to a radar track), we accept all updates
-            if (notification.Position is not null)
-            {
-                var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight, notification.Position);
-                if (!shouldUpdate)
-                {
-                    logger.Verbose("Rate limiting {Callsign}", notification.Callsign);
-                    return;
-                }
-            }
+            flight.UpdateLastSeen(clock);
 
             UpdateFlightData(notification, flight);
             flight.UpdatePosition(notification.Position);
@@ -136,8 +138,6 @@ public class FlightUpdatedHandler(
             // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
             if (notification.Position is not null && !notification.Position.IsOnGround)
                 CalculateEstimates(flight, notification, airportConfiguration);
-
-            flight.UpdateLastSeen(clock);
 
             logger.Verbose("Flight updated: {Flight}", flight);
 
@@ -171,7 +171,7 @@ public class FlightUpdatedHandler(
         }
 
         // Don't update ETA_FF once passed FF, or if a manual estimate is set
-        if ((feederFixSystemEstimate is not null && !flight.HasPassedFeederFix) || !flight.ManualFeederFixEstimate)
+        if ((feederFixSystemEstimate is not null && flight is { HasPassedFeederFix: false, ManualFeederFixEstimate: false }))
         {
             var calculatedFeederFixEstimate = estimateProvider.GetFeederFixEstimate(
                 airportConfiguration,
