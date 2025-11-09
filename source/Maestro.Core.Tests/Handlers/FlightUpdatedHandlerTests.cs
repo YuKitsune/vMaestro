@@ -630,7 +630,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .Returns(new MockExclusiveSession(new MockSession(sequence)));
 
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-        rateLimiter.ShouldUpdateFlight(Arg.Any<Flight>(), Arg.Any<FlightPosition>()).Returns(true);
+        rateLimiter.ShouldUpdateFlight(Arg.Any<Flight>()).Returns(true);
 
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([airportConfigurationFixture.Instance]);

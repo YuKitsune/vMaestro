@@ -42,6 +42,7 @@ public class Plugin : IPlugin
     string IPlugin.Name => Name;
 
     readonly IMediator? _mediator;
+    readonly ISessionManager? _sessionManager;
     readonly ILogger? _logger;
 
     public Plugin()
@@ -54,6 +55,7 @@ public class Plugin : IPlugin
             AddToolbarItem();
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
+            _sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
 
             Network.Connected += NetworkOnConnected;
@@ -347,6 +349,9 @@ public class Plugin : IPlugin
 
     void PublishFlightUpdatedEvent(FDP2.FDR updated)
     {
+        if (_sessionManager is null || !_sessionManager.HasSessionFor(updated.DesAirport))
+            return;
+
         var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
         if (!isActivated)
             return;
