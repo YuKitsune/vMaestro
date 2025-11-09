@@ -21,6 +21,7 @@ public class ChangeRunwayModeRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying ChangeRunwayModeRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }

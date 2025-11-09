@@ -15,6 +15,7 @@ public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IClock c
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying ChangeRunwayRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -26,6 +27,9 @@ public class ChangeRunwayRequestHandler(ISessionManager sessionManager, IClock c
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
             return;
         }
+
+        // TODO: Track who initiated the change
+        logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
         flight.SetRunway(request.RunwayIdentifier, true);
         sequence.Recompute(flight);

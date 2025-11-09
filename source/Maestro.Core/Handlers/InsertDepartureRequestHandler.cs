@@ -3,6 +3,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
@@ -10,7 +11,8 @@ public class InsertDepartureRequestHandler(
     ISessionManager sessionManager,
     IArrivalLookup arrivalLookup,
     IClock clock,
-    IMediator mediator)
+    IMediator mediator,
+    ILogger logger)
     : IRequestHandler<InsertDepartureRequest>
 {
     public async Task Handle(InsertDepartureRequest request, CancellationToken cancellationToken)
@@ -18,6 +20,7 @@ public class InsertDepartureRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying InsertDepartureRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -45,6 +48,8 @@ public class InsertDepartureRequestHandler(
         var feederFixEstimate = GetFeederFixTime(flight);
         if (feederFixEstimate is not null)
             flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
+
+        logger.Information("Inserted departure {Callsign} for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

@@ -1,10 +1,11 @@
 ﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ResumeSequencingRequestHandler(ISessionManager sessionManager, IMediator mediator)
+public class ResumeSequencingRequestHandler(ISessionManager sessionManager, IMediator mediator, ILogger logger)
     : IRequestHandler<ResumeSequencingRequest>
 {
     public async Task Handle(ResumeSequencingRequest request, CancellationToken cancellationToken)
@@ -13,12 +14,15 @@ public class ResumeSequencingRequestHandler(ISessionManager sessionManager, IMed
         {
             if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
             {
+                logger.Information("Relaying ResumeSequencingRequest for {AirportIdentifier}", request.AirportIdentifier);
                 await lockedSession.Session.Connection.Invoke(request, cancellationToken);
                 return;
             }
 
             var sequence = lockedSession.Session.Sequence;
             sequence.Resume(request.Callsign);
+
+            logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
         }
 
         // Let the RecomputeRequestHandler do the scheduling and notification

@@ -13,6 +13,7 @@ public class MakePendingRequestHandler(ISessionManager sessionManager, IMediator
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying MakePendingRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -29,6 +30,8 @@ public class MakePendingRequestHandler(ISessionManager sessionManager, IMediator
             throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
 
         sequence.MakePending(flight);
+
+        logger.Information("Marked flight {Callsign} as pending for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

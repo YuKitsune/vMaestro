@@ -3,13 +3,15 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class InsertPendingRequestHandler(
     ISessionManager sessionManager,
     IClock clock,
-    IMediator mediator)
+    IMediator mediator,
+    ILogger logger)
     : IRequestHandler<InsertPendingRequest>
 {
     public async Task Handle(InsertPendingRequest request, CancellationToken cancellationToken)
@@ -17,6 +19,7 @@ public class InsertPendingRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying InsertPendingRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -46,6 +49,8 @@ public class InsertPendingRequestHandler(
         }
 
         flight.SetState(State.Stable, clock);
+
+        logger.Information("Inserted pending flight {Callsign} for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

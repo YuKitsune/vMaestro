@@ -3,6 +3,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
@@ -12,7 +13,7 @@ namespace Maestro.Core.Handlers;
 // - [ ] Update WPF to support new DummyFlight type
 // - [ ] Test
 
-public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediator mediator)
+public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediator mediator, ILogger logger)
     : IRequestHandler<InsertFlightRequest>
 {
     const int MaxCallsignLength = 12; // TODO: Verify the VATSIM limit
@@ -22,6 +23,7 @@ public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediato
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying InsertFlightRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -56,6 +58,8 @@ public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediato
             default:
                 throw new ArgumentOutOfRangeException();
         }
+
+        logger.Information("Inserted dummy flight {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),

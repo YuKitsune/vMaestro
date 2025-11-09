@@ -3,13 +3,15 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class MoveFlightRequestHandler(
     ISessionManager sessionManager,
     IMediator mediator,
-    IClock clock)
+    IClock clock,
+    ILogger logger)
     : IRequestHandler<MoveFlightRequest>
 {
     public async Task Handle(MoveFlightRequest request, CancellationToken cancellationToken)
@@ -17,6 +19,7 @@ public class MoveFlightRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying MoveFlightRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -35,6 +38,8 @@ public class MoveFlightRequestHandler(
         // Unstable flights become stable when moved
         if (flight.State == State.Unstable)
             flight.SetState(State.Stable, clock);
+
+        logger.Information("Flight {Callsign} moved to {NewLandingTime}", flight.Callsign, flight.LandingTime);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

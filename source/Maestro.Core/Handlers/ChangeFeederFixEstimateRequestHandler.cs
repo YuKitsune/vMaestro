@@ -20,6 +20,7 @@ public class ChangeFeederFixEstimateRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying ChangeFeederFixEstimateRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -31,6 +32,9 @@ public class ChangeFeederFixEstimateRequestHandler(
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
             return;
         }
+
+        // TODO: Track who initiated the change
+        logger.Information("Changing feeder fix estimate for flight {Callsign} to {NewFeederFixEstimate}.", request.Callsign, request.NewFeederFixEstimate);
 
         flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
 

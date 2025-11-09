@@ -23,6 +23,7 @@ public class RecomputeRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying RecomputeRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -37,8 +38,6 @@ public class RecomputeRequestHandler(
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
             return;
         }
-
-        logger.Information("Recomputing {Callsign}", flight.Callsign);
 
         // Reset the feeder fix in case of a re-route
         var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
@@ -62,6 +61,8 @@ public class RecomputeRequestHandler(
 
         // Progress the state based on the new times
         flight.UpdateStateBasedOnTime(clock);
+
+        logger.Information("{Callsign} recomputed", flight.Callsign);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

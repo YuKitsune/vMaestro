@@ -1,10 +1,11 @@
 ﻿using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ConnectSessionRequestHandler(ISessionManager sessionManager, IMediator mediator)
+public class ConnectSessionRequestHandler(ISessionManager sessionManager, IMediator mediator, ILogger logger)
     : IRequestHandler<ConnectSessionRequest>
 {
     public async Task Handle(ConnectSessionRequest request, CancellationToken cancellationToken)
@@ -18,6 +19,8 @@ public class ConnectSessionRequestHandler(ISessionManager sessionManager, IMedia
 
             if (!lockedSession.Session.IsActive)
                 await mediator.Publish(new ConnectionReadyNotification(request.AirportIdentifier), cancellationToken);
+
+            logger.Information("Session for {AirportIdentifier} connected", request.AirportIdentifier);
 
             await mediator.Publish(
                 new SequenceUpdatedNotification(request.AirportIdentifier, lockedSession.Session.Sequence.ToMessage()),

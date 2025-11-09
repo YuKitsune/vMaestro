@@ -2,10 +2,11 @@ using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class CoordinationMessageSentNotificationHandler(ISessionManager sessionManager, IClock clock)
+public class CoordinationMessageSentNotificationHandler(ISessionManager sessionManager, IClock clock, ILogger logger)
     : INotificationHandler<CoordinationMessageSentNotification>
 {
     public async Task Handle(CoordinationMessageSentNotification request, CancellationToken cancellationToken)
@@ -22,6 +23,7 @@ public class CoordinationMessageSentNotificationHandler(ISessionManager sessionM
                 request.Message,
                 request.Destination);
 
+            logger.Information("Sending coordination message {Message} to {AirportIdentifier}", notification.Message, notification.AirportIdentifier);
             await lockedSession.Session.Connection.Send(notification, cancellationToken);
         }
     }

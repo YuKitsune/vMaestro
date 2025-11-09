@@ -2,10 +2,11 @@
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class SessionConnectedNotificationHandler(ISessionManager sessionManager, IPeerTracker peerTracker, IMediator mediator)
+public class SessionConnectedNotificationHandler(ISessionManager sessionManager, IPeerTracker peerTracker, IMediator mediator, ILogger logger)
     : INotificationHandler<SessionConnectedNotification>
 {
     public async Task Handle(SessionConnectedNotification notification, CancellationToken cancellationToken)
@@ -16,6 +17,7 @@ public class SessionConnectedNotificationHandler(ISessionManager sessionManager,
         }
 
         await TryPublishInformationNotification(notification.AirportIdentifier, cancellationToken);
+        logger.Information("Session for {AirportIdentifier} connected", notification.AirportIdentifier);
     }
 
     async Task TryPublishInformationNotification(string airportIdentifier, CancellationToken cancellationToken)

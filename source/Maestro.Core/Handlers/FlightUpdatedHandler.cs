@@ -57,11 +57,10 @@ public class FlightUpdatedHandler(
 
             if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
             {
+                logger.Debug("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
                 await lockedSession.Session.Connection.Send(notification, cancellationToken);
                 return;
             }
-
-            logger.Debug("Received update for {Callsign}", notification.Callsign);
 
             var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
                 .Single(a => a.Identifier == notification.Destination);

@@ -4,6 +4,7 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
@@ -20,7 +21,8 @@ namespace Maestro.Core.Handlers;
 public class SwapFlightsRequestHandler(
     ISessionManager sessionManager,
     IMediator mediator,
-    IClock clock)
+    IClock clock,
+    ILogger logger)
     : IRequestHandler<SwapFlightsRequest>
 {
     public async Task Handle(SwapFlightsRequest request, CancellationToken cancellationToken)
@@ -28,6 +30,7 @@ public class SwapFlightsRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
         {
+            logger.Information("Relaying SwapFlightsRequest for {AirportIdentifier}", request.AirportIdentifier);
             await lockedSession.Session.Connection.Invoke(request, cancellationToken);
             return;
         }
@@ -43,10 +46,11 @@ public class SwapFlightsRequestHandler(
         if (secondFlight is null)
             throw new MaestroException($"Could not find {request.SecondFlightCallsign}");
 
-
         // Unstable flights become stable when moved
         if (firstFlight.State == State.Unstable) firstFlight.SetState(State.Stable, clock);
         if (secondFlight.State == State.Unstable) secondFlight.SetState(State.Stable, clock);
+
+        logger.Information("Flights {FirstFlightCallsign} and {SecondFlightCallsign} swapped", firstFlight.Callsign, secondFlight.Callsign);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
