@@ -361,6 +361,7 @@ public class Plugin : IPlugin
             return;
 
         var estimates = updated.ParsedRoute
+            .ToArray() // Materialize to avoid mutation during enumeration
             .Select((s, i) => new FixEstimate(
                 s.Intersection.Name,
                 ToDateTimeOffset(s.ETO),
