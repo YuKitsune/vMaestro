@@ -248,6 +248,7 @@ public class FlightTests(ClockFixture clockFixture)
             .WithActivationTime(clockFixture.Instance.UtcNow().AddMinutes(-30))
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(25)) // Within stable threshold of 25 minutes
             .WithFeederFixTime(clockFixture.Instance.UtcNow().AddMinutes(26)) // Scheduled time slightly out
+            .WithLandingTime(clockFixture.Instance.UtcNow().AddMinutes(40))
             .WithState(State.Unstable)
             .Build();
 
@@ -265,6 +266,7 @@ public class FlightTests(ClockFixture clockFixture)
         var flight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow()) // Reached feeder fix time
             .WithFeederFixTime(clockFixture.Instance.UtcNow().AddMinutes(2)) // Schedueld time slightly out
+            .WithLandingTime(clockFixture.Instance.UtcNow().AddMinutes(40))
             .WithState(State.Stable)
             .Build();
 
