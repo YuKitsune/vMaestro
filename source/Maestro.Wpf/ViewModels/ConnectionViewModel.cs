@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
@@ -63,11 +63,11 @@ public partial class ConnectionViewModel : ObservableObject
         {
             if (IsConnected || IsReady)
             {
-                _mediator.Send(new DisconnectSessionRequest(_airportIdentifier));
+                _mediator.Send(new StopConnectionRequest(_airportIdentifier));
             }
             else
             {
-                _mediator.Send(new ConnectSessionRequest(_airportIdentifier, SelectedServer));
+                _mediator.Send(new CreateConnectionRequest(_airportIdentifier, SelectedServer));
             }
 
             _windowHandle.Close();

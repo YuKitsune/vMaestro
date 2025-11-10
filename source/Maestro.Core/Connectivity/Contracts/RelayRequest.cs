@@ -1,3 +1,4 @@
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Messages;
 using MediatR;
 

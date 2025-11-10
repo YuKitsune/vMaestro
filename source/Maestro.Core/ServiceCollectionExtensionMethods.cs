@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,9 +12,7 @@ public static class ServiceCollectionExtensionMethods
     {
         return services
             .AddSingleton<ISessionManager, SessionManager>()
-            .AddSingleton<ISessionFactory, SessionFactory>()
-            .AddSingleton<IMaestroConnectionFactory, MaestroConnectionFactory>()
-            .AddSingleton<IPeerTracker, PeerTracker>()
+            .AddSingleton<IMaestroConnectionManager, MaestroConnectionManager>()
             .AddSingleton<IFlightUpdateRateLimiter, FlightUpdateRateLimiter>()
             .AddSingleton<IArrivalLookup, ArrivalLookup>()
             .AddSingleton<IEstimateProvider, EstimateProvider>()

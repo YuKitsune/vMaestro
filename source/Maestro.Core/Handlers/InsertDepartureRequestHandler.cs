@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -9,6 +10,7 @@ namespace Maestro.Core.Handlers;
 
 public class InsertDepartureRequestHandler(
     ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
     IArrivalLookup arrivalLookup,
     IClock clock,
     IMediator mediator,
@@ -17,15 +19,18 @@ public class InsertDepartureRequestHandler(
 {
     public async Task Handle(InsertDepartureRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
             logger.Information("Relaying InsertDepartureRequest for {AirportIdentifier}", request.AirportIdentifier);
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
 
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
+
         var flight = sequence.PendingFlights.SingleOrDefault(f =>
             f.Callsign == request.Callsign);
 

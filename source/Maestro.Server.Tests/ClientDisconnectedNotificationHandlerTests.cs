@@ -1,6 +1,5 @@
 using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;

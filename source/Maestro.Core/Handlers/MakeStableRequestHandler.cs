@@ -1,3 +1,4 @@
+using Maestro.Core.Connectivity;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -12,18 +13,26 @@ namespace Maestro.Core.Handlers;
 // - Flights in other modes are ignored
 // - Flight does not become unstable when manually stablised
 
-public class MakeStableRequestHandler(ISessionManager sessionManager, IClock clock, IMediator mediator, ILogger logger)
+public class MakeStableRequestHandler(
+    ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
+    IClock clock,
+    IMediator mediator,
+    ILogger logger)
     : IRequestHandler<MakeStableRequest>
 {
     public async Task Handle(MakeStableRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
             logger.Information("Relaying MakeStableRequest for {AirportIdentifier}", request.AirportIdentifier);
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
 
         var sequence = lockedSession.Session.Sequence;
         var flight = sequence.FindTrackedFlight(request.Callsign);

@@ -1,7 +1,6 @@
-using Maestro.Core.Configuration;
 using MediatR;
 
-namespace Maestro.Core.Messages;
+namespace Maestro.Core.Connectivity.Contracts;
 
 public class RequestEnvelope
 {

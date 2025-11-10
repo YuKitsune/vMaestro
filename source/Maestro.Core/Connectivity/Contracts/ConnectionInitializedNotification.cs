@@ -1,6 +1,7 @@
+using Maestro.Core.Messages;
 using MediatR;
 
-namespace Maestro.Core.Messages.Connectivity;
+namespace Maestro.Core.Connectivity.Contracts;
 
 public record ConnectionInitializedNotification(
     string ConnectionId,

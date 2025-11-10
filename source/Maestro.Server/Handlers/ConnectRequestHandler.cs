@@ -1,6 +1,5 @@
 using Maestro.Core.Configuration;
 using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
 using MediatR;
 using ILogger = Serilog.ILogger;
 

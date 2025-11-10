@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -10,6 +11,7 @@ namespace Maestro.Core.Handlers;
 
 public class ChangeRunwayModeRequestHandler(
     ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
     IMediator mediator,
@@ -18,15 +20,18 @@ public class ChangeRunwayModeRequestHandler(
 {
     public async Task Handle(ChangeRunwayModeRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
             logger.Information("Relaying ChangeRunwayModeRequest for {AirportIdentifier}", request.AirportIdentifier);
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
 
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
+
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().SingleOrDefault(c => c.Identifier == request.AirportIdentifier);
         if (airportConfiguration == null)
         {

@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -11,6 +12,7 @@ namespace Maestro.Core.Handlers;
 
 public class RecomputeRequestHandler(
     ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
     IClock clock,
@@ -20,13 +22,16 @@ public class RecomputeRequestHandler(
 {
     public async Task Handle(RecomputeRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
             logger.Information("Relaying RecomputeRequest for {AirportIdentifier}", request.AirportIdentifier);
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
 
         var sequence = lockedSession.Session.Sequence;
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()

@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -25,6 +26,7 @@ public record FlightUpdatedNotification(
 
 public class FlightUpdatedHandler(
     ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
@@ -55,10 +57,12 @@ public class FlightUpdatedHandler(
                 }
             }
 
-            if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+            if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
+                 connection.IsConnected &&
+                 !connection.IsMaster)
             {
                 logger.Debug("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
-                await lockedSession.Session.Connection.Send(notification, cancellationToken);
+                await connection.Send(notification, cancellationToken);
                 return;
             }
 

@@ -1,57 +1,59 @@
 using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
 using MediatR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
 using Serilog;
 
-namespace Maestro.Core.Infrastructure;
-
-// TODO:
-// - [X] Dispatch messages to both Mediator (for in-memory stuff) and SignalR (when connected); Disregard permissions for now
-// - [X] Invoke SignalR methods when initializing the connection, ensure it's all synchronous to prevent dirty states
-// - [X] Encapsulate the in-memory sequence, the SignalR connection, and the UI stuff into a Session object
-// - [X] Test with two clients connected at once, what breaks?
-// - [X] Restrict access to certain functions from certain clients
-// - [X] Show information messages when things happen
-// - [X] Coordination messages
+namespace Maestro.Core.Connectivity;
 
 public class MaestroConnection : IAsyncDisposable
 {
+    readonly List<PeerInfo> _peers = new();
     readonly CancellationTokenSource _rootCancellationTokenSource = new();
-    readonly string _partition;
+    readonly ServerConfiguration _serverConfiguration;
     readonly string _airportIdentifier;
-    readonly string _callsign;
-    readonly Role _role;
-    readonly HubConnection _hubConnection;
     readonly IMediator _mediator;
     readonly ILogger _logger;
 
-    public bool IsConnected => _hubConnection.State is not HubConnectionState.Disconnected;
-    public string Partition => _partition;
-    public string AirportIdentifier => _airportIdentifier;
-    public string Callsign => _callsign;
-    public Role Role => _role;
+    HubConnection? _hubConnection;
+
+    public string Partition { get; }
+
+    // [MemberNotNull(nameof(_serverConfiguration))]
+    public bool IsConnected => _hubConnection is not null && _hubConnection.State is not HubConnectionState.Disconnected;
+    public Role Role { get; private set; }
+    public bool IsMaster { get; private set; }
+    public IReadOnlyList<PeerInfo> Peers => _peers;
 
     public MaestroConnection(
         ServerConfiguration serverConfiguration,
-        string partition,
         string airportIdentifier,
-        string callsign,
+        string partition,
         IMediator mediator,
         ILogger logger)
     {
-        _partition = partition;
+        _serverConfiguration = serverConfiguration;
         _airportIdentifier = airportIdentifier;
-        _callsign = callsign;
-        _role = RoleHelper.GetRoleFromCallsign(callsign);
+        Partition = partition;
+
+        _mediator = mediator;
+        _logger = logger;
+    }
+
+    public async Task Start(string callsign, CancellationToken cancellationToken)
+    {
+        if (IsConnected)
+            throw new MaestroException("Cannot start the connection when already connected.");
+
+        Role = RoleHelper.GetRoleFromCallsign(callsign);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(serverConfiguration.Uri + $"?partition={partition}&airportIdentifier={airportIdentifier}&callsign={callsign}&role={_role}")
-            .WithServerTimeout(TimeSpan.FromSeconds(serverConfiguration.TimeoutSeconds))
+            .WithUrl(_serverConfiguration.Uri + $"?partition={Partition}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}")
+            .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
             .AddNewtonsoftJsonProtocol(x =>
@@ -61,21 +63,13 @@ public class MaestroConnection : IAsyncDisposable
             })
             .Build();
 
-        _mediator = mediator;
-        _logger = logger;
-
-        SubscribeToNotifications();
-        SubscribeToConnectionEvents();
-    }
-
-    public async Task Start(CancellationToken cancellationToken)
-    {
-        if (IsConnected)
-            throw new MaestroException("Cannot start the connection when already connected.");
+        SubscribeToNotifications(_hubConnection);
+        SubscribeToConnectionEvents(_hubConnection);
 
         try
         {
             await _hubConnection.StartAsync(cancellationToken);
+            await _mediator.Publish(new ConnectionStartedNotification(_airportIdentifier), cancellationToken);
         }
         catch (Exception exception)
         {
@@ -90,7 +84,14 @@ public class MaestroConnection : IAsyncDisposable
 
         try
         {
-            await _hubConnection.StopAsync(cancellationToken);
+            // IsConnected ensures _hubConnection is not null
+            await _hubConnection!.StopAsync(cancellationToken);
+            await _hubConnection.DisposeAsync();
+            _hubConnection = null;
+            IsMaster = true;
+            Role = Role.Flow;
+
+            await _mediator.Publish(new ConnectionStoppedNotification(_airportIdentifier), cancellationToken);
         }
         catch (Exception exception)
         {
@@ -105,7 +106,9 @@ public class MaestroConnection : IAsyncDisposable
             throw new MaestroException("Cannot invoke a method when not connected.");
 
         var methodName = GetMethodName(message);
-        var response = await _hubConnection.InvokeAsync<RelayResponse>(methodName, message, cancellationToken);
+
+        // IsConnected ensures _hubConnection is not null
+        var response = await _hubConnection!.InvokeAsync<RelayResponse>(methodName, message, cancellationToken);
         if (!response.Success)
         {
             await _mediator.Publish(new ErrorNotification(new MaestroException(response.ErrorMessage)), cancellationToken);
@@ -119,7 +122,9 @@ public class MaestroConnection : IAsyncDisposable
             throw new MaestroException("Cannot send a message when not connected.");
 
         var methodName = GetMethodName(message);
-        await _hubConnection.SendAsync(methodName, message, cancellationToken);
+
+        // IsConnected ensures _hubConnection is not null
+        await _hubConnection!.SendAsync(methodName, message, cancellationToken);
     }
 
     private static string GetMethodName(object request)
@@ -155,41 +160,56 @@ public class MaestroConnection : IAsyncDisposable
         };
     }
 
-    void SubscribeToNotifications()
+    void SubscribeToNotifications(HubConnection hubConnection)
     {
-        _hubConnection.On<ConnectionInitializedNotification>("ConnectionInitialized", async notification =>
+        hubConnection.On<ConnectionInitializedNotification>("ConnectionInitialized", async notification =>
         {
             if (notification.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Publish(notification, GetMessageCancellationToken());
+            IsMaster = notification.IsMaster;
+
+            _peers.AddRange(notification.ConnectedPeers);
+
+            // TODO: Clear the sequence if it's null
+            if (notification.Sequence is not null)
+            {
+                await _mediator.Send(
+                    new RestoreSequenceRequest(notification.AirportIdentifier, notification.Sequence),
+                    GetMessageCancellationToken());
+            }
         });
 
-        _hubConnection.On<OwnershipGrantedNotification>("OwnershipGranted", async request =>
+        hubConnection.On<OwnershipGrantedNotification>("OwnershipGranted", request =>
         {
             if (request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Publish(request, GetMessageCancellationToken());
+            IsMaster = true;
+            _logger.Information("Ownership granted for {AirportIdentifier}", _airportIdentifier);
         });
 
-        _hubConnection.On<OwnershipRevokedNotification>("OwnershipRevoked", async request =>
+        hubConnection.On<OwnershipRevokedNotification>("OwnershipRevoked", request =>
         {
             if (request.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Publish(request, GetMessageCancellationToken());
+            IsMaster = false;
+            _logger.Information("Ownership revoked for {AirportIdentifier}", _airportIdentifier);
         });
 
-        _hubConnection.On<SequenceUpdatedNotification>("SequenceUpdated", async sequenceUpdatedNotification =>
+        hubConnection.On<SequenceUpdatedNotification>("SequenceUpdated", async sequenceUpdatedNotification =>
         {
             if (sequenceUpdatedNotification.AirportIdentifier != _airportIdentifier)
                 return;
 
-            await _mediator.Publish(sequenceUpdatedNotification, GetMessageCancellationToken());
+            await _mediator.Send(
+                new RestoreSequenceRequest(sequenceUpdatedNotification.AirportIdentifier,
+                    sequenceUpdatedNotification.Sequence),
+                GetMessageCancellationToken());
         });
 
-        _hubConnection.On<FlightUpdatedNotification>("FlightUpdated", async flightUpdatedNotification =>
+        hubConnection.On<FlightUpdatedNotification>("FlightUpdated", async flightUpdatedNotification =>
         {
             if (flightUpdatedNotification.Destination != _airportIdentifier)
                 return;
@@ -197,7 +217,7 @@ public class MaestroConnection : IAsyncDisposable
             await _mediator.Publish(flightUpdatedNotification, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<CoordinationNotification>("Coordination", async coordinationNotification =>
+        hubConnection.On<CoordinationNotification>("Coordination", async coordinationNotification =>
         {
             if (coordinationNotification.AirportIdentifier != _airportIdentifier)
                 return;
@@ -206,23 +226,25 @@ public class MaestroConnection : IAsyncDisposable
             await _mediator.Publish(coordinationNotification, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<PeerConnectedNotification>("PeerConnected", async clientConnectedNotification =>
+        hubConnection.On<PeerConnectedNotification>("PeerConnected", async clientConnectedNotification =>
         {
             if (clientConnectedNotification.AirportIdentifier != _airportIdentifier)
                 return;
 
+            _peers.Add(new PeerInfo(clientConnectedNotification.Callsign, clientConnectedNotification.Role));
             await _mediator.Publish(clientConnectedNotification, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<PeerDisconnectedNotification>("PeerDisconnected", async clientDisconnectedNotification =>
+        hubConnection.On<PeerDisconnectedNotification>("PeerDisconnected", async clientDisconnectedNotification =>
         {
             if (clientDisconnectedNotification.AirportIdentifier != _airportIdentifier)
                 return;
 
+            _peers.RemoveAll(p => p.Callsign == clientDisconnectedNotification.Callsign);
             await _mediator.Publish(clientDisconnectedNotification, GetMessageCancellationToken());
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("InsertFlight", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("InsertFlight", async envelope =>
         {
             var request = (InsertFlightRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -231,7 +253,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDummy);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("InsertDeparture", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("InsertDeparture", async envelope =>
         {
             var request = (InsertDepartureRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -240,7 +262,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDeparture);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("MoveFlight", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("MoveFlight", async envelope =>
         {
             var request = (MoveFlightRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -249,7 +271,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MoveFlight);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("SwapFlights", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("SwapFlights", async envelope =>
         {
             var request = (SwapFlightsRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -258,7 +280,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MoveFlight);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("Remove", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("Remove", async envelope =>
         {
             var request = (RemoveRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -267,7 +289,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.RemoveFlight);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("Desequence", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("Desequence", async envelope =>
         {
             var request = (DesequenceRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -276,7 +298,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.Desequence);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("MakePending", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("MakePending", async envelope =>
         {
             var request = (MakePendingRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -285,7 +307,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MakePending);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("MakeStable", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("MakeStable", async envelope =>
         {
             var request = (MakeStableRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -294,7 +316,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.MakeStable);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("Recompute", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("Recompute", async envelope =>
         {
             var request = (RecomputeRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -303,7 +325,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.Recompute);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("ResumeSequencing", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("ResumeSequencing", async envelope =>
         {
             var request = (ResumeSequencingRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -312,7 +334,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.Resequence);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("ManualDelay", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("ManualDelay", async envelope =>
         {
             var request = (ManualDelayRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -321,7 +343,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManualDelay);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("ChangeRunway", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("ChangeRunway", async envelope =>
         {
             var request = (ChangeRunwayRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -330,7 +352,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeRunway);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("ChangeRunwayMode", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("ChangeRunwayMode", async envelope =>
         {
             var request = (ChangeRunwayModeRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -339,7 +361,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeTerminalConfiguration);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("ChangeFeederFixEstimate", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("ChangeFeederFixEstimate", async envelope =>
         {
             var request = (ChangeFeederFixEstimateRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -348,7 +370,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeFeederFixEstimate);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("CreateSlot", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("CreateSlot", async envelope =>
         {
             var request = (CreateSlotRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -357,7 +379,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("ModifySlot", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("ModifySlot", async envelope =>
         {
             var request = (ModifySlotRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -366,7 +388,7 @@ public class MaestroConnection : IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
         });
 
-        _hubConnection.On<RequestEnvelope, RelayResponse>("DeleteSlot", async envelope =>
+        hubConnection.On<RequestEnvelope, RelayResponse>("DeleteSlot", async envelope =>
         {
             var request = (DeleteSlotRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
@@ -376,39 +398,39 @@ public class MaestroConnection : IAsyncDisposable
         });
     }
 
-    void SubscribeToConnectionEvents()
+    void SubscribeToConnectionEvents(HubConnection hubConnection)
     {
-        _hubConnection.Closed += async (exception) =>
+        hubConnection.Closed += async (exception) =>
         {
-            await _mediator.Publish(new SessionDisconnectedNotification(_airportIdentifier, IsReady: true), CancellationToken.None);
+            await _mediator.Publish(new ConnectionStoppedNotification(_airportIdentifier), CancellationToken.None);
 
             // If the connection was closed due to an error, take ownership of the sequence and report the error
             if (exception != null && !_rootCancellationTokenSource.Token.IsCancellationRequested)
             {
                 _logger.Error(exception, "Connection for {AirportIdentifier} lost", _airportIdentifier);
-                // await _mediator.Publish(new OwnershipGrantedNotification(_airportIdentifier), CancellationToken.None);
                 await _mediator.Publish(new ErrorNotification(exception), CancellationToken.None);
-
-                // BUG: UI still says "READY" after disconnecting here. Need to remove connection details and connection from Session
             }
             else
             {
                 _logger.Information("Connection for {AirportIdentifier} closed", _airportIdentifier);
             }
+
+            IsMaster = true;
+            await _mediator.Publish(new ConnectionStoppedNotification(_airportIdentifier), CancellationToken.None);
         };
 
-        _hubConnection.Reconnecting += async exception =>
+        hubConnection.Reconnecting += async exception =>
         {
             _logger.Warning(exception, "Connection for {AirportIdentifier} reconnecting", _airportIdentifier);
-            await _mediator.Publish(new SessionReconnectingNotification(_airportIdentifier), CancellationToken.None);
+            await _mediator.Publish(new ReconnectingNotification(_airportIdentifier), CancellationToken.None);
         };
 
-        _hubConnection.Reconnected += connectionId =>
+        hubConnection.Reconnected += async connectionId =>
         {
             _logger.Information(
                 "Connection for {AirportIdentifier} reconnected with ConnectionId {ConnectionId}",
                 _airportIdentifier, connectionId);
-            return Task.CompletedTask;
+            await _mediator.Publish(new ReconnectedNotification(_airportIdentifier), CancellationToken.None);
         };
     }
 
@@ -455,7 +477,7 @@ public class MaestroConnection : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _hubConnection.DisposeAsync();
+        await Stop(CancellationToken.None); // Calling Stop disposes _hubConnection
         _rootCancellationTokenSource.Cancel();
         _rootCancellationTokenSource.Dispose();
     }
