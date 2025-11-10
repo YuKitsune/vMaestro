@@ -30,6 +30,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
             .WithRunway("34R")
+            .WithFeederFix("BOREE") // TODO: Sequence will re-assign the runway based on feeder fix preferences; need to remove this from the sequencing logic
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)

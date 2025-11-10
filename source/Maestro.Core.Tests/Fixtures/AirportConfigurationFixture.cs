@@ -93,7 +93,13 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "WELSH"],
-            PreferredRunways = [],
+            PreferredRunways = new Dictionary<string, string[]> {
+                {"RIVET", ["34L"]},
+                {"WELSH", ["34L"]},
+                {"BOREE", ["34R"]},
+                {"YAKKA", ["34R"]},
+                {"MARLN", ["34R"]}
+            },
             DepartureAirports = ["YSCB"]
         };
 }
