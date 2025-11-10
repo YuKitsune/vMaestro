@@ -38,8 +38,8 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
 
             var connection = new MaestroConnection(
                 _serverConfiguration,
-                partition,
                 airportIdentifier,
+                partition,
                 _mediator,
                 _logger.ForContext<MaestroConnection>());
 

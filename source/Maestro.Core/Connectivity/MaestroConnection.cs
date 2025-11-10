@@ -477,7 +477,10 @@ public class MaestroConnection : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await Stop(CancellationToken.None); // Calling Stop disposes _hubConnection
+        if (_hubConnection is not null)
+            await _hubConnection.DisposeAsync();
+
+        _hubConnection = null;
         _rootCancellationTokenSource.Cancel();
         _rootCancellationTokenSource.Dispose();
     }

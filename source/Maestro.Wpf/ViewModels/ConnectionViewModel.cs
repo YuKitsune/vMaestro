@@ -63,7 +63,7 @@ public partial class ConnectionViewModel : ObservableObject
         {
             if (IsConnected || IsReady)
             {
-                _mediator.Send(new StopConnectionRequest(_airportIdentifier));
+                _mediator.Send(new DestroyConnectionRequest(_airportIdentifier));
             }
             else
             {
