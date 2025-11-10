@@ -1,6 +1,4 @@
-using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
+using Maestro.Core.Connectivity.Contracts;
 using MediatR;
 using ILogger = Serilog.ILogger;
 
@@ -47,7 +45,7 @@ public class ConnectRequestHandler(
                 currentMaster.IsMaster = false;
 
                 await hubProxy.Send(
-                    connectionId,
+                    currentMaster.Id,
                     "OwnershipRevoked",
                     new OwnershipRevokedNotification(request.AirportIdentifier),
                     cancellationToken);

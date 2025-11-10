@@ -1,4 +1,6 @@
-﻿namespace Maestro.Core.Configuration;
+﻿using Maestro.Core.Connectivity.Contracts;
+
+namespace Maestro.Core.Configuration;
 
 public class ServerConfiguration
 {
@@ -8,13 +10,6 @@ public class ServerConfiguration
     public required Dictionary<string, Role[]> Permissions { get; init; }
 }
 
-public enum Role
-{
-    Flow,
-    Enroute,
-    Approach,
-    Observer
-}
 
 public static class ActionKeys
 {
@@ -35,21 +30,4 @@ public static class ActionKeys
     public const string Resequence = nameof(Resequence);
     public const string RemoveFlight = nameof(RemoveFlight);
     public const string Coordination = nameof(Coordination);
-}
-
-public static class RoleHelper
-{
-    public static Role GetRoleFromCallsign(string callsign)
-    {
-        if (callsign.EndsWith("_FMP"))
-            return Role.Flow;
-
-        if (callsign.EndsWith("_CTR") || callsign.EndsWith("_FSS"))
-            return Role.Enroute;
-
-        if (callsign.EndsWith("_APP") || callsign.EndsWith("_DEP"))
-            return Role.Approach;
-
-        return Role.Observer;
-    }
 }

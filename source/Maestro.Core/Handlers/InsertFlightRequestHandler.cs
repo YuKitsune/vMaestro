@@ -1,8 +1,11 @@
-﻿using Maestro.Core.Extensions;
+﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
@@ -12,20 +15,27 @@ namespace Maestro.Core.Handlers;
 // - [ ] Update WPF to support new DummyFlight type
 // - [ ] Test
 
-public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediator mediator)
+public class InsertFlightRequestHandler(
+    ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
+    IMediator mediator,
+    ILogger logger)
     : IRequestHandler<InsertFlightRequest>
 {
     const int MaxCallsignLength = 12; // TODO: Verify the VATSIM limit
 
     public async Task Handle(InsertFlightRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            logger.Information("Relaying InsertFlightRequest for {AirportIdentifier}", request.AirportIdentifier);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
 
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
 
         var callsign = request.Callsign?.ToUpperInvariant().Truncate(MaxCallsignLength)!;
@@ -56,6 +66,8 @@ public class InsertFlightRequestHandler(ISessionManager sessionManager, IMediato
             default:
                 throw new ArgumentOutOfRangeException();
         }
+
+        logger.Information("Inserted dummy flight {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),

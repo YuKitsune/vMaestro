@@ -1,28 +1,36 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class InsertDepartureRequestHandler(
     ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
     IArrivalLookup arrivalLookup,
     IClock clock,
-    IMediator mediator)
+    IMediator mediator,
+    ILogger logger)
     : IRequestHandler<InsertDepartureRequest>
 {
     public async Task Handle(InsertDepartureRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            logger.Information("Relaying InsertDepartureRequest for {AirportIdentifier}", request.AirportIdentifier);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
 
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
+
         var flight = sequence.PendingFlights.SingleOrDefault(f =>
             f.Callsign == request.Callsign);
 
@@ -45,6 +53,8 @@ public class InsertDepartureRequestHandler(
         var feederFixEstimate = GetFeederFixTime(flight);
         if (feederFixEstimate is not null)
             flight.UpdateFeederFixEstimate(feederFixEstimate.Value);
+
+        logger.Information("Inserted departure {Callsign} for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

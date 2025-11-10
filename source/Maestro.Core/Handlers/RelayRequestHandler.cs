@@ -1,11 +1,12 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Sessions;
+using Maestro.Core.Connectivity;
+using Maestro.Core.Connectivity.Contracts;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class RelayRequestHandler(ISessionManager sessionManager, ServerConfiguration serverConfiguration, IMediator mediator, ILogger logger)
+public class RelayRequestHandler(IMaestroConnectionManager connectionManager, ServerConfiguration serverConfiguration, IMediator mediator, ILogger logger)
     : IRequestHandler<RelayRequest, RelayResponse>
 {
     public async Task<RelayResponse> Handle(RelayRequest request, CancellationToken cancellationToken)
@@ -24,23 +25,22 @@ public class RelayRequestHandler(ISessionManager sessionManager, ServerConfigura
             return RelayResponse.CreateFailure("Could not determine airport identifier from request");
         }
 
-        using (var lockedSession = await sessionManager.AcquireSession(airportIdentifier, cancellationToken))
+        if (!connectionManager.TryGetConnection(airportIdentifier, out var connection))
+            return RelayResponse.CreateFailure($"Could not find connection for {airportIdentifier}");
+
+        // Check if the originating user has permission to perform this action
+        // TODO: Consider moving this into each handler, and adding the sender details to all requests
+        if (!CanPerformAction(connection, envelope.OriginatingRole, actionKey))
         {
-            var session = lockedSession.Session;
+            logger.Warning("{Callsign} attempted {ActionKey} but does not have permission (Role: {Role})",
+                envelope.OriginatingCallsign, actionKey, envelope.OriginatingRole);
 
-            // Check if the originating user has permission to perform this action
-            if (!CanPerformAction(session, envelope.OriginatingRole, actionKey))
-            {
-                logger.Warning("{Callsign} attempted {ActionKey} but does not have permission (Role: {Role})",
-                    envelope.OriginatingCallsign, actionKey, envelope.OriginatingRole);
-
-                return RelayResponse.CreateFailure($"{envelope.OriginatingRole} cannot perform {actionKey}");
-            }
-
-            // Permission granted - unwrap and forward the request to the appropriate handler
-            logger.Information("{Callsign} authorized for {ActionKey}, forwarding to handler",
-                envelope.OriginatingCallsign, actionKey);
+            return RelayResponse.CreateFailure($"{envelope.OriginatingRole} cannot perform {actionKey}");
         }
+
+        // Permission granted - unwrap and forward the request to the appropriate handler
+        logger.Information("{Callsign} authorized for {ActionKey}, forwarding to handler",
+            envelope.OriginatingCallsign, actionKey);
 
         try
         {
@@ -54,10 +54,10 @@ public class RelayRequestHandler(ISessionManager sessionManager, ServerConfigura
         }
     }
 
-    bool CanPerformAction(ISession session, Role userRole, string actionKey)
+    bool CanPerformAction(MaestroConnection connection, Role userRole, string actionKey)
     {
         // If we're the flow controller, we need to enforce permission checks
-        if (session is { OwnsSequence: true, Connection.Role: Role.Flow })
+        if (connection is { IsMaster: true, Role: Role.Flow })
         {
             var permissions = serverConfiguration.Permissions;
             return permissions.TryGetValue(actionKey, out var allowedRoles) && allowedRoles.Contains(userRole);

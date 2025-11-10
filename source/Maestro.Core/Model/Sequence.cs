@@ -278,13 +278,14 @@ public class Sequence
         Schedule(index, runwayIdentifiers, forceRescheduleStable: true);
     }
 
-    public void CreateSlot(DateTimeOffset start, DateTimeOffset end, string[] runwayIdentifiers)
+    public Guid CreateSlot(DateTimeOffset start, DateTimeOffset end, string[] runwayIdentifiers)
     {
         var id = Guid.NewGuid();
         var index = CalculateInsertionIndex(start);
         InsertAt(index, new SlotSequenceItem(new Slot(id, start, end, runwayIdentifiers)));
 
         Schedule(index, runwayIdentifiers.ToHashSet(), forceRescheduleStable: true);
+        return id;
     }
 
     public void ModifySlot(Guid id, DateTimeOffset start, DateTimeOffset end)

@@ -6,6 +6,7 @@ using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
 using MediatR;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -228,6 +229,10 @@ public class ManualDelayRequestHandlerTests(
         var sessionManager = new MockLocalSessionManager(sequence);
         mediator ??= Substitute.For<IMediator>();
 
-        return new ManualDelayRequestHandler(sessionManager, mediator);
+        return new ManualDelayRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
     }
 }

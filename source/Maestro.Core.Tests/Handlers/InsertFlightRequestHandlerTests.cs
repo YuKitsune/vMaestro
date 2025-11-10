@@ -6,6 +6,7 @@ using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
 using MediatR;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -398,6 +399,10 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     {
         var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
-        return new InsertFlightRequestHandler(sessionManager, mediator);
+        return new InsertFlightRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
     }
 }

@@ -151,6 +151,7 @@ public class ChangeFeederFixEstimateHandlerTests(
 
         return new ChangeFeederFixEstimateRequestHandler(
             sessionManager,
+            new MockLocalConnectionManager(),
             estimateProvider,
             clockFixture.Instance,
             mediator,

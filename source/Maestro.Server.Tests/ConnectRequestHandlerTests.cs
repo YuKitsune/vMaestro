@@ -1,6 +1,5 @@
-using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Messages;
-using Maestro.Core.Messages.Connectivity;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;
@@ -153,12 +152,14 @@ public class ConnectRequestHandlerTests
         existingConnection.IsMaster.ShouldBeFalse();
         newConnection.IsMaster.ShouldBeTrue();
 
+        // OwnershipRevoked should be sent to the OLD master (existingConnection)
         hubProxy.Verify(x => x.Send(
-            connectionId,
+            existingConnection.Id,
             "OwnershipRevoked",
             It.Is<OwnershipRevokedNotification>(n => n.AirportIdentifier == airportIdentifier),
             It.IsAny<CancellationToken>()), Times.Once);
 
+        // PeerConnected should be sent to the existing connection
         hubProxy.Verify(x => x.Send(
             existingConnection.Id,
             "PeerConnected",
@@ -168,6 +169,7 @@ public class ConnectRequestHandlerTests
                 n.Role == role),
             It.IsAny<CancellationToken>()), Times.Once);
 
+        // ConnectionInitialized with IsMaster=true should be sent to the NEW Flow controller
         hubProxy.Verify(x => x.Send(
             connectionId,
             "ConnectionInitialized",

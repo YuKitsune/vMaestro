@@ -9,16 +9,12 @@ namespace Maestro.Core.Sessions;
 
 public class SessionManager(
     IAirportConfigurationProvider airportConfigurationProvider,
-    ServerConfiguration serverConfiguration,
-    ISessionFactory sessionFactory,
-    IMediator mediator,
-    ILogger logger,
     IArrivalLookup arrivalLookup,
     IClock clock)
     : ISessionManager
 {
     readonly SemaphoreSlim _semaphore = new(1, 1);
-    readonly IDictionary<string, Session> _sessions = new Dictionary<string, Session>();
+    readonly IDictionary<string, ISession> _sessions = new Dictionary<string, ISession>();
 
     public string[] ActiveSessions => _sessions.Keys.ToArray();
 
@@ -29,7 +25,7 @@ public class SessionManager(
             throw new MaestroException($"Session already exists for {airportIdentifier}.");
 
         var sequence = CreateSequence(airportIdentifier);
-        _sessions[airportIdentifier] = sessionFactory.Create(sequence);
+        _sessions[airportIdentifier] = new Session(sequence);
     }
 
     public bool HasSessionFor(string airportIdentifier) => _sessions.ContainsKey(airportIdentifier);
@@ -50,7 +46,7 @@ public class SessionManager(
         if (!_sessions.TryGetValue(airportIdentifier, out var session))
             throw new MaestroException($"No session exists for {airportIdentifier}.");
 
-        await session.DisposeAsync();
+        session.Dispose();
         _sessions.Remove(airportIdentifier);
     }
 

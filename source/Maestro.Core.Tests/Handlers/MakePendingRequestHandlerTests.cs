@@ -165,6 +165,10 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
-        return new MakePendingRequestHandler(sessionManager, mediator, logger);
+        return new MakePendingRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            logger);
     }
 }

@@ -1,21 +1,31 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class MakePendingRequestHandler(ISessionManager sessionManager, IMediator mediator, ILogger logger)
+public class MakePendingRequestHandler(
+    ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
+    IMediator mediator,
+    ILogger logger)
     : IRequestHandler<MakePendingRequest>
 {
     public async Task Handle(MakePendingRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            logger.Information("Relaying MakePendingRequest for {AirportIdentifier}", request.AirportIdentifier);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
 
         var sequence = lockedSession.Session.Sequence;
         var flight = sequence.FindTrackedFlight(request.Callsign);
@@ -29,6 +39,8 @@ public class MakePendingRequestHandler(ISessionManager sessionManager, IMediator
             throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
 
         sequence.MakePending(flight);
+
+        logger.Information("Marked flight {Callsign} as pending for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(

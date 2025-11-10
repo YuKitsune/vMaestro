@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -11,6 +12,7 @@ namespace Maestro.Core.Handlers;
 
 public class RecomputeRequestHandler(
     ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
     IClock clock,
@@ -20,12 +22,16 @@ public class RecomputeRequestHandler(
 {
     public async Task Handle(RecomputeRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        if (lockedSession.Session is { OwnsSequence: false, Connection: not null })
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
         {
-            await lockedSession.Session.Connection.Invoke(request, cancellationToken);
+            logger.Information("Relaying RecomputeRequest for {AirportIdentifier}", request.AirportIdentifier);
+            await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
 
         var sequence = lockedSession.Session.Sequence;
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
@@ -37,8 +43,6 @@ public class RecomputeRequestHandler(
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
             return;
         }
-
-        logger.Information("Recomputing {Callsign}", flight.Callsign);
 
         // Reset the feeder fix in case of a re-route
         var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
@@ -62,6 +66,8 @@ public class RecomputeRequestHandler(
 
         // Progress the state based on the new times
         flight.UpdateStateBasedOnTime(clock);
+
+        logger.Information("{Callsign} recomputed", flight.Callsign);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
