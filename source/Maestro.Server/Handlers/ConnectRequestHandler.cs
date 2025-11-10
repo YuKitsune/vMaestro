@@ -47,7 +47,7 @@ public class ConnectRequestHandler(
                 currentMaster.IsMaster = false;
 
                 await hubProxy.Send(
-                    connectionId,
+                    currentMaster.Id,
                     "OwnershipRevoked",
                     new OwnershipRevokedNotification(request.AirportIdentifier),
                     cancellationToken);
