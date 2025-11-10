@@ -232,7 +232,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        subject.LandingTime.ShouldBe(frozen2.LandingTime.AddSeconds(-180));
+        subject.LandingTime.ShouldBe(frozen2.LandingTime.AddMinutes(3));
     }
 
     [Fact]

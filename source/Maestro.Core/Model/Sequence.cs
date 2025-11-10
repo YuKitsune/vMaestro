@@ -632,6 +632,9 @@ public class Sequence
 
                 ValidateInsertionBetweenImmovableFlights(insertionIndex, flight.AssignedRunwayIdentifier);
 
+                // BUG: This will initially cause a conflict because the reference flight doesn't get recomputed here.
+                // They will be recomputed afterwards as part of regular scheduling, but if they're stable, it's likely to cause a persistent conflict until manually adjusted.
+                // Need to figure out a better way to deal with inserting flights at specific times.
                 flight.SetLandingTime(referenceFlightItem.Flight.LandingTime, manual: true);
 
                 index = insertionIndex;
@@ -824,6 +827,8 @@ public class Sequence
                 continue;
             }
 
+            // TODO: What about manual landing times?
+
             // Stable and SuperStable flights should not have their landing times changed
             // unless we're forcing a reschedule due to operational changes
             if (currentFlight.State is State.Stable or State.SuperStable && !forceRescheduleStable)
@@ -964,6 +969,8 @@ public class Sequence
                         // Manually-inserted flights can't be delayed
                         // TODO: Verify this behaviour is correct
                         FlightSequenceItem { Flight.IsManuallyInserted: true } => false,
+
+                        // TODO: What about manual landing times?
 
                         // New flights can delay stable flights
                         FlightSequenceItem { Flight.State: State.Stable } when isNewFlight => true,
