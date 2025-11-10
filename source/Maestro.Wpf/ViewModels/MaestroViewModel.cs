@@ -141,7 +141,20 @@ public partial class MaestroViewModel : ObservableObject
     }
 
     [RelayCommand]
-    async Task MoveFlight(MoveFlightRequest request)
+    async Task MoveFlightWithoutConfirmation(MoveFlightRequest request)
+    {
+        try
+        {
+            await _mediator.Send(request, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    async Task MoveFlightWithConfirmation(MoveFlightRequest request)
     {
         try
         {
@@ -166,19 +179,10 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
-            IsConfirmationDialogOpen = true;
-            var confirmation = await _mediator.Send(
-                new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
-            IsConfirmationDialogOpen = false;
-
-            if (!confirmation.Confirmed)
-                return;
-
             await _mediator.Send(request, CancellationToken.None);
         }
         catch (Exception ex)
         {
-            IsConfirmationDialogOpen = false;
             _errorReporter.ReportError(ex);
         }
     }

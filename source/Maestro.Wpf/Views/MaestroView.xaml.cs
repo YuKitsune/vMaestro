@@ -392,7 +392,7 @@ public partial class MaestroView
                 : ViewModel.SelectedView.RightLadder;
 
             // Move the selected flight to the clicked position
-            ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
+            ViewModel.MoveFlightWithoutConfirmationCommand.Execute(new MoveFlightRequest(
                 ViewModel.AirportIdentifier,
                 ViewModel.SelectedFlight.Callsign,
                 filterItems,
@@ -601,7 +601,7 @@ public partial class MaestroView
                     _ => []
                 };
 
-                ViewModel.MoveFlightCommand.Execute(new MoveFlightRequest(
+                ViewModel.MoveFlightWithConfirmationCommand.Execute(new MoveFlightRequest(
                     ViewModel.AirportIdentifier,
                     flight.Callsign,
                     filterItems,
