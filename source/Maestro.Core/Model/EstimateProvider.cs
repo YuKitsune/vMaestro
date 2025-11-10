@@ -35,7 +35,7 @@ public class EstimateProvider(
 
         // If the flight has passed the feeder fix but vatSys didn't see it, we'll get a MaxValue for the ATO_FF
         // In this case, defer to the system estimate
-        if (flight.HasPassedFeederFix || flight.ActualFeederFixTime == DateTimeOffset.MaxValue)
+        if (flight.HasPassedFeederFix && flight.ActualFeederFixTime == DateTimeOffset.MaxValue)
             return systemEstimate;
 
         var timeToGo = arrivalLookup.GetArrivalInterval(

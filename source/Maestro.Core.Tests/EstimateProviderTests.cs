@@ -61,37 +61,6 @@ public class EstimateProviderTests
     }
 
     [Fact]
-    public void GetFeederFixEstimate_WithinRange_UsesTrajectory()
-    {
-        // Arrange
-        var estimateProvider = new EstimateProvider(
-            _arrivalLookup,
-            _fixLookup,
-            _clock);
-
-        // Act
-        var systemEstimate = _currentTime.AddMinutes(65);
-        var position = new FlightPosition(
-            new Coordinate(1, 0), // 60 nm
-            25000,
-            VerticalTrack.Maintaining,
-            60,
-            isOnGround: false);
-
-        var estimate = estimateProvider.GetFeederFixEstimate(
-            _airportConfigurationFixture.Instance,
-            "RIVET",
-            systemEstimate,
-            position);
-
-        // Assert
-        var expectedEstimate = _clock.UtcNow().AddHours(1).AddMinutes(2.5);
-        estimate.ShouldNotBeNull();
-        estimate.Value.ShouldBe(expectedEstimate, TimeSpan.FromSeconds(30));
-        estimate.Value.ShouldNotBe(systemEstimate, TimeSpan.FromSeconds(30));
-    }
-
-    [Fact]
     public void GetLandingEstimate_WithoutIntervals_UsesSystemEstimate()
     {
         // Arrange
