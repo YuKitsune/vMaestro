@@ -465,8 +465,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
-            .WithLandingEstimate(now.AddMinutes(20))
-            .WithFeederFixEstimate(now.AddMinutes(8))
+            .WithLandingEstimate(now.AddMinutes(10))
             .WithState(State.Unstable)
             .Build();
 
@@ -476,6 +475,10 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         sequence.Insert(frozenFlight1, frozenFlight1.LandingEstimate);
         sequence.Insert(frozenFlight2, frozenFlight2.LandingEstimate);
         sequence.AddPendingFlight(pendingFlight);
+
+        // Sanity check - ensure the two frozen flights are correctly positioned
+        frozenFlight1.LandingTime.ShouldBe(now.AddMinutes(10));
+        frozenFlight2.LandingTime.ShouldBe(now.AddMinutes(13));
 
         var handler = GetRequestHandler(sequence, clockFixture.Instance);
         var request = new InsertPendingRequest(
