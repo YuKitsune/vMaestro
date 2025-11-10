@@ -49,6 +49,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
 
         var handler = new ChangeRunwayRequestHandler(
             sessionManager,
+            new MockLocalConnectionManager(),
             Substitute.For<IClock>(),
             mediator,
             Substitute.For<ILogger>());

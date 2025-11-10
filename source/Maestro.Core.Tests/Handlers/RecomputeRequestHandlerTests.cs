@@ -371,6 +371,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         return new RecomputeRequestHandler(
             sessionManager,
+            new MockLocalConnectionManager(),
             airportConfigurationProvider,
             estimateProvider,
             clockFixture.Instance,

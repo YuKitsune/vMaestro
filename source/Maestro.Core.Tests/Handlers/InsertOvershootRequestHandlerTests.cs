@@ -7,6 +7,7 @@ using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
 using MediatR;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -401,6 +402,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
     {
         var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
-        return new InsertOvershootRequestHandler(sessionManager, clock, mediator);
+        return new InsertOvershootRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            clock,
+            mediator,
+            Substitute.For<ILogger>());
     }
 }

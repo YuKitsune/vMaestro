@@ -640,6 +640,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
 
         return new FlightUpdatedHandler(
             sessionManager,
+            new MockLocalConnectionManager(),
             rateLimiter,
             airportConfigurationProvider,
             estimateProvider,

@@ -7,6 +7,7 @@ using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
 using MediatR;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -493,6 +494,11 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
     {
         var sessionManager = new MockLocalSessionManager(sequence);
         var mediator = Substitute.For<IMediator>();
-        return new InsertPendingRequestHandler(sessionManager, clock, mediator);
+        return new InsertPendingRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            clock,
+            mediator,
+            Substitute.For<ILogger>());
     }
 }

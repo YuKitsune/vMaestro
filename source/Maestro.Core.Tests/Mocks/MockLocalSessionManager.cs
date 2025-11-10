@@ -1,6 +1,4 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 
 namespace Maestro.Core.Tests.Mocks;
@@ -38,17 +36,9 @@ public class MockSession(Sequence sequence) : ISession
     public string AirportIdentifier => sequence.AirportIdentifier;
     public Sequence Sequence => sequence;
     public string Position => "MockPosition";
-    public MaestroConnection? Connection => null;
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
-    public ConnectionInfo? ConnectionInfo => null;
-    public bool OwnsSequence => true;
-    public Role Role => Role.Flow;
     public bool IsActive => true;
-    public bool IsConnected => false;
     public Task Start(string position, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task Stop(CancellationToken cancellationToken) => throw new NotImplementedException();
-    public Task SetConnectionInfo(ConnectionInfo connectionInfo, CancellationToken cancellationToken) => throw new NotImplementedException();
-    public Task Disconnect(CancellationToken cancellationToken) => throw new NotImplementedException();
-    public Task TakeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
-    public Task RevokeOwnership(CancellationToken cancellationToken) => throw new NotImplementedException();
+    public void Dispose() => Semaphore.Dispose();
 }

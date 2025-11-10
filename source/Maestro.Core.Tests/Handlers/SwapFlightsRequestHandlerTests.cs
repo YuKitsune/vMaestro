@@ -6,6 +6,7 @@ using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
 using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
@@ -36,7 +37,12 @@ public class SwapFlightsRequestHandlerTests(
         sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
-        var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
+        var handler = new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -73,7 +79,12 @@ public class SwapFlightsRequestHandlerTests(
         sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
-        var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
+        var handler = new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -107,7 +118,12 @@ public class SwapFlightsRequestHandlerTests(
         sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
-        var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
+        var handler = new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -140,7 +156,12 @@ public class SwapFlightsRequestHandlerTests(
         sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
-        var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
+        var handler = new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -165,7 +186,12 @@ public class SwapFlightsRequestHandlerTests(
         sequence.Insert(flight, flight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
-        var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
+        var handler = new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -190,7 +216,12 @@ public class SwapFlightsRequestHandlerTests(
         sequence.Insert(flight, flight.LandingEstimate);
 
         var sessionManager = new MockLocalSessionManager(sequence);
-        var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
+        var handler = new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -225,8 +256,7 @@ public class SwapFlightsRequestHandlerTests(
         sequence.Insert(firstFlight, firstFlight.LandingEstimate);
         sequence.Insert(secondFlight, secondFlight.LandingEstimate);
 
-        var sessionManager = new MockLocalSessionManager(sequence);
-        var handler = new SwapFlightsRequestHandler(sessionManager, Substitute.For<MediatR.IMediator>(), _clock);
+        var handler = GetHandler(sequence);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -236,5 +266,16 @@ public class SwapFlightsRequestHandlerTests(
         // Assert
         firstFlight.State.ShouldBe(State.SuperStable);
         secondFlight.State.ShouldBe(State.Frozen);
+    }
+
+    SwapFlightsRequestHandler GetHandler(Sequence sequence)
+    {
+        var sessionManager = new MockLocalSessionManager(sequence);
+        return new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
     }
 }
