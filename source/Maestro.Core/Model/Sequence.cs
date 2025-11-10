@@ -558,6 +558,8 @@ public class Sequence
     {
         var originalIndex = _sequence.FindIndex(i => i is FlightSequenceItem f && f.Flight == flight);
 
+        // TODO: What if the flight is already frozen?
+        // TODO: If we recompute a flight that's in the frozen part of the sequence, should it get delayed until it's no longer in that part?
         // Validate BEFORE removing - exclude the flight being moved
         var newIndex = CalculateInsertionIndex(flight.LandingEstimate);
         if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
@@ -589,8 +591,6 @@ public class Sequence
         switch (options)
         {
             case ExactInsertionOptions landingTimeOption:
-                flight.SetLandingTime(landingTimeOption.TargetLandingTime, manual: true);
-
                 var runwayMode = GetRunwayModeAt(landingTimeOption.TargetLandingTime);
                 var runwayIdentifier = runwayMode.Runways.FirstOrDefault(r => landingTimeOption.RunwayIdentifiers.Contains(r.Identifier))?.Identifier
                     ?? runwayMode.Default.Identifier;
@@ -632,11 +632,6 @@ public class Sequence
 
                 ValidateInsertionBetweenImmovableFlights(insertionIndex, flight.AssignedRunwayIdentifier);
 
-                // BUG: This will initially cause a conflict because the reference flight doesn't get recomputed here.
-                // They will be recomputed afterwards as part of regular scheduling, but if they're stable, it's likely to cause a persistent conflict until manually adjusted.
-                // Need to figure out a better way to deal with inserting flights at specific times.
-                flight.SetLandingTime(referenceFlightItem.Flight.LandingTime, manual: true);
-
                 index = insertionIndex;
 
                 break;
@@ -677,9 +672,7 @@ public class Sequence
 
         // Now it's safe to mutate - validation has passed
         flight.SetRunway(runway.Identifier, manual: true);
-        flight.SetLandingTime(newLandingTime, manual: true);
 
-        // TODO: When moved to a position more than 1 runway separation from the preceding flight will, it should move forward towards this position to minimise the delay.
         var index = CalculateInsertionIndex(newLandingTime);
         InsertAt(index, new FlightSequenceItem(flight));
 
@@ -712,11 +705,11 @@ public class Sequence
         var tempLandingTime = flight1.LandingTime;
         var tempFeederFixTime = flight1.FeederFixTime;
 
-        flight1.SetLandingTime(flight2.LandingTime, manual: true);
+        flight1.SetLandingTime(flight2.LandingTime);
         if (flight2.FeederFixTime is not null)
             flight1.SetFeederFixTime(flight2.FeederFixTime.Value);
 
-        flight2.SetLandingTime(tempLandingTime, manual: true);
+        flight2.SetLandingTime(tempLandingTime);
         if (tempFeederFixTime is not null)
             flight2.SetFeederFixTime(tempFeederFixTime.Value);
     }
@@ -771,19 +764,8 @@ public class Sequence
         if (!string.IsNullOrEmpty(referenceFlightItem.Flight.AssignedRunwayIdentifier))
             ValidateInsertionBetweenImmovableFlights(insertionIndex, referenceFlightItem.Flight.AssignedRunwayIdentifier!);
 
-        // TODO: Source the runway mode from the flight instead of calculating it
-        var runwayMode = GetRunwayModeAt(referenceFlightItem.Time);
-        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlightItem.Flight.AssignedRunwayIdentifier);
-
-        var landingTime = relativePosition switch
-        {
-            RelativePosition.Before => referenceFlightItem.Flight.LandingTime,
-            RelativePosition.After when runway is not null => referenceFlightItem.Flight.LandingTime.Add(runway.AcceptanceRate),
-            _ => throw new ArgumentOutOfRangeException(nameof(relativePosition), relativePosition, null)
-        };
-
+        // TODO: Account for runway mode changes
         existingFlightItem.Flight.SetRunway(referenceFlightItem.Flight.AssignedRunwayIdentifier!, manual: true);
-        existingFlightItem.Flight.SetLandingTime(landingTime);
 
         _sequence.Remove(existingFlightItem);
         if (currentFlightIndex >= insertionIndex)
