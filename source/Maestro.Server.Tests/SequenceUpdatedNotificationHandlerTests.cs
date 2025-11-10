@@ -1,4 +1,4 @@
-using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Messages;
 using Maestro.Server.Handlers;
 using Moq;

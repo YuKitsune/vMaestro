@@ -1,4 +1,4 @@
-using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Messages;
 using Maestro.Server.Handlers;
 using Moq;
@@ -78,23 +78,23 @@ public class ClientDisconnectedNotificationHandlerTests
         const string connectionId = "master-connection";
         const string partition = "partition-1";
         const string airportIdentifier = "YSSY";
-        const string callsign = "ML-BIK_CTR";
+        const string callsign = "SY_FMP";
         const Role role = Role.Enroute;
 
         var notification = new ClientDisconnectedNotification(connectionId);
 
-        var masterConnection = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = true };
-        var flowController = new Connection("flow-connection", partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = false };
+        var primaryFlowController = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = true };
+        var secondaryFlowController = new Connection("flow-connection", partition, airportIdentifier, "SY__FMP", Role.Flow) { IsMaster = false };
         var otherPeer = new Connection("other-connection", partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
             .Returns(new TryGetConnectionCallback((string id, out Connection? connection) =>
             {
-                connection = masterConnection;
+                connection = primaryFlowController;
                 return true;
             }));
-        connectionManager.Setup(x => x.GetPeers(masterConnection)).Returns([flowController, otherPeer]);
+        connectionManager.Setup(x => x.GetPeers(primaryFlowController)).Returns([otherPeer, secondaryFlowController]);
 
         var hubProxy = new Mock<IHubProxy>();
 
@@ -103,17 +103,17 @@ public class ClientDisconnectedNotificationHandlerTests
             .Handle(notification, CancellationToken.None);
 
         // Assert
-        flowController.IsMaster.ShouldBeTrue();
+        primaryFlowController.IsMaster.ShouldBeTrue();
         otherPeer.IsMaster.ShouldBeFalse();
 
         hubProxy.Verify(x => x.Send(
-            flowController.Id,
+            secondaryFlowController.Id,
             "OwnershipGranted",
             It.Is<OwnershipGrantedNotification>(n => n.AirportIdentifier == airportIdentifier),
             It.IsAny<CancellationToken>()), Times.Once);
 
         hubProxy.Verify(x => x.Send(
-            flowController.Id,
+            secondaryFlowController.Id,
             "PeerDisconnected",
             It.Is<PeerDisconnectedNotification>(n =>
                 n.AirportIdentifier == airportIdentifier &&

@@ -1,5 +1,4 @@
-using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
+using Maestro.Core.Connectivity.Contracts;
 using MediatR;
 using ILogger = Serilog.ILogger;
 
@@ -39,7 +38,7 @@ public class ClientDisconnectedNotificationHandler(
                 .ToArray();
 
             // Master has left, need to re-assign to someone else
-            // Prefer the flow controller, otherwise the next available connection
+            // Prefer another flow controller, otherwise the next eligible connection
             var newMaster = eligiblePeers.FirstOrDefault(c => c.Role == Role.Flow) ?? eligiblePeers.FirstOrDefault();
             if (newMaster is not null)
             {
