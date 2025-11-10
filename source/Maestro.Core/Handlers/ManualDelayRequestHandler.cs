@@ -37,6 +37,9 @@ public class ManualDelayRequestHandler(
         var maximumDelay = TimeSpan.FromMinutes(request.MaximumDelayMinutes);
         flight.SetMaximumDelay(maximumDelay);
 
+        // TODO: Re-insert the flight based on it's ETA.
+        //  during scheduling, don't move the flight back if it would result in a delay greater than the maximum delay
+
         sequence.Recompute(flight);
 
         logger.Information("Set maximum delay for {Callsign} to {MaximumDelay}", request.Callsign, maximumDelay);

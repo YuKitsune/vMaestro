@@ -78,7 +78,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         InitialLandingEstimate = message.InitialLandingEstimate;
         LandingEstimate = message.LandingEstimate;
         LandingTime = message.LandingTime;
-        ManualLandingTime = message.ManualLandingTime;
         FlowControls = message.FlowControls;
         AssignedArrivalIdentifier = message.AssignedArrivalIdentifier;
         Fixes = message.Fixes.ToArray();
@@ -120,7 +119,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset InitialLandingEstimate { get; private set; }
     public DateTimeOffset LandingEstimate { get; private set; } // ETA
     public DateTimeOffset LandingTime { get; private set; } // STA
-    public bool ManualLandingTime { get; private set; }
 
     public TimeSpan TotalDelay => LandingTime - InitialLandingEstimate;
     public TimeSpan RemainingDelay => LandingTime - LandingEstimate;
@@ -204,10 +202,9 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     }
 
     // TODO: This should update the feeder fix time based on the processed arrival
-    public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
+    public void SetLandingTime(DateTimeOffset landingTime)
     {
         LandingTime = landingTime;
-        ManualLandingTime = manual;
     }
 
     public void UpdateLastSeen(IClock clock)
@@ -239,7 +236,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         LandingEstimate = default;
         InitialLandingEstimate = default;
         LandingTime = default;
-        ManualLandingTime = false;
         State = State.Unstable;
         FlowControls = FlowControls.ProfileSpeed;
         MaximumDelay = null;

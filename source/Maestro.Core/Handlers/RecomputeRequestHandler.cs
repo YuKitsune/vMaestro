@@ -60,8 +60,6 @@ public class RecomputeRequestHandler(
         if (flight.FeederFixEstimate is not null)
             flight.SetFeederFixTime(flight.FeederFixEstimate.Value);
 
-        flight.SetLandingTime(flight.LandingEstimate, manual: false);
-
         sequence.Recompute(flight);
 
         // Progress the state based on the new times
