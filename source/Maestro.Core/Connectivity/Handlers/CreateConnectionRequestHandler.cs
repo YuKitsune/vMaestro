@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -25,6 +24,8 @@ public class CreateConnectionRequestHandler(
                 request.Partition,
                 cancellationToken);
 
+            await mediator.Publish(new ConnectionCreatedNotification(request.AirportIdentifier), cancellationToken);
+
             logger.Information("Connection for {AirportIdentifier} created", request.AirportIdentifier);
 
             // If the session is active, start the connection immediately
@@ -32,6 +33,8 @@ public class CreateConnectionRequestHandler(
             {
                 await connection.Start(lockedSession.Session.Position, cancellationToken);
                 logger.Information("Connection for {AirportIdentifier} started", request.AirportIdentifier);
+
+                await mediator.Publish(new ConnectionStartedNotification(request.AirportIdentifier), cancellationToken);
             }
         }
         catch (Exception e)
