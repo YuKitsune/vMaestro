@@ -28,7 +28,7 @@ public class ManualDelayRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
 
         var sequence = lockedSession.Session.Sequence;
-        var flight = sequence.FindTrackedFlight(request.Callsign);
+        var flight = sequence.FindFlight(request.Callsign);
         if (flight == null)
         {
             throw new MaestroException($"{request.Callsign} not found");
