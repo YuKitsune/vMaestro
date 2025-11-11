@@ -36,15 +36,15 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     }
 
     // Constructor for manually inserted flights (formerly DummyFlight)
-    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset landingTime, State state)
+    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset targetTime, State state)
     {
         Callsign = callsign;
         AircraftType = aircraftType ?? string.Empty;
         DestinationIdentifier = destinationIdentifier;
         AssignedRunwayIdentifier = runwayIdentifier;
-        LandingTime = landingTime;
-        InitialLandingEstimate = landingTime;
-        LandingEstimate = landingTime;
+        InitialLandingEstimate = targetTime;
+        LandingEstimate = targetTime;
+        LandingTime = targetTime;
         State = state;
         IsManuallyInserted = true;
         AircraftCategory = AircraftCategory.Jet;
