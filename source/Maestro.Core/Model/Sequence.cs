@@ -893,14 +893,10 @@ public class Sequence
                 }
             }
 
-            var earliestAllowedTime = currentFlight.ManualLandingTime
-                ? currentFlight.LandingTime
-                : currentFlight.LandingEstimate;
-
-            // Ensure the flight isn't sped up to meet the previous item
-            var landingTime = earliestLandingTimeFromPrevious.IsAfter(earliestAllowedTime)
+            // Don't speed flights up to land before their estimate
+            var landingTime = earliestLandingTimeFromPrevious.IsAfter(currentFlight.LandingEstimate)
                 ? earliestLandingTimeFromPrevious
-                : earliestAllowedTime;
+                : currentFlight.LandingEstimate;
 
             // Ensure manual delay flights aren't delayed by more than their maximum delay
             if (currentFlight.MaximumDelay is not null)

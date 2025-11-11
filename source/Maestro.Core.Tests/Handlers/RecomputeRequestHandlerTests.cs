@@ -73,10 +73,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "QFA1 landing time should be reset to estimate");
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task WhenRecomputingAFlight_LandingTimeIsResetToEstimatedTime(bool manual)
+    [Fact]
+    public async Task WhenRecomputingAFlight_LandingTimeIsResetToEstimatedTime()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -86,7 +84,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
             .WithLandingEstimate(estimatedLandingTime)
-            .WithLandingTime(scheduledLandingTime, manual)
+            .WithLandingTime(scheduledLandingTime)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
@@ -104,7 +102,6 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight.InitialLandingEstimate.ShouldBe(estimatedLandingTime);
         flight.LandingEstimate.ShouldBe(estimatedLandingTime);
         flight.LandingTime.ShouldBe(estimatedLandingTime);
-        flight.ManualLandingTime.ShouldBeFalse();
     }
 
     [Theory]
