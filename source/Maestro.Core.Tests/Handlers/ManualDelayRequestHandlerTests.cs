@@ -115,7 +115,7 @@ public class ManualDelayRequestHandlerTests(
     }
 
     [Fact]
-    public async Task WhenFlightHasDelayAboveMaximum_FlightMovesForwardToReduceDelay()
+    public async Task WhenFlightHasDelayAboveMaximum_FlightIsRepositionedToReduceDelay()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();

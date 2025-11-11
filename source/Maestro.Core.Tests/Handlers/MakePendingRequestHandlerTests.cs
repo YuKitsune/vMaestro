@@ -17,7 +17,7 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
     [Fact]
-    public async Task WhenMakingFlightPending_AllRequiredUpdatesArePerformed()
+    public async Task WhenMakingFlightPending_ItIsRemovedFromTheSequence()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -65,6 +65,8 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
         flight2.LandingTime.ShouldBe(flight2.LandingEstimate, "remaining flight should return to its estimate");
     }
+
+    // TODO: Throw an error
 
     [Fact]
     public async Task WhenFlightNotFound_WarningIsLoggedAndHandlerReturns()

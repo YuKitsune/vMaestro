@@ -23,6 +23,86 @@ namespace Maestro.Core.Model;
 // - Landed, Frozen, SuperStable, and Stable flights are sequenced by ScheduledLandingTime
 // - Unstable flights are sequenced by EstimatedLandingTime
 
+
+public class NewSequence
+{
+    readonly List<ISequenceItem> _items = new();
+
+    public IReadOnlyList<ISequenceItem> Items => _items.AsReadOnly();
+
+    public int IndexOf(ISequenceItem item)
+    {
+        return _items.IndexOf(item);
+    }
+
+    public int IndexOf(Flight flight)
+    {
+        return _items.FindIndex(i => i is FlightSequenceItem flightItem && flightItem.Flight == flight);
+    }
+
+    public int IndexOf(DateTimeOffset time)
+    {
+        for (var i = 0; i < _items.Count; i++)
+        {
+            if (time > _items[i].Time)
+                continue;
+
+            return i;
+        }
+
+        return _items.Count;
+    }
+
+    public void Insert(int index, Flight flight)
+    {
+        if (_items.Count == 0)
+        {
+            _items.Add(new FlightSequenceItem(flight));
+        }
+        else
+        {
+            _items.Insert(index, new FlightSequenceItem(flight));
+        }
+    }
+
+    public void Insert(int index, Slot slot)
+    {
+        if (_items.Count == 0)
+        {
+            _items.Add(new SlotSequenceItem(slot));
+        }
+        else
+        {
+            _items.Insert(index, new SlotSequenceItem(slot));
+        }
+    }
+
+    public void Insert(int index, RunwayMode runwayMode, DateTimeOffset lastLandingTimeForOldMode, DateTimeOffset firstLandingTimeForNewMode)
+    {
+        if (_items.Count == 0)
+        {
+            _items.Add(new RunwayModeChangeSequenceItem(runwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode));
+        }
+        else
+        {
+            _items.Insert(index, new RunwayModeChangeSequenceItem(runwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode));
+        }
+    }
+
+    public void Swap(int index1, int index2)
+    {
+        var item1 = _items[index1];
+        var item2 = _items[index2];
+        _items[index1] = item2;
+        _items[index2] = item1;
+    }
+
+    public void Remove(int index)
+    {
+        _items.RemoveAt(index);
+    }
+}
+
 public class Sequence
 {
     readonly AirportConfiguration _airportConfiguration;
@@ -1136,33 +1216,35 @@ public class Sequence
 
         flight.ResetInitialEstimates();
     }
+}
 
-    interface ISequenceItem
-    {
-        DateTimeOffset Time { get; }
-    }
+public interface ISequenceItem
+{
+    DateTimeOffset Time { get; }
+}
 
-    interface IFlightSequenceItem : ISequenceItem
-    {
-        State State { get; }
-    }
+public interface IFlightSequenceItem : ISequenceItem
+{
+    State State { get; }
+}
 
-    record FlightSequenceItem(Flight Flight) : ISequenceItem
-    {
-        // Always use LandingTime for sequence positioning to prevent discontinuities during state transitions
-        public DateTimeOffset Time => Flight.LandingTime;
-    }
+public record FlightSequenceItem(Flight Flight) : ISequenceItem
+{
+    // Always use LandingTime for sequence positioning to prevent discontinuities during state transitions
+    public DateTimeOffset Time => Flight.LandingTime;
+}
 
-    record SlotSequenceItem(Slot Slot) : ISequenceItem
-    {
-        public DateTimeOffset Time => Slot.StartTime;
-    }
+public record SlotSequenceItem(Slot Slot) : ISequenceItem
+{
+    public DateTimeOffset Time => Slot.StartTime;
+}
 
-    record RunwayModeChangeSequenceItem(
-        RunwayMode RunwayMode,
-        DateTimeOffset LastLandingTimeInPreviousMode,
-        DateTimeOffset FirstLandingTimeInNewMode) : ISequenceItem
-    {
-        public DateTimeOffset Time => LastLandingTimeInPreviousMode;
-    }
+// TODO: Remove this and source runway mode and separation requirements from the flight itself
+
+public record RunwayModeChangeSequenceItem(
+    RunwayMode RunwayMode,
+    DateTimeOffset LastLandingTimeInPreviousMode,
+    DateTimeOffset FirstLandingTimeInNewMode) : ISequenceItem
+{
+    public DateTimeOffset Time => LastLandingTimeInPreviousMode;
 }
