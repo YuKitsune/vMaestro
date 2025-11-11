@@ -155,7 +155,6 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight.RunwayManuallyAssigned.ShouldBeFalse("RunwayManuallyAssigned should be reset to false");
         flight.LandingEstimate.ShouldBe(default(DateTimeOffset), "LandingEstimate should be reset to default");
         flight.LandingTime.ShouldBe(default(DateTimeOffset), "LandingTime should be reset to default");
-        flight.ManualLandingTime.ShouldBeFalse("ManualLandingTime should be reset to false");
         flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
     }

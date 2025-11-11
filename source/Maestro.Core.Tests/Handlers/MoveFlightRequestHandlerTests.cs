@@ -42,6 +42,8 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         moving.LandingTime.ShouldBe(frozen.LandingTime.AddMinutes(5));
     }
 
+    // TODO: nope
+
     [Fact]
     public async Task WhenFlightIsMoved_LandingTimeIsSet()
     {
@@ -65,7 +67,6 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         // Assert
         flight.LandingTime.ShouldBe(newTime);
-        flight.ManualLandingTime.ShouldBeTrue();
     }
 
     [Fact]
