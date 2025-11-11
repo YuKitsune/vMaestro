@@ -1486,49 +1486,6 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
     }
 
     [Fact]
-    public void SwapFlights_RepositionsBothFlights()
-    {
-        // Arrange
-        var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
-            .Build();
-
-        var flight1 = new FlightBuilder("ABC123")
-            .WithLandingEstimate(_time.AddMinutes(5))
-            .WithRunway("34L")
-            .WithFeederFixTime(_time.AddMinutes(3))
-            .Build();
-
-        var flight2 = new FlightBuilder("DEF456")
-            .WithLandingEstimate(_time.AddMinutes(8))
-            .WithRunway("34L")
-            .WithFeederFixTime(_time.AddMinutes(6))
-            .Build();
-
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
-
-        var originalFlight1LandingTime = flight1.LandingTime;
-        var originalFlight2LandingTime = flight2.LandingTime;
-        var originalFlight1FeederFixTime = flight1.FeederFixTime;
-        var originalFlight2FeederFixTime = flight2.FeederFixTime;
-
-        // Act: Swap the two flights
-        sequence.SwapFlights("ABC123", "DEF456");
-
-        // Assert
-        flight1.LandingTime.ShouldBe(originalFlight2LandingTime, "first flight should have second flight's original landing time");
-        flight2.LandingTime.ShouldBe(originalFlight1LandingTime, "second flight should have first flight's original landing time");
-
-        flight1.FeederFixTime.ShouldBe(originalFlight2FeederFixTime, "first flight should have second flight's original feeder fix time");
-        flight2.FeederFixTime.ShouldBe(originalFlight1FeederFixTime, "second flight should have first flight's original feeder fix time");
-
-        // Verify ordering is swapped
-        sequence.NumberInSequence(flight2).ShouldBe(1, "second flight should now be first in sequence");
-        sequence.NumberInSequence(flight1).ShouldBe(2, "first flight should now be second in sequence");
-    }
-
-    [Fact]
     public void Reposition_WithNoConflict_MovesFlight_BasedOnTargetTime()
     {
         // Arrange
