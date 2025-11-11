@@ -37,7 +37,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
     }
 
     [Fact]
-    public async Task WhenFlightIsInserted_TheStateIsSet()
+    public async Task WhenFlightIsInserted_ItBecomesStable()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();

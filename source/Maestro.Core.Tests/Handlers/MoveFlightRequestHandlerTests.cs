@@ -12,6 +12,23 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
+// TODO: All of these tests asserting landing times need to be moved to a separate scheduler test.
+// Handlers tests should just assert the position is set.
+
+// TODO: Test cases
+// - When a flight is moved, and no other flights exist, the landing time is unchanged
+// - When a flight is moved, and the landing time changes, the feeder fix time is updated
+// - When a flight is moved, and it was unstable, it becomes stable
+// - When a flight is moved, in front of another one, the position is updated, and the other flight is delayed behind the moved flight
+// - When a flight is moved, behind another one, the position is updated, and the moved flight is delayed behind the other flight
+// - When a flight is moved, between two flights, with an estimate ahead of the first one, the position is updated, and the moved flight is delayed behind the first flight
+// - (Theory) When a flight is moved, between two flights, with an estimate behind of the first one (or behind the last one), the position is updated, the moved flight is not delayed, and the last flight is delayed behind the moved flight
+// - When a flight is moved, in front of a stable or superstable flight, the stable/unstable flight is delayed
+// - When a flight is moved, in front of a frozen flight, the frozen flight is not delayed
+// - When a flight is moved, between two frozen flights, with an estimate ahead of the first one, and enough space between them, the position is updated, and the moved flight is delayed behind the first flight
+// - When a flight is moved, between two frozen flights, with an estimate behind the first one, and enough space between them, the position is updated, and the moved flight is delayed behind the first flight, and the second flight is not moved
+// - When a flight is moved, between two frozen flights, without enough space between them, an error is thrown
+
 public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
