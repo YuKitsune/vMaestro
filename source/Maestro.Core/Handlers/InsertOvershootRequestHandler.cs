@@ -31,7 +31,7 @@ public class InsertOvershootRequestHandler(
         var sequence = lockedSession.Session.Sequence;
 
         // BUG: If inserting after a frozen flight, nothing happens
-        var landedFlight = sequence.FindTrackedFlight(request.Callsign);
+        var landedFlight = sequence.FindFlight(request.Callsign);
         if (landedFlight is null)
         {
             throw new MaestroException($"Flight {request.Callsign} not found in landed flights");

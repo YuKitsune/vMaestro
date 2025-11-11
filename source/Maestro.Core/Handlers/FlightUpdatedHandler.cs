@@ -46,7 +46,7 @@ public class FlightUpdatedHandler(
 
             // Rate-limit updates for existing flights
             var sequence = lockedSession.Session.Sequence;
-            var flight = sequence.FindTrackedFlight(notification.Callsign);
+            var flight = sequence.FindFlight(notification.Callsign);
             if (flight is not null)
             {
                 var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight);

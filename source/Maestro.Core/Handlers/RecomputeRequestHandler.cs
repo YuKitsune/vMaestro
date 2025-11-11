@@ -37,7 +37,7 @@ public class RecomputeRequestHandler(
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == request.AirportIdentifier);
 
-        var flight = sequence.FindTrackedFlight(request.Callsign);
+        var flight = sequence.FindFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);

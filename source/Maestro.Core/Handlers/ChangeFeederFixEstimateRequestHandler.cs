@@ -31,7 +31,7 @@ public class ChangeFeederFixEstimateRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
 
-        var flight = sequence.FindTrackedFlight(request.Callsign);
+        var flight = sequence.FindFlight(request.Callsign);
         if (flight == null)
         {
             logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
