@@ -33,11 +33,11 @@ public class SwapFlightsRequestHandler(
 
         var firstFlight = sequence.FindFlight(request.FirstFlightCallsign);
         if (firstFlight is null)
-            throw new MaestroException($"Could not find {request.FirstFlightCallsign}");
+            throw new MaestroException($"{request.FirstFlightCallsign} not found");
 
         var secondFlight = sequence.FindFlight(request.SecondFlightCallsign);
         if (secondFlight is null)
-            throw new MaestroException($"Could not find {request.SecondFlightCallsign}");
+            throw new MaestroException($"{request.SecondFlightCallsign} not found");
 
         // Swap positions
         var firstFlightIndex = sequence.IndexOf(firstFlight);
