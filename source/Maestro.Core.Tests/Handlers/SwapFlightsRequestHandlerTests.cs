@@ -24,12 +24,12 @@ public class SwapFlightsRequestHandlerTests(
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
             .WithRunway("34L")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
             .Build();
 
         var secondFlight = new FlightBuilder("QFA2")
             .WithRunway("34R")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
@@ -104,13 +104,15 @@ public class SwapFlightsRequestHandlerTests(
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34L")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
             .Build();
 
         var secondFlight = new FlightBuilder("QFA2")
+            .WithFeederFix("MARLN") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34R")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
@@ -141,13 +143,13 @@ public class SwapFlightsRequestHandlerTests(
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
             .WithRunway("34L")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
             .WithState(State.Unstable)
             .Build();
 
         var secondFlight = new FlightBuilder("QFA2")
             .WithRunway("34R")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .WithState(State.Unstable)
             .Build();
 
@@ -178,7 +180,7 @@ public class SwapFlightsRequestHandlerTests(
         // Arrange
         var flight = new FlightBuilder("QFA2")
             .WithRunway("34R")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
             .WithState(State.Unstable)
             .Build();
 
@@ -199,7 +201,7 @@ public class SwapFlightsRequestHandlerTests(
         var exception = await Should.ThrowAsync<MaestroException>(
             () => handler.Handle(request, CancellationToken.None));
 
-        exception.Message.ShouldBe("Could not find QFA1");
+        exception.Message.ShouldBe("QFA1 not found");
     }
 
     [Fact]
@@ -208,7 +210,7 @@ public class SwapFlightsRequestHandlerTests(
         // Arrange
         var flight = new FlightBuilder("QFA1")
             .WithRunway("34L")
-            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
             .WithState(State.Unstable)
             .Build();
 
@@ -229,11 +231,11 @@ public class SwapFlightsRequestHandlerTests(
         var exception = await Should.ThrowAsync<MaestroException>(
             () => handler.Handle(request, CancellationToken.None));
 
-        exception.Message.ShouldBe("Could not find QFA2");
+        exception.Message.ShouldBe("QFA2 not found");
     }
 
     [Fact]
-    public async Task WhenSwappingTwoFlights_AndTheyAreNotUnstable_UpdateStateBasedOnTimeIsCalled()
+    public async Task WhenSwappingTwoFlights_AndTheyAreNotUnstable_TheirStateRemainsUnchanged()
     {
         // Arrange
         var firstFlight = new FlightBuilder("QFA1")
@@ -264,8 +266,51 @@ public class SwapFlightsRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        firstFlight.State.ShouldBe(State.SuperStable);
-        secondFlight.State.ShouldBe(State.Frozen);
+        firstFlight.State.ShouldBe(State.Frozen);
+        secondFlight.State.ShouldBe(State.SuperStable);
+    }
+
+    [Fact]
+    public async Task WhenSwappingTwoFlights_TheSequenceIsNotRecomputed()
+    {
+        // Arrange
+        var firstFlight = new FlightBuilder("QFA1")
+            .WithRunway("34L")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .Build();
+
+        var secondFlight = new FlightBuilder("QFA2")
+            .WithRunway("34R")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .Build();
+
+        var thirdFlight = new FlightBuilder("QFA2")
+            .WithRunway("34R")
+            .WithLandingEstimate(_clock.UtcNow().AddMinutes(30))
+            .Build();
+
+        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
+        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
+        sequence.Insert(thirdFlight, thirdFlight.LandingEstimate);
+
+        thirdFlight.SetLandingTime(_clock.UtcNow().AddMinutes(40)); // Artificial 10-minute delay to ensure recomputation is not performed
+
+        var sessionManager = new MockLocalSessionManager(sequence);
+        var handler = new SwapFlightsRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<MediatR.IMediator>(),
+            _clock,
+            Substitute.For<ILogger>());
+
+        var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        thirdFlight.LandingTime.ShouldBe(_clock.UtcNow().AddMinutes(40));
     }
 
     SwapFlightsRequestHandler GetHandler(Sequence sequence)

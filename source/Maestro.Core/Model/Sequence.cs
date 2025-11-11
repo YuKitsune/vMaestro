@@ -697,7 +697,7 @@ public class Sequence
         if (flight2Index == -1)
             throw new MaestroException($"{callsign2} not found in sequence");
 
-        // Swap the flights in the sequence
+        // Swap the positions
         _sequence[flight1Index] = new FlightSequenceItem(flight2);
         _sequence[flight2Index] = new FlightSequenceItem(flight1);
 
@@ -712,6 +712,11 @@ public class Sequence
         flight2.SetLandingTime(tempLandingTime);
         if (tempFeederFixTime is not null)
             flight2.SetFeederFixTime(tempFeederFixTime.Value);
+
+        // Swap the runways
+        var tempRunway = flight1.AssignedRunwayIdentifier;
+        flight1.SetRunway(flight2.AssignedRunwayIdentifier, manual: true);
+        flight2.SetRunway(tempRunway, manual: true);
     }
 
     public void Reposition(Flight flight, DateTimeOffset time)
