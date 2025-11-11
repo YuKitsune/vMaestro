@@ -5,20 +5,9 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
-using Microsoft.AspNetCore.Connections;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
-
-// TODO: What if the runway doesn't exist in the current mode?
-// TODO: What if the runway doesn't accept arrivals from that feeder fix?
-
-// TODO: Test cases:
-// - When swapping two flights, their landing times are swapped
-// - When swapping two flights, their feeder fix times are updated
-// - When swapping two flights, their runways are swapped
-// - When swapping two flights, and they are unstable, they become stable
-// - When swapping two flights, and one flight doesn't exist, an error is thrown
 
 public class SwapFlightsRequestHandler(
     ISessionManager sessionManager,
