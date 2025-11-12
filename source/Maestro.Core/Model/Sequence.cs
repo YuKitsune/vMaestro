@@ -327,6 +327,8 @@ public class Sequence
         Schedule(recomputePoint, forceRescheduleStable: true);
     }
 
+
+    TODO: this next
     public void MoveFlight(string callsign, DateTimeOffset newLandingTime, string[] runwayIdentifiers)
     {
         var flight = FindFlight(callsign);
@@ -466,7 +468,11 @@ public class Sequence
 
             var currentRunwayMode = runwayModeItem.RunwayMode;
 
-            // TODO: Would like to extract this into a separate service. Need to use it in a few different places.
+            // TODO: We need to do this in case we delay a flight into the next runway mode.
+            // If we're delayed into a new mode, but the runway was manually assigned, no separation is applied to this
+            // flight against other flights on the new mode, even though this flight is landing in the new mode.
+            // Need to figure out how to handle this properly.
+
             // If the assigned runway isn't in the current mode, use the default
             Runway runway;
             if (currentFlight.FeederFixIdentifier is not null && !currentFlight.RunwayManuallyAssigned)
