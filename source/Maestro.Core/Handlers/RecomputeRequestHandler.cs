@@ -62,7 +62,8 @@ public class RecomputeRequestHandler(
 
         sequence.Recompute(flight);
 
-        // Progress the state based on the new times
+        // Reset the state
+        flight.SetState(State.Unstable, clock);
         flight.UpdateStateBasedOnTime(clock);
 
         logger.Information("{Callsign} recomputed", flight.Callsign);
