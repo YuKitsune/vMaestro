@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
@@ -25,15 +26,21 @@ public class ResumeSequencingRequestHandler(
             return;
         }
 
-        using (var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken))
-        {
-            var sequence = lockedSession.Session.Sequence;
-            sequence.Resume(request.Callsign);
+        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        var sequence = lockedSession.Session.Sequence;
 
-            logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
-        }
+        var flight = lockedSession.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
+        if (flight is null)
+            throw new MaestroException($"{request.Callsign} was not found in the desequenced list.");
 
-        // Let the RecomputeRequestHandler do the scheduling and notification
-        await mediator.Send(new RecomputeRequest(request.AirportIdentifier, request.Callsign), cancellationToken);
+        // Insert the flight based on its ETA relative to other flights
+        var index = sequence.FirstIndexOf(f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
+
+        sequence.Insert(index, flight);
+        lockedSession.Session.DeSequencedFlights.Remove(flight);
+
+        logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+
+        await mediator.Publish(new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()), cancellationToken);
     }
 }
