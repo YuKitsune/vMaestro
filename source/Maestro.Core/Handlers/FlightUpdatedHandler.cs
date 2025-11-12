@@ -106,7 +106,7 @@ public class FlightUpdatedHandler(
                     return;
 
                 // New flights can displace stable flights
-                var earliestInsertionIndex = sequence.LastIndexOf(f => f.State is not State.Unstable and not State.Stable);
+                var earliestInsertionIndex = sequence.LastIndexOf(f => f.State is not State.Unstable and not State.Stable) + 1;
                 var indexByEstimate = sequence.FirstIndexOf(f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
                 var insertionIndex = Math.Max(earliestInsertionIndex, indexByEstimate);
 
