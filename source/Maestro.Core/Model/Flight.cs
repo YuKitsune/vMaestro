@@ -311,7 +311,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public override string ToString()
     {
-        return $"{Callsign}; {State}; FF {FeederFixIdentifier}; ETA_FF {FeederFixEstimate:HH:mm}; STA_FF {FeederFixTime:HH:mm}; ATO_FF {ActualFeederFixTime:HH:mm}; ETA {LandingEstimate:HH:mm}; STA {LandingTime:HH:mm}";
+        return $"{Callsign}: State: {State}; Runway {AssignedRunwayIdentifier ?? "null"}; STA {LandingTime:HH:mm};";
     }
 }
 
