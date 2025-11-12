@@ -1,6 +1,5 @@
 ﻿using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -8,12 +7,6 @@ using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
-
-// TODO:
-// - [X] Refactor dummy flight into a separate type
-// - [X] Separate pending flight insertion from dummy flight insertion
-// - [ ] Update WPF to support new DummyFlight type
-// - [ ] Test
 
 public class InsertFlightRequestHandler(
     ISessionManager sessionManager,
@@ -40,32 +33,65 @@ public class InsertFlightRequestHandler(
 
         var callsign = request.Callsign?.ToUpperInvariant().Truncate(MaxCallsignLength)!;
         if (string.IsNullOrEmpty(callsign))
-            callsign = sequence.NewDummyCallsign();
+            callsign = lockedSession.Session.NewDummyCallsign();
 
         var state = State.Frozen; // TODO: Make this configurable
+
+        int index;
+        string runwayIdentifier;
+        DateTimeOffset landingTime;
 
         switch (request.Options)
         {
             case ExactInsertionOptions exactInsertionOptions:
-                sequence.InsertDummyFlight(
-                    callsign,
-                    request.AircraftType ?? string.Empty,
-                    exactInsertionOptions.TargetLandingTime,
-                    exactInsertionOptions.RunwayIdentifiers,
-                    state);
-                break;
-            case RelativeInsertionOptions relativeInsertionOptions:
-                sequence.InsertDummyFlight(
-                    callsign,
-                    request.AircraftType ?? string.Empty,
-                    relativeInsertionOptions.Position,
-                    relativeInsertionOptions.ReferenceCallsign,
-                    state);
-                break;
+            {
+                index = sequence.IndexOf(exactInsertionOptions.TargetLandingTime);
 
+                var runwayMode = sequence.GetRunwayModeAt(index);
+                var runway = runwayMode.Runways.FirstOrDefault(r => exactInsertionOptions.RunwayIdentifiers.Contains(r.Identifier)) ?? runwayMode.Default;
+                runwayIdentifier = runway.Identifier;
+                landingTime = exactInsertionOptions.TargetLandingTime;
+                break;
+            }
+            case RelativeInsertionOptions relativeInsertionOptions:
+            {
+                var referenceFlight = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
+                if (referenceFlight == null)
+                    throw new MaestroException($"Reference flight {relativeInsertionOptions.ReferenceCallsign} not found in sequence.");
+
+                index = relativeInsertionOptions.Position switch
+                {
+                    RelativePosition.Before => sequence.IndexOf(referenceFlight.LandingTime),
+                    RelativePosition.After => sequence.IndexOf(referenceFlight.LandingTime) + 1,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                runwayIdentifier = referenceFlight.AssignedRunwayIdentifier;
+
+                var runwayMode = sequence.GetRunwayModeAt(index);
+                var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier) ?? runwayMode.Default;
+
+                landingTime = relativeInsertionOptions.Position switch
+                {
+                    RelativePosition.Before => referenceFlight.LandingTime,
+                    RelativePosition.After => referenceFlight.LandingTime.Add(runway.AcceptanceRate),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                break;
+            }
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new NotSupportedException($"Cannot insert flight with {request.Options.GetType().Name}");
         }
+
+        var flight = new Flight(
+            callsign,
+            request.AircraftType,
+            request.AirportIdentifier,
+            runwayIdentifier,
+            landingTime,
+            state);
+
+        sequence.Insert(index, flight);
 
         logger.Information("Inserted dummy flight {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
 
