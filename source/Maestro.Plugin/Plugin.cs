@@ -394,6 +394,9 @@ public class Plugin : IPlugin
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
     {
+        if (dateTime == DateTime.MaxValue)
+            return DateTimeOffset.MaxValue;
+
         return new DateTimeOffset(
             dateTime.Year, dateTime.Month, dateTime.Day,
             dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond,
