@@ -2,5 +2,5 @@
 
 public interface IExclusiveSession : IDisposable
 {
-    ISession Session { get; }
+    Session Session { get; }
 }

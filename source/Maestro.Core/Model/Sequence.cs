@@ -5,23 +5,6 @@ using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
 
-// TODO: Need to consolidate all of these methods here. Maybe move them into individual handlers?
-
-// TODO Test cases:
-// - Desequencing a flight, deallocates the slot and adds the flight to desequenced flights
-// - AddPendingFlight adds a flight to pending flights
-// - PurgeSlotsBefore removes slots before a given time and retains the 5 most recent landed flights
-// - NumberInSequence returns the index of a flight in the entire sequence, starting from 1
-// - NumberForRunway returns the index of a flight for its assigned runway, starting from 1
-
-// TODO: Test cases:
-// - Landed and Frozen flights are unaffected by runway modes and slots
-// - Flights are not sequenced during slots
-// - Flights are not sequenced during runway mode transitions
-// - Landed, Frozen, SuperStable, and Stable flights are sequenced by ScheduledLandingTime
-// - Unstable flights are sequenced by EstimatedLandingTime
-
-
 public class Sequence
 {
     readonly AirportConfiguration _airportConfiguration;
@@ -29,15 +12,9 @@ public class Sequence
     readonly IArrivalLookup _arrivalLookup;
     readonly IClock _clock;
 
-    private int _dummyCounter = 1;
-
-    readonly List<Flight> _pendingFlights = []; // TODO: Consider extracting pending flights
-    readonly List<Flight> _deSequencedFlights = []; // TODO: Consider extracting de-sequenced flights
     readonly List<ISequenceItem> _sequence = [];
 
     public string AirportIdentifier { get; }
-    public IReadOnlyList<Flight> PendingFlights => _pendingFlights.AsReadOnly();
-    public IReadOnlyList<Flight> DeSequencedFlights => _deSequencedFlights.AsReadOnly();
     public IReadOnlyList<Flight> Flights => _sequence.OfType<FlightSequenceItem>().Select(x => x.Flight).ToList().AsReadOnly();
 
     public Sequence(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
@@ -164,11 +141,6 @@ public class Sequence
         InsertAt(flightInsertionIndex, new FlightSequenceItem(flight));
 
         Schedule(flightInsertionIndex, forceRescheduleStable: true);
-    }
-
-    public string NewDummyCallsign()
-    {
-        return $"****{_dummyCounter++:00}*";
     }
 
     public void AddPendingFlight(Flight flight)
@@ -380,14 +352,11 @@ public class Sequence
         {
             AirportIdentifier = AirportIdentifier,
             Flights = sequencedFlights,
-            PendingFlights = _pendingFlights.Select(f => f.ToMessage(this)).ToArray(),
-            DeSequencedFlights = _deSequencedFlights.Select(f => f.ToMessage(this)).ToArray(),
             CurrentRunwayMode = currentRunwayMode.ToMessage(),
             NextRunwayMode = nextRunwayModeItem?.RunwayMode.ToMessage(),
             LastLandingTimeForCurrentMode = nextRunwayModeItem?.LastLandingTimeInPreviousMode ?? default,
             FirstLandingTimeForNextMode = nextRunwayModeItem?.FirstLandingTimeInNewMode ?? default,
-            Slots = slots,
-            DummyCounter = _dummyCounter
+            Slots = slots
         };
     }
 
