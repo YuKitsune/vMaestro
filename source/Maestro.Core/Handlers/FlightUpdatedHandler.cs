@@ -105,18 +105,29 @@ public class FlightUpdatedHandler(
                 if (!hasDeparted)
                     return;
 
+                // New flights can displace stable flights
+                var earliestInsertionIndex = sequence.LastIndexOf(f => f.State is not State.Unstable and not State.Stable);
+                var indexByEstimate = sequence.FirstIndexOf(f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
+                var insertionIndex = Math.Max(earliestInsertionIndex, indexByEstimate);
+
                 // Only create flights in Maestro when they're within a specified range of the feeder fix
                 if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
                 {
+                    // Determine the runway to assign
+                    var runwayMode = sequence.GetRunwayModeAt(insertionIndex);
+                    var runway = FindBestRunway(airportConfiguration, runwayMode, feederFix?.FixIdentifier ?? string.Empty);
+
                     flight = CreateMaestroFlight(
                         notification,
                         feederFix,
                         landingEstimate);
 
-                    sequence.Insert(flight, flight.LandingEstimate);
+                    flight.SetRunway(runway.Identifier, manual: false);
+
+                    sequence.Insert(insertionIndex, flight);
                     logger.Information("{Callsign} created", notification.Callsign);
                 }
-                // Flights not tracking a feeder fix are created with high priority
+                // Flights not tracking a feeder fix are added to the pending list
                 else if (feederFix is null && landingEstimate - clock.UtcNow() <= flightCreationThreshold)
                 {
                     flight = CreateMaestroFlight(
@@ -124,10 +135,8 @@ public class FlightUpdatedHandler(
                         null,
                         landingEstimate);
 
-                    flight.HighPriority = true;
-
-                    sequence.Insert(flight, flight.LandingEstimate);
-                    logger.Information("{Callsign} created (high priority)", notification.Callsign);
+                    lockedSession.Session.PendingFlights.Add(flight);
+                    logger.Information("{Callsign} created (pending)", notification.Callsign);
                 }
             }
 
@@ -159,6 +168,18 @@ public class FlightUpdatedHandler(
         {
             logger.Error(exception, "Error updating {Callsign}", notification.Callsign);
         }
+    }
+
+    Runway FindBestRunway(AirportConfiguration airportConfiguration, RunwayMode runwayMode, string feederFixIdentifier)
+    {
+        if (airportConfiguration.PreferredRunways.TryGetValue(feederFixIdentifier, out var preferredRunways))
+        {
+            return runwayMode.Runways
+                       .FirstOrDefault(r => preferredRunways.Contains(r.Identifier))
+                   ?? runwayMode.Default;
+        }
+
+        return runwayMode.Default;
     }
 
     void CalculateEstimates(Flight flight, FlightUpdatedNotification notification, AirportConfiguration airportConfiguration)

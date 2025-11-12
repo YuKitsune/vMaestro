@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Connectivity;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -26,9 +25,15 @@ public class RemoveRequestHandler(
         }
 
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-
         var sequence = lockedSession.Session.Sequence;
-        sequence.Remove(request.Callsign);
+
+        var flight = sequence.FindFlight(request.Callsign);
+        if (flight is null)
+            throw new MaestroException($"{request.Callsign} not found");
+
+        logger.Information("Removing flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+
+        sequence.Remove(flight);
 
         await mediator.Publish(
             new SequenceUpdatedNotification(
