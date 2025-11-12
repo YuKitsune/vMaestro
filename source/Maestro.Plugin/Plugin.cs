@@ -127,7 +127,7 @@ public class Plugin : IPlugin
         var configFilePath = Path.Combine(profileDirectory, configFileName);
 
         if (!File.Exists(configFilePath))
-            throw new MaestroException($"Unable to locate {configFileName}.");
+            throw new MaestroException($"Unable to locate {configFileName} in {profileDirectory}.");
 
         var configurationJson = File.ReadAllText(configFilePath);
         var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
