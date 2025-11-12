@@ -94,19 +94,13 @@ public class Sequence
                ?? _pendingFlights.FirstOrDefault(f => f.Callsign == callsign);
     }
 
-    public void Desequence(string callsign)
+    public void Remove(Flight flight)
     {
-        var item = _sequence.FirstOrDefault(i => i is FlightSequenceItem flightItem && flightItem.Flight.Callsign == callsign);
-        if (item is not FlightSequenceItem flightSequenceItem)
-            throw new MaestroException($"{callsign} not found");
-
-        var index = _sequence.IndexOf(flightSequenceItem);
+        var index = _sequence.FindIndex(i => i is FlightSequenceItem f && f.Flight == flight);
         if (index == -1)
-            throw new MaestroException($"{callsign} not found");
+            throw new MaestroException($"{flight.Callsign} not found");
 
         _sequence.RemoveAt(index);
-        _deSequencedFlights.Add(flightSequenceItem.Flight);
-
         Schedule(index, forceRescheduleStable: true);
     }
 

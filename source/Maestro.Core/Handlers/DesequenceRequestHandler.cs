@@ -28,7 +28,14 @@ public class DesequenceRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
 
-        sequence.Desequence(request.Callsign);
+        var flight = sequence.FindFlight(request.Callsign);
+        if (flight is null)
+        {
+            throw new MaestroException($"{request.Callsign} not found");
+        }
+
+        lockedSession.Session.DeSequencedFlights.Add(flight);
+        sequence.Remove(flight);
 
         logger.Information("Flight {Callsign} desequenced for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
