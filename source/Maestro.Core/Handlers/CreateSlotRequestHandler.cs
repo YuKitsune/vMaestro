@@ -28,7 +28,7 @@ public class CreateSlotRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
 
-        var slotId =sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers);
+        var slotId = sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers);
 
         logger.Information(
             "Slot {SlotId} created for {AirportIdentifier} from {StartTime} to {EndTime}",

@@ -176,33 +176,27 @@ public class Sequence
     {
         var id = Guid.NewGuid();
         var index = IndexOf(start);
-        InsertAt(index, new SlotSequenceItem(new Slot(id, start, end, runwayIdentifiers)));
 
-        foreach (var runwayIdentifier in runwayIdentifiers)
-        {
-            Schedule(index, forceRescheduleStable: true);
-        }
+        InsertAt(index, new SlotSequenceItem(new Slot(id, start, end, runwayIdentifiers)));
+        Schedule(index, forceRescheduleStable: true);
 
         return id;
     }
 
     public void ModifySlot(Guid id, DateTimeOffset start, DateTimeOffset end)
     {
-        var slotItem = _sequence.OfType<SlotSequenceItem>().FirstOrDefault(s => s.Slot.Id == id);
-        if (slotItem is null)
+        var existingSlotItem = _sequence.OfType<SlotSequenceItem>().FirstOrDefault(s => s.Slot.Id == id);
+        if (existingSlotItem is null)
             throw new MaestroException($"Slot {id} not found");
 
-        slotItem.Slot.ChangeTime(start, end);
+        var oldIndex = _sequence.IndexOf(existingSlotItem);
+        _sequence.RemoveAt(oldIndex);
 
-        // Reinsert at the correct position according to the start time
-        _sequence.Remove(slotItem);
-        var index = IndexOf(start);
-        InsertAt(index, slotItem);
+        var newSlotItem = new SlotSequenceItem(new Slot(id, start, end, existingSlotItem.Slot.RunwayIdentifiers));
+        var newIndex = IndexOf(start);
 
-        foreach (var runwayIdentifier in slotItem.Slot.RunwayIdentifiers)
-        {
-            Schedule(index, forceRescheduleStable: true);
-        }
+        InsertAt(newIndex, newSlotItem);
+        Schedule(newIndex, forceRescheduleStable: true);
     }
 
     public void DeleteSlot(Guid id)
@@ -211,13 +205,9 @@ public class Sequence
         if (index == -1)
             throw new MaestroException($"Slot {id} not found");
 
-        var slotItem = (SlotSequenceItem)_sequence[index];
         _sequence.RemoveAt(index);
 
-        foreach (var runwayIdentifier in slotItem.Slot.RunwayIdentifiers)
-        {
-            Schedule(index, forceRescheduleStable: true);
-        }
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public int NumberInSequence(Flight flight) => NumberInSequence(flight.Callsign);
