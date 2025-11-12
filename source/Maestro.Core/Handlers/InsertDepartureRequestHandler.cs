@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -31,9 +32,7 @@ public class InsertDepartureRequestHandler(
         using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
         var sequence = lockedSession.Session.Sequence;
 
-        var flight = sequence.PendingFlights.SingleOrDefault(f =>
-            f.Callsign == request.Callsign);
-
+        var flight = lockedSession.Session.PendingFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
         if (flight is null)
         {
             // TODO: Confirm what should happen in this case
@@ -45,7 +44,58 @@ public class InsertDepartureRequestHandler(
         if (!flight.IsFromDepartureAirport)
             throw new MaestroException($"{request.Callsign} is not from a departure airport.");
 
-        sequence.Depart(flight, request.Options);
+        int index;
+        switch (request.Options)
+        {
+            case ExactInsertionOptions landingTimeOption:
+                var runwayMode = sequence.GetRunwayModeAt(landingTimeOption.TargetLandingTime);
+                var runwayIdentifier = runwayMode.Runways.FirstOrDefault(r => landingTimeOption.RunwayIdentifiers.Contains(r.Identifier))?.Identifier
+                    ?? runwayMode.Default.Identifier;
+                flight.SetRunway(runwayIdentifier, manual: true);
+
+                index = sequence.IndexOf(landingTimeOption.TargetLandingTime);
+                break;
+
+            case RelativeInsertionOptions relativeInsertionOptions:
+
+                var referenceFlightItem = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
+                if (referenceFlightItem is null)
+                    throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
+
+                var referenceIndex = sequence.IndexOf(referenceFlightItem);
+                if (referenceIndex == -1)
+                    throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
+
+                var insertionIndex = relativeInsertionOptions.Position switch
+                {
+                    RelativePosition.Before => referenceIndex,
+                    RelativePosition.After => referenceIndex + 1,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                index = insertionIndex;
+                break;
+
+            case DepartureInsertionOptions departureInsertionOptions:
+                if (flight.EstimatedTimeEnroute is null)
+                    throw new MaestroException($"{request.Callsign} has no EET");
+
+                var landingEstimate = departureInsertionOptions.TakeoffTime.Add(flight.EstimatedTimeEnroute.Value);
+                flight.UpdateLandingEstimate(landingEstimate);
+
+                // New flights can displace Unstable and Stable flights
+                var earliestIndex = sequence.LastIndexOf(f => f.State is not State.Unstable and not State.Stable) + 1;
+                var estimateIndex = sequence.FirstIndexOf(f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
+
+                index = Math.Max(estimateIndex, earliestIndex);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        sequence.Insert(index, flight);
+
         flight.SetState(State.Stable, clock);
 
         // Calculate feeder fix estimate based on landing time
