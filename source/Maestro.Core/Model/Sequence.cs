@@ -63,7 +63,7 @@ public class Sequence
             index,
             new RunwayModeChangeSequenceItem(runwayMode, now, now));
 
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void ChangeRunwayMode(
@@ -75,7 +75,7 @@ public class Sequence
         InsertAt(index,
             new RunwayModeChangeSequenceItem(runwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode));
 
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public RunwayMode GetRunwayModeAt(DateTimeOffset time)
@@ -115,7 +115,7 @@ public class Sequence
             index,
             new FlightSequenceItem(flight));
 
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void InsertDummyFlight(
@@ -163,7 +163,7 @@ public class Sequence
         // Now perform the actual insertion
         InsertAt(flightInsertionIndex, new FlightSequenceItem(flight));
 
-        Schedule(flightInsertionIndex);
+        Schedule(flightInsertionIndex, forceRescheduleStable: true);
     }
 
     public string NewDummyCallsign()
@@ -201,7 +201,7 @@ public class Sequence
         _sequence.RemoveAt(index);
         _deSequencedFlights.Add(flightSequenceItem.Flight);
 
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void Resume(string callsign)
@@ -215,7 +215,7 @@ public class Sequence
         InsertAt(index, new FlightSequenceItem(flight));
 
         // TODO: Test that resumed flights are pushed back until there is a spot available
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void Remove(string callsign)
@@ -263,12 +263,12 @@ public class Sequence
         {
             foreach (var runwayIdentifier in runwayIdentifiers)
             {
-                Schedule(index);
+                Schedule(index, forceRescheduleStable: true);
             }
         }
         else
         {
-            Schedule(index);
+            Schedule(index, forceRescheduleStable: true);
         }
     }
 
@@ -280,7 +280,7 @@ public class Sequence
 
         foreach (var runwayIdentifier in runwayIdentifiers)
         {
-            Schedule(index);
+            Schedule(index, forceRescheduleStable: true);
         }
 
         return id;
@@ -301,7 +301,7 @@ public class Sequence
 
         foreach (var runwayIdentifier in slotItem.Slot.RunwayIdentifiers)
         {
-            Schedule(index);
+            Schedule(index, forceRescheduleStable: true);
         }
     }
 
@@ -316,7 +316,7 @@ public class Sequence
 
         foreach (var runwayIdentifier in slotItem.Slot.RunwayIdentifiers)
         {
-            Schedule(index);
+            Schedule(index, forceRescheduleStable: true);
         }
     }
 
@@ -449,9 +449,10 @@ public class Sequence
         }
     }
 
-    public void Insert(Flight newFlight, DateTimeOffset preferredTime)
+    // TODO: Remove time parameter
+    public void Insert(Flight newFlight, DateTimeOffset _)
     {
-        var index = IndexOf(preferredTime);
+        var index = IndexByEstimate(newFlight.LandingEstimate, newFlight.AssignedRunwayIdentifier);
         if (!string.IsNullOrEmpty(newFlight.AssignedRunwayIdentifier))
             ValidateInsertionBetweenImmovableFlights(index, newFlight.AssignedRunwayIdentifier!);
 
@@ -463,7 +464,7 @@ public class Sequence
         InsertAt(index, new FlightSequenceItem(newFlight));
 
         // TODO: Which runway?
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void Insert(Flight newFlight, RelativePosition relativePosition, string referenceCallsign)
@@ -484,7 +485,7 @@ public class Sequence
 
         InsertAt(index, new FlightSequenceItem(newFlight));
 
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void InsertPending(string callsign, DateTimeOffset landingTime, string[] runwayIdentifiers)
@@ -505,7 +506,7 @@ public class Sequence
         pendingFlight.SetRunway(runwayIdentifier, manual: true);
 
         InsertAt(index, new FlightSequenceItem(pendingFlight));
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void InsertPending(string callsign, RelativePosition relativePosition, string referenceCallsign)
@@ -532,7 +533,7 @@ public class Sequence
         _pendingFlights.Remove(pendingFlight);
 
         InsertAt(index, new FlightSequenceItem(pendingFlight));
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void Recompute(Flight flight)
@@ -553,7 +554,7 @@ public class Sequence
 
         var recomputePoint = Math.Min(originalIndex, newIndex);
 
-        Schedule(recomputePoint);
+        Schedule(recomputePoint, forceRescheduleStable: true);
     }
 
     public void MakePending(Flight flight)
@@ -634,7 +635,7 @@ public class Sequence
         }
 
         InsertAt(index, new FlightSequenceItem(flight));
-        Schedule(index);
+        Schedule(index, forceRescheduleStable: true);
     }
 
     public void MoveFlight(string callsign, DateTimeOffset newLandingTime, string[] runwayIdentifiers)
@@ -659,7 +660,7 @@ public class Sequence
 
         InsertAt(insertionIndex, new FlightSequenceItem(flight));
 
-        Schedule(insertionIndex);
+        Schedule(insertionIndex, forceRescheduleStable: true);
     }
 
     public void Swap(int index1, int index2)
@@ -667,24 +668,16 @@ public class Sequence
         (_sequence[index1],  _sequence[index2]) = (_sequence[index2], _sequence[index1]);
     }
 
-    public void Reposition(Flight flight, DateTimeOffset time)
+    // TODO: Remove time parameter
+    public void Reposition(Flight flight, DateTimeOffset _)
     {
         var existingFlight = _sequence.OfType<FlightSequenceItem>()
             .SingleOrDefault(f => f.Flight == flight);
         if (existingFlight is null)
             throw new MaestroException($"{flight.Callsign} not found in sequence");
 
-        var desiredIndex = IndexOf(time);
-
-        var lastStableFlightItem = _sequence
-            .OfType<FlightSequenceItem>()
-            .LastOrDefault(f =>
-                f.Flight.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
-                f.Flight.State is not State.Unstable);
-
-        var earliestIndex = _sequence.IndexOf(lastStableFlightItem) + 1;
-
-        var newIndex = Math.Max(desiredIndex, earliestIndex);
+        // Reposition by comparing ETA rather than STA
+        var newIndex = IndexByEstimate(flight.LandingEstimate, flight.AssignedRunwayIdentifier);
 
         // Validate BEFORE removing - exclude the flight being moved
         if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
@@ -700,7 +693,7 @@ public class Sequence
 
         var reschedulePoint = Math.Min(oldIndex, newIndex);
 
-        Schedule(reschedulePoint);
+        Schedule(reschedulePoint, forceRescheduleStable: false);
     }
 
     public void Reposition(Flight flight, RelativePosition relativePosition, string referenceCallsign)
@@ -739,7 +732,7 @@ public class Sequence
 
         var recomputeIndex = Math.Min(currentFlightIndex, insertionIndex);
 
-        Schedule(recomputeIndex);
+        Schedule(recomputeIndex, forceRescheduleStable: true);
     }
 
     void InsertAt(int index, ISequenceItem item)
@@ -750,7 +743,7 @@ public class Sequence
             _sequence.Insert(index, item);
     }
 
-    void Schedule(int startIndex)
+    void Schedule(int startIndex, bool forceRescheduleStable)
     {
         for (var i = startIndex; i < _sequence.Count; i++)
         {
@@ -769,18 +762,11 @@ public class Sequence
                 continue;
             }
 
-            // Stable and SuperStable flights should not have their landing times changed
-            // unless we're forcing a reschedule due to operational changes
-            // if (currentFlight.State is State.Stable or State.SuperStable && !forceRescheduleStable)
-            // {
-            //     continue;
-            // }
-
-            // Skip flights on unaffected runways if runway filter is specified
-            // if (!string.IsNullOrEmpty(runwayIdentifier) && currentFlight.AssignedRunwayIdentifier != runwayIdentifier)
-            // {
-            //     continue;
-            // }
+            // Stable and SuperStable flights should not be rescheduled unless forced
+            if (currentFlight.State is State.Stable or State.SuperStable && !forceRescheduleStable)
+            {
+                continue;
+            }
 
             var runwayModeItem = _sequence
                 .Take(i)
@@ -903,6 +889,47 @@ public class Sequence
                 }
             }
 
+            // If the next item in the sequence cannot be moved, move this flight behind it to ensure we don't conflict with it
+            if (nextItem is not null)
+            {
+                var earliestTimeToTrailer = nextItem switch
+                {
+                    FlightSequenceItem nextFlightItem => nextFlightItem.Flight.LandingTime.Subtract(runway.AcceptanceRate),
+                    _ => nextItem.Time
+                };
+
+                if (landingTime.IsAfter(earliestTimeToTrailer))
+                {
+                    var canDelayNextItem = nextItem switch
+                    {
+                        // Unstable flights can always be delayed
+                        FlightSequenceItem { Flight.State: State.Unstable } => true,
+
+                        // forceRescheduleStable allows stable and superstable flights to be delayed
+                        FlightSequenceItem { Flight.State: State.Stable or State.SuperStable } when forceRescheduleStable => true,
+
+                        _ => false
+                    };
+
+                    // If we can't delay the next item, we need to move this flight behind it
+                    if (!canDelayNextItem)
+                    {
+                        // Find the actual index of the nextItem in the sequence
+                        var nextItemIndex = _sequence.IndexOf(nextItem);
+                        if (nextItemIndex == -1)
+                        {
+                            continue;
+                        }
+
+                        (_sequence[i], _sequence[nextItemIndex]) = (_sequence[nextItemIndex], _sequence[i]);
+
+                        // Reprocess this index since we've moved something new into this position
+                        i--;
+                        continue;
+                    }
+                }
+            }
+
             // TODO: Double check how this is supposed to work
             if (currentFlight.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
             {
@@ -948,6 +975,23 @@ public class Sequence
         for (var i = 0; i < _sequence.Count; i++)
         {
             if (dateTimeOffset > _sequence[i].Time)
+                continue;
+
+            return i;
+        }
+
+        return _sequence.Count;
+    }
+
+    int IndexByEstimate(DateTimeOffset landingEstimate, string runwayIdentifier)
+    {
+        for (var i = 0; i < _sequence.Count; i++)
+        {
+            var item = _sequence[i];
+            if (item is not FlightSequenceItem flightItem || flightItem.Flight.AssignedRunwayIdentifier != runwayIdentifier)
+                continue;
+
+            if (landingEstimate > flightItem.Flight.LandingEstimate)
                 continue;
 
             return i;
