@@ -1136,8 +1136,6 @@ public record SlotSequenceItem(Slot Slot) : ISequenceItem
     public DateTimeOffset Time => Slot.StartTime;
 }
 
-// TODO: Remove this and source runway mode and separation requirements from the flight itself
-
 public record RunwayModeChangeSequenceItem(
     RunwayMode RunwayMode,
     DateTimeOffset LastLandingTimeInPreviousMode,
