@@ -327,13 +327,6 @@ public class Sequence
         Schedule(recomputePoint, forceRescheduleStable: true);
     }
 
-    public void MakePending(Flight flight)
-    {
-        flight.Reset();
-        _pendingFlights.Add(flight);
-        _sequence.RemoveAll(i => i is FlightSequenceItem flightSequenceItem && flightSequenceItem.Flight == flight);
-    }
-
     public void MoveFlight(string callsign, DateTimeOffset newLandingTime, string[] runwayIdentifiers)
     {
         var flight = FindFlight(callsign);

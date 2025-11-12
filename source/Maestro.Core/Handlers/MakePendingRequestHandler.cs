@@ -38,7 +38,9 @@ public class MakePendingRequestHandler(
         if (!flight.IsFromDepartureAirport)
             throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
 
-        sequence.MakePending(flight);
+        lockedSession.Session.PendingFlights.Add(flight);
+        flight.Reset();
+        sequence.Remove(flight);
 
         logger.Information("Marked flight {Callsign} as pending for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
