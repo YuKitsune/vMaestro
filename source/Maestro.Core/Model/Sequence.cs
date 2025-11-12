@@ -85,62 +85,6 @@ public class Sequence
         Schedule(index, forceRescheduleStable: true);
     }
 
-    public void InsertDummyFlight(
-        string callsign,
-        string aircraftTypeCode,
-        RelativePosition relativePosition,
-        string referenceCallsign,
-        State state)
-    {
-        var referenceFlightItem = _sequence
-            .OfType<FlightSequenceItem>()
-            .FirstOrDefault(i => i.Flight.Callsign == referenceCallsign);
-        if (referenceFlightItem is null)
-            throw new MaestroException($"{referenceCallsign} not found");
-
-        var referenceFlightIndex = _sequence.IndexOf(referenceFlightItem);
-        var flightInsertionIndex = relativePosition switch
-        {
-            RelativePosition.Before => referenceFlightIndex,
-            RelativePosition.After => referenceFlightIndex + 1,
-            _ => throw new ArgumentOutOfRangeException()
-        };
-
-        ValidateInsertionBetweenImmovableFlights(flightInsertionIndex, referenceFlightItem.Flight.AssignedRunwayIdentifier);
-
-        // TODO: Source the runway mode from the flight instead of calculating it
-        var runwayMode = GetRunwayModeAt(referenceFlightItem.Time);
-        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlightItem.Flight.AssignedRunwayIdentifier);
-
-        var landingTime = relativePosition switch
-        {
-            RelativePosition.Before => referenceFlightItem.Flight.LandingTime,
-            RelativePosition.After when runway is not null => referenceFlightItem.Flight.LandingTime.Add(runway.AcceptanceRate),
-            _ => throw new ArgumentOutOfRangeException(nameof(relativePosition), relativePosition, null)
-        };
-
-        var flight = new Flight(
-            callsign,
-            aircraftTypeCode,
-            AirportIdentifier,
-            referenceFlightItem.Flight.AssignedRunwayIdentifier,
-            landingTime,
-            state);
-
-        // Now perform the actual insertion
-        InsertAt(flightInsertionIndex, new FlightSequenceItem(flight));
-
-        Schedule(flightInsertionIndex, forceRescheduleStable: true);
-    }
-
-    public void AddPendingFlight(Flight flight)
-    {
-        if (_pendingFlights.Any(f => f.Callsign == flight.Callsign))
-            throw new MaestroException($"{flight.Callsign} is already in pending list");
-
-        _pendingFlights.Add(flight);
-    }
-
     public Flight? FindFlight(string callsign)
     {
         return _sequence.OfType<FlightSequenceItem>()

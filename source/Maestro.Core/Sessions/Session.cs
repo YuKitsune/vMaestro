@@ -22,12 +22,10 @@ public interface ISession : IDisposable
 public class Session : ISession, IDisposable
 {
     int _dummyCounter = 1;
-    readonly List<Flight> _pendingFlights = new();
-    readonly List<Flight> _deSequencedFlights = new();
 
     public string AirportIdentifier => Sequence.AirportIdentifier;
-    public IReadOnlyCollection<Flight> PendingFlights => _pendingFlights.AsReadOnly();
-    public IReadOnlyCollection<Flight> DeSequencedFlights => _deSequencedFlights.AsReadOnly();
+    public List<Flight> PendingFlights { get; } = new();
+    public List<Flight> DeSequencedFlights { get; } = new();
     public Sequence Sequence { get; private set; }
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public string Position { get; private set; } = string.Empty;
@@ -68,8 +66,8 @@ public class Session : ISession, IDisposable
         return new SessionMessage
         {
             AirportIdentifier = AirportIdentifier,
-            PendingFlights = _pendingFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
-            DeSequencedFlights = _deSequencedFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
+            PendingFlights = PendingFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
+            DeSequencedFlights = DeSequencedFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
             Sequence = Sequence.ToMessage(),
             DummyCounter = _dummyCounter
         };
@@ -79,11 +77,11 @@ public class Session : ISession, IDisposable
     {
         _dummyCounter = message.DummyCounter;
 
-        _pendingFlights.Clear();
-        _pendingFlights.AddRange(message.PendingFlights.Select(f => new Flight(f)));
+        PendingFlights.Clear();
+        PendingFlights.AddRange(message.PendingFlights.Select(f => new Flight(f)));
 
-        _deSequencedFlights.Clear();
-        _deSequencedFlights.AddRange(message.DeSequencedFlights.Select(f => new Flight(f)));
+        DeSequencedFlights.Clear();
+        DeSequencedFlights.AddRange(message.DeSequencedFlights.Select(f => new Flight(f)));
 
         Sequence.Restore(message.Sequence);
     }

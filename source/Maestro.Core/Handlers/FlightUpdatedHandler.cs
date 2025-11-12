@@ -46,7 +46,7 @@ public class FlightUpdatedHandler(
 
             // Rate-limit updates for existing flights
             var sequence = lockedSession.Session.Sequence;
-            var flight = sequence.FindFlight(notification.Callsign);
+            var flight = FindFlight(lockedSession.Session, notification.Callsign);
             if (flight is not null)
             {
                 var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight);
@@ -88,7 +88,8 @@ public class FlightUpdatedHandler(
                         landingEstimate);
 
                     flight.IsFromDepartureAirport = true;
-                    sequence.AddPendingFlight(flight);
+
+                    lockedSession.Session.PendingFlights.Add(flight);
 
                     logger.Information("{Callsign} created (pending)", notification.Callsign);
                     await mediator.Publish(new CoordinationMessageSentNotification(
@@ -248,5 +249,12 @@ public class FlightUpdatedHandler(
 
         flight.AssignedArrivalIdentifier = notification.AssignedArrival;
         flight.Fixes = notification.Estimates;
+    }
+
+    Flight? FindFlight(Session session, string callsign)
+    {
+        return session.Sequence.FindFlight(callsign) ??
+               session.PendingFlights.SingleOrDefault(f => f.Callsign == callsign) ??
+               session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == callsign);
     }
 }
