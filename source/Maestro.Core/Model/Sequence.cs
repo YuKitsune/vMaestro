@@ -66,32 +66,22 @@ public class Sequence
         return runwayModeItem.RunwayMode;
     }
 
-    public void InsertDummyFlight(
-        string callsign,
-        string aircraftTypeCode,
-        DateTimeOffset targetTime,
-        string[] runwayIdentifiers,
-        State state)
+    public RunwayMode GetRunwayModeAt(int index)
     {
-        var runwayMode = GetRunwayModeAt(targetTime);
-        var runwayIdentifier = runwayIdentifiers.FirstOrDefault(r => runwayMode.Runways.Any(rm => rm.Identifier == r))
-                     ?? runwayMode.Default.Identifier;
+        var runwayModeItem = _sequence
+            .Take(index + 1)
+            .OfType<RunwayModeChangeSequenceItem>()
+            .LastOrDefault();
+        if (runwayModeItem is null)
+            throw new MaestroException("No runway mode found");
 
-        var flight = new Flight(
-            callsign,
-            aircraftTypeCode,
-            AirportIdentifier,
-            runwayIdentifier,
-            targetTime,
-            state);
+        return runwayModeItem.RunwayMode;
+    }
 
-        var index = IndexOf(targetTime);
-        ValidateInsertionBetweenImmovableFlights(index, runwayIdentifier);
-
-        InsertAt(
-            index,
-            new FlightSequenceItem(flight));
-
+    public void Insert(int index, Flight flight)
+    {
+        ValidateInsertionBetweenImmovableFlights(index, flight.AssignedRunwayIdentifier);
+        InsertAt(index, new FlightSequenceItem(flight));
         Schedule(index, forceRescheduleStable: true);
     }
 
@@ -939,7 +929,7 @@ public class Sequence
         }
     }
 
-    int IndexOf(DateTimeOffset dateTimeOffset)
+    public int IndexOf(DateTimeOffset dateTimeOffset)
     {
         for (var i = 0; i < _sequence.Count; i++)
         {
