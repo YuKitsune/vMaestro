@@ -6,15 +6,17 @@ public static class SequenceExtensionMethods
 {
     public static void RepositionByEstimate(this Sequence sequence, Flight flight, bool displaceStableFlights = false)
     {
-        var earliestIndex = -1;
+        var earliestIndex = 0;
         if (!displaceStableFlights)
         {
-            earliestIndex = sequence.LastIndexOf(f => f.State is not State.Unstable and not State.Stable) + 1;
+            earliestIndex = sequence.FindLastIndex(f =>
+                f.State is not State.Unstable and not State.Stable &&
+                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier) + 1;
         }
 
-        var desiredIndex = sequence.FirstIndexOf(f => f.LandingEstimate.IsBefore(flight.LandingEstimate));
-
-        var newIndex = Math.Max(earliestIndex,  desiredIndex);
+        var newIndex = sequence.FindIndex(
+            earliestIndex,
+            f => f.LandingEstimate.IsBefore(flight.LandingEstimate));
 
         sequence.Move(flight, newIndex, displaceStableFlights);
     }
