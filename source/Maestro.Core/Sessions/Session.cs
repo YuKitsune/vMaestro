@@ -7,19 +7,7 @@ using SequenceMessage = Maestro.Core.Messages.SequenceMessage;
 
 namespace Maestro.Core.Sessions;
 
-public interface ISession : IDisposable
-{
-    string AirportIdentifier { get; }
-    Sequence Sequence { get; }
-    string Position { get; }
-    SemaphoreSlim Semaphore { get; }
-    bool IsActive { get; }
-
-    Task Start(string position, CancellationToken cancellationToken);
-    Task Stop(CancellationToken cancellationToken);
-}
-
-public class Session : ISession, IDisposable
+public class Session
 {
     int _dummyCounter = 1;
 
@@ -27,38 +15,16 @@ public class Session : ISession, IDisposable
     public List<Flight> PendingFlights { get; } = new();
     public List<Flight> DeSequencedFlights { get; } = new();
     public Sequence Sequence { get; private set; }
-    public SemaphoreSlim Semaphore { get; } = new(1, 1);
-    public string Position { get; private set; } = string.Empty;
-    public bool IsActive { get; private set; }
 
     public Session(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
     {
         Sequence = new Sequence(airportConfiguration, arrivalLookup, clock);
     }
 
-    public Task Start(string position, CancellationToken cancellationToken)
-    {
-        Position = position;
-        IsActive = true;
-        return Task.CompletedTask;
-    }
-
-    public Task Stop(CancellationToken cancellationToken)
-    {
-        Position = string.Empty;
-        IsActive = false;
-        return Task.CompletedTask;
-    }
-
     // TODO: Move dummy stuff to a separate service
     public string NewDummyCallsign()
     {
         return $"****{_dummyCounter++:00}*";
-    }
-
-    public void Dispose()
-    {
-        Semaphore.Dispose();
     }
 
     public SessionMessage Snapshot()

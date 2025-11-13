@@ -30,11 +30,11 @@ public partial class FlightInformationViewModel : ObservableObject
         Update(flightMessage);
 
         // TODO: Use flight updates instead
-        WeakReferenceMessenger.Default.Register<SequenceUpdatedNotification>(this, (s, m) =>
+        WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (s, m) =>
         {
-            var flight = m.Sequence.Flights.FirstOrDefault(f => f.Callsign == Callsign) ??
-                         m.Sequence.DeSequencedFlights.FirstOrDefault(f => f.Callsign == Callsign) ??
-                         m.Sequence.PendingFlights.FirstOrDefault(f => f.Callsign == Callsign);
+            var flight = m.Session.Sequence.Flights.FirstOrDefault(f => f.Callsign == Callsign) ??
+                         m.Session.DeSequencedFlights.FirstOrDefault(f => f.Callsign == Callsign) ??
+                         m.Session.PendingFlights.FirstOrDefault(f => f.Callsign == Callsign);
 
             if (flight == null)
                 return;

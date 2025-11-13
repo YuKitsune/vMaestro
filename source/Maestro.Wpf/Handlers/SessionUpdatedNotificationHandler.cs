@@ -4,9 +4,9 @@ using MediatR;
 
 namespace Maestro.Wpf.Handlers;
 
-public class SequenceUpdatedNotificationHandler : INotificationHandler<SequenceUpdatedNotification>
+public class SessionUpdatedNotificationHandler : INotificationHandler<SessionUpdatedNotification>
 {
-    public Task Handle(SequenceUpdatedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(SessionUpdatedNotification notification, CancellationToken cancellationToken)
     {
         WeakReferenceMessenger.Default.Send(notification);
         return Task.CompletedTask;

@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -9,7 +11,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class ChangeFeederFixEstimateRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IEstimateProvider estimateProvider,
     IClock clock,
@@ -28,36 +30,41 @@ public class ChangeFeederFixEstimateRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var flight = sequence.FindFlight(request.Callsign);
-        if (flight == null)
+        using (await instance.Semaphore.LockAsync(cancellationToken))
         {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return;
+            var flight = instance.Session.Sequence.FindFlight(request.Callsign);
+            if (flight == null)
+            {
+                logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
+                return;
+            }
+
+            // TODO: Track who initiated the change
+            logger.Information("Changing feeder fix estimate for flight {Callsign} to {NewFeederFixEstimate}.", request.Callsign, request.NewFeederFixEstimate);
+
+            flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
+
+            // Re-calculate the landing estimate based on the new feeder fix estimate
+            var landingEstimate = estimateProvider.GetLandingEstimate(
+                flight,
+                flight.Fixes.Last().Estimate);
+            if (landingEstimate is not null)
+                flight.UpdateLandingEstimate(landingEstimate.Value);
+
+            instance.Session.Sequence.RepositionByEstimate(flight);
+            if (flight.State is State.Unstable)
+                flight.SetState(State.Stable, clock); // TODO: Make configurable
+
+            sessionMessage = instance.Session.Snapshot();
         }
 
-        // TODO: Track who initiated the change
-        logger.Information("Changing feeder fix estimate for flight {Callsign} to {NewFeederFixEstimate}.", request.Callsign, request.NewFeederFixEstimate);
-
-        flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
-
-        // Re-calculate the landing estimate based on the new feeder fix estimate
-        var landingEstimate = estimateProvider.GetLandingEstimate(
-            flight,
-            flight.Fixes.Last().Estimate);
-        if (landingEstimate is not null)
-            flight.UpdateLandingEstimate(landingEstimate.Value);
-
-        sequence.RepositionByEstimate(flight);
-        if (flight.State is State.Unstable)
-            flight.SetState(State.Stable, clock); // TODO: Make configurable
-
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

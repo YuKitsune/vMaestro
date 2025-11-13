@@ -10,9 +10,9 @@ namespace Maestro.Server;
 
 public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 {
-    public async Task SequenceUpdated(SequenceUpdatedNotification sequenceUpdatedNotification)
+    public async Task SessionUpdated(SessionUpdatedNotification sessionUpdatedNotification)
     {
-        await mediator.Publish(new NotificationContextWrapper<SequenceUpdatedNotification>(Context.ConnectionId, sequenceUpdatedNotification));
+        await mediator.Publish(new NotificationContextWrapper<SessionUpdatedNotification>(Context.ConnectionId, sessionUpdatedNotification));
     }
 
     public async Task FlightUpdated(FlightUpdatedNotification flightUpdatedNotification)

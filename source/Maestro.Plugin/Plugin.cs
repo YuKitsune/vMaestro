@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Automation.Peers;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Xml.Linq;
@@ -10,11 +11,12 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
+using Maestro.Core.Hosting.Contracts;
 using Maestro.Core.Integration;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
-using Maestro.Core.Sessions;
 using Maestro.Plugin.Configuration;
+using Maestro.Plugin.Handlers;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
 using Maestro.Wpf.Integrations;
@@ -43,7 +45,7 @@ public class Plugin : IPlugin
     string IPlugin.Name => Name;
 
     readonly IMediator? _mediator;
-    readonly ISessionManager? _sessionManager;
+    readonly IMaestroInstanceManager? _instanceManager;
     readonly ILogger? _logger;
 
     public Plugin()
@@ -51,12 +53,15 @@ public class Plugin : IPlugin
         try
         {
             EnsureDpiAwareness();
-            ConfigureServices();
+
+            var configuration = ConfigureConfiguration();
+
+            ConfigureServices(configuration);
             ConfigureTheme();
-            AddToolbarItem();
+            AddToolbarItems(configuration);
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
-            _sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
+            _instanceManager = Ioc.Default.GetRequiredService<IMaestroInstanceManager>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
 
             Network.Connected += NetworkOnConnected;
@@ -90,15 +95,14 @@ public class Plugin : IPlugin
         Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeights.Bold : FontWeights.Regular;
     }
 
-    void ConfigureServices()
+    void ConfigureServices(PluginConfiguration pluginConfiguration)
     {
-        var configuration = ConfigureConfiguration();
-        var logger = ConfigureLogger(configuration.Logging);
+        var logger = ConfigureLogger(pluginConfiguration.Logging);
 
         Ioc.Default.ConfigureServices(
             new ServiceCollection()
-                .AddConfiguration(configuration)
-                .AddSingleton(configuration.Server)
+                .AddConfiguration(pluginConfiguration)
+                .AddSingleton(pluginConfiguration.Server)
                 .AddViewModels()
                 .AddMaestro()
                 .AddMediatR(c =>
@@ -157,91 +161,38 @@ public class Plugin : IPlugin
         return logger;
     }
 
-    void AddToolbarItem()
+    void AddToolbarItems(PluginConfiguration pluginConfiguration)
     {
-        var menuItem = new CustomToolStripMenuItem(
-            CustomToolStripMenuItemWindowType.Main,
-            MenuItemCategory,
-            new ToolStripMenuItem("New TFMS Window"));
+        const string MenuItemCategory = "TFMS";
 
-        menuItem.Item.Click += (_, _) => OpenSetupWindow();
-
-        MMI.AddCustomMenuItem(menuItem);
-        MMI.AddCustomMenuItem(
-            new CustomToolStripMenuItem(
+        foreach (var airportConfiguration in pluginConfiguration.Airports)
+        {
+            var menuItem = new CustomToolStripMenuItem(
                 CustomToolStripMenuItemWindowType.Main,
                 MenuItemCategory,
-                new ToolStripSeparator()));
-    }
+                new ToolStripMenuItem(airportConfiguration.Identifier));
 
-    const string MenuItemCategory = "TFMS";
-    static readonly IDictionary<string, CustomToolStripMenuItem> MenuItems = new Dictionary<string, CustomToolStripMenuItem>();
+            menuItem.Item.Click += (_, _) => OpenOrFocusWindowFor(airportConfiguration.Identifier);
 
-    internal static void AddMenuItemFor(string airportIdentifier, Form window)
-    {
-        var menuItem = new CustomToolStripMenuItem(
-            CustomToolStripMenuItemWindowType.Main,
-            MenuItemCategory,
-            new ToolStripMenuItem(airportIdentifier));
-        MMI.AddCustomMenuItem(menuItem);
-
-        MenuItems[airportIdentifier] = menuItem;
-
-        menuItem.Item.Click += (_, _) =>
-        {
-            window.WindowState = FormWindowState.Normal;
-            window.Activate();
-        };
-    }
-
-    internal static void RemoveMenuItemFor(string airportIdentifier)
-    {
-        if (MenuItems.TryGetValue(airportIdentifier, out var menuItem))
-            MMI.RemoveCustomMenuItem(menuItem);
-    }
-
-    // TODO: Extract this into a mediator request
-    void OpenSetupWindow()
-    {
-        try
-        {
-            var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
-            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
-            var windowManager = Ioc.Default.GetRequiredService<WindowManager>();
-            var configurations = airportConfigurationProvider
-                .GetAirportConfigurations()
-                .Where(a => !sessionManager.HasSessionFor(a.Identifier))
-                .ToArray();
-
-            if (configurations.Length == 0)
-            {
-                // TODO: Eurocat style message box
-                MessageBox.Show(
-                    "All configured airports already have an active TFMS sequence.",
-                    "No Available Airports",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                return;
-            }
-
-            windowManager.FocusOrCreateWindow(
-                WindowKeys.SetupWindow,
-                "Maestro Setup",
-                handle =>
-                {
-                    var viewModel = new SetupViewModel(
-                        configurations,
-                        Ioc.Default.GetRequiredService<IMediator>(),
-                        handle,
-                        Ioc.Default.GetRequiredService<IErrorReporter>());
-
-                    return new SetupView(viewModel);
-                });
+            MMI.AddCustomMenuItem(menuItem);
         }
-        catch (Exception ex)
+    }
+
+    void OpenOrFocusWindowFor(string airportIdentifier)
+    {
+        var windowManager = Ioc.Default.GetRequiredService<WindowManager>();
+        if (windowManager.TryGetWindow(WindowKeys.Maestro(airportIdentifier), out var windowHandle))
         {
-            _logger?.Error(ex, "An error occurred while opening the Setup window.");
-            Errors.Add(ex, Name);
+            windowHandle!.Focus();
+
+            var guiInvoker = Ioc.Default.GetRequiredService<GuiInvoker>();
+            guiInvoker.InvokeOnUiThread(_ =>
+            {
+            });
+        }
+        else
+        {
+            _mediator.Send(new CreateMaestroInstanceRequest(airportIdentifier), CancellationToken.None);
         }
     }
 
@@ -249,23 +200,7 @@ public class Plugin : IPlugin
     {
         try
         {
-            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
-            foreach (var airportIdentifier in sessionManager.ActiveSessions)
-            {
-                try
-                {
-                    _mediator?.Send(
-                        new StartSessionRequest(airportIdentifier, Network.Callsign),
-                        CancellationToken.None);
-                }
-                catch
-                {
-                    // Just play it safe and destroy the session if starting it fails
-                    _mediator?.Send(
-                        new DestroySessionRequest(airportIdentifier),
-                        CancellationToken.None);
-                }
-            }
+            _mediator.Publish(new NetworkConnectedNotification(Network.Callsign), CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -278,11 +213,7 @@ public class Plugin : IPlugin
     {
         try
         {
-            var sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
-            foreach (var airportIdentifier in sessionManager.ActiveSessions)
-            {
-                _mediator?.Send(new StopSessionRequest(airportIdentifier), CancellationToken.None);
-            }
+            _mediator.Publish(new NetworkDisconnectedNotification(), CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -323,7 +254,7 @@ public class Plugin : IPlugin
 
     void PublishFlightUpdatedEvent(FDP2.FDR updated)
     {
-        if (_sessionManager is null || !_sessionManager.HasSessionFor(updated.DesAirport))
+        if (_instanceManager is null || !_instanceManager.InstanceExists(updated.DesAirport))
             return;
 
         var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;

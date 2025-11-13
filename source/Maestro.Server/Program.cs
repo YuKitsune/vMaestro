@@ -53,7 +53,7 @@ try
         c.RegisterServicesFromAssemblies(typeof(AssemblyMarker).Assembly);
     });
 
-    builder.Services.AddSingleton<SequenceCache>();
+    builder.Services.AddSingleton<SessionCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();
     builder.Services.AddHostedService<SystemMetricsService>();

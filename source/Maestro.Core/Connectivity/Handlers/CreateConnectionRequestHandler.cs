@@ -1,13 +1,12 @@
 ﻿using Maestro.Core.Connectivity.Contracts;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Connectivity.Handlers;
 
 public class CreateConnectionRequestHandler(
-    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -17,8 +16,6 @@ public class CreateConnectionRequestHandler(
     {
         try
         {
-            using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-
             var connection = await connectionManager.CreateConnection(
                 request.AirportIdentifier,
                 request.Partition,
@@ -28,10 +25,11 @@ public class CreateConnectionRequestHandler(
 
             logger.Information("Connection for {AirportIdentifier} created", request.AirportIdentifier);
 
-            // If the session is active, start the connection immediately
-            if (lockedSession.Session.IsActive)
+            // If connected to thet network, start the connection immediately
+            var networkStatus = await TryGetNetworkStatusResponse(cancellationToken);
+            if (networkStatus is not null && networkStatus.IsConnected)
             {
-                await connection.Start(lockedSession.Session.Position, cancellationToken);
+                await connection.Start(networkStatus.Position, cancellationToken);
                 logger.Information("Connection for {AirportIdentifier} started", request.AirportIdentifier);
 
                 await mediator.Publish(new ConnectionStartedNotification(request.AirportIdentifier), cancellationToken);
@@ -40,6 +38,19 @@ public class CreateConnectionRequestHandler(
         catch (Exception e)
         {
             await mediator.Publish(new ErrorNotification(e), cancellationToken);
+        }
+    }
+
+    async Task<GetNetworkStatusResponse?> TryGetNetworkStatusResponse(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await mediator.Send(new GetNetworkStatusRequest(),cancellationToken);
+        }
+        catch (Exception e)
+        {
+            logger.Error(e, "Failed to get network status");
+            return null;
         }
     }
 }

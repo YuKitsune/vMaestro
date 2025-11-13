@@ -1,4 +1,4 @@
-using Maestro.Core.Messages;
+using Maestro.Core.Sessions;
 using MediatR;
 
 namespace Maestro.Core.Connectivity.Contracts;
@@ -8,5 +8,5 @@ public record ConnectionInitializedNotification(
     string Partition,
     string AirportIdentifier,
     bool IsMaster,
-    SequenceMessage? Sequence,
+    SessionMessage? Session,
     IReadOnlyList<PeerInfo> ConnectedPeers) : INotification;

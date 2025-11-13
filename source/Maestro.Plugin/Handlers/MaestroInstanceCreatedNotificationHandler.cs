@@ -1,5 +1,7 @@
 ﻿using System.Windows;
 using Maestro.Core.Configuration;
+using Maestro.Core.Hosting;
+using Maestro.Core.Hosting.Contracts;
 using Maestro.Core.Messages;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
@@ -10,14 +12,14 @@ using vatsys;
 
 namespace Maestro.Plugin.Handlers;
 
-public class SessionCreatedNotificationHandler(
+public class MaestroInstanceCreatedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter)
-    : INotificationHandler<SessionCreatedNotification>
+    : INotificationHandler<MaestroInstanceCreatedNotification>
 {
-    public async Task Handle(SessionCreatedNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(MaestroInstanceCreatedNotification notification, CancellationToken cancellationToken)
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == notification.AirportIdentifier);
@@ -38,20 +40,17 @@ public class SessionCreatedNotificationHandler(
                     mediator,
                     errorReporter)),
             shrinkToContent: false,
-            new Size(560, 800),
+            new Size(640, 800),
             configureForm: form =>
             {
-                Plugin.AddMenuItemFor(notification.AirportIdentifier, form);
-
                 form.Closed += async (_, _) =>
                 {
                     try
                     {
                         // TODO: Revisit confirmation dialog
                         await mediator.Send(
-                            new DestroySessionRequest(notification.AirportIdentifier),
+                            new DestroyMaestroInstanceRequest(notification.AirportIdentifier),
                             cancellationToken);
-                        Plugin.RemoveMenuItemFor(notification.AirportIdentifier);
                     }
                     catch (Exception ex)
                     {
@@ -63,7 +62,7 @@ public class SessionCreatedNotificationHandler(
         // Immediately start session if we're connected to VATSIM
         if (Network.IsConnected)
         {
-            await mediator.Send(new StartSessionRequest(notification.AirportIdentifier, Network.Callsign), cancellationToken);
+            await mediator.Publish(new NetworkConnectedNotification(Network.Callsign), cancellationToken);
         }
     }
 }

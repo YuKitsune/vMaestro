@@ -1,7 +1,6 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Sessions;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.Messages;
@@ -14,7 +13,7 @@ namespace Maestro.Plugin.Handlers;
 public class OpenTerminalConfigurationWindowRequestHandler(
     WindowManager windowManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMediator mediator,
     IClock clock,
     IErrorReporter errorReporter)
@@ -22,12 +21,12 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 {
     public async Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
     {
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-
         var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
             .Single(a => a.Identifier == request.AirportIdentifier);
 
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var sequenceMessage = instance.Session.Sequence.ToMessage();
+
         var runwayModes = airportConfiguration.RunwayModes
             .Select(r => new RunwayModeViewModel(r))
             .ToArray();
@@ -37,8 +36,6 @@ public class OpenTerminalConfigurationWindowRequestHandler(
             "TMA Configuration",
             windowHandle =>
             {
-                var sequenceMessage = sequence.ToMessage();
-
                 var lastLandingTime = sequenceMessage.LastLandingTimeForCurrentMode == default
                     ? clock.UtcNow()
                     : sequenceMessage.LastLandingTimeForCurrentMode;

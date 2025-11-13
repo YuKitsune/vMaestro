@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
-using Maestro.Core.Infrastructure;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -8,7 +9,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class MakePendingRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -25,29 +26,35 @@ public class MakePendingRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var sequence = lockedSession.Session.Sequence;
-        var flight = sequence.FindFlight(request.Callsign);
-        if (flight == null)
+        using (await instance.Semaphore.LockAsync(cancellationToken))
         {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return;
+            var sequence = instance.Session.Sequence;
+            var flight = sequence.FindFlight(request.Callsign);
+            if (flight == null)
+            {
+                logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
+                return;
+            }
+
+            if (!flight.IsFromDepartureAirport)
+                throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
+
+            instance.Session.PendingFlights.Add(flight);
+            flight.Reset();
+            sequence.Remove(flight);
+
+            logger.Information("Marked flight {Callsign} as pending for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
+
+            sessionMessage = instance.Session.Snapshot();
         }
 
-        if (!flight.IsFromDepartureAirport)
-            throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
-
-        lockedSession.Session.PendingFlights.Add(flight);
-        flight.Reset();
-        sequence.Remove(flight);
-
-        logger.Information("Marked flight {Callsign} as pending for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
-
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

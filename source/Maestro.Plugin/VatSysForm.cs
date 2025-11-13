@@ -26,8 +26,8 @@ public class VatSysForm : BaseForm
 
         Text = title;
 
-        var windowHandle = new WindowHandle(this);
-        var child = childFactory(windowHandle);
+        WindowHandle = new WindowHandle(this);
+        var child = childFactory(WindowHandle);
 
         var elementHost = new ElementHost();
         if (shrinkToContent)

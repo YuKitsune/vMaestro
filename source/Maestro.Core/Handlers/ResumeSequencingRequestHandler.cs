@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -10,7 +11,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class ResumeSequencingRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -27,33 +28,44 @@ public class ResumeSequencingRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var flight = lockedSession.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
-        if (flight is null)
-            throw new MaestroException($"{request.Callsign} was not found in the desequenced list.");
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
 
-        var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
-        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier) ??
-                     runwayMode.Default;
+            var flight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
+            if (flight is null)
+                throw new MaestroException($"{request.Callsign} was not found in the desequenced list.");
 
-        // TODO: If the runway mode has changed since the flight was desequenced, re-assign the runway based on the flights feeder fix
+            var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
+            var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier) ??
+                         runwayMode.Default;
 
-        // Don't insert the flight in front of any SuperStable, Frozen, or Landed flights
-        var earliestInsertionIndex = sequence.FindLastIndex(f =>
-            f.State is not State.Unstable and not State.Stable &&
-            f.AssignedRunwayIdentifier == runway.Identifier) + 1;
+            // TODO: If the runway mode has changed since the flight was desequenced, re-assign the runway based on the flights feeder fix
 
-        var index = sequence.FindIndex(
-            earliestInsertionIndex,
-            f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
+            // Don't insert the flight in front of any SuperStable, Frozen, or Landed flights
+            var earliestInsertionIndex = sequence.FindLastIndex(f =>
+                f.State is not State.Unstable and not State.Stable &&
+                f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
-        sequence.Insert(index, flight);
-        lockedSession.Session.DeSequencedFlights.Remove(flight);
+            var index = sequence.FindIndex(
+                earliestInsertionIndex,
+                f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
 
-        logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            sequence.Insert(index, flight);
+            instance.Session.DeSequencedFlights.Remove(flight);
 
-        await mediator.Publish(new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()), cancellationToken);
+            logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
+
+        await mediator.Publish(
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
+            cancellationToken);
     }
 }

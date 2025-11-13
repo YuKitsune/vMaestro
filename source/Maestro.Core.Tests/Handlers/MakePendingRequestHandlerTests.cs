@@ -56,7 +56,7 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight1.State.ShouldBe(State.Unstable, "flight should be marked as unstable when made pending");
 
         // Verify flight is moved to pending list and removed from main sequence
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
