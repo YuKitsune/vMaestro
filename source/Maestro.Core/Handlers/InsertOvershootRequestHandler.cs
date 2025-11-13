@@ -37,19 +37,45 @@ public class InsertOvershootRequestHandler(
             throw new MaestroException($"Flight {request.Callsign} not found in landed flights");
         }
 
+        int index;
+        Runway runway;
+
         switch (request.Options)
         {
             case ExactInsertionOptions exactInsertionOptions:
-                sequence.MoveFlight(landedFlight.Callsign, exactInsertionOptions.TargetLandingTime, exactInsertionOptions.RunwayIdentifiers);
+            {
+                index = sequence.IndexOf(exactInsertionOptions.TargetLandingTime);
+
+                var runwayMode = sequence.GetRunwayModeAt(index);
+                runway = runwayMode.Runways.FirstOrDefault(r => exactInsertionOptions.RunwayIdentifiers.Contains(r.Identifier)) ?? runwayMode.Default;
                 break;
+            }
             case RelativeInsertionOptions relativeInsertionOptions:
-                sequence.Reposition(landedFlight, relativeInsertionOptions.Position, relativeInsertionOptions.ReferenceCallsign);
+            {
+                var referenceFlight = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
+                if (referenceFlight == null)
+                    throw new MaestroException($"Reference flight {relativeInsertionOptions.ReferenceCallsign} not found in sequence.");
+
+                index = relativeInsertionOptions.Position switch
+                {
+                    RelativePosition.Before => sequence.IndexOf(referenceFlight.LandingTime),
+                    RelativePosition.After => sequence.IndexOf(referenceFlight.LandingTime) + 1,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                var runwayMode = sequence.GetRunwayModeAt(index);
+                runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
                 break;
+            }
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new NotSupportedException($"Cannot insert flight with {request.Options.GetType().Name}");
         }
 
-        // TODO: Validate flights cannot be inserted between frozen flights when there is less than 2x the acceptance rate
+        // TODO: What do we do about the ETA? If they've landed, the ETA is gonna be inaccurate.
+
+        sequence.ThrowIfSlotIsUnavailable(index, runway.Identifier);
+        landedFlight.SetRunway(runway.Identifier, manual: true);
+        sequence.Move(landedFlight, index);
 
         landedFlight.SetState(State.Frozen, clock);
 
