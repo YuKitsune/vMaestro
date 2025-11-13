@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -9,7 +11,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class SwapFlightsRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IArrivalLookup arrivalLookup,
     IMediator mediator,
@@ -28,53 +30,60 @@ public class SwapFlightsRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var firstFlight = sequence.FindFlight(request.FirstFlightCallsign);
-        if (firstFlight is null)
-            throw new MaestroException($"{request.FirstFlightCallsign} not found");
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
 
-        var secondFlight = sequence.FindFlight(request.SecondFlightCallsign);
-        if (secondFlight is null)
-            throw new MaestroException($"{request.SecondFlightCallsign} not found");
+            var firstFlight = sequence.FindFlight(request.FirstFlightCallsign);
+            if (firstFlight is null)
+                throw new MaestroException($"{request.FirstFlightCallsign} not found");
 
-        // Swap positions
-        sequence.Swap(firstFlight, secondFlight);
+            var secondFlight = sequence.FindFlight(request.SecondFlightCallsign);
+            if (secondFlight is null)
+                throw new MaestroException($"{request.SecondFlightCallsign} not found");
 
-        // TODO: This has been moved into the Sequence. I'm not sure how I feel about it.
+            // Swap positions
+            sequence.Swap(firstFlight, secondFlight);
 
-        // // Swap landing times
-        // var firstLandingTime = firstFlight.LandingTime;
-        // var secondLandingTime = secondFlight.LandingTime;
-        // firstFlight.SetLandingTime(secondLandingTime);
-        // secondFlight.SetLandingTime(firstLandingTime);
-        //
-        // // Re-calculate feeder-fix times (don't swap because they could be on different arrivals with different intervals)
-        // var firstFeederFixTime = GetFeederFixTime(firstFlight);
-        // if (firstFeederFixTime is not null)
-        //     firstFlight.SetFeederFixTime(firstFeederFixTime.Value);
-        //
-        // var secondFeederFixTime = GetFeederFixTime(secondFlight);
-        // if (secondFeederFixTime is not null)
-        //     secondFlight.SetFeederFixTime(secondFeederFixTime.Value);
-        //
-        // // Swap runways
-        // var firstRunway = firstFlight.AssignedRunwayIdentifier;
-        // var secondRunway = secondFlight.AssignedRunwayIdentifier;
-        // firstFlight.SetRunway(secondRunway, manual: true);
-        // secondFlight.SetRunway(firstRunway, manual: true);
+            // TODO: This has been moved into the Sequence. I'm not sure how I feel about it.
 
-        // Unstable flights become stable when swapped
-        if (firstFlight.State == State.Unstable) firstFlight.SetState(State.Stable, clock);
-        if (secondFlight.State == State.Unstable) secondFlight.SetState(State.Stable, clock);
+            // // Swap landing times
+            // var firstLandingTime = firstFlight.LandingTime;
+            // var secondLandingTime = secondFlight.LandingTime;
+            // firstFlight.SetLandingTime(secondLandingTime);
+            // secondFlight.SetLandingTime(firstLandingTime);
+            //
+            // // Re-calculate feeder-fix times (don't swap because they could be on different arrivals with different intervals)
+            // var firstFeederFixTime = GetFeederFixTime(firstFlight);
+            // if (firstFeederFixTime is not null)
+            //     firstFlight.SetFeederFixTime(firstFeederFixTime.Value);
+            //
+            // var secondFeederFixTime = GetFeederFixTime(secondFlight);
+            // if (secondFeederFixTime is not null)
+            //     secondFlight.SetFeederFixTime(secondFeederFixTime.Value);
+            //
+            // // Swap runways
+            // var firstRunway = firstFlight.AssignedRunwayIdentifier;
+            // var secondRunway = secondFlight.AssignedRunwayIdentifier;
+            // firstFlight.SetRunway(secondRunway, manual: true);
+            // secondFlight.SetRunway(firstRunway, manual: true);
 
-        logger.Information("Flights {FirstFlightCallsign} and {SecondFlightCallsign} swapped", firstFlight.Callsign, secondFlight.Callsign);
+            // Unstable flights become stable when swapped
+            if (firstFlight.State == State.Unstable) firstFlight.SetState(State.Stable, clock);
+            if (secondFlight.State == State.Unstable) secondFlight.SetState(State.Stable, clock);
+
+            logger.Information("Flights {FirstFlightCallsign} and {SecondFlightCallsign} swapped", firstFlight.Callsign, secondFlight.Callsign);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 

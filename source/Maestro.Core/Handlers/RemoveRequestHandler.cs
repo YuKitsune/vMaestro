@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -7,7 +9,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class RemoveRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -24,21 +26,28 @@ public class RemoveRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var flight = sequence.FindFlight(request.Callsign);
-        if (flight is null)
-            throw new MaestroException($"{request.Callsign} not found");
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
 
-        logger.Information("Removing flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            var flight = sequence.FindFlight(request.Callsign);
+            if (flight is null)
+                throw new MaestroException($"{request.Callsign} not found");
 
-        sequence.Remove(flight);
+            logger.Information("Removing flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+
+            sequence.Remove(flight);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

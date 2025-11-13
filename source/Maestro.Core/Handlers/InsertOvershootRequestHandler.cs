@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -9,7 +11,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class InsertOvershootRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IClock clock,
     IMediator mediator,
@@ -27,8 +29,12 @@ public class InsertOvershootRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
+
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
 
         // BUG: If inserting after a frozen flight, nothing happens
         var landedFlight = sequence.FindFlight(request.Callsign);
@@ -71,18 +77,23 @@ public class InsertOvershootRequestHandler(
                 throw new NotSupportedException($"Cannot insert flight with {request.Options.GetType().Name}");
         }
 
-        // TODO: What do we do about the ETA? If they've landed, the ETA is gonna be inaccurate.
+            // TODO: What do we do about the ETA? If they've landed, the ETA is gonna be inaccurate.
 
-        sequence.ThrowIfSlotIsUnavailable(index, runway.Identifier);
-        landedFlight.SetRunway(runway.Identifier, manual: true);
-        sequence.Move(landedFlight, index);
+            sequence.ThrowIfSlotIsUnavailable(index, runway.Identifier);
+            landedFlight.SetRunway(runway.Identifier, manual: true);
+            sequence.Move(landedFlight, index);
 
-        landedFlight.SetState(State.Frozen, clock);
+            landedFlight.SetState(State.Frozen, clock);
 
-        logger.Information("Inserted overshoot flight {Callsign} for {AirportIdentifier}", landedFlight.Callsign, request.AirportIdentifier);
+            logger.Information("Inserted overshoot flight {Callsign} for {AirportIdentifier}", landedFlight.Callsign, request.AirportIdentifier);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

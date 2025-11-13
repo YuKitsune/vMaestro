@@ -11,12 +11,12 @@ public static class SequenceExtensionMethods
         {
             earliestIndex = sequence.FindLastIndex(f =>
                 f.State is not State.Unstable and not State.Stable &&
-                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier) + 1;
+                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
         }
 
         var newIndex = sequence.FindIndex(
-            earliestIndex,
-            f => f.LandingEstimate.IsBefore(flight.LandingEstimate));
+            Math.Max(earliestIndex, 0),
+            f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
 
         sequence.Move(flight, newIndex, displaceStableFlights);
     }

@@ -1,5 +1,6 @@
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Messages;
+using Maestro.Core.Sessions;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;
@@ -30,7 +31,7 @@ public class ClientDisconnectedNotificationHandlerTests
     }
 
     [Fact]
-    public async Task WhenLeavingTheSequence_PeersAreNotified()
+    public async Task WhenLeavingTheSession_PeersAreNotified()
     {
         // Arrange
         const string connectionId = "connection-1";
@@ -72,7 +73,7 @@ public class ClientDisconnectedNotificationHandlerTests
     }
 
     [Fact]
-    public async Task WhenMasterLeavesTheSequence_AndAnotherFlowControllerExists_FlowControllerIsPromoted()
+    public async Task WhenMasterLeavesTheSession_AndAnotherFlowControllerExists_FlowControllerIsPromoted()
     {
         // Arrange
         const string connectionId = "master-connection";
@@ -130,7 +131,7 @@ public class ClientDisconnectedNotificationHandlerTests
     }
 
     [Fact]
-    public async Task WhenMasterLeavesTheSequence_AndNoFlowControllerExists_NextAvailableConnectionIsPromoted()
+    public async Task WhenMasterLeavesTheSession_AndNoFlowControllerExists_NextAvailableConnectionIsPromoted()
     {
         // Arrange
         const string connectionId = "master-connection";
@@ -172,7 +173,7 @@ public class ClientDisconnectedNotificationHandlerTests
     }
 
     [Fact]
-    public async Task WhenMasterLeavesTheSequence_AndOnlyObserversRemain_NoNewMasterIsPromoted()
+    public async Task WhenMasterLeavesTheSession_AndOnlyObserversRemain_NoNewMasterIsPromoted()
     {
         // Arrange
         const string connectionId = "master-connection";
@@ -230,7 +231,7 @@ public class ClientDisconnectedNotificationHandlerTests
     }
 
     [Fact]
-    public async Task WhenLastConnectionDisconnects_AndNoPeersRemain_SequenceCacheIsCleared()
+    public async Task WhenLastConnectionDisconnects_AndNoPeersRemain_SessionCacheIsCleared()
     {
         // Arrange
         const string connectionId = "last-connection";
@@ -252,33 +253,36 @@ public class ClientDisconnectedNotificationHandlerTests
             }));
         connectionManager.Setup(x => x.GetPeers(lastConnection)).Returns([]);
 
-        var sequenceCache = new SequenceCache();
-        sequenceCache.Set(partition, airportIdentifier, new SequenceMessage
+        var sessionCache = new SessionCache();
+        sessionCache.Set(partition, airportIdentifier, new SessionMessage
         {
             AirportIdentifier = null,
-            CurrentRunwayMode = null,
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = default,
-            FirstLandingTimeForNextMode = default,
-            Flights = [],
             PendingFlights = [],
             DeSequencedFlights = [],
-            Slots = [],
-            DummyCounter = 0
+            DummyCounter = 0,
+            Sequence = new SequenceMessage
+            {
+                CurrentRunwayMode = null,
+                NextRunwayMode = null,
+                LastLandingTimeForCurrentMode = default,
+                FirstLandingTimeForNextMode = default,
+                Flights = [],
+                Slots = [],
+            }
         });
 
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager: connectionManager.Object, sequenceCache: sequenceCache, hubProxy: hubProxy.Object)
+        await GetHandler(connectionManager: connectionManager.Object, sessionCache: sessionCache, hubProxy: hubProxy.Object)
             .Handle(notification, CancellationToken.None);
 
         // Assert
-        sequenceCache.Get(partition, airportIdentifier).ShouldBeNull();
+        sessionCache.Get(partition, airportIdentifier).ShouldBeNull();
     }
 
     [Fact]
-    public async Task WhenLastNonObserverConnectionDisconnects_AndOnlyObserversRemain_SequenceCacheIsCleared()
+    public async Task WhenLastNonObserverConnectionDisconnects_AndOnlyObserversRemain_SessionCacheIsCleared()
     {
         // Arrange
         const string connectionId = "last-atc-connection";
@@ -302,41 +306,44 @@ public class ClientDisconnectedNotificationHandlerTests
             }));
         connectionManager.Setup(x => x.GetPeers(lastAtcConnection)).Returns([observer1, observer2]);
 
-        var sequenceCache = new SequenceCache();
-        sequenceCache.Set(partition, airportIdentifier, new SequenceMessage
+        var sessionCache = new SessionCache();
+        sessionCache.Set(partition, airportIdentifier, new SessionMessage
         {
             AirportIdentifier = null,
-            CurrentRunwayMode = null,
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = default,
-            FirstLandingTimeForNextMode = default,
-            Flights = [],
             PendingFlights = [],
             DeSequencedFlights = [],
-            Slots = [],
-            DummyCounter = 0
+            DummyCounter = 0,
+            Sequence = new SequenceMessage
+            {
+                CurrentRunwayMode = null,
+                NextRunwayMode = null,
+                LastLandingTimeForCurrentMode = default,
+                FirstLandingTimeForNextMode = default,
+                Flights = [],
+                Slots = [],
+            }
         });
 
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager: connectionManager.Object, sequenceCache: sequenceCache, hubProxy: hubProxy.Object)
+        await GetHandler(connectionManager: connectionManager.Object, sessionCache: sessionCache, hubProxy: hubProxy.Object)
             .Handle(notification, CancellationToken.None);
 
         // Assert
-        sequenceCache.Get(partition, airportIdentifier).ShouldBeNull();
+        sessionCache.Get(partition, airportIdentifier).ShouldBeNull();
     }
 
     ClientDisconnectedNotificationHandler GetHandler(
         IConnectionManager? connectionManager = null,
-        SequenceCache? sequenceCache = null,
+        SessionCache? sessionCache = null,
         IHubProxy? hubProxy = null)
     {
         connectionManager ??= new Mock<IConnectionManager>().Object;
-        sequenceCache ??= new SequenceCache();
+        sessionCache ??= new SessionCache();
         hubProxy ??= new Mock<IHubProxy>().Object;
         var logger = new Mock<ILogger>().Object;
-        return new ClientDisconnectedNotificationHandler(connectionManager, sequenceCache, hubProxy, logger);
+        return new ClientDisconnectedNotificationHandler(connectionManager, sessionCache, hubProxy, logger);
     }
 
     delegate bool TryGetConnectionCallback(string connectionId, out Connection? connection);

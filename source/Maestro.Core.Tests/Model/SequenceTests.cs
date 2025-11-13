@@ -124,7 +124,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.InsertDummyFlight("ABC123", "A320", flight1.LandingTime, ["34L"], State.Frozen);
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         var manualFlight = sequenceMessage.Flights.SingleOrDefault(f => f.IsManuallyInserted);
         manualFlight.ShouldNotBeNull("manually-inserted flight should be added to sequence");
         manualFlight.Callsign.ShouldBe("ABC123", "manually-inserted flight should have specified callsign");
@@ -162,7 +162,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.InsertDummyFlight("ABC123", "B738", RelativePosition.Before, "ABC123", State.Frozen);
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         var manualFlight = sequenceMessage.Flights.SingleOrDefault(f => f.IsManuallyInserted);
         manualFlight.ShouldNotBeNull("manually-inserted flight should be added to sequence");
         manualFlight.Callsign.ShouldBe("ABC123", "manually-inserted flight should have specified callsign");
@@ -200,7 +200,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.InsertDummyFlight("DEF", "C172", RelativePosition.After, "ABC123", State.Frozen);
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         var manualFlight = sequenceMessage.Flights.SingleOrDefault(f => f.IsManuallyInserted);
         manualFlight.ShouldNotBeNull("manually-inserted flight should be added to sequence");
         manualFlight.Callsign.ShouldBe("DEF", "manually-inserted flight should have specified callsign");
@@ -229,7 +229,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.AddPendingFlight(pendingFlight);
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "ABC123", "flight should be in pending list");
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "ABC123", "flight should not be in main sequence");
         sequenceMessage.PendingFlights.Length.ShouldBe(1, "should have exactly one pending flight");
@@ -261,7 +261,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.Desequence("ABC123");
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.DeSequencedFlights.ShouldContain(f => f.Callsign == "ABC123", "first flight should be in desequenced list");
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "ABC123", "first flight should not be in main sequence");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "DEF456", "second flight should remain in sequence");
@@ -305,7 +305,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.Resume("DEF456");
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "DEF456", "resumed flight should not be in desequenced list");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "DEF456", "resumed flight should be back in main sequence");
 
@@ -339,7 +339,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.Remove("ABC123");
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "ABC123", "removed flight should not be in main sequence");
         sequenceMessage.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "ABC123", "removed flight should not be in desequenced list");
         sequenceMessage.PendingFlights.ShouldNotContain(f => f.Callsign == "ABC123", "removed flight should not be in pending list"); // TODO: It might be intended that removed flights enter the pending list. Need to clarify.
@@ -418,7 +418,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         var initialSlotEnd = _time.AddMinutes(10);
         sequence.CreateSlot(initialSlotStart, initialSlotEnd, ["34L"]);
 
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         var slotId = sequenceMessage.Slots.First().Id;
 
         // Act: Modify the slot to become shorter
@@ -466,7 +466,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         var slotEnd = _time.AddMinutes(10);
         sequence.CreateSlot(slotStart, slotEnd, ["34L"]);
 
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         var slotId = sequenceMessage.Slots.First().Id;
 
         // Act: Delete the slot
@@ -1245,7 +1245,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.MakePending(flight1);
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "ABC123", "first flight should be in pending list");
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "ABC123", "first flight should not be in main sequence");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "DEF456", "second flight should remain in sequence");
@@ -1286,7 +1286,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.Depart(pendingFlight, new DepartureInsertionOptions(takeOffTime));
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldNotContain(f => f.Callsign == "DEF456", "departed flight should not be in pending list");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "DEF456", "departed flight should be in main sequence");
 
@@ -1331,7 +1331,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
         sequence.Depart(pendingFlight, new DepartureInsertionOptions(takeOffTime));
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldNotContain(f => f.Callsign == "DEF456", "departed flight should not be in pending list");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "DEF456", "departed flight should be in main sequence");
 

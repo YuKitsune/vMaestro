@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -9,7 +11,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class InsertPendingRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IClock clock,
     IMediator mediator,
@@ -27,10 +29,14 @@ public class InsertPendingRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var flight = lockedSession.Session.PendingFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
+
+            var flight = instance.Session.PendingFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
         if (flight is null)
         {
             // TODO: Confirm what should happen in this case
@@ -84,14 +90,17 @@ public class InsertPendingRequestHandler(
 
         sequence.Insert(index, flight);
 
-        flight.SetState(State.Stable, clock);
+            flight.SetState(State.Stable, clock);
 
-        logger.Information("Inserted pending flight {Callsign} for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
+            logger.Information("Inserted pending flight {Callsign} for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

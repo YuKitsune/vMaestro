@@ -51,7 +51,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
@@ -83,7 +83,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         sequence.Desequence("QFA123");
 
         // Verify flight is desequenced
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.DeSequencedFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in desequenced list");
 
         var handler = GetRequestHandler(sequence);
@@ -93,7 +93,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        sequenceMessage = sequence.ToMessage();
+        sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
         sequenceMessage.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in desequenced list");
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
@@ -176,7 +176,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         sequence.AddPendingFlight(flight);
 
         // Verify flight is in pending list
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
 
         var handler = GetRequestHandler(sequence);

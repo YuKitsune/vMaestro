@@ -9,6 +9,7 @@ public class Sequence
 {
     readonly AirportConfiguration _airportConfiguration;
 
+    // TODO: Figure out how to get rid of these from here
     readonly IArrivalLookup _arrivalLookup;
     readonly IClock _clock;
 
@@ -169,6 +170,8 @@ public class Sequence
     public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false)
     {
         var currentIndex = IndexOf(flight);
+        if (newIndex == currentIndex)
+            return;
 
         ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
         _sequence.RemoveAt(currentIndex);
@@ -529,6 +532,11 @@ public class Sequence
 
     void InsertAt(int index, ISequenceItem item)
     {
+        // Ensure we never insert before the first runway mode change
+        // The first item (index 0) should always be a runway mode change
+        if (item is not RunwayModeChangeSequenceItem && index == 0)
+            index = 1;
+
         if (index >= _sequence.Count)
             _sequence.Add(item);
         else
@@ -650,7 +658,7 @@ public class Sequence
 
         return new SequenceMessage
         {
-            AirportIdentifier = AirportIdentifier,
+            // AirportIdentifier = AirportIdentifier,
             Flights = sequencedFlights,
             CurrentRunwayMode = currentRunwayMode.ToMessage(),
             NextRunwayMode = nextRunwayModeItem?.RunwayMode.ToMessage(),

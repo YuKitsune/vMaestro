@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -25,7 +26,7 @@ public record FlightUpdatedNotification(
     : INotification;
 
 public class FlightUpdatedHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
@@ -39,133 +40,140 @@ public class FlightUpdatedHandler(
     {
         try
         {
-            if (!sessionManager.HasSessionFor(notification.Destination))
+            if (!instanceManager.InstanceExists(notification.Destination))
                 return;
 
-            using var lockedSession = await sessionManager.AcquireSession(notification.Destination, cancellationToken);
+            var instance = await instanceManager.GetInstance(notification.Destination, cancellationToken);
+            SessionMessage sessionMessage;
 
-            // Rate-limit updates for existing flights
-            var sequence = lockedSession.Session.Sequence;
-            var flight = FindFlight(lockedSession.Session, notification.Callsign);
-            if (flight is not null)
+            using (await instance.Semaphore.LockAsync(cancellationToken))
             {
-                var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight);
-                if (!shouldUpdate)
+                // Rate-limit updates for existing flights
+                var flight = FindFlight(instance.Session, notification.Callsign);
+                if (flight is not null)
                 {
-                    logger.Verbose("Rate limiting {Callsign}", notification.Callsign);
-                    return;
+                    var shouldUpdate = rateLimiter.ShouldUpdateFlight(flight);
+                    if (!shouldUpdate)
+                    {
+                        logger.Verbose("Rate limiting {Callsign}", notification.Callsign);
+                        return;
+                    }
                 }
-            }
 
-            if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
-                 connection.IsConnected &&
-                 !connection.IsMaster)
-            {
-                logger.Debug("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
-                await connection.Send(notification, cancellationToken);
-                return;
-            }
-
-            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-                .Single(a => a.Identifier == notification.Destination);
-
-            if (flight is null)
-            {
-                // TODO: Make configurable
-                var flightCreationThreshold = TimeSpan.FromHours(2);
-
-                var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-                var landingEstimate = notification.Estimates.Last().Estimate;
-                var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
-                var feederFixTimeIsNotKnown = feederFix is not null && feederFix.ActualTimeOver == DateTimeOffset.MaxValue; // vatSys uses MaxValue when the fix has been overflown, but the time is not known (i.e. controller connecting after the event)
-
-                // Flights are added to the pending list if they are departing from a configured departure airport
-                if (feederFixTimeIsNotKnown || (airportConfiguration.DepartureAirports.Contains(notification.Origin) && !hasDeparted))
+                if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
+                     connection.IsConnected &&
+                     !connection.IsMaster)
                 {
-                    flight = CreateMaestroFlight(
-                        notification,
-                        feederFix,
-                        landingEstimate);
-
-                    flight.IsFromDepartureAirport = true;
-
-                    lockedSession.Session.PendingFlights.Add(flight);
-
-                    logger.Information("{Callsign} created (pending)", notification.Callsign);
-                    await mediator.Publish(new CoordinationMessageSentNotification(
-                        notification.Destination,
-                        $"{notification.Callsign} added to pending list",
-                        new CoordinationDestination.Broadcast()),
-                        cancellationToken);
-
+                    logger.Debug("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
+                    await connection.Send(notification, cancellationToken);
                     return;
                 }
 
-                // TODO: Determine if this behaviour is correct
-                if (!hasDeparted)
+                var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
+                    .Single(a => a.Identifier == notification.Destination);
+
+                if (flight is null)
+                {
+                    // TODO: Make configurable
+                    var flightCreationThreshold = TimeSpan.FromHours(2);
+
+                    var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+                    var landingEstimate = notification.Estimates.Last().Estimate;
+                    var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
+                    var feederFixTimeIsNotKnown = feederFix is not null && feederFix.ActualTimeOver == DateTimeOffset.MaxValue; // vatSys uses MaxValue when the fix has been overflown, but the time is not known (i.e. controller connecting after the event)
+
+                    // Flights are added to the pending list if they are departing from a configured departure airport
+                    if (feederFixTimeIsNotKnown || (airportConfiguration.DepartureAirports.Contains(notification.Origin) && !hasDeparted))
+                    {
+                        flight = CreateMaestroFlight(
+                            notification,
+                            feederFix,
+                            landingEstimate);
+
+                        flight.IsFromDepartureAirport = true;
+
+                        instance.Session.PendingFlights.Add(flight);
+
+                        logger.Information("{Callsign} created (pending)", notification.Callsign);
+                        await mediator.Publish(new CoordinationMessageSentNotification(
+                            notification.Destination,
+                            $"{notification.Callsign} added to pending list",
+                            new CoordinationDestination.Broadcast()),
+                            cancellationToken);
+
+                        return;
+                    }
+
+                    // TODO: Determine if this behaviour is correct
+                    if (!hasDeparted)
+                        return;
+
+                    // Only create flights in Maestro when they're within a specified range of the feeder fix
+                    if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
+                    {
+                        // Determine the runway to assign
+                        var runwayMode = instance.Session.Sequence.GetRunwayModeAt(landingEstimate);
+                        var runway = FindBestRunway(airportConfiguration, runwayMode, feederFix?.FixIdentifier ?? string.Empty);
+
+                        // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
+                        var earliestInsertionIndex = instance.Session.Sequence.FindLastIndex(f =>
+                            f.State is not State.Unstable and not State.Stable &&
+                            f.AssignedRunwayIdentifier == runway.Identifier);
+
+                        var insertionIndex = instance.Session.Sequence.FindIndex(
+                            Math.Max(earliestInsertionIndex, 0),
+                            f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
+
+                        flight = CreateMaestroFlight(
+                            notification,
+                            feederFix,
+                            landingEstimate);
+
+                        flight.SetRunway(runway.Identifier, manual: false);
+
+                        instance.Session.Sequence.Insert(insertionIndex, flight);
+                        logger.Information("{Callsign} created", notification.Callsign);
+                    }
+                    // Flights not tracking a feeder fix are added to the pending list
+                    else if (feederFix is null && landingEstimate - clock.UtcNow() <= flightCreationThreshold)
+                    {
+                        flight = CreateMaestroFlight(
+                            notification,
+                            null,
+                            landingEstimate);
+
+                        instance.Session.PendingFlights.Add(flight);
+                        logger.Information("{Callsign} created (pending)", notification.Callsign);
+                    }
+                }
+
+                if (flight is null)
                     return;
 
-                // Only create flights in Maestro when they're within a specified range of the feeder fix
-                if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
-                {
-                    // Determine the runway to assign
-                    var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
-                    var runway = FindBestRunway(airportConfiguration, runwayMode, feederFix?.FixIdentifier ?? string.Empty);
+                flight.UpdateLastSeen(clock);
 
-                    // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
-                    var earliestInsertionIndex = sequence.FindLastIndex(f =>
-                        f.State is not State.Unstable and not State.Stable &&
-                        f.AssignedRunwayIdentifier == runway.Identifier) + 1;
+                UpdateFlightData(notification, flight);
+                flight.UpdatePosition(notification.Position);
 
-                    var insertionIndex = sequence.FindIndex(
-                        earliestInsertionIndex,
-                        f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
+                // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
+                if (notification.Position is not null && !notification.Position.IsOnGround)
+                    CalculateEstimates(flight, notification, airportConfiguration);
 
-                    flight = CreateMaestroFlight(
-                        notification,
-                        feederFix,
-                        landingEstimate);
+                logger.Verbose("Flight updated: {Flight}", flight);
 
-                    flight.SetRunway(runway.Identifier, manual: false);
+                // Unstable flights are repositioned in the sequence on every update
+                if (flight.State is State.Unstable)
+                    instance.Session.Sequence.RepositionByEstimate(flight);
 
-                    sequence.Insert(insertionIndex, flight);
-                    logger.Information("{Callsign} created", notification.Callsign);
-                }
-                // Flights not tracking a feeder fix are added to the pending list
-                else if (feederFix is null && landingEstimate - clock.UtcNow() <= flightCreationThreshold)
-                {
-                    flight = CreateMaestroFlight(
-                        notification,
-                        null,
-                        landingEstimate);
+                flight.UpdateStateBasedOnTime(clock);
 
-                    lockedSession.Session.PendingFlights.Add(flight);
-                    logger.Information("{Callsign} created (pending)", notification.Callsign);
-                }
+                sessionMessage = instance.Session.Snapshot();
             }
-
-            if (flight is null)
-                return;
-
-            flight.UpdateLastSeen(clock);
-
-            UpdateFlightData(notification, flight);
-            flight.UpdatePosition(notification.Position);
-
-            // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
-            if (notification.Position is not null && !notification.Position.IsOnGround)
-                CalculateEstimates(flight, notification, airportConfiguration);
-
-            logger.Verbose("Flight updated: {Flight}", flight);
-
-            // Unstable flights are repositioned in the sequence on every update
-            if (flight.State is State.Unstable)
-                sequence.RepositionByEstimate(flight);
-
-            flight.UpdateStateBasedOnTime(clock);
 
             await mediator.Publish(
-                new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
+                new SessionUpdatedNotification(
+                    instance.AirportIdentifier,
+                    sessionMessage),
                 cancellationToken);
         }
         catch (Exception exception)
