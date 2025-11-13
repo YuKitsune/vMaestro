@@ -105,17 +105,21 @@ public class FlightUpdatedHandler(
                 if (!hasDeparted)
                     return;
 
-                // New flights can displace stable flights
-                var earliestInsertionIndex = sequence.LastIndexOf(f => f.State is not State.Unstable and not State.Stable) + 1;
-                var indexByEstimate = sequence.FirstIndexOf(f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
-                var insertionIndex = Math.Max(earliestInsertionIndex, indexByEstimate);
-
                 // Only create flights in Maestro when they're within a specified range of the feeder fix
                 if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
                 {
                     // Determine the runway to assign
-                    var runwayMode = sequence.GetRunwayModeAt(insertionIndex);
+                    var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
                     var runway = FindBestRunway(airportConfiguration, runwayMode, feederFix?.FixIdentifier ?? string.Empty);
+
+                    // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
+                    var earliestInsertionIndex = sequence.FindLastIndex(f =>
+                        f.State is not State.Unstable and not State.Stable &&
+                        f.AssignedRunwayIdentifier == runway.Identifier) + 1;
+
+                    var insertionIndex = sequence.FindIndex(
+                        earliestInsertionIndex,
+                        f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
 
                     flight = CreateMaestroFlight(
                         notification,
@@ -156,7 +160,7 @@ public class FlightUpdatedHandler(
 
             // Unstable flights are repositioned in the sequence on every update
             if (flight.State is State.Unstable)
-                sequence.Reposition(flight, flight.LandingEstimate);
+                sequence.RepositionByEstimate(flight);
 
             flight.UpdateStateBasedOnTime(clock);
 
