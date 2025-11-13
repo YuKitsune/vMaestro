@@ -50,7 +50,7 @@ public class ChangeFeederFixEstimateRequestHandler(
         if (landingEstimate is not null)
             flight.UpdateLandingEstimate(landingEstimate.Value);
 
-        sequence.Recompute(flight);
+        sequence.RepositionByEstimate(flight);
         if (flight.State is State.Unstable)
             flight.SetState(State.Stable, clock); // TODO: Make configurable
 

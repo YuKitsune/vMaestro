@@ -41,7 +41,7 @@ public class ChangeRunwayRequestHandler(
         logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
         flight.SetRunway(request.RunwayIdentifier, true);
-        sequence.Recompute(flight);
+        sequence.RepositionByEstimate(flight, displaceStableFlights: true);
 
         // Unstable flights become Stable when changing runway
         if (flight.State is State.Unstable)

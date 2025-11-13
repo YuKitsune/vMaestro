@@ -108,9 +108,19 @@ public class Sequence
         return _sequence.FindIndex(i => i is FlightSequenceItem f && predicate(f.Flight));
     }
 
+    public int FirstIndexOf(int startIndex, Func<Flight, bool> predicate)
+    {
+        return _sequence.FindIndex(startIndex, i => i is FlightSequenceItem f && predicate(f.Flight));
+    }
+
     public int LastIndexOf(Func<Flight, bool> predicate)
     {
         return _sequence.FindLastIndex(i => i is FlightSequenceItem f && predicate(f.Flight));
+    }
+
+    public int LastIndexOf(int startIndex, Func<Flight, bool> predicate)
+    {
+        return _sequence.FindLastIndex(startIndex, i => i is FlightSequenceItem f && predicate(f.Flight));
     }
 
     public Guid CreateSlot(DateTimeOffset start, DateTimeOffset end, string[] runwayIdentifiers)
@@ -263,27 +273,44 @@ public class Sequence
         ValidateInsertionBetweenImmovableFlights(index, runwayIdentifier);
     }
 
-    public void Recompute(Flight flight)
+    // public void Recompute(Flight flight)
+    // {
+    //     var originalIndex = _sequence.FindIndex(i => i is FlightSequenceItem f && f.Flight == flight);
+    //
+    //     // TODO: What if the flight is already frozen?
+    //     // TODO: If we recompute a flight that's in the frozen part of the sequence, should it get delayed until it's no longer in that part?
+    //     // Validate BEFORE removing - exclude the flight being moved
+    //     var newIndex = IndexOf(flight.LandingEstimate);
+    //     if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+    //         ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier!);
+    //
+    //     // Remove and re-insert the flight by it's landing estimate
+    //     _sequence.RemoveAll(i => i is FlightSequenceItem f && f.Flight == flight);
+    //
+    //     InsertAt(newIndex, new FlightSequenceItem(flight));
+    //
+    //     var recomputePoint = Math.Min(originalIndex, newIndex);
+    //
+    //     Schedule(recomputePoint, forceRescheduleStable: true);
+    // }
+
+    public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false)
     {
-        var originalIndex = _sequence.FindIndex(i => i is FlightSequenceItem f && f.Flight == flight);
+        var currentIndex = IndexOf(flight);
 
-        // TODO: What if the flight is already frozen?
-        // TODO: If we recompute a flight that's in the frozen part of the sequence, should it get delayed until it's no longer in that part?
-        // Validate BEFORE removing - exclude the flight being moved
-        var newIndex = IndexOf(flight.LandingEstimate);
-        if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
-            ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier!);
+        ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
+        _sequence.RemoveAt(currentIndex);
 
-        // Remove and re-insert the flight by it's landing estimate
-        _sequence.RemoveAll(i => i is FlightSequenceItem f && f.Flight == flight);
+        // Removing the flight will change the index of everything behind it
+        if (newIndex > currentIndex)
+            newIndex--;
 
         InsertAt(newIndex, new FlightSequenceItem(flight));
 
-        var recomputePoint = Math.Min(originalIndex, newIndex);
+        var recomputePoint = Math.Min(newIndex, currentIndex);
 
-        Schedule(recomputePoint, forceRescheduleStable: true);
+        Schedule(recomputePoint, forceRescheduleStable);
     }
-
 
     TODO: this next
     public void MoveFlight(string callsign, DateTimeOffset newLandingTime, string[] runwayIdentifiers)
@@ -391,7 +418,7 @@ public class Sequence
             _sequence.Insert(index, item);
     }
 
-    void Schedule(int startIndex, bool forceRescheduleStable)
+    public void Schedule(int startIndex, bool forceRescheduleStable)
     {
         for (var i = startIndex; i < _sequence.Count; i++)
         {
@@ -542,6 +569,7 @@ public class Sequence
                 }
             }
 
+            // TODO: Do not swap with the next item if the maximum delay will be exceeded
             // If the next item in the sequence cannot be moved, move this flight behind it to ensure we don't conflict with it
             if (nextItem is not null)
             {
