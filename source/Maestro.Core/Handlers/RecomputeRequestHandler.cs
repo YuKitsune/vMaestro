@@ -52,15 +52,10 @@ public class RecomputeRequestHandler(
         flight.HighPriority = feederFix is null;
         flight.SetMaximumDelay(null);
 
-        // Re-calculate estimates
         CalculateEstimates(airportConfiguration, flight);
         flight.ResetInitialEstimates();
 
-        // Reset scheduled times
-        if (flight.FeederFixEstimate is not null)
-            flight.SetFeederFixTime(flight.FeederFixEstimate.Value);
-
-        sequence.Recompute(flight);
+        sequence.RepositionByEstimate(flight);
 
         // Reset the state
         flight.SetState(State.Unstable, clock);

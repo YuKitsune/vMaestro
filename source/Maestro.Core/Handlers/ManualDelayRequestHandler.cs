@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Connectivity;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
+using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
@@ -30,17 +31,19 @@ public class ManualDelayRequestHandler(
         var sequence = lockedSession.Session.Sequence;
         var flight = sequence.FindFlight(request.Callsign);
         if (flight == null)
-        {
             throw new MaestroException($"{request.Callsign} not found");
-        }
+
+        var index = sequence.IndexOf(flight);
+        if (index < 0)
+            throw new MaestroException($"{request.Callsign} not found");
 
         var maximumDelay = TimeSpan.FromMinutes(request.MaximumDelayMinutes);
         flight.SetMaximumDelay(maximumDelay);
 
-        // TODO: Re-insert the flight based on it's ETA.
-        //  during scheduling, don't move the flight back if it would result in a delay greater than the maximum delay
-
-        sequence.Recompute(flight);
+        // Re-schedule the flight
+        // This will move it forward if the delay exceeds the maximum delay
+        // TODO: Should this be a different method?
+        sequence.Schedule(index, forceRescheduleStable: true);
 
         logger.Information("Set maximum delay for {Callsign} to {MaximumDelay}", request.Callsign, maximumDelay);
 
