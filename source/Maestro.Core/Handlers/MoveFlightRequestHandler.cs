@@ -40,19 +40,13 @@ public class MoveFlightRequestHandler(
         var runwayIdentifier = runwayMode.Runways.FirstOrDefault(r => request.RunwayIdentifiers.Contains(r.Identifier))?.Identifier
             ?? runwayMode.Default.Identifier;
 
+        sequence.ThrowIfSlotIsUnavailable(newIndex, runwayIdentifier);
+
         // TODO: Manually set the runway for now, but we need to revisit this later
         // Re: delaying into a new runway mode
         flight.SetRunway(runwayIdentifier, manual: true);
 
-        TODO finish me
-
-
-
-        // Delegate to Sequence aggregate to handle the move operation
-        sequence.MoveFlight(
-            request.Callsign,
-            request.NewLandingTime,
-            request.RunwayIdentifiers);
+        sequence.Move(flight, newIndex, forceRescheduleStable: true);
 
         // Unstable flights become stable when moved
         if (flight.State == State.Unstable)
