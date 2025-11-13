@@ -258,52 +258,9 @@ public class Sequence
         }
     }
 
-    public void InsertPending(string callsign, DateTimeOffset landingTime, string[] runwayIdentifiers)
+    public void ThrowIfSlotIsUnavailable(int index, string runwayIdentifier)
     {
-        var pendingFlight = _pendingFlights.FirstOrDefault(f => f.Callsign == callsign);
-        if (pendingFlight is null)
-            throw new MaestroException($"{callsign} not found in pending list");
-
-        var index = IndexOf(landingTime);
-        if (!string.IsNullOrEmpty(pendingFlight.AssignedRunwayIdentifier))
-            ValidateInsertionBetweenImmovableFlights(index, pendingFlight.AssignedRunwayIdentifier!);
-
-        var runwayMode = GetRunwayModeAt(landingTime);
-        var runwayIdentifier = runwayIdentifiers.FirstOrDefault(r => runwayMode.Runways.Any(rm => rm.Identifier == r))
-                               ?? runwayMode.Default.Identifier;
-
-        _pendingFlights.Remove(pendingFlight);
-        pendingFlight.SetRunway(runwayIdentifier, manual: true);
-
-        InsertAt(index, new FlightSequenceItem(pendingFlight));
-        Schedule(index, forceRescheduleStable: true);
-    }
-
-    public void InsertPending(string callsign, RelativePosition relativePosition, string referenceCallsign)
-    {
-        var pendingFlight = _pendingFlights.FirstOrDefault(f => f.Callsign == callsign);
-        if (pendingFlight is null)
-            throw new MaestroException($"{callsign} not found in pending list");
-
-        var referenceFlightItem = _sequence
-            .OfType<FlightSequenceItem>()
-            .FirstOrDefault(i => i.Flight.Callsign == referenceCallsign);
-
-        var index = _sequence.IndexOf(referenceFlightItem);
-        index = relativePosition switch
-        {
-            RelativePosition.Before => index,
-            RelativePosition.After => index + 1,
-            _ => throw new ArgumentOutOfRangeException()
-        };
-
-        if (!string.IsNullOrEmpty(pendingFlight.AssignedRunwayIdentifier))
-            ValidateInsertionBetweenImmovableFlights(index, pendingFlight.AssignedRunwayIdentifier!);
-
-        _pendingFlights.Remove(pendingFlight);
-
-        InsertAt(index, new FlightSequenceItem(pendingFlight));
-        Schedule(index, forceRescheduleStable: true);
+        ValidateInsertionBetweenImmovableFlights(index, runwayIdentifier);
     }
 
     public void Recompute(Flight flight)
