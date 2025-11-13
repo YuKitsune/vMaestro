@@ -40,30 +40,30 @@ public class SwapFlightsRequestHandler(
             throw new MaestroException($"{request.SecondFlightCallsign} not found");
 
         // Swap positions
-        var firstFlightIndex = sequence.IndexOf(firstFlight);
-        var secondFlightIndex = sequence.IndexOf(secondFlight);
-        sequence.Swap(firstFlightIndex, secondFlightIndex);
+        sequence.Swap(firstFlight, secondFlight);
 
-        // Swap landing times
-        var firstLandingTime = firstFlight.LandingTime;
-        var secondLandingTime = secondFlight.LandingTime;
-        firstFlight.SetLandingTime(secondLandingTime);
-        secondFlight.SetLandingTime(firstLandingTime);
+        // TODO: This has been moved into the Sequence. I'm not sure how I feel about it.
 
-        // Re-calculate feeder-fix times (don't swap because they could be on different arrivals with different intervals)
-        var firstFeederFixTime = GetFeederFixTime(firstFlight);
-        if (firstFeederFixTime is not null)
-            firstFlight.SetFeederFixTime(firstFeederFixTime.Value);
-
-        var secondFeederFixTime = GetFeederFixTime(secondFlight);
-        if (secondFeederFixTime is not null)
-            secondFlight.SetFeederFixTime(secondFeederFixTime.Value);
-
-        // Swap runways
-        var firstRunway = firstFlight.AssignedRunwayIdentifier;
-        var secondRunway = secondFlight.AssignedRunwayIdentifier;
-        firstFlight.SetRunway(secondRunway, manual: true);
-        secondFlight.SetRunway(firstRunway, manual: true);
+        // // Swap landing times
+        // var firstLandingTime = firstFlight.LandingTime;
+        // var secondLandingTime = secondFlight.LandingTime;
+        // firstFlight.SetLandingTime(secondLandingTime);
+        // secondFlight.SetLandingTime(firstLandingTime);
+        //
+        // // Re-calculate feeder-fix times (don't swap because they could be on different arrivals with different intervals)
+        // var firstFeederFixTime = GetFeederFixTime(firstFlight);
+        // if (firstFeederFixTime is not null)
+        //     firstFlight.SetFeederFixTime(firstFeederFixTime.Value);
+        //
+        // var secondFeederFixTime = GetFeederFixTime(secondFlight);
+        // if (secondFeederFixTime is not null)
+        //     secondFlight.SetFeederFixTime(secondFeederFixTime.Value);
+        //
+        // // Swap runways
+        // var firstRunway = firstFlight.AssignedRunwayIdentifier;
+        // var secondRunway = secondFlight.AssignedRunwayIdentifier;
+        // firstFlight.SetRunway(secondRunway, manual: true);
+        // secondFlight.SetRunway(firstRunway, manual: true);
 
         // Unstable flights become stable when swapped
         if (firstFlight.State == State.Unstable) firstFlight.SetState(State.Stable, clock);

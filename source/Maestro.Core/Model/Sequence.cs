@@ -312,35 +312,41 @@ public class Sequence
         Schedule(recomputePoint, forceRescheduleStable);
     }
 
-    TODO: this next
-    public void MoveFlight(string callsign, DateTimeOffset newLandingTime, string[] runwayIdentifiers)
+    public void Swap(Flight flight1, Flight flight2)
     {
-        var flight = FindFlight(callsign);
-        if (flight is null)
-            throw new MaestroException($"{callsign} not found");
+        var index1 = IndexOf(flight1);
+        if (index1 < 0)
+            throw new MaestroException($"{flight1.Callsign} not found");
 
-        var runwayMode = GetRunwayModeAt(newLandingTime);
-        var runway = runwayMode.Runways
-            .FirstOrDefault(r => runwayIdentifiers.Contains(r.Identifier)) ?? runwayMode.Default;
+        var index2 = IndexOf(flight2);
+        if (index2 < 0)
+            throw new MaestroException($"{flight1.Callsign} not found");
 
-        // Calculate insertion index and validate BEFORE removing/mutating - exclude the flight being moved
-        var insertionIndex = IndexOf(newLandingTime);
-        ValidateInsertionBetweenImmovableFlights(insertionIndex, runway.Identifier);
-
-        // Remove flight from current position
-        _sequence.RemoveAll(i => i is FlightSequenceItem flightSequenceItem && flightSequenceItem.Flight == flight);
-
-        // Now it's safe to mutate - validation has passed
-        flight.SetRunway(runway.Identifier, manual: true);
-
-        InsertAt(insertionIndex, new FlightSequenceItem(flight));
-
-        Schedule(insertionIndex, forceRescheduleStable: true);
-    }
-
-    public void Swap(int index1, int index2)
-    {
+        // Swap positions
         (_sequence[index1],  _sequence[index2]) = (_sequence[index2], _sequence[index1]);
+
+        // Swap runways
+        var runway1 = flight1.AssignedRunwayIdentifier;
+        var runway2 = flight2.AssignedRunwayIdentifier;
+        flight1.SetRunway(runway2, manual: true);
+        flight1.SetRunway(runway1, manual: true);
+
+        // Swap landing times
+        var landingTime1 = flight1.LandingTime;
+        var landingTime2 = flight2.LandingTime;
+        flight1.SetLandingTime(landingTime2);
+        flight1.SetLandingTime(landingTime1);
+
+        // Fix feeder fix time
+        var feederFixTime1 = GetFeederFixTime(flight1);
+        if (feederFixTime1 is not null)
+            flight1.SetFeederFixTime(feederFixTime1.Value);
+
+        var feederFixTime2 = GetFeederFixTime(flight2);
+        if (feederFixTime2 is not null)
+            flight2.SetFeederFixTime(feederFixTime2.Value);
+
+        // No need to re-schedule as we're exchanging two flights that are already scheduled
     }
 
     // TODO: Remove time parameter
@@ -793,6 +799,22 @@ public class Sequence
         }
 
         flight.ResetInitialEstimates();
+    }
+
+    DateTimeOffset? GetFeederFixTime(Flight flight)
+    {
+        var interval = _arrivalLookup.GetArrivalInterval(
+            flight.DestinationIdentifier,
+            flight.FeederFixIdentifier,
+            flight.AssignedArrivalIdentifier,
+            flight.AssignedRunwayIdentifier,
+            flight.AircraftType,
+            flight.AircraftCategory);
+
+        if (interval is null)
+            return null;
+
+        return flight.LandingTime.Subtract(interval.Value);
     }
 }
 
