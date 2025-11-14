@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.Composition;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Xml.Linq;
@@ -122,12 +123,13 @@ public class Plugin : IPlugin
     PluginConfiguration ConfigureConfiguration()
     {
         const string configFileName = "Maestro.json";
-        var profileDirectory = FindProfileDirectory();
 
-        var configFilePath = Path.Combine(profileDirectory, configFileName);
+        var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+        var configFilePath = Path.Combine(assemblyDirectory, configFileName);
 
         if (!File.Exists(configFilePath))
-            throw new MaestroException($"Unable to locate {configFileName} in {profileDirectory}.");
+            throw new MaestroException($"Unable to locate {configFileName}");
 
         var configurationJson = File.ReadAllText(configFilePath);
         var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
@@ -139,6 +141,8 @@ public class Plugin : IPlugin
     ILogger ConfigureLogger(ILoggingConfiguration loggingConfiguration)
     {
         var logFileName = Path.Combine(Helpers.GetFilesFolder(), "maestro_log.txt");
+
+        // TODO: Include the airport in the log output
         var logger = new LoggerConfiguration()
             .WriteTo.File(
                 path: logFileName,
@@ -151,36 +155,6 @@ public class Plugin : IPlugin
         Log.Logger = logger;
 
         return logger;
-    }
-
-    string FindProfileDirectory()
-    {
-        var vatsysFilesDirectory = Helpers.GetFilesFolder();
-        var profilesDirectory = Path.Combine(vatsysFilesDirectory, "Profiles");
-        var profileDirectories = Directory.GetDirectories(profilesDirectory);
-
-        foreach (var profileDirectory in profileDirectories)
-        {
-            var profileXmlFile = Path.Combine(profileDirectory, "Profile.xml");
-            if (!File.Exists(profileXmlFile))
-                continue;
-
-            var profileXml = File.ReadAllText(profileXmlFile);
-            var fullProfileName = ExtractFullName(profileXml);
-
-            // Profile.Name is FullName Version and Revision combined
-            if (Profile.Name.StartsWith(fullProfileName))
-                return profileDirectory;
-        }
-
-        throw new MaestroException($"Unable to locate profile directory for {Profile.Name}. Maestro configuration cannot be loaded.");
-
-        string ExtractFullName(string xmlContent)
-        {
-            var doc = XDocument.Parse(xmlContent);
-            var profileElement = doc.Element("Profile");
-            return profileElement?.Attribute("FullName")?.Value ?? string.Empty;
-        }
     }
 
     void AddToolbarItem()
@@ -430,15 +404,14 @@ public class Plugin : IPlugin
     {
         try
         {
-            var vatSysPath = GetVatSysExecutablePath();
-            if (vatSysPath == null)
+            if (!TryGetVatSysExecutablePath(out var vatSysExecutablePath))
                 return;
 
             const string registryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
             const string dpiValue = "DPIUNAWARE";
 
             using var key = Registry.CurrentUser.OpenSubKey(registryPath, writable: false);
-            var existingValue = key?.GetValue(vatSysPath) as string;
+            var existingValue = key?.GetValue(vatSysExecutablePath) as string;
 
             // If already set, exit early
             if (existingValue != null && existingValue.Contains(dpiValue))
@@ -448,7 +421,7 @@ public class Plugin : IPlugin
             using var writableKey = Registry.CurrentUser.OpenSubKey(registryPath, writable: true)
                 ?? Registry.CurrentUser.CreateSubKey(registryPath);
 
-            writableKey.SetValue(vatSysPath, dpiValue, RegistryValueKind.String);
+            writableKey.SetValue(vatSysExecutablePath, dpiValue, RegistryValueKind.String);
 
             // Restart vatSys to apply the DPI setting
             RestartVatSys();
@@ -463,12 +436,11 @@ public class Plugin : IPlugin
     {
         try
         {
-            var vatSysPath = GetVatSysExecutablePath();
-            if (vatSysPath != null)
-            {
-                System.Diagnostics.Process.Start(vatSysPath);
-                Environment.Exit(0);
-            }
+            if (!TryGetVatSysExecutablePath(out var vatSysExecutablePath))
+                return;
+
+            System.Diagnostics.Process.Start(vatSysExecutablePath);
+            Environment.Exit(0);
         }
         catch (Exception ex)
         {
@@ -476,22 +448,30 @@ public class Plugin : IPlugin
         }
     }
 
-    string? GetVatSysExecutablePath()
+    bool TryGetVatSysInstallationPath(out string? installationPath)
+    {
+        using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Sawbe\vatSys");
+        installationPath = key?.GetValue("Path") as string;
+        return !string.IsNullOrEmpty(installationPath) && Directory.Exists(installationPath);
+    }
+
+    bool TryGetVatSysExecutablePath(out string? executablePath)
     {
         try
         {
-            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Sawbe\vatSys");
-            var installPath = key?.GetValue("Path") as string;
+            if (!TryGetVatSysInstallationPath(out var installationPath))
+            {
+                executablePath = null;
+                return false;
+            }
 
-            if (string.IsNullOrEmpty(installPath))
-                return null;
-
-            var exePath = Path.Combine(installPath, "bin", "vatSys.exe");
-            return File.Exists(exePath) ? exePath : null;
+            executablePath = Path.Combine(installationPath, "bin", "vatSys.exe");
+            return File.Exists(executablePath);
         }
         catch
         {
-            return null;
+            executablePath = null;
+            return false;
         }
     }
 }

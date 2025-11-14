@@ -210,14 +210,11 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
-            Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
-
-            // Copy config to profile
+            // Copy config
             var configFile = RootDirectory / "Maestro.json";
-            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var profileDirectory = Path.Combine(documentsPath, "vatSys Files", "Profiles", ProfileName);
-            configFile.CopyToDirectory(profileDirectory, ExistsPolicy.FileOverwrite);
-            Log.Information("Maestro.json copied to to {ProfileDirectory}", profileDirectory);
+            configFile.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
+
+            Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
         });
 
     Target Package => _ => _
@@ -227,7 +224,6 @@ class Build : NukeBuild
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
             var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
-            var readmeFile = RootDirectory / "README.md";
             var configFile = RootDirectory / "Maestro.json";
 
             PackageDirectory.CreateOrCleanDirectory();
@@ -240,10 +236,11 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(pluginAssembliesDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
+            // Temporary for testing - include the config with the package
+            configFile.CopyToDirectory(pluginAssembliesDirectory, ExistsPolicy.FileOverwrite);
+
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
-            readmeFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
-            configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
 
             if (ZipPath.FileExists())
                 ZipPath.DeleteFile();
