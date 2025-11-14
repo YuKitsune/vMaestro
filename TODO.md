@@ -1,12 +1,23 @@
 # Big Refactor
 
-- [ ] Split Flight into two (FlightData for vatSys details and sequencing parameters, SequencedFlight for scheduling data like initial estimates, STA and STA_FF)
-- [ ] Assign runway during insertion (required ctor arguments)
-- [ ] Re-assign runway when changing TMA configuration
+- [ ] Introduce SessionDraft and SequenceDraft
+    - [ ] Mutable Session + Sequence
+    - [ ] Pass to Scheduler to create a Session
+    - [ ] Replace session when completed
 
-- [ ] Make Sequence immutable
-    - [ ] Create a separate mutable sequence type
-    - [ ] Convert mutable sequence to immutable sequence using scheduler
-    - [ ] Move TMA configuration into session
+- [ ] Make Runway a ctor parameter for Flights
+    - [ ] Assign runway on insertion
+    - [ ] Store the runway and the acceptance rate in the flight
+
+- [ ] Separate Flight data from Sequence data
+    - [ ] Current estimates and sequence parameters go in the main Flight class
+    - [ ] Initial estimates and scheduled times go in the Sequence data class
+    - [ ] Re-assign runways when changing TMA configuration
 
 - [ ] Review test cases
+
+# Questions
+
+If a runway change is scheduled for some time in the future, and a flight is delayed past the `LastLandingTimeInPreviousMode`, what happens?
+Does the flight get moved to a runway in the new mode, or will it remain on its assigned runway?
+Does the flight get scheduled between `LastLandingTimeInPreviousMode` and `FirstLandingTimeInNewMode`, or is it delayed until `FirstLandingTimeInNewMode`?
