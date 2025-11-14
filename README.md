@@ -24,7 +24,5 @@ For installation instructions, configuration guides, and usage documentation, vi
 
 1. Download the latest release from [GitHub Releases](https://github.com/YuKitsune/vMaestro/releases)
 2. Extract to your vatSys plugins directory
-3. Copy `Maestro.json` to your vatSys profile directory
-4. Restart vatSys
 
 For detailed setup and configuration, see the [official documentation](https://maestro.eoinmotherway.dev/).
