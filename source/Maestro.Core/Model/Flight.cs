@@ -36,15 +36,15 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     }
 
     // Constructor for manually inserted flights (formerly DummyFlight)
-    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset landingTime, State state)
+    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset targetTime, State state)
     {
         Callsign = callsign;
         AircraftType = aircraftType ?? string.Empty;
         DestinationIdentifier = destinationIdentifier;
         AssignedRunwayIdentifier = runwayIdentifier;
-        LandingTime = landingTime;
-        InitialLandingEstimate = landingTime;
-        LandingEstimate = landingTime;
+        InitialLandingEstimate = targetTime;
+        LandingEstimate = targetTime;
+        LandingTime = targetTime;
         State = state;
         IsManuallyInserted = true;
         AircraftCategory = AircraftCategory.Jet;
@@ -78,7 +78,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         InitialLandingEstimate = message.InitialLandingEstimate;
         LandingEstimate = message.LandingEstimate;
         LandingTime = message.LandingTime;
-        ManualLandingTime = message.ManualLandingTime;
         FlowControls = message.FlowControls;
         AssignedArrivalIdentifier = message.AssignedArrivalIdentifier;
         Fixes = message.Fixes.ToArray();
@@ -120,7 +119,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset InitialLandingEstimate { get; private set; }
     public DateTimeOffset LandingEstimate { get; private set; } // ETA
     public DateTimeOffset LandingTime { get; private set; } // STA
-    public bool ManualLandingTime { get; private set; }
 
     public TimeSpan TotalDelay => LandingTime - InitialLandingEstimate;
     public TimeSpan RemainingDelay => LandingTime - LandingEstimate;
@@ -204,10 +202,9 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     }
 
     // TODO: This should update the feeder fix time based on the processed arrival
-    public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
+    public void SetLandingTime(DateTimeOffset landingTime)
     {
         LandingTime = landingTime;
-        ManualLandingTime = manual;
     }
 
     public void UpdateLastSeen(IClock clock)
@@ -239,7 +236,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         LandingEstimate = default;
         InitialLandingEstimate = default;
         LandingTime = default;
-        ManualLandingTime = false;
         State = State.Unstable;
         FlowControls = FlowControls.ProfileSpeed;
         MaximumDelay = null;
@@ -315,7 +311,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public override string ToString()
     {
-        return $"{Callsign}; {State}; FF {FeederFixIdentifier}; ETA_FF {FeederFixEstimate:HH:mm}; STA_FF {FeederFixTime:HH:mm}; ATO_FF {ActualFeederFixTime:HH:mm}; ETA {LandingEstimate:HH:mm}; STA {LandingTime:HH:mm}";
+        return $"{Callsign}: State: {State}; Runway {AssignedRunwayIdentifier ?? "null"}; STA {LandingTime:HH:mm};";
     }
 }
 

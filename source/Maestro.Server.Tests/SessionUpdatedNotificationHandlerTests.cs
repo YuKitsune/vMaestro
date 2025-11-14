@@ -1,5 +1,6 @@
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Messages;
+using Maestro.Core.Sessions;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;
@@ -7,7 +8,7 @@ using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Tests;
 
-public class SequenceUpdatedNotificationHandlerTests
+public class SessionUpdatedNotificationHandlerTests
 {
     [Fact]
     public async Task WhenTheClientIsNotTracked_ExceptionIsThrown()
@@ -16,32 +17,35 @@ public class SequenceUpdatedNotificationHandlerTests
         const string connectionId = "unknown-connection";
         const string airportIdentifier = "YSSY";
 
-        var sequenceMessage = new SequenceMessage
+        var sessionMessage = new SessionMessage
         {
-            AirportIdentifier = airportIdentifier,
-            CurrentRunwayMode = null,
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = default,
-            FirstLandingTimeForNextMode = default,
-            Flights = [],
+            AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
-            Slots = [],
-            DummyCounter = 0
+            DummyCounter = 0,
+            Sequence = new SequenceMessage
+            {
+                CurrentRunwayMode = null,
+                NextRunwayMode = null,
+                LastLandingTimeForCurrentMode = default,
+                FirstLandingTimeForNextMode = default,
+                Flights = [],
+                Slots = [],
+            }
         };
 
-        var sequenceUpdatedNotification = new SequenceUpdatedNotification(airportIdentifier, sequenceMessage);
-        var wrappedNotification = new NotificationContextWrapper<SequenceUpdatedNotification>(connectionId, sequenceUpdatedNotification);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionMessage);
+        var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny)).Returns(false);
 
-        var sequenceCache = new SequenceCache();
+        var sessionCache = new SessionCache();
         var hubProxy = new Mock<IHubProxy>();
 
         // Act & Assert
         var exception = await Should.ThrowAsync<InvalidOperationException>(
-            async () => await GetHandler(connectionManager: connectionManager.Object, sequenceCache: sequenceCache, hubProxy: hubProxy.Object)
+            async () => await GetHandler(connectionManager: connectionManager.Object, sessionCache: sessionCache, hubProxy: hubProxy.Object)
                 .Handle(wrappedNotification, CancellationToken.None));
 
         exception.Message.ShouldBe($"Connection {connectionId} is not tracked");
@@ -58,22 +62,25 @@ public class SequenceUpdatedNotificationHandlerTests
 
         var masterConnection = new Connection(connectionId, partition, connectionAirport, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
-        var sequenceMessage = new SequenceMessage
+        var sessionMessage = new SessionMessage
         {
-            AirportIdentifier = notificationAirport,
-            CurrentRunwayMode = null,
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = default,
-            FirstLandingTimeForNextMode = default,
-            Flights = [],
+            AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
-            Slots = [],
-            DummyCounter = 0
+            DummyCounter = 0,
+            Sequence = new SequenceMessage
+            {
+                CurrentRunwayMode = null,
+                NextRunwayMode = null,
+                LastLandingTimeForCurrentMode = default,
+                FirstLandingTimeForNextMode = default,
+                Flights = [],
+                Slots = [],
+            }
         };
 
-        var sequenceUpdatedNotification = new SequenceUpdatedNotification(notificationAirport, sequenceMessage);
-        var wrappedNotification = new NotificationContextWrapper<SequenceUpdatedNotification>(connectionId, sequenceUpdatedNotification);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(notificationAirport, sessionMessage);
+        var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -83,12 +90,12 @@ public class SequenceUpdatedNotificationHandlerTests
                 return true;
             }));
 
-        var sequenceCache = new SequenceCache();
+        var sessionCache = new SessionCache();
         var hubProxy = new Mock<IHubProxy>();
 
         // Act & Assert
         var exception = await Should.ThrowAsync<InvalidOperationException>(
-            async () => await GetHandler(connectionManager: connectionManager.Object, sequenceCache: sequenceCache, hubProxy: hubProxy.Object)
+            async () => await GetHandler(connectionManager: connectionManager.Object, sessionCache: sessionCache, hubProxy: hubProxy.Object)
                 .Handle(wrappedNotification, CancellationToken.None));
 
         exception.Message.ShouldBe($"Connection {connectionId} attempted to update {notificationAirport} but is connected to {connectionAirport}");
@@ -104,22 +111,25 @@ public class SequenceUpdatedNotificationHandlerTests
 
         var slaveConnection = new Connection(connectionId, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
 
-        var sequenceMessage = new SequenceMessage
+        var sessionMessage = new SessionMessage
         {
-            AirportIdentifier = airportIdentifier,
-            CurrentRunwayMode = null,
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = default,
-            FirstLandingTimeForNextMode = default,
-            Flights = [],
+            AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
-            Slots = [],
-            DummyCounter = 0
+            DummyCounter = 0,
+            Sequence = new SequenceMessage
+            {
+                CurrentRunwayMode = null,
+                NextRunwayMode = null,
+                LastLandingTimeForCurrentMode = default,
+                FirstLandingTimeForNextMode = default,
+                Flights = [],
+                Slots = [],
+            }
         };
 
-        var sequenceUpdatedNotification = new SequenceUpdatedNotification(airportIdentifier, sequenceMessage);
-        var wrappedNotification = new NotificationContextWrapper<SequenceUpdatedNotification>(connectionId, sequenceUpdatedNotification);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionMessage);
+        var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -129,19 +139,19 @@ public class SequenceUpdatedNotificationHandlerTests
                 return true;
             }));
 
-        var sequenceCache = new SequenceCache();
+        var sessionCache = new SessionCache();
         var hubProxy = new Mock<IHubProxy>();
 
         // Act & Assert
         var exception = await Should.ThrowAsync<InvalidOperationException>(
-            async () => await GetHandler(connectionManager: connectionManager.Object, sequenceCache: sequenceCache, hubProxy: hubProxy.Object)
+            async () => await GetHandler(connectionManager: connectionManager.Object, sessionCache: sessionCache, hubProxy: hubProxy.Object)
                 .Handle(wrappedNotification, CancellationToken.None));
 
         exception.Message.ShouldBe("Only the master can update the sequence");
     }
 
     [Fact]
-    public async Task WhenTheSequenceIsUpdated_TheCacheIsUpdatedAndAllOtherClientsAreNotified()
+    public async Task WhenTheSessionIsUpdated_TheCacheIsUpdatedAndAllOtherClientsAreNotified()
     {
         // Arrange
         const string connectionId = "master-connection";
@@ -153,22 +163,25 @@ public class SequenceUpdatedNotificationHandlerTests
         var peer2 = new Connection("peer-2", partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
         var peers = new[] { peer1, peer2 };
 
-        var sequenceMessage = new SequenceMessage
+        var sessionMessage = new SessionMessage
         {
-            AirportIdentifier = airportIdentifier,
-            CurrentRunwayMode = null,
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = default,
-            FirstLandingTimeForNextMode = default,
-            Flights = [],
+            AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
-            Slots = [],
-            DummyCounter = 42
+            DummyCounter = 42,
+            Sequence = new SequenceMessage
+            {
+                CurrentRunwayMode = null,
+                NextRunwayMode = null,
+                LastLandingTimeForCurrentMode = default,
+                FirstLandingTimeForNextMode = default,
+                Flights = [],
+                Slots = [],
+            }
         };
 
-        var sequenceUpdatedNotification = new SequenceUpdatedNotification(airportIdentifier, sequenceMessage);
-        var wrappedNotification = new NotificationContextWrapper<SequenceUpdatedNotification>(connectionId, sequenceUpdatedNotification);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionMessage);
+        var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -179,41 +192,41 @@ public class SequenceUpdatedNotificationHandlerTests
             }));
         connectionManager.Setup(x => x.GetPeers(masterConnection)).Returns(peers);
 
-        var sequenceCache = new SequenceCache();
+        var sessionCache = new SessionCache();
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager: connectionManager.Object, sequenceCache: sequenceCache, hubProxy: hubProxy.Object)
+        await GetHandler(connectionManager: connectionManager.Object, sessionCache: sessionCache, hubProxy: hubProxy.Object)
             .Handle(wrappedNotification, CancellationToken.None);
 
         // Assert
-        var cachedSequence = sequenceCache.Get(partition, airportIdentifier);
+        var cachedSequence = sessionCache.Get(partition, airportIdentifier);
         cachedSequence.ShouldNotBeNull();
-        cachedSequence.ShouldBe(sequenceMessage);
+        cachedSequence.ShouldBe(sessionMessage);
 
         hubProxy.Verify(x => x.Send(
             peer1.Id,
             "SequenceUpdated",
-            sequenceUpdatedNotification,
+            sessionUpdatedNotification,
             It.IsAny<CancellationToken>()), Times.Once);
 
         hubProxy.Verify(x => x.Send(
             peer2.Id,
             "SequenceUpdated",
-            sequenceUpdatedNotification,
+            sessionUpdatedNotification,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    SequenceUpdatedNotificationHandler GetHandler(
+    SessionUpdatedNotificationHandler GetHandler(
         IConnectionManager? connectionManager = null,
-        SequenceCache? sequenceCache = null,
+        SessionCache? sessionCache = null,
         IHubProxy? hubProxy = null)
     {
         connectionManager ??= new Mock<IConnectionManager>().Object;
-        sequenceCache ??= new SequenceCache();
+        sessionCache ??= new SessionCache();
         hubProxy ??= new Mock<IHubProxy>().Object;
         var logger = new Mock<ILogger>().Object;
-        return new SequenceUpdatedNotificationHandler(connectionManager, sequenceCache, hubProxy, logger);
+        return new SessionUpdatedNotificationHandler(connectionManager, sessionCache, hubProxy, logger);
     }
 
     delegate bool TryGetConnectionCallback(string connectionId, out Connection? connection);

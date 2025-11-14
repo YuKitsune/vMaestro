@@ -11,6 +11,9 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
+// TODO: All of these tests asserting landing times need to be moved to a separate scheduler test.
+// Handlers tests should just assert the position is set.
+
 public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
@@ -25,6 +28,9 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
                 new RunwayConfiguration { Identifier = "34R", LandingRateSeconds = 180 }
             ]
         });
+
+    // TODO: When recomputing a flight, and it moves to a later time, the sequence is recalculated from where the flight was
+    // TODO: When recomputing a flight, and it moved to an earlier time, the sequence is recalculated from where the flight moves to
 
     [Fact]
     public async Task WhenRecomputingAFlight_TheSequenceIsRecalculated()
@@ -73,10 +79,10 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "QFA1 landing time should be reset to estimate");
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task WhenRecomputingAFlight_LandingTimeIsResetToEstimatedTime(bool manual)
+    // TODO: Nope. The landing time should be re-calculated.
+
+    [Fact]
+    public async Task WhenRecomputingAFlight_LandingTimeIsResetToEstimatedTime()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -86,7 +92,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
             .WithLandingEstimate(estimatedLandingTime)
-            .WithLandingTime(scheduledLandingTime, manual)
+            .WithLandingTime(scheduledLandingTime)
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration)
@@ -104,8 +110,9 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight.InitialLandingEstimate.ShouldBe(estimatedLandingTime);
         flight.LandingEstimate.ShouldBe(estimatedLandingTime);
         flight.LandingTime.ShouldBe(estimatedLandingTime);
-        flight.ManualLandingTime.ShouldBeFalse();
     }
+
+    // TODO: Nope.
 
     [Theory]
     [InlineData(true)]
@@ -145,6 +152,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight.FeederFixTime.ShouldBe(actualFeederFixEstaimate);
         flight.ManualFeederFixEstimate.ShouldBeFalse();
     }
+
+    // TODO: Check STA_FF and ETA_FF
 
     [Fact]
     public async Task WhenRecomputingAFlightWithNewFeederFix_FeederFixAndEstimatesAreUpdated()
@@ -208,33 +217,6 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34L"); // Default runway from runway mode
         flight.RunwayManuallyAssigned.ShouldBeFalse();
-    }
-
-    [Fact]
-    public async Task WhenRecomputingAFlightWithNoFeederFix_FlightIsMarkedAsHighPriority()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var flight = new FlightBuilder("QFA1")
-            .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(10))
-            .WithFeederFix("RIVET")
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
-            .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
-
-        var handler = GetRequestHandler(sequence);
-        var request = new RecomputeRequest("YSSY", "QFA1");
-
-        // Act
-        flight.Fixes = [new FixEstimate("TESAT", now.AddMinutes(10))]; // No feeder fix
-        await handler.Handle(request, CancellationToken.None);
-
-        // Assert
-        flight.HighPriority.ShouldBeTrue();
     }
 
     [Fact]

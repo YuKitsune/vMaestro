@@ -12,7 +12,7 @@ public record NotificationContextWrapper<T>(string ConnectionId, T Notification)
 
 public class ConnectRequestHandler(
     IConnectionManager connectionManager,
-    SequenceCache sequenceCache,
+    SessionCache sessionCache,
     IHubProxy hubProxy,
     ILogger logger)
     : IRequestHandler<RequestContextWrapper<ConnectRequest>>
@@ -70,7 +70,7 @@ public class ConnectRequestHandler(
                 cancellationToken);
         }
 
-        var latestSequence = sequenceCache.Get(request.Partition, request.AirportIdentifier);
+        var latestSequence = sessionCache.Get(request.Partition, request.AirportIdentifier);
 
         await hubProxy.Send(
             connectionId,

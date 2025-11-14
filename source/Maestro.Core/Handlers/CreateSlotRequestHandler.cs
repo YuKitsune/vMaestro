@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
@@ -8,7 +10,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class CreateSlotRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -25,20 +27,29 @@ public class CreateSlotRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var slotId =sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers);
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
 
-        logger.Information(
-            "Slot {SlotId} created for {AirportIdentifier} from {StartTime} to {EndTime}",
-            slotId,
-            request.AirportIdentifier,
-            request.StartTime,
-            request.EndTime);
+            var slotId = sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers);
+
+            logger.Information(
+                "Slot {SlotId} created for {AirportIdentifier} from {StartTime} to {EndTime}",
+                slotId,
+                request.AirportIdentifier,
+                request.StartTime,
+                request.EndTime);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

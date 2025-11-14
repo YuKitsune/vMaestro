@@ -7,6 +7,7 @@ public static class SemaphoreSlimExtensionMethods
         semaphoreSlim.Wait();
         return new Releaser(semaphoreSlim);
     }
+
     public static async Task<IDisposable> LockAsync(this SemaphoreSlim semaphoreSlim, CancellationToken cancellationToken = default)
     {
         await semaphoreSlim.WaitAsync(cancellationToken);

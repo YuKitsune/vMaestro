@@ -17,7 +17,7 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
 
     [Fact]
-    public async Task WhenMakingFlightPending_AllRequiredUpdatesArePerformed()
+    public async Task WhenMakingFlightPending_ItIsRemovedFromTheSequence()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -56,7 +56,7 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight1.State.ShouldBe(State.Unstable, "flight should be marked as unstable when made pending");
 
         // Verify flight is moved to pending list and removed from main sequence
-        var sequenceMessage = sequence.ToMessage();
+        var sessionMessage = instance.Session.Snapshot();
         sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
         sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
         sequenceMessage.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
@@ -65,6 +65,8 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
         flight2.LandingTime.ShouldBe(flight2.LandingEstimate, "remaining flight should return to its estimate");
     }
+
+    // TODO: Throw an error
 
     [Fact]
     public async Task WhenFlightNotFound_WarningIsLoggedAndHandlerReturns()
@@ -155,7 +157,6 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight.RunwayManuallyAssigned.ShouldBeFalse("RunwayManuallyAssigned should be reset to false");
         flight.LandingEstimate.ShouldBe(default(DateTimeOffset), "LandingEstimate should be reset to default");
         flight.LandingTime.ShouldBe(default(DateTimeOffset), "LandingTime should be reset to default");
-        flight.ManualLandingTime.ShouldBeFalse("ManualLandingTime should be reset to false");
         flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
     }

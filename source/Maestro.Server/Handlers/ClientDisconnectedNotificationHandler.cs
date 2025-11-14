@@ -14,7 +14,7 @@ public record ClientDisconnectedNotification(string ConnectionId) : INotificatio
 
 public class ClientDisconnectedNotificationHandler(
     IConnectionManager connectionManager,
-    SequenceCache sequenceCache,
+    SessionCache sessionCache,
     IHubProxy hubProxy,
     ILogger logger)
     : INotificationHandler<ClientDisconnectedNotification>
@@ -56,7 +56,7 @@ public class ClientDisconnectedNotificationHandler(
 
         if (remainingPeers.Length == 0 || remainingPeers.All(p => p.Role == Role.Observer))
         {
-            sequenceCache.Evict(connection.Partition, connection.AirportIdentifier);
+            sessionCache.Evict(connection.Partition, connection.AirportIdentifier);
         }
 
         // Broadcast to remaining clients that this client has disconnected

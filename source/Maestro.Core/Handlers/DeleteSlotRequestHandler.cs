@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
@@ -8,7 +10,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class DeleteSlotRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -25,15 +27,24 @@ public class DeleteSlotRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        sequence.DeleteSlot(request.SlotId);
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
 
-        logger.Information("Slot {SlotId} deleted for {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
+            sequence.DeleteSlot(request.SlotId);
+
+            logger.Information("Slot {SlotId} deleted for {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(sequence.AirportIdentifier, sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

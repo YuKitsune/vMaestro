@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
-using Maestro.Core.Infrastructure;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -8,7 +9,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class DesequenceRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -25,17 +26,31 @@ public class DesequenceRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
-        var sequence = lockedSession.Session.Sequence;
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        sequence.Desequence(request.Callsign);
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
 
-        logger.Information("Flight {Callsign} desequenced for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            var flight = sequence.FindFlight(request.Callsign);
+            if (flight is null)
+            {
+                throw new MaestroException($"{request.Callsign} not found");
+            }
+
+            instance.Session.DeSequencedFlights.Add(flight);
+            sequence.Remove(flight);
+
+            logger.Information("Flight {Callsign} desequenced for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }
