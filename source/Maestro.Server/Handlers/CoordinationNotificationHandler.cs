@@ -1,3 +1,4 @@
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using MediatR;
@@ -15,6 +16,13 @@ public class CoordinationNotificationHandler(IConnectionManager connectionManage
         if (!connectionManager.TryGetConnection(connectionId, out var connection))
         {
             throw new InvalidOperationException($"Connection {connectionId} is not tracked");
+        }
+
+        if (connection.Role == Role.Observer)
+        {
+            logger.Information("{Connection} is an observer; skipping coordination message: {Message}",
+                connection, notification.Message);
+            return;
         }
 
         var peers = connectionManager.GetPeers(connection);
