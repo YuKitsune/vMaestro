@@ -10,7 +10,6 @@ public class ServerConfiguration
     public required Dictionary<string, Role[]> Permissions { get; init; }
 }
 
-
 public static class ActionKeys
 {
     public const string ChangeTerminalConfiguration = nameof(ChangeTerminalConfiguration);
@@ -29,5 +28,4 @@ public static class ActionKeys
     public const string Desequence = nameof(Desequence);
     public const string Resequence = nameof(Resequence);
     public const string RemoveFlight = nameof(RemoveFlight);
-    public const string Coordination = nameof(Coordination);
 }
