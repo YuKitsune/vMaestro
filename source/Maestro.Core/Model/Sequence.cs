@@ -7,16 +7,26 @@ namespace Maestro.Core.Model;
 
 public class Sequence
 {
+    object _gate = new object();
+
     readonly AirportConfiguration _airportConfiguration;
 
     // TODO: Figure out how to get rid of these from here
     readonly IArrivalLookup _arrivalLookup;
     readonly IClock _clock;
 
-    readonly List<ISequenceItem> _sequence = [];
+    readonly List<Slot> _slots = [];
+    readonly List<Flight> _flights = [];
 
     public string AirportIdentifier { get; }
-    public IReadOnlyList<Flight> Flights => _sequence.OfType<FlightSequenceItem>().Select(x => x.Flight).ToList().AsReadOnly();
+
+    public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
+    public IReadOnlyList<Flight> Flights => _flights.AsReadOnly();
+
+    public RunwayMode CurrentRunwayMode { get; private set; }
+    public RunwayMode? NextRunwayMode { get; private set; }
+    public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
+    public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
 
     public Sequence(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
     {
@@ -25,11 +35,7 @@ public class Sequence
         _clock = clock;
 
         AirportIdentifier = airportConfiguration.Identifier;
-        _sequence.Add(
-            new RunwayModeChangeSequenceItem(
-                new RunwayMode(airportConfiguration.RunwayModes.First()),
-                DateTimeOffset.MinValue,
-                DateTimeOffset.MinValue));
+        CurrentRunwayMode = new RunwayMode(airportConfiguration.RunwayModes.First());
     }
 
     /// <summary>
@@ -37,13 +43,11 @@ public class Sequence
     /// </summary>
     public void ChangeRunwayMode(RunwayMode runwayMode)
     {
-        var now = _clock.UtcNow();
-        var index = IndexOf(now);
-        InsertAt(
-            index,
-            new RunwayModeChangeSequenceItem(runwayMode, now, now));
-
-        Schedule(index, forceRescheduleStable: true);
+        lock (_gate)
+        {
+            CurrentRunwayMode = runwayMode;
+            Schedule(0, forceRescheduleStable: true);
+        }
     }
 
     /// <summary>
@@ -55,11 +59,31 @@ public class Sequence
         DateTimeOffset lastLandingTimeForOldMode,
         DateTimeOffset firstLandingTimeForNewMode)
     {
-        var index = IndexOf(lastLandingTimeForOldMode);
-        InsertAt(index,
-            new RunwayModeChangeSequenceItem(runwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode));
+        lock (_gate)
+        {
+            NextRunwayMode = runwayMode;
+            LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
+            FirstLandingTimeForNewMode = firstLandingTimeForNewMode;
 
-        Schedule(index, forceRescheduleStable: true);
+            var recomputeIndex = IndexOf(lastLandingTimeForOldMode);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
+        }
+    }
+
+    public void TrySwapRunwayModes()
+    {
+        lock (_gate)
+        {
+            if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null || FirstLandingTimeForNewMode is null)
+                return;
+
+            if (_clock.UtcNow().IsBefore(FirstLandingTimeForNewMode.Value))
+                return;
+
+            CurrentRunwayMode = NextRunwayMode;
+            LastLandingTimeForCurrentMode = null;
+            FirstLandingTimeForNewMode = null;
+        }
     }
 
     /// <summary>
@@ -67,28 +91,16 @@ public class Sequence
     /// </summary>
     public RunwayMode GetRunwayModeAt(DateTimeOffset time)
     {
-        var runwayModeItem = _sequence
-            .OfType<RunwayModeChangeSequenceItem>()
-            .LastOrDefault(i => i.Time <= time);
-        if (runwayModeItem is null)
-            throw new MaestroException("No runway mode found");
+        lock (_gate)
+        {
+            if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null || FirstLandingTimeForNewMode is null)
+                return CurrentRunwayMode;
 
-        return runwayModeItem.RunwayMode;
-    }
+            if (time.IsBefore(FirstLandingTimeForNewMode.Value))
+                return CurrentRunwayMode;
 
-    /// <summary>
-    ///     Returns the active <see cref="RunwayMode"/> at the specified <paramref name="index"/>.
-    /// </summary>
-    public RunwayMode GetRunwayModeAt(int index)
-    {
-        var runwayModeItem = _sequence
-            .Take(index + 1)
-            .OfType<RunwayModeChangeSequenceItem>()
-            .LastOrDefault();
-        if (runwayModeItem is null)
-            throw new MaestroException("No runway mode found");
-
-        return runwayModeItem.RunwayMode;
+            return NextRunwayMode;
+        }
     }
 
     /// <summary>
@@ -97,7 +109,10 @@ public class Sequence
     /// </summary>
     public void ThrowIfSlotIsUnavailable(int index, string runwayIdentifier)
     {
-        ValidateInsertionBetweenImmovableFlights(index, runwayIdentifier);
+        lock (_gate)
+        {
+            ValidateInsertionBetweenImmovableFlights(index, runwayIdentifier);
+        }
     }
 
     /// <summary>
@@ -106,9 +121,12 @@ public class Sequence
     /// </summary>
     public void Insert(int index, Flight flight)
     {
-        ValidateInsertionBetweenImmovableFlights(index, flight.AssignedRunwayIdentifier);
-        InsertAt(index, new FlightSequenceItem(flight));
-        Schedule(index, forceRescheduleStable: true);
+        lock (_gate)
+        {
+            ValidateInsertionBetweenImmovableFlights(index, flight.AssignedRunwayIdentifier);
+            _flights.Insert(index, flight);
+            Schedule(index, forceRescheduleStable: true);
+        }
     }
 
     /// <summary>
@@ -117,10 +135,11 @@ public class Sequence
     /// </summary>
     public Flight? FindFlight(string callsign)
     {
-        return _sequence
-            .OfType<FlightSequenceItem>()
-            .Select(i => i.Flight)
+        lock (_gate)
+        {
+            return _flights
             .FirstOrDefault(f => f.Callsign == callsign);
+        }
     }
 
     /// <summary>
@@ -128,15 +147,18 @@ public class Sequence
     /// </summary>
     public int IndexOf(DateTimeOffset dateTimeOffset)
     {
-        for (var i = 0; i < _sequence.Count; i++)
+        lock (_gate)
         {
-            if (dateTimeOffset > _sequence[i].Time)
-                continue;
+            for (var i = 0; i < _flights.Count; i++)
+            {
+                if (dateTimeOffset > _flights[i].LandingTime)
+                    continue;
 
-            return i;
+                return i;
+            }
+
+            return _flights.Count;
         }
-
-        return _sequence.Count;
     }
 
     /// <summary>
@@ -144,72 +166,92 @@ public class Sequence
     /// </summary>
     public int IndexOf(Flight flight)
     {
-        return _sequence.FindIndex(i => i is FlightSequenceItem flightSequenceItem && flightSequenceItem.Flight == flight);
+        lock (_gate)
+        {
+            return _flights.IndexOf(flight);
+        }
     }
 
     public int FindIndex(Func<Flight, bool> predicate)
     {
-        return _sequence.FindIndex(i => i is FlightSequenceItem f && predicate(f.Flight));
+        lock (_gate)
+        {
+            return _flights.FindIndex(f => predicate(f));
+        }
     }
 
     public int FindIndex(int startIndex, Func<Flight, bool> predicate)
     {
-        return _sequence.FindIndex(startIndex, i => i is FlightSequenceItem f && predicate(f.Flight));
+        lock (_gate)
+        {
+            return _flights.FindIndex(startIndex, f => predicate(f));
+        }
     }
 
     public int FindLastIndex(Func<Flight, bool> predicate)
     {
-        return _sequence.FindLastIndex(i => i is FlightSequenceItem f && predicate(f.Flight));
+        lock (_gate)
+        {
+            return _flights.FindLastIndex(f => predicate(f));
+        }
     }
 
     public int FindLastIndex(int startIndex, Func<Flight, bool> predicate)
     {
-        return _sequence.FindLastIndex(startIndex, i => i is FlightSequenceItem f && predicate(f.Flight));
+        lock (_gate)
+        {
+            return _flights.FindLastIndex(startIndex, f => predicate(f));
+        }
     }
 
     public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false)
     {
-        var currentIndex = IndexOf(flight);
-        if (newIndex == currentIndex)
-            return;
+        lock (_gate)
+        {
+            var currentIndex = _flights.IndexOf(flight);
+            if (newIndex == currentIndex)
+                return;
 
-        ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
-        _sequence.RemoveAt(currentIndex);
+            ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
+            _flights.RemoveAt(currentIndex);
 
-        // Removing the flight will change the index of everything behind it
-        if (newIndex > currentIndex)
-            newIndex--;
+            // Removing the flight will change the index of everything behind it
+            if (newIndex > currentIndex)
+                newIndex--;
 
-        InsertAt(newIndex, new FlightSequenceItem(flight));
+            _flights.Insert(newIndex, flight);
 
-        var recomputePoint = Math.Min(newIndex, currentIndex);
-
-        Schedule(recomputePoint, forceRescheduleStable);
+            var recomputeIndex = Math.Min(newIndex, currentIndex);
+            Schedule(recomputeIndex, forceRescheduleStable);
+        }
     }
 
     public void Swap(Flight flight1, Flight flight2)
     {
-        var index1 = IndexOf(flight1);
-        if (index1 < 0)
-            throw new MaestroException($"{flight1.Callsign} not found");
+        lock (_gate)
+        {
+            var index1 = _flights.IndexOf(flight1);
+            if (index1 < 0)
+                throw new MaestroException($"{flight1.Callsign} not found");
 
-        var index2 = IndexOf(flight2);
-        if (index2 < 0)
-            throw new MaestroException($"{flight1.Callsign} not found");
+            var index2 = _flights.IndexOf(flight2);
+            if (index2 < 0)
+                throw new MaestroException($"{flight1.Callsign} not found");
 
-        // Swap positions
-        (_sequence[index1],  _sequence[index2]) = (_sequence[index2], _sequence[index1]);
+            // Swap positions
+            (_flights[index1],  _flights[index2]) = (_flights[index2], _flights[index1]);
 
-        // Swap landing times and runways
-        var landingTime1 = flight1.LandingTime;
-        var landingTime2 = flight2.LandingTime;
-        var runway1 = flight1.AssignedRunwayIdentifier;
-        var runway2 = flight2.AssignedRunwayIdentifier;
+            // Swap landing times and runways
+            var landingTime1 = flight1.LandingTime;
+            var landingTime2 = flight2.LandingTime;
+            var runway1 = flight1.AssignedRunwayIdentifier;
+            var runway2 = flight2.AssignedRunwayIdentifier;
 
-        Schedule(flight1, landingTime2, runway2);
-        Schedule(flight2, landingTime1, runway1);
+            Schedule(flight1, landingTime2, runway2);
+            Schedule(flight2, landingTime1, runway1);
 
-        // No need to re-schedule as we're exchanging two flights that are already scheduled
+            // No need to re-schedule as we're exchanging two flights that are already scheduled
+        }
     }
 
     /// <summary>
@@ -218,50 +260,82 @@ public class Sequence
     /// </summary>
     public void Remove(Flight flight)
     {
-        var index = _sequence.FindIndex(i => i is FlightSequenceItem f && f.Flight == flight);
-        if (index == -1)
-            throw new MaestroException($"{flight.Callsign} not found");
+        lock (_gate)
+        {
+            var index = _flights.IndexOf(flight);
+            if (index == -1)
+                throw new MaestroException($"{flight.Callsign} not found");
 
-        _sequence.RemoveAt(index);
-        Schedule(index, forceRescheduleStable: true);
+            _flights.RemoveAt(index);
+
+            Schedule(index, forceRescheduleStable: true);
+        }
     }
 
     public Guid CreateSlot(DateTimeOffset start, DateTimeOffset end, string[] runwayIdentifiers)
     {
-        var id = Guid.NewGuid();
-        var index = IndexOf(start);
+        lock (_gate)
+        {
+            var id = Guid.NewGuid();
 
-        InsertAt(index, new SlotSequenceItem(new Slot(id, start, end, runwayIdentifiers)));
-        Schedule(index, forceRescheduleStable: true);
+            var slot = new Slot(id, start, end, runwayIdentifiers);
+            _slots.Add(slot);
 
-        return id;
+            var recomputeIndex = IndexOf(start);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
+
+            return id;
+        }
     }
 
     public void ModifySlot(Guid id, DateTimeOffset start, DateTimeOffset end)
     {
-        var existingSlotItem = _sequence.OfType<SlotSequenceItem>().FirstOrDefault(s => s.Slot.Id == id);
-        if (existingSlotItem is null)
-            throw new MaestroException($"Slot {id} not found");
+        lock (_gate)
+        {
+            var slot = _slots.FirstOrDefault(s => s.Id == id);
+            if (slot is null)
+                throw new MaestroException($"Slot {id} not found");
 
-        var oldIndex = _sequence.IndexOf(existingSlotItem);
-        _sequence.RemoveAt(oldIndex);
+            _slots.Remove(slot);
 
-        var newSlotItem = new SlotSequenceItem(new Slot(id, start, end, existingSlotItem.Slot.RunwayIdentifiers));
-        var newIndex = IndexOf(start);
+            var newSlot = new Slot(id, start, end, slot.RunwayIdentifiers);
+            _slots.Add(newSlot);
 
-        InsertAt(newIndex, newSlotItem);
-        Schedule(newIndex, forceRescheduleStable: true);
+            var rescheduleIndex = IndexOf(start);
+            Schedule(rescheduleIndex, forceRescheduleStable: true);
+        }
     }
 
     public void DeleteSlot(Guid id)
     {
-        var index = _sequence.FindIndex(s => s is SlotSequenceItem slotItem && slotItem.Slot.Id == id);
-        if (index == -1)
-            throw new MaestroException($"Slot {id} not found");
+        lock (_gate)
+        {
+            var slot = _slots.FirstOrDefault(s => s.Id == id);
+            if (slot is null)
+                throw new MaestroException($"Slot {id} not found");
 
-        _sequence.RemoveAt(index);
+            _slots.Remove(slot);
 
-        Schedule(index, forceRescheduleStable: true);
+            var rescheduleIndex = IndexOf(slot.StartTime);
+            Schedule(rescheduleIndex, forceRescheduleStable: true);
+        }
+    }
+
+    List<ISequenceItem> BuildSequence()
+    {
+        var sequence = new List<ISequenceItem>();
+
+        sequence.AddRange(_flights.Select(f => new FlightSequenceItem(f)));
+        sequence.AddRange(_slots.Select(s => new SlotSequenceItem(s)));
+
+        sequence.Add(new RunwayModeChangeSequenceItem(CurrentRunwayMode, DateTimeOffset.MinValue, DateTimeOffset.MinValue));
+        if (NextRunwayMode is not null && LastLandingTimeForCurrentMode is not null && FirstLandingTimeForNewMode is not null)
+        {
+            sequence.Add(new RunwayModeChangeSequenceItem(NextRunwayMode, LastLandingTimeForCurrentMode.Value, FirstLandingTimeForNewMode.Value));
+        }
+
+        sequence.Sort((i1, i2) => i1.Time.CompareTo(i2.Time));
+        return sequence;
     }
 
     /// <summary>
@@ -275,234 +349,242 @@ public class Sequence
     /// </param>
     public void Schedule(int startIndex, bool forceRescheduleStable)
     {
-        for (var i = startIndex; i < _sequence.Count; i++)
+        lock (_gate)
         {
-            if (i == 0)
-                continue;
+            var sequence = BuildSequence();
 
-            var currentItem = _sequence[i];
-            if (currentItem is not FlightSequenceItem flightItem)
+            var startingFlight =  _flights[startIndex];
+            var effectiveStartIndex = sequence.FindIndex(i => i is FlightSequenceItem f && f.Flight == startingFlight);
+
+            for (var i = effectiveStartIndex; i < sequence.Count; i++)
             {
-                continue;
-            }
-
-            var currentFlight = flightItem.Flight;
-            if (currentFlight.State is State.Landed or State.Frozen)
-            {
-                continue;
-            }
-
-            // Stable and SuperStable flights should not be rescheduled unless forced
-            if (currentFlight.State is State.Stable or State.SuperStable && !forceRescheduleStable)
-            {
-                continue;
-            }
-
-            var runwayModeItem = _sequence
-                .Take(i)
-                .OfType<RunwayModeChangeSequenceItem>()
-                .LastOrDefault();
-            if (runwayModeItem is null)
-                throw new Exception("No runway mode found");
-
-            var currentRunwayMode = runwayModeItem.RunwayMode;
-
-            // TODO: We need to do this in case we delay a flight into the next runway mode.
-            // If we're delayed into a new mode, but the runway was manually assigned, no separation is applied to this
-            // flight against other flights on the new mode, even though this flight is landing in the new mode.
-            // Need to figure out how to handle this properly.
-
-            // If the assigned runway isn't in the current mode, use the default
-            Runway runway;
-            if (currentFlight.FeederFixIdentifier is not null && !currentFlight.RunwayManuallyAssigned)
-            {
-                if (_airportConfiguration.PreferredRunways.TryGetValue(currentFlight.FeederFixIdentifier,
-                        out var preferredRunways))
+                var currentItem = sequence[i];
+                if (currentItem is not FlightSequenceItem flightItem)
                 {
-                    runway = currentRunwayMode.Runways
-                                 .FirstOrDefault(r => preferredRunways.Contains(r.Identifier))
-                             ?? currentRunwayMode.Default;
+                    continue;
+                }
+
+                var currentFlight = flightItem.Flight;
+                if (currentFlight.State is State.Landed or State.Frozen)
+                {
+                    continue;
+                }
+
+                // Stable and SuperStable flights should not be rescheduled unless forced
+                if (currentFlight.State is State.Stable or State.SuperStable && !forceRescheduleStable)
+                {
+                    continue;
+                }
+
+                var runwayModeItem = sequence
+                    .Take(i)
+                    .OfType<RunwayModeChangeSequenceItem>()
+                    .LastOrDefault();
+                if (runwayModeItem is null)
+                    throw new Exception("No runway mode found");
+
+                var currentRunwayMode = runwayModeItem.RunwayMode;
+
+                // TODO: We need to do this in case we delay a flight into the next runway mode.
+                // If we're delayed into a new mode, but the runway was manually assigned, no separation is applied to this
+                // flight against other flights on the new mode, even though this flight is landing in the new mode.
+                // Need to figure out how to handle this properly.
+
+                // If the assigned runway isn't in the current mode, use the default
+                Runway runway;
+                if (currentFlight.FeederFixIdentifier is not null && !currentFlight.RunwayManuallyAssigned)
+                {
+                    if (_airportConfiguration.PreferredRunways.TryGetValue(currentFlight.FeederFixIdentifier,
+                            out var preferredRunways))
+                    {
+                        runway = currentRunwayMode.Runways
+                                     .FirstOrDefault(r => preferredRunways.Contains(r.Identifier))
+                                 ?? currentRunwayMode.Default;
+                    }
+                    else
+                    {
+                        runway = currentRunwayMode.Default;
+                    }
                 }
                 else
                 {
-                    runway = currentRunwayMode.Default;
+                    runway = currentRunwayMode.Runways
+                                 .FirstOrDefault(r => r.Identifier == currentFlight.AssignedRunwayIdentifier)
+                             ?? currentRunwayMode.Default;
                 }
-            }
-            else
-            {
-                runway = currentRunwayMode.Runways
-                             .FirstOrDefault(r => r.Identifier == currentFlight.AssignedRunwayIdentifier)
-                         ?? currentRunwayMode.Default;
-            }
 
-            // Determine the latest possible landing time based on the next item on this runway
-            var nextItem = _sequence
-                .Skip(i + 1)
-                .FirstOrDefault(s => AppliesToRunway(s, runway));
+                // Determine the latest possible landing time based on the next item on this runway
+                var nextItem = sequence
+                    .Skip(i + 1)
+                    .FirstOrDefault(s => AppliesToRunway(s, runway));
 
-            var latestLandingTime = nextItem switch
-            {
-                // Frozen and Landed flights cannot be delayed, other flights are fair game
-                FlightSequenceItem { Flight.State: State.Frozen or State.Landed } frozenFlight => frozenFlight.Flight.LandingTime.Subtract(runway.AcceptanceRate),
-                SlotSequenceItem slotItem => slotItem.Slot.StartTime,
-                RunwayModeChangeSequenceItem runwayModeChange => runwayModeChange.LastLandingTimeInPreviousMode,
-                _ => DateTime.MaxValue
-            };
-
-            // Determine the earliest possible landing time based on the preceding item on this runway
-            var precedingItemsOnRunway = _sequence
-                .Take(i)
-                .Where(s => AppliesToRunway(s, runway))
-                .ToList();
-
-            var previousItem = precedingItemsOnRunway.Last();
-            var earliestLandingTime = previousItem switch
-            {
-                FlightSequenceItem previousFlightItem => previousFlightItem.Flight.LandingTime.Add(runway.AcceptanceRate),
-                SlotSequenceItem slotItem => slotItem.Slot.EndTime,
-                RunwayModeChangeSequenceItem runwayModeChange => runwayModeChange.FirstLandingTimeInNewMode,
-                _ => DateTime.MinValue
-            };
-
-            // If the previous item is a frozen flight, look ahead for any slots they could be occupying
-            if (previousItem is FlightSequenceItem { Flight.State: State.Frozen })
-            {
-                var lastSlot = precedingItemsOnRunway
-                    .OfType<SlotSequenceItem>()
-                    .LastOrDefault();
-                if (lastSlot is not null)
+                var latestLandingTime = nextItem switch
                 {
-                    earliestLandingTime = lastSlot.Slot.EndTime.IsAfter(earliestLandingTime)
-                        ? lastSlot.Slot.EndTime
-                        : earliestLandingTime;
-                }
-            }
-
-            if (earliestLandingTime.IsAfter(latestLandingTime))
-            {
-                // TODO: There is no room in this slot, move the flight back and try again
-            }
-
-            var landingTime = currentFlight.LandingEstimate;
-
-            // The flight behind this one can't be delayed, so we need to speed up
-            if (landingTime.IsAfter(latestLandingTime))
-            {
-                landingTime = latestLandingTime;
-            }
-
-            // We're too close to whatever is in front of us, we need to delay
-            if (landingTime.IsBefore(earliestLandingTime))
-            {
-                landingTime = earliestLandingTime;
-            }
-
-            // Ensure manual delay flights aren't delayed by more than their maximum delay
-            if (currentFlight.MaximumDelay is not null)
-            {
-                var totalDelay = landingTime - currentFlight.LandingEstimate;
-
-                // Zero delay flights can be delayed within the acceptance rate, but no more
-                // E.g. QFA1 lands at T15, QFA2 is Zero delay estimating at T17. Rather than moving QFA1 back and giving them a 5-minute delay, give QFA2 a 1-minute delay instead
-                if (currentFlight.MaximumDelay == TimeSpan.Zero && totalDelay < runway.AcceptanceRate)
-                {
-                }
-                else if (previousItem is FlightSequenceItem { Flight.State: State.Frozen or State.Landed })
-                {
-                    // Don't move in front of frozen or landed flights
-                }
-                else if (totalDelay > currentFlight.MaximumDelay)
-                {
-                    // Delay exceeds the maximum, move this flight forward one space and reprocess
-                    var previousItemIndex = _sequence.IndexOf(previousItem);
-                    if (previousItemIndex != -1)
-                    {
-                        (_sequence[i], _sequence[previousItemIndex]) = (_sequence[previousItemIndex], _sequence[i]);
-                        i = previousItemIndex - 1;
-                        continue;
-                    }
-                }
-            }
-
-            // TODO: Do not swap with the next item if the maximum delay will be exceeded
-            // If the next item in the sequence cannot be moved, move this flight behind it to ensure we don't conflict with it
-            if (nextItem is not null)
-            {
-                var earliestTimeToTrailer = nextItem switch
-                {
-                    FlightSequenceItem nextFlightItem => nextFlightItem.Flight.LandingTime.Subtract(runway.AcceptanceRate),
-                    _ => nextItem.Time
+                    // Frozen and Landed flights cannot be delayed, other flights are fair game
+                    FlightSequenceItem { Flight.State: State.Frozen or State.Landed } frozenFlight => frozenFlight.Flight.LandingTime.Subtract(runway.AcceptanceRate),
+                    SlotSequenceItem slotItem => slotItem.Slot.StartTime,
+                    RunwayModeChangeSequenceItem runwayModeChange => runwayModeChange.LastLandingTimeInPreviousMode,
+                    _ => DateTime.MaxValue
                 };
 
-                if (landingTime.IsAfter(earliestTimeToTrailer))
+                // Determine the earliest possible landing time based on the preceding item on this runway
+                var precedingItemsOnRunway = sequence
+                    .Take(i)
+                    .Where(s => AppliesToRunway(s, runway))
+                    .ToList();
+
+                var previousItem = precedingItemsOnRunway.Last();
+                var earliestLandingTime = previousItem switch
                 {
-                    var canDelayNextItem = nextItem switch
+                    FlightSequenceItem previousFlightItem => previousFlightItem.Flight.LandingTime.Add(runway.AcceptanceRate),
+                    SlotSequenceItem slotItem => slotItem.Slot.EndTime,
+                    RunwayModeChangeSequenceItem runwayModeChange => runwayModeChange.FirstLandingTimeInNewMode,
+                    _ => DateTime.MinValue
+                };
+
+                // If the previous item is a frozen flight, look ahead for any slots they could be occupying
+                if (previousItem is FlightSequenceItem { Flight.State: State.Frozen })
+                {
+                    var lastSlot = precedingItemsOnRunway
+                        .OfType<SlotSequenceItem>()
+                        .LastOrDefault();
+                    if (lastSlot is not null)
                     {
-                        // Unstable flights can always be delayed
-                        FlightSequenceItem { Flight.State: State.Unstable } => true,
+                        earliestLandingTime = lastSlot.Slot.EndTime.IsAfter(earliestLandingTime)
+                            ? lastSlot.Slot.EndTime
+                            : earliestLandingTime;
+                    }
+                }
 
-                        // forceRescheduleStable allows stable and superstable flights to be delayed
-                        FlightSequenceItem { Flight.State: State.Stable or State.SuperStable } when forceRescheduleStable => true,
+                if (earliestLandingTime.IsAfter(latestLandingTime))
+                {
+                    // TODO: There is no room in this slot, move the flight back and try again
+                }
 
-                        _ => false
-                    };
+                var landingTime = currentFlight.LandingEstimate;
 
-                    // If we can't delay the next item, we need to move this flight behind it
-                    if (!canDelayNextItem)
+                // The flight behind this one can't be delayed, so we need to speed up
+                if (landingTime.IsAfter(latestLandingTime))
+                {
+                    landingTime = latestLandingTime;
+                }
+
+                // We're too close to whatever is in front of us, we need to delay
+                if (landingTime.IsBefore(earliestLandingTime))
+                {
+                    landingTime = earliestLandingTime;
+                }
+
+                // Ensure manual delay flights aren't delayed by more than their maximum delay
+                if (currentFlight.MaximumDelay is not null)
+                {
+                    var totalDelay = landingTime - currentFlight.LandingEstimate;
+
+                    // Zero delay flights can be delayed within the acceptance rate, but no more
+                    // E.g. QFA1 lands at T15, QFA2 is Zero delay estimating at T17. Rather than moving QFA1 back and giving them a 5-minute delay, give QFA2 a 1-minute delay instead
+                    if (currentFlight.MaximumDelay == TimeSpan.Zero && totalDelay < runway.AcceptanceRate)
                     {
-                        // Find the actual index of the nextItem in the sequence
-                        var nextItemIndex = _sequence.IndexOf(nextItem);
-                        if (nextItemIndex == -1)
+                    }
+                    else if (previousItem is FlightSequenceItem { Flight.State: State.Frozen or State.Landed })
+                    {
+                        // Don't move in front of frozen or landed flights
+                    }
+                    else if (totalDelay > currentFlight.MaximumDelay)
+                    {
+                        // Delay exceeds the maximum, move this flight forward one space and reprocess
+                        var previousItemIndex = sequence.IndexOf(previousItem);
+                        if (previousItemIndex != -1)
                         {
+                            (sequence[i], sequence[previousItemIndex]) = (sequence[previousItemIndex], sequence[i]);
+                            i = previousItemIndex - 1;
                             continue;
                         }
+                    }
+                }
 
-                        (_sequence[i], _sequence[nextItemIndex]) = (_sequence[nextItemIndex], _sequence[i]);
+                // TODO: Do not swap with the next item if the maximum delay will be exceeded
+                // If the next item in the sequence cannot be moved, move this flight behind it to ensure we don't conflict with it
+                if (nextItem is not null)
+                {
+                    var earliestTimeToTrailer = nextItem switch
+                    {
+                        FlightSequenceItem nextFlightItem => nextFlightItem.Flight.LandingTime.Subtract(runway.AcceptanceRate),
+                        _ => nextItem.Time
+                    };
 
-                        // Reprocess this index since we've moved something new into this position
+                    if (landingTime.IsAfter(earliestTimeToTrailer))
+                    {
+                        var canDelayNextItem = nextItem switch
+                        {
+                            // Unstable flights can always be delayed
+                            FlightSequenceItem { Flight.State: State.Unstable } => true,
+
+                            // forceRescheduleStable allows stable and superstable flights to be delayed
+                            FlightSequenceItem { Flight.State: State.Stable or State.SuperStable } when forceRescheduleStable => true,
+
+                            _ => false
+                        };
+
+                        // If we can't delay the next item, we need to move this flight behind it
+                        if (!canDelayNextItem)
+                        {
+                            // Find the actual index of the nextItem in the sequence
+                            var nextItemIndex = sequence.IndexOf(nextItem);
+                            if (nextItemIndex == -1)
+                            {
+                                continue;
+                            }
+
+                            (sequence[i], sequence[nextItemIndex]) = (sequence[nextItemIndex], sequence[i]);
+
+                            // Reprocess this index since we've moved something new into this position
+                            i--;
+                            continue;
+                        }
+                    }
+                }
+
+                // TODO: Double check how this is supposed to work
+                if (currentFlight.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
+                {
+                    currentFlight.SetFlowControls(FlowControls.ReduceSpeed);
+                }
+                else
+                {
+                    currentFlight.SetFlowControls(FlowControls.ProfileSpeed);
+                }
+
+                Schedule(currentFlight, landingTime, runway.Identifier);
+
+                // Preserve the order of the sequence with respect to flights on other runways
+                if (i < sequence.Count - 1)
+                {
+                    var nextSequenceItem = sequence[i + 1];
+                    if (!AppliesToRunway(nextSequenceItem, runway) && currentFlight.LandingTime.IsAfter(nextSequenceItem.Time))
+                    {
+                        (sequence[i], sequence[i + 1]) = (sequence[i + 1], sequence[i]);
                         i--;
-                        continue;
+                    }
+                }
+
+                bool AppliesToRunway(ISequenceItem item, Runway runway)
+                {
+                    string[] relevantRunways = [runway.Identifier, ..runway.Dependencies.Select(x => x.RunwayIdentifier).ToArray()];
+
+                    switch (item)
+                    {
+                        case RunwayModeChangeSequenceItem:
+                        case SlotSequenceItem slotItem when slotItem.Slot.RunwayIdentifiers.Any(r => relevantRunways.Contains(r)):
+                        case FlightSequenceItem flightItem when relevantRunways.Contains(flightItem.Flight.AssignedRunwayIdentifier):
+                            return true;
+                        default:
+                            return false;
                     }
                 }
             }
 
-            // TODO: Double check how this is supposed to work
-            if (currentFlight.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
-            {
-                currentFlight.SetFlowControls(FlowControls.ReduceSpeed);
-            }
-            else
-            {
-                currentFlight.SetFlowControls(FlowControls.ProfileSpeed);
-            }
-
-            Schedule(currentFlight, landingTime, runway.Identifier);
-
-            // Preserve the order of the sequence with respect to flights on other runways
-            if (i < _sequence.Count - 1)
-            {
-                var nextSequenceItem = _sequence[i + 1];
-                if (!AppliesToRunway(nextSequenceItem, runway) && currentFlight.LandingTime.IsAfter(nextSequenceItem.Time))
-                {
-                    (_sequence[i], _sequence[i + 1]) = (_sequence[i + 1], _sequence[i]);
-                    i--;
-                }
-            }
-
-            bool AppliesToRunway(ISequenceItem item, Runway runway)
-            {
-                string[] relevantRunways = [runway.Identifier, ..runway.Dependencies.Select(x => x.RunwayIdentifier).ToArray()];
-
-                switch (item)
-                {
-                    case RunwayModeChangeSequenceItem:
-                    case SlotSequenceItem slotItem when slotItem.Slot.RunwayIdentifiers.Any(r => relevantRunways.Contains(r)):
-                    case FlightSequenceItem flightItem when relevantRunways.Contains(flightItem.Flight.AssignedRunwayIdentifier):
-                        return true;
-                    default:
-                        return false;
-                }
-            }
+            _flights.Clear();
+            _flights.AddRange(sequence.OfType<FlightSequenceItem>().Select(f => f.Flight));
         }
     }
 
@@ -528,19 +610,6 @@ public class Sequence
         }
 
         flight.ResetInitialEstimates();
-    }
-
-    void InsertAt(int index, ISequenceItem item)
-    {
-        // Ensure we never insert before the first runway mode change
-        // The first item (index 0) should always be a runway mode change
-        if (item is not RunwayModeChangeSequenceItem && index == 0)
-            index = 1;
-
-        if (index >= _sequence.Count)
-            _sequence.Add(item);
-        else
-            _sequence.Insert(index, item);
     }
 
     // TODO: Invoke this from handlers rather than internally.
@@ -581,39 +650,33 @@ public class Sequence
 
         Flight? GetPreviousFlightOnRunway()
         {
-            return _sequence
+            return _flights
                 .Take(insertionIndex)
-                .OfType<FlightSequenceItem>()
-                .Where(f => f.Flight.AssignedRunwayIdentifier == runwayIdentifier)
-                .LastOrDefault()
-                ?.Flight;
+                .Where(f => f.AssignedRunwayIdentifier == runwayIdentifier)
+                .LastOrDefault();
         }
 
         Flight? GetNextFlightOnRunway()
         {
-            return _sequence
+            return _flights
                 .Skip(insertionIndex)
-                .OfType<FlightSequenceItem>()
-                .Where(f => f.Flight.AssignedRunwayIdentifier == runwayIdentifier)
-                .FirstOrDefault()
-                ?.Flight;
+                .Where(f => f.AssignedRunwayIdentifier == runwayIdentifier)
+                .FirstOrDefault();
         }
     }
 
+    // TODO: Store these on the flight itself
     public int NumberInSequence(Flight flight) => NumberInSequence(flight.Callsign);
 
     public int NumberForRunway(Flight flight) => NumberForRunway(flight.Callsign, flight.AssignedRunwayIdentifier);
 
     int NumberInSequence(string callsign)
     {
-        // Get all flights (real and manually-inserted) that are not landed, ordered by landing time
-        var allItems = _sequence
-            .Where(i => i is FlightSequenceItem { Flight.State: not State.Landed })
-            .OrderBy(i => i.Time)
-            .ToList();
-
-        var index = allItems.FindIndex(i =>
-            i is FlightSequenceItem fsi && fsi.Flight.Callsign == callsign);
+        var index = _flights
+            .Where(f => f.State is not State.Landed)
+            .OrderBy(i => i.LandingTime)
+            .ToList()
+            .FindIndex(f => f.Callsign == callsign);
 
         if (index == -1)
             return -1;
@@ -623,116 +686,87 @@ public class Sequence
 
     int NumberForRunway(string callsign, string runwayIdentifier)
     {
-        // Get all flights (real and manually-inserted) on the same runway that are not landed, ordered by landing time
-        var allItems = _sequence
-            .Where(i => i switch
-            {
-                FlightSequenceItem { Flight.State: not State.Landed } fs when fs.Flight.AssignedRunwayIdentifier == runwayIdentifier => true,
-                _ => false
-            })
-            .OrderBy(i => i.Time)
-            .ToList();
+        var index = _flights
+            .Where(f => f.State is not State.Landed && f.AssignedRunwayIdentifier == runwayIdentifier)
+            .OrderBy(i => i.LandingTime)
+            .ToList()
+            .FindIndex(f => f.Callsign == callsign);
 
-        var index = allItems.FindIndex(i =>
-            i is FlightSequenceItem fsi && fsi.Flight.Callsign == callsign);
+        if (index == -1)
+            return -1;
+
         return index + 1;
     }
 
     // TODO: Rename to snapshot
     public SequenceMessage ToMessage()
     {
-        var sequencedFlights = _sequence
-            .OfType<FlightSequenceItem>()
-            .Select(i => i.Flight.ToMessage(this))
-            .ToArray();
-
-        var slots = _sequence
-            .OfType<SlotSequenceItem>()
-            .Select(x => x.Slot.ToMessage())
-            .ToArray();
-
-        var now = _clock.UtcNow();
-        var currentRunwayMode = GetRunwayModeAt(now);
-        var nextRunwayModeItem = _sequence.OfType<RunwayModeChangeSequenceItem>()
-            .FirstOrDefault(i => i.Time > now);
-
         return new SequenceMessage
         {
             // AirportIdentifier = AirportIdentifier,
-            Flights = sequencedFlights,
-            CurrentRunwayMode = currentRunwayMode.ToMessage(),
-            NextRunwayMode = nextRunwayModeItem?.RunwayMode.ToMessage(),
-            LastLandingTimeForCurrentMode = nextRunwayModeItem?.LastLandingTimeInPreviousMode ?? default,
-            FirstLandingTimeForNextMode = nextRunwayModeItem?.FirstLandingTimeInNewMode ?? default,
-            Slots = slots
+            Flights = _flights
+                .Select(f => f.ToMessage(this))
+                .ToArray(),
+            CurrentRunwayMode = CurrentRunwayMode.ToMessage(),
+            NextRunwayMode = NextRunwayMode?.ToMessage(),
+            LastLandingTimeForCurrentMode = LastLandingTimeForCurrentMode ?? default,
+            FirstLandingTimeForNextMode = FirstLandingTimeForNewMode ?? default,
+            Slots = _slots
+                .Select(s => s.ToMessage())
+                .ToArray()
         };
     }
 
     public void Restore(SequenceMessage message)
     {
         // Clear existing state
-        _sequence.Clear();
+        _flights.Clear();
+        _slots.Clear();
 
-        // Restore runway modes first (they need to be in the sequence for proper ordering)
-        var currentRunwayMode = new RunwayMode(message.CurrentRunwayMode);
-        _sequence.Add(new RunwayModeChangeSequenceItem(
-            currentRunwayMode,
-            DateTimeOffset.MinValue,
-            DateTimeOffset.MinValue));
-
-        // If there's a next runway mode scheduled, add it
+        CurrentRunwayMode = new RunwayMode(message.CurrentRunwayMode);
         if (message.NextRunwayMode is not null)
         {
-            var nextRunwayMode = new RunwayMode(message.NextRunwayMode);
-            _sequence.Add(new RunwayModeChangeSequenceItem(
-                nextRunwayMode,
-                message.LastLandingTimeForCurrentMode,
-                message.FirstLandingTimeForNextMode));
+            NextRunwayMode = new RunwayMode(message.NextRunwayMode);
+            LastLandingTimeForCurrentMode = message.LastLandingTimeForCurrentMode;
+            FirstLandingTimeForNewMode = message.FirstLandingTimeForNextMode;
         }
 
         // Restore slots
         foreach (var slotMessage in message.Slots)
         {
             var slot = new Slot(slotMessage.Id, slotMessage.StartTime, slotMessage.EndTime, slotMessage.RunwayIdentifiers);
-            var index = IndexOf(slot.StartTime);
-            InsertAt(index, new SlotSequenceItem(slot));
+            _slots.Add(slot);
         }
 
         // Restore sequenced flights (both real and manually-inserted)
         foreach (var flightMessage in message.Flights)
         {
             var flight = new Flight(flightMessage);
-            var index = IndexOf(flight.LandingTime);
-            InsertAt(index, new FlightSequenceItem(flight));
+            _flights.Add(flight);
         }
     }
-}
 
-public interface ISequenceItem
-{
-    DateTimeOffset Time { get; }
-}
+    interface ISequenceItem
+    {
+        DateTimeOffset Time { get; }
+    }
 
-public interface IFlightSequenceItem : ISequenceItem
-{
-    State State { get; }
-}
+    record FlightSequenceItem(Flight Flight) : ISequenceItem
+    {
+        // Always use LandingTime for sequence positioning to prevent discontinuities during state transitions
+        public DateTimeOffset Time => Flight.LandingTime;
+    }
 
-public record FlightSequenceItem(Flight Flight) : ISequenceItem
-{
-    // Always use LandingTime for sequence positioning to prevent discontinuities during state transitions
-    public DateTimeOffset Time => Flight.LandingTime;
-}
+    record SlotSequenceItem(Slot Slot) : ISequenceItem
+    {
+        public DateTimeOffset Time => Slot.StartTime;
+    }
 
-public record SlotSequenceItem(Slot Slot) : ISequenceItem
-{
-    public DateTimeOffset Time => Slot.StartTime;
-}
-
-public record RunwayModeChangeSequenceItem(
-    RunwayMode RunwayMode,
-    DateTimeOffset LastLandingTimeInPreviousMode,
-    DateTimeOffset FirstLandingTimeInNewMode) : ISequenceItem
-{
-    public DateTimeOffset Time => LastLandingTimeInPreviousMode;
+    record RunwayModeChangeSequenceItem(
+        RunwayMode RunwayMode,
+        DateTimeOffset LastLandingTimeInPreviousMode,
+        DateTimeOffset FirstLandingTimeInNewMode) : ISequenceItem
+    {
+        public DateTimeOffset Time => LastLandingTimeInPreviousMode;
+    }
 }
