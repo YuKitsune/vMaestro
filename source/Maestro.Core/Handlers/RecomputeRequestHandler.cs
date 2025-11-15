@@ -57,7 +57,7 @@ public class RecomputeRequestHandler(
             flight.SetMaximumDelay(null);
 
             CalculateEstimates(airportConfiguration, flight);
-            flight.ResetInitialEstimates();
+            flight.InvalidateSequenceData();
 
             sequence.RepositionByEstimate(flight, displaceStableFlights: true);
 

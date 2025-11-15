@@ -16,7 +16,11 @@ public static class SequenceExtensionMethods
 
         var newIndex = sequence.FindIndex(
             Math.Max(earliestIndex, 0),
-            f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
+            f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
+                 f.LandingEstimate.IsAfter(flight.LandingEstimate));
+
+        if (newIndex == -1)
+            newIndex = sequence.Flights.Count;
 
         sequence.Move(flight, newIndex, displaceStableFlights);
     }
