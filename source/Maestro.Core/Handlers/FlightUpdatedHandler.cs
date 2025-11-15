@@ -122,7 +122,9 @@ public class FlightUpdatedHandler(
 
                         var insertionIndex = instance.Session.Sequence.FindIndex(
                             Math.Max(earliestInsertionIndex, 0),
-                            f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
+                            f => f.LandingEstimate.IsAfter(landingEstimate));
+                        if (insertionIndex == -1)
+                            insertionIndex = instance.Session.Sequence.Flights.Count;
 
                         flight = CreateMaestroFlight(
                             notification,
@@ -163,7 +165,10 @@ public class FlightUpdatedHandler(
 
                 // Unstable flights are repositioned in the sequence on every update
                 if (flight.State is State.Unstable)
+                {
+                    flight.InvalidateSequenceData();
                     instance.Session.Sequence.RepositionByEstimate(flight);
+                }
 
                 flight.UpdateStateBasedOnTime(clock);
 
@@ -261,7 +266,6 @@ public class FlightUpdatedHandler(
             flight.SetFeederFix(feederFixEstimate.FixIdentifier, feederFixEstimate.Estimate, feederFixEstimate.ActualTimeOver);
 
         flight.UpdateLandingEstimate(landingEstimate);
-        flight.ResetInitialEstimates();
 
         if (feederFixEstimate is null)
             flight.HighPriority = true;

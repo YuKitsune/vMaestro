@@ -244,11 +244,13 @@ public class Sequence
             // Swap landing times and runways
             var landingTime1 = flight1.LandingTime;
             var landingTime2 = flight2.LandingTime;
+            var flowControls1 = flight1.FlowControls;
             var runway1 = flight1.AssignedRunwayIdentifier;
             var runway2 = flight2.AssignedRunwayIdentifier;
+            var flowControls2 = flight2.FlowControls;
 
-            Schedule(flight1, landingTime2, runway2);
-            Schedule(flight2, landingTime1, runway1);
+            Schedule(flight1, landingTime2, flowControls2, runway2);
+            Schedule(flight2, landingTime1, flowControls1, runway1);
 
             // No need to re-schedule as we're exchanging two flights that are already scheduled
         }
@@ -326,16 +328,35 @@ public class Sequence
         var sequence = new List<ISequenceItem>();
 
         sequence.AddRange(_flights.Select(f => new FlightSequenceItem(f)));
-        sequence.AddRange(_slots.Select(s => new SlotSequenceItem(s)));
 
-        sequence.Add(new RunwayModeChangeSequenceItem(CurrentRunwayMode, DateTimeOffset.MinValue, DateTimeOffset.MinValue));
-        if (NextRunwayMode is not null && LastLandingTimeForCurrentMode is not null && FirstLandingTimeForNewMode is not null)
+        foreach (var slot in _slots)
         {
-            sequence.Add(new RunwayModeChangeSequenceItem(NextRunwayMode, LastLandingTimeForCurrentMode.Value, FirstLandingTimeForNewMode.Value));
+            sequence.Insert(IndexOf(slot.StartTime), new SlotSequenceItem(slot));
         }
 
-        sequence.Sort((i1, i2) => i1.Time.CompareTo(i2.Time));
+        // Current runway always goes first
+        sequence.Insert(0, new RunwayModeChangeSequenceItem(CurrentRunwayMode, DateTimeOffset.MinValue, DateTimeOffset.MinValue));
+        if (NextRunwayMode is not null && LastLandingTimeForCurrentMode is not null && FirstLandingTimeForNewMode is not null)
+        {
+            sequence.Insert(
+                IndexOf(LastLandingTimeForCurrentMode.Value),
+                new RunwayModeChangeSequenceItem(NextRunwayMode, LastLandingTimeForCurrentMode.Value, FirstLandingTimeForNewMode.Value));
+        }
+
         return sequence;
+
+        int IndexOf(DateTimeOffset time)
+        {
+            for (var i = 0; i < sequence.Count; i++)
+            {
+                if (time > sequence[i].Time)
+                    continue;
+
+                return i;
+            }
+
+            return sequence.Count;
+        }
     }
 
     /// <summary>
@@ -545,22 +566,23 @@ public class Sequence
                 }
 
                 // TODO: Double check how this is supposed to work
+                FlowControls flowControls;
                 if (currentFlight.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
                 {
-                    currentFlight.SetFlowControls(FlowControls.ReduceSpeed);
+                    flowControls = FlowControls.ReduceSpeed;
                 }
                 else
                 {
-                    currentFlight.SetFlowControls(FlowControls.ProfileSpeed);
+                    flowControls = FlowControls.ProfileSpeed;
                 }
 
-                Schedule(currentFlight, landingTime, runway.Identifier);
+                Schedule(currentFlight, landingTime, flowControls, runway.Identifier);
 
                 // Preserve the order of the sequence with respect to flights on other runways
                 if (i < sequence.Count - 1)
                 {
                     var nextSequenceItem = sequence[i + 1];
-                    if (!AppliesToRunway(nextSequenceItem, runway) && currentFlight.LandingTime.IsAfter(nextSequenceItem.Time))
+                    if (!AppliesToRunway(nextSequenceItem, runway) && landingTime.IsAfter(nextSequenceItem.Time))
                     {
                         (sequence[i], sequence[i + 1]) = (sequence[i + 1], sequence[i]);
                         i--;
@@ -588,11 +610,11 @@ public class Sequence
         }
     }
 
-    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier)
+    void Schedule(Flight flight, DateTimeOffset landingTime, FlowControls flowControls, string runwayIdentifier)
     {
-        flight.SetLandingTime(landingTime);
         flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
 
+        DateTimeOffset? feederFixTime = null;
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && flight.FeederFixEstimate is not null && !flight.HasPassedFeederFix)
         {
             var arrivalInterval = _arrivalLookup.GetArrivalInterval(
@@ -604,12 +626,11 @@ public class Sequence
                 flight.AircraftCategory);
             if (arrivalInterval is not null)
             {
-                var feederFixTime = flight.LandingTime.Subtract(arrivalInterval.Value);
-                flight.SetFeederFixTime(feederFixTime);
+                feederFixTime = landingTime.Subtract(arrivalInterval.Value);
             }
         }
 
-        flight.ResetInitialEstimates();
+        flight.SetSequenceData(landingTime, feederFixTime, flowControls);
     }
 
     // TODO: Invoke this from handlers rather than internally.
