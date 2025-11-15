@@ -52,7 +52,7 @@ public class InsertFlightRequestHandler(
                 {
                     index = sequence.IndexOf(exactInsertionOptions.TargetLandingTime);
 
-                    var runwayMode = sequence.GetRunwayModeAt(index);
+                    var runwayMode = sequence.GetRunwayModeAt(exactInsertionOptions.TargetLandingTime);
                     var runway = runwayMode.Runways.FirstOrDefault(r => exactInsertionOptions.RunwayIdentifiers.Contains(r.Identifier)) ?? runwayMode.Default;
                     runwayIdentifier = runway.Identifier;
                     landingTime = exactInsertionOptions.TargetLandingTime;
@@ -73,7 +73,7 @@ public class InsertFlightRequestHandler(
 
                     runwayIdentifier = referenceFlight.AssignedRunwayIdentifier;
 
-                    var runwayMode = sequence.GetRunwayModeAt(index);
+                    var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
                     var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier) ?? runwayMode.Default;
 
                     landingTime = relativeInsertionOptions.Position switch

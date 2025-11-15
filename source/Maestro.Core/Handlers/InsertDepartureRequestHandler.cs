@@ -84,7 +84,7 @@ public class InsertDepartureRequestHandler(
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                var runwayMode = sequence.GetRunwayModeAt(insertionIndex);
+                var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
                 runway =
                     runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier)
                     ?? runwayMode.Default;

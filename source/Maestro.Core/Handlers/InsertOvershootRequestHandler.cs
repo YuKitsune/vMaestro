@@ -52,7 +52,7 @@ public class InsertOvershootRequestHandler(
             {
                 index = sequence.IndexOf(exactInsertionOptions.TargetLandingTime);
 
-                var runwayMode = sequence.GetRunwayModeAt(index);
+                var runwayMode = sequence.GetRunwayModeAt(exactInsertionOptions.TargetLandingTime);
                 runway = runwayMode.Runways.FirstOrDefault(r => exactInsertionOptions.RunwayIdentifiers.Contains(r.Identifier)) ?? runwayMode.Default;
                 break;
             }
@@ -69,7 +69,7 @@ public class InsertOvershootRequestHandler(
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                var runwayMode = sequence.GetRunwayModeAt(index);
+                var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
                 runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
                 break;
             }
