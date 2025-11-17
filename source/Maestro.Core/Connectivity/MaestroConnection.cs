@@ -10,7 +10,7 @@ using Serilog;
 
 namespace Maestro.Core.Connectivity;
 
-public class MaestroConnection : IAsyncDisposable
+public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 {
     readonly List<PeerInfo> _peers = new();
     readonly CancellationTokenSource _rootCancellationTokenSource = new();

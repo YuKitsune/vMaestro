@@ -2,12 +2,12 @@ namespace Maestro.Core.Connectivity;
 
 public interface IMaestroConnectionManager
 {
-    Task<MaestroConnection> CreateConnection(
+    Task<IMaestroConnection> CreateConnection(
         string airportIdentifier,
         string partition,
         CancellationToken cancellationToken);
 
-    bool TryGetConnection(string airportIdentifier, out MaestroConnection? connection);
+    bool TryGetConnection(string airportIdentifier, out IMaestroConnection? connection);
 
     Task RemoveConnection(string airportIdentifier, CancellationToken cancellationToken);
 }

@@ -176,17 +176,40 @@ public class ChangeFeederFixEstimateHandlerTests(
     [Fact]
     public async Task RedirectedToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
+        var originalFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(10);
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(originalFeederFixEstimate)
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
+
+        // Create a mock connection manager that simulates a slave connection
+        var mockConnectionManager = new MockSlaveConnectionManager();
+
+        var newEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
+        var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newEstimate);
+        var handler = new ChangeFeederFixEstimateRequestHandler(
+            instanceManager,
+            mockConnectionManager,
+            Substitute.For<IEstimateProvider>(),
+            clockFixture.Instance,
+            Substitute.For<IMediator>(),
+            Substitute.For<ILogger>());
 
         // Act
-        // TODO: Change the feeder fix estimate
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        // Verify the request was relayed to the master
+        mockConnectionManager.Connection.InvokedRequests.ShouldContain(request, "request should have been relayed to master");
+
+        // Verify the flight was NOT modified locally (proving redirection occurred)
+        flight.ManualFeederFixEstimate.ShouldBeFalse("flight should not have been modified locally");
+        flight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate, "feeder fix estimate should remain unchanged");
     }
 
     ChangeFeederFixEstimateRequestHandler GetHandler(

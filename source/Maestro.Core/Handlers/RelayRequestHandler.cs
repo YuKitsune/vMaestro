@@ -54,7 +54,7 @@ public class RelayRequestHandler(IMaestroConnectionManager connectionManager, Se
         }
     }
 
-    bool CanPerformAction(MaestroConnection connection, Role userRole, string actionKey)
+    bool CanPerformAction(IMaestroConnection connection, Role userRole, string actionKey)
     {
         // If we're the flow controller, we need to enforce permission checks
         if (connection is { IsMaster: true, Role: Role.Flow })

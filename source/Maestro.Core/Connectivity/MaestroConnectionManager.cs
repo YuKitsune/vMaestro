@@ -22,7 +22,7 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
         _logger = logger;
     }
 
-    public async Task<MaestroConnection> CreateConnection(
+    public async Task<IMaestroConnection> CreateConnection(
         string airportIdentifier,
         string partition,
         CancellationToken cancellationToken)
@@ -55,9 +55,11 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
         }
     }
 
-    public bool TryGetConnection(string airportIdentifier, out MaestroConnection? connection)
+    public bool TryGetConnection(string airportIdentifier, out IMaestroConnection? connection)
     {
-        return _connections.TryGetValue(airportIdentifier, out connection);
+        var result = _connections.TryGetValue(airportIdentifier, out var conn);
+        connection = conn;
+        return result;
     }
 
     public async Task RemoveConnection(string airportIdentifier, CancellationToken cancellationToken)
