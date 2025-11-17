@@ -70,6 +70,15 @@ public class Plugin : IPlugin
             version = version.Split('+').First();
 #endif
             _logger.Information("{PluginName} {Version} initialized.", Name, version);
+
+#if RELEASE
+            // Check for updates in background (fire-and-forget)
+            var pluginConfiguration = Ioc.Default.GetRequiredService<PluginConfiguration>();
+            if (pluginConfiguration.CheckForUpdates)
+            {
+                _ = GitHubReleaseChecker.CheckForUpdatesAsync(version, _logger);
+            }
+#endif
         }
         catch (Exception ex)
         {
