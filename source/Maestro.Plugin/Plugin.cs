@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.Composition;
+using System.ComponentModel.Composition;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Documents;
@@ -75,6 +75,11 @@ public class Plugin : IPlugin
             version = version.Split('+').First();
 #endif
             _logger.Information("{PluginName} {Version} initialized.", Name, version);
+
+#if RELEASE
+            // Check for updates in background (fire-and-forget)
+            _ = GitHubReleaseChecker.CheckForUpdatesAsync(version, _logger);
+#endif
         }
         catch (Exception ex)
         {
