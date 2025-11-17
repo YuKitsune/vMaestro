@@ -1,3 +1,4 @@
+using Maestro.Core;
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
@@ -10,6 +11,8 @@ namespace Maestro.Server;
 
 public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 {
+    static readonly string ServerVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroHub).Assembly);
+
     public async Task SessionUpdated(SessionUpdatedNotification sessionUpdatedNotification)
     {
         await mediator.Publish(new NotificationContextWrapper<SessionUpdatedNotification>(Context.ConnectionId, sessionUpdatedNotification));
@@ -133,6 +136,23 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 
         // TODO: HTTP 400 if missing parameters
 
+        var clientVersion = httpContext.Request.Query["version"].FirstOrDefault();
+        if (string.IsNullOrEmpty(clientVersion))
+        {
+            logger.Warning("{ConnectionId} attempted to connect without a version", Context.ConnectionId);
+            Context.Abort();
+            return;
+        }
+
+        if (!VersionCompatibility.IsCompatible(clientVersion, ServerVersion))
+        {
+            logger.Warning(
+                "{ConnectionId} attempted to connect with incompatible version {ClientVersion} (server version: {ServerVersion})",
+                Context.ConnectionId, clientVersion, ServerVersion);
+            Context.Abort();
+            return;
+        }
+
         var partition = httpContext.Request.Query["partition"].FirstOrDefault();
         if (string.IsNullOrEmpty(partition))
         {
@@ -165,7 +185,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
             return;
         }
 
-        logger.Information("{ConnectionId} connected", Context.ConnectionId);
+        logger.Information("{ConnectionId} connected with version {ClientVersion}", Context.ConnectionId, clientVersion);
 
         var request = new ConnectRequest(
             partition,

@@ -51,8 +51,10 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 
         Role = RoleHelper.GetRoleFromCallsign(callsign);
 
+        var clientVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroConnection).Assembly);
+
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(_serverConfiguration.Uri + $"?partition={Partition}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}")
+            .WithUrl(_serverConfiguration.Uri + $"?partition={Partition}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}&version={clientVersion}")
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
