@@ -1,5 +1,6 @@
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -39,14 +40,15 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
 
         // Verify initial state
         sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
         sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
 
-        var handler = GetRequestHandler(sequence);
+        var instanceManager = new MockInstanceManager(sequence);
+        var handler = GetRequestHandler(sequence, instanceManager: instanceManager);
         var request = new MakePendingRequest("YSSY", "QFA123");
 
         // Act
@@ -56,10 +58,11 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight1.State.ShouldBe(State.Unstable, "flight should be marked as unstable when made pending");
 
         // Verify flight is moved to pending list and removed from main sequence
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
         var sessionMessage = instance.Session.Snapshot();
-        sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
-        sequenceMessage.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
+        sessionMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
+        sessionMessage.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
+        sessionMessage.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
 
         // Verify remaining flight moved up in sequence
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
@@ -106,7 +109,7 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
@@ -134,13 +137,13 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
             .Build();
 
         // Set some additional properties that should be reset
-        flight.SetFlowControls(FlowControls.ReduceSpeed);
+        flight.SetSequenceData(flight.LandingTime, flight.FeederFixTime, FlowControls.ReduceSpeed);
         flight.IsFromDepartureAirport = true;
 
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
@@ -161,13 +164,13 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
     }
 
-    MakePendingRequestHandler GetRequestHandler(Sequence sequence, ILogger? logger = null)
+    MakePendingRequestHandler GetRequestHandler(Sequence sequence, IMaestroInstanceManager? instanceManager = null, ILogger? logger = null)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
+        instanceManager ??= new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
         return new MakePendingRequestHandler(
-            sessionManager,
+            instanceManager,
             new MockLocalConnectionManager(),
             mediator,
             logger);

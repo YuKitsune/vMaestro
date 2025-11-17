@@ -1,7 +1,6 @@
 ﻿using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
-using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -36,8 +35,8 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .Build(); // Uses default runway mode with both 34L and 34R
 
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
 
         // Verify initial runway assignments and ordering
         flight1.AssignedRunwayIdentifier.ShouldBe("34L");
@@ -45,11 +44,11 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         sequence.NumberForRunway(flight1).ShouldBe(1, "QFA1 should be #1 on 34L initially");
         sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R initially");
 
-        var sessionManager = new MockLocalSessionManager(sequence);
+        var instanceManager = new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            sessionManager,
+            instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IClock>(),
             mediator,

@@ -25,7 +25,7 @@ public class ChangeFeederFixEstimateHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var newEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newEstimate);
@@ -50,7 +50,7 @@ public class ChangeFeederFixEstimateHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var newFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
         var expectedLandingEstimate = clockFixture.Instance.UtcNow().AddMinutes(25);
@@ -87,8 +87,8 @@ public class ChangeFeederFixEstimateHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight2, flight2.LandingEstimate); // QFA2 first
-        sequence.Insert(flight1, flight1.LandingEstimate); // QFA1 second
+        sequence.Insert(0, flight2); // QFA2 first
+        sequence.Insert(1, flight1); // QFA1 second
 
         // Verify initial order
         sequence.NumberInSequence(flight2).ShouldBe(1);
@@ -123,7 +123,7 @@ public class ChangeFeederFixEstimateHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var request = new ChangeFeederFixEstimateRequest(
             "YSSY",
@@ -144,13 +144,12 @@ public class ChangeFeederFixEstimateHandlerTests(
         IMediator? mediator = null,
         ILogger? logger = null)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
         estimateProvider ??= Substitute.For<IEstimateProvider>();
         mediator ??= Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
 
         return new ChangeFeederFixEstimateRequestHandler(
-            sessionManager,
+            new MockInstanceManager(sequence),
             new MockLocalConnectionManager(),
             estimateProvider,
             clockFixture.Instance,

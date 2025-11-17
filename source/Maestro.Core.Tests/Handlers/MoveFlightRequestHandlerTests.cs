@@ -42,8 +42,8 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         var moving = new FlightBuilder("QFA1S").WithState(State.Stable).WithLandingTime(now.AddMinutes(20)).Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(frozen, frozen.LandingTime);
-        sequence.Insert(moving, frozen.LandingTime);
+        sequence.Insert(0, frozen);
+        sequence.Insert(1, moving);
 
         var handler = GetRequestHandler(sequence);
         var request = new MoveFlightRequest(
@@ -69,7 +69,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         var flight = new FlightBuilder("QFA1").WithState(State.Stable).WithLandingTime(now.AddMinutes(10)).Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight, flight.LandingTime);
+        sequence.Insert(0, flight);
 
         var newTime = now.AddMinutes(20);
         var handler = GetRequestHandler(sequence);
@@ -94,7 +94,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         var flight = new FlightBuilder("QFA1").WithState(State.Unstable).WithLandingTime(now.AddMinutes(10)).Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight, flight.LandingTime);
+        sequence.Insert(0, flight);
 
         var newTime = now.AddMinutes(20);
         var handler = GetRequestHandler(sequence);
@@ -121,7 +121,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         var flight = new FlightBuilder("QFA1").WithState(state).WithLandingTime(now.AddMinutes(10)).Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight, flight.LandingTime);
+        sequence.Insert(0, flight);
 
         var newTime = now.AddMinutes(20);
         var handler = GetRequestHandler(sequence);
@@ -157,9 +157,9 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(frozen1, frozen1.LandingTime);
-        sequence.Insert(frozen2, frozen2.LandingTime);
-        sequence.Insert(subject, subject.LandingTime);
+        sequence.Insert(0, frozen1);
+        sequence.Insert(1, frozen2);
+        sequence.Insert(2, subject);
 
         var handler = GetRequestHandler(sequence);
         var requestedTime = now.AddMinutes(20);
@@ -196,9 +196,9 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(frozen1, frozen1.LandingTime);
-        sequence.Insert(frozen2, frozen2.LandingTime);
-        sequence.Insert(subject, subject.LandingTime);
+        sequence.Insert(0, frozen1);
+        sequence.Insert(1, frozen2);
+        sequence.Insert(2, subject);
 
         var handler = GetRequestHandler(sequence);
         var requestedTime = now.AddMinutes(12);
@@ -234,9 +234,9 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(frozen1, frozen1.LandingTime);
-        sequence.Insert(frozen2, frozen2.LandingTime);
-        sequence.Insert(subject, subject.LandingTime);
+        sequence.Insert(0, frozen1);
+        sequence.Insert(1, frozen2);
+        sequence.Insert(2, subject);
 
         var handler = GetRequestHandler(sequence);
         var requestedTime = now.AddMinutes(18);
@@ -272,9 +272,9 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(frozen1, frozen1.LandingTime);
-        sequence.Insert(frozen2, frozen2.LandingTime);
-        sequence.Insert(subject, subject.LandingTime);
+        sequence.Insert(0, frozen1);
+        sequence.Insert(1, frozen2);
+        sequence.Insert(2, subject);
 
         var handler = GetRequestHandler(sequence);
         var requestedTime = now.AddMinutes(13);
@@ -310,9 +310,9 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight1, flight1.LandingTime);
-        sequence.Insert(flight2, flight2.LandingTime);
-        sequence.Insert(subject, subject.LandingTime);
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
+        sequence.Insert(2, subject);
 
         var handler = GetRequestHandler(sequence);
         var requestedTime = now.AddMinutes(12);
@@ -349,7 +349,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight, flight.LandingTime);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
 
@@ -380,7 +380,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight, flight.LandingTime);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var newTime = now.AddMinutes(20);
@@ -400,11 +400,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
     MoveFlightRequestHandler GetRequestHandler(Sequence sequence)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
+        var instanceManager = new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(
-            sessionManager,
+            instanceManager,
             new MockLocalConnectionManager(),
             mediator,
             clock,

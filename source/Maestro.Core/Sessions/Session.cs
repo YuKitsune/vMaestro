@@ -16,9 +16,9 @@ public class Session
     public List<Flight> DeSequencedFlights { get; } = new();
     public Sequence Sequence { get; private set; }
 
-    public Session(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
+    public Session(Sequence sequence)
     {
-        Sequence = new Sequence(airportConfiguration, arrivalLookup, clock);
+        Sequence = sequence;
     }
 
     // TODO: Move dummy stuff to a separate service

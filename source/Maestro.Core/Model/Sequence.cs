@@ -372,6 +372,9 @@ public class Sequence
     {
         lock (_gate)
         {
+            if (_flights.Count == 0)
+                return;
+
             var sequence = BuildSequence();
 
             var startingFlight =  _flights[startIndex];

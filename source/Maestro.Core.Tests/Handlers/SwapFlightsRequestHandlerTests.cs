@@ -35,8 +35,8 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
-        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
+        sequence.Insert(0, firstFlight);
+        sequence.Insert(1, secondFlight);
 
         // Sanity check
         sequence.NumberForRunway(firstFlight).ShouldBe(1);
@@ -73,8 +73,8 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
-        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
+        sequence.Insert(0, firstFlight);
+        sequence.Insert(1, secondFlight);
 
         var handler = GetHandler(sequence);
 
@@ -109,8 +109,8 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
-        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
+        sequence.Insert(0, firstFlight);
+        sequence.Insert(1, secondFlight);
 
         var handler = GetHandler(sequence);
 
@@ -144,8 +144,8 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
-        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
+        sequence.Insert(0, firstFlight);
+        sequence.Insert(1, secondFlight);
 
         var handler = GetHandler(sequence);
 
@@ -176,8 +176,8 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
-        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
+        sequence.Insert(0, firstFlight);
+        sequence.Insert(0, secondFlight);
 
         var handler = GetHandler(sequence);
 
@@ -201,7 +201,7 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetHandler(sequence);
 
@@ -225,7 +225,7 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetHandler(sequence);
 
@@ -259,8 +259,8 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
-        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
+        sequence.Insert(0, firstFlight);
+        sequence.Insert(1, secondFlight);
 
         var handler = GetHandler(sequence);
 
@@ -294,11 +294,12 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(firstFlight, firstFlight.LandingEstimate);
-        sequence.Insert(secondFlight, secondFlight.LandingEstimate);
-        sequence.Insert(thirdFlight, thirdFlight.LandingEstimate);
+        sequence.Insert(0, firstFlight);
+        sequence.Insert(1, secondFlight);
+        sequence.Insert(2, thirdFlight);
 
-        thirdFlight.SetLandingTime(_clock.UtcNow().AddMinutes(40)); // Artificial 10-minute delay to ensure recomputation is not performed
+        // Artificial 10-minute delay to ensure recomputation is not performed
+        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), _clock.UtcNow().AddMinutes(30), FlowControls.ReduceSpeed);
 
         var handler = GetHandler(sequence);
 
@@ -313,8 +314,6 @@ public class SwapFlightsRequestHandlerTests(
 
     SwapFlightsRequestHandler GetHandler(Sequence sequence)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
-
         var arrivalLookup = Substitute.For<IArrivalLookup>();
         arrivalLookup.GetArrivalInterval(
                 Arg.Any<string>(),
@@ -326,7 +325,7 @@ public class SwapFlightsRequestHandlerTests(
             .Returns(TimeSpan.FromMinutes(10));
 
         return new SwapFlightsRequestHandler(
-            sessionManager,
+            new MockInstanceManager(sequence),
             new MockLocalConnectionManager(),
             arrivalLookup,
             Substitute.For<MediatR.IMediator>(),

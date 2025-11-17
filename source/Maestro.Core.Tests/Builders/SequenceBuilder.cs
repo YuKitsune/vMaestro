@@ -1,6 +1,5 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using NSubstitute;
 

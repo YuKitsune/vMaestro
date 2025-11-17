@@ -57,8 +57,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .Build();
 
         // Insert flights in order based on landing estimates
-        sequence.Insert(flight2, flight2.LandingEstimate); // QFA2 first (10 min)
-        sequence.Insert(flight1, flight1.LandingEstimate); // QFA1 second (20 min)
+        sequence.Insert(0, flight2); // QFA2 first (10 min)
+        sequence.Insert(1, flight1); // QFA1 second (20 min)
 
         // Verify initial order
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA2 should be first initially");
@@ -98,7 +98,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithRunwayMode(_runwayMode)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -133,7 +133,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithRunwayMode(_runwayMode)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var actualFeederFixEstaimate = now.AddMinutes(5);
         var estimateProvider = new MockEstimateProvider(
@@ -171,7 +171,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithRunwayMode(_runwayMode)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -206,7 +206,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithRunwayMode(_runwayMode)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -233,7 +233,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithRunwayMode(_runwayMode)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -258,7 +258,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithRunwayMode(_runwayMode)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var mediator = Substitute.For<IMediator>();
         var handler = GetRequestHandler(sequence, mediator: mediator);
@@ -269,7 +269,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         // Assert
         await mediator.Received(1).Publish(
-            Arg.Is<SequenceUpdatedNotification>(n => n.AirportIdentifier == "YSSY"),
+            Arg.Is<SessionUpdatedNotification>(n => n.AirportIdentifier == "YSSY"),
             Arg.Any<CancellationToken>());
     }
 
@@ -325,7 +325,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var sequence = new SequenceBuilder(_airportConfiguration)
             .WithRunwayMode(_runwayMode)
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        sequence.Insert(0, flight);
 
         var handler = GetRequestHandler(sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
@@ -342,7 +342,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         IEstimateProvider? estimateProvider = null,
         IMediator? mediator = null)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
+        var instanceManager = new MockInstanceManager(sequence);
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
 
@@ -352,7 +352,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var logger = Substitute.For<Serilog.ILogger>();
 
         return new RecomputeRequestHandler(
-            sessionManager,
+            instanceManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             estimateProvider,

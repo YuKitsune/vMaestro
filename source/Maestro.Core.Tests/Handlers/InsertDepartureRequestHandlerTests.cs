@@ -1,6 +1,7 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -31,11 +32,13 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.AddPendingFlight(pendingFlight);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -57,10 +60,10 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         var now = clockFixture.Instance.UtcNow();
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA999",
@@ -88,11 +91,13 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.AddPendingFlight(pendingFlight);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -130,12 +135,14 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.Insert(existingFlight, existingFlight.LandingEstimate);
-        sequence.AddPendingFlight(pendingFlight);
+        sequence.Insert(0, existingFlight);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -167,11 +174,13 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.AddPendingFlight(pendingFlight);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -213,12 +222,14 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.Insert(existingFlight, existingFlight.LandingEstimate);
-        sequence.AddPendingFlight(pendingFlight);
+        sequence.Insert(0, existingFlight);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -265,13 +276,15 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
-        sequence.AddPendingFlight(pendingFlight);
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -317,12 +330,14 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.Insert(existingFlight, existingFlight.LandingEstimate);
-        sequence.AddPendingFlight(pendingFlight);
+        sequence.Insert(0, existingFlight);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -369,13 +384,15 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
-        sequence.AddPendingFlight(pendingFlight);
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -432,13 +449,15 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
-            .WithArrivalLookup(GetArrivalLookup())
             .Build();
-        sequence.Insert(frozenFlight1, frozenFlight1.LandingEstimate);
-        sequence.Insert(frozenFlight2, frozenFlight2.LandingEstimate);
-        sequence.AddPendingFlight(pendingFlight);
+        sequence.Insert(0, frozenFlight1);
+        sequence.Insert(1, frozenFlight2);
 
-        var handler = GetRequestHandler(sequence, clockFixture.Instance);
+        var instanceManager = new MockInstanceManager(sequence);
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(sequence, clockFixture.Instance, instanceManager);
         var request = new InsertDepartureRequest(
             "YSSY",
             "QFA123",
@@ -453,31 +472,18 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         exception.Message.ShouldContain("Cannot insert flight", Case.Insensitive);
     }
 
-    IArrivalLookup GetArrivalLookup()
+    InsertDepartureRequestHandler GetRequestHandler(Sequence sequence, IClock clock, IMaestroInstanceManager? instanceManager = null)
     {
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
-                Arg.Is("YSSY"),
-                Arg.Is("RIVET"),
-                Arg.Is("RIVET4"),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(_arrivalInterval);
-        return arrivalLookup;
-    }
-
-    InsertDepartureRequestHandler GetRequestHandler(Sequence sequence, IClock clock)
-    {
-        var sessionManager = new MockLocalSessionManager(sequence);
+        instanceManager ??= new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
-        var arrivalLookup = GetArrivalLookup();
         return new InsertDepartureRequestHandler(
-            sessionManager,
+            Substitute.For<IAirportConfigurationProvider>(),
+            instanceManager,
             new MockLocalConnectionManager(),
-            arrivalLookup,
+            Substitute.For<IArrivalLookup>(),
             clock,
             mediator,
             Substitute.For<ILogger>());
     }
 }
+

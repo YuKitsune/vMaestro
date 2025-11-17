@@ -1,4 +1,5 @@
 using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -130,7 +131,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(existingFlight, existingFlight.LandingEstimate);
+        sequence.Insert(0, existingFlight);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertFlightRequest(
@@ -197,7 +198,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(existingFlight, existingFlight.LandingEstimate);
+        sequence.Insert(0, existingFlight);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertFlightRequest(
@@ -242,8 +243,8 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertFlightRequest(
@@ -282,7 +283,7 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(existingFlight, existingFlight.LandingEstimate);
+        sequence.Insert(0, existingFlight);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertFlightRequest(
@@ -327,8 +328,8 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertFlightRequest(
@@ -378,8 +379,8 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
             .WithClock(clockFixture.Instance)
             .Build();
-        sequence.Insert(frozenFlight1, frozenFlight1.LandingEstimate);
-        sequence.Insert(frozenFlight2, frozenFlight2.LandingEstimate);
+        sequence.Insert(0, frozenFlight1);
+        sequence.Insert(1, frozenFlight2);
 
         var handler = GetRequestHandler(sequence);
         var request = new InsertFlightRequest(
@@ -395,12 +396,12 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         exception.Message.ShouldContain("Cannot insert flight", Case.Insensitive);
     }
 
-    InsertFlightRequestHandler GetRequestHandler(Sequence sequence)
+    InsertFlightRequestHandler GetRequestHandler(Sequence sequence, IMaestroInstanceManager? instanceManager = null)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
+        instanceManager ??= new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
         return new InsertFlightRequestHandler(
-            sessionManager,
+            instanceManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
