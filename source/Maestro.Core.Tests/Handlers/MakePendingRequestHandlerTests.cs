@@ -39,16 +39,15 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration).Build();
-        sequence.Insert(0, flight1);
-        sequence.Insert(1, flight2);
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
+            .Build();
 
         // Verify initial state
         sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
         sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
 
-        var instanceManager = new MockInstanceManager(sequence);
-        var handler = GetRequestHandler(sequence, instanceManager: instanceManager);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
 
         // Act
@@ -75,11 +74,10 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
     public async Task WhenFlightNotFound_WarningIsLoggedAndHandlerReturns()
     {
         // Arrange
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .Build();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration).Build();
 
         var logger = Substitute.For<ILogger>();
-        var handler = GetRequestHandler(sequence, logger: logger);
+        var handler = GetRequestHandler(instanceManager, sequence, logger: logger);
         var request = new MakePendingRequest("YSSY", "NONEXISTENT");
 
         // Act
@@ -106,12 +104,11 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         // Mark flight as NOT from departure airport
         flight.IsFromDepartureAirport = false;
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
 
         // Act & Assert
@@ -140,12 +137,11 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight.SetSequenceData(flight.LandingTime, flight.FeederFixTime, FlowControls.ReduceSpeed);
         flight.IsFromDepartureAirport = true;
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
 
         // Act
@@ -164,9 +160,8 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
     }
 
-    MakePendingRequestHandler GetRequestHandler(Sequence sequence, IMaestroInstanceManager? instanceManager = null, ILogger? logger = null)
+    MakePendingRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, ILogger? logger = null)
     {
-        instanceManager ??= new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
         return new MakePendingRequestHandler(

@@ -1,5 +1,6 @@
-﻿using Maestro.Core.Configuration;
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -160,9 +161,8 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     // TODO: Delete these
 
 
-    MoveFlightRequestHandler GetRequestHandler(Sequence sequence)
+    MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
     {
-        var instanceManager = new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(

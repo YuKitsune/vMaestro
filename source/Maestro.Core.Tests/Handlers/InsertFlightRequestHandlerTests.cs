@@ -19,11 +19,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -44,11 +44,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "MYCALL123",
@@ -69,11 +69,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "lowercase_very_long_callsign",
@@ -94,11 +94,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             null,
@@ -119,11 +119,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -144,11 +144,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -178,12 +178,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
-        sequence.Insert(0, existingFlight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -208,11 +207,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
         var targetLandingTime = now.AddMinutes(20);
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -245,12 +244,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
-        sequence.Insert(0, existingFlight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -290,13 +288,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
-        sequence.Insert(0, flight1);
-        sequence.Insert(1, flight2);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -330,12 +326,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
-        sequence.Insert(0, existingFlight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -375,13 +370,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
-        sequence.Insert(0, flight1);
-        sequence.Insert(1, flight2);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -426,13 +419,11 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(frozenFlight1, frozenFlight2))
             .Build();
-        sequence.Insert(0, frozenFlight1);
-        sequence.Insert(1, frozenFlight2);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new InsertFlightRequest(
             "YSSY",
             "TEST123",
@@ -462,9 +453,8 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         // TODO: Assert that the request was redirected to the master and not handled locally
     }
 
-    InsertFlightRequestHandler GetRequestHandler(Sequence sequence, IMaestroInstanceManager? instanceManager = null)
+    InsertFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
     {
-        instanceManager ??= new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
         return new InsertFlightRequestHandler(
             instanceManager,

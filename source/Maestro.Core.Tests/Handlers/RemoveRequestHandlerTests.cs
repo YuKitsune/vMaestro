@@ -35,20 +35,15 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
-
-        sequence.Insert(0, flight1);
-        sequence.Insert(1, flight2);
 
         // Verify initial state
         sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
         sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
 
-        var instanceManager = new MockInstanceManager(sequence);
-
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
@@ -80,15 +75,13 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var instanceManager = new MockInstanceManager(sequence);
-        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
         instance.Session.DeSequencedFlights.Add(flight1);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
@@ -121,12 +114,11 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             clockFixture.Instance.UtcNow().AddMinutes(20),
             FlowControls.ReduceSpeed);
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
@@ -166,11 +158,11 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
     public async Task WhenRemovingAFlightThatDoesNotExist_AnExceptionIsThrown()
     {
         // Arrange
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "NONEXISTENT");
 
         // Act & Assert
@@ -189,15 +181,13 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(now.AddMinutes(8))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var instanceManager = new MockInstanceManager(sequence);
-        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
         instance.Session.PendingFlights.Add(flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act & Assert
@@ -223,9 +213,8 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         // TODO: Assert that the request was redirected to the master and not handled locally
     }
 
-    RemoveRequestHandler GetRequestHandler(Sequence sequence, IMaestroInstanceManager? instanceManager = null)
+    RemoveRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
     {
-        instanceManager ??= new MockInstanceManager(sequence);
         var mediator = Substitute.For<IMediator>();
 
         return new RemoveRequestHandler(

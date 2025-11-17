@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -97,12 +98,11 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithLandingTime(landingTime)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -131,12 +131,11 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithRunway("34R", manual)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -158,12 +157,11 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .ManualDelay(TimeSpan.FromMinutes(5))
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -183,13 +181,12 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithLandingTime(now.AddMinutes(10))
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
         var mediator = Substitute.For<IMediator>();
-        var handler = GetRequestHandler(sequence, mediator: mediator);
+        var handler = GetRequestHandler(instanceManager, sequence, mediator: mediator);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -250,12 +247,11 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithActivationTime(now.Subtract(TimeSpan.FromMinutes(10)))
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
-        sequence.Insert(0, flight);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -282,11 +278,11 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     }
 
     RecomputeRequestHandler GetRequestHandler(
+        IMaestroInstanceManager instanceManager,
         Sequence sequence,
         IEstimateProvider? estimateProvider = null,
         IMediator? mediator = null)
     {
-        var instanceManager = new MockInstanceManager(sequence);
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
 
