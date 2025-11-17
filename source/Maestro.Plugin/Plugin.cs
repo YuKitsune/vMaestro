@@ -78,7 +78,11 @@ public class Plugin : IPlugin
 
 #if RELEASE
             // Check for updates in background (fire-and-forget)
-            _ = GitHubReleaseChecker.CheckForUpdatesAsync(version, _logger);
+            var pluginConfiguration = Ioc.Default.GetRequiredService<PluginConfiguration>();
+            if (pluginConfiguration.CheckForUpdates)
+            {
+                _ = GitHubReleaseChecker.CheckForUpdatesAsync(version, _logger);
+            }
 #endif
         }
         catch (Exception ex)
