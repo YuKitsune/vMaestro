@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -69,5 +70,96 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         // Verify QFA1 is now scheduled on 34R and positioned appropriately
         sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R");
         sequence.NumberForRunway(flight1).ShouldBe(2, "QFA1 should be #2 on 34R after moving to 34R");
+    }
+
+    [Fact]
+    public async Task WhenChangingRunway_TheFlightIsMovedBasedOnItsLandingEstimate()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create three flights.
+        // - Two flights should be on 34L with the same landing estimate
+        // - One flight should be on 34R with a later landing estimate
+
+        // Act
+        // TODO: Re-assign the second flight on 34L to 34R.
+
+        // Assert
+        // TODO: Assert that the flight is now on 34R
+        // TODO: Assert that the flight is positioned before the existing flight on 34R based on its landing estimate
+    }
+
+    [Fact]
+    public async Task WhenChangingRunway_TheSequenceIsRecalculated()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create four flights.
+        // - Three flights should be on 34L with the same landing estimate
+        // - One flight should be on 34R with a later landing estimate
+
+        // Act
+        // TODO: Re-assign the second flight on 34L to 34R.
+
+        // Assert
+        // TODO: Assert that the flight is now on 34R
+        // TODO: Assert that the landing time of the existing flight on 34R is adjusted to maintain proper separation
+        // TODO: Assert that the landing times of the remaining flights on 34L are adjusted to minimise the delay
+    }
+
+    [Fact]
+    public async Task WhenChangingRunway_AndTheFlightWasUnstable_ItBecomesStable()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a flight that is unstable
+
+        // Act
+        // TODO: Change the runway of the flight
+
+        // Assert
+        // TODO: Assert that the flight's state is now Stable
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    [InlineData(State.Landed)]
+    public async Task WhenChangingRunway_AndTheFlightWasNotUnstable_ItBecomesStable(State state)
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a flight with the specified state
+
+        // Act
+        // TODO: Change the runway of the flight
+
+        // Assert
+        // TODO: Assert that the flight's state remains unchanged
+    }
+
+    [Fact]
+    public async Task RelaysToMaster()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a dummy connection that simulates a non-master instance
+
+        // Act
+        // TODO: Change the runway
+
+        // Assert
+        // TODO: Assert that the request was redirected to the master and not handled locally
     }
 }

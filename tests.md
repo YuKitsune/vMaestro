@@ -1,29 +1,29 @@
 ## Flight Updated
 
 - [ ] When a flight is updated, and no instances are active for that flights destination, it is not tracked
-- [ ] When a flight is updated, and it is out of range, it is not tracked
-- [ ] When a flight is updated, and it's within range, it is tracked
+- [X] When a flight is updated, and it is out of range, it is not tracked
+- [X] When a flight is updated, and it's within range, it is tracked
 - [ ] When a flight is updated, and it's not tracking via a known feeder fix, it is added to the pending list
-- [ ] When a flight is updated, and it's on the ground at a departure airport, it is added to the pending list
+- [X] When a flight is updated, and it's on the ground at a departure airport, it is added to the pending list
 - [ ] When a flight is updated, and it's not currently tracked, a runway is assigned based on feeder fix preferences
 - [ ] When a flight is updated, and it's not currently tracked, and it's landing estimate is earlier than a stable flight, the flight is inserted before the stable one
 - [ ] When a flight is updated, and it's not currently tracked, and it's landing estimate is earlier than a superstable  flight, the flight is inserted after the sueprstable one
-- [ ] When a flight is updated, its estimates are updated
-- [ ] When a flight is updated, and a manual ETA_FF has been set, estimates are not updated
-- [ ] When a flight is updated, and it's unstable, it's re-positioned in the sequence based on it's estimate
+- [X] When a flight is updated, its estimates are updated
+- [X] When a flight is updated, and a manual ETA_FF has been set, estimates are not updated
+- [X] When a flight is updated, and it's unstable, it's re-positioned in the sequence based on it's estimate
 - [ ] When a flight is updated, and it's unstable, and its estimate is ahead of a stable flight, it does not overtake the stable flight
-- [ ] When a flight is updated, and it's unstable, it's sequence data is re-calculated
+- [X] When a flight is updated, and it's unstable, it's sequence data is re-calculated
 - [ ] When a flight is updated, and it's last update was recent, the update is ignored
 - [ ] When a flight is updated, and it's within range, it's state is updated
 - [ ] When a flight is updated, and we are in slave mode, the update is relayed to the master
 
 ## Change feeder fix estimate
 
-- [ ] When changing feeder fix estimate, the feeder fix estimate is set, and manual flag is set
-- [ ] When changing feeder fix estimate, the landing estimate is re-calculated
-- [ ] When changing feeder fix estimate, the flight is repositioned based on the new landing estimate
-- [ ] When changing feeder fix estimate, and the flight is unstable, it is made stable
-- [ ] When changing feeder fix estimate, and it's not unstable, it's state is retained
+- [X] When changing feeder fix estimate, the feeder fix estimate is set, and manual flag is set
+- [X] When changing feeder fix estimate, the landing estimate is re-calculated
+- [X] When changing feeder fix estimate, the flight is repositioned based on the new landing estimate
+- [X] When changing feeder fix estimate, and the flight is unstable, it is made stable
+- [X] When changing feeder fix estimate, and it's not unstable, it's state is retained
 - [ ] When changing feeder fix estimate, and we are in slave mode, the request is relayed to the master
 
 ## Change Runway Mode
@@ -37,7 +37,7 @@
 
 ## Change Runway
 
-- [ ] When changing runway, the new runway is assigned
+- [X] When changing runway, the new runway is assigned
 - [ ] When changing runway, the flight is re-positioned based on it's estimate
 - [ ] When changing runway, the sequence from where the flight was moved to is re-calculated
 - [ ] When changing runway, and the flight was unstable, it becomes stable
@@ -75,10 +75,12 @@
 - [ ] When inserting a departure, the runway is assigned based on the feeder-fix preference
 - [ ] When inserting a departure, with an estimate earlier than a stable flight, the stable flight is delayed
 - [ ] When inserting a departure, with an estimate earlier than a suberstable flight, the inserted flight is delayed until after the superstable one
-- [ ] When inserting a departure, ahead of another flight, the departure is sequenced in front of the other flight
-- [ ] When inserting a departure, behind another flight, the departure is sequenced in behind of the other flight
-- [ ] When inserting a departure, the rest of the sequence is re-calculated
+- [X] When inserting a departure, ahead of another flight, the departure is sequenced in front of the other flight
+- [X] When inserting a departure, behind another flight, the departure is sequenced in behind of the other flight
+- [X] When inserting a departure, the rest of the sequence is re-calculated
 - [ ] When inserting a departure, and we are in slave mode, the request is relayed to the master
+
+<!-- Suggest re-writing all of the flight insertion tests -->
 
 ## Insert Flight 
 
@@ -94,12 +96,12 @@
 - [ ] When inserting a flight, ahead of another one, the landing time is set to the reference flights landing time
 - [ ] When inserting a flight, ahead of another one, the flight is sequenced ahead of the reference flight
 
-- [ ] When inserting a flight, the provided callsign is used
-- [ ] When inserting a flight, and no callsign is provided, a dummy callsign is used
-- [ ] When inserting a flight, the provided aircraft type is used
-- [ ] When inserting a flight, and no aircraft type is provided, defaults to medium jet
+- [X] When inserting a flight, the provided callsign is used
+- [X] When inserting a flight, and no callsign is provided, a dummy callsign is used
+- [X] When inserting a flight, the provided aircraft type is used
+- [X] When inserting a flight, and no aircraft type is provided, defaults to medium jet
 
-- [ ] When inserting a flight, it is frozen
+- [X] When inserting a flight, it is frozen
 
 - [ ] When inserting a flight, and we are in slave mode, the request is relayed to the master
 
@@ -117,7 +119,7 @@
 - [ ] When inserting an overshoot, ahead of another one, the landing time is set to the reference flights landing time
 - [ ] When inserting an overshoot, ahead of another one, the flight is moved ahead of the reference flight
 
-- [ ] When inserting an overshoot, it is frozen
+- [X] When inserting an overshoot, it is frozen
 
 - [ ] When inserting an overshoot, and we are in slave mode, the request is relayed to the master
 
@@ -151,10 +153,10 @@
 
 ## Manual Delay
 
-- [ ] When manual delay is assigned, and the current delay does not exceed the maximum delay, the sequence is unaffected
-- [ ] When manual delay is assigned, and the current delay exceeds the maximum delay, the flight is moved forward until the maximum delay is no longer exceeded
-- [ ] When manual delay is assigned, and all preceeding flights are frozen, the sequence is unaffected
-- [ ] When manual delay is assigned, and we are in slave mode, the request is relayed to the master
+- [X] When manual delay is assigned, and the current delay does not exceed the maximum delay, the sequence is unaffected
+- [X] When manual delay is assigned, and the current delay exceeds the maximum delay, the flight is moved forward until the maximum delay is no longer exceeded
+- [X] When manual delay is assigned, and all preceeding flights are frozen, the sequence is unaffected
+- [X] When manual delay is assigned, and we are in slave mode, the request is relayed to the master
 
 ## Move Flight
 
@@ -166,16 +168,16 @@
 
 ## Recompute
 
-- [ ] When recomputing a flight, manual ETA_FF is removed
-- [ ] When recomputing a flight, manual delay is removed
-- [ ] When recomputing a flight, runway is re-assigned
+- [X] When recomputing a flight, manual ETA_FF is removed
+- [X] When recomputing a flight, manual delay is removed
+- [X] When recomputing a flight, runway is re-assigned
 - [ ] When recomputing a flight, it is repositioned based on it's ETA_FF
 - [ ] When recomputing a flight, the state is updated based based on time
 - [ ] When recomputing a flight, and we are in slave mode, the request is relayed to the master
 
 ## Remove
 
-- [ ] When removing a flight, it is removed from the sequence and added to the pending list
+- [X] When removing a flight, it is removed from the sequence and added to the pending list
 - [ ] When removing a flight, the sequence is re-calculated from where it was removed
 - [ ] When removing a flight, and we are in slave mode, the request is relayed to the master
 
@@ -188,10 +190,10 @@
 
 ## Swap Flights
 
-- [ ] When swapping flights, landing times, runways, and positions are swapped
-- [ ] When swapping flights, the sequence is not recomputed
-- [ ] When swapping flights, both flights become stable
-- [ ] When swapping flights, and we are in slave mode, the request is relayed to the master
+- [X] When swapping flights, landing times, runways, and positions are swapped
+- [X] When swapping flights, the sequence is not recomputed
+- [X] When swapping flights, both flights become stable
+- [X] When swapping flights, and we are in slave mode, the request is relayed to the master
 
 ## Sequence
 

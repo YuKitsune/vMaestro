@@ -54,6 +54,114 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     }
 
     [Fact]
+    public async Task LandingEstimateIsDerivedFromTakeOffTime()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a flight with a specific estimated enroute time
+        // TODO: Add the flight to the pending list
+
+        // Act
+        // TODO: Insert the flight with a specific take-off time
+
+        // Assert
+        // TODO: Assert that the landing estimate is correctly calculated based on the take-off time and enroute time
+    }
+
+    [Fact]
+    public async Task WhenAFlightIsInserted_WithATakeOffTime_ItIsInsertedBasedOnItsCalculatedLandingEstimate()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a flight with a specific estimated enroute time
+        // TODO: Add the flight to the pending list
+        // TODO: Create two flights in the sequence with landing estimates before and after the calculated landing estimate of the inserted flight
+
+        // Act
+        // TODO: Insert the flight with a specific take-off time
+
+        // Assert
+        // TODO: Assert that the flight is inserted in the correct position based on its calculated landing estimate
+    }
+
+    [Fact]
+    public async Task WhenAFlightIsInserted_WithATakeOffTime_RunwayIsAssignedByFeederPreference()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Add a flight to the pending list
+
+        // Act
+        // TODO: Insert the flight with a specific take-off time
+
+        // Assert
+        // TODO: Assert that the runway is assigned based on the feeder preference
+    }
+
+    [Fact]
+    public async Task WhenAFlightIsInserted_WithATakeOffTime_RunwayIsAssignedByModeAtLandingEstimate()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Add a flight to the pending list
+        // TODO: Change the runway mode before the landing estimate (from 34R to 16L, 5 minutes before landing estimate)
+
+        // Act
+        // TODO: Insert the flight with a specific take-off time
+
+        // Assert
+        // TODO: Assert that the runway is assigned based on the mode at the calculated landing estimate
+    }
+
+    [Fact]
+    public async Task WhenAFlightIsInserted_WithATakeOffTime_AndTheLandingEstimateIsBeforeAStableFlight_StableFlightIsDelayed()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Add a flight to the pending list
+        // TODO: Add two stable flights to the sequence landing before and after the calculated landing estimate of the inserted flight
+
+        // Act
+        // TODO: Insert the flight with a specific take-off time
+
+        // Assert
+        // TODO: Assert the landing order is correct (Stabled flight, Inserted flight, Stabled flight)
+        // TODO: Assert that the first stable flight is unaffected
+        // TODO: Assert that the second stable flight is delayed to maintain separation with the inserted flight
+    }
+
+    [Theory]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    public async Task WhenAFlightIsInserted_WithATakeOffTime_AndTheLandingEstimateIsBeforeASuperStableFlight_InsertedFlightIsDelayed(State state)
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Add a flight to the pending list
+        // TODO: Add a flight with the provided state to the sequence landing after the calculated landing estimate of the inserted flight
+
+        // Act
+        // TODO: Insert the flight with a specific take-off time
+
+        // Assert
+        // TODO: Assert the landing order is correct (Existing flight, Inserted flight)
+        // TODO: Assert that the existing flight is unaffected
+        // TODO: Assert that the inserted flight is delayed to maintain separation with the existing flight
+    }
+
+    [Fact]
     public async Task WhenFlightIsInserted_AndItDoesNotExistInThePendingList_AnExceptionIsThrown()
     {
         // Arrange
@@ -470,6 +578,23 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
             await handler.Handle(request, CancellationToken.None));
 
         exception.Message.ShouldContain("Cannot insert flight", Case.Insensitive);
+    }
+
+    [Fact]
+    public async Task RedirectedToMaster()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a dummy connection that simulates a non-master instance
+        // TODO: Add a flight to the pending list
+
+        // Act
+        // TODO: Insert the flight
+
+        // Assert
+        // TODO: Assert that the request was redirected to the master and not handled locally
     }
 
     InsertDepartureRequestHandler GetRequestHandler(Sequence sequence, IClock clock, IMaestroInstanceManager? instanceManager = null)

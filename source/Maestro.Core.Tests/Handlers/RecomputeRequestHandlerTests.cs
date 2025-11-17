@@ -29,134 +29,63 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             ]
         });
 
-    // TODO: When recomputing a flight, and it moves to a later time, the sequence is recalculated from where the flight was
-    // TODO: When recomputing a flight, and it moved to an earlier time, the sequence is recalculated from where the flight moves to
-
     [Fact]
-    public async Task WhenRecomputingAFlight_TheSequenceIsRecalculated()
+    public async Task TheFlightIsMovedBasedOnItsLandingEstimate()
     {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
         // Arrange
-        var now = clockFixture.Instance.UtcNow();
-
-        var flight1 = new FlightBuilder("QFA1")
-            .WithState(State.Stable)
-            .WithLandingEstimate(now.AddMinutes(20))
-            .WithLandingTime(now.AddMinutes(20))
-            .WithRunway("34L")
-            .Build();
-
-        var flight2 = new FlightBuilder("QFA2")
-            .WithState(State.Stable)
-            .WithLandingEstimate(now.AddMinutes(10))
-            .WithLandingTime(now.AddMinutes(10))
-            .WithRunway("34L")
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
-            .Build();
-
-        // Insert flights in order based on landing estimates
-        sequence.Insert(0, flight2); // QFA2 first (10 min)
-        sequence.Insert(1, flight1); // QFA1 second (20 min)
-
-        // Verify initial order
-        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA2 should be first initially");
-        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA1 should be second initially");
-
-        // Change QFA1's estimate to be earlier than QFA2
-        flight1.UpdateLandingEstimate(now.AddMinutes(5));
-
-        var handler = GetRequestHandler(sequence);
-        var request = new RecomputeRequest("YSSY", "QFA1");
+        // TODO: Create two stable flights, one after the other
+        // TODO: Change the landing estimate of the second flight to be earlier than the first flight
 
         // Act
-        await handler.Handle(request, CancellationToken.None);
-
-        // Assert - QFA1 should now be first due to earlier estimate
-        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA1 should be first after recompute with earlier estimate");
-        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA2 should be second after QFA1 moves ahead");
-        flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "QFA1 landing time should be reset to estimate");
-    }
-
-    // TODO: Nope. The landing time should be re-calculated.
-
-    [Fact]
-    public async Task WhenRecomputingAFlight_LandingTimeIsResetToEstimatedTime()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var scheduledLandingTime = now.AddMinutes(15);
-        var estimatedLandingTime = now.AddMinutes(10);
-
-        var flight = new FlightBuilder("QFA1")
-            .WithState(State.Stable)
-            .WithLandingEstimate(estimatedLandingTime)
-            .WithLandingTime(scheduledLandingTime)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
-            .Build();
-        sequence.Insert(0, flight);
-
-        var handler = GetRequestHandler(sequence);
-        var request = new RecomputeRequest("YSSY", "QFA1");
-
-        // Act
-        await handler.Handle(request, CancellationToken.None);
+        // TODO: Recompute the second flight
 
         // Assert
-        flight.InitialLandingEstimate.ShouldBe(estimatedLandingTime);
-        flight.LandingEstimate.ShouldBe(estimatedLandingTime);
-        flight.LandingTime.ShouldBe(estimatedLandingTime);
+        // TODO: Assert the landing order is second, first
     }
 
-    // TODO: Nope.
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task WhenRecomputingAFlight_FeederFixTimeIsResetToEstimatedTime(bool manual)
+    [Fact]
+    public async Task TheSequenceIsRecalculated()
     {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
         // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var scheduledFeederFixTime = now.AddMinutes(15);
-        var manualFeederFixEstaimate = now.AddMinutes(10);
-
-        var flight = new FlightBuilder("QFA1")
-            .WithState(State.Stable)
-            .WithFeederFixEstimate(manualFeederFixEstaimate, manual)
-            .WithFeederFixTime(scheduledFeederFixTime)
-            .Build();
-
-        var sequence = new SequenceBuilder(_airportConfiguration)
-            .WithRunwayMode(_runwayMode)
-            .Build();
-        sequence.Insert(0, flight);
-
-        var actualFeederFixEstaimate = now.AddMinutes(5);
-        var estimateProvider = new MockEstimateProvider(
-            feederFixEstimate: actualFeederFixEstaimate,
-            landingEstimate: flight.LandingEstimate);
-
-        var handler = GetRequestHandler(sequence, estimateProvider);
-        var request = new RecomputeRequest("YSSY", "QFA1");
+        // TODO: Create three stable flights, one after the other
+        // TODO: Change the landing estimate of the last flight to be earlier than the second flight
 
         // Act
-        await handler.Handle(request, CancellationToken.None);
+        // TODO: Recompute the last flight
 
         // Assert
-        flight.InitialFeederFixEstimate.ShouldBe(actualFeederFixEstaimate);
-        flight.FeederFixEstimate.ShouldBe(actualFeederFixEstaimate);
-        flight.FeederFixTime.ShouldBe(actualFeederFixEstaimate);
-        flight.ManualFeederFixEstimate.ShouldBeFalse();
+        // TODO: Assert the landing order is first, last, second
+        // TODO: Assert the first flight's landing time is unchanged
+        // TODO: Assert the last flight's landing time is its landing estimate
+        // TODO: Assert the second flight's landing time is after the last flight's landing time plus separation
     }
 
     // TODO: Check STA_FF and ETA_FF
 
     [Fact]
-    public async Task WhenRecomputingAFlightWithNewFeederFix_FeederFixAndEstimatesAreUpdated()
+    public async Task ManualFeederFixEstimateIsRemoved()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a stable flight with a manual feeder fix estimate
+
+        // Act
+        // TODO: Recompute the flight
+
+        // Assert
+        // TODO: Assert the flight's manual feeder fix estimate is removed
+    }
+
+    [Fact]
+    public async Task FeederFixIsReCalculated()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -187,13 +116,12 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         // Assert
         flight.FeederFixIdentifier.ShouldBe("WELSH");
         flight.FeederFixTime.ShouldBe(newFeederFixEstimate);
-        // TODO: flight.ManualFeederFixTime.ShouldBeFalse();
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task WhenRecomputingAFlight_RunwayIsReset(bool manual)
+    public async Task RunwayIsReset(bool manual)
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -220,7 +148,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     }
 
     [Fact]
-    public async Task WhenRecomputingAFlight_MaximumDelayIsReset()
+    public async Task MaximumDelayIsReset()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -335,6 +263,22 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         // Assert
         flight.State.ShouldBe(expectedState);
+    }
+
+    [Fact]
+    public async Task RedirectedToMaster()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a dummy connection that simulates a non-master instance
+
+        // Act
+        // TODO: Move a flight
+
+        // Assert
+        // TODO: Assert that the request was redirected to the master and not handled locally
     }
 
     RecomputeRequestHandler GetRequestHandler(

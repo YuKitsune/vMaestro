@@ -53,7 +53,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
-    public async Task WhenAFlightIsInRangeOfFeederFix_ItShouldBeSequenced()
+    public async Task WhenAFlightIsInRangeOfFeederFix_ItShouldBeTracked()
     {
         // Arrange
         var clock = clockFixture.Instance;
@@ -340,7 +340,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     [Fact]
     public async Task WhenAnExistingFlightIsUpdated_AllFlightDataIsUpdated()
     {
-
         // Arrange
         var clock = clockFixture.Instance;
         var flight = new FlightBuilder("QFA123")

@@ -89,26 +89,49 @@ public class SwapFlightsRequestHandlerTests(
     }
 
     [Fact]
-    public async Task WhenSwappingTwoFlights_TheirFeederFixTimesAreUpdated()
+    public async Task WhenSwappingTwoFlights_TheirFeederFixTimesAreReCalculated()
     {
         // Arrange
+        var firstLandingTime = _clock.UtcNow().AddMinutes(10);
         var firstFlight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34L")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(0))
             .WithFeederFixTime(_clock.UtcNow().AddMinutes(0))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithLandingTime(_clock.UtcNow().AddMinutes(10))
+            .WithLandingTime(firstLandingTime)
             .Build();
 
+        var secondLandingTime = _clock.UtcNow().AddMinutes(20);
         var secondFlight = new FlightBuilder("QFA2")
+            .WithFeederFix("MARLN") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34R")
             .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
             .WithFeederFixTime(_clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
-            .WithLandingTime(_clock.UtcNow().AddMinutes(20))
+            .WithLandingTime(secondLandingTime)
             .Build();
 
-        var sequence = new SequenceBuilder(_airportConfiguration).Build();
+        // Arrival intervals here are different to demonstrate that feeder fix times are re-calculated
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        arrivalLookup.GetArrivalInterval(
+                Arg.Any<string>(),
+                Arg.Is("RIVET"),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<AircraftCategory>())
+            .Returns(TimeSpan.FromMinutes(10));
+        arrivalLookup.GetArrivalInterval(
+                Arg.Any<string>(),
+                Arg.Is("MARLN"),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<AircraftCategory>())
+            .Returns(TimeSpan.FromMinutes(15));
+
+        var sequence = new SequenceBuilder(_airportConfiguration).WithArrivalLookup(arrivalLookup).Build();
         sequence.Insert(0, firstFlight);
         sequence.Insert(1, secondFlight);
 
@@ -120,11 +143,8 @@ public class SwapFlightsRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // First flight gets second flight's landing time (20 min) and feeder fix time should be adjusted
-        firstFlight.FeederFixTime.ShouldBe(_clock.UtcNow().AddMinutes(10));
-
-        // Second flight gets first flight's landing time (10 min) and feeder fix time should be adjusted
-        secondFlight.FeederFixTime.ShouldBe(_clock.UtcNow().AddMinutes(0));
+        firstFlight.FeederFixTime.ShouldBe(secondLandingTime.Subtract(TimeSpan.FromMinutes(10)));
+        secondFlight.FeederFixTime.ShouldBe(firstLandingTime.Subtract(TimeSpan.FromMinutes(15)));
     }
 
     [Fact]
@@ -310,6 +330,22 @@ public class SwapFlightsRequestHandlerTests(
 
         // Assert
         thirdFlight.LandingTime.ShouldBe(_clock.UtcNow().AddMinutes(40));
+    }
+
+    [Fact]
+    public async Task RedirectedToMaster()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a dummy connection that simulates a non-master instance
+
+        // Act
+        // TODO: Swap the two flights
+
+        // Assert
+        // TODO: Assert that the request was redirected to the master and not handled locally
     }
 
     SwapFlightsRequestHandler GetHandler(Sequence sequence)

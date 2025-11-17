@@ -223,6 +223,59 @@ public class ManualDelayRequestHandlerTests(
         flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
     }
 
+    [Fact]
+    public async Task WhenPreceedingFlightsAreFrozen_FlightIsRepositionedAfterLastFrozenFlight()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        var flight1 = new FlightBuilder("QFA1")
+            .WithState(State.Frozen)
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithState(State.SuperStable)
+            .WithLandingEstimate(now.AddMinutes(16))
+            .WithLandingTime(now.AddMinutes(18))
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithState(State.Stable)
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(21))
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
+        sequence.Insert(2, flight3);
+
+        // Verify initial order
+        sequence.NumberInSequence(flight1).ShouldBe(1);
+        sequence.NumberInSequence(flight2).ShouldBe(2);
+        sequence.NumberInSequence(flight3).ShouldBe(3);
+
+        var handler = GetHandler(sequence);
+        var request = new ManualDelayRequest("YSSY", "QFA3", 0);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight3.MaximumDelay.ShouldBe(TimeSpan.FromMinutes(5));
+
+        // Landing order should be updated
+        sequence.NumberInSequence(flight1).ShouldBe(1);
+        sequence.NumberInSequence(flight3).ShouldBe(2);
+        sequence.NumberInSequence(flight2).ShouldBe(3);
+
+        flight1.LandingTime.ShouldBe(flight1.LandingEstimate);
+        flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
+        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
+    }
+
     ManualDelayRequestHandler GetHandler(
         Sequence sequence,
         IMaestroInstanceManager? instanceManager = null,

@@ -138,6 +138,36 @@ public class ChangeFeederFixEstimateHandlerTests(
         flight.State.ShouldBe(State.Stable);
     }
 
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    [InlineData(State.Landed)]
+    public async Task WhenFlightIsNotUnstable_StateIsRetained(State state)
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithState(state)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .Build();
+
+        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
+        sequence.Insert(0, flight);
+
+        var request = new ChangeFeederFixEstimateRequest(
+            "YSSY",
+            "QFA1",
+            clockFixture.Instance.UtcNow().AddMinutes(15));
+        var handler = GetHandler(sequence);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.State.ShouldBe(state);
+    }
+
     ChangeFeederFixEstimateRequestHandler GetHandler(
         Sequence sequence,
         IEstimateProvider? estimateProvider = null,

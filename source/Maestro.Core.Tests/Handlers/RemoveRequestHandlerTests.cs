@@ -147,6 +147,22 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
+    public async Task TheSequenceIsRecalculated()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create two flights in sequence
+
+        // Act
+        // TODO: Remove the first flight
+
+        // Assert
+        // TODO: Assert that the second flight's landing time has been recalculated
+    }
+
+    [Fact]
     public async Task WhenRemovingAFlightThatDoesNotExist_AnExceptionIsThrown()
     {
         // Arrange
@@ -189,6 +205,22 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             await handler.Handle(request, CancellationToken.None));
 
         exception.Message.ShouldContain("not found", Case.Insensitive);
+    }
+
+    [Fact]
+    public async Task RedirectedToMaster()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a dummy connection that simulates a non-master instance
+
+        // Act
+        // TODO: Move a flight
+
+        // Assert
+        // TODO: Assert that the request was redirected to the master and not handled locally
     }
 
     RemoveRequestHandler GetRequestHandler(Sequence sequence, IMaestroInstanceManager? instanceManager = null)
