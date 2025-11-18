@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
-using Maestro.Core.Infrastructure;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -8,7 +9,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class RemoveRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -25,15 +26,28 @@ public class RemoveRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var sequence = lockedSession.Session.Sequence;
-        sequence.Remove(request.Callsign);
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
+
+            var flight = sequence.FindFlight(request.Callsign);
+            if (flight is null)
+                throw new MaestroException($"{request.Callsign} not found");
+
+            logger.Information("Removing flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+
+            sequence.Remove(flight);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

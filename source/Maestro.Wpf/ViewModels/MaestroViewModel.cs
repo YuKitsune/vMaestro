@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Integrations;
@@ -105,20 +104,20 @@ public partial class MaestroViewModel : ObservableObject
             }
         });
 
-        WeakReferenceMessenger.Default.Register<SequenceUpdatedNotification>(this, (r, notification) =>
+        WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (r, notification) =>
         {
             if (notification.AirportIdentifier != AirportIdentifier)
                 return;
 
-            CurrentRunwayMode = new RunwayModeViewModel(notification.Sequence.CurrentRunwayMode);
-            NextRunwayMode = notification.Sequence.NextRunwayMode is not null
-                ? new RunwayModeViewModel(notification.Sequence.NextRunwayMode)
+            CurrentRunwayMode = new RunwayModeViewModel(notification.Session.Sequence.CurrentRunwayMode);
+            NextRunwayMode = notification.Session.Sequence.NextRunwayMode is not null
+                ? new RunwayModeViewModel(notification.Session.Sequence.NextRunwayMode)
                 : null;
 
-            DeSequencedFlights = notification.Sequence.DeSequencedFlights.ToList();
-            PendingFlights = notification.Sequence.PendingFlights.ToList();
-            Flights = notification.Sequence.Flights.ToList();
-            Slots = notification.Sequence.Slots.ToList();
+            DeSequencedFlights = notification.Session.DeSequencedFlights.ToList();
+            PendingFlights = notification.Session.PendingFlights.ToList();
+            Flights = notification.Session.Sequence.Flights.ToList();
+            Slots = notification.Session.Sequence.Slots.ToList();
         });
     }
 
@@ -141,7 +140,20 @@ public partial class MaestroViewModel : ObservableObject
     }
 
     [RelayCommand]
-    async Task MoveFlight(MoveFlightRequest request)
+    async Task MoveFlightWithoutConfirmation(MoveFlightRequest request)
+    {
+        try
+        {
+            await _mediator.Send(request, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    async Task MoveFlightWithConfirmation(MoveFlightRequest request)
     {
         try
         {
@@ -166,19 +178,10 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
-            IsConfirmationDialogOpen = true;
-            var confirmation = await _mediator.Send(
-                new ConfirmationRequest("Move flight", "Do you really want to move this flight?"));
-            IsConfirmationDialogOpen = false;
-
-            if (!confirmation.Confirmed)
-                return;
-
             await _mediator.Send(request, CancellationToken.None);
         }
         catch (Exception ex)
         {
-            IsConfirmationDialogOpen = false;
             _errorReporter.ReportError(ex);
         }
     }

@@ -4,23 +4,7 @@ using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
 
-public sealed class FlightComparer : IComparer<Flight>
-{
-    public static FlightComparer Instance { get; } = new();
-
-    public int Compare(Flight? left, Flight? right)
-    {
-        if (left is null)
-            return -1;
-
-        if (right is null)
-            return 1;
-
-        return left.LandingTime.CompareTo(right.LandingTime);
-    }
-}
-
-public class Flight : IEquatable<Flight>, IComparable<Flight>
+public class Flight : IEquatable<Flight>
 {
     public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate, DateTimeOffset activatedTime, string aircraftType, AircraftCategory aircraftCategory, WakeCategory wakeCategory)
     {
@@ -36,15 +20,15 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     }
 
     // Constructor for manually inserted flights (formerly DummyFlight)
-    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset landingTime, State state)
+    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset targetTime, State state)
     {
         Callsign = callsign;
         AircraftType = aircraftType ?? string.Empty;
         DestinationIdentifier = destinationIdentifier;
         AssignedRunwayIdentifier = runwayIdentifier;
-        LandingTime = landingTime;
-        InitialLandingEstimate = landingTime;
-        LandingEstimate = landingTime;
+        InitialLandingEstimate = targetTime;
+        LandingEstimate = targetTime;
+        LandingTime = targetTime;
         State = state;
         IsManuallyInserted = true;
         AircraftCategory = AircraftCategory.Jet;
@@ -78,7 +62,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         InitialLandingEstimate = message.InitialLandingEstimate;
         LandingEstimate = message.LandingEstimate;
         LandingTime = message.LandingTime;
-        ManualLandingTime = message.ManualLandingTime;
         FlowControls = message.FlowControls;
         AssignedArrivalIdentifier = message.AssignedArrivalIdentifier;
         Fixes = message.Fixes.ToArray();
@@ -120,7 +103,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public DateTimeOffset InitialLandingEstimate { get; private set; }
     public DateTimeOffset LandingEstimate { get; private set; } // ETA
     public DateTimeOffset LandingTime { get; private set; } // STA
-    public bool ManualLandingTime { get; private set; }
 
     public TimeSpan TotalDelay => LandingTime - InitialLandingEstimate;
     public TimeSpan RemainingDelay => LandingTime - LandingEstimate;
@@ -143,11 +125,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         RunwayManuallyAssigned = manual;
     }
 
-    public void SetFlowControls(FlowControls flowControls)
-    {
-        FlowControls = flowControls;
-    }
-
     public void SetFeederFix(
         string feederFixIdentifier,
         DateTimeOffset feederFixEstimate,
@@ -156,7 +133,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         FeederFixIdentifier = feederFixIdentifier;
         FeederFixEstimate = feederFixEstimate;
         InitialFeederFixEstimate = feederFixEstimate;
-        FeederFixTime = feederFixEstimate;
         ActualFeederFixTime = actualFeederFixTime;
     }
 
@@ -167,18 +143,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
         FeederFixEstimate = feederFixEstimate;
         ManualFeederFixEstimate = manual;
-    }
-
-    public void SetFeederFixTime(DateTimeOffset feederFixTime)
-    {
-        if (string.IsNullOrEmpty(FeederFixIdentifier))
-            throw new MaestroException("No feeder fix has been set");
-
-        if (HasPassedFeederFix)
-            throw new MaestroException(
-                "Cannot update feeder fix time because the flight has already passed the feeder fix");
-
-        FeederFixTime = feederFixTime;
     }
 
     public void PassedFeederFix(DateTimeOffset feederFixTime)
@@ -197,19 +161,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         LandingEstimate = landingEstimate;
     }
 
-    public void ResetInitialEstimates()
-    {
-        InitialLandingEstimate = LandingEstimate;
-        InitialFeederFixEstimate = FeederFixEstimate;
-    }
-
-    // TODO: This should update the feeder fix time based on the processed arrival
-    public void SetLandingTime(DateTimeOffset landingTime, bool manual = false)
-    {
-        LandingTime = landingTime;
-        ManualLandingTime = manual;
-    }
-
     public void UpdateLastSeen(IClock clock)
     {
         LastSeen = clock.UtcNow();
@@ -223,6 +174,29 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
     public void SetMaximumDelay(TimeSpan? maximumDelay)
     {
         MaximumDelay = maximumDelay;
+    }
+
+    public void InvalidateSequenceData()
+    {
+        InitialLandingEstimate = LandingEstimate;
+        InitialFeederFixEstimate = FeederFixEstimate;
+
+        LandingTime = LandingEstimate;
+        FeederFixTime = FeederFixEstimate;
+        FlowControls = FlowControls.ProfileSpeed;
+    }
+
+    public void SetSequenceData(
+        DateTimeOffset landingTime,
+        DateTimeOffset? feederFixTime,
+        FlowControls flowControls)
+    {
+        InitialLandingEstimate = LandingEstimate;
+        InitialFeederFixEstimate = FeederFixEstimate;
+
+        LandingTime = landingTime;
+        FeederFixTime = feederFixTime;
+        FlowControls = flowControls;
     }
 
     public void Reset()
@@ -239,7 +213,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         LandingEstimate = default;
         InitialLandingEstimate = default;
         LandingTime = default;
-        ManualLandingTime = false;
         State = State.Unstable;
         FlowControls = FlowControls.ProfileSpeed;
         MaximumDelay = null;
@@ -303,11 +276,6 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
         // SetState(State.Unstable, clock);
     }
 
-    public int CompareTo(Flight? other)
-    {
-        return FlightComparer.Instance.Compare(this, other);
-    }
-
     public bool Equals(Flight? other)
     {
         return other is not null && (ReferenceEquals(this, other) || Callsign == other.Callsign);
@@ -315,7 +283,7 @@ public class Flight : IEquatable<Flight>, IComparable<Flight>
 
     public override string ToString()
     {
-        return $"{Callsign}; {State}; FF {FeederFixIdentifier}; ETA_FF {FeederFixEstimate:HH:mm}; STA_FF {FeederFixTime:HH:mm}; ATO_FF {ActualFeederFixTime:HH:mm}; ETA {LandingEstimate:HH:mm}; STA {LandingTime:HH:mm}";
+        return $"{Callsign}: State: {State}; Runway {AssignedRunwayIdentifier ?? "null"}; STA {LandingTime:HH:mm};";
     }
 }
 

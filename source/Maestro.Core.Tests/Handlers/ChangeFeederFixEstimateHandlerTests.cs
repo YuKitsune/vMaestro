@@ -1,4 +1,5 @@
 ﻿using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -24,12 +25,13 @@ public class ChangeFeederFixEstimateHandlerTests(
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
 
         var newEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newEstimate);
-        var handler = GetHandler(sequence);
+        var handler = GetHandler(instanceManager, sequence);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -49,8 +51,9 @@ public class ChangeFeederFixEstimateHandlerTests(
             .WithLandingEstimate(clockFixture.Instance.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
 
         var newFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
         var expectedLandingEstimate = clockFixture.Instance.UtcNow().AddMinutes(25);
@@ -60,7 +63,7 @@ public class ChangeFeederFixEstimateHandlerTests(
             .Returns(expectedLandingEstimate);
 
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(sequence, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, sequence, estimateProvider: estimateProvider);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -86,9 +89,9 @@ public class ChangeFeederFixEstimateHandlerTests(
             .WithLandingEstimate(clockFixture.Instance.UtcNow().AddMinutes(20))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight2, flight2.LandingEstimate); // QFA2 first
-        sequence.Insert(flight1, flight1.LandingEstimate); // QFA1 second
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight2, flight1)) // QFA2 first, QFA1 second
+            .Build();
 
         // Verify initial order
         sequence.NumberInSequence(flight2).ShouldBe(1);
@@ -102,7 +105,7 @@ public class ChangeFeederFixEstimateHandlerTests(
             .Returns(newLandingEstimate);
 
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(sequence, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, sequence, estimateProvider: estimateProvider);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -122,14 +125,15 @@ public class ChangeFeederFixEstimateHandlerTests(
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance).Build();
-        sequence.Insert(flight, flight.LandingEstimate);
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
 
         var request = new ChangeFeederFixEstimateRequest(
             "YSSY",
             "QFA1",
             clockFixture.Instance.UtcNow().AddMinutes(15));
-        var handler = GetHandler(sequence);
+        var handler = GetHandler(instanceManager, sequence);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -138,19 +142,89 @@ public class ChangeFeederFixEstimateHandlerTests(
         flight.State.ShouldBe(State.Stable);
     }
 
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    [InlineData(State.Landed)]
+    public async Task WhenFlightIsNotUnstable_StateIsRetained(State state)
+    {
+        // Arrange
+        var flight = new FlightBuilder("QFA1")
+            .WithState(state)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
+
+        var request = new ChangeFeederFixEstimateRequest(
+            "YSSY",
+            "QFA1",
+            clockFixture.Instance.UtcNow().AddMinutes(15));
+        var handler = GetHandler(instanceManager, sequence);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.State.ShouldBe(state);
+    }
+
+    [Fact]
+    public async Task RedirectedToMaster()
+    {
+        // Arrange
+        var originalFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(10);
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(originalFeederFixEstimate)
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
+
+        // Create a mock connection manager that simulates a slave connection
+        var mockConnectionManager = new MockSlaveConnectionManager();
+
+        var newEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
+        var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newEstimate);
+        var handler = new ChangeFeederFixEstimateRequestHandler(
+            instanceManager,
+            mockConnectionManager,
+            Substitute.For<IEstimateProvider>(),
+            clockFixture.Instance,
+            Substitute.For<IMediator>(),
+            Substitute.For<ILogger>());
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        // Verify the request was relayed to the master
+        mockConnectionManager.Connection.InvokedRequests.ShouldContain(request, "request should have been relayed to master");
+
+        // Verify the flight was NOT modified locally (proving redirection occurred)
+        flight.ManualFeederFixEstimate.ShouldBeFalse("flight should not have been modified locally");
+        flight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate, "feeder fix estimate should remain unchanged");
+    }
+
     ChangeFeederFixEstimateRequestHandler GetHandler(
+        IMaestroInstanceManager instanceManager,
         Sequence sequence,
         IEstimateProvider? estimateProvider = null,
         IMediator? mediator = null,
         ILogger? logger = null)
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
         estimateProvider ??= Substitute.For<IEstimateProvider>();
         mediator ??= Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
 
         return new ChangeFeederFixEstimateRequestHandler(
-            sessionManager,
+            instanceManager,
             new MockLocalConnectionManager(),
             estimateProvider,
             clockFixture.Instance,

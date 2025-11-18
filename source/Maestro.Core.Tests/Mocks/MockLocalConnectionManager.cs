@@ -4,12 +4,12 @@ namespace Maestro.Core.Tests.Mocks;
 
 public class MockLocalConnectionManager : IMaestroConnectionManager
 {
-    public Task<MaestroConnection> CreateConnection(string airportIdentifier, string partition, CancellationToken cancellationToken)
+    public Task<IMaestroConnection> CreateConnection(string airportIdentifier, string partition, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public bool TryGetConnection(string airportIdentifier, out MaestroConnection? connection)
+    public bool TryGetConnection(string airportIdentifier, out IMaestroConnection? connection)
     {
         connection = null;
         return false;

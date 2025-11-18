@@ -1,4 +1,5 @@
 using Maestro.Core.Handlers;
+using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -34,27 +35,27 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
-        sequence.Insert(flight1, flight1.LandingEstimate);
-        sequence.Insert(flight2, flight2.LandingEstimate);
 
         // Verify initial state
         sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
         sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var sequenceMessage = sequence.ToMessage();
-        sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
-        sequenceMessage.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        var sessionMessage = instance.Session.Snapshot();
+
+        sessionMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
+        sessionMessage.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
+        sessionMessage.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
 
         // Verify remaining flight moved up in sequence
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
@@ -74,29 +75,23 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
-        sequence.Insert(flight1, flight1.LandingEstimate);
 
-        // Desequence the flight first
-        sequence.Desequence("QFA123");
+        instance.Session.DeSequencedFlights.Add(flight1);
 
-        // Verify flight is desequenced
-        var sequenceMessage = sequence.ToMessage();
-        sequenceMessage.DeSequencedFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in desequenced list");
-
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        sequenceMessage = sequence.ToMessage();
-        sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sequenceMessage.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in desequenced list");
-        sequenceMessage.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
+        var sessionMessage = instance.Session.Snapshot();
+        sessionMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
+        sessionMessage.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in desequenced list");
+        sessionMessage.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
     }
 
     [Fact]
@@ -114,14 +109,16 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .Build();
 
         // Set some additional properties that should be reset
-        flight.SetFlowControls(FlowControls.ReduceSpeed);
+        flight.SetSequenceData(
+            clockFixture.Instance.UtcNow().AddMinutes(30),
+            clockFixture.Instance.UtcNow().AddMinutes(20),
+            FlowControls.ReduceSpeed);
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
-        sequence.Insert(flight, flight.LandingEstimate);
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
@@ -137,20 +134,35 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         flight.LandingEstimate.ShouldBe(default(DateTimeOffset), "LandingEstimate should be reset to default");
         flight.InitialLandingEstimate.ShouldBe(default(DateTimeOffset), "InitialLandingEstimate should be reset to default");
         flight.LandingTime.ShouldBe(default(DateTimeOffset), "LandingTime should be reset to default");
-        flight.ManualLandingTime.ShouldBeFalse("ManualLandingTime should be reset to false");
         flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
+    }
+
+    [Fact]
+    public async Task TheSequenceIsRecalculated()
+    {
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create two flights in sequence
+
+        // Act
+        // TODO: Remove the first flight
+
+        // Assert
+        // TODO: Assert that the second flight's landing time has been recalculated
     }
 
     [Fact]
     public async Task WhenRemovingAFlightThatDoesNotExist_AnExceptionIsThrown()
     {
         // Arrange
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "NONEXISTENT");
 
         // Act & Assert
@@ -169,18 +181,13 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(now.AddMinutes(8))
             .Build();
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
-            .WithClock(clockFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        // Add flight to pending list
-        sequence.AddPendingFlight(flight);
+        instance.Session.PendingFlights.Add(flight);
 
-        // Verify flight is in pending list
-        var sequenceMessage = sequence.ToMessage();
-        sequenceMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-
-        var handler = GetRequestHandler(sequence);
+        var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act & Assert
@@ -190,12 +197,28 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         exception.Message.ShouldContain("not found", Case.Insensitive);
     }
 
-    RemoveRequestHandler GetRequestHandler(Sequence sequence)
+    [Fact]
+    public async Task RedirectedToMaster()
     {
-        var sessionManager = new MockLocalSessionManager(sequence);
+        await Task.CompletedTask;
+        Assert.Fail("Not implemented");
+
+        // Arrange
+        // TODO: Create a dummy connection that simulates a non-master instance
+
+        // Act
+        // TODO: Move a flight
+
+        // Assert
+        // TODO: Assert that the request was redirected to the master and not handled locally
+    }
+
+    RemoveRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
+    {
         var mediator = Substitute.For<IMediator>();
+
         return new RemoveRequestHandler(
-            sessionManager,
+            instanceManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());

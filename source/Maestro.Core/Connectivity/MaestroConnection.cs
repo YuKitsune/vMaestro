@@ -10,7 +10,7 @@ using Serilog;
 
 namespace Maestro.Core.Connectivity;
 
-public class MaestroConnection : IAsyncDisposable
+public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 {
     readonly List<PeerInfo> _peers = new();
     readonly CancellationTokenSource _rootCancellationTokenSource = new();
@@ -133,7 +133,7 @@ public class MaestroConnection : IAsyncDisposable
         return request switch
         {
             // Notifications
-            SequenceUpdatedNotification => "SequenceUpdated",
+            SessionUpdatedNotification => "SessionUpdated",
             FlightUpdatedNotification => "FlightUpdated",
             CoordinationNotification => "Coordination",
 
@@ -171,11 +171,11 @@ public class MaestroConnection : IAsyncDisposable
 
             _peers.AddRange(notification.ConnectedPeers);
 
-            // TODO: Clear the sequence if it's null
-            if (notification.Sequence is not null)
+            // TODO: Clear the session if it's null
+            if (notification.Session is not null)
             {
                 await _mediator.Send(
-                    new RestoreSequenceRequest(notification.AirportIdentifier, notification.Sequence),
+                    new RestoreSessionRequest(notification.AirportIdentifier, notification.Session),
                     GetMessageCancellationToken());
             }
         });
@@ -198,14 +198,15 @@ public class MaestroConnection : IAsyncDisposable
             _logger.Information("Ownership revoked for {AirportIdentifier}", _airportIdentifier);
         });
 
-        hubConnection.On<SequenceUpdatedNotification>("SequenceUpdated", async sequenceUpdatedNotification =>
+        hubConnection.On<SessionUpdatedNotification>("SessionUpdated", async sequenceUpdatedNotification =>
         {
             if (sequenceUpdatedNotification.AirportIdentifier != _airportIdentifier)
                 return;
 
             await _mediator.Send(
-                new RestoreSequenceRequest(sequenceUpdatedNotification.AirportIdentifier,
-                    sequenceUpdatedNotification.Sequence),
+                new RestoreSessionRequest(
+                    sequenceUpdatedNotification.AirportIdentifier,
+                    sequenceUpdatedNotification.Session),
                 GetMessageCancellationToken());
         });
 

@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -9,7 +11,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class MoveFlightRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     IClock clock,
@@ -27,29 +29,43 @@ public class MoveFlightRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var sequence = lockedSession.Session.Sequence;
-        var flight = sequence.FindTrackedFlight(request.Callsign);
-        if (flight is null)
-            return;
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
+            var flight = sequence.FindFlight(request.Callsign);
+            if (flight is null)
+                throw new MaestroException($"{request.Callsign} not found");
 
-        // Delegate to Sequence aggregate to handle the move operation
-        sequence.MoveFlight(
-            request.Callsign,
-            request.NewLandingTime,
-            request.RunwayIdentifiers);
+            var newIndex = sequence.IndexOf(request.NewLandingTime);
 
-        // Unstable flights become stable when moved
-        if (flight.State == State.Unstable)
-            flight.SetState(State.Stable, clock);
+            var runwayMode = sequence.GetRunwayModeAt(request.NewLandingTime);
+            var runwayIdentifier = runwayMode.Runways.FirstOrDefault(r => request.RunwayIdentifiers.Contains(r.Identifier))?.Identifier
+                ?? runwayMode.Default.Identifier;
 
-        logger.Information("Flight {Callsign} moved to {NewLandingTime}", flight.Callsign, flight.LandingTime);
+            sequence.ThrowIfSlotIsUnavailable(newIndex, runwayIdentifier);
+
+            // TODO: Manually set the runway for now, but we need to revisit this later
+            // Re: delaying into a new runway mode
+            flight.SetRunway(runwayIdentifier, manual: true);
+
+            sequence.Move(flight, newIndex, forceRescheduleStable: true);
+
+            // Unstable flights become stable when moved
+            if (flight.State == State.Unstable)
+                flight.SetState(State.Stable, clock);
+
+            logger.Information("Flight {Callsign} moved to {NewLandingTime}", flight.Callsign, flight.LandingTime);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

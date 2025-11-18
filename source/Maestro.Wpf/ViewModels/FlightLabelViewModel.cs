@@ -177,8 +177,8 @@ public partial class FlightLabelViewModel(
                 new OpenSlotWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     SlotId: null, // slotId is null for new slots
-                    StartTime: FlightViewModel.LandingTime.Subtract(TimeSpan.FromMinutes(5)),
-                    EndTime: FlightViewModel.LandingTime,
+                    StartTime: FlightViewModel.LandingTime.Subtract(TimeSpan.FromMinutes(6)),
+                    EndTime: FlightViewModel.LandingTime.Subtract(TimeSpan.FromMinutes(1)),
                     [FlightViewModel.AssignedRunwayIdentifier]));
         }
         catch (Exception ex)

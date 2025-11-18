@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -11,7 +12,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class RecomputeRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IEstimateProvider estimateProvider,
@@ -31,48 +32,48 @@ public class RecomputeRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var sequence = lockedSession.Session.Sequence;
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-            .Single(a => a.Identifier == request.AirportIdentifier);
-
-        var flight = sequence.FindTrackedFlight(request.Callsign);
-        if (flight == null)
+        using (await instance.Semaphore.LockAsync(cancellationToken))
         {
-            logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
-            return;
+            var sequence = instance.Session.Sequence;
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
+                .Single(a => a.Identifier == request.AirportIdentifier);
+
+            var flight = sequence.FindFlight(request.Callsign);
+            if (flight == null)
+            {
+                logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
+                return;
+            }
+
+            // Reset the feeder fix in case of a re-route
+            var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+            if (feederFix is not null)
+                flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
+
+            flight.HighPriority = feederFix is null;
+            flight.SetMaximumDelay(null);
+
+            CalculateEstimates(airportConfiguration, flight);
+            flight.InvalidateSequenceData();
+
+            sequence.RepositionByEstimate(flight, displaceStableFlights: true);
+
+            // Reset the state
+            flight.SetState(State.Unstable, clock);
+            flight.UpdateStateBasedOnTime(clock);
+
+            logger.Information("{Callsign} recomputed", flight.Callsign);
+
+            sessionMessage = instance.Session.Snapshot();
         }
 
-        // Reset the feeder fix in case of a re-route
-        var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-        if (feederFix is not null)
-            flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
-
-        flight.HighPriority = feederFix is null;
-        flight.SetMaximumDelay(null);
-
-        // Re-calculate estimates
-        CalculateEstimates(airportConfiguration, flight);
-        flight.ResetInitialEstimates();
-
-        // Reset scheduled times
-        if (flight.FeederFixEstimate is not null)
-            flight.SetFeederFixTime(flight.FeederFixEstimate.Value);
-
-        flight.SetLandingTime(flight.LandingEstimate, manual: false);
-
-        sequence.Recompute(flight);
-
-        // Progress the state based on the new times
-        flight.UpdateStateBasedOnTime(clock);
-
-        logger.Information("{Callsign} recomputed", flight.Callsign);
-
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 

@@ -20,7 +20,6 @@ public class FlightBuilder(string callsign)
 
     DateTimeOffset landingEstimate = default;
     DateTimeOffset landingTime = default;
-    bool manualLandingTime = false;
 
     string _assignedArrival = "RIVET4";
     string _assignedRunway = "34L";
@@ -98,10 +97,9 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithLandingTime(DateTimeOffset time, bool manual = false)
+    public FlightBuilder WithLandingTime(DateTimeOffset time)
     {
         landingTime = time;
-        manualLandingTime = manual;
         return this;
     }
 
@@ -181,14 +179,7 @@ public class FlightBuilder(string callsign)
         if (!string.IsNullOrEmpty(_feederFixIdentifier))
             flight.UpdateFeederFixEstimate(feederFixEstimate, manualFeederFixEstimate);
 
-        if (feederFixTime != default)
-            flight.SetFeederFixTime(feederFixTime);
-
-        if (landingTime != default)
-            flight.SetLandingTime(landingTime, manualLandingTime);
-
-        if (landingTime == default)
-            flight.SetLandingTime(landingEstimate);
+        flight.SetSequenceData(landingTime, feederFixTime, FlowControls.ProfileSpeed);
 
         flight.SetRunway(_assignedRunway, _manualRunway);
 
@@ -204,8 +195,6 @@ public class FlightBuilder(string callsign)
             new FixEstimate(_feederFixIdentifier, feederFixEstimate, passedFeederFix),
             new FixEstimate(_destination, landingEstimate)
         ];
-
-        flight.ResetInitialEstimates();
 
         flight.IsFromDepartureAirport = _isFromDepartureAirport;
 

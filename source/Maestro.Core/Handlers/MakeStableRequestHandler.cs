@@ -1,4 +1,6 @@
 using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -14,7 +16,7 @@ namespace Maestro.Core.Handlers;
 // - Flight does not become unstable when manually stablised
 
 public class MakeStableRequestHandler(
-    ISessionManager sessionManager,
+    IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IClock clock,
     IMediator mediator,
@@ -32,24 +34,30 @@ public class MakeStableRequestHandler(
             return;
         }
 
-        using var lockedSession = await sessionManager.AcquireSession(request.AirportIdentifier, cancellationToken);
+        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        SessionMessage sessionMessage;
 
-        var sequence = lockedSession.Session.Sequence;
-        var flight = sequence.FindTrackedFlight(request.Callsign);
-        if (flight is null)
-            return;
+        using (await instance.Semaphore.LockAsync(cancellationToken))
+        {
+            var sequence = instance.Session.Sequence;
+            var flight = sequence.FindFlight(request.Callsign);
+            if (flight is null)
+                return;
 
-        if (flight.State is not State.Unstable)
-            return;
+            if (flight.State is not State.Unstable)
+                return;
 
-        flight.SetState(State.Stable, clock);
+            flight.SetState(State.Stable, clock);
 
-        logger.Information("Flight {Callsign} made stable", flight.Callsign);
+            logger.Information("Flight {Callsign} made stable", flight.Callsign);
+
+            sessionMessage = instance.Session.Snapshot();
+        }
 
         await mediator.Publish(
-            new SequenceUpdatedNotification(
-                sequence.AirportIdentifier,
-                sequence.ToMessage()),
+            new SessionUpdatedNotification(
+                instance.AirportIdentifier,
+                sessionMessage),
             cancellationToken);
     }
 }

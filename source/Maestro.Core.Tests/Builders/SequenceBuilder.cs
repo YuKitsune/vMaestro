@@ -1,6 +1,5 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using NSubstitute;
 
@@ -11,6 +10,7 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
     RunwayMode? _runwayMode;
     IArrivalLookup _arrivalLookup = Substitute.For<IArrivalLookup>();
     IClock _clock = Substitute.For<IClock>();
+    List<Flight> _flights = [];
 
     public SequenceBuilder WithArrivalLookup(IArrivalLookup arrivalLookup)
     {
@@ -51,10 +51,26 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
                 }));
     }
 
+    public SequenceBuilder WithFlight(Flight flight)
+    {
+        _flights.Add(flight);
+        return this;
+    }
+
+    public SequenceBuilder WithFlightsInOrder(params Flight[] flights)
+    {
+        _flights.AddRange(flights);
+        return this;
+    }
+
     public Sequence Build()
     {
         var sequence = new Sequence(airportConfiguration, _arrivalLookup, _clock);
         sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(airportConfiguration.RunwayModes.First()));
+        for (var i = 0; i < _flights.Count; i++)
+        {
+            sequence.Insert(i, _flights[i]);
+        }
 
         return sequence;
     }

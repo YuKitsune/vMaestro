@@ -35,6 +35,25 @@ public class AirportConfigurationFixture
                     {
                         FeederFixes = ["BOREE", "YAKKA", "MARLN"]
                     }
+                },
+                new RunwayConfiguration
+                {
+                    Identifier = "16R",
+                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
+                    Preferences = new RunwayPreferences
+                    {
+                        FeederFixes = ["RIVET", "WELSH"],
+                        WakeCategories = [WakeCategory.SuperHeavy, WakeCategory.Heavy]
+                    }
+                },
+                new RunwayConfiguration
+                {
+                    Identifier = "16L",
+                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
+                    Preferences = new RunwayPreferences
+                    {
+                        FeederFixes = ["BOREE", "YAKKA", "MARLN"]
+                    }
                 }
             ],
             RunwayModes =
@@ -52,6 +71,23 @@ public class AirportConfigurationFixture
                         new RunwayConfiguration
                         {
                             Identifier = "34R",
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
+                        }
+                    ]
+                },
+                new RunwayModeConfiguration
+                {
+                    Identifier = "16IVA",
+                    Runways =
+                    [
+                        new RunwayConfiguration
+                        {
+                            Identifier = "16L",
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
+                        },
+                        new RunwayConfiguration
+                        {
+                            Identifier = "16R",
                             LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
                         }
                     ]
@@ -94,11 +130,11 @@ public class AirportConfigurationFixture
             ],
             FeederFixes = ["RIVET", "WELSH"],
             PreferredRunways = new Dictionary<string, string[]> {
-                {"RIVET", ["34L"]},
-                {"WELSH", ["34L"]},
-                {"BOREE", ["34R"]},
-                {"YAKKA", ["34R"]},
-                {"MARLN", ["34R"]}
+                {"RIVET", ["34L", "16R"]},
+                {"WELSH", ["34L", "16R"]},
+                {"BOREE", ["34R", "16L"]},
+                {"YAKKA", ["34R", "16L"]},
+                {"MARLN", ["34R", "16L"]}
             },
             DepartureAirports = ["YSCB"]
         };

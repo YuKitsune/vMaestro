@@ -1,48 +1,63 @@
+using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using SequenceMessage = Maestro.Core.Messages.SequenceMessage;
 
 namespace Maestro.Core.Sessions;
 
-public interface ISession : IDisposable
+public class Session
 {
-    string AirportIdentifier { get; }
-    Sequence Sequence { get; }
-    string Position { get; }
-    SemaphoreSlim Semaphore { get; }
-    bool IsActive { get; }
+    int _dummyCounter = 1;
 
-    Task Start(string position, CancellationToken cancellationToken);
-    Task Stop(CancellationToken cancellationToken);
-}
-
-public class Session : ISession, IDisposable
-{
     public string AirportIdentifier => Sequence.AirportIdentifier;
+    public List<Flight> PendingFlights { get; } = new();
+    public List<Flight> DeSequencedFlights { get; } = new();
     public Sequence Sequence { get; private set; }
-    public SemaphoreSlim Semaphore { get; } = new(1, 1);
-    public string Position { get; private set; } = string.Empty;
-    public bool IsActive { get; private set; }
 
     public Session(Sequence sequence)
     {
         Sequence = sequence;
     }
 
-    public Task Start(string position, CancellationToken cancellationToken)
+    // TODO: Move dummy stuff to a separate service
+    public string NewDummyCallsign()
     {
-        Position = position;
-        IsActive = true;
-        return Task.CompletedTask;
+        return $"****{_dummyCounter++:00}*";
     }
 
-    public Task Stop(CancellationToken cancellationToken)
+    public SessionMessage Snapshot()
     {
-        Position = string.Empty;
-        IsActive = false;
-        return Task.CompletedTask;
+        return new SessionMessage
+        {
+            AirportIdentifier = AirportIdentifier,
+            PendingFlights = PendingFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
+            DeSequencedFlights = DeSequencedFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
+            Sequence = Sequence.ToMessage(),
+            DummyCounter = _dummyCounter
+        };
     }
 
-    public void Dispose()
+    public void Restore(SessionMessage message)
     {
-        Semaphore.Dispose();
+        _dummyCounter = message.DummyCounter;
+
+        PendingFlights.Clear();
+        PendingFlights.AddRange(message.PendingFlights.Select(f => new Flight(f)));
+
+        DeSequencedFlights.Clear();
+        DeSequencedFlights.AddRange(message.DeSequencedFlights.Select(f => new Flight(f)));
+
+        Sequence.Restore(message.Sequence);
     }
+}
+
+public class SessionMessage
+{
+    public required string AirportIdentifier { get; init; }
+    public required FlightMessage[] PendingFlights { get; init; }
+    public required FlightMessage[] DeSequencedFlights { get; init; }
+    public required SequenceMessage Sequence { get; init; }
+    public required int DummyCounter { get; init; }
 }

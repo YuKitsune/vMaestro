@@ -31,7 +31,6 @@ public class FlightMessage
     public required DateTimeOffset InitialLandingEstimate { get; init; }
     public required DateTimeOffset LandingEstimate { get; init; }
     public required DateTimeOffset LandingTime { get; init; }
-    public required bool ManualLandingTime { get; init; }
     public required TimeSpan InitialDelay { get; init; }
     public required TimeSpan RemainingDelay { get; init; }
     public required FlowControls FlowControls { get; init; }

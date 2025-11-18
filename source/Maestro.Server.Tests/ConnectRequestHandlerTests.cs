@@ -1,5 +1,6 @@
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Messages;
+using Maestro.Core.Sessions;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;
@@ -180,7 +181,7 @@ public class ConnectRequestHandlerTests
     }
 
     [Fact]
-    public async Task WhenConnecting_AndACachedSequenceExists_ItIsReturnedToTheClient()
+    public async Task WhenConnecting_AndACachedSessionExists_ItIsReturnedToTheClient()
     {
         // Arrange
         const string connectionId = "connection-1";
@@ -193,31 +194,34 @@ public class ConnectRequestHandlerTests
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
         var connection = new Connection(connectionId, partition, airportIdentifier, callsign, role);
-        var cachedSequence = new SequenceMessage
+        var cachedSession = new SessionMessage
         {
             AirportIdentifier = null,
-            CurrentRunwayMode = null,
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = default,
-            FirstLandingTimeForNextMode = default,
-            Flights = [],
             PendingFlights = [],
             DeSequencedFlights = [],
-            Slots = [],
-            DummyCounter = 0
+            DummyCounter = 0,
+            Sequence = new SequenceMessage
+            {
+                CurrentRunwayMode = null,
+                NextRunwayMode = null,
+                LastLandingTimeForCurrentMode = default,
+                FirstLandingTimeForNextMode = default,
+                Flights = [],
+                Slots = [],
+            }
         };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([]);
         connectionManager.Setup(x => x.Add(connectionId, partition, airportIdentifier, callsign, role)).Returns(connection);
 
-        var sequenceCache = new SequenceCache();
-        sequenceCache.Set(partition, airportIdentifier, cachedSequence);
+        var sessionCache = new SessionCache();
+        sessionCache.Set(partition, airportIdentifier, cachedSession);
 
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager.Object, sequenceCache, hubProxy.Object).Handle(wrappedRequest, CancellationToken.None);
+        await GetHandler(connectionManager.Object, sessionCache, hubProxy.Object).Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
         hubProxy.Verify(x => x.Send(
@@ -225,19 +229,19 @@ public class ConnectRequestHandlerTests
             "ConnectionInitialized",
             It.Is<ConnectionInitializedNotification>(n =>
                 n.ConnectionId == connectionId &&
-                n.Sequence == cachedSequence),
+                n.Session == cachedSession),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     ConnectRequestHandler GetHandler(
         IConnectionManager? connectionManager = null,
-        SequenceCache? sequenceCache = null,
+        SessionCache? sessionCache = null,
         IHubProxy? hubProxy = null)
     {
         connectionManager ??= new Mock<IConnectionManager>().Object;
-        sequenceCache ??= new SequenceCache();
+        sessionCache ??= new SessionCache();
         hubProxy ??= new Mock<IHubProxy>().Object;
         var logger = new Mock<ILogger>().Object;
-        return new ConnectRequestHandler(connectionManager, sequenceCache, hubProxy, logger);
+        return new ConnectRequestHandler(connectionManager, sessionCache, hubProxy, logger);
     }
 }
