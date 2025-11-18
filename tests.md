@@ -174,9 +174,9 @@
 - [X] When recomputing a flight, manual ETA_FF is removed
 - [X] When recomputing a flight, manual delay is removed
 - [X] When recomputing a flight, runway is re-assigned
-- [ ] When recomputing a flight, it is repositioned based on it's ETA_FF
-- [ ] When recomputing a flight, the state is updated based based on time
-- [ ] When recomputing a flight, and we are in slave mode, the request is relayed to the master
+- [X] When recomputing a flight, it is repositioned based on it's ETA_FF
+- [X] When recomputing a flight, the state is updated based based on time
+- [X] When recomputing a flight, and we are in slave mode, the request is relayed to the master
 
 ## Remove
 
@@ -234,6 +234,7 @@
 - [ ] When scheduling, and a delay is required, ReduceSpeed flow control is applied
 - [ ] When scheduling, and no delay is required, ProfileSpeed flow control is applied
 - [ ] When scheduling, and flights have moved, the order of the sequence is preserved between runways
+- [ ] When scheduling, initial estimates are updated
 
 - ChangeRunwayMode covered by other tests
 - Slots covered by other tests
