@@ -8,6 +8,7 @@ public interface IMaestroConnection
     bool IsConnected { get; }
     bool IsMaster { get; }
     Role Role { get; }
+    IReadOnlyList<PeerInfo> Peers { get; set; }
 
     Task Start(string callsign, CancellationToken cancellationToken);
     Task Stop(CancellationToken cancellationToken);

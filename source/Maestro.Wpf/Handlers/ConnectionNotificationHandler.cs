@@ -79,7 +79,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
         return Task.CompletedTask;
     }
 
-    string GetStatus(MaestroConnection connection)
+    string GetStatus(IMaestroConnection connection)
     {
         var flowIsOnline = connection.Peers.Any(p => p.Role == Role.Flow);
 
