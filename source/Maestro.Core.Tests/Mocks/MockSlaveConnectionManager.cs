@@ -43,6 +43,7 @@ public class MockSlaveConnection : IMaestroConnection
     public bool IsMaster => false;
     public Role Role => Role.Flow;
     public IReadOnlyList<PeerInfo> Peers => [];
+    public string Partition => "TEST";
 
     /// <summary>
     /// Gets all requests that have been relayed through this connection.
