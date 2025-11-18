@@ -20,33 +20,73 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     [Fact]
     public async Task FlightIsPositionedBasedOnTargetTime()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create three flights, one after the other
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34L")
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
 
         // Act
-        // TODO: Move the last flight to a time between the first two flights
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the landing order is first, third, second
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "First flight should be QFA1");
+        sequence.Flights[1].Callsign.ShouldBe("QFA3", "Second flight should be QFA3 (moved)");
+        sequence.Flights[2].Callsign.ShouldBe("QFA2", "Third flight should be QFA2");
     }
 
     [Fact]
     public async Task RunwayIsChanged()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a flight assigned to a specific runway
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA1", ["34R"], newLandingTime);
+
+        flight.AssignedRunwayIdentifier.ShouldBe("34L", "Flight should initially be on 34L");
 
         // Act
-        // TODO: Move the flight to a new time and assign it to a different runway
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the flight's runway has been updated to the new runway
+        flight.AssignedRunwayIdentifier.ShouldBe("34R", "Flight runway should be updated to 34R");
     }
 
     [Theory]
@@ -55,37 +95,99 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     [InlineData(State.SuperStable)]
     public async Task TheSequenceIsRecalculated(State state)
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create three flights, one after the other, with the specified state, and no conflicts
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(state)
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(13))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithRunway("34L")
+            .WithState(state)
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(16))
+            .WithLandingTime(now.AddMinutes(16))
+            .WithRunway("34L")
+            .WithState(state)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        var newLandingTime = now.AddMinutes(11);
+        var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
+
+        var originalFlight1LandingTime = flight1.LandingTime;
 
         // Act
-        // TODO: Move the last flight to a time between the first two flights
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the first flight remains unchanged
-        // TODO: Assert the moved flight has no delay (STA = ETA)
-        // TODO: Assert the third flight has been delayed to maintain separation from the moved flight
+        flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "First flight should remain unchanged");
+        flight3.LandingTime.ShouldBe(flight3.LandingEstimate, "Moved flight should have no delay (STA = ETA)");
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Third flight should be delayed to maintain separation from the moved flight");
     }
 
     [Fact]
     public async Task WhenEstimateIsAheadOfFrozenFlights_FrozenFlightsAreNotMoved()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create three flights, one after the other, where the first two are frozen, and the last one is stable with an estimate ahead of the first frozen flight
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(16))
+            .WithLandingTime(now.AddMinutes(16))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(5))
+            .WithLandingTime(now.AddMinutes(19))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
+
+        var originalFlight1LandingTime = flight1.LandingTime;
+        var originalFlight2LandingTime = flight2.LandingTime;
 
         // Act
-        // TODO: Move the last flight to a time between the first two frozen flights
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the frozen flights remain unchanged
-        // TODO: Assert the moved flight is between the two frozen flights
-        // TODO: Assert the moved flight is delayed behind the first frozen flight
+        flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "Frozen flight QFA1 should remain unchanged");
+        flight2.LandingTime.ShouldBe(originalFlight2LandingTime, "Frozen flight QFA2 should remain unchanged");
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "First flight should be QFA1");
+        sequence.Flights[1].Callsign.ShouldBe("QFA3", "Second flight should be QFA3 (moved between frozen flights)");
+        sequence.Flights[2].Callsign.ShouldBe("QFA2", "Third flight should be QFA2");
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Moved flight should be delayed behind the first frozen flight");
     }
 
     // TODO: What if ETA is behind frozen flight? Exception? Move backwards?
@@ -93,17 +195,32 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     [Fact]
     public async Task UnstableFlightsBecomeStable()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create an unstable flight
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        flight.State.ShouldBe(State.Unstable, "Flight should initially be Unstable");
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA1", ["34L"], newLandingTime);
 
         // Act
-        // TODO: Move the flight to a new time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the flight is now stable
+        flight.State.ShouldBe(State.Stable, "Unstable flight should become Stable after being moved");
     }
 
     [Theory]
@@ -113,53 +230,127 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     [InlineData(State.Landed)]
     public async Task StableFlightsDoNotChangeState(State state)
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a flight with the specified state
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(state)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        flight.State.ShouldBe(state, $"Flight should initially be {state}");
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA1", ["34L"], newLandingTime);
 
         // Act
-        // TODO: Move the flight to a new time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the state is unchanged
+        flight.State.ShouldBe(state, $"Flight state should remain {state} after being moved");
     }
 
     [Fact]
     public async Task InsufficientSpaceBetweenFrozenFlights_ThrowsException()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create three flights, where the first two are frozen and are have 5 minutes between them, and the third is stable
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
 
-        // Act
-        // TODO: Move the stable flight to a time between the two frozen flights
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
 
-        // Assert
-        // TODO: Assert that an exception is thrown indicating insufficient space
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(18))
+            .WithLandingTime(now.AddMinutes(18))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
+
+        // Act & Assert
+        await Should.ThrowAsync<MaestroException>(async () =>
+            await handler.Handle(request, CancellationToken.None));
     }
 
     [Fact]
     public async Task RedirectedToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34L")
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var mediator = Substitute.For<IMediator>();
+        var clock = clockFixture.Instance;
+
+        var handler = new MoveFlightRequestHandler(
+            instanceManager,
+            slaveConnectionManager,
+            mediator,
+            clock,
+            Substitute.For<ILogger>());
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
 
         // Act
-        // TODO: Move a flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
+        slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "Sequence should not be modified locally when relaying to master");
+        sequence.Flights[1].Callsign.ShouldBe("QFA2", "Sequence should not be modified locally when relaying to master");
+        sequence.Flights[2].Callsign.ShouldBe("QFA3", "Sequence should not be modified locally when relaying to master");
     }
-
-    // TODO: Delete these
-
 
     MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
     {
