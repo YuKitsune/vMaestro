@@ -28,45 +28,45 @@
 
 ## Change Runway Mode
 
-- [ ] When changing runway mode, and the start time is now or earlier, all non-frozen flights from now onwards are re-assigned to the new runway mode, and the sequence is re-calculated
-- [ ] When changing runway mode, the Next runway mode and start times are set
-- [ ] When changing runway mode, non-frozen flights are not scheduled to land between the start and end times
-- [ ] When changing runway mode, flights scheduled to land after the start time are assigned to the new runway mode
-- [ ] When changing runway mode, the sequence is re-calculated from the point where the current runway mode ends
-- [ ] When changing runway mode, and we are in slave mode, the request is relayed to the master
+- [X] When changing runway mode, and the start time is now or earlier, all non-frozen flights from now onwards are re-assigned to the new runway mode, and the sequence is re-calculated
+- [X] When changing runway mode, the Next runway mode and start times are set
+- [X] When changing runway mode, non-frozen flights are not scheduled to land between the start and end times
+- [X] When changing runway mode, flights scheduled to land after the start time are assigned to the new runway mode
+- [X] When changing runway mode, the sequence is re-calculated from the point where the current runway mode ends
+- [X] When changing runway mode, and we are in slave mode, the request is relayed to the master
 
 ## Change Runway
 
 - [X] When changing runway, the new runway is assigned
-- [ ] When changing runway, the flight is re-positioned based on it's estimate
-- [ ] When changing runway, the sequence from where the flight was moved to is re-calculated
-- [ ] When changing runway, and the flight was unstable, it becomes stable
-- [ ] When changing runway, and the flight is not unstable, it's state is retained
-- [ ] When changing runway, and we are in slave mode, the request is relayed to the master
+- [X] When changing runway, the flight is re-positioned based on it's estimate
+- [X] When changing runway, the sequence from where the flight was moved to is re-calculated
+- [X] When changing runway, and the flight was unstable, it becomes stable
+- [X] When changing runway, and the flight is not unstable, it's state is retained
+- [X] When changing runway, and we are in slave mode, the request is relayed to the master
 
 ## Create Slot
 
-- [ ] When creating a slot, flights landing within the slot are delayed until the end of the slot
-- [ ] When creating a slot, frozen flights are not re-calculated
-- [ ] When creating a slot, and we are in slave mode, the request is relayed to the master
+- [X] When creating a slot, flights landing within the slot are delayed until the end of the slot
+- [X] When creating a slot, frozen flights are not re-calculated
+- [X] When creating a slot, and we are in slave mode, the request is relayed to the master
 
 ## Modify Slot
 
-- [ ] When modifying a slot, flights landing after the original start time or the new start time are re-calculated
-- [ ] when modifying a slot, flights within the slot are delayed until after the slot
-- [ ] When modifying a slot, frozen flights are not re-calculated
-- [ ] When modifying a slot, and we are in slave mode, the request is relayed to the master
+- [X] When modifying a slot, flights landing after the original start time or the new start time are re-calculated
+- [X] when modifying a slot, flights within the slot are delayed until after the slot
+- [X] When modifying a slot, frozen flights are not re-calculated
+- [X] When modifying a slot, and we are in slave mode, the request is relayed to the master
 
 ## Delete Slot
 
-- [ ] When deleting a slot, the sequence is re-calculated from the start time of the slot
-- [ ] When deleting a slot, and we are in slave mode, the request is relayed to the master
+- [X] When deleting a slot, the sequence is re-calculated from the start time of the slot
+- [X] When deleting a slot, and we are in slave mode, the request is relayed to the master
 
 ## Desequence
 
-- [ ] When desequencing a flight, it is removed from the sequence and added to the de-sequenced list
-- [ ] When desequencing a flight, the sequence is re-calculated from where the flight was de-sequenced
-- [ ] When desequencing a flight, and we are in slave mode, the request is relayed to the master
+- [X] When desequencing a flight, it is removed from the sequence and added to the de-sequenced list
+- [X] When desequencing a flight, the sequence is re-calculated from where the flight was de-sequenced
+- [X] When desequencing a flight, and we are in slave mode, the request is relayed to the master
 
 ## Insert Departure
 
@@ -160,11 +160,14 @@
 
 ## Move Flight
 
-- [ ] When moving a flight, the flight is moved based on the target time
-- [ ] When moving a flight, the sequence is re-calculated
-- [ ] When moving a flight, it becomes stable
-- [ ] When moving a flight, between two frozen flights with insufficient space, exception is thrown
-- [ ] When moving a flight, and we are in slave mode, the request is relayed to the master
+- [X] When moving a flight, the flight is moved based on the target time
+- [X] When moving a flight, the sequence is re-calculated
+- [X] When moving a flight, it becomes stable
+- [X] When moving a flight, the runway can be changed
+- [X] When moving a flight, frozen flights are not moved
+- [X] When moving a flight, stable/superstable/frozen/landed flights retain their state
+- [X] When moving a flight, between two frozen flights with insufficient space, exception is thrown
+- [X] When moving a flight, and we are in slave mode, the request is relayed to the master
 
 ## Recompute
 
@@ -197,22 +200,24 @@
 
 ## Sequence
 
-- [ ] When a flight is inserted, and it's estimate is ahead of the flight in front of it, it is delayed
-- [ ] When a flight is inserted, and it's estimate is not in conflict with the next flight, it is not delayed
-- [ ] When a flight is inserted, and flights behind it have earlier landing times, flights behind it are delayed
+- [ ] When a flight is inserted, and it's estimate is ahead of the flight in front of it, the inserted flight is delayed
+- [ ] When a flight is inserted, and it's estimate is not in conflict with the next flight, the inserted flight is not delayed
+- [ ] When a flight is inserted, and flights behind it have earlier landing times, the flights behind it are delayed
 - [ ] When a flight is inserted, between two frozen flights, without enough space, exception is thrown
 
 - [ ] When a flight is moved, the position in sequence is updated
 - [ ] When a flight is moved forward, and the estimate is earlier than the preceeding flight, the moved flight receives no delay
-- [ ] When a flight is moved forward, and the estimate is later than the preceeding flight, the moved flight receives no delay, and the other flight is delayed
+- [ ] When a flight is moved forward, and the estimate is later than the preceeding flight, the moved flight receives no delay, and the preceeding flight is delayed behind the moved flight
 
-- [ ] When a flight is moved backwards, and the estimate is earlier than the next flight, the moved flight receives no delay, and the other flight is delayed
+- [ ] When a flight is moved backwards, and the estimate is earlier than the next flight, the moved flight receives no delay, and the next flight is delayed behind the moved flight
 - [ ] When a flight is moved backwards, and the estiate is later than the next flight, neither flight is delayed
 
 - [ ] When a flight is moved, between two frozen flights, without enough space, exception is thrown
 
-- [ ] When flights are swapped, their landing times and ruwnays are swapped
-- [ ] When flights are swapped, the sequence is not re-calculated
+- [ ] When flights are swapped, their landing times are swapped
+- [ ] When flights are swapped, their ruwnays are swapped
+- [ ] When flights are swapped, their ETA_FF is re-calculated
+- [ ] When flights are swapped, the sequence is not re-calculated (apply an artificial delay to an unstable flight and assert the delay remains after swapping)
 
 - [ ] When scheduling, unstable flights are re-scheduled based on their estimates
 - [ ] When scheduling, stable flights are not re-scheduled
@@ -220,13 +225,13 @@
 - [ ] When scheduling, and two flights are too close, the next flight in the sequence is delayed
 - [ ] When scheduling, and two flights on different runways are too close, no separation is applied
 - [ ] When scheduling, and two flights on dependent runways are too close, they are separated by the dependency rate
-- [ ] When scheduling, and two flights are too close, but the next one cannot be delayed, the current flight is moved behind the "fixed" flight
+- [ ] When scheduling, and two flights are too close, but the next one cannot be delayed, the preceeding flight is moved behind the "fixed" flight
 - [ ] When scheduling, and the delay exceeds the maximum delay, the flight is moved forward
 - [ ] When scheduling, and the delay exceeds the maximum delay, but is less than the acceptance rate, the flight is not moved
 - [ ] When scheduling, and the delay exceeds the maximum delay, but the flight cannot move forward, the flight moves as far farward as it possibly can
 - [ ] When scheduling, and the landing time is within a slot, the flight is delayed until after the slot ends
 - [ ] When scheduling, and the landing time is within a runway change, the flight is delayed until after the runway change
-- [ ] When scheduling, and a delay is applied, ReduceSpeed flow control is applied
+- [ ] When scheduling, and a delay is required, ReduceSpeed flow control is applied
 - [ ] When scheduling, and no delay is required, ProfileSpeed flow control is applied
 - [ ] When scheduling, and flights have moved, the order of the sequence is preserved between runways
 
