@@ -303,6 +303,8 @@ public class Sequence
             var newSlot = new Slot(id, start, end, slot.RunwayIdentifiers);
             _slots.Add(newSlot);
 
+            // BUG: If a flight is scheduled to land after the start time, but estimated to land before it, they need
+            //  to be recomputed. Maybe this is okay?
             var rescheduleIndex = IndexOf(start);
             Schedule(rescheduleIndex, forceRescheduleStable: true);
         }
