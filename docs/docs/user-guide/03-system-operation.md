@@ -5,11 +5,7 @@
 
 ## Starting Maestro
 
-Maestro can be started by clicking the `TFMS` button on the vatSys menu bar, then clicking `New TFMS Window`.
-
-A `Maestro Setup` window will appear. Select the desired airport, then click `Start`.
-
-![Screenshot of setup window](./../../static/img/setup_1.png)
+Maestro can be started by clicking the `TFMS` button on the vatSys menu bar, then clicking one of the configured airports.
 
 This will open a blank Maestro window.
 
@@ -230,7 +226,7 @@ Flights scheduled to land after the `Change rates at` time will be processed usi
 
 Flights from departure airports must be manually inserted into the sequence.
 
-To insert a departure, click the `DEPS` button in the Sequence Display Zone, and the `Insert a Flight` window will appear. Select the flight from the `Pending` list, and set the `Take Off` time to its expected take-off time. 
+To insert a departure, click the `DEPS` button in the Sequence Display Zone, and the `Insert a Flight` window will appear. Select the flight from the `Pending` list, and set the `Take Off` time to its expected take-off time.
 
 ![Insert a Flight window with a pending departure](../../static/img/insert_departure_window.png)
 
@@ -348,28 +344,33 @@ If a delay of `00` is specified, the flight can still be delayed up to the runwa
 Flights can be moved throughout the sequence from a runway view.
 
 Left-click a flight label to select it, a frame will be displayed around the selected flight.
-The flight can be de-selected by left-clicking it again.
+The flight can be de-selected by left-clicking it again, or by right-clicking.
 
 ![Flight with selection frame](../../static/img/flight_selected.png)
 
-Left-click on the timeline where the flight should be moved to.
-A confirmation will appear. Click `Confirm` to move the flight.
+Left-click on the timeline where the flight should be moved to. The flight will be moved immediately without confirmation.
 
 When a flight is moved:
-- the `STA` is set to the time corresponding to where the second left-click occurred
+- the flight is repositioned in the sequence based on the clicked position
+- the `STA` is re-calculated based on the new landing order
 - if another timeline was clicked, the flight will be re-assigned to the runway corresponding to that timeline
 - if the flight was `Unstable`, it becomes `Stable`
 - the rest of the sequence is re-calculated
 
 If a second flight is clicked, the `STA` and runways of the two flights are swapped.
 
+:::note
+Flights are moved by position in the sequence, not by manually setting a landing time.
+The `STA` is automatically re-calculated based on the new landing order and runway acceptance rates.
+:::
+
 :::info
 Flights cannot be moved between two `Frozen` flights when the time between them is less than twice the acceptance rate.
 :::
 
 Alternatively, flights can be dragged up and down the ladder by left-clicking the flight and holding the mouse button down while moving the mouse cursor.
-When the button is released, a confirmation window will appear as before.
-Clicking `Confirm` will move the flight to the specified time.
+When the button is released, a confirmation window will appear.
+Clicking `Confirm` will move the flight to the specified position in the sequence.
 
 ### Recomputing
 
