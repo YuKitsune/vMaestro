@@ -73,56 +73,149 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
     [Fact]
     public async Task WhenChangingRunway_TheFlightIsMovedBasedOnItsLandingEstimate()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create three flights.
-        // - Two flights should be on 34L with the same landing estimate
-        // - One flight should be on 34R with a later landing estimate
+        var flight1 = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithRunway("34L")
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithFeederFix("BOREE")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34R")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA2", "34R");
 
         // Act
-        // TODO: Re-assign the second flight on 34L to 34R.
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the flight is now on 34R
-        // TODO: Assert that the flight is positioned before the existing flight on 34R based on its landing estimate
+        flight2.AssignedRunwayIdentifier.ShouldBe("34R", "QFA2 should be assigned to 34R");
+
+        sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R (positioned before QFA3 based on earlier estimate)");
+        sequence.NumberForRunway(flight3).ShouldBe(2, "QFA3 should be #2 on 34R");
     }
 
     [Fact]
     public async Task WhenChangingRunway_TheSequenceIsRecalculated()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create four flights.
-        // - Three flights should be on 34L with the same landing estimate
-        // - One flight should be on 34R with a later landing estimate
+        var flight1 = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithRunway("34L")
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(16))
+            .WithRunway("34L")
+            .Build();
+
+        var flight4 = new FlightBuilder("QFA4")
+            .WithFeederFix("BOREE") // TODO: Sequence will re-assign the runway based on feeder fix preferences; need to remove this from the sequencing logic
+            .WithLandingEstimate(now.AddMinutes(12))
+            .WithLandingTime(now.AddMinutes(12))
+            .WithRunway("34R")
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA2", "34R");
 
         // Act
-        // TODO: Re-assign the second flight on 34L to 34R.
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the flight is now on 34R
-        // TODO: Assert that the landing time of the existing flight on 34R is adjusted to maintain proper separation
-        // TODO: Assert that the landing times of the remaining flights on 34L are adjusted to minimise the delay
+        flight2.AssignedRunwayIdentifier.ShouldBe("34R", "QFA2 should be assigned to 34R");
+        flight4.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA4 landing time should be adjusted to maintain separation from QFA2");
+
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA3 landing time should be reduced to minimize delay after QFA2 moved to 34R");
     }
 
     [Fact]
     public async Task WhenChangingRunway_AndTheFlightWasUnstable_ItBecomesStable()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a flight that is unstable
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
+
+        flight.State.ShouldBe(State.Unstable, "Flight should initially be Unstable");
 
         // Act
-        // TODO: Change the runway of the flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the flight's state is now Stable
+        flight.State.ShouldBe(State.Stable, "Unstable flight should become Stable when runway is changed");
     }
 
     [Theory]
@@ -132,32 +225,76 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
     [InlineData(State.Landed)]
     public async Task WhenChangingRunway_AndTheFlightWasNotUnstable_ItBecomesStable(State state)
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a flight with the specified state
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(state)
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
+
+        flight.State.ShouldBe(state, $"Flight should initially be {state}");
 
         // Act
-        // TODO: Change the runway of the flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the flight's state remains unchanged
+        flight.State.ShouldBe(state, $"Flight state should remain {state} when changing runway");
     }
 
     [Fact]
     public async Task RelaysToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .Build();
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            slaveConnectionManager,
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
+
+        var originalRunway = flight.AssignedRunwayIdentifier;
 
         // Act
-        // TODO: Change the runway
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
+        slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
+        flight.AssignedRunwayIdentifier.ShouldBe(originalRunway, "Local flight should not be modified when relaying to master");
     }
 }
