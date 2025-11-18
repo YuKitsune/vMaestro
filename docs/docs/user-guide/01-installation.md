@@ -17,8 +17,8 @@ Before installing vMaestro, ensure you have the following:
 
 1. Open vatSys.
 2. Look for the `TFMS` menu item in the vatSys menu bar.
-3. Click `TFMS` → `New TFMS Window`.
-4. If the Maestro Setup window appears, the installation was successful.
+3. Click `TFMS`, then select an airport.
+4. If the Maestro window appears, the installation was successful.
 
 :::tip
 If you do not see the `TFMS` menu item after restarting vatSys, refer to the [Troubleshooting](#troubleshooting) section below.
