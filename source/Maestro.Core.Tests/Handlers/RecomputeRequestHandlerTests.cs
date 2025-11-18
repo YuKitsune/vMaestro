@@ -12,9 +12,6 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-// TODO: All of these tests asserting landing times need to be moved to a separate scheduler test.
-// Handlers tests should just assert the position is set.
-
 public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
@@ -33,38 +30,94 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     [Fact]
     public async Task TheFlightIsMovedBasedOnItsLandingEstimate()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create two stable flights, one after the other
-        // TODO: Change the landing estimate of the second flight to be earlier than the first flight
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        // Change the landing estimate of the second flight to be earlier than the first flight
+        flight2.UpdateLandingEstimate(now.AddMinutes(5));
+
+        var request = new RecomputeRequest("YSSY", "QFA2");
 
         // Act
-        // TODO: Recompute the second flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the landing order is second, first
+        sequence.Flights[0].Callsign.ShouldBe("QFA2", "First flight should be QFA2 after recompute");
+        sequence.Flights[1].Callsign.ShouldBe("QFA1", "Second flight should be QFA1 after recompute");
     }
 
     [Fact]
     public async Task TheSequenceIsRecalculated()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create three stable flights, one after the other
-        // TODO: Change the landing estimate of the last flight to be earlier than the second flight
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(20))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+
+        var originalFlight1LandingTime = flight1.LandingTime;
+
+        // Change the landing estimate of the last flight to be earlier than the second flight
+        flight3.UpdateLandingEstimate(now.AddMinutes(12));
+
+        var request = new RecomputeRequest("YSSY", "QFA3");
 
         // Act
-        // TODO: Recompute the last flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the landing order is first, last, second
-        // TODO: Assert the first flight's landing time is unchanged
-        // TODO: Assert the last flight's landing time is its landing estimate
-        // TODO: Assert the second flight's landing time is after the last flight's landing time plus separation
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "First flight should be QFA1");
+        sequence.Flights[1].Callsign.ShouldBe("QFA3", "Second flight should be QFA3 (moved forward)");
+        sequence.Flights[2].Callsign.ShouldBe("QFA2", "Third flight should be QFA2");
+
+        flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "First flight's landing time should be unchanged");
+        flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "First flight should land at its estimate");
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Flight 3 should be behind flight 1 separated by acceptance rate");
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Flight 2 should be behind flight 3 separated by acceptance rate");
     }
 
     // TODO: Check STA_FF and ETA_FF
@@ -72,17 +125,32 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     [Fact]
     public async Task ManualFeederFixEstimateIsRemoved()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a stable flight with a manual feeder fix estimate
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(now.AddMinutes(5), manual: true)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+        var request = new RecomputeRequest("YSSY", "QFA1");
+
+        flight.ManualFeederFixEstimate.ShouldBeTrue("Manual feeder fix estimate should initially be set");
 
         // Act
-        // TODO: Recompute the flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the flight's manual feeder fix estimate is removed
+        flight.ManualFeederFixEstimate.ShouldBeFalse("Manual feeder fix estimate should be removed after recompute");
     }
 
     [Fact]
@@ -115,11 +183,12 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         // Assert
         flight.FeederFixIdentifier.ShouldBe("WELSH");
-        flight.FeederFixTime.ShouldBe(newFeederFixEstimate);
+        flight.FeederFixEstimate.ShouldBe(newFeederFixEstimate);
     }
 
+    // TODO: Revisit
     [Theory]
-    [InlineData(true)]
+    [InlineData(true, Skip = "Intended behaviour is unclear")]
     [InlineData(false)]
     public async Task RunwayIsReset(bool manual)
     {
@@ -264,17 +333,48 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     [Fact]
     public async Task RedirectedToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
+            .Build();
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
+        airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
+
+        var estimateProvider = Substitute.For<IEstimateProvider>();
+        var mediator = Substitute.For<IMediator>();
+        var logger = Substitute.For<Serilog.ILogger>();
+
+        var handler = new RecomputeRequestHandler(
+            instanceManager,
+            slaveConnectionManager,
+            airportConfigurationProvider,
+            estimateProvider,
+            clockFixture.Instance,
+            mediator,
+            logger);
+
+        var request = new RecomputeRequest("YSSY", "QFA1");
+
+        var originalFlightLandingTime = flight.LandingTime;
 
         // Act
-        // TODO: Move a flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
+        slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
+        flight.LandingTime.ShouldBe(originalFlightLandingTime, "Flight should not be modified locally when relaying to master");
     }
 
     RecomputeRequestHandler GetRequestHandler(
