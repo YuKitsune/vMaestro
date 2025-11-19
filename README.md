@@ -9,7 +9,7 @@
   [![License](https://img.shields.io/github/license/YuKitsune/vMaestro)](https://github.com/YuKitsune/vMaestro/blob/main/LICENSE)
   [![Latest Release](https://img.shields.io/github/v/release/YuKitsune/vMaestro?include_prereleases)](https://github.com/YuKitsune/vMaestro/releases)
 
-  <img src="./README-screenshot.png" width="320" />
+  <img src="./README.png" width="320" />
 </h3>
 
 vMaestro is a [vatSys](https://virtualairtrafficsystem.com) plugin that emulates the Maestro Traffic Flow Management System used by air traffic controllers. It provides automated aircraft sequencing, runway assignment, and traffic flow management capabilities for virtual ATC operations.
