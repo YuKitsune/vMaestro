@@ -54,7 +54,7 @@ public class ResumeSequencingRequestHandler(
                 earliestInsertionIndex,
                 f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
 
-            sequence.Insert(index, flight);
+            sequence.Insert(Math.Max(earliestInsertionIndex, index), flight);
             instance.Session.DeSequencedFlights.Remove(flight);
 
             logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
