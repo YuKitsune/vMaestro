@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../docker-compose.yaml" />
+    <File Path="../Maestro.json" />
+  </Folder>
+  <Project Path="build/_build.csproj">
+    <Build Project="false" />
+  </Project>
+  <Project Path="Maestro.Core.Tests/Maestro.Core.Tests.csproj" />
+  <Project Path="Maestro.Core/Maestro.Core.csproj" />
+  <Project Path="Maestro.Plugin/Maestro.Plugin.csproj" />
+  <Project Path="Maestro.Server.Tests/Maestro.Server.Tests.csproj" />
+  <Project Path="Maestro.Server/Maestro.Server.csproj" />
+  <Project Path="Maestro.Wpf/Maestro.Wpf.csproj" />
+</Solution>
