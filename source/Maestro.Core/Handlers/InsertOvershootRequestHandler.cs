@@ -51,6 +51,7 @@ public class InsertOvershootRequestHandler(
                 case ExactInsertionOptions exactInsertionOptions:
                 {
                     index = sequence.IndexOf(exactInsertionOptions.TargetLandingTime);
+                    landedFlight.UpdateLandingEstimate(exactInsertionOptions.TargetLandingTime);
 
                     var runwayMode = sequence.GetRunwayModeAt(exactInsertionOptions.TargetLandingTime);
                     runway = runwayMode.Runways.FirstOrDefault(r => exactInsertionOptions.RunwayIdentifiers.Contains(r.Identifier)) ?? runwayMode.Default;
@@ -71,6 +72,10 @@ public class InsertOvershootRequestHandler(
 
                     var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
                     runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
+
+                    var landingEstimate = referenceFlight.LandingTime;
+                    landedFlight.UpdateLandingEstimate(landingEstimate);
+
                     break;
                 }
                 default:
@@ -80,9 +85,13 @@ public class InsertOvershootRequestHandler(
             // TODO: What do we do about the ETA? If they've landed, the ETA is gonna be inaccurate.
 
             sequence.ThrowIfSlotIsUnavailable(index, runway.Identifier);
-            landedFlight.SetRunway(runway.Identifier, manual: true);
-            sequence.Move(landedFlight, index);
+            landedFlight.InvalidateSequenceData();
 
+            landedFlight.SetRunway(runway.Identifier, manual: true);
+
+            // Set the state to Stable so that it gets re-scheduled. TODO: Need to change this behaviour
+            landedFlight.SetState(State.Stable, clock);
+            sequence.Move(landedFlight, index, forceRescheduleStable: true);
             landedFlight.SetState(State.Frozen, clock);
 
             logger.Information("Inserted overshoot flight {Callsign} for {AirportIdentifier}", landedFlight.Callsign, request.AirportIdentifier);

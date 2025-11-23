@@ -196,8 +196,8 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // Verify the dummy flight is first in the sequence
-        sequence.NumberInSequence(dummyFlight).ShouldBeLessThan(sequence.NumberInSequence(existingFlight),
-            "TEST123 should be positioned before QFA456");
+        sequence.NumberInSequence(dummyFlight).ShouldBe(1, "TEST123 should be first in sequence");
+        sequence.NumberInSequence(existingFlight).ShouldBe(2, "QFA456 should be second in sequence");
     }
 
     [Fact]
@@ -262,8 +262,8 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // Verify the dummy flight is first in the sequence
-        sequence.NumberInSequence(dummyFlight).ShouldBeLessThan(sequence.NumberInSequence(existingFlight),
-            "TEST123 should be positioned before QFA456");
+        sequence.NumberInSequence(dummyFlight).ShouldBe(1, "TEST123 should be first in sequence");
+        sequence.NumberInSequence(existingFlight).ShouldBe(2, "QFA456 should be second in sequence");
     }
 
     [Fact]
@@ -344,8 +344,8 @@ public class InsertFlightRequestHandlerTests(AirportConfigurationFixture airport
         var dummyFlight = sequence.Flights.Single(f => f.Callsign == "TEST123");
 
         // Verify the dummy flight is after the existing flight
-        sequence.NumberInSequence(dummyFlight).ShouldBeGreaterThan(sequence.NumberInSequence(existingFlight),
-            "TEST123 should be positioned after QFA456");
+        sequence.NumberInSequence(existingFlight).ShouldBe(1, "QFA456 should be first in sequence");
+        sequence.NumberInSequence(dummyFlight).ShouldBe(2, "TEST123 should be second in sequence");
     }
 
     [Fact]
