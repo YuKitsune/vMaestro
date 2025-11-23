@@ -23,7 +23,7 @@ public class ClientDisconnectedNotificationHandler(
     {
         if (!connectionManager.TryGetConnection(notification.ConnectionId, out var connection))
         {
-            throw new InvalidOperationException($"Connection {notification.ConnectionId} is not tracked");
+            return; // Connection not tracked, nothing to do
         }
 
         logger.Information("{Connection} untracked", connection);
