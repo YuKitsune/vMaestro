@@ -63,9 +63,11 @@ class Build : NukeBuild
     string PluginName => Configuration == Configuration.Debug ? DebugPluginName : ReleasePluginName;
 
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
+    AbsolutePath ServerProjectPath => RootDirectory / "source" / "Maestro.Server" / "Maestro.Server.csproj";
     AbsolutePath CoreTestsProjectPath => RootDirectory / "source" / "Maestro.Core.Tests" / "Maestro.Core.Tests.csproj";
     AbsolutePath ServerTestsProjectPath => RootDirectory / "source" / "Maestro.Server.Tests" / "Maestro.Server.Tests.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
+    AbsolutePath ServerPublishDirectory => RootDirectory / "source" / "Maestro.Server" / "bin" / Configuration / "net9.0" / "publish";
     AbsolutePath RepackDirectory => TemporaryDirectory / "repack";
     AbsolutePath PluginAssembliesPath => ShouldRepack ? RepackDirectory : BuildOutputDirectory;
     AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
@@ -171,6 +173,27 @@ class Build : NukeBuild
     Target Test => _ => _
         .DependsOn(TestCore)
         .DependsOn(TestServer);
+
+    Target PublishServer => _ => _
+        .Executes(() =>
+        {
+            var version = GetSemanticVersion();
+            Log.Information(
+                "Publishing Maestro.Server version {Version} with configuration {Configuration}",
+                version,
+                Configuration);
+
+            DotNetTasks.DotNetPublish(s => s
+                .SetProject(ServerProjectPath)
+                .SetConfiguration(Configuration)
+                .SetOutput(ServerPublishDirectory)
+                .SetVersion(version)
+                .SetAssemblyVersion(GitVersion.MajorMinorPatch)
+                .SetFileVersion(GitVersion.MajorMinorPatch)
+                .SetInformationalVersion(version));
+
+            Log.Information("Server published to {OutputDirectory}", ServerPublishDirectory);
+        });
 
     Target Uninstall => _ => _
         .Requires(() => ProfileName)

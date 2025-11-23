@@ -28,6 +28,7 @@
         "DownloadVatSys",
         "Install",
         "Package",
+        "PublishServer",
         "Release",
         "Test",
         "TestCore",
