@@ -30,10 +30,6 @@ COPY ["source/", "source/"]
 RUN chmod +x build.sh && \
     ./build.sh PublishServer --configuration $BUILD_CONFIGURATION
 
-FROM build AS publish
-# Published output is in source/Maestro.Server/bin/{Configuration}/net9.0/publish
-ARG BUILD_CONFIGURATION=Release
-
 FROM base AS final
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /app
