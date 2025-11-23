@@ -6,10 +6,14 @@ public static class AssemblyVersionHelper
 {
     public static string GetVersion(Assembly assembly)
     {
-        var version = assembly.GetName().Version;
-        if (version is null)
-            return "0.0.0";
+        var version = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion ?? string.Empty;
 
-        return $"{version.Major}.{version.Minor}.{version.Build}";
+#if RELEASE
+        return version.Split('+').First();
+#else
+        return version;
+#endif
     }
 }
