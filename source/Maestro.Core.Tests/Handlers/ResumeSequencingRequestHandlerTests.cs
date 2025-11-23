@@ -1,78 +1,212 @@
-﻿namespace Maestro.Core.Tests.Handlers;
+﻿using Maestro.Core.Handlers;
+using Maestro.Core.Messages;
+using Maestro.Core.Model;
+using Maestro.Core.Tests.Builders;
+using Maestro.Core.Tests.Fixtures;
+using Maestro.Core.Tests.Mocks;
+using MediatR;
+using NSubstitute;
+using Serilog;
+using Shouldly;
 
-// TODO: Test cases:
-// - When a flight is resumed, it is inserted based on its ETA
-// - When a flight is resumed, it becomes stable
-// - When multiple flights are resumed, they are inserted in the same order they were before they were desequenced
+namespace Maestro.Core.Tests.Handlers;
 
-public class ResumeSequencingRequestHandlerTests
+public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
     [Fact]
     public async Task FlightIsInsertedIntoTheSequenceAndRemovedFromTheDeSequencedList()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a flight and add it to the desequenced list
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+
+        instance.Session.DeSequencedFlights.Add(flight);
+
+        session.DeSequencedFlights.Count.ShouldBe(1, "Flight should be in desequenced list");
+        sequence.Flights.Count.ShouldBe(0, "No flights in sequence initially");
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ResumeSequencingRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ResumeSequencingRequest("YSSY", "QFA1");
 
         // Act
-        // TODO: Resume sequencing for the flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the flight is added to the sequence
-        // TODO: Assert that the flight has been removed from the DesequencedFlights list
+        sequence.Flights.Count.ShouldBe(1, "Flight should be added to sequence");
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "Flight in sequence should be QFA1");
+        session.DeSequencedFlights.Count.ShouldBe(0, "Flight should be removed from desequenced list");
     }
 
     [Fact]
     public async Task FlightIsInsertedByLandingEstimate()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create two flights in the sequence, one after the other
-        // TODO: Create a third flight with an ETA between the first two flights, add it to the desequenced list
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithRunway("34L")
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(12))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s
+                .WithFlightsInOrder(flight1, flight2)
+                .WithClock(clockFixture.Instance))
+            .Build();
+
+        instance.Session.DeSequencedFlights.Add(flight3);
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ResumeSequencingRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ResumeSequencingRequest("YSSY", "QFA3");
 
         // Act
-        // TODO: Resume sequencing for the third flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the landing order is first, third, second
-        // TODO: Assert the third flight is delayed behind the first flight based on separation rules
-        // TODO: Assert the second flight is delayed behind the third flight based on separation rules
+        sequence.Flights.Count.ShouldBe(3, "Three flights should be in sequence");
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "First flight should be QFA1");
+        sequence.Flights[1].Callsign.ShouldBe("QFA3", "Second flight should be QFA3");
+        sequence.Flights[2].Callsign.ShouldBe("QFA2", "Third flight should be QFA2");
+
+        // Assert that each flight's landing time is separated by the acceptance rate
+        var acceptanceRate = airportConfigurationFixture.AcceptanceRate;
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(acceptanceRate), "QFA3 should be delayed behind QFA1 by acceptance rate");
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(acceptanceRate), "QFA2 should be delayed behind QFA3 by acceptance rate");
     }
 
     [Fact]
     public async Task WhenEstimateIsBetweenTwoFrozenFlightsWithInsufficientSpace_ItIsMovedBackUntilThereIsSpace()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create two frozen flights in the sequence with insufficient space between them for the required separation
-        // TODO: Create a third flight with an ETA between the two frozen flights, add it to the desequenced list
+        // Create two frozen flights 5 minutes apart
+        var frozenFlight1 = new FlightBuilder("QFA1")
+            .WithState(State.Frozen)
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var frozenFlight2 = new FlightBuilder("QFA2")
+            .WithState(State.Frozen)
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34L")
+            .Build();
+
+        // Create a third flight with an ETA between the two frozen flights
+        var flight3 = new FlightBuilder("QFA3")
+            .WithLandingEstimate(now.AddMinutes(12))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s
+                .WithFlightsInOrder(frozenFlight1, frozenFlight2)
+                .WithClock(clockFixture.Instance))
+            .Build();
+
+        instance.Session.DeSequencedFlights.Add(flight3);
+
+        var originalFrozenFlight1LandingTime = frozenFlight1.LandingTime;
+        var originalFrozenFlight2LandingTime = frozenFlight2.LandingTime;
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ResumeSequencingRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ResumeSequencingRequest("YSSY", "QFA3");
 
         // Act
-        // TODO: Resume sequencing for the third flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the third flight is placed after the second frozen flight
+        sequence.Flights.Count.ShouldBe(3, "Three flights should be in sequence");
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "First flight should be QFA1");
+        sequence.Flights[1].Callsign.ShouldBe("QFA2", "Second flight should be QFA2");
+        sequence.Flights[2].Callsign.ShouldBe("QFA3", "Third flight should be QFA3 (placed after frozen flights)");
+
+        // Frozen flight landing times should not be changed
+        frozenFlight1.LandingTime.ShouldBe(originalFrozenFlight1LandingTime, "QFA1 landing time should not change");
+        frozenFlight2.LandingTime.ShouldBe(originalFrozenFlight2LandingTime, "QFA2 landing time should not change");
+
+        // QFA3 should be placed after the second frozen flight with proper separation
+        var acceptanceRate = airportConfigurationFixture.AcceptanceRate;
+        flight3.LandingTime.ShouldBe(frozenFlight2.LandingTime.Add(acceptanceRate), "QFA3 should be placed after QFA2 with proper separation");
     }
 
     [Fact]
     public async Task RedirectedToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+
+        instance.Session.DeSequencedFlights.Add(flight);
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ResumeSequencingRequestHandler(
+            instanceManager,
+            slaveConnectionManager,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ResumeSequencingRequest("YSSY", "QFA1");
 
         // Act
-        // TODO: Resume sequencing for the third flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
+        slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
+        sequence.Flights.Count.ShouldBe(0, "Flight should not be added to sequence locally when relaying to master");
+        session.DeSequencedFlights.Count.ShouldBe(1, "Flight should remain in desequenced list when relaying to master");
     }
 }
