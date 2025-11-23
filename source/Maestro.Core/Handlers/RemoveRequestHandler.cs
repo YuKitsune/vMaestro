@@ -33,13 +33,30 @@ public class RemoveRequestHandler(
         {
             var sequence = instance.Session.Sequence;
 
-            var flight = sequence.FindFlight(request.Callsign);
-            if (flight is null)
+            var sequencedFlight = sequence.FindFlight(request.Callsign);
+            if (sequencedFlight is not null)
+            {
+                logger.Information("Removing sequenced flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+                sequence.Remove(sequencedFlight);
+
+                sequencedFlight.Reset();
+                instance.Session.PendingFlights.Add(sequencedFlight);
+            }
+
+            var desequencedFlight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
+            if (desequencedFlight is not null)
+            {
+                logger.Information("Removing desequenced flight {Callsign} from de-sequenced flights for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+                instance.Session.DeSequencedFlights.Remove(desequencedFlight);
+
+                desequencedFlight.Reset();
+                instance.Session.PendingFlights.Add(desequencedFlight);
+            }
+
+            if (sequencedFlight is null && desequencedFlight is null)
+            {
                 throw new MaestroException($"{request.Callsign} not found");
-
-            logger.Information("Removing flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
-
-            sequence.Remove(flight);
+            }
 
             sessionMessage = instance.Session.Snapshot();
         }

@@ -141,17 +141,45 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
     [Fact]
     public async Task TheSequenceIsRecalculated()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Create two flights in sequence
+        var now = clockFixture.Instance.UtcNow();
+
+        // Create two flights where flight2 is delayed behind flight1
+        var flight1 = new FlightBuilder("QFA123")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(10))
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithFeederFixEstimate(now.AddMinutes(-2))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA456")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(13)) // 3 minutes after flight1 (acceptance rate)
+            .WithLandingEstimate(now.AddMinutes(11)) // Original estimate is earlier
+            .WithFeederFixEstimate(now.AddMinutes(-1))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        // Verify initial state
+        flight1.LandingTime.ShouldBe(now.AddMinutes(10));
+        flight2.LandingTime.ShouldBe(now.AddMinutes(13));
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+        var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
-        // TODO: Remove the first flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the second flight's landing time has been recalculated
+        // After removing flight1, flight2 should be recalculated to land at its estimate (T+11)
+        // since there's no longer a conflict with flight1
+        flight2.LandingTime.ShouldBe(now.AddMinutes(11),
+            "flight2 should be recalculated to land at its estimate after flight1 is removed");
     }
 
     [Fact]
@@ -200,17 +228,39 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
     [Fact]
     public async Task RedirectedToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
+        var now = clockFixture.Instance.UtcNow();
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(10))
+            .WithLandingEstimate(now.AddMinutes(8))
+            .WithFeederFixEstimate(now.AddMinutes(-2))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
+            .Build();
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new RemoveRequestHandler(
+            instanceManager,
+            slaveConnectionManager,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
-        // TODO: Move a flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
+        slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
+        sequence.Flights.ShouldContain(flight, "Flight should remain in sequence when relaying to master");
+        instance.Session.PendingFlights.ShouldNotContain(flight, "Flight should not be added to pending list when relaying to master");
     }
 
     RemoveRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
