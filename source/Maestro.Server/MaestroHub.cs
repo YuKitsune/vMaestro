@@ -140,8 +140,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         if (string.IsNullOrEmpty(clientVersion))
         {
             logger.Warning("{ConnectionId} attempted to connect without a version", Context.ConnectionId);
-            Context.Abort();
-            return;
+            throw new HubException("Connection rejected: Client version not provided");
         }
 
         if (!VersionCompatibility.IsCompatible(clientVersion, ServerVersion))
@@ -149,32 +148,28 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
             logger.Warning(
                 "{ConnectionId} attempted to connect with incompatible version {ClientVersion} (server version: {ServerVersion})",
                 Context.ConnectionId, clientVersion, ServerVersion);
-            Context.Abort();
-            return;
+            throw new HubException($"Incompatible version. Client version: {clientVersion}, Server version: {ServerVersion}");
         }
 
         var partition = httpContext.Request.Query["partition"].FirstOrDefault();
         if (string.IsNullOrEmpty(partition))
         {
             logger.Warning("{ConnectionId} attempted to connect with an empty partition", Context.ConnectionId);
-            Context.Abort();
-            return;
+            throw new HubException("Connection rejected: Partition not provided");
         }
 
         var airportIdentifier = httpContext.Request.Query["airportIdentifier"].FirstOrDefault();
         if (string.IsNullOrEmpty(airportIdentifier))
         {
             logger.Warning("{ConnectionId} attempted to connect with an empty airport identifier", Context.ConnectionId);
-            Context.Abort();
-            return;
+            throw new HubException("Connection rejected: Airport identifier not provided");
         }
 
         var callsign = httpContext.Request.Query["callsign"].FirstOrDefault();
         if (string.IsNullOrEmpty(callsign))
         {
             logger.Warning("{ConnectionId} attempted to connect with an empty callsign", Context.ConnectionId);
-            Context.Abort();
-            return;
+            throw new HubException("Connection rejected: Callsign not provided");
         }
 
         var roleString = httpContext.Request.Query["role"].FirstOrDefault();

@@ -419,7 +419,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             }
 
             IsMaster = true;
-            await _mediator.Publish(new ConnectionStoppedNotification(_airportIdentifier), CancellationToken.None);
+            await _mediator.Send(new DestroyConnectionRequest(_airportIdentifier), CancellationToken.None);
         };
 
         hubConnection.Reconnecting += async exception =>
