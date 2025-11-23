@@ -1,5 +1,13 @@
 # vMaestro Roadmap
 
+## Housekeeping
+
+- [ ] Check-in on GitHub issues. Try to reproduce the issues, fix them, or close them.
+
+## Automatic Updates
+
+- [ ] Implement automatic plugin updates via the plugin manager
+
 ## Refactor Sequence Aggregate
 
 Separate the `Sequence` aggregate into a read-only aggregate (source of truth), and a mutable builder (dirty state).
@@ -57,6 +65,10 @@ Configuration files will likely require a new format to support tabular data suc
 - [ ] Consider new config file format
 
 ## Algorithm Overhaul
+
+> **Note**
+> Consult VATPAC before making a move on this. Keeping things realistic could significantly increase the workload for the AIS team.
+> It may be easier to use vatSys performance data along with the track-miles of each arrival, rather than using time.
 
 Revisit the sequencing and scheduling algorithms.
 
