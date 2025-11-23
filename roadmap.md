@@ -1,23 +1,52 @@
 # vMaestro Roadmap
 
-## Documentation
+## Refactor Sequence Aggregate
 
-- [X] Write documentation for ATC usage
-- [ ] Write documentation for configuration
-- [ ] Architecture decision record
+Separate the `Sequence` aggregate into a read-only aggregate (source of truth), and a mutable builder (dirty state).
+Use the builder to propose changes to the sequence, and combine it with a new `Scheduler` to ensure flights are scheduled and separated appropriately.
 
-## Things to revisit after release
+Pseudocode:
+```cs
+var sequence = repository.GetSequenceFor(airportIdentifier);
 
-- [ ] Insert flight from feeder-fix ladders
-- [ ] Source winds from GRIB and factor them into system estimates
-- [ ] Re-introduce BRL-based ETA method
+var sequenceBuilder = SequenceBuilder.From(sequence);
 
-## Arrival Configuration Overhaul
+sequenceBuilder.Insert(10, newFlight);
 
-- [ ] Move arrival configurations into a separate `csv` file
-- [ ] Introduce transition fixes
-- [ ] Introduce an approach types
-    - [ ] Introduce "Change Approach Type" request and handler
+var newSequence = sequenceBuilder.Build(scheduler);
+
+sequence.Apply(newSequence);
+
+repository.UpdateSequence(sequence);
+```
+
+- [ ] Separate `Flight` into multiple parts, such that FlightPlan data from vatSys can be updated independently of the sequencing and scheduling data
+    - Consider separating the flight into a mutable and immutable types, or;
+    - Split flight into `FlightPlan` + `ScheduleParameters` + `ScheduleResult`.
+        - FlightPlan contains data from vatSys
+        - `ScheduleParameters` are used to schedule the flight and build the sequence
+        - `ScheduleResult` contains the STA etc.
+        - `FlightPlan` and `ScheduleParameters` remain mutable
+        - `ScheduleResult` controlled by the `Sequence` aggregate
+
+- [ ] Make the `Sequence` aggregate read-only
+    - [ ] Create a separate SequenceBuilder type for mutations (accepts an existing sequence as a starting point, requires a scheduler to build a concrete Sequence)
+
+- [ ] Add tests
+    - [ ] SequenceBuilder: Building from existing sequences, ordering and prioritising flights
+    - [ ] Sequence: Accepts changes from builder
+    - [ ] Scheduler: Applying required separation between flights
+
+## Configuration Overhaul
+
+Introduce support for transitions and approach types.
+Configuration will be split into multiple files, one per airport.
+Configuration files will likely require a new format to support tabular data such as arrivals.
+
+- [ ] Re-design configuration types
+    - [ ] Introduce transition fixes
+    - [ ] Introduce approach types
+- [ ] Introduce "Change Approach Type" request and handler
 - [ ] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
     - [ ] Filter runway options based on feeder fix in the UI
 - [ ] Remove runway requirements and preferences
@@ -25,13 +54,25 @@
     - [ ] Set landing estimate based on ETA_FF + arrival TTG
     - [ ] Set STA_FF using STA - arrival TTG
     - [ ] If ATO_FF is set, ETA should be ATO_FF + arrival TTG (this value won't change after passing FF, this is accurate)
+- [ ] Consider new config file format
 
-## TMA Delay
+## Algorithm Overhaul
 
-- [ ] Include TMA pressure in arrival/runway mode configuration
-- [ ] Separate enroute and TMA delay
+Revisit the sequencing and scheduling algorithms.
 
-## Account for "Close" airports
+- [ ] ETA_FF = ETA - average TTG when no FF is set
+- [ ] Revise insertions based on ETA. Some should be using ETA_FF.
+- [ ] Specify delaying actions in the scheduling algorithm
+- [ ] Model enroute and TMA trajectories
+- [ ] Model runway allocation strategies (grographic, preferred, mixed)
+- [ ] Model runway dependencies (dependent, semi-dependent, and independent)
+- [ ] Account for GRIB winds
+
+## Unit test review
+
+- [ ] Compare test cases with reference material
+
+## Model "Close" airports
 
 - [ ] Flights within 25 mins flight time of the FF are from "Close" airports (e.g: Inside the TMA)
 - [ ] Flights from "Close" airports will be added to the pending list
@@ -51,6 +92,13 @@
 ### WinForms Compatibility
 
 - [ ] Revisit the `*` WPF size, and it's compatibility with WinForms.
+- [ ] Consider Avalonia instead of WPF
+
+## Documentation
+
+- [X] Write documentation for ATC usage
+- [ ] Write documentation for configuration
+- [ ] Architecture decision record
 
 ### Refactoring
 
