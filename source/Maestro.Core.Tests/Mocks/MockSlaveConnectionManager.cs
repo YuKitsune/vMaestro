@@ -38,6 +38,7 @@ public class MockSlaveConnectionManager : IMaestroConnectionManager
 public class MockSlaveConnection : IMaestroConnection
 {
     readonly List<object> _invokedRequests = new();
+    readonly List<object> _invokedNotifications = new();
 
     public bool IsConnected => true;
     public bool IsMaster => false;
@@ -45,10 +46,8 @@ public class MockSlaveConnection : IMaestroConnection
     public IReadOnlyList<PeerInfo> Peers => [];
     public string Partition => "TEST";
 
-    /// <summary>
-    /// Gets all requests that have been relayed through this connection.
-    /// </summary>
     public IReadOnlyList<object> InvokedRequests => _invokedRequests;
+    public IReadOnlyList<object> InvokedNotifications => _invokedNotifications;
 
     public Task Start(string callsign, CancellationToken cancellationToken)
     {
@@ -68,6 +67,7 @@ public class MockSlaveConnection : IMaestroConnection
 
     public Task Send<T>(T message, CancellationToken cancellationToken) where T : class, INotification
     {
-        throw new NotImplementedException();
+        _invokedNotifications.Add(message);
+        return Task.CompletedTask;
     }
 }

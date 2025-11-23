@@ -213,11 +213,14 @@ public class Sequence
                 return;
 
             ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
-            _flights.RemoveAt(currentIndex);
+            if (currentIndex != -1)
+            {
+                _flights.RemoveAt(currentIndex);
 
-            // Removing the flight will change the index of everything behind it
-            if (newIndex > currentIndex)
-                newIndex--;
+                // Removing the flight will change the index of everything behind it
+                if (newIndex > currentIndex)
+                    newIndex--;
+            }
 
             _flights.Insert(newIndex, flight);
 

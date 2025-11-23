@@ -4,14 +4,17 @@ namespace Maestro.Core.Model;
 
 public static class SequenceExtensionMethods
 {
-    public static void RepositionByEstimate(this Sequence sequence, Flight flight, bool displaceStableFlights = false)
+    public static void RepositionByEstimate(
+        this Sequence sequence,
+        Flight flight,
+        bool displaceStableFlights = false)
     {
         var earliestIndex = 0;
         if (!displaceStableFlights)
         {
             earliestIndex = sequence.FindLastIndex(f =>
                 f.State is not State.Unstable and not State.Stable &&
-                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier);
+                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier) + 1;
         }
 
         var newIndex = sequence.FindIndex(
@@ -20,7 +23,7 @@ public static class SequenceExtensionMethods
                  f.LandingEstimate.IsAfter(flight.LandingEstimate));
 
         if (newIndex == -1)
-            newIndex = sequence.Flights.Count;
+            newIndex = Math.Max(earliestIndex, sequence.Flights.Count);
 
         sequence.Move(flight, newIndex, displaceStableFlights);
     }

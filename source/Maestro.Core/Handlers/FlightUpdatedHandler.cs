@@ -118,13 +118,13 @@ public class FlightUpdatedHandler(
                         // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
                         var earliestInsertionIndex = instance.Session.Sequence.FindLastIndex(f =>
                             f.State is not State.Unstable and not State.Stable &&
-                            f.AssignedRunwayIdentifier == runway.Identifier);
+                            f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
                         var insertionIndex = instance.Session.Sequence.FindIndex(
                             Math.Max(earliestInsertionIndex, 0),
                             f => f.LandingEstimate.IsAfter(landingEstimate));
                         if (insertionIndex == -1)
-                            insertionIndex = instance.Session.Sequence.Flights.Count;
+                            insertionIndex = Math.Max(earliestInsertionIndex, instance.Session.Sequence.Flights.Count);
 
                         flight = CreateMaestroFlight(
                             notification,

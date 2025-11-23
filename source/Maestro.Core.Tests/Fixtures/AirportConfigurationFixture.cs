@@ -128,7 +128,7 @@ public class AirportConfigurationFixture
                     ViewMode = ViewMode.Enroute
                 }
             ],
-            FeederFixes = ["RIVET", "WELSH"],
+            FeederFixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
             PreferredRunways = new Dictionary<string, string[]> {
                 {"RIVET", ["34L", "16R"]},
                 {"WELSH", ["34L", "16R"]},
