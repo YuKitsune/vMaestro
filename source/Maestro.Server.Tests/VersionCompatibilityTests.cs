@@ -59,6 +59,22 @@ public class VersionCompatibilityTests
     }
 
     [Theory]
+    [InlineData("1.0.0 abc123", "1.0.0", true)]
+    [InlineData("1.0.0", "1.0.0 def456", true)]
+    [InlineData("1.0.0 abc123", "1.0.0 def456", true)]
+    [InlineData("1.2.3 githash", "1.2.5 otherhash", true)]
+    [InlineData("1.0.0-beta.1 abc123", "1.0.0-beta.1", true)]
+    [InlineData("1.0.0-beta.1 abc123", "1.0.0-beta.1 def456", true)]
+    public void IsCompatible_ShouldIgnoreSpaceSeparatedMetadata(
+        string clientVersion,
+        string serverVersion,
+        bool expected)
+    {
+        var result = VersionCompatibility.IsCompatible(clientVersion, serverVersion);
+        result.ShouldBe(expected);
+    }
+
+    [Theory]
     [InlineData("1.0.0-beta", "1.0.0-beta", true)]
     [InlineData("1.0.0-alpha.1", "1.0.0-alpha.1", true)]
     [InlineData("2.3.4-rc.2", "2.3.4-rc.2", true)]

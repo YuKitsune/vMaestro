@@ -22,10 +22,14 @@ public static class VersionCompatibility
 
     static (int Major, int Minor, int Patch, string? PreRelease) ParseVersion(string version)
     {
-        // Strip build metadata (e.g., "+abc123")
+        // Strip build metadata (e.g., "+abc123" or space-separated hash)
         var metadataIndex = version.IndexOf('+');
         if (metadataIndex >= 0)
             version = version.Substring(0, metadataIndex);
+
+        var spaceIndex = version.IndexOf(' ');
+        if (spaceIndex >= 0)
+            version = version.Substring(0, spaceIndex);
 
         // Extract pre-release label (e.g., "-beta.1")
         string? preRelease = null;
