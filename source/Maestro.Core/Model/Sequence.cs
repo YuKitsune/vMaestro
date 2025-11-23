@@ -351,6 +351,12 @@ public class Sequence
         {
             for (var i = 0; i < sequence.Count; i++)
             {
+                // Compare landing estimate if the flight hasn't been scheduled yet
+                if (sequence[i] is FlightSequenceItem flightItem &&
+                    flightItem.Flight.LandingTime == DateTimeOffset.MinValue &&
+                    time <= flightItem.Flight.LandingEstimate)
+                    return i;
+
                 if (time > sequence[i].Time)
                     continue;
 

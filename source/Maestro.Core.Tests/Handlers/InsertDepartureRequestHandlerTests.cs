@@ -53,88 +53,253 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     [Fact]
     public async Task LandingEstimateIsDerivedFromTakeOffTime()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Create a flight with a specific estimated enroute time
-        // TODO: Add the flight to the pending list
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(45);
+        var takeoffTime = now.AddMinutes(5);
+        var expectedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime);
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(estimatedEnrouteTime)
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(60)) // Initial estimate, should be updated
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
 
         // Act
-        // TODO: Insert the flight with a specific take-off time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the landing estimate is correctly calculated based on the take-off time and enroute time
+        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate,
+            "landing estimate should be calculated from takeoff time + EET");
     }
 
     [Fact]
     public async Task WhenAFlightIsInserted_WithATakeOffTime_ItIsInsertedBasedOnItsCalculatedLandingEstimate()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Create a flight with a specific estimated enroute time
-        // TODO: Add the flight to the pending list
-        // TODO: Create two flights in the sequence with landing estimates before and after the calculated landing estimate of the inserted flight
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(30);
+        var takeoffTime = now.AddMinutes(5);
+        var calculatedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime); // now + 35 minutes
+
+        // Create flights in sequence at T+20 and T+50
+        var flight1 = new FlightBuilder("QFA456")
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(20))
+            .WithFeederFixEstimate(now.AddMinutes(8))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA789")
+            .WithLandingEstimate(now.AddMinutes(50))
+            .WithLandingTime(now.AddMinutes(50))
+            .WithFeederFixEstimate(now.AddMinutes(38))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(estimatedEnrouteTime)
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(60))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
 
         // Act
-        // TODO: Insert the flight with a specific take-off time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the flight is inserted in the correct position based on its calculated landing estimate
+        // The flight should be inserted between flight1 (T+20) and flight2 (T+50) based on its estimate (T+35)
+        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA456 should be first in sequence");
+        sequence.NumberInSequence(pendingFlight).ShouldBe(2, "QFA123 should be second in sequence based on its landing estimate");
+        sequence.NumberInSequence(flight2).ShouldBe(3, "QFA789 should be third in sequence");
     }
 
     [Fact]
     public async Task WhenAFlightIsInserted_WithATakeOffTime_RunwayIsAssignedByFeederPreference()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Add a flight to the pending list
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(30);
+        var takeoffTime = now.AddMinutes(5);
+
+        // Flight with BOREE feeder fix should prefer 34R runway (not 34L which is the default)
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(estimatedEnrouteTime)
+            .WithFeederFix("BOREE")
+            .WithLandingEstimate(now.AddMinutes(60))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
 
         // Act
-        // TODO: Insert the flight with a specific take-off time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the runway is assigned based on the feeder preference
+        // BOREE prefers 34R in the 34IVA runway mode (not the default 34L)
+        pendingFlight.AssignedRunwayIdentifier.ShouldBe("34R",
+            "runway should be assigned based on BOREE feeder fix preference for 34R");
     }
 
     [Fact]
     public async Task WhenAFlightIsInserted_WithATakeOffTime_RunwayIsAssignedByModeAtLandingEstimate()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Add a flight to the pending list
-        // TODO: Change the runway mode before the landing estimate (from 34R to 16L, 5 minutes before landing estimate)
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(30);
+        var takeoffTime = now.AddMinutes(5);
+        var calculatedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime); // now + 35 minutes
+
+        // Flight with BOREE feeder fix (prefers 34R in 34IVA mode, or 16L in 16IVA mode)
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(estimatedEnrouteTime)
+            .WithFeederFix("BOREE")
+            .WithLandingEstimate(now.AddMinutes(60))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        // Change runway mode to 16IVA starting at T+30 (before the landing estimate at T+35)
+        sequence.ChangeRunwayMode(
+            new RunwayMode(new RunwayModeDto(
+            "16IVA",
+            new Dictionary<string, int>
+            {
+                { "16L", 180 },
+                { "16R", 180 }
+            })),
+            now.AddMinutes(25),
+            now.AddMinutes(30));
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
 
         // Act
-        // TODO: Insert the flight with a specific take-off time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the runway is assigned based on the mode at the calculated landing estimate
+
+        // BOREE prefers 16L in the 16IVA runway mode (not 16R)
+        pendingFlight.AssignedRunwayIdentifier.ShouldBe("16L",
+            "runway should be assigned based on BOREE feeder fix preference in 16IVA mode at landing estimate");
     }
 
     [Fact]
     public async Task WhenAFlightIsInserted_WithATakeOffTime_AndTheLandingEstimateIsBeforeAStableFlight_StableFlightIsDelayed()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Add a flight to the pending list
-        // TODO: Add two stable flights to the sequence landing before and after the calculated landing estimate of the inserted flight
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(20);
+        var takeoffTime = now.AddMinutes(5);
+        var calculatedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime); // now + 25 minutes
+
+        // Create two stable flights, one before (T+15) and one after (T+20) the calculated landing estimate
+        var stableFlight1 = new FlightBuilder("QFA456")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithFeederFixEstimate(now.AddMinutes(3))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var stableFlight2 = new FlightBuilder("QFA789")
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(18))
+            .WithFeederFixEstimate(now.AddMinutes(8))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(estimatedEnrouteTime)
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(60))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(stableFlight1, stableFlight2))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
 
         // Act
-        // TODO: Insert the flight with a specific take-off time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the landing order is correct (Stabled flight, Inserted flight, Stabled flight)
-        // TODO: Assert that the first stable flight is unaffected
-        // TODO: Assert that the second stable flight is delayed to maintain separation with the inserted flight
+        // The landing order should be: stableFlight1, pendingFlight, stableFlight2
+        sequence.NumberInSequence(stableFlight1).ShouldBe(1, "QFA456 should be first in sequence");
+        sequence.NumberInSequence(pendingFlight).ShouldBe(2, "QFA123 should be second in sequence");
+        sequence.NumberInSequence(stableFlight2).ShouldBe(3, "QFA789 should be third in sequence");
+
+        // The first stable flight should be unaffected
+        stableFlight1.LandingTime.ShouldBe(now.AddMinutes(15),
+            "QFA456 should remain at its original landing time");
+
+        // The second stable flight should be delayed to maintain separation with the inserted flight
+        stableFlight2.LandingTime.ShouldBe(pendingFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            "QFA789 should be delayed to maintain separation behind QFA123");
     }
 
     [Theory]
@@ -142,20 +307,57 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     [InlineData(State.Frozen)]
     public async Task WhenAFlightIsInserted_WithATakeOffTime_AndTheLandingEstimateIsBeforeASuperStableFlight_InsertedFlightIsDelayed(State state)
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Add a flight to the pending list
-        // TODO: Add a flight with the provided state to the sequence landing after the calculated landing estimate of the inserted flight
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(20);
+        var takeoffTime = now.AddMinutes(5);
+        var calculatedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime); // now + 25 minutes
+
+        // Create a superstable/frozen flight at T+30 (after the calculated landing estimate at T+25)
+        var superStableFlight = new FlightBuilder("QFA456")
+            .WithLandingEstimate(now.AddMinutes(30))
+            .WithLandingTime(now.AddMinutes(30))
+            .WithFeederFixEstimate(now.AddMinutes(18))
+            .WithState(state)
+            .WithRunway("34L")
+            .Build();
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(estimatedEnrouteTime)
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(60))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(superStableFlight))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
 
         // Act
-        // TODO: Insert the flight with a specific take-off time
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the landing order is correct (Existing flight, Inserted flight)
-        // TODO: Assert that the existing flight is unaffected
-        // TODO: Assert that the inserted flight is delayed to maintain separation with the existing flight
+        // The landing order should be: superStableFlight, pendingFlight
+        sequence.NumberInSequence(superStableFlight).ShouldBe(1, "QFA456 should be first in sequence");
+        sequence.NumberInSequence(pendingFlight).ShouldBe(2, "QFA123 should be second in sequence");
+
+        // The superstable/frozen flight should be unaffected
+        superStableFlight.LandingTime.ShouldBe(now.AddMinutes(30),
+            "QFA456 should remain at its original landing time");
+
+        // The inserted flight should be delayed and positioned after the superstable/frozen flight
+        pendingFlight.LandingTime.ShouldBe(superStableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            "QFA123 should be delayed to land after QFA456 with proper separation");
     }
 
     [Fact]
@@ -458,7 +660,7 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingEstimate(now.AddMinutes(11))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
             .Build();
@@ -546,25 +748,56 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     [Fact]
     public async Task RedirectedToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
-        // TODO: Add a flight to the pending list
+        var now = clockFixture.Instance.UtcNow();
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(TimeSpan.FromMinutes(30))
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(60))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new InsertDepartureRequestHandler(
+            Substitute.For<IAirportConfigurationProvider>(),
+            instanceManager,
+            slaveConnectionManager,
+            Substitute.For<IArrivalLookup>(),
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new ExactInsertionOptions(now.AddMinutes(20), ["34L"]));
 
         // Act
-        // TODO: Insert the flight
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
+        slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
+        sequence.Flights.ShouldNotContain(pendingFlight, "Flight should not be inserted locally when relaying to master");
     }
 
     InsertDepartureRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, IClock clock)
     {
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
         var mediator = Substitute.For<IMediator>();
         return new InsertDepartureRequestHandler(
-            Substitute.For<IAirportConfigurationProvider>(),
+            airportConfigurationProvider,
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),

@@ -40,93 +40,95 @@ public class InsertDepartureRequestHandler(
             var sequence = instance.Session.Sequence;
 
             var flight = instance.Session.PendingFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
-        if (flight is null)
-        {
-            // TODO: Confirm what should happen in this case
-            // The UI seems to accept manual input
-            // Maybe use Aircraft type to determine a speed and figure out a landing time from there?
-            throw new MaestroException($"{request.Callsign} was not found in the pending list.");
-        }
-
-        if (!flight.IsFromDepartureAirport)
-            throw new MaestroException($"{request.Callsign} is not from a departure airport.");
-
-        int index;
-        Runway runway;
-
-        switch (request.Options)
-        {
-            case ExactInsertionOptions landingTimeOption:
+            if (flight is null)
             {
-                var runwayMode = sequence.GetRunwayModeAt(landingTimeOption.TargetLandingTime);
-                runway = runwayMode.Runways.FirstOrDefault(r =>
-                             landingTimeOption.RunwayIdentifiers.Contains(r.Identifier))
-                         ?? runwayMode.Default;
-
-                index = sequence.IndexOf(landingTimeOption.TargetLandingTime);
-                break;
+                // TODO: Confirm what should happen in this case
+                // The UI seems to accept manual input
+                // Maybe use Aircraft type to determine a speed and figure out a landing time from there?
+                throw new MaestroException($"{request.Callsign} was not found in the pending list.");
             }
 
-            case RelativeInsertionOptions relativeInsertionOptions:
+            if (!flight.IsFromDepartureAirport)
+                throw new MaestroException($"{request.Callsign} is not from a departure airport.");
+
+            int index;
+            Runway runway;
+
+            switch (request.Options)
             {
-                var referenceFlight = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
-                if (referenceFlight is null)
-                    throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
-
-                var referenceIndex = sequence.IndexOf(referenceFlight);
-                if (referenceIndex == -1)
-                    throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
-
-                var insertionIndex = relativeInsertionOptions.Position switch
+                case ExactInsertionOptions landingTimeOption:
                 {
-                    RelativePosition.Before => referenceIndex,
-                    RelativePosition.After => referenceIndex + 1,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                    var runwayMode = sequence.GetRunwayModeAt(landingTimeOption.TargetLandingTime);
+                    runway = runwayMode.Runways.FirstOrDefault(r =>
+                                 landingTimeOption.RunwayIdentifiers.Contains(r.Identifier))
+                             ?? runwayMode.Default;
 
-                var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
-                runway =
-                    runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier)
-                    ?? runwayMode.Default;
+                    index = sequence.IndexOf(landingTimeOption.TargetLandingTime);
+                    break;
+                }
 
-                index = insertionIndex;
-                break;
+                case RelativeInsertionOptions relativeInsertionOptions:
+                {
+                    var referenceFlight = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
+                    if (referenceFlight is null)
+                        throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
+
+                    var referenceIndex = sequence.IndexOf(referenceFlight);
+                    if (referenceIndex == -1)
+                        throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
+
+                    var insertionIndex = relativeInsertionOptions.Position switch
+                    {
+                        RelativePosition.Before => referenceIndex,
+                        RelativePosition.After => referenceIndex + 1,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+
+                    var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
+                    runway =
+                        runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier)
+                        ?? runwayMode.Default;
+
+                    index = insertionIndex;
+                    break;
+                }
+
+                case DepartureInsertionOptions departureInsertionOptions:
+                {
+                    if (flight.EstimatedTimeEnroute is null)
+                        throw new MaestroException($"{request.Callsign} has no EET");
+
+                    var landingEstimate = departureInsertionOptions.TakeoffTime.Add(flight.EstimatedTimeEnroute.Value);
+                    flight.UpdateLandingEstimate(landingEstimate);
+
+
+                    // TODO: We do this a lot, extract this into a separate service
+                    var airportConfiguration = airportConfigurationProvider
+                        .GetAirportConfigurations()
+                        .SingleOrDefault(a => a.Identifier == request.AirportIdentifier);
+                    if (airportConfiguration is null)
+                        throw new MaestroException($"Couldn't find airport configuration for {request.AirportIdentifier}");
+
+                    var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
+                    runway = FindBestRunway(airportConfiguration, runwayMode, flight.FeederFixIdentifier);
+
+                    // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
+                    var earliestInsertionIndex = sequence.FindLastIndex(f =>
+                        f.State is not State.Unstable and not State.Stable &&
+                        f.AssignedRunwayIdentifier == runway.Identifier) + 1;
+
+                    index = sequence.FindIndex(
+                        earliestInsertionIndex,
+                        f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
+
+                    index = Math.Max(earliestInsertionIndex, index);
+
+                    break;
+                }
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-
-            case DepartureInsertionOptions departureInsertionOptions:
-            {
-                if (flight.EstimatedTimeEnroute is null)
-                    throw new MaestroException($"{request.Callsign} has no EET");
-
-                var landingEstimate = departureInsertionOptions.TakeoffTime.Add(flight.EstimatedTimeEnroute.Value);
-                flight.UpdateLandingEstimate(landingEstimate);
-
-                var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
-
-                // TODO: We do this a lot, extract this into a separate service
-                var airportConfiguration = airportConfigurationProvider
-                    .GetAirportConfigurations()
-                    .SingleOrDefault(a => a.Identifier == request.AirportIdentifier);
-                if (airportConfiguration is null)
-                    throw new MaestroException($"Couldn't find airport configuration for {request.AirportIdentifier}");
-
-                runway = FindBestRunway(airportConfiguration, runwayMode, flight.FeederFixIdentifier);
-
-                // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
-                var earliestInsertionIndex = sequence.FindLastIndex(f =>
-                    f.State is not State.Unstable and not State.Stable &&
-                    f.AssignedRunwayIdentifier == runway.Identifier) + 1;
-
-                index = sequence.FindIndex(
-                    earliestInsertionIndex,
-                    f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
-
-                break;
-            }
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
 
             flight.SetRunway(runway.Identifier, manual: true);
             sequence.Insert(index, flight);
