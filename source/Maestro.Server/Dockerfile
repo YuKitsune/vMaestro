@@ -13,19 +13,26 @@ RUN npm run build
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["source/Maestro.Server/Maestro.Server.csproj", "Maestro.Server/"]
-RUN dotnet restore "Maestro.Server/Maestro.Server.csproj"
-COPY source .
-WORKDIR "/src/Maestro.Server"
-RUN dotnet build "./Maestro.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR /repo
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Maestro.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Copy build system files
+COPY [".nuke", ".nuke/"]
+COPY ["build.sh", "build.cmd", "build.ps1", "./"]
+COPY ["source/build/", "source/build/"]
+
+# Copy git repository for GitVersion
+COPY [".git", ".git/"]
+
+# Copy source code
+COPY ["source/", "source/"]
+
+# Run NUKE build to publish server with proper versioning
+RUN chmod +x build.sh && \
+    ./build.sh PublishServer --configuration $BUILD_CONFIGURATION
 
 FROM base AS final
+ARG BUILD_CONFIGURATION=Release
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /repo/source/Maestro.Server/bin/${BUILD_CONFIGURATION}/net9.0/publish .
 COPY --from=docs-build /docs/build ./wwwroot
 ENTRYPOINT ["dotnet", "Maestro.Server.dll"]

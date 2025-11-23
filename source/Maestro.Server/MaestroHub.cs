@@ -1,3 +1,4 @@
+using Maestro.Core;
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
@@ -10,6 +11,8 @@ namespace Maestro.Server;
 
 public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 {
+    static readonly string ServerVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroHub).Assembly);
+
     public async Task SessionUpdated(SessionUpdatedNotification sessionUpdatedNotification)
     {
         await mediator.Publish(new NotificationContextWrapper<SessionUpdatedNotification>(Context.ConnectionId, sessionUpdatedNotification));
@@ -133,28 +136,40 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 
         // TODO: HTTP 400 if missing parameters
 
+        var clientVersion = httpContext.Request.Query["version"].FirstOrDefault();
+        if (string.IsNullOrEmpty(clientVersion))
+        {
+            logger.Warning("{ConnectionId} attempted to connect without a version", Context.ConnectionId);
+            throw new HubException("Connection rejected: Client version not provided");
+        }
+
+        if (!VersionCompatibility.IsCompatible(clientVersion, ServerVersion))
+        {
+            logger.Warning(
+                "{ConnectionId} attempted to connect with incompatible version {ClientVersion} (server version: {ServerVersion})",
+                Context.ConnectionId, clientVersion, ServerVersion);
+            throw new HubException($"Incompatible version. Client version: {clientVersion}, Server version: {ServerVersion}");
+        }
+
         var partition = httpContext.Request.Query["partition"].FirstOrDefault();
         if (string.IsNullOrEmpty(partition))
         {
             logger.Warning("{ConnectionId} attempted to connect with an empty partition", Context.ConnectionId);
-            Context.Abort();
-            return;
+            throw new HubException("Connection rejected: Partition not provided");
         }
 
         var airportIdentifier = httpContext.Request.Query["airportIdentifier"].FirstOrDefault();
         if (string.IsNullOrEmpty(airportIdentifier))
         {
             logger.Warning("{ConnectionId} attempted to connect with an empty airport identifier", Context.ConnectionId);
-            Context.Abort();
-            return;
+            throw new HubException("Connection rejected: Airport identifier not provided");
         }
 
         var callsign = httpContext.Request.Query["callsign"].FirstOrDefault();
         if (string.IsNullOrEmpty(callsign))
         {
             logger.Warning("{ConnectionId} attempted to connect with an empty callsign", Context.ConnectionId);
-            Context.Abort();
-            return;
+            throw new HubException("Connection rejected: Callsign not provided");
         }
 
         var roleString = httpContext.Request.Query["role"].FirstOrDefault();
@@ -165,7 +180,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
             return;
         }
 
-        logger.Information("{ConnectionId} connected", Context.ConnectionId);
+        logger.Information("{ConnectionId} connected with version {ClientVersion}", Context.ConnectionId, clientVersion);
 
         var request = new ConnectRequest(
             partition,

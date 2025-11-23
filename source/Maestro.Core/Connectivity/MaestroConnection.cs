@@ -51,8 +51,10 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 
         Role = RoleHelper.GetRoleFromCallsign(callsign);
 
+        var clientVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroConnection).Assembly);
+
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(_serverConfiguration.Uri + $"?partition={Partition}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}")
+            .WithUrl(_serverConfiguration.Uri + $"?partition={Partition}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}&version={clientVersion}")
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
@@ -417,7 +419,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             }
 
             IsMaster = true;
-            await _mediator.Publish(new ConnectionStoppedNotification(_airportIdentifier), CancellationToken.None);
+            await _mediator.Send(new DestroyConnectionRequest(_airportIdentifier), CancellationToken.None);
         };
 
         hubConnection.Reconnecting += async exception =>

@@ -1,9 +1,12 @@
+using System.Reflection;
+using Maestro.Core;
 using Maestro.Server;
 using Maestro.Server.Handlers;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json.Serialization;
 using Serilog;
+using AssemblyMarker = Maestro.Server.AssemblyMarker;
 
 var loggerConfig = new LoggerConfiguration()
     .WriteTo.Console();
@@ -15,6 +18,11 @@ if (!string.IsNullOrEmpty(seqServerUrl))
 }
 
 Log.Logger = loggerConfig.CreateLogger();
+
+// Log version information at startup
+var assembly = Assembly.GetExecutingAssembly();
+var version = AssemblyVersionHelper.GetVersion(assembly);
+Log.Information("Starting Maestro.Server version {Version}", version);
 
 // TODO: Basic web UI with supervisor functions
 //  - View connected users
