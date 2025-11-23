@@ -186,10 +186,10 @@
 
 ## Resume
 
-- [ ] When resuming a flight, it is removed from the de-sequenced list and inserted into the sequence
-- [ ] When resuming a flight, it is inserted based on it's ETA
-- [ ] When resuming a flight, and it's ETA places it between two frozen flights with insufficient space, it is delayed until after the frozen flights
-- [ ] When resuming a flight, and we are in slave mode, the request is relayed to the master
+- [X] When resuming a flight, it is removed from the de-sequenced list and inserted into the sequence
+- [X] When resuming a flight, it is inserted based on it's ETA
+- [X] When resuming a flight, and it's ETA places it between two frozen flights with insufficient space, it is delayed until after the frozen flights
+- [X] When resuming a flight, and we are in slave mode, the request is relayed to the master
 
 ## Swap Flights
 
