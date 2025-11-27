@@ -7,9 +7,9 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class RelayRequestHandler(IMaestroConnectionManager connectionManager, ServerConfiguration serverConfiguration, IMediator mediator, ILogger logger)
-    : IRequestHandler<RelayRequest, RelayResponse>
+    : IRequestHandler<RelayRequest, ServerResponse>
 {
-    public async Task<RelayResponse> Handle(RelayRequest request, CancellationToken cancellationToken)
+    public async Task<ServerResponse> Handle(RelayRequest request, CancellationToken cancellationToken)
     {
         var envelope = request.Envelope;
         var actionKey = request.ActionKey;
@@ -22,11 +22,11 @@ public class RelayRequestHandler(IMaestroConnectionManager connectionManager, Se
         if (string.IsNullOrEmpty(airportIdentifier))
         {
             logger.Warning("Could not determine airport identifier from request {RequestType}", request.Envelope.Request.GetType().Name);
-            return RelayResponse.CreateFailure("Could not determine airport identifier from request");
+            return ServerResponse.CreateFailure("Could not determine airport identifier from request");
         }
 
         if (!connectionManager.TryGetConnection(airportIdentifier, out var connection))
-            return RelayResponse.CreateFailure($"Could not find connection for {airportIdentifier}");
+            return ServerResponse.CreateFailure($"Could not find connection for {airportIdentifier}");
 
         // Check if the originating user has permission to perform this action
         // TODO: Consider moving this into each handler, and adding the sender details to all requests
@@ -35,7 +35,7 @@ public class RelayRequestHandler(IMaestroConnectionManager connectionManager, Se
             logger.Warning("{Callsign} attempted {ActionKey} but does not have permission (Role: {Role})",
                 envelope.OriginatingCallsign, actionKey, envelope.OriginatingRole);
 
-            return RelayResponse.CreateFailure($"{envelope.OriginatingRole} cannot perform {actionKey}");
+            return ServerResponse.CreateFailure($"{envelope.OriginatingRole} cannot perform {actionKey}");
         }
 
         // Permission granted - unwrap and forward the request to the appropriate handler
@@ -45,12 +45,12 @@ public class RelayRequestHandler(IMaestroConnectionManager connectionManager, Se
         try
         {
             await mediator.Send(envelope.Request, cancellationToken);
-            return RelayResponse.CreateSuccess();
+            return ServerResponse.CreateSuccess();
         }
         catch (Exception ex)
         {
             logger.Error(ex, "Failed to process {ActionKey} from {Callsign}", actionKey, envelope.OriginatingCallsign);
-            return RelayResponse.CreateFailure($"Failed to process {actionKey}: {ex.Message}");
+            return ServerResponse.CreateFailure($"Failed to process {actionKey}: {ex.Message}");
         }
     }
 

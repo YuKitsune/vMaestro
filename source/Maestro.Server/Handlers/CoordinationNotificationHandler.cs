@@ -6,12 +6,12 @@ using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
-public class CoordinationNotificationHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
-    : INotificationHandler<NotificationContextWrapper<CoordinationNotification>>
+public class SendCoordinationMessageRequestHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
+    : IRequestHandler<RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>, ServerResponse>
 {
-    public async Task Handle(NotificationContextWrapper<CoordinationNotification> wrappedNotification, CancellationToken cancellationToken)
+    public async Task<ServerResponse> Handle(RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse> wrappedRequest, CancellationToken cancellationToken)
     {
-        var (connectionId, notification) = wrappedNotification;
+        var (connectionId, request) = wrappedRequest;
 
         if (!connectionManager.TryGetConnection(connectionId, out var connection))
         {
@@ -20,12 +20,17 @@ public class CoordinationNotificationHandler(IConnectionManager connectionManage
 
         if (connection.Role == Role.Observer)
         {
-            logger.Information("{Connection} is an observer; skipping coordination message: {Message}",
-                connection, notification.Message);
-            return;
+            return ServerResponse.CreateFailure("Observers cannot send coordination messages");
         }
 
         var peers = connectionManager.GetPeers(connection);
+
+        var notification = new CoordinationMessageReceivedNotification(
+            request.AirportIdentifier,
+            request.Time,
+            connection.Callsign,
+            request.Message,
+            request.Destination);
 
         switch (notification.Destination)
         {
@@ -35,7 +40,7 @@ public class CoordinationNotificationHandler(IConnectionManager connectionManage
 
                 foreach (var peer in peers)
                 {
-                    await hubProxy.Send(peer.Id, "Coordination", notification, cancellationToken);
+                    await hubProxy.Send(peer.Id, "CoordinationMessageReceived", notification, cancellationToken);
                 }
 
                 break;
@@ -48,7 +53,7 @@ public class CoordinationNotificationHandler(IConnectionManager connectionManage
                     logger.Information("{Connection} sending coordination message to {Target}: {Message}",
                         connection, targetPeer, notification.Message);
 
-                    await hubProxy.Send(targetPeer.Id, "Coordination", notification, cancellationToken);
+                    await hubProxy.Send(targetPeer.Id, "CoordinationMessageReceived", notification, cancellationToken);
                 }
                 else
                 {
@@ -60,5 +65,7 @@ public class CoordinationNotificationHandler(IConnectionManager connectionManage
             default:
                 throw new InvalidOperationException($"Unknown destination type: {notification.Destination.GetType().Name}");
         }
+
+        return ServerResponse.CreateSuccess();
     }
 }

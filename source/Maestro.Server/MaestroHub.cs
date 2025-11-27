@@ -23,105 +23,105 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         await mediator.Publish(new NotificationContextWrapper<FlightUpdatedNotification>(Context.ConnectionId, flightUpdatedNotification));
     }
 
-    public async Task Coordination(CoordinationNotification coordinationNotification)
+    public async Task<ServerResponse> SendCoordinationMessage(SendCoordinationMessageRequest coordinationRequest)
     {
-        await mediator.Publish(new NotificationContextWrapper<CoordinationNotification>(Context.ConnectionId, coordinationNotification));
+        return await mediator.Send(new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(Context.ConnectionId, coordinationRequest));
     }
 
-    public async Task<RelayResponse> InsertFlight(InsertFlightRequest request)
+    public async Task<ServerResponse> InsertFlight(InsertFlightRequest request)
     {
         return await RelayToMaster("InsertFlight", request);
     }
 
-    public async Task<RelayResponse> InsertOvershoot(InsertOvershootRequest request)
+    public async Task<ServerResponse> InsertOvershoot(InsertOvershootRequest request)
     {
         return await RelayToMaster("InsertOvershoot", request);
     }
 
-    public async Task<RelayResponse> InsertDeparture(InsertDepartureRequest request)
+    public async Task<ServerResponse> InsertDeparture(InsertDepartureRequest request)
     {
         return await RelayToMaster("InsertDeparture", request);
     }
 
-    public async Task<RelayResponse> MoveFlight(MoveFlightRequest request)
+    public async Task<ServerResponse> MoveFlight(MoveFlightRequest request)
     {
         return await RelayToMaster("MoveFlight", request);
     }
 
-    public async Task<RelayResponse> SwapFlights(SwapFlightsRequest request)
+    public async Task<ServerResponse> SwapFlights(SwapFlightsRequest request)
     {
         return await RelayToMaster("SwapFlights", request);
     }
 
-    public async Task<RelayResponse> Remove(RemoveRequest request)
+    public async Task<ServerResponse> Remove(RemoveRequest request)
     {
         return await RelayToMaster("Remove", request);
     }
 
-    public async Task<RelayResponse> Desequence(DesequenceRequest request)
+    public async Task<ServerResponse> Desequence(DesequenceRequest request)
     {
         return await RelayToMaster("Desequence", request);
     }
 
-    public async Task<RelayResponse> MakePending(MakePendingRequest request)
+    public async Task<ServerResponse> MakePending(MakePendingRequest request)
     {
         return await RelayToMaster("MakePending", request);
     }
 
-    public async Task<RelayResponse> MakeStable(MakeStableRequest request)
+    public async Task<ServerResponse> MakeStable(MakeStableRequest request)
     {
         return await RelayToMaster("MakeStable", request);
     }
 
-    public async Task<RelayResponse> Recompute(RecomputeRequest request)
+    public async Task<ServerResponse> Recompute(RecomputeRequest request)
     {
         return await RelayToMaster("Recompute", request);
     }
 
-    public async Task<RelayResponse> ResumeSequencing(ResumeSequencingRequest request)
+    public async Task<ServerResponse> ResumeSequencing(ResumeSequencingRequest request)
     {
         return await RelayToMaster("ResumeSequencing", request);
     }
 
-    public async Task<RelayResponse> ManualDelay(ManualDelayRequest request)
+    public async Task<ServerResponse> ManualDelay(ManualDelayRequest request)
     {
         return await RelayToMaster("ManualDelay", request);
     }
 
-    public async Task<RelayResponse> ChangeRunway(ChangeRunwayRequest request)
+    public async Task<ServerResponse> ChangeRunway(ChangeRunwayRequest request)
     {
         return await RelayToMaster("ChangeRunway", request);
     }
 
-    public async Task<RelayResponse> ChangeRunwayMode(ChangeRunwayModeRequest request)
+    public async Task<ServerResponse> ChangeRunwayMode(ChangeRunwayModeRequest request)
     {
         return await RelayToMaster("ChangeRunwayMode", request);
     }
 
-    public async Task<RelayResponse> ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)
+    public async Task<ServerResponse> ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)
     {
         return await RelayToMaster("ChangeFeederFixEstimate", request);
     }
 
-    public async Task<RelayResponse> CreateSlot(CreateSlotRequest request)
+    public async Task<ServerResponse> CreateSlot(CreateSlotRequest request)
     {
         return await RelayToMaster("CreateSlot", request);
     }
 
-    public async Task<RelayResponse> ModifySlot(ModifySlotRequest request)
+    public async Task<ServerResponse> ModifySlot(ModifySlotRequest request)
     {
         return await RelayToMaster("ModifySlot", request);
     }
 
-    public async Task<RelayResponse> DeleteSlot(DeleteSlotRequest request)
+    public async Task<ServerResponse> DeleteSlot(DeleteSlotRequest request)
     {
         return await RelayToMaster("DeleteSlot", request);
     }
 
-    async Task<RelayResponse> RelayToMaster(string methodName, IRequest request)
+    async Task<ServerResponse> RelayToMaster(string methodName, IRequest request)
     {
         return await mediator.Send(
-            new RequestContextWrapper<RelayToMasterRequest, RelayResponse>(
+            new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(
                 Context.ConnectionId,
                 new RelayToMasterRequest(methodName, request)));
     }

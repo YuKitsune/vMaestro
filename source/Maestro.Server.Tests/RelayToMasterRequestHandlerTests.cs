@@ -17,7 +17,7 @@ public class RelayToMasterRequestHandlerTests
         const string connectionId = "unknown-connection";
         var testRequest = new TestRequest("test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
-        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, RelayResponse>(connectionId, relayRequest);
+        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny)).Returns(false);
@@ -39,7 +39,7 @@ public class RelayToMasterRequestHandlerTests
         const string connectionId = "master-connection";
         var testRequest = new TestRequest("test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
-        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, RelayResponse>(connectionId, relayRequest);
+        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
         var masterConnection = new Connection(connectionId, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
@@ -72,7 +72,7 @@ public class RelayToMasterRequestHandlerTests
         const string connectionId = "slave-connection";
         var testRequest = new TestRequest("test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
-        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, RelayResponse>(connectionId, relayRequest);
+        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
         var slaveConnection = new Connection(connectionId, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
         var peerConnections = new[]
@@ -112,13 +112,13 @@ public class RelayToMasterRequestHandlerTests
         const string masterConnectionId = "master-connection";
         var testRequest = new TestRequest("test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
-        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, RelayResponse>(connectionId, relayRequest);
+        var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
         var slaveConnection = new Connection(connectionId, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
         var masterConnection = new Connection(masterConnectionId, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
         var peerConnections = new[] { masterConnection };
 
-        var expectedResponse = RelayResponse.CreateSuccess();
+        var expectedResponse = ServerResponse.CreateSuccess();
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -130,7 +130,7 @@ public class RelayToMasterRequestHandlerTests
         connectionManager.Setup(x => x.GetPeers(slaveConnection)).Returns(peerConnections);
 
         var hubProxy = new Mock<IHubProxy>();
-        hubProxy.Setup(x => x.Invoke<RequestEnvelope, RelayResponse>(
+        hubProxy.Setup(x => x.Invoke<RequestEnvelope, ServerResponse>(
                 masterConnectionId,
                 "TestMethod",
                 It.IsAny<RequestEnvelope>(),
@@ -144,7 +144,7 @@ public class RelayToMasterRequestHandlerTests
         // Assert
         result.ShouldBe(expectedResponse);
 
-        hubProxy.Verify(x => x.Invoke<RequestEnvelope, RelayResponse>(
+        hubProxy.Verify(x => x.Invoke<RequestEnvelope, ServerResponse>(
             masterConnectionId,
             "TestMethod",
             It.Is<RequestEnvelope>(envelope =>
