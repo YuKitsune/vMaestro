@@ -22,7 +22,7 @@ public class SendCoordinationMessageRequestHandlerTests
             TestMessage,
             new CoordinationDestination.Broadcast());
 
-        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny)).Returns(false);
@@ -38,7 +38,7 @@ public class SendCoordinationMessageRequestHandlerTests
     }
 
     [Fact]
-    public async Task WhenSenderIsObserver_ExceptionIsThrown()
+    public async Task WhenSenderIsObserver_FailureIsReturned()
     {
         // Arrange
         const string connectionId = "observer-connection";
@@ -53,7 +53,7 @@ public class SendCoordinationMessageRequestHandlerTests
             TestMessage,
             new CoordinationDestination.Broadcast());
 
-        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -65,12 +65,13 @@ public class SendCoordinationMessageRequestHandlerTests
 
         var hubProxy = new Mock<IHubProxy>();
 
-        // Act & Assert
-        var exception = await Should.ThrowAsync<InvalidOperationException>(
-            async () => await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
-                .Handle(wrappedRequest, CancellationToken.None));
+        // Act
+        var result = await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+            .Handle(wrappedRequest, CancellationToken.None);
 
-        exception.Message.ShouldBe("Observers cannot send coordination messages");
+        // Assert
+        result.Success.ShouldBeFalse();
+        result.ErrorMessage.ShouldBe("Observers cannot send coordination messages");
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class SendCoordinationMessageRequestHandlerTests
             TestMessage,
             new CoordinationDestination.Broadcast());
 
-        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -107,10 +108,13 @@ public class SendCoordinationMessageRequestHandlerTests
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+        var result = await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
             .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
+        result.Success.ShouldBeTrue();
+        result.ErrorMessage.ShouldBeEmpty();
+
         // Sender should not receive their own message
         hubProxy.Verify(x => x.Send(
             senderConnection.Id,
@@ -160,7 +164,7 @@ public class SendCoordinationMessageRequestHandlerTests
             TestMessage,
             new CoordinationDestination.Controller(targetCallsign));
 
-        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -174,10 +178,13 @@ public class SendCoordinationMessageRequestHandlerTests
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+        var result = await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
             .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
+        result.Success.ShouldBeTrue();
+        result.ErrorMessage.ShouldBeEmpty();
+
         // Sender should not receive their own message
         hubProxy.Verify(x => x.Send(
             senderConnection.Id,
@@ -223,7 +230,7 @@ public class SendCoordinationMessageRequestHandlerTests
             TestMessage,
             new CoordinationDestination.Controller(targetCallsign));
 
-        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -237,10 +244,13 @@ public class SendCoordinationMessageRequestHandlerTests
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+        var result = await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
             .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
+        result.Success.ShouldBeTrue();
+        result.ErrorMessage.ShouldBeEmpty();
+
         hubProxy.Verify(x => x.Send(
             It.IsAny<string>(),
             "CoordinationMessageReceived",
@@ -266,7 +276,7 @@ public class SendCoordinationMessageRequestHandlerTests
             message,
             new CoordinationDestination.Broadcast());
 
-        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -280,10 +290,13 @@ public class SendCoordinationMessageRequestHandlerTests
         var hubProxy = new Mock<IHubProxy>();
 
         // Act
-        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+        var result = await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
             .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
+        result.Success.ShouldBeTrue();
+        result.ErrorMessage.ShouldBeEmpty();
+
         hubProxy.Verify(x => x.Send(
             It.IsAny<string>(),
             "CoordinationMessageReceived",

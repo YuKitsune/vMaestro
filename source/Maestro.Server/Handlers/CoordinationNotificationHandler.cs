@@ -7,9 +7,9 @@ using ILogger = Serilog.ILogger;
 namespace Maestro.Server.Handlers;
 
 public class SendCoordinationMessageRequestHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
-    : IRequestHandler<RequestContextWrapper<SendCoordinationMessageRequest>>
+    : IRequestHandler<RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>, ServerResponse>
 {
-    public async Task Handle(RequestContextWrapper<SendCoordinationMessageRequest> wrappedRequest, CancellationToken cancellationToken)
+    public async Task<ServerResponse> Handle(RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse> wrappedRequest, CancellationToken cancellationToken)
     {
         var (connectionId, request) = wrappedRequest;
 
@@ -20,7 +20,7 @@ public class SendCoordinationMessageRequestHandler(IConnectionManager connection
 
         if (connection.Role == Role.Observer)
         {
-            throw new InvalidOperationException("Observers cannot send coordination messages");
+            return ServerResponse.CreateFailure("Observers cannot send coordination messages");
         }
 
         var peers = connectionManager.GetPeers(connection);
@@ -65,5 +65,7 @@ public class SendCoordinationMessageRequestHandler(IConnectionManager connection
             default:
                 throw new InvalidOperationException($"Unknown destination type: {notification.Destination.GetType().Name}");
         }
+
+        return ServerResponse.CreateSuccess();
     }
 }
