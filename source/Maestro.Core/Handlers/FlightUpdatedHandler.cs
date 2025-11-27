@@ -95,8 +95,10 @@ public class FlightUpdatedHandler(
                         instance.Session.PendingFlights.Add(flight);
 
                         logger.Information("{Callsign} created (pending)", notification.Callsign);
-                        await mediator.Publish(new CoordinationMessageSentNotification(
+
+                        await mediator.Send(new SendCoordinationMessageRequest(
                             notification.Destination,
+                            clock.UtcNow(),
                             $"{notification.Callsign} added to pending list",
                             new CoordinationDestination.Broadcast()),
                             cancellationToken);

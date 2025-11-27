@@ -1,12 +1,12 @@
 using CommunityToolkit.Mvvm.Messaging;
+using Maestro.Core.Messages;
 using MediatR;
-using CoordinationNotification = Maestro.Core.Messages.CoordinationNotification;
 
 namespace Maestro.Wpf.Handlers;
 
-public class CoordinationNotificationHandler : INotificationHandler<CoordinationNotification>
+public class CoordinationNotificationHandler : INotificationHandler<CoordinationMessageReceivedNotification>
 {
-    public Task Handle(CoordinationNotification notification, CancellationToken cancellationToken)
+    public Task Handle(CoordinationMessageReceivedNotification notification, CancellationToken cancellationToken)
     {
         WeakReferenceMessenger.Default.Send(notification);
         return Task.CompletedTask;

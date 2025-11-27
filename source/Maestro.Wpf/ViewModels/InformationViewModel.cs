@@ -16,13 +16,13 @@ public partial class InformationViewModel : ObservableObject
     [ObservableProperty]
     string _messageText = string.Empty;
 
-    public InformationViewModel(string airportIdentifier, IWindowHandle windowHandle, CoordinationNotification initialNotification)
+    public InformationViewModel(string airportIdentifier, IWindowHandle windowHandle, CoordinationMessageReceivedNotification initialNotification)
     {
         _airportIdentifier = airportIdentifier;
         _windowHandle = windowHandle;
         AppendMessage(initialNotification);
 
-        WeakReferenceMessenger.Default.Register<CoordinationNotification>(this, (s, m) =>
+        WeakReferenceMessenger.Default.Register<CoordinationMessageReceivedNotification>(this, (s, m) =>
         {
             if (m.AirportIdentifier != _airportIdentifier)
                 return;
@@ -31,15 +31,16 @@ public partial class InformationViewModel : ObservableObject
         });
     }
 
-    void AppendMessage(CoordinationNotification notification)
+    void AppendMessage(CoordinationMessageReceivedNotification notification)
     {
+        var newMessageText = $"{notification.Sender} ({notification.Time:HH:mm:ss}): {notification.Message}";
         if (string.IsNullOrEmpty(MessageText))
         {
-            MessageText = $"{notification.Time:HH:mm:ss}: {notification.Message}";
+            MessageText = newMessageText;
         }
         else
         {
-            MessageText += Environment.NewLine + $"{notification.Time:HH:mm:ss}: {notification.Message}";
+            MessageText += Environment.NewLine + newMessageText;
         }
     }
 

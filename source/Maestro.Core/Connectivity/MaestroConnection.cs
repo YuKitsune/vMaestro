@@ -137,7 +137,6 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             // Notifications
             SessionUpdatedNotification => "SessionUpdated",
             FlightUpdatedNotification => "FlightUpdated",
-            CoordinationNotification => "Coordination",
 
             // Requests
             ChangeRunwayRequest => "ChangeRunway",
@@ -158,6 +157,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             CreateSlotRequest => "CreateSlot",
             ModifySlotRequest => "ModifySlot",
             DeleteSlotRequest => "DeleteSlot",
+            SendCoordinationMessageRequest => "SendCoordinationMessage",
             _ => throw new ArgumentOutOfRangeException(nameof(request), "Unsupported request type: " + request.GetType().Name)
         };
     }
@@ -220,7 +220,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             await _mediator.Publish(flightUpdatedNotification, GetMessageCancellationToken());
         });
 
-        hubConnection.On<CoordinationNotification>("Coordination", async coordinationNotification =>
+        hubConnection.On<CoordinationMessageReceivedNotification>("CoordinationMessageReceived", async coordinationNotification =>
         {
             if (coordinationNotification.AirportIdentifier != _airportIdentifier)
                 return;

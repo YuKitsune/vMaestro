@@ -23,9 +23,9 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         await mediator.Publish(new NotificationContextWrapper<FlightUpdatedNotification>(Context.ConnectionId, flightUpdatedNotification));
     }
 
-    public async Task Coordination(CoordinationNotification coordinationNotification)
+    public async Task SendCoordinationMessage(SendCoordinationMessageRequest coordinationRequest)
     {
-        await mediator.Publish(new NotificationContextWrapper<CoordinationNotification>(Context.ConnectionId, coordinationNotification));
+        await mediator.Send(new RequestContextWrapper<SendCoordinationMessageRequest>(Context.ConnectionId, coordinationRequest));
     }
 
     public async Task<RelayResponse> InsertFlight(InsertFlightRequest request)

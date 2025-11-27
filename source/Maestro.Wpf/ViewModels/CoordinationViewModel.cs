@@ -68,9 +68,10 @@ public partial class CoordinationViewModel : ObservableObject
                 ? new CoordinationDestination.Broadcast()
                 : new CoordinationDestination.Controller(SelectedDestination!);
 
-            await _mediator.Publish(
-                new CoordinationMessageSentNotification(
+            await _mediator.Send(
+                new SendCoordinationMessageRequest(
                     _airportIdentifier,
+                    DateTimeOffset.UtcNow, // TODO: Use a clock
                     SelectedMessage,
                     destination),
                 CancellationToken.None);
