@@ -135,8 +135,6 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         }
 
         // TODO: HTTP 400 if missing parameters
-
-#if RELEASE
         var clientVersion = httpContext.Request.Query["version"].FirstOrDefault();
         if (string.IsNullOrEmpty(clientVersion))
         {
@@ -144,6 +142,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
             throw new HubException("Connection rejected: Client version not provided");
         }
 
+#if RELEASE
         if (!VersionCompatibility.IsCompatible(clientVersion, ServerVersion))
         {
             logger.Warning(
