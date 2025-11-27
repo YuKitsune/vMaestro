@@ -513,6 +513,12 @@ public class Sequence
                 // Ensure manual delay flights aren't delayed by more than their maximum delay
                 if (currentFlight.MaximumDelay is not null)
                 {
+                    // TODO: When Sequence is made immutable, we should revisit this logic to avoid the swap
+                    // - From the handler, move the flight one position forward and calculate the delay
+                    // - If the delay exceeds maximum, move it back and try again
+                    // - Repeat the process until the flight is within its maximum delay, or cannot be moved any further forward
+                    // - Persist the sequence once completed
+
                     var totalDelay = landingTime - currentFlight.LandingEstimate;
 
                     // Zero delay flights can be delayed within the acceptance rate, but no more
@@ -564,6 +570,8 @@ public class Sequence
                 // If the next item in the sequence cannot be moved, move this flight behind it to ensure we don't conflict with it
                 if (nextItem is not null)
                 {
+                    // TODO: When Sequence is made immutable, we should revisit this logic to avoid the swap
+
                     var earliestTimeToTrailer = nextItem switch
                     {
                         FlightSequenceItem nextFlightItem => nextFlightItem.Flight.LandingTime.Subtract(runway.AcceptanceRate),
@@ -616,6 +624,8 @@ public class Sequence
                 Schedule(currentFlight, landingTime, flowControls, runway.Identifier);
 
                 // Preserve the order of the sequence with respect to flights on other runways
+                // TODO: When Sequence is made immutable, we should revisit this logic to avoid the swap.
+                // Maybe do it when persisting the sequence rather than during scheduling.
                 if (i < sequence.Count - 1)
                 {
                     var nextSequenceItem = sequence[i + 1];
