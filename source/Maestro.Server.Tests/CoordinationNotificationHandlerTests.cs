@@ -9,6 +9,8 @@ namespace Maestro.Server.Tests;
 
 public class SendCoordinationMessageRequestHandlerTests
 {
+    const string Version = "0.0.0";
+
     const string TestMessage = "Test coordination message";
 
     [Fact]
@@ -45,7 +47,7 @@ public class SendCoordinationMessageRequestHandlerTests
         const string airportIdentifier = "YSSY";
         const string partition = "partition-1";
 
-        var observerConnection = new Connection(connectionId, partition, airportIdentifier, "OBS", Role.Observer) { IsMaster = false };
+        var observerConnection = new Connection(connectionId, Version, partition, airportIdentifier, "OBS", Role.Observer) { IsMaster = false };
 
         var request = new SendCoordinationMessageRequest(
             airportIdentifier,
@@ -83,9 +85,9 @@ public class SendCoordinationMessageRequestHandlerTests
         const string partition = "partition-1";
         const string senderCallsign = "ML-BIK_CTR";
 
-        var senderConnection = new Connection(connectionId, partition, airportIdentifier, senderCallsign, Role.Enroute) { IsMaster = false };
-        var peer1 = new Connection("peer-1", partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
-        var peer2 = new Connection("peer-2", partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var senderConnection = new Connection(connectionId, Version, partition, airportIdentifier, senderCallsign, Role.Enroute) { IsMaster = false };
+        var peer1 = new Connection("peer-1", Version, partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
+        var peer2 = new Connection("peer-2", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
         var peers = new[] { peer1, peer2 };
 
         var request = new SendCoordinationMessageRequest(
@@ -153,9 +155,9 @@ public class SendCoordinationMessageRequestHandlerTests
         const string targetCallsign = "SY_APP";
         const string senderCallsign = "ML-BIK_CTR";
 
-        var senderConnection = new Connection(connectionId, partition, airportIdentifier, senderCallsign, Role.Enroute) { IsMaster = false };
-        var targetPeer = new Connection("target-peer", partition, airportIdentifier, targetCallsign, Role.Approach) { IsMaster = false };
-        var otherPeer = new Connection("other-peer", partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
+        var senderConnection = new Connection(connectionId, Version, partition, airportIdentifier, senderCallsign, Role.Enroute) { IsMaster = false };
+        var targetPeer = new Connection("target-peer", Version, partition, airportIdentifier, targetCallsign, Role.Approach) { IsMaster = false };
+        var otherPeer = new Connection("other-peer", Version, partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
         var peers = new[] { targetPeer, otherPeer };
 
         var request = new SendCoordinationMessageRequest(
@@ -219,9 +221,9 @@ public class SendCoordinationMessageRequestHandlerTests
         const string partition = "partition-1";
         const string targetCallsign = "UNKNOWN_CTR";
 
-        var senderConnection = new Connection(connectionId, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = false };
-        var peer1 = new Connection("peer-1", partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
-        var peer2 = new Connection("peer-2", partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
+        var senderConnection = new Connection(connectionId, Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = false };
+        var peer1 = new Connection("peer-1", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var peer2 = new Connection("peer-2", Version, partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
         var peers = new[] { peer1, peer2 };
 
         var request = new SendCoordinationMessageRequest(
@@ -267,7 +269,7 @@ public class SendCoordinationMessageRequestHandlerTests
         const string partition = "partition-1";
         const string message = "WX Dev have commenced.";
 
-        var senderConnection = new Connection(connectionId, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var senderConnection = new Connection(connectionId, Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
         var peers = Array.Empty<Connection>();
 
         var request = new SendCoordinationMessageRequest(

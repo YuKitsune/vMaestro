@@ -10,6 +10,8 @@ namespace Maestro.Server.Tests;
 
 public class FlightUpdatedNotificationHandlerTests
 {
+    const string Version = "0.0.0";
+
     [Fact]
     public async Task WhenTheConnectionIsNotTracked_ExceptionIsThrown()
     {
@@ -63,7 +65,7 @@ public class FlightUpdatedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
 
-        var masterConnection = new Connection(connectionId, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var masterConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -103,11 +105,11 @@ public class FlightUpdatedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
 
-        var slaveConnection = new Connection(connectionId, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
+        var slaveConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
         var peerConnections = new[]
         {
-            new Connection("peer-1", "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false },
-            new Connection("peer-2", "partition-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false }
+            new Connection("peer-1", Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false },
+            new Connection("peer-2", Version, "partition-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false }
         };
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -150,8 +152,8 @@ public class FlightUpdatedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
 
-        var slaveConnection = new Connection(connectionId, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
-        var masterConnection = new Connection(masterConnectionId, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var slaveConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
+        var masterConnection = new Connection(masterConnectionId, Version, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
         var peerConnections = new[] { masterConnection };
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -198,9 +200,9 @@ public class FlightUpdatedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
 
-        var slaveConnection = new Connection(connectionId, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
-        var masterConnection = new Connection(masterConnectionId, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
-        var otherPeer = new Connection("other-peer", "partition-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false };
+        var slaveConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
+        var masterConnection = new Connection(masterConnectionId, Version, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var otherPeer = new Connection("other-peer", Version, "partition-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false };
         var peerConnections = new[] { masterConnection, otherPeer };
 
         var connectionManager = new Mock<IConnectionManager>();

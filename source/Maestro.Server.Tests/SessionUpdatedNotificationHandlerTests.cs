@@ -10,6 +10,8 @@ namespace Maestro.Server.Tests;
 
 public class SessionUpdatedNotificationHandlerTests
 {
+    const string Version = "0.0.0";
+
     [Fact]
     public async Task WhenTheClientIsNotTracked_ExceptionIsThrown()
     {
@@ -60,7 +62,7 @@ public class SessionUpdatedNotificationHandlerTests
         const string notificationAirport = "YMML";
         const string partition = "partition-1";
 
-        var masterConnection = new Connection(connectionId, partition, connectionAirport, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var masterConnection = new Connection(connectionId, Version, partition, connectionAirport, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
         var sessionMessage = new SessionMessage
         {
@@ -109,7 +111,7 @@ public class SessionUpdatedNotificationHandlerTests
         const string airportIdentifier = "YSSY";
         const string partition = "partition-1";
 
-        var slaveConnection = new Connection(connectionId, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var slaveConnection = new Connection(connectionId, Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
 
         var sessionMessage = new SessionMessage
         {
@@ -158,9 +160,9 @@ public class SessionUpdatedNotificationHandlerTests
         const string airportIdentifier = "YSSY";
         const string partition = "partition-1";
 
-        var masterConnection = new Connection(connectionId, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
-        var peer1 = new Connection("peer-1", partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
-        var peer2 = new Connection("peer-2", partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
+        var masterConnection = new Connection(connectionId, Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var peer1 = new Connection("peer-1", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var peer2 = new Connection("peer-2", Version, partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
         var peers = new[] { peer1, peer2 };
 
         var sessionMessage = new SessionMessage

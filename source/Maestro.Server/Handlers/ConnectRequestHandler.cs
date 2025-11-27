@@ -27,6 +27,7 @@ public class ConnectRequestHandler(
 
         var connection = connectionManager.Add(
             connectionId,
+            request.Version,
             request.Partition,
             request.AirportIdentifier,
             request.Callsign,

@@ -81,6 +81,7 @@ public class SystemMetricsService : BackgroundService
         return connections.Select(c => new
         {
             c.Id,
+            c.Version,
             c.Partition,
             c.AirportIdentifier,
             c.Callsign,

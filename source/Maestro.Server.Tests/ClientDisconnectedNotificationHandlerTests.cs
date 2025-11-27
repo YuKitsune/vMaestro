@@ -10,6 +10,8 @@ namespace Maestro.Server.Tests;
 
 public class ClientDisconnectedNotificationHandlerTests
 {
+    const string Version = "0.0.0";
+
     [Fact]
     public async Task WhenConnectionIsUntracked_ExceptionIsThrown()
     {
@@ -42,8 +44,8 @@ public class ClientDisconnectedNotificationHandlerTests
 
         var notification = new ClientDisconnectedNotification(connectionId);
 
-        var disconnectingConnection = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = false };
-        var peerConnection = new Connection("peer-1", partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var disconnectingConnection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role) { IsMaster = false };
+        var peerConnection = new Connection("peer-1", Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -84,9 +86,9 @@ public class ClientDisconnectedNotificationHandlerTests
 
         var notification = new ClientDisconnectedNotification(connectionId);
 
-        var primaryFlowController = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = true };
-        var secondaryFlowController = new Connection("flow-connection", partition, airportIdentifier, "SY__FMP", Role.Flow) { IsMaster = false };
-        var otherPeer = new Connection("other-connection", partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var primaryFlowController = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role) { IsMaster = true };
+        var secondaryFlowController = new Connection("flow-connection", Version, partition, airportIdentifier, "SY__FMP", Role.Flow) { IsMaster = false };
+        var otherPeer = new Connection("other-connection", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -142,9 +144,9 @@ public class ClientDisconnectedNotificationHandlerTests
 
         var notification = new ClientDisconnectedNotification(connectionId);
 
-        var masterConnection = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = true };
-        var nextMaster = new Connection("next-connection", partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
-        var observer = new Connection("observer-connection", partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
+        var masterConnection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role) { IsMaster = true };
+        var nextMaster = new Connection("next-connection", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var observer = new Connection("observer-connection", Version, partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -184,9 +186,9 @@ public class ClientDisconnectedNotificationHandlerTests
 
         var notification = new ClientDisconnectedNotification(connectionId);
 
-        var masterConnection = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = true };
-        var observer1 = new Connection("observer-1", partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
-        var observer2 = new Connection("observer-2", partition, airportIdentifier, "BB_OBS", Role.Observer) { IsMaster = false };
+        var masterConnection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role) { IsMaster = true };
+        var observer1 = new Connection("observer-1", Version, partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
+        var observer2 = new Connection("observer-2", Version, partition, airportIdentifier, "BB_OBS", Role.Observer) { IsMaster = false };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -242,7 +244,7 @@ public class ClientDisconnectedNotificationHandlerTests
 
         var notification = new ClientDisconnectedNotification(connectionId);
 
-        var lastConnection = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = true };
+        var lastConnection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role) { IsMaster = true };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -293,9 +295,9 @@ public class ClientDisconnectedNotificationHandlerTests
 
         var notification = new ClientDisconnectedNotification(connectionId);
 
-        var lastAtcConnection = new Connection(connectionId, partition, airportIdentifier, callsign, role) { IsMaster = true };
-        var observer1 = new Connection("observer-1", partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
-        var observer2 = new Connection("observer-2", partition, airportIdentifier, "BB_OBS", Role.Observer) { IsMaster = false };
+        var lastAtcConnection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role) { IsMaster = true };
+        var observer1 = new Connection("observer-1", Version, partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
+        var observer2 = new Connection("observer-2", Version, partition, airportIdentifier, "BB_OBS", Role.Observer) { IsMaster = false };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))

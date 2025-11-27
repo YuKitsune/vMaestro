@@ -184,6 +184,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         logger.Information("{ConnectionId} connected with version {ClientVersion}", Context.ConnectionId, clientVersion);
 
         var request = new ConnectRequest(
+            clientVersion,
             partition,
             airportIdentifier,
             callsign,

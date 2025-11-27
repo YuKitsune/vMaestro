@@ -5,7 +5,7 @@ namespace Maestro.Server;
 
 public interface IConnectionManager
 {
-    Connection Add(string connectionId, string partition, string airportIdentifier, string callsign, Role role);
+    Connection Add(string connectionId, string version, string partition, string airportIdentifier, string callsign, Role role);
 
     bool TryGetConnection(
         string connectionId,
@@ -21,12 +21,12 @@ public class ConnectionManager : IConnectionManager
 {
     readonly List<Connection> _connections = [];
 
-    public Connection Add(string connectionId, string partition, string airportIdentifier, string callsign, Role role)
+    public Connection Add(string connectionId, string version, string partition, string airportIdentifier, string callsign, Role role)
     {
         if (_connections.Any(c => c.Id == connectionId))
             throw new InvalidOperationException($"Connection {connectionId} already exists");
 
-        var connection = new Connection(connectionId, partition, airportIdentifier, callsign, role);
+        var connection = new Connection(connectionId, version, partition, airportIdentifier, callsign, role);
         _connections.Add(connection);
         return connection;
     }

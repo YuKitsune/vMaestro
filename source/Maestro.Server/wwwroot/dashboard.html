@@ -64,11 +64,12 @@
                                         <th>Airport</th>
                                         <th>Role</th>
                                         <th>Connection ID</th>
+                                        <th>Client Version</th>
                                     </tr>
                                 </thead>
                                 <tbody id="connectionsTable">
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">No active connections</td>
+                                        <td colspan="6" class="text-center text-muted">No active connections</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -219,6 +220,7 @@
                             </span>
                         </td>
                         <td><small class="text-muted">${escapeHtml(conn.Id)}</small></td>
+                        <td><small class="text-muted">${escapeHtml(conn.Version)}</small></td>
                     </tr>
                 `;
             }).join('');
