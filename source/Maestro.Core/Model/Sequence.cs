@@ -520,13 +520,36 @@ public class Sequence
                     if (currentFlight.MaximumDelay == TimeSpan.Zero && totalDelay < runway.AcceptanceRate)
                     {
                     }
+
+                    // Don't move in front of frozen or landed flights
                     else if (previousItem is FlightSequenceItem { Flight.State: State.Frozen or State.Landed })
                     {
-                        // Don't move in front of frozen or landed flights
                     }
+
+                    // Don't move into a slot
+                    else if (previousItem is SlotSequenceItem slotItem &&
+                             currentFlight.LandingEstimate.IsAfter(slotItem.Slot.StartTime) &&
+                             currentFlight.LandingEstimate.IsBefore(slotItem.Slot.EndTime))
+                    {
+                    }
+
+                    // Don't move into a runway mode change period
+                    else if (previousItem is RunwayModeChangeSequenceItem runwayModeChangeItem &&
+                             currentFlight.LandingEstimate.IsAfter(runwayModeChangeItem
+                                 .LastLandingTimeInPreviousMode) &&
+                             currentFlight.LandingEstimate.IsBefore(runwayModeChangeItem.FirstLandingTimeInNewMode))
+                    {
+                    }
+
+                    // Previous flight also has maximum delay, if they have an earlier ETA, don't move past them
+                    else if (previousItem is FlightSequenceItem { Flight.MaximumDelay: not null } previousFlightItem &&
+                             previousFlightItem.Flight.LandingEstimate.IsBefore(currentFlight.LandingEstimate))
+                    {
+                    }
+
+                    // Delay exceeds the maximum, move this flight forward one space and reprocess
                     else if (totalDelay > currentFlight.MaximumDelay)
                     {
-                        // Delay exceeds the maximum, move this flight forward one space and reprocess
                         var previousItemIndex = sequence.IndexOf(previousItem);
                         if (previousItemIndex != -1)
                         {

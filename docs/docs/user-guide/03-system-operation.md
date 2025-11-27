@@ -339,6 +339,21 @@ Manual delay can be cancelled using the [Recompute](#recompute) function.
 If a delay of `00` is specified, the flight can still be delayed up to the runway's acceptance rate.
 :::
 
+#### Scheduling Behavior for Maximum Delay Flights
+
+When the sequence is re-calculated, flights with a maximum delay are prioritized:
+
+- If the calculated delay would exceed the maximum delay, the flight moves forward in the sequence by swapping positions with preceding flights until the delay is within the limit
+- The flight will continue moving forward iteratively until the maximum delay is no longer exceeded or it cannot move further
+
+The flight will **not** move forward if any of the following conditions apply:
+
+- The flight has zero delay and the current delay is less than the runway's acceptance rate
+- The preceding flight is `Frozen` or `Landed`
+- Moving forward would place the flight inside a slot
+- Moving forward would place the flight inside a runway mode change period
+- The preceding flight also has a maximum delay and has an earlier landing estimate
+
 ### Moving Flights
 
 Flights can be moved throughout the sequence from a runway view.
