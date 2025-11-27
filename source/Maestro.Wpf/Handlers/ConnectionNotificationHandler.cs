@@ -1,10 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
 using Maestro.Wpf.Messages;
 using MediatR;
 
@@ -14,6 +10,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
     : INotificationHandler<ConnectionCreatedNotification>,
         INotificationHandler<ConnectionStartedNotification>,
         INotificationHandler<ReconnectingNotification>,
+        INotificationHandler<ReconnectedNotification>,
         INotificationHandler<ConnectionStoppedNotification>,
         INotificationHandler<ConnectionDestroyedNotification>,
         INotificationHandler<PeerConnectedNotification>,
