@@ -549,7 +549,7 @@ public class Sequence
 
                     // Previous flight also has maximum delay, if they have an earlier ETA, don't move past them
                     else if (previousItem is FlightSequenceItem { Flight.MaximumDelay: not null } previousFlightItem &&
-                             previousFlightItem.Flight.LandingEstimate.IsBefore(currentFlight.LandingEstimate))
+                             previousFlightItem.Flight.LandingEstimate.IsSameOrBefore(currentFlight.LandingEstimate))
                     {
                     }
 
