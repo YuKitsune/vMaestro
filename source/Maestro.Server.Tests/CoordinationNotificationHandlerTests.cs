@@ -7,7 +7,7 @@ using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Tests;
 
-public class CoordinationNotificationHandlerTests
+public class SendCoordinationMessageRequestHandlerTests
 {
     const string TestMessage = "Test coordination message";
 
@@ -16,13 +16,13 @@ public class CoordinationNotificationHandlerTests
     {
         // Arrange
         const string connectionId = "unknown-connection";
-        var coordinationNotification = new CoordinationNotification(
+        var request = new SendCoordinationMessageRequest(
             "YSSY",
             DateTimeOffset.UtcNow,
             TestMessage,
             new CoordinationDestination.Broadcast());
 
-        var wrappedNotification = new NotificationContextWrapper<CoordinationNotification>(connectionId, coordinationNotification);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny)).Returns(false);
@@ -32,9 +32,45 @@ public class CoordinationNotificationHandlerTests
         // Act & Assert
         var exception = await Should.ThrowAsync<InvalidOperationException>(
             async () => await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
-                .Handle(wrappedNotification, CancellationToken.None));
+                .Handle(wrappedRequest, CancellationToken.None));
 
         exception.Message.ShouldBe($"Connection {connectionId} is not tracked");
+    }
+
+    [Fact]
+    public async Task WhenSenderIsObserver_ExceptionIsThrown()
+    {
+        // Arrange
+        const string connectionId = "observer-connection";
+        const string airportIdentifier = "YSSY";
+        const string partition = "partition-1";
+
+        var observerConnection = new Connection(connectionId, partition, airportIdentifier, "OBS", Role.Observer) { IsMaster = false };
+
+        var request = new SendCoordinationMessageRequest(
+            airportIdentifier,
+            DateTimeOffset.UtcNow,
+            TestMessage,
+            new CoordinationDestination.Broadcast());
+
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
+
+        var connectionManager = new Mock<IConnectionManager>();
+        connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
+            .Returns(new TryGetConnectionCallback((string id, out Connection? connection) =>
+            {
+                connection = observerConnection;
+                return true;
+            }));
+
+        var hubProxy = new Mock<IHubProxy>();
+
+        // Act & Assert
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            async () => await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+                .Handle(wrappedRequest, CancellationToken.None));
+
+        exception.Message.ShouldBe("Observers cannot send coordination messages");
     }
 
     [Fact]
@@ -44,19 +80,20 @@ public class CoordinationNotificationHandlerTests
         const string connectionId = "sender-connection";
         const string airportIdentifier = "YSSY";
         const string partition = "partition-1";
+        const string senderCallsign = "ML-BIK_CTR";
 
-        var senderConnection = new Connection(connectionId, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = false };
+        var senderConnection = new Connection(connectionId, partition, airportIdentifier, senderCallsign, Role.Enroute) { IsMaster = false };
         var peer1 = new Connection("peer-1", partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
         var peer2 = new Connection("peer-2", partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
         var peers = new[] { peer1, peer2 };
 
-        var coordinationNotification = new CoordinationNotification(
+        var request = new SendCoordinationMessageRequest(
             airportIdentifier,
             DateTimeOffset.UtcNow,
             TestMessage,
             new CoordinationDestination.Broadcast());
 
-        var wrappedNotification = new NotificationContextWrapper<CoordinationNotification>(connectionId, coordinationNotification);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -71,25 +108,34 @@ public class CoordinationNotificationHandlerTests
 
         // Act
         await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
-            .Handle(wrappedNotification, CancellationToken.None);
+            .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
+        // Sender should not receive their own message
         hubProxy.Verify(x => x.Send(
             senderConnection.Id,
-            "Coordination",
-            coordinationNotification,
+            "CoordinationMessageReceived",
+            It.IsAny<CoordinationMessageReceivedNotification>(),
             It.IsAny<CancellationToken>()), Times.Never);
 
+        // Verify peer1 receives the message with correct sender
         hubProxy.Verify(x => x.Send(
             peer1.Id,
-            "Coordination",
-            coordinationNotification,
+            "CoordinationMessageReceived",
+            It.Is<CoordinationMessageReceivedNotification>(n =>
+                n.Sender == senderCallsign &&
+                n.Message == TestMessage &&
+                n.AirportIdentifier == airportIdentifier),
             It.IsAny<CancellationToken>()), Times.Once);
 
+        // Verify peer2 receives the message with correct sender
         hubProxy.Verify(x => x.Send(
             peer2.Id,
-            "Coordination",
-            coordinationNotification,
+            "CoordinationMessageReceived",
+            It.Is<CoordinationMessageReceivedNotification>(n =>
+                n.Sender == senderCallsign &&
+                n.Message == TestMessage &&
+                n.AirportIdentifier == airportIdentifier),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -101,19 +147,20 @@ public class CoordinationNotificationHandlerTests
         const string airportIdentifier = "YSSY";
         const string partition = "partition-1";
         const string targetCallsign = "SY_APP";
+        const string senderCallsign = "ML-BIK_CTR";
 
-        var senderConnection = new Connection(connectionId, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = false };
+        var senderConnection = new Connection(connectionId, partition, airportIdentifier, senderCallsign, Role.Enroute) { IsMaster = false };
         var targetPeer = new Connection("target-peer", partition, airportIdentifier, targetCallsign, Role.Approach) { IsMaster = false };
         var otherPeer = new Connection("other-peer", partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
         var peers = new[] { targetPeer, otherPeer };
 
-        var coordinationNotification = new CoordinationNotification(
+        var request = new SendCoordinationMessageRequest(
             airportIdentifier,
             DateTimeOffset.UtcNow,
             TestMessage,
             new CoordinationDestination.Controller(targetCallsign));
 
-        var wrappedNotification = new NotificationContextWrapper<CoordinationNotification>(connectionId, coordinationNotification);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -128,25 +175,31 @@ public class CoordinationNotificationHandlerTests
 
         // Act
         await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
-            .Handle(wrappedNotification, CancellationToken.None);
+            .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
+        // Sender should not receive their own message
         hubProxy.Verify(x => x.Send(
             senderConnection.Id,
-            "Coordination",
-            It.IsAny<CoordinationNotification>(),
+            "CoordinationMessageReceived",
+            It.IsAny<CoordinationMessageReceivedNotification>(),
             It.IsAny<CancellationToken>()), Times.Never);
 
+        // Verify target peer receives the message
         hubProxy.Verify(x => x.Send(
             targetPeer.Id,
-            "Coordination",
-            coordinationNotification,
+            "CoordinationMessageReceived",
+            It.Is<CoordinationMessageReceivedNotification>(n =>
+                n.Sender == senderCallsign &&
+                n.Message == TestMessage &&
+                n.AirportIdentifier == airportIdentifier),
             It.IsAny<CancellationToken>()), Times.Once);
 
+        // Verify other peer does not receive the message
         hubProxy.Verify(x => x.Send(
             otherPeer.Id,
-            "Coordination",
-            It.IsAny<CoordinationNotification>(),
+            "CoordinationMessageReceived",
+            It.IsAny<CoordinationMessageReceivedNotification>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -164,13 +217,13 @@ public class CoordinationNotificationHandlerTests
         var peer2 = new Connection("peer-2", partition, airportIdentifier, "SY_FMP", Role.Flow) { IsMaster = true };
         var peers = new[] { peer1, peer2 };
 
-        var coordinationNotification = new CoordinationNotification(
+        var request = new SendCoordinationMessageRequest(
             airportIdentifier,
             DateTimeOffset.UtcNow,
             TestMessage,
             new CoordinationDestination.Controller(targetCallsign));
 
-        var wrappedNotification = new NotificationContextWrapper<CoordinationNotification>(connectionId, coordinationNotification);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -185,13 +238,13 @@ public class CoordinationNotificationHandlerTests
 
         // Act
         await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
-            .Handle(wrappedNotification, CancellationToken.None);
+            .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
         hubProxy.Verify(x => x.Send(
             It.IsAny<string>(),
-            "Coordination",
-            It.IsAny<CoordinationNotification>(),
+            "CoordinationMessageReceived",
+            It.IsAny<CoordinationMessageReceivedNotification>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -207,13 +260,13 @@ public class CoordinationNotificationHandlerTests
         var senderConnection = new Connection(connectionId, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
         var peers = Array.Empty<Connection>();
 
-        var coordinationNotification = new CoordinationNotification(
+        var request = new SendCoordinationMessageRequest(
             airportIdentifier,
             DateTimeOffset.UtcNow,
             message,
             new CoordinationDestination.Broadcast());
 
-        var wrappedNotification = new NotificationContextWrapper<CoordinationNotification>(connectionId, coordinationNotification);
+        var wrappedRequest = new RequestContextWrapper<SendCoordinationMessageRequest>(connectionId, request);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -228,24 +281,24 @@ public class CoordinationNotificationHandlerTests
 
         // Act
         await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
-            .Handle(wrappedNotification, CancellationToken.None);
+            .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
         hubProxy.Verify(x => x.Send(
             It.IsAny<string>(),
-            "Coordination",
-            It.IsAny<CoordinationNotification>(),
+            "CoordinationMessageReceived",
+            It.IsAny<CoordinationMessageReceivedNotification>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    CoordinationNotificationHandler GetHandler(
+    SendCoordinationMessageRequestHandler GetHandler(
         IConnectionManager? connectionManager = null,
         IHubProxy? hubProxy = null)
     {
         connectionManager ??= new Mock<IConnectionManager>().Object;
         hubProxy ??= new Mock<IHubProxy>().Object;
         var logger = new Mock<ILogger>().Object;
-        return new CoordinationNotificationHandler(connectionManager, hubProxy, logger);
+        return new SendCoordinationMessageRequestHandler(connectionManager, hubProxy, logger);
     }
 
     delegate bool TryGetConnectionCallback(string connectionId, out Connection? connection);
