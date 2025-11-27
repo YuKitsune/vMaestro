@@ -513,6 +513,12 @@ public class Sequence
                 // Ensure manual delay flights aren't delayed by more than their maximum delay
                 if (currentFlight.MaximumDelay is not null)
                 {
+                    // TODO: When Sequence is made immutable, we should revisit this logic to avoid the swap
+                    // - From the handler, move the flight one position forward and calculate the delay
+                    // - If the delay exceeds maximum, move it back and try again
+                    // - Repeat the process until the flight is within its maximum delay, or cannot be moved any further forward
+                    // - Persist the sequence once completed
+
                     var totalDelay = landingTime - currentFlight.LandingEstimate;
 
                     // Zero delay flights can be delayed within the acceptance rate, but no more
@@ -520,13 +526,36 @@ public class Sequence
                     if (currentFlight.MaximumDelay == TimeSpan.Zero && totalDelay < runway.AcceptanceRate)
                     {
                     }
+
+                    // Don't move in front of frozen or landed flights
                     else if (previousItem is FlightSequenceItem { Flight.State: State.Frozen or State.Landed })
                     {
-                        // Don't move in front of frozen or landed flights
                     }
+
+                    // Don't move into a slot
+                    else if (previousItem is SlotSequenceItem slotItem &&
+                             currentFlight.LandingEstimate.IsAfter(slotItem.Slot.StartTime) &&
+                             currentFlight.LandingEstimate.IsBefore(slotItem.Slot.EndTime))
+                    {
+                    }
+
+                    // Don't move into a runway mode change period
+                    else if (previousItem is RunwayModeChangeSequenceItem runwayModeChangeItem &&
+                             currentFlight.LandingEstimate.IsAfter(runwayModeChangeItem
+                                 .LastLandingTimeInPreviousMode) &&
+                             currentFlight.LandingEstimate.IsBefore(runwayModeChangeItem.FirstLandingTimeInNewMode))
+                    {
+                    }
+
+                    // Previous flight also has maximum delay, if they have an earlier ETA, don't move past them
+                    else if (previousItem is FlightSequenceItem { Flight.MaximumDelay: not null } previousFlightItem &&
+                             previousFlightItem.Flight.LandingEstimate.IsSameOrBefore(currentFlight.LandingEstimate))
+                    {
+                    }
+
+                    // Delay exceeds the maximum, move this flight forward one space and reprocess
                     else if (totalDelay > currentFlight.MaximumDelay)
                     {
-                        // Delay exceeds the maximum, move this flight forward one space and reprocess
                         var previousItemIndex = sequence.IndexOf(previousItem);
                         if (previousItemIndex != -1)
                         {
@@ -541,6 +570,8 @@ public class Sequence
                 // If the next item in the sequence cannot be moved, move this flight behind it to ensure we don't conflict with it
                 if (nextItem is not null)
                 {
+                    // TODO: When Sequence is made immutable, we should revisit this logic to avoid the swap
+
                     var earliestTimeToTrailer = nextItem switch
                     {
                         FlightSequenceItem nextFlightItem => nextFlightItem.Flight.LandingTime.Subtract(runway.AcceptanceRate),
@@ -593,6 +624,8 @@ public class Sequence
                 Schedule(currentFlight, landingTime, flowControls, runway.Identifier);
 
                 // Preserve the order of the sequence with respect to flights on other runways
+                // TODO: When Sequence is made immutable, we should revisit this logic to avoid the swap.
+                // Maybe do it when persisting the sequence rather than during scheduling.
                 if (i < sequence.Count - 1)
                 {
                     var nextSequenceItem = sequence[i + 1];
