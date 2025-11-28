@@ -40,7 +40,9 @@ public class RemoveRequestHandler(
                 sequence.Remove(sequencedFlight);
 
                 sequencedFlight.Reset();
-                instance.Session.PendingFlights.Add(sequencedFlight);
+
+                if (!sequencedFlight.IsManuallyInserted)
+                    instance.Session.PendingFlights.Add(sequencedFlight);
             }
 
             var desequencedFlight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
@@ -50,7 +52,9 @@ public class RemoveRequestHandler(
                 instance.Session.DeSequencedFlights.Remove(desequencedFlight);
 
                 desequencedFlight.Reset();
-                instance.Session.PendingFlights.Add(desequencedFlight);
+
+                if (!desequencedFlight.IsManuallyInserted)
+                    instance.Session.PendingFlights.Add(desequencedFlight);
             }
 
             if (sequencedFlight is null && desequencedFlight is null)
