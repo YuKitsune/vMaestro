@@ -51,6 +51,7 @@ public class MoveFlightRequestHandler(
             // Re: delaying into a new runway mode
             flight.SetRunway(runwayIdentifier, manual: true);
 
+            flight.InvalidateSequenceData();
             sequence.Move(flight, newIndex, forceRescheduleStable: true);
 
             // Unstable flights become stable when moved
