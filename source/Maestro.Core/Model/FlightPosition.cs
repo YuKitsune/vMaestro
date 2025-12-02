@@ -4,14 +4,12 @@ public class FlightPosition(
     Coordinate coordinate,
     int altitude,
     VerticalTrack verticalTrack,
-    double groundSpeed,
-    bool isOnGround)
+    double groundSpeed)
 {
     public Coordinate Coordinate => coordinate;
     public int Altitude => altitude;
     public VerticalTrack VerticalTrack => verticalTrack;
     public double GroundSpeed => groundSpeed;
-    public bool IsOnGround => isOnGround;
 }
 
 public enum VerticalTrack
