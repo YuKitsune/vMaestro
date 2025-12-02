@@ -143,6 +143,7 @@ public class InsertDepartureRequestHandler(
 
             logger.Information("Inserted departure {Callsign} for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
+            instance.Session.PendingFlights.Remove(flight);
             sessionMessage = instance.Session.Snapshot();
         }
 

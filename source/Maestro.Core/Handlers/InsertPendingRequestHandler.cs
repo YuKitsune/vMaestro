@@ -94,9 +94,8 @@ public class InsertPendingRequestHandler(
 
             logger.Information("Inserted pending flight {Callsign} for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 
-            sessionMessage = instance.Session.Snapshot();
-
             instance.Session.PendingFlights.Remove(flight);
+            sessionMessage = instance.Session.Snapshot();
         }
 
         await mediator.Publish(
