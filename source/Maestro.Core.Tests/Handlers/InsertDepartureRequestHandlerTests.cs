@@ -792,6 +792,40 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         sequence.Flights.ShouldNotContain(pendingFlight, "Flight should not be inserted locally when relaying to master");
     }
 
+    [Fact]
+    public async Task WhenFlightIsInserted_ItIsRemovedFromThePendingList()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithEstimatedFlightTime(TimeSpan.FromMinutes(30))
+            .WithFeederFix("RIVET")
+            .WithLandingEstimate(now.AddMinutes(60))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(now.AddMinutes(5)));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        instance.Session.PendingFlights.ShouldBeEmpty("Flight should be removed from pending list after insertion");
+        sequence.Flights.ShouldContain(pendingFlight, "Flight should be in the sequence");
+    }
+
     InsertDepartureRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, IClock clock)
     {
         var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);

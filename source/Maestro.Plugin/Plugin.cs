@@ -285,7 +285,7 @@ public class Plugin : IPlugin
             .ToArray();
 
         FlightPosition? position = null;
-        if (updated.CoupledTrack is not null)
+        if (updated.CoupledTrack is not null && !updated.CoupledTrack.OnGround)
         {
             var track = updated.CoupledTrack;
             var verticalTrack = track.VerticalSpeed >= RDP.VS_CLIMB
@@ -298,8 +298,7 @@ public class Plugin : IPlugin
                 new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
                 track.CorrectedAltitude,
                 verticalTrack,
-                track.GroundSpeed,
-                track.OnGround);
+                track.GroundSpeed);
         }
 
         // PerformanceData can be null
