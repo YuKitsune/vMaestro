@@ -453,15 +453,6 @@ public class Sequence
                     .Skip(i + 1)
                     .FirstOrDefault(s => AppliesToRunway(s, runway));
 
-                var latestLandingTime = nextItem switch
-                {
-                    // Frozen and Landed flights cannot be delayed, other flights are fair game
-                    FlightSequenceItem { Flight.State: State.Frozen or State.Landed } frozenFlight => frozenFlight.Flight.LandingTime.Subtract(runway.AcceptanceRate),
-                    SlotSequenceItem slotItem => slotItem.Slot.StartTime,
-                    RunwayModeChangeSequenceItem runwayModeChange => runwayModeChange.LastLandingTimeInPreviousMode,
-                    _ => DateTime.MaxValue
-                };
-
                 // Determine the earliest possible landing time based on the preceding item on this runway
                 var precedingItemsOnRunway = sequence
                     .Take(i)
@@ -491,18 +482,7 @@ public class Sequence
                     }
                 }
 
-                if (earliestLandingTime.IsAfter(latestLandingTime))
-                {
-                    // TODO: There is no room in this slot, move the flight back and try again
-                }
-
                 var landingTime = currentFlight.LandingEstimate;
-
-                // The flight behind this one can't be delayed, so we need to speed up
-                if (landingTime.IsAfter(latestLandingTime))
-                {
-                    landingTime = latestLandingTime;
-                }
 
                 // We're too close to whatever is in front of us, we need to delay
                 if (landingTime.IsBefore(earliestLandingTime))
