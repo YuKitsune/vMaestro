@@ -237,8 +237,10 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         stableFlight.LandingTime.ShouldBe(stableFlight.LandingEstimate, "stable flight should remain at its original time");
     }
 
-    [Fact]
-    public void RepositionByEstimate_WhenNewEtaConflictsWithFrozenFlight_RepositionedFlightIsMovedBehindFrozenFlight()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void RepositionByEstimate_WhenNewEtaConflictsWithFrozenFlight_RepositionedFlightIsMovedBehindFrozenFlight(bool displaceStableFlights)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
@@ -269,7 +271,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
 
         // Act: Update unstableFlight's estimate to conflict with the frozen flight
         unstableFlight.UpdateLandingEstimate(_time.AddMinutes(9));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByEstimate(unstableFlight, displaceStableFlights);
 
         // Assert: unstableFlight should be moved behind the frozen flight
         sequence.NumberInSequence(frozenFlight).ShouldBe(1, "frozen flight should remain first in sequence");
@@ -277,6 +279,94 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
 
         frozenFlight.LandingTime.ShouldBe(frozenFlight.LandingEstimate, "frozen flight should remain at its scheduled time");
         unstableFlight.LandingTime.ShouldBe(frozenFlight.LandingTime.Add(_landingRate), "unstable flight should be delayed behind frozen flight");
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    public void RepositionByEstimate_WhenEtaIsEarlier_AndStableFlightIsInFront_AndNewEtaConflicts_WithDisplaceStableFlights_StableFlightIsDisplaced(State stableFlightState)
+    {
+        // Arrange
+        var sequence = GetSequenceBuilder()
+            .WithSingleRunway("34L", _landingRate)
+            .Build();
+
+        var stableFlight = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(5))
+            .WithRunway("34L")
+            .WithState(stableFlightState)
+            .Build();
+
+        var unstableFlight = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        sequence.Insert(0, stableFlight);
+        sequence.Insert(1, unstableFlight);
+
+        // Sanity check
+        sequence.NumberInSequence(stableFlight).ShouldBe(1);
+        sequence.NumberInSequence(unstableFlight).ShouldBe(2);
+
+        var originalStableLandingTime = stableFlight.LandingTime;
+
+        // Act: Update unstableFlight's estimate to be earlier than stableFlight but close enough to conflict (within landing rate)
+        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(4));
+        sequence.RepositionByEstimate(unstableFlight, displaceStableFlights: true);
+
+        // Assert: unstableFlight should be moved in front and land at its estimate, stable flight should be displaced
+        sequence.NumberInSequence(unstableFlight).ShouldBe(1, "unstable flight should now be first in sequence");
+        sequence.NumberInSequence(stableFlight).ShouldBe(2, "stable flight should now be second in sequence");
+
+        unstableFlight.LandingTime.ShouldBe(unstableFlight.LandingEstimate, "unstable flight should land at its new estimate");
+        stableFlight.LandingTime.ShouldBe(unstableFlight.LandingTime.Add(_landingRate), "stable flight should be displaced behind the unstable flight");
+        stableFlight.LandingTime.ShouldNotBe(originalStableLandingTime, "stable flight's landing time should have changed");
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    public void RepositionByEstimate_WhenEtaIsLater_AndStableFlightIsBehind_AndNewEtaConflicts_WithDisplaceStableFlights_UnstableFlightRemainsInFrontAndStableFlightIsDisplaced(State stableFlightState)
+    {
+        // Arrange
+        var sequence = GetSequenceBuilder()
+            .WithSingleRunway("34L", _landingRate)
+            .Build();
+
+        var unstableFlight = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(5))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var stableFlight = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(stableFlightState)
+            .Build();
+
+        sequence.Insert(0, unstableFlight);
+        sequence.Insert(1, stableFlight);
+
+        // Sanity check
+        sequence.NumberInSequence(unstableFlight).ShouldBe(1);
+        sequence.NumberInSequence(stableFlight).ShouldBe(2);
+
+        var originalStableLandingTime = stableFlight.LandingTime;
+
+        // Act: Update unstableFlight's estimate to be 2 minutes before the stable flight (causing conflict with 3-minute spacing)
+        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(8));
+        sequence.RepositionByEstimate(unstableFlight, displaceStableFlights: true);
+
+        // Assert: unstableFlight should remain in front and land at its new estimate, stable flight should be displaced
+        sequence.NumberInSequence(unstableFlight).ShouldBe(1, "unstable flight should remain first in sequence");
+        sequence.NumberInSequence(stableFlight).ShouldBe(2, "stable flight should remain second in sequence");
+
+        unstableFlight.LandingTime.ShouldBe(unstableFlight.LandingEstimate, "unstable flight should land at its new estimate");
+        stableFlight.LandingTime.ShouldBe(unstableFlight.LandingTime.Add(_landingRate), "stable flight should be displaced to maintain separation");
+        stableFlight.LandingTime.ShouldNotBe(originalStableLandingTime, "stable flight's landing time should have changed");
     }
 
     SequenceBuilder GetSequenceBuilder() =>
