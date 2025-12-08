@@ -738,6 +738,11 @@ public partial class MaestroView
 
                 // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)
                 default:
+                    // Hide the flight label if it exists
+                    if (_flightLabels.TryGetValue(flight.Callsign, out var hiddenLabel))
+                    {
+                        hiddenLabel.Visibility = Visibility.Collapsed;
+                    }
                     continue;
             }
 
