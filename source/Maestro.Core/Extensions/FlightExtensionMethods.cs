@@ -34,7 +34,6 @@ public static class FlightExtensionMethods
             ActivatedTime = flight.ActivatedTime,
             HighPriority = flight.HighPriority,
             MaximumDelay = flight.MaximumDelay,
-            EstimatedTimeEnroute = flight.EstimatedTimeEnroute,
             ManualFeederFixEstimate = flight.ManualFeederFixEstimate,
             ActualFeederFixTime = flight.ActualFeederFixTime,
             RunwayManuallyAssigned = flight.RunwayManuallyAssigned,

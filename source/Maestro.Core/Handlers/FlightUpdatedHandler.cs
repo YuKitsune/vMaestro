@@ -320,7 +320,6 @@ public class FlightUpdatedHandler(
 
         flight.OriginIdentifier = notification.Origin;
         flight.EstimatedDepartureTime = notification.EstimatedDepartureTime;
-        flight.EstimatedTimeEnroute = notification.EstimatedFlightTime;
 
         flight.AssignedArrivalIdentifier = notification.AssignedArrival;
         flight.Fixes = notification.Estimates;
