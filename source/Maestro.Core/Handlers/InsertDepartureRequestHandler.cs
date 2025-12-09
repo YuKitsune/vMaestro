@@ -95,19 +95,16 @@ public class InsertDepartureRequestHandler(
 
                 case DepartureInsertionOptions departureInsertionOptions:
                 {
-                    if (flight.EstimatedTimeEnroute is null)
-                        throw new MaestroException($"{request.Callsign} has no EET");
-
-                    var landingEstimate = departureInsertionOptions.TakeoffTime.Add(flight.EstimatedTimeEnroute.Value);
-                    flight.UpdateLandingEstimate(landingEstimate);
-
-
                     // TODO: We do this a lot, extract this into a separate service
                     var airportConfiguration = airportConfigurationProvider
                         .GetAirportConfigurations()
                         .SingleOrDefault(a => a.Identifier == request.AirportIdentifier);
                     if (airportConfiguration is null)
                         throw new MaestroException($"Couldn't find airport configuration for {request.AirportIdentifier}");
+
+                    var enrouteTime = CalculateEnrouteTime(airportConfiguration, flight);
+                    var landingEstimate = departureInsertionOptions.TakeoffTime.Add(enrouteTime);
+                    flight.UpdateLandingEstimate(landingEstimate);
 
                     var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
                     runway = FindBestRunway(airportConfiguration, runwayMode, flight.FeederFixIdentifier);
@@ -180,5 +177,24 @@ public class InsertDepartureRequestHandler(
             return null;
 
         return flight.LandingEstimate.Subtract(arrivalInterval.Value);
+    }
+
+    TimeSpan CalculateEnrouteTime(AirportConfiguration airportConfiguration, Flight flight)
+    {
+        var departureAirportConfiguration = airportConfiguration.DepartureAirports.SingleOrDefault(d => d.Identifier == flight.OriginIdentifier);
+
+        if (departureAirportConfiguration is null)
+            throw new MaestroException($"{flight.Callsign} is not from a departure airport");
+
+        var matchingTime = departureAirportConfiguration.FlightTimes.FirstOrDefault(t =>
+            (t.AircraftType is SpecificAircraftTypeConfiguration c1 && c1.TypeCode == flight.AircraftType) ||
+            (t.AircraftType is AircraftCategoryConfiguration c2 && c2.Category == flight.AircraftCategory) ||
+            t.AircraftType is AllAircraftTypesConfiguration);
+
+        if (matchingTime is not null)
+            return matchingTime.AverageFlightTime;
+
+        var averageSeconds = departureAirportConfiguration.FlightTimes.Average(t => t.AverageFlightTime.TotalSeconds);
+        return TimeSpan.FromSeconds(averageSeconds);
     }
 }
