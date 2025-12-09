@@ -252,15 +252,13 @@ class Build : NukeBuild
             PackageDirectory.CreateOrCleanDirectory();
 
             // Copy plugin assemblies
-            var pluginAssembliesDirectory = PackageDirectory / PluginName;
-            pluginAssembliesDirectory.CreateOrCleanDirectory();
             foreach (var absolutePath in PluginAssembliesPath.GetFiles())
             {
-                absolutePath.CopyToDirectory(pluginAssembliesDirectory, ExistsPolicy.MergeAndOverwrite);
+                absolutePath.CopyToDirectory(PackageDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
             // Temporary for testing - include the config with the package
-            configFile.CopyToDirectory(pluginAssembliesDirectory, ExistsPolicy.FileOverwrite);
+            configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
 
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
