@@ -21,7 +21,8 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         new Coordinate(0, 0),
         0,
         VerticalTrack.Maintaining,
-        0);
+        0,
+        false);
 
     [Fact]
     public async Task WhenAFlightIsOutOfRangeOfFeederFix_ItShouldNotBeTracked()
@@ -83,6 +84,44 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
+    public async Task WhenAFlightIsOnGroundAtDepartureAirport_ItShouldBeAddedToThePendingList()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
+
+        var position = new FlightPosition(
+            new Coordinate(0, 0),
+            0,
+            VerticalTrack.Maintaining,
+            0,
+            true);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YSCB", // Departure airport configured in fixture
+            "YSSY",
+            clock.UtcNow().AddMinutes(10),
+            TimeSpan.FromHours(20),
+            "RIVET4",
+            position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
+
+        var handler = GetHandler(instanceManager, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        var flight = instance.Session.PendingFlights.ShouldHaveSingleItem();
+        flight.Callsign.ShouldBe(notification.Callsign);
+    }
+
+    [Fact]
     public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeToThePendingList()
     {
         // Arrange
@@ -114,29 +153,30 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
-    public async Task WhenANewFlightFromADepartureAirportIsCoupled_ItShouldBeAddedToTheSequence()
+    public async Task WhenAFlightIsOnGroundAtNonDepartureAirport_ItShouldNotBeTracked()
     {
         // Arrange
         var clock = clockFixture.Instance;
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
 
         var position = new FlightPosition(
             new Coordinate(0, 0),
-            5000,
-            VerticalTrack.Climbing,
-            250);
+            0,
+            VerticalTrack.Maintaining,
+            0,
+            true);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
             AircraftCategory.Jet,
             WakeCategory.Medium,
-            "YSCB", // Departure airport configured in fixture
+            "YXXX", // Non-departure airport
             "YSSY",
-            clock.UtcNow().AddMinutes(-10),
-            TimeSpan.FromHours(1),
+            clock.UtcNow().AddHours(10),
+            TimeSpan.FromHours(20),
             "RIVET4",
-            position, // Has coupled radar track
+            position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
         var handler = GetHandler(instanceManager, clock);
@@ -145,9 +185,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        var flight = sequence.Flights.ShouldHaveSingleItem();
-        flight.Callsign.ShouldBe(notification.Callsign);
-        instance.Session.PendingFlights.ShouldBeEmpty("coupled departure flights should go directly to sequence, not pending list");
+        sequence.Flights.ShouldBeEmpty();
     }
 
     [Theory]
@@ -321,7 +359,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             clock.UtcNow().AddHours(-1.5), // Different estimated departure
             TimeSpan.FromHours(2),
             "ODALE7", // Different arrival
-            new FlightPosition(new Coordinate(1, 1), 38_000, VerticalTrack.Descending, 280), // Different position
+            new FlightPosition(new Coordinate(1, 1), 38_000, VerticalTrack.Descending, 280, false), // Different position
             [new FixEstimate("WELSH", clock.UtcNow().AddMinutes(10))]);
 
         var handler = GetHandler(instanceManager, clock);

@@ -101,6 +101,7 @@ public class InsertDepartureRequestHandler(
                     var landingEstimate = departureInsertionOptions.TakeoffTime.Add(flight.EstimatedTimeEnroute.Value);
                     flight.UpdateLandingEstimate(landingEstimate);
 
+
                     // TODO: We do this a lot, extract this into a separate service
                     var airportConfiguration = airportConfigurationProvider
                         .GetAirportConfigurations()
@@ -118,11 +119,7 @@ public class InsertDepartureRequestHandler(
 
                     index = sequence.FindIndex(
                         earliestInsertionIndex,
-                        f => f.LandingEstimate.IsAfter(landingEstimate));
-
-                    // If no flight has a later estimate, insert at the end
-                    if (index == -1)
-                        index = Math.Max(earliestInsertionIndex, sequence.Flights.Count);
+                        f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
 
                     index = Math.Max(earliestInsertionIndex, index);
 
