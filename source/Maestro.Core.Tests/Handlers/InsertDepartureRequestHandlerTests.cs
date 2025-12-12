@@ -89,6 +89,100 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     }
 
     [Fact]
+    public async Task WhenFlightHasPosition_LandingEstimateIsNotDerivedFromTakeOffTime()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var takeoffTime = now.AddMinutes(5);
+        var initialLandingEstimate = now.AddMinutes(10); // Much sooner than takeoff + EET (which would be ~35 minutes)
+
+        // Create a flight position to simulate a radar-coupled flight
+        var position = new FlightPosition(
+            new Coordinate(1, 1), // Actual position doesn't matter
+            15000,
+            VerticalTrack.Descending,
+            280,
+            false);
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithFeederFix("RIVET")
+            .WithAircraftCategory(AircraftCategory.Jet)
+            .WithLandingEstimate(initialLandingEstimate)
+            .WithState(State.Unstable)
+            .WithPosition(position) // Set position to simulate radar-coupled flight
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        pendingFlight.LandingEstimate.ShouldBe(initialLandingEstimate,
+            "landing estimate should not be recalculated when flight has a known position (radar-coupled)");
+    }
+
+    [Fact]
+    public async Task WhenFlightHasPosition_ButIsOnGround_LandingEstimateDerivedFromTakeOffTime()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(30); // Jet from YSCB per config
+        var takeoffTime = now.AddMinutes(5);
+        var expectedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime);
+        var initialLandingEstimate = now.AddMinutes(60); // Fudged estimate due to inaccurate flight plan
+
+        // Create a flight position to simulate a radar-coupled flight
+        var position = new FlightPosition(
+            new Coordinate(1, 1), // Actual position doesn't matter
+            0,
+            VerticalTrack.Maintaining,
+            15,
+            true);
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithFeederFix("RIVET")
+            .WithAircraftCategory(AircraftCategory.Jet)
+            .WithLandingEstimate(initialLandingEstimate)
+            .WithState(State.Unstable)
+            .WithPosition(position) // Set position to simulate radar-coupled flight
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate,
+            "landing estimate should be calculated from takeoff time + EET");
+    }
+
+    [Fact]
     public async Task WhenAFlightIsInserted_WithATakeOffTime_ItIsInsertedBasedOnItsCalculatedLandingEstimate()
     {
         // Arrange

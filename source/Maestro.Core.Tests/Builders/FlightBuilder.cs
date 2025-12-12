@@ -31,6 +31,7 @@ public class FlightBuilder(string callsign)
 
     DateTimeOffset _lastSeen = default;
     bool _isFromDepartureAirport = false;
+    FlightPosition? _position = null;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
     {
@@ -145,6 +146,12 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithPosition(FlightPosition position)
+    {
+        _position = position;
+        return this;
+    }
+
     public Flight Build()
     {
         var flight = new Flight(
@@ -182,6 +189,11 @@ public class FlightBuilder(string callsign)
         ];
 
         flight.IsFromDepartureAirport = _isFromDepartureAirport;
+
+        if (_position is not null)
+        {
+            flight.UpdatePosition(_position);
+        }
 
         return flight;
     }

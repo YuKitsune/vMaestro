@@ -102,11 +102,15 @@ public class InsertDepartureRequestHandler(
                     if (airportConfiguration is null)
                         throw new MaestroException($"Couldn't find airport configuration for {request.AirportIdentifier}");
 
-                    var enrouteTime = CalculateEnrouteTime(airportConfiguration, flight);
-                    var landingEstimate = departureInsertionOptions.TakeoffTime.Add(enrouteTime);
-                    flight.UpdateLandingEstimate(landingEstimate);
+                    // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
+                    if (flight.Position is null || flight.Position.IsOnGround)
+                    {
+                        var enrouteTime = CalculateEnrouteTime(airportConfiguration, flight);
+                        var landingEstimate = departureInsertionOptions.TakeoffTime.Add(enrouteTime);
+                        flight.UpdateLandingEstimate(landingEstimate);
+                    }
 
-                    var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
+                    var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
                     runway = FindBestRunway(airportConfiguration, runwayMode, flight.FeederFixIdentifier);
 
                     // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
@@ -116,7 +120,7 @@ public class InsertDepartureRequestHandler(
 
                     index = sequence.FindIndex(
                         earliestInsertionIndex,
-                        f => f.LandingEstimate.IsBefore(landingEstimate)) + 1;
+                        f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
 
                     index = Math.Max(earliestInsertionIndex, index);
 
