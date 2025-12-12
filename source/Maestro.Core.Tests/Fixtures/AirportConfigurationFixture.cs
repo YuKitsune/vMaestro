@@ -11,6 +11,7 @@ namespace Maestro.Core.Tests.Fixtures;
 public class AirportConfigurationFixture
 {
     public TimeSpan AcceptanceRate => TimeSpan.FromSeconds(180);
+
     public AirportConfiguration Instance =>
         new()
         {
@@ -129,13 +130,33 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
-            PreferredRunways = new Dictionary<string, string[]> {
-                {"RIVET", ["34L", "16R"]},
-                {"WELSH", ["34L", "16R"]},
-                {"BOREE", ["34R", "16L"]},
-                {"YAKKA", ["34R", "16L"]},
-                {"MARLN", ["34R", "16L"]}
+            PreferredRunways = new Dictionary<string, string[]>
+            {
+                { "RIVET", ["34L", "16R"] },
+                { "WELSH", ["34L", "16R"] },
+                { "BOREE", ["34R", "16L"] },
+                { "YAKKA", ["34R", "16L"] },
+                { "MARLN", ["34R", "16L"] }
             },
-            DepartureAirports = ["YSCB"]
+            DepartureAirports =
+            [
+                new DepartureAirportConfiguration
+                {
+                    Identifier = "YSCB",
+                    FlightTimes =
+                    [
+                        new DepartureAirportFlightTimeConfiguration
+                        {
+                            AircraftType = new AircraftCategoryConfiguration(AircraftCategory.Jet),
+                            AverageFlightTime = TimeSpan.FromMinutes(30),
+                        },
+                        new DepartureAirportFlightTimeConfiguration
+                        {
+                            AircraftType = new AircraftCategoryConfiguration(AircraftCategory.NonJet),
+                            AverageFlightTime = TimeSpan.FromMinutes(45),
+                        }
+                    ]
+                }
+            ]
         };
 }
