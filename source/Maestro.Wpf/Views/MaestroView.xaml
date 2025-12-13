@@ -10,6 +10,7 @@
              mc:Ignorable="d"
              Background="{x:Static local:Theme.BackgroundColor}"
              MinWidth="480"
+             MinHeight="480"
              d:DataContext="{d:DesignInstance Type=viewModels:MaestroViewModel}"
              d:DesignHeight="800"
              d:DesignWidth="560">

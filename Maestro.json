@@ -258,36 +258,42 @@
         {
           "Identifier": "GUN/BIK",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["RIVET"],
           "RightLadder": ["WELSH"]
         },
         {
           "Identifier": "ARL",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["BOREE"],
           "RightLadder": ["YAKKA"]
         },
         {
           "Identifier": "OCN",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["MARLN"],
           "RightLadder": []
         },
         {
           "Identifier": "ARL/OCN",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["BOREE", "YAKKA"],
           "RightLadder": ["MARLN"]
         },
         {
           "Identifier": "ALL",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["RIVET", "WELSH"],
           "RightLadder": ["YAKKA", "MARLN", "BOREE"]
         },
         {
           "Identifier": "RWY",
           "ViewMode": "Approach",
+          "TimeHorizonMinutes": 45,
           "LeftLadder": ["34L", "16R", "07"],
           "RightLadder": ["34R", "16L", "25"]
         }
@@ -825,30 +831,35 @@
         {
           "Identifier": "BLA/ELW",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["BOOIN"],
           "RightLadder": ["BOYSE"]
         },
         {
           "Identifier": "MUN/YWE",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["ARBEY"],
           "RightLadder": ["ALAXO"]
         },
         {
           "Identifier": "HUO/WON",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["RAZZI"],
           "RightLadder": ["PORTS"]
         },
         {
           "Identifier": "ALL",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["ARBEY", "ALAXO", "PORTS"],
           "RightLadder": ["BOOIN", "BOYSE", "RAZZI"]
         },
         {
           "Identifier": "RWY",
           "ViewMode": "Approach",
+          "TimeHorizonMinutes": 45,
           "LeftLadder": ["16", "34"],
           "RightLadder": ["09", "27"]
         }
@@ -1833,36 +1844,42 @@
         {
           "Identifier": "INL",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["BLAKA"],
           "RightLadder": ["GOMOL"]
         },
         {
           "Identifier": "DOS",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["ENLIP"],
           "RightLadder": ["WOODY"]
         },
         {
           "Identifier": "BUR",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["MORBI"],
           "RightLadder": ["SMOKA"]
         },
         {
           "Identifier": "SDY",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["TEBOT"],
           "RightLadder": ["UGTUG"] 
         },
         {
           "Identifier": "ALL",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["BLAKA", "ENLIP", "GOMOL", "MORBI"],
           "RightLadder": ["SMOKA", "TEBOT", "UGTUG", "WOODY"] 
         },
         {
           "Identifier": "RWY",
           "ViewMode": "Approach",
+          "TimeHorizonMinutes": 45,
           "LeftLadder": ["01L", "19R"],
           "RightLadder": ["01R", "19L"] 
         }
@@ -2564,30 +2581,35 @@
         {
           "Identifier": "PIY",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["JULIM", "SAPKO"],
           "RightLadder": ["KABLI", "DAYLR", "LAVEX"]
         },
         {
           "Identifier": "LEA",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["KAGMI"],
           "RightLadder": []
         },
         {
           "Identifier": "JAR",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["SOLUS"],
           "RightLadder": []
         },
         {
           "Identifier": "ALL/HYD",
           "ViewMode": "Enroute",
+          "TimeHorizonMinutes": 30,
           "LeftLadder": ["JULIM", "SAPKO", "KAGMI", "SOLUS"],
           "RightLadder": ["KABLI", "DAYLR", "LAVEX"]
         },
         {
           "Identifier": "RWY",
           "ViewMode": "Approach",
+          "TimeHorizonMinutes": 45,
           "LeftLadder": ["03", "21"],
           "RightLadder": ["06", "24"]
         }
