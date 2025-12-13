@@ -143,6 +143,7 @@ public class AirportConfigurationFixture
                 new DepartureAirportConfiguration
                 {
                     Identifier = "YSCB",
+                    Distance = 50,
                     FlightTimes =
                     [
                         new DepartureAirportFlightTimeConfiguration

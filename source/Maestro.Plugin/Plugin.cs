@@ -263,6 +263,8 @@ public class Plugin : IPlugin
 
     void PublishFlightUpdatedEvent(FDP2.FDR updated)
     {
+        // BUG: FDR updates can be sent before the instance manager has been created, in which case we miss updates
+        //  When an instance is created, scan the active FDRs to ensure it's populated.
         if (_instanceManager is null || !_instanceManager.InstanceExists(updated.DesAirport))
             return;
 
