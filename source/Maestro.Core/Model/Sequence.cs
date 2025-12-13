@@ -642,7 +642,7 @@ public class Sequence
         flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
 
         DateTimeOffset? feederFixTime = null;
-        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && flight.FeederFixEstimate is not null && !flight.HasPassedFeederFix)
+        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && !flight.HasPassedFeederFix)
         {
             var arrivalInterval = _arrivalLookup.GetArrivalInterval(
                 flight.DestinationIdentifier,

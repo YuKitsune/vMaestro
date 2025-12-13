@@ -54,6 +54,8 @@ public class InsertDepartureRequestHandler(
             int index;
             Runway runway;
 
+            // BUG: Insert pending at specific time doesn't work? They completely disappear.
+
             switch (request.Options)
             {
                 case ExactInsertionOptions landingTimeOption:
@@ -120,7 +122,12 @@ public class InsertDepartureRequestHandler(
 
                     index = sequence.FindIndex(
                         earliestInsertionIndex,
-                        f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
+                        f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
+
+                    // TODO: We need to make sure we're doing this anywhere else we're inserting a flight
+                    // If there are no flights after this one, add them to the back of the queue
+                    if (index == -1)
+                        index = sequence.Flights.Count;
 
                     index = Math.Max(earliestInsertionIndex, index);
 

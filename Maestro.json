@@ -292,7 +292,288 @@
           "RightLadder": ["34R", "16L", "25"]
         }
       ],
-      "DepartureAirports": ["YSCB", "YBTH", "YORG", "YCWR", "YSDU", "YGTH", "YPKS", "YSWG", "YNAR", "YMRY", "YMAY", "YMER", "YCFS", "YPMQ", "YARM", "YSTW", "YMOR"]
+      "DepartureAirports": [
+        {
+          "Identifier": "YPMQ",
+          "Distance": 209.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:44:53.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:41:57"
+            }
+          ]
+        },
+        {
+          "Identifier": "YCOM",
+          "Distance": 221.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:46:45"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:43:43.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSCB",
+          "Distance": 178.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:40:05.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:37:21.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGLB",
+          "Distance": 111.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:29:42.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:27:25.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YCWR",
+          "Distance": 163.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:37:45.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:35:08.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YPKS",
+          "Distance": 221.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:46:45"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:43:43.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YORG",
+          "Distance": 140.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:34:12"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:31:43.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBTH",
+          "Distance": 175.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:39:37.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:36:55.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSDU",
+          "Distance": 214.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:45:40.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:42:41.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSCO",
+          "Distance": 117.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:30:38.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:28:19.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSTW",
+          "Distance": 191.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:42:06"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:39:17.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YARM",
+          "Distance": 214.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:45:40.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:42:41.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGFN",
+          "Distance": 298.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:58:40.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:55:08.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YNBR",
+          "Distance": 255.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:52:01.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:48:46.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YCBB",
+          "Distance": 194.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:42:34.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:39:43.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSDU",
+          "Distance": 249.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:51:05.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:47:52.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMDG",
+          "Distance": 179.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:40:14.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:37:30.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMAY",
+          "Distance": 286.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:56:49.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:53:21.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSWG",
+          "Distance": 214.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:45:40.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:42:41.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMER",
+          "Distance": 236.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:49:04.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:45:57"
+            }
+          ]
+        }
+      ]
     },
     {
       "Identifier": "YMML",
@@ -572,7 +853,484 @@
           "RightLadder": ["09", "27"]
         }
       ],
-      "DepartureAirports": ["YSCB", "YSWG", "YMER", "YMAY", "YCOM", "YMIA", "YMTG", "YMLT", "YKII", "YDPO"]
+      "DepartureAirports": [
+        {
+          "Identifier": "YHAY",
+          "Distance": 214.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:45:40.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:42:41.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YDLQ",
+          "Distance": 147.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:35:17.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:32:46.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YECH",
+          "Distance": 93.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:26:55.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:24:46.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMNG",
+          "Distance": 78.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:24:36"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:22:33"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSHT",
+          "Distance": 114.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:30:10.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:27:52.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YNAR",
+          "Distance": 225.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:47:22.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:44:19.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YCOR",
+          "Distance": 158.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:36:59.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:34:24"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBLA",
+          "Distance": 126.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:32:01.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:29:39.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YWGT",
+          "Distance": 116.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:30:28.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:28:10.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMAY",
+          "Distance": 154.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:36:22.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:33:48"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSWG",
+          "Distance": 210.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:45:03"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:42:06"
+            }
+          ]
+        },
+        {
+          "Identifier": "YCRG",
+          "Distance": 205.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:44:16.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:41:21.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YHOT",
+          "Distance": 139.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:34:03"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:31:34.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YLTV",
+          "Distance": 130.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:32:39"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:30:15"
+            }
+          ]
+        },
+        {
+          "Identifier": "YFLI",
+          "Distance": 251.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:51:24"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:48:10.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YDPO",
+          "Distance": 249.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:51:05.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:47:52.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMLT",
+          "Distance": 282.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:56:12"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:52:46.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YWYY",
+          "Distance": 243.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:50:09.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:46:59.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YKII",
+          "Distance": 199.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:43:20.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:40:28.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YWBL",
+          "Distance": 174.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:39:28.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:36:46.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YPOD",
+          "Distance": 189.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:41:47.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:38:59.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMTG",
+          "Distance": 209.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:44:53.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:41:57"
+            }
+          ]
+        },
+        {
+          "Identifier": "YHML",
+          "Distance": 203.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:43:57.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:41:03.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBLT",
+          "Distance": 70.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:23:21.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:21:21.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YARA",
+          "Distance": 163.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:37:45.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:35:08.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSWL",
+          "Distance": 174.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:39:28.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:36:46.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YNRC",
+          "Distance": 257.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:52:19.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:49:03.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YHSM",
+          "Distance": 167.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:38:22.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:35:43.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YHNL",
+          "Distance": 203.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:43:57.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:41:03.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YWKB",
+          "Distance": 170.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:38:51"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:36:10.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBDG",
+          "Distance": 83.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:25:22.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:23:17.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSWH",
+          "Distance": 153.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:36:13.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:33:39.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGTH",
+          "Distance": 234.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:48:45.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:45:39.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YCOM",
+          "Distance": 233.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:48:36.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:45:30.6000000"
+            }
+          ]
+        }
+      ]
     },
     {
       "Identifier": "YBBN",
@@ -1109,7 +1867,316 @@
           "RightLadder": ["01R", "19L"] 
         }
       ],
-      "DepartureAirports": ["YCFS", "YPMQ", "YARM", "YROM", "YBHA", "YBUD", "YGLA", "YBRK", "YTWB"]
+      "DepartureAirports": [
+        {
+          "Identifier": "YCFS",
+          "Distance": 189.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:41:47.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:38:59.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGFN",
+          "Distance": 158.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:36:59.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:34:24"
+            }
+          ]
+        },
+        {
+          "Identifier": "YLIS",
+          "Distance": 96.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:27:22.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:25:12.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBNA",
+          "Distance": 28.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:16:51"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:15:08.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBCG",
+          "Distance": 59.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:21:39"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:19:43.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YARM",
+          "Distance": 236.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:49:04.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:45:57"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGLI",
+          "Distance": 172.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:39:09.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:36:28.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YIVL",
+          "Distance": 185.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:41:10.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:38:24"
+            }
+          ]
+        },
+        {
+          "Identifier": "YSPE",
+          "Distance": 115.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:30:19.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:28:01.8000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YWCK",
+          "Distance": 106.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:28:55.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:26:41.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMOR",
+          "Distance": 243.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:50:09.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:46:59.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGDI",
+          "Distance": 171.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:39:00"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:36:19.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMLS",
+          "Distance": 198.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:43:11.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:40:19.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YCCA",
+          "Distance": 175.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:39:37.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:36:55.2000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YKRY",
+          "Distance": 102.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:28:18.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:26:06"
+            }
+          ]
+        },
+        {
+          "Identifier": "YTAM",
+          "Distance": 235.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:48:55.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:45:48"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGAY",
+          "Distance": 163.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:37:45.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:35:08.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YTNG",
+          "Distance": 266.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:53:43.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:50:24"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBUD",
+          "Distance": 185.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:41:10.2000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:38:24"
+            }
+          ]
+        },
+        {
+          "Identifier": "YMYB",
+          "Distance": 162.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:37:36.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:34:59.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YHBA",
+          "Distance": 176.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:39:46.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:37:03.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBSU",
+          "Distance": 84.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:25:31.8000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:23:25.8000000"
+            }
+          ]
+        }
+      ]
     },
     {
       "Identifier": "YPPH",
@@ -1525,7 +2592,50 @@
           "RightLadder": ["06", "24"]
         }
       ],
-      "DepartureAirports": ["YPKG", "YESP", "YABA", "YGEL"]
+      "DepartureAirports": [
+        {
+          "Identifier": "YABA",
+          "Distance": 230.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:48:08.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:45:03.6000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YBLN",
+          "Distance": 162.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:37:36.6000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:34:59.4000000"
+            }
+          ]
+        },
+        {
+          "Identifier": "YGEL",
+          "Distance": 229.0,
+          "FlightTimes": [
+            {
+              "AircraftType": "JET",
+              "AverageFlightTime": "00:47:59.4000000"
+            },
+            {
+              "AircraftType": "NONJET",
+              "AverageFlightTime": "00:44:54.6000000"
+            }
+          ]
+        }
+      ]
     }
   ],
   "CoordinationMessages": {
