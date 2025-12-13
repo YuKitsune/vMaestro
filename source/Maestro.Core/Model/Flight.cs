@@ -45,7 +45,6 @@ public class Flight : IEquatable<Flight>
         OriginIdentifier = message.OriginIdentifier;
         DestinationIdentifier = message.DestinationIdentifier;
         EstimatedDepartureTime = message.EstimatedDepartureTime;
-        EstimatedTimeEnroute = message.EstimatedTimeEnroute;
         IsFromDepartureAirport = message.IsFromDepartureAirport;
         AssignedRunwayIdentifier = message.AssignedRunwayIdentifier;
         RunwayManuallyAssigned = message.RunwayManuallyAssigned;
@@ -78,7 +77,6 @@ public class Flight : IEquatable<Flight>
     public string DestinationIdentifier { get; }
     public bool IsManuallyInserted { get; }
     public DateTimeOffset? EstimatedDepartureTime { get; set; }
-    public TimeSpan? EstimatedTimeEnroute { get; set; }
 
     public bool IsFromDepartureAirport { get; set; }
 

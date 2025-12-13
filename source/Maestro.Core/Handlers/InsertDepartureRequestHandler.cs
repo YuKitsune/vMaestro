@@ -54,6 +54,8 @@ public class InsertDepartureRequestHandler(
             int index;
             Runway runway;
 
+            // BUG: Insert pending at specific time doesn't work? They completely disappear.
+
             switch (request.Options)
             {
                 case ExactInsertionOptions landingTimeOption:
@@ -95,12 +97,6 @@ public class InsertDepartureRequestHandler(
 
                 case DepartureInsertionOptions departureInsertionOptions:
                 {
-                    if (flight.EstimatedTimeEnroute is null)
-                        throw new MaestroException($"{request.Callsign} has no EET");
-
-                    var landingEstimate = departureInsertionOptions.TakeoffTime.Add(flight.EstimatedTimeEnroute.Value);
-                    flight.UpdateLandingEstimate(landingEstimate);
-
                     // TODO: We do this a lot, extract this into a separate service
                     var airportConfiguration = airportConfigurationProvider
                         .GetAirportConfigurations()
@@ -108,7 +104,15 @@ public class InsertDepartureRequestHandler(
                     if (airportConfiguration is null)
                         throw new MaestroException($"Couldn't find airport configuration for {request.AirportIdentifier}");
 
-                    var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
+                    // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
+                    if (flight.Position is null || flight.Position.IsOnGround)
+                    {
+                        var enrouteTime = CalculateEnrouteTime(airportConfiguration, flight);
+                        var landingEstimate = departureInsertionOptions.TakeoffTime.Add(enrouteTime);
+                        flight.UpdateLandingEstimate(landingEstimate);
+                    }
+
+                    var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
                     runway = FindBestRunway(airportConfiguration, runwayMode, flight.FeederFixIdentifier);
 
                     // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
@@ -118,11 +122,12 @@ public class InsertDepartureRequestHandler(
 
                     index = sequence.FindIndex(
                         earliestInsertionIndex,
-                        f => f.LandingEstimate.IsAfter(landingEstimate));
+                        f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
 
-                    // If no flight has a later estimate, insert at the end
+                    // TODO: We need to make sure we're doing this anywhere else we're inserting a flight
+                    // If there are no flights after this one, add them to the back of the queue
                     if (index == -1)
-                        index = Math.Max(earliestInsertionIndex, sequence.Flights.Count);
+                        index = sequence.Flights.Count;
 
                     index = Math.Max(earliestInsertionIndex, index);
 
@@ -183,5 +188,24 @@ public class InsertDepartureRequestHandler(
             return null;
 
         return flight.LandingEstimate.Subtract(arrivalInterval.Value);
+    }
+
+    TimeSpan CalculateEnrouteTime(AirportConfiguration airportConfiguration, Flight flight)
+    {
+        var departureAirportConfiguration = airportConfiguration.DepartureAirports.SingleOrDefault(d => d.Identifier == flight.OriginIdentifier);
+
+        if (departureAirportConfiguration is null)
+            throw new MaestroException($"{flight.Callsign} is not from a departure airport");
+
+        var matchingTime = departureAirportConfiguration.FlightTimes.FirstOrDefault(t =>
+            (t.AircraftType is SpecificAircraftTypeConfiguration c1 && c1.TypeCode == flight.AircraftType) ||
+            (t.AircraftType is AircraftCategoryConfiguration c2 && c2.Category == flight.AircraftCategory) ||
+            t.AircraftType is AllAircraftTypesConfiguration);
+
+        if (matchingTime is not null)
+            return matchingTime.AverageFlightTime;
+
+        var averageSeconds = departureAirportConfiguration.FlightTimes.Average(t => t.AverageFlightTime.TotalSeconds);
+        return TimeSpan.FromSeconds(averageSeconds);
     }
 }

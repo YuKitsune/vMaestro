@@ -10,8 +10,6 @@ public class FlightBuilder(string callsign)
     string _origin = "YMML";
     string _destination = "YSSY";
     string _feederFixIdentifier = "RIVET";
-    DateTimeOffset estimatedTimeOfDeparture = default;
-    TimeSpan? _estimatedFlightTime;
     DateTimeOffset activationTime = DateTimeOffset.Now.AddHours(-1);
     DateTimeOffset feederFixEstimate = default;
     bool manualFeederFixEstimate = false;
@@ -33,6 +31,7 @@ public class FlightBuilder(string callsign)
 
     DateTimeOffset _lastSeen = default;
     bool _isFromDepartureAirport = false;
+    FlightPosition? _position = null;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
     {
@@ -140,21 +139,16 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithEstimatedDeparture(DateTimeOffset estimatedDeparture)
-    {
-        estimatedTimeOfDeparture = estimatedDeparture;
-        return this;
-    }
-
-    public FlightBuilder WithEstimatedFlightTime(TimeSpan estimatedFlightTime)
-    {
-        _estimatedFlightTime = estimatedFlightTime;
-        return this;
-    }
-
     public FlightBuilder FromDepartureAirport(bool value = true)
     {
+        _origin = "YSCB";
         _isFromDepartureAirport = value;
+        return this;
+    }
+
+    public FlightBuilder WithPosition(FlightPosition position)
+    {
+        _position = position;
         return this;
     }
 
@@ -170,8 +164,6 @@ public class FlightBuilder(string callsign)
             _wakeCategory)
         {
             OriginIdentifier = _origin,
-            EstimatedDepartureTime = estimatedTimeOfDeparture,
-            EstimatedTimeEnroute = _estimatedFlightTime,
             AssignedArrivalIdentifier = _assignedArrival
         };
 
@@ -197,6 +189,11 @@ public class FlightBuilder(string callsign)
         ];
 
         flight.IsFromDepartureAirport = _isFromDepartureAirport;
+
+        if (_position is not null)
+        {
+            flight.UpdatePosition(_position);
+        }
 
         return flight;
     }

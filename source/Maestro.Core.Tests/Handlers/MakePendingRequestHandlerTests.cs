@@ -130,7 +130,6 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
             .WithRunway("34L", manual: true)
-            .WithEstimatedDeparture(now.AddMinutes(2)) // Will depart in 2 minutes
             .Build();
 
         // Set some additional properties that should be reset

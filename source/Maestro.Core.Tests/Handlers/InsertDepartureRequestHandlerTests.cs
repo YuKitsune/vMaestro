@@ -55,16 +55,110 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var estimatedEnrouteTime = TimeSpan.FromMinutes(45);
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(45); // NonJet from YSCB per config
         var takeoffTime = now.AddMinutes(5);
         var expectedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime);
 
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(estimatedEnrouteTime)
             .WithFeederFix("RIVET")
+            .WithAircraftCategory(AircraftCategory.NonJet) // Use NonJet to match 45-minute config
             .WithLandingEstimate(now.AddMinutes(60)) // Initial estimate, should be updated
             .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "DH8D", // Turboprop (NonJet) to match the 45-minute config
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate,
+            "landing estimate should be calculated from takeoff time + EET");
+    }
+
+    [Fact]
+    public async Task WhenFlightHasPosition_LandingEstimateIsNotDerivedFromTakeOffTime()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var takeoffTime = now.AddMinutes(5);
+        var initialLandingEstimate = now.AddMinutes(10); // Much sooner than takeoff + EET (which would be ~35 minutes)
+
+        // Create a flight position to simulate a radar-coupled flight
+        var position = new FlightPosition(
+            new Coordinate(1, 1), // Actual position doesn't matter
+            15000,
+            VerticalTrack.Descending,
+            280,
+            false);
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithFeederFix("RIVET")
+            .WithAircraftCategory(AircraftCategory.Jet)
+            .WithLandingEstimate(initialLandingEstimate)
+            .WithState(State.Unstable)
+            .WithPosition(position) // Set position to simulate radar-coupled flight
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var request = new InsertDepartureRequest(
+            "YSSY",
+            "QFA123",
+            "B738",
+            "YSCB",
+            new DepartureInsertionOptions(takeoffTime));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        pendingFlight.LandingEstimate.ShouldBe(initialLandingEstimate,
+            "landing estimate should not be recalculated when flight has a known position (radar-coupled)");
+    }
+
+    [Fact]
+    public async Task WhenFlightHasPosition_ButIsOnGround_LandingEstimateDerivedFromTakeOffTime()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(30); // Jet from YSCB per config
+        var takeoffTime = now.AddMinutes(5);
+        var expectedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime);
+        var initialLandingEstimate = now.AddMinutes(60); // Fudged estimate due to inaccurate flight plan
+
+        // Create a flight position to simulate a radar-coupled flight
+        var position = new FlightPosition(
+            new Coordinate(1, 1), // Actual position doesn't matter
+            0,
+            VerticalTrack.Maintaining,
+            15,
+            true);
+
+        var pendingFlight = new FlightBuilder("QFA123")
+            .FromDepartureAirport()
+            .WithFeederFix("RIVET")
+            .WithAircraftCategory(AircraftCategory.Jet)
+            .WithLandingEstimate(initialLandingEstimate)
+            .WithState(State.Unstable)
+            .WithPosition(position) // Set position to simulate radar-coupled flight
             .Build();
 
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
@@ -116,7 +210,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(estimatedEnrouteTime)
             .WithFeederFix("RIVET")
             .WithLandingEstimate(now.AddMinutes(60))
             .WithState(State.Unstable)
@@ -156,7 +249,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         // Flight with BOREE feeder fix should prefer 34R runway (not 34L which is the default)
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(estimatedEnrouteTime)
             .WithFeederFix("BOREE")
             .WithLandingEstimate(now.AddMinutes(60))
             .WithState(State.Unstable)
@@ -196,7 +288,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         // Flight with BOREE feeder fix (prefers 34R in 34IVA mode, or 16L in 16IVA mode)
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(estimatedEnrouteTime)
             .WithFeederFix("BOREE")
             .WithLandingEstimate(now.AddMinutes(60))
             .WithState(State.Unstable)
@@ -242,9 +333,9 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var estimatedEnrouteTime = TimeSpan.FromMinutes(20);
+        var estimatedEnrouteTime = TimeSpan.FromMinutes(30); // Jet from YSCB per config
         var takeoffTime = now.AddMinutes(5);
-        var calculatedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime); // now + 25 minutes
+        var calculatedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime); // now + 35 minutes
 
         // Create two stable flights, one before (T+15) and one after (T+20) the calculated landing estimate
         var stableFlight1 = new FlightBuilder("QFA456")
@@ -265,7 +356,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(estimatedEnrouteTime)
             .WithFeederFix("RIVET")
             .WithLandingEstimate(now.AddMinutes(60))
             .WithState(State.Unstable)
@@ -309,24 +399,20 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var estimatedEnrouteTime = TimeSpan.FromMinutes(20);
         var takeoffTime = now.AddMinutes(5);
-        var calculatedLandingEstimate = takeoffTime.Add(estimatedEnrouteTime); // now + 25 minutes
 
         // Create a superstable/frozen flight at T+30 (after the calculated landing estimate at T+25)
         var superStableFlight = new FlightBuilder("QFA456")
-            .WithLandingEstimate(now.AddMinutes(30))
-            .WithLandingTime(now.AddMinutes(30))
-            .WithFeederFixEstimate(now.AddMinutes(18))
+            .WithLandingEstimate(now.AddMinutes(35))
+            .WithLandingTime(now.AddMinutes(35))
+            .WithFeederFixEstimate(now.AddMinutes(20))
             .WithState(state)
             .WithRunway("34L")
             .Build();
 
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(estimatedEnrouteTime)
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(now.AddMinutes(60))
             .WithState(State.Unstable)
             .Build();
 
@@ -352,7 +438,7 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         sequence.NumberInSequence(pendingFlight).ShouldBe(2, "QFA123 should be second in sequence");
 
         // The superstable/frozen flight should be unaffected
-        superStableFlight.LandingTime.ShouldBe(now.AddMinutes(30),
+        superStableFlight.LandingTime.ShouldBe(now.AddMinutes(35),
             "QFA456 should remain at its original landing time");
 
         // The inserted flight should be delayed and positioned after the superstable/frozen flight
@@ -753,7 +839,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(TimeSpan.FromMinutes(30))
             .WithFeederFix("RIVET")
             .WithLandingEstimate(now.AddMinutes(60))
             .WithState(State.Unstable)
@@ -799,7 +884,6 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         var now = clockFixture.Instance.UtcNow();
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
-            .WithEstimatedFlightTime(TimeSpan.FromMinutes(30))
             .WithFeederFix("RIVET")
             .WithLandingEstimate(now.AddMinutes(60))
             .WithState(State.Unstable)

@@ -85,13 +85,11 @@ public class FlightUpdatedHandler(
 
                     var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
                     var landingEstimate = notification.Estimates.Last().Estimate;
-                    var hasCoupledRadarTrack = notification.Position is not null;
+                    var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
                     var feederFixTimeIsNotKnown = feederFix is not null && feederFix.ActualTimeOver == DateTimeOffset.MaxValue; // vatSys uses MaxValue when the fix has been overflown, but the time is not known (i.e. controller connecting after the event)
 
-                    // Flights are added to the pending list if:
-                    // 1. Feeder fix time is not known (controller connected after they passed it), OR
-                    // 2. They're from a departure airport AND don't have a coupled radar track
-                    if (feederFixTimeIsNotKnown || (airportConfiguration.DepartureAirports.Contains(notification.Origin) && !hasCoupledRadarTrack))
+                    // Flights are added to the pending list if they are departing from a configured departure airport
+                    if (feederFixTimeIsNotKnown || (airportConfiguration.DepartureAirports.Any(d => d.Identifier == notification.Origin) && !hasDeparted))
                     {
                         var newPendingFlight = CreateMaestroFlight(
                             notification,
@@ -113,6 +111,10 @@ public class FlightUpdatedHandler(
 
                         return;
                     }
+
+                    // TODO: Determine if this behaviour is correct
+                    if (!hasDeparted)
+                        return;
 
                     // Only create flights in Maestro when they're within a specified range of the feeder fix
                     if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
@@ -179,7 +181,7 @@ public class FlightUpdatedHandler(
                     desequencedFlight.UpdatePosition(notification.Position);
 
                     // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
-                    if (notification.Position is not null)
+                    if (notification.Position is not null && !notification.Position.IsOnGround)
                         CalculateEstimates(desequencedFlight, notification, airportConfiguration);
 
                     desequencedFlight.UpdateStateBasedOnTime(clock);
@@ -193,7 +195,7 @@ public class FlightUpdatedHandler(
                     sequencedFlight.UpdatePosition(notification.Position);
 
                     // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
-                    if (notification.Position is not null)
+                    if (notification.Position is not null && !notification.Position.IsOnGround)
                         CalculateEstimates(sequencedFlight, notification, airportConfiguration);
 
                     logger.Verbose("Flight updated: {Flight}", sequencedFlight);
@@ -318,7 +320,6 @@ public class FlightUpdatedHandler(
 
         flight.OriginIdentifier = notification.Origin;
         flight.EstimatedDepartureTime = notification.EstimatedDepartureTime;
-        flight.EstimatedTimeEnroute = notification.EstimatedFlightTime;
 
         flight.AssignedArrivalIdentifier = notification.AssignedArrival;
         flight.Fixes = notification.Estimates;

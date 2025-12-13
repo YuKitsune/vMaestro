@@ -263,6 +263,8 @@ public class Plugin : IPlugin
 
     void PublishFlightUpdatedEvent(FDP2.FDR updated)
     {
+        // BUG: FDR updates can be sent before the instance manager has been created, in which case we miss updates
+        //  When an instance is created, scan the active FDRs to ensure it's populated.
         if (_instanceManager is null || !_instanceManager.InstanceExists(updated.DesAirport))
             return;
 
@@ -285,7 +287,7 @@ public class Plugin : IPlugin
             .ToArray();
 
         FlightPosition? position = null;
-        if (updated.CoupledTrack is not null && !updated.CoupledTrack.OnGround)
+        if (updated.CoupledTrack is not null)
         {
             var track = updated.CoupledTrack;
             var verticalTrack = track.VerticalSpeed >= RDP.VS_CLIMB
@@ -298,7 +300,8 @@ public class Plugin : IPlugin
                 new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
                 track.CorrectedAltitude,
                 verticalTrack,
-                track.GroundSpeed);
+                track.GroundSpeed,
+                track.OnGround);
         }
 
         // PerformanceData can be null
