@@ -20,7 +20,6 @@ namespace Maestro.Wpf.Views;
 /// </summary>
 public partial class MaestroView
 {
-    const int MinuteHeight = 12;
     const int LadderWidth = 24;
     const int TickWidth = 8;
     const int LineThickness = 2;
@@ -117,6 +116,8 @@ public partial class MaestroView
         return null;
     }
 
+    double MinuteHeight(int timeHorizonMinutes) => LadderCanvas.ActualHeight / timeHorizonMinutes;
+
     void RedrawLadder(DateTimeOffset referenceTime)
     {
         // Remove all elements that are NOT flight labels
@@ -131,6 +132,14 @@ public partial class MaestroView
 
         var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
+
+        // Prevent rendering when canvas is too small to avoid infinite loop hangs
+        // MinuteHeight() would return a value approaching 0, causing while loops to iterate excessively
+        const double minCanvasSize = 10.0;
+        if (canvasHeight < minCanvasSize || canvasWidth < minCanvasSize)
+        {
+            return;
+        }
 
         var middlePoint = canvasWidth / 2;
         var ladderLeftPosition = middlePoint - LadderWidth / 2 - LineThickness;
@@ -200,7 +209,7 @@ public partial class MaestroView
                 y: yPosition);
             LadderCanvas.Children.Add(rightTick);
 
-            yOffset += MinuteHeight;
+            yOffset += MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes);
         }
 
         // At each 5-minute interval, draw text with 2-digit minutes
@@ -221,7 +230,7 @@ public partial class MaestroView
             LadderCanvas.Children.Add(text);
 
             nextTime = nextTime.AddMinutes(5);
-            yOffset += MinuteHeight * 5;
+            yOffset += MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes) * 5;
         }
 
         // Draw slots
@@ -334,7 +343,7 @@ public partial class MaestroView
 
     double GetYOffsetForTime(DateTimeOffset currentTime, DateTimeOffset nextTime)
     {
-        return (nextTime - currentTime).TotalMinutes * MinuteHeight;
+        return (nextTime - currentTime).TotalMinutes * MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes);
     }
 
     DateTimeOffset GetNearest5Minutes(DateTimeOffset currentTime)
@@ -369,7 +378,7 @@ public partial class MaestroView
     DateTimeOffset GetTimeForYOffset(DateTimeOffset referenceTime, double yOffset)
     {
         // Convert the Y offset back to a time
-        var minutes = yOffset / MinuteHeight;
+        var minutes = yOffset / MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes);
         var newTime = referenceTime.AddMinutes(minutes);
         return newTime;
     }
@@ -705,6 +714,14 @@ public partial class MaestroView
     {
         var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
+
+        // Prevent rendering when canvas is too small
+        const double minCanvasSize = 10.0;
+        if (canvasHeight < minCanvasSize || canvasWidth < minCanvasSize)
+        {
+            return;
+        }
+
         var middlePoint = canvasWidth / 2;
 
         var currentFlights = ViewModel.Flights
