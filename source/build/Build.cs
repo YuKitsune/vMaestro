@@ -211,6 +211,13 @@ class Build : NukeBuild
                 pluginDirectory.DeleteDirectory();
                 Log.Information("Plugin uninstalled from {Directory}", pluginDirectory);
             }
+
+            var configFilePath = pluginsDirectory / "Configs" / "Maestro" / "Maestro.json";
+            if (configFilePath.FileExists())
+            {
+                configFilePath.DeleteFile();
+                Log.Information("Config file {ConfigFile} deleted", configFilePath);
+            }
         });
 
     Target Install => _ => _
@@ -235,7 +242,10 @@ class Build : NukeBuild
 
             // Copy config
             var configFile = RootDirectory / "Maestro.json";
-            configFile.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
+            var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
+            configDestinationDirectory.CreateOrCleanDirectory();
+
+            configFile.CopyToDirectory(configDestinationDirectory, ExistsPolicy.MergeAndOverwrite);
 
             Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
         });

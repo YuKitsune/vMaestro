@@ -137,17 +137,40 @@ public class Plugin : IPlugin
     {
         const string configFileName = "Maestro.json";
 
+        var searchDirectories = new List<string>();
+
+        // Search the profile first
+        if (TryFindProfileDirectory(out var profileDirectory))
+        {
+            searchDirectories.AddRange([
+                Path.Combine(profileDirectory.FullName, "Plugins", "Configs", "Maestro"),
+                Path.Combine(profileDirectory.FullName, "Plugins", "Configs"),
+                Path.Combine(profileDirectory.FullName, "Plugins"),
+                profileDirectory.FullName
+            ]);
+        }
+
+        // Search the assembly directory last
         var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        searchDirectories.Add(assemblyDirectory);
 
-        var configFilePath = Path.Combine(assemblyDirectory, configFileName);
+        var configFilePath = string.Empty;
+        foreach (var searchDirectory in searchDirectories)
+        {
+            var filePath = Path.Combine(searchDirectory, configFileName);
+            if (!File.Exists(filePath))
+                continue;
 
-        if (!File.Exists(configFilePath))
+            configFilePath = filePath;
+            break;
+        }
+
+        if (string.IsNullOrEmpty(configFilePath))
             throw new MaestroException($"Unable to locate {configFileName}");
 
         var configurationJson = File.ReadAllText(configFilePath);
         var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
 
-        // TODO: Reloadable configuration would be cool
         return configuration;
     }
 
@@ -418,5 +441,19 @@ public class Plugin : IPlugin
             executablePath = null;
             return false;
         }
+    }
+
+    // Thanks Max!
+    bool TryFindProfileDirectory(out DirectoryInfo? directoryInfo)
+    {
+        directoryInfo = null;
+        if (!Profile.Loaded)
+            return false;
+
+        var shortNameObject = typeof(Profile).GetField("shortName", BindingFlags.Static | BindingFlags.NonPublic);
+        var shortName = (string)shortNameObject.GetValue(shortNameObject);
+
+        directoryInfo = new DirectoryInfo(Path.Combine(Helpers.GetFilesFolder(), "Profiles", shortName));
+        return true;
     }
 }
