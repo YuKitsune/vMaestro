@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.Versioning;
 using Nuke.Common;
@@ -10,6 +11,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.ILRepack;
 using Octokit;
 using Serilog;
 
@@ -43,9 +45,6 @@ class Build : NukeBuild
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Parameter("Merges all dependencies into a single assembly", Name = "repack")]
-    bool ShouldRepack = false;
-
     [Parameter("GitHub token for creating releases")]
     [Secret]
     readonly string GitHubToken;
@@ -68,8 +67,6 @@ class Build : NukeBuild
     AbsolutePath ServerTestsProjectPath => RootDirectory / "source" / "Maestro.Server.Tests" / "Maestro.Server.Tests.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
     AbsolutePath ServerPublishDirectory => RootDirectory / "source" / "Maestro.Server" / "bin" / Configuration / "net9.0" / "publish";
-    AbsolutePath RepackDirectory => TemporaryDirectory / "repack";
-    AbsolutePath PluginAssembliesPath => ShouldRepack ? RepackDirectory : BuildOutputDirectory;
     AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
     AbsolutePath PackageDirectory => TemporaryDirectory / "package";
 
@@ -152,6 +149,59 @@ class Build : NukeBuild
                 .SetProperty("VatSysPath", VatSysExePath.Parent.Parent));
         });
 
+    Target Repack => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            var mainAssembly = BuildOutputDirectory / PluginAssemblyFileName;
+            var assembliesToMerge = new[]
+            {
+                BuildOutputDirectory / "Maestro.Core.dll",
+                BuildOutputDirectory / "Maestro.Wpf.dll",
+                BuildOutputDirectory / "Serilog.dll",
+                BuildOutputDirectory / "Serilog.Sinks.File.dll",
+                BuildOutputDirectory / "MediatR.dll",
+                BuildOutputDirectory / "MediatR.Contracts.dll",
+                BuildOutputDirectory / "CommunityToolkit.Mvvm.dll",
+                BuildOutputDirectory / "Newtonsoft.Json.dll"
+            };
+
+            if (!mainAssembly.FileExists())
+                throw new Exception($"Main assembly not found: {mainAssembly}");
+
+            foreach (var assembly in assembliesToMerge.Where(a => !a.FileExists()))
+                Log.Warning("Assembly not found (will be skipped): {Assembly}", assembly);
+
+            var existingAssemblies = assembliesToMerge.Where(a => a.FileExists()).ToArray();
+            if (existingAssemblies.Length == 0)
+            {
+                Log.Information("No assemblies found to repack, skipping");
+                return;
+            }
+
+            var settings = new ILRepackSettings()
+                .SetAssemblies([mainAssembly.ToString(), ..existingAssemblies.Select(a => a.ToString())])
+                .SetInternalize(true)
+                .SetParallel(true)
+                .SetOutput(mainAssembly.ToString())
+                .SetLib(BuildOutputDirectory.ToString());  // Tell ILRepack where to find referenced assemblies
+
+            Log.Information("Repacking {Count} assemblies into {MainAssembly}", existingAssemblies.Length, mainAssembly);
+            foreach (var assembly in existingAssemblies)
+                Log.Information("  - {Assembly}", assembly.Name);
+
+            ILRepackTasks.ILRepack(settings);
+
+            // Clean up original merged DLLs
+            foreach (var assembly in existingAssemblies)
+            {
+                assembly.DeleteFile();
+                Log.Information("Deleted {Assembly}", assembly);
+            }
+
+            Log.Information("Repack complete");
+        });
+
     Target TestCore => _ => _
         .Executes(() =>
         {
@@ -223,6 +273,7 @@ class Build : NukeBuild
     Target Install => _ => _
         .Requires(() => ProfileName)
         .DependsOn(Compile)
+        .DependsOn(Repack)
         .DependsOn(Uninstall)
         .Executes(() =>
         {
@@ -235,7 +286,7 @@ class Build : NukeBuild
             // Copy plugin assemblies
             var maestroPluginDirectory = pluginsDirectory / PluginName;
             maestroPluginDirectory.CreateOrCleanDirectory();
-            foreach (var absolutePath in PluginAssembliesPath.GetFiles())
+            foreach (var absolutePath in BuildOutputDirectory.GetFiles())
             {
                 absolutePath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
             }
@@ -252,6 +303,7 @@ class Build : NukeBuild
 
     Target Package => _ => _
         .DependsOn(Compile)
+        .DependsOn(Repack)
         .Requires(() => Configuration == Configuration.Release)
         .Executes(() =>
         {
@@ -262,7 +314,7 @@ class Build : NukeBuild
             PackageDirectory.CreateOrCleanDirectory();
 
             // Copy plugin assemblies
-            foreach (var absolutePath in PluginAssembliesPath.GetFiles())
+            foreach (var absolutePath in BuildOutputDirectory.GetFiles())
             {
                 absolutePath.CopyToDirectory(PackageDirectory, ExistsPolicy.MergeAndOverwrite);
             }

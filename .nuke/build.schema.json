@@ -30,6 +30,7 @@
         "Package",
         "PublishServer",
         "Release",
+        "Repack",
         "Test",
         "TestCore",
         "TestServer",
@@ -122,10 +123,6 @@
         },
         "ProfileName": {
           "type": "string"
-        },
-        "repack": {
-          "type": "boolean",
-          "description": "Merges all dependencies into a single assembly"
         },
         "VatSysPath": {
           "type": "string",
