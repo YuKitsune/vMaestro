@@ -162,8 +162,7 @@ class Build : NukeBuild
                 BuildOutputDirectory / "Serilog.Sinks.File.dll",
                 BuildOutputDirectory / "MediatR.dll",
                 BuildOutputDirectory / "MediatR.Contracts.dll",
-                BuildOutputDirectory / "CommunityToolkit.Mvvm.dll",
-                BuildOutputDirectory / "Newtonsoft.Json.dll"
+                BuildOutputDirectory / "CommunityToolkit.Mvvm.dll"
             };
 
             if (!mainAssembly.FileExists())
