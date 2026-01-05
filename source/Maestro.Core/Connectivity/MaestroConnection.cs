@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
-using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace Maestro.Core.Connectivity;
 
@@ -71,6 +71,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         try
         {
             await _hubConnection.StartAsync(cancellationToken);
+            await InitializeConnection(cancellationToken);
             await _mediator.Publish(new ConnectionStartedNotification(_airportIdentifier), cancellationToken);
         }
         catch (Exception exception)
@@ -129,7 +130,28 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         await _hubConnection!.SendAsync(methodName, message, cancellationToken);
     }
 
-    private static string GetMethodName(object request)
+    async Task InitializeConnection(CancellationToken cancellationToken)
+    {
+        if (!IsConnected)
+            throw new MaestroException("Cannot initialize connection when not connected.");
+
+        var initResponse = await _hubConnection!.InvokeAsync<InitializeConnectionResponse>(
+            "InitializeConnection",
+            new InitializeConnectionRequest(),
+            cancellationToken);
+
+        IsMaster = initResponse.IsMaster;
+        _peers.AddRange(initResponse.ConnectedPeers);
+
+        if (initResponse.Session is null)
+            return;
+
+        await _mediator.Send(
+            new RestoreSessionRequest(initResponse.AirportIdentifier, initResponse.Session),
+            GetMessageCancellationToken());
+    }
+
+    static string GetMethodName(object request)
     {
         // Map request type names to hub method names (removed "Request" suffix)
         return request switch
@@ -164,24 +186,6 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 
     void SubscribeToNotifications(HubConnection hubConnection)
     {
-        hubConnection.On<ConnectionInitializedNotification>("ConnectionInitialized", async notification =>
-        {
-            if (notification.AirportIdentifier != _airportIdentifier)
-                return;
-
-            IsMaster = notification.IsMaster;
-
-            _peers.AddRange(notification.ConnectedPeers);
-
-            // TODO: Clear the session if it's null
-            if (notification.Session is not null)
-            {
-                await _mediator.Send(
-                    new RestoreSessionRequest(notification.AirportIdentifier, notification.Session),
-                    GetMessageCancellationToken());
-            }
-        });
-
         hubConnection.On<OwnershipGrantedNotification>("OwnershipGranted", request =>
         {
             if (request.AirportIdentifier != _airportIdentifier)

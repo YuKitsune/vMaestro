@@ -208,13 +208,13 @@ public class SessionUpdatedNotificationHandlerTests
 
         hubProxy.Verify(x => x.Send(
             peer1.Id,
-            "SequenceUpdated",
+            "SessionUpdated",
             sessionUpdatedNotification,
             It.IsAny<CancellationToken>()), Times.Once);
 
         hubProxy.Verify(x => x.Send(
             peer2.Id,
-            "SequenceUpdated",
+            "SessionUpdated",
             sessionUpdatedNotification,
             It.IsAny<CancellationToken>()), Times.Once);
     }

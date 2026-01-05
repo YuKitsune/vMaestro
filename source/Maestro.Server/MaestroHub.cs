@@ -13,6 +13,14 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 {
     static readonly string ServerVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroHub).Assembly);
 
+    public async Task<InitializeConnectionResponse> InitializeConnection(InitializeConnectionRequest request)
+    {
+        return await mediator.Send(
+            new RequestContextWrapper<InitializeConnectionRequest, InitializeConnectionResponse>(
+                Context.ConnectionId,
+                request));
+    }
+
     public async Task SessionUpdated(SessionUpdatedNotification sessionUpdatedNotification)
     {
         await mediator.Publish(new NotificationContextWrapper<SessionUpdatedNotification>(Context.ConnectionId, sessionUpdatedNotification));
