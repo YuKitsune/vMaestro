@@ -9,4 +9,4 @@ public record ConnectionInitializedNotification(
     string AirportIdentifier,
     bool IsMaster,
     SessionMessage? Session,
-    IReadOnlyList<PeerInfo> ConnectedPeers) : INotification;
+    PeerInfo[] ConnectedPeers) : INotification;

@@ -13,7 +13,7 @@ public class ClientDisconnectedNotificationHandlerTests
     const string Version = "0.0.0";
 
     [Fact]
-    public async Task WhenConnectionIsUntracked_ExceptionIsThrown()
+    public async Task WhenConnectionIsUntracked_NoExceptionIsThrown()
     {
         // Arrange
         const string connectionId = "unknown-connection";
@@ -24,12 +24,17 @@ public class ClientDisconnectedNotificationHandlerTests
 
         var hubProxy = new Mock<IHubProxy>();
 
-        // Act & Assert
-        var exception = await Should.ThrowAsync<InvalidOperationException>(
-            async () => await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
-                .Handle(notification, CancellationToken.None));
+        // Act
+        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+            .Handle(notification, CancellationToken.None);
 
-        exception.Message.ShouldBe($"Connection {connectionId} is not tracked");
+        // Assert - Handler gracefully returns without throwing
+        connectionManager.Verify(x => x.Remove(It.IsAny<Connection>()), Times.Never);
+        hubProxy.Verify(x => x.Send(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<object>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

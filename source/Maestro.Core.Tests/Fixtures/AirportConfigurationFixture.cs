@@ -126,7 +126,8 @@ public class AirportConfigurationFixture
                     Identifier = "BIK",
                     LeftLadder = [],
                     RightLadder = [],
-                    ViewMode = ViewMode.Enroute
+                    ViewMode = ViewMode.Enroute,
+                    TimeHorizonMinutes = 45
                 }
             ],
             FeederFixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],

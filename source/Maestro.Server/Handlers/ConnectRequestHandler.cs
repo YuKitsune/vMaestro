@@ -70,19 +70,5 @@ public class ConnectRequestHandler(
                 new PeerConnectedNotification(request.AirportIdentifier, request.Callsign, request.Role),
                 cancellationToken);
         }
-
-        var latestSequence = sessionCache.Get(request.Partition, request.AirportIdentifier);
-
-        await hubProxy.Send(
-            connectionId,
-            "ConnectionInitialized",
-            new ConnectionInitializedNotification(
-                connectionId,
-                request.Partition,
-                request.AirportIdentifier,
-                connection.IsMaster,
-                latestSequence,
-                peers.Select(c => new PeerInfo(c.Callsign, c.Role)).ToArray()),
-            cancellationToken);
     }
 }

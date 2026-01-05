@@ -22,7 +22,7 @@ public class ConnectRequestHandlerTests
         const string callsign = "ML-BIK_CTR";
         const Role role = Role.Enroute;
 
-        var request = new ConnectRequest(partition, Version, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
         var connection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role);
@@ -39,15 +39,6 @@ public class ConnectRequestHandlerTests
 
         // Assert
         connection.IsMaster.ShouldBeTrue();
-
-        hubProxy.Verify(x => x.Send(
-            connectionId,
-            "ConnectionInitialized",
-            It.Is<ConnectionInitializedNotification>(n =>
-                n.ConnectionId == connectionId &&
-                n.IsMaster == true &&
-                n.ConnectedPeers.Count == 0),
-            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -60,7 +51,7 @@ public class ConnectRequestHandlerTests
         const string callsign = "AA_OBS";
         const Role role = Role.Observer;
 
-        var request = new ConnectRequest(partition, Version, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
         var connection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role);
@@ -77,15 +68,6 @@ public class ConnectRequestHandlerTests
 
         // Assert
         connection.IsMaster.ShouldBeFalse();
-
-        hubProxy.Verify(x => x.Send(
-            connectionId,
-            "ConnectionInitialized",
-            It.Is<ConnectionInitializedNotification>(n =>
-                n.ConnectionId == connectionId &&
-                n.IsMaster == false &&
-                n.ConnectedPeers.Count == 0),
-            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -98,7 +80,7 @@ public class ConnectRequestHandlerTests
         const string callsign = "ML-BIK_CTR";
         const Role role = Role.Enroute;
 
-        var request = new ConnectRequest(partition, Version, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
         var existingConnection = new Connection("connection-1", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = true };
@@ -135,7 +117,7 @@ public class ConnectRequestHandlerTests
         const string callsign = "SY_FMP";
         const Role role = Role.Flow;
 
-        var request = new ConnectRequest(partition, Version, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
         var existingConnection = new Connection("connection-1", Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
@@ -171,69 +153,8 @@ public class ConnectRequestHandlerTests
                 n.Callsign == callsign &&
                 n.Role == role),
             It.IsAny<CancellationToken>()), Times.Once);
-
-        // ConnectionInitialized with IsMaster=true should be sent to the NEW Flow controller
-        hubProxy.Verify(x => x.Send(
-            connectionId,
-            "ConnectionInitialized",
-            It.Is<ConnectionInitializedNotification>(n =>
-                n.ConnectionId == connectionId &&
-                n.IsMaster == true),
-            It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task WhenConnecting_AndACachedSessionExists_ItIsReturnedToTheClient()
-    {
-        // Arrange
-        const string connectionId = "connection-1";
-        const string partition = "partition-1";
-        const string airportIdentifier = "YSSY";
-        const string callsign = "ML-BIK_CTR";
-        const Role role = Role.Enroute;
-
-        var request = new ConnectRequest(partition, Version, airportIdentifier, callsign, role);
-        var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
-
-        var connection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role);
-        var cachedSession = new SessionMessage
-        {
-            AirportIdentifier = null,
-            PendingFlights = [],
-            DeSequencedFlights = [],
-            DummyCounter = 0,
-            Sequence = new SequenceMessage
-            {
-                CurrentRunwayMode = null,
-                NextRunwayMode = null,
-                LastLandingTimeForCurrentMode = default,
-                FirstLandingTimeForNextMode = default,
-                Flights = [],
-                Slots = [],
-            }
-        };
-
-        var connectionManager = new Mock<IConnectionManager>();
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([]);
-        connectionManager.Setup(x => x.Add(connectionId, Version, partition, airportIdentifier, callsign, role)).Returns(connection);
-
-        var sessionCache = new SessionCache();
-        sessionCache.Set(partition, airportIdentifier, cachedSession);
-
-        var hubProxy = new Mock<IHubProxy>();
-
-        // Act
-        await GetHandler(connectionManager.Object, sessionCache, hubProxy.Object).Handle(wrappedRequest, CancellationToken.None);
-
-        // Assert
-        hubProxy.Verify(x => x.Send(
-            connectionId,
-            "ConnectionInitialized",
-            It.Is<ConnectionInitializedNotification>(n =>
-                n.ConnectionId == connectionId &&
-                n.Session == cachedSession),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
 
     ConnectRequestHandler GetHandler(
         IConnectionManager? connectionManager = null,
