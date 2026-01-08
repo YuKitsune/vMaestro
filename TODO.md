@@ -1,6 +1,13 @@
 ## Checklist
 
-- [ ] Review all test cases
+- [ ] Review failing test cases
+- [ ] Replace `ArrivalRegex` with `ApproachType`
+- [ ] Add `TransitionFix` to arrival configuration
+- [ ] Add `ApproachType` to `Flight`
+- [ ] Add a `Change Approach Type` function
+- [ ] Add test cases
+- [ ] Merge
+- [ ] Consider modelling trajectories
 
 # Questions
 
