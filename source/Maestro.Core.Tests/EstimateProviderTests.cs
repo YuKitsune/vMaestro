@@ -30,7 +30,7 @@ public class EstimateProviderTests
                 Arg.Is("YSSY"),
                 Arg.Is("RIVET"),
                 Arg.Any<string[]>(),
-                Arg.Is("RIVET4"),
+                Arg.Is(""),
                 Arg.Is("34L"),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
