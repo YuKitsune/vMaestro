@@ -70,7 +70,7 @@ public class Chevron : Control
         }
     }
 
-    private void DrawUpChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
+    void DrawUpChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
         // Outer triangle: top vertex at (width/2, 0), bottom vertices at (0, height) and (width, height)
         var outerTop = new Point(width / 2, 0);
@@ -86,7 +86,6 @@ public class Chevron : Control
         ]);
         dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Inner triangle (inset by lineWidth)
         var innerTop = new Point(width / 2, lineWidth);
         var innerBottomLeft = new Point(lineWidth, height - lineWidth);
         var innerBottomRight = new Point(width - lineWidth, height - lineWidth);
@@ -123,7 +122,7 @@ public class Chevron : Control
         dc.DrawGeometry(Theme.DarkBrush, null, bottomBevelGeometry);
     }
 
-    private void DrawDownChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
+    void DrawDownChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
         // Outer triangle: bottom vertex at (width/2, height), top vertices at (0, 0) and (width, 0)
         var outerBottom = new Point(width / 2, height);
@@ -139,8 +138,7 @@ public class Chevron : Control
         ]);
         dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Inner triangle (inset by lineWidth)
-        var innerBottom = new Point(width / 2, height - lineWidth);
+        var innerBottom = new Point(width, height - lineWidth);
         var innerTopLeft = new Point(lineWidth, lineWidth);
         var innerTopRight = new Point(width - lineWidth, lineWidth);
 
@@ -155,7 +153,7 @@ public class Chevron : Control
         ]);
         dc.DrawGeometry(Theme.LightBrush, null, topBevelGeometry);
 
-        // Right edge: Light
+        // Right edge: Dark
         var rightBevelGeometry = new PathGeometry([
             new PathFigure(outerTopRight, [
                 new LineSegment(outerBottom, true),
@@ -165,7 +163,7 @@ public class Chevron : Control
         ]);
         dc.DrawGeometry(Theme.DarkBrush, null, rightBevelGeometry);
 
-        // Left edge: Dark
+        // Left edge: Light
         var leftBevelGeometry = new PathGeometry([
             new PathFigure(outerBottom, [
                 new LineSegment(outerTopLeft, true),
@@ -176,7 +174,7 @@ public class Chevron : Control
         dc.DrawGeometry(Theme.LightBrush, null, leftBevelGeometry);
     }
 
-    private void DrawLeftChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
+    void DrawLeftChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
         // Outer triangle: left vertex at (0, height/2), right vertices at (width, 0) and (width, height)
         var outerLeft = new Point(0, height / 2);
@@ -192,7 +190,6 @@ public class Chevron : Control
         ]);
         dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Inner triangle (inset by lineWidth)
         var innerLeft = new Point(lineWidth, height / 2);
         var innerTopRight = new Point(width - lineWidth, lineWidth);
         var innerBottomRight = new Point(width - lineWidth, height - lineWidth);
@@ -229,7 +226,7 @@ public class Chevron : Control
         dc.DrawGeometry(Theme.DarkBrush, null, rightBevelGeometry);
     }
 
-    private void DrawRightChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
+    void DrawRightChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
         // Outer triangle: right vertex at (width, height/2), left vertices at (0, 0) and (0, height)
         var outerRight = new Point(width, height / 2);
@@ -245,7 +242,6 @@ public class Chevron : Control
         ]);
         dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Inner triangle (inset by lineWidth)
         var innerRight = new Point(width - lineWidth, height / 2);
         var innerTopLeft = new Point(lineWidth, lineWidth);
         var innerBottomLeft = new Point(lineWidth, height - lineWidth);
