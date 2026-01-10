@@ -51,7 +51,7 @@ public class Chevron : Control
     private void DrawBeveledChevron(DrawingContext dc, double width, double height, Direction direction)
     {
         var foreground = Foreground ?? Brushes.Black;
-        var lineWidth = Theme.BeveledLineWidth;
+        var lineWidth = Theme.BeveledLineWidth / 2;
 
         switch (direction)
         {
@@ -72,101 +72,213 @@ public class Chevron : Control
 
     private void DrawUpChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
-        // Triangle pointing up: top vertex at (width/2, 0), bottom vertices at (0, height) and (width, height)
-        var top = new Point(width / 2, 0);
-        var bottomLeft = new Point(0, height);
-        var bottomRight = new Point(width, height);
+        // Outer triangle: top vertex at (width/2, 0), bottom vertices at (0, height) and (width, height)
+        var outerTop = new Point(width / 2, 0);
+        var outerBottomLeft = new Point(0, height);
+        var outerBottomRight = new Point(width, height);
 
-        // Draw filled triangle
-        var geometry = new PathGeometry([
-            new PathFigure(top, [
-                new LineSegment(bottomRight, true),
-                new LineSegment(bottomLeft, true)
+        // Draw full background triangle
+        var backgroundGeometry = new PathGeometry([
+            new PathFigure(outerTop, [
+                new LineSegment(outerBottomRight, true),
+                new LineSegment(outerBottomLeft, true)
             ], true)
         ]);
-        dc.DrawGeometry(foreground, null, geometry);
+        dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Draw beveled edges
-        // Left edge: Light
-        dc.DrawLine(new Pen(Theme.LightBrush, lineWidth), bottomLeft, top);
+        // Inner triangle (inset by lineWidth)
+        var innerTop = new Point(width / 2, lineWidth);
+        var innerBottomLeft = new Point(lineWidth, height - lineWidth);
+        var innerBottomRight = new Point(width - lineWidth, height - lineWidth);
+
+        // Draw beveled edges as polygons on top
+        // Left edge: Light (trapezoid from outer to inner)
+        var leftBevelGeometry = new PathGeometry([
+            new PathFigure(outerBottomLeft, [
+                new LineSegment(outerTop, true),
+                new LineSegment(innerTop, true),
+                new LineSegment(innerBottomLeft, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.LightBrush, null, leftBevelGeometry);
+
         // Right edge: Dark
-        dc.DrawLine(new Pen(Theme.DarkBrush, lineWidth), top, bottomRight);
+        var rightBevelGeometry = new PathGeometry([
+            new PathFigure(outerTop, [
+                new LineSegment(outerBottomRight, true),
+                new LineSegment(innerBottomRight, true),
+                new LineSegment(innerTop, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.DarkBrush, null, rightBevelGeometry);
+
         // Bottom edge: Dark
-        dc.DrawLine(new Pen(Theme.DarkBrush, lineWidth), bottomRight, bottomLeft);
+        var bottomBevelGeometry = new PathGeometry([
+            new PathFigure(outerBottomRight, [
+                new LineSegment(outerBottomLeft, true),
+                new LineSegment(innerBottomLeft, true),
+                new LineSegment(innerBottomRight, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.DarkBrush, null, bottomBevelGeometry);
     }
 
     private void DrawDownChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
-        // Triangle pointing down: bottom vertex at (width/2, height), top vertices at (0, 0) and (width, 0)
-        var bottom = new Point(width / 2, height);
-        var topLeft = new Point(0, 0);
-        var topRight = new Point(width, 0);
+        // Outer triangle: bottom vertex at (width/2, height), top vertices at (0, 0) and (width, 0)
+        var outerBottom = new Point(width / 2, height);
+        var outerTopLeft = new Point(0, 0);
+        var outerTopRight = new Point(width, 0);
 
-        // Draw filled triangle
-        var geometry = new PathGeometry([
-            new PathFigure(bottom, [
-                new LineSegment(topLeft, true),
-                new LineSegment(topRight, true)
+        // Draw full background triangle
+        var backgroundGeometry = new PathGeometry([
+            new PathFigure(outerBottom, [
+                new LineSegment(outerTopLeft, true),
+                new LineSegment(outerTopRight, true)
             ], true)
         ]);
-        dc.DrawGeometry(foreground, null, geometry);
+        dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Draw beveled edges
+        // Inner triangle (inset by lineWidth)
+        var innerBottom = new Point(width / 2, height - lineWidth);
+        var innerTopLeft = new Point(lineWidth, lineWidth);
+        var innerTopRight = new Point(width - lineWidth, lineWidth);
+
+        // Draw beveled edges as polygons on top
         // Top edge: Light
-        dc.DrawLine(new Pen(Theme.LightBrush, lineWidth), topLeft, topRight);
-        // Left edge: Light
-        dc.DrawLine(new Pen(Theme.LightBrush, lineWidth), topRight, bottom);
-        // Right edge: Dark
-        dc.DrawLine(new Pen(Theme.DarkBrush, lineWidth), bottom, topLeft);
+        var topBevelGeometry = new PathGeometry([
+            new PathFigure(outerTopLeft, [
+                new LineSegment(outerTopRight, true),
+                new LineSegment(innerTopRight, true),
+                new LineSegment(innerTopLeft, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.LightBrush, null, topBevelGeometry);
+
+        // Right edge: Light
+        var rightBevelGeometry = new PathGeometry([
+            new PathFigure(outerTopRight, [
+                new LineSegment(outerBottom, true),
+                new LineSegment(innerBottom, true),
+                new LineSegment(innerTopRight, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.DarkBrush, null, rightBevelGeometry);
+
+        // Left edge: Dark
+        var leftBevelGeometry = new PathGeometry([
+            new PathFigure(outerBottom, [
+                new LineSegment(outerTopLeft, true),
+                new LineSegment(innerTopLeft, true),
+                new LineSegment(innerBottom, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.LightBrush, null, leftBevelGeometry);
     }
 
     private void DrawLeftChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
-        // Triangle pointing left: left vertex at (0, height/2), right vertices at (width, 0) and (width, height)
-        var left = new Point(0, height / 2);
-        var topRight = new Point(width, 0);
-        var bottomRight = new Point(width, height);
+        // Outer triangle: left vertex at (0, height/2), right vertices at (width, 0) and (width, height)
+        var outerLeft = new Point(0, height / 2);
+        var outerTopRight = new Point(width, 0);
+        var outerBottomRight = new Point(width, height);
 
-        // Draw filled triangle
-        var geometry = new PathGeometry([
-            new PathFigure(left, [
-                new LineSegment(topRight, true),
-                new LineSegment(bottomRight, true)
+        // Draw full background triangle
+        var backgroundGeometry = new PathGeometry([
+            new PathFigure(outerLeft, [
+                new LineSegment(outerTopRight, true),
+                new LineSegment(outerBottomRight, true)
             ], true)
         ]);
-        dc.DrawGeometry(foreground, null, geometry);
+        dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Draw beveled edges
+        // Inner triangle (inset by lineWidth)
+        var innerLeft = new Point(lineWidth, height / 2);
+        var innerTopRight = new Point(width - lineWidth, lineWidth);
+        var innerBottomRight = new Point(width - lineWidth, height - lineWidth);
+
+        // Draw beveled edges as polygons on top
         // Top edge: Light
-        dc.DrawLine(new Pen(Theme.LightBrush, lineWidth), topRight, left);
+        var topBevelGeometry = new PathGeometry([
+            new PathFigure(outerTopRight, [
+                new LineSegment(outerLeft, true),
+                new LineSegment(innerLeft, true),
+                new LineSegment(innerTopRight, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.LightBrush, null, topBevelGeometry);
+
         // Bottom edge: Dark
-        dc.DrawLine(new Pen(Theme.DarkBrush, lineWidth), left, bottomRight);
+        var bottomBevelGeometry = new PathGeometry([
+            new PathFigure(outerLeft, [
+                new LineSegment(outerBottomRight, true),
+                new LineSegment(innerBottomRight, true),
+                new LineSegment(innerLeft, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.DarkBrush, null, bottomBevelGeometry);
+
         // Right edge: Dark
-        dc.DrawLine(new Pen(Theme.DarkBrush, lineWidth), bottomRight, topRight);
+        var rightBevelGeometry = new PathGeometry([
+            new PathFigure(outerBottomRight, [
+                new LineSegment(outerTopRight, true),
+                new LineSegment(innerTopRight, true),
+                new LineSegment(innerBottomRight, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.DarkBrush, null, rightBevelGeometry);
     }
 
     private void DrawRightChevron(DrawingContext dc, double width, double height, Brush foreground, double lineWidth)
     {
-        // Triangle pointing right: right vertex at (width, height/2), left vertices at (0, 0) and (0, height)
-        var right = new Point(width, height / 2);
-        var topLeft = new Point(0, 0);
-        var bottomLeft = new Point(0, height);
+        // Outer triangle: right vertex at (width, height/2), left vertices at (0, 0) and (0, height)
+        var outerRight = new Point(width, height / 2);
+        var outerTopLeft = new Point(0, 0);
+        var outerBottomLeft = new Point(0, height);
 
-        // Draw filled triangle
-        var geometry = new PathGeometry([
-            new PathFigure(right, [
-                new LineSegment(bottomLeft, true),
-                new LineSegment(topLeft, true)
+        // Draw full background triangle
+        var backgroundGeometry = new PathGeometry([
+            new PathFigure(outerRight, [
+                new LineSegment(outerBottomLeft, true),
+                new LineSegment(outerTopLeft, true)
             ], true)
         ]);
-        dc.DrawGeometry(foreground, null, geometry);
+        dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        // Draw beveled edges
+        // Inner triangle (inset by lineWidth)
+        var innerRight = new Point(width - lineWidth, height / 2);
+        var innerTopLeft = new Point(lineWidth, lineWidth);
+        var innerBottomLeft = new Point(lineWidth, height - lineWidth);
+
+        // Draw beveled edges as polygons on top
         // Left edge: Light
-        dc.DrawLine(new Pen(Theme.LightBrush, lineWidth), bottomLeft, topLeft);
+        var leftBevelGeometry = new PathGeometry([
+            new PathFigure(outerBottomLeft, [
+                new LineSegment(outerTopLeft, true),
+                new LineSegment(innerTopLeft, true),
+                new LineSegment(innerBottomLeft, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.LightBrush, null, leftBevelGeometry);
+
         // Top edge: Light
-        dc.DrawLine(new Pen(Theme.LightBrush, lineWidth), topLeft, right);
+        var topBevelGeometry = new PathGeometry([
+            new PathFigure(outerTopLeft, [
+                new LineSegment(outerRight, true),
+                new LineSegment(innerRight, true),
+                new LineSegment(innerTopLeft, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.LightBrush, null, topBevelGeometry);
+
         // Bottom edge: Dark
-        dc.DrawLine(new Pen(Theme.DarkBrush, lineWidth), right, bottomLeft);
+        var bottomBevelGeometry = new PathGeometry([
+            new PathFigure(outerRight, [
+                new LineSegment(outerBottomLeft, true),
+                new LineSegment(innerBottomLeft, true),
+                new LineSegment(innerRight, true)
+            ], true)
+        ]);
+        dc.DrawGeometry(Theme.DarkBrush, null, bottomBevelGeometry);
     }
 }
