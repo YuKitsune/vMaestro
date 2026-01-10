@@ -8,10 +8,26 @@ public interface IArrivalLookup
     public TimeSpan? GetArrivalInterval(
         string airportIdentifier,
         string feederFixIdentifier,
-        string? arrivalIdentifier,
+        string[] fixNames,
+        string approachType,
         string runwayIdentifier,
         string aircraftTypeCode,
         AircraftCategory aircraftCategory);
+}
+
+public static class ArrivalLookupExtensionMethods
+{
+    public static TimeSpan? GetArrivalInterval(this IArrivalLookup arrivalLookup, Flight flight)
+    {
+        return arrivalLookup.GetArrivalInterval(
+            flight.DestinationIdentifier,
+            flight.FeederFixIdentifier,
+            flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
+            flight.ApproachType,
+            flight.AssignedRunwayIdentifier,
+            flight.AircraftType,
+            flight.AircraftCategory);
+    }
 }
 
 public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
@@ -20,7 +36,8 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
     public TimeSpan? GetArrivalInterval(
         string airportIdentifier,
         string feederFixIdentifier,
-        string? arrivalIdentifier,
+        string[] fixNames,
+        string approachType,
         string runwayIdentifier,
         string aircraftTypeCode,
         AircraftCategory aircraftCategory)
@@ -33,10 +50,13 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
 
         var foundArrivalConfigurations = airportConfiguration.Arrivals
             .Where(x => x.FeederFix == feederFixIdentifier)
+            .Where(x => x.ApproachType == approachType)
+            .Where(x => string.IsNullOrEmpty(x.ApproachFix) || fixNames.Contains(x.ApproachFix))
             .Where(x =>
-                (string.IsNullOrEmpty(x.AircraftType) || x.AircraftType == aircraftTypeCode) &&
-                (x.AdditionalAircraftTypes.Contains(aircraftTypeCode) || x.Category is null || x.Category == aircraftCategory) &&
-                (string.IsNullOrEmpty(arrivalIdentifier) || x.ArrivalRegex.IsMatch(arrivalIdentifier)))
+                ((string.IsNullOrEmpty(x.AircraftType) || x.AircraftType == aircraftTypeCode) &&
+                 (x.Category is null || x.Category == aircraftCategory)) ||
+                x.AdditionalAircraftTypes.Contains(aircraftTypeCode))
+            .OrderByDescending(GetRank)
             .ToArray();
 
         // No matches, nothing to do
@@ -47,14 +67,32 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         {
             // TODO: Show vatSys error
             logger.Warning(
-                "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; STAR = {ArrivalIdentifier}; Type = {Type}",
+                "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; APCH = {ApproachType}; Type = {Type}",
                 airportIdentifier,
                 feederFixIdentifier,
                 runwayIdentifier,
-                arrivalIdentifier,
+                approachType,
                 aircraftTypeCode);
         }
 
         return TimeSpan.FromMinutes(foundArrivalConfigurations.First().RunwayIntervals[runwayIdentifier]);
+
+        int GetRank(ArrivalConfiguration arrivalConfiguration)
+        {
+            var rank = 0;
+            if (!string.IsNullOrEmpty(arrivalConfiguration.ApproachType) &&
+                arrivalConfiguration.ApproachType == approachType)
+            {
+                rank++;
+            }
+
+            if (!string.IsNullOrEmpty(arrivalConfiguration.ApproachFix) &&
+                fixNames.Contains(arrivalConfiguration.ApproachFix))
+            {
+                rank++;
+            }
+
+            return rank;
+        }
     }
 }

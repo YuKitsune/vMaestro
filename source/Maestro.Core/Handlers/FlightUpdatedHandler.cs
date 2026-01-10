@@ -20,7 +20,6 @@ public record FlightUpdatedNotification(
     string Destination,
     DateTimeOffset EstimatedDepartureTime,
     TimeSpan EstimatedFlightTime,
-    string? AssignedArrival,
     FlightPosition? Position,
     FixEstimate[] Estimates)
     : INotification;
@@ -339,7 +338,6 @@ public class FlightUpdatedHandler(
         flight.OriginIdentifier = notification.Origin;
         flight.EstimatedDepartureTime = notification.EstimatedDepartureTime;
 
-        flight.AssignedArrivalIdentifier = notification.AssignedArrival;
         flight.Fixes = notification.Estimates;
     }
 }

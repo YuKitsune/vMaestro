@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
 using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
@@ -99,7 +98,6 @@ public class AirportConfigurationFixture
                 new ArrivalConfiguration
                 {
                     FeederFix = "RIVET",
-                    ArrivalRegex = new Regex(@"RIVET\d"),
                     Category = AircraftCategory.Jet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
@@ -110,7 +108,6 @@ public class AirportConfigurationFixture
                 new ArrivalConfiguration
                 {
                     FeederFix = "WELSH",
-                    ArrivalRegex = new Regex(@"ODALE\d"),
                     Category = AircraftCategory.Jet,
                     RunwayIntervals = new Dictionary<string, int>
                     {

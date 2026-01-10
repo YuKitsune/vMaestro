@@ -40,7 +40,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(4),
-            "RIVET4",
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(3))]);
 
@@ -69,7 +68,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -106,7 +104,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddMinutes(10),
             TimeSpan.FromHours(20),
-            "RIVET4",
             position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -137,7 +134,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddMinutes(10),
             TimeSpan.FromHours(20),
-            "RIVET4",
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -175,7 +171,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(10),
             TimeSpan.FromHours(20),
-            "RIVET4",
             position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -220,7 +215,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -275,7 +269,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             null,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddHours(1)),
@@ -318,7 +311,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15)),
@@ -358,7 +350,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1.5), // Different estimated departure
             TimeSpan.FromHours(2),
-            "ODALE7", // Different arrival
             new FlightPosition(new Coordinate(1, 1), 38_000, VerticalTrack.Descending, 280, false), // Different position
             [new FixEstimate("WELSH", clock.UtcNow().AddMinutes(10))]);
 
@@ -372,7 +363,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         flight.WakeCategory.ShouldBe(WakeCategory.Heavy);
         flight.OriginIdentifier.ShouldBe("YMAV");
         flight.EstimatedDepartureTime.ShouldBe(notification.EstimatedDepartureTime);
-        flight.AssignedArrivalIdentifier.ShouldBe("ODALE7");
         flight.Position!.Coordinate.Latitude.ShouldBe(notification.Position!.Coordinate.Latitude);
         flight.Position.Coordinate.Longitude.ShouldBe(notification.Position.Coordinate.Longitude);
         flight.Position.Altitude.ShouldBe(notification.Position.Altitude);
@@ -407,7 +397,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -479,7 +468,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -555,7 +543,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -607,7 +594,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YBBN", // Destination with no active instance
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -637,7 +623,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            null,
             _position,
             [new FixEstimate("YSSY", clock.UtcNow().AddMinutes(30))]); // Only landing estimate, no feeder fix
 
@@ -669,7 +654,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "BOREE4",
             _position,
             [new FixEstimate("BOREE", clock.UtcNow().AddMinutes(30))]);
 
@@ -710,7 +694,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
 
@@ -754,7 +737,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(5)), new FixEstimate("YSSY", clock.UtcNow().AddMinutes(15))]);
 
@@ -812,7 +794,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -866,7 +847,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15)),
@@ -901,7 +881,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -941,7 +920,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15)),
@@ -989,7 +967,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -1047,7 +1024,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),

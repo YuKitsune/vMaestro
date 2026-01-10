@@ -177,13 +177,7 @@ public class InsertDepartureRequestHandler(
 
     DateTimeOffset? GetFeederFixTime(Flight flight)
     {
-        var arrivalInterval = arrivalLookup.GetArrivalInterval(
-            flight.DestinationIdentifier,
-            flight.FeederFixIdentifier,
-            flight.AssignedArrivalIdentifier,
-            flight.AssignedRunwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
+        var arrivalInterval = arrivalLookup.GetArrivalInterval(flight);
         if (arrivalInterval is null)
             return null;
 

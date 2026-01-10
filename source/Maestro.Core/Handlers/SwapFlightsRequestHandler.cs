@@ -89,13 +89,7 @@ public class SwapFlightsRequestHandler(
 
     DateTimeOffset? GetFeederFixTime(Flight flight)
     {
-        var interval = arrivalLookup.GetArrivalInterval(
-            flight.DestinationIdentifier,
-            flight.FeederFixIdentifier,
-            flight.AssignedArrivalIdentifier,
-            flight.AssignedRunwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
+        var interval = arrivalLookup.GetArrivalInterval(flight);
 
         if (interval is null)
             return null;

@@ -644,13 +644,7 @@ public class Sequence
         DateTimeOffset? feederFixTime = null;
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && !flight.HasPassedFeederFix)
         {
-            var arrivalInterval = _arrivalLookup.GetArrivalInterval(
-                flight.DestinationIdentifier,
-                flight.FeederFixIdentifier,
-                flight.AssignedArrivalIdentifier,
-                flight.AssignedRunwayIdentifier,
-                flight.AircraftType,
-                flight.AircraftCategory);
+            var arrivalInterval = _arrivalLookup.GetArrivalInterval(flight);
             if (arrivalInterval is not null)
             {
                 feederFixTime = landingTime.Subtract(arrivalInterval.Value);

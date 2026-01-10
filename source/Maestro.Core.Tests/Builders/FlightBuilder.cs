@@ -19,7 +19,7 @@ public class FlightBuilder(string callsign)
     DateTimeOffset landingEstimate = default;
     DateTimeOffset landingTime = default;
 
-    string _assignedArrival = "RIVET4";
+    string _approachType = string.Empty;
     string _assignedRunway = "34L";
     bool _manualRunway = false;
 
@@ -114,9 +114,9 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithArrival(string arrivalIdentifier)
+    public FlightBuilder WithApproachType(string approachType)
     {
-        _assignedArrival = arrivalIdentifier;
+        _approachType = approachType;
         return this;
     }
 
@@ -163,9 +163,10 @@ public class FlightBuilder(string callsign)
             _aircraftCategory,
             _wakeCategory)
         {
-            OriginIdentifier = _origin,
-            AssignedArrivalIdentifier = _assignedArrival
+            OriginIdentifier = _origin
         };
+
+        flight.SetApproachType(_approachType);
 
         flight.SetFeederFix(_feederFixIdentifier, feederFixEstimate, passedFeederFix);
         if (!string.IsNullOrEmpty(_feederFixIdentifier))

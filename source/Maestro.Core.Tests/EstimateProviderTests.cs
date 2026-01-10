@@ -29,6 +29,7 @@ public class EstimateProviderTests
         _arrivalLookup.GetArrivalInterval(
                 Arg.Is("YSSY"),
                 Arg.Is("RIVET"),
+                Arg.Any<string[]>(),
                 Arg.Is("RIVET4"),
                 Arg.Is("34L"),
                 Arg.Any<string>(),

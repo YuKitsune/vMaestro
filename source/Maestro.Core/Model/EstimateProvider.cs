@@ -38,13 +38,7 @@ public class EstimateProvider(
         if (flight.HasPassedFeederFix && flight.ActualFeederFixTime == DateTimeOffset.MaxValue)
             return systemEstimate;
 
-        var timeToGo = arrivalLookup.GetArrivalInterval(
-            flight.DestinationIdentifier,
-            flight.FeederFixIdentifier,
-            flight.AssignedArrivalIdentifier,
-            flight.AssignedRunwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
+        var timeToGo = arrivalLookup.GetArrivalInterval(flight);
 
         if (timeToGo is null)
             return systemEstimate;
