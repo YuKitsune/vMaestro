@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -49,6 +48,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
             Substitute.For<IClock>(),
             mediator,
             Substitute.For<ILogger>());
@@ -106,6 +106,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -165,6 +166,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -203,6 +205,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -244,6 +247,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -281,6 +285,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             slaveConnectionManager,
+            Substitute.For<IArrivalLookup>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());

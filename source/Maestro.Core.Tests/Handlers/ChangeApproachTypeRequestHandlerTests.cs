@@ -31,12 +31,12 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithRunway("34R")
             .Build();
 
+        var arrivalLookup = GetArrivalLookup();
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
-        var arrivalLookup = GetArrivalLookup();
 
         var handler = new ChangeApproachTypeRequestHandler(
             instanceManager,
@@ -73,12 +73,12 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithRunway("34R")
             .Build();
 
+        var arrivalLookup = GetArrivalLookup();
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
-        var arrivalLookup = GetArrivalLookup();
 
         var handler = new ChangeApproachTypeRequestHandler(
             instanceManager,
@@ -116,13 +116,13 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithRunway("34R")
             .Build();
 
+        var arrivalLookup = GetArrivalLookup();
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithFlightsInOrder(flight))
+            .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(flight))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
-        var arrivalLookup = GetArrivalLookup();
 
         var handler = new ChangeApproachTypeRequestHandler(
             instanceManager,

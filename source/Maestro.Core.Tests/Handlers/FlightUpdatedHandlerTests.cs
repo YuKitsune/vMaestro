@@ -4,7 +4,6 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
-using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -199,7 +198,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -256,7 +255,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(originalLandingTime)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -298,7 +297,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(manualLandingEstimate)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -337,7 +336,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -382,7 +381,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingTime(clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
         instance.Session.DeSequencedFlights.Add(flight);
 
         var newFeederFixTime = clock.UtcNow().AddMinutes(15);
@@ -611,7 +610,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     {
         // Arrange
         var clock = clockFixture.Instance;
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
 
         // Notification with no feeder fix estimates (only landing estimate)
         var notification = new FlightUpdatedNotification(
@@ -834,7 +833,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(originalEstimate.AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -1057,6 +1056,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     FlightUpdatedHandler GetHandler(
         IMaestroInstanceManager instanceManager,
         IClock clock,
+        IArrivalLookup? arrivalLookup = null,
         IEstimateProvider? estimateProvider = null,
         IFlightUpdateRateLimiter? rateLimiter = null,
         IMaestroConnectionManager? connectionManager = null)
@@ -1067,6 +1067,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([airportConfigurationFixture.Instance]);
 
+        arrivalLookup ??= Substitute.For<IArrivalLookup>();
         estimateProvider ??= Substitute.For<IEstimateProvider>();
         connectionManager ??= new MockLocalConnectionManager();
         var mediator = Substitute.For<IMediator>();
@@ -1076,6 +1077,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             connectionManager,
             rateLimiter,
             airportConfigurationProvider,
+            arrivalLookup,
             estimateProvider,
             mediator,
             clock,

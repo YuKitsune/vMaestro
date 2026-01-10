@@ -1,4 +1,5 @@
 using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
@@ -7,6 +8,7 @@ using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
 using MediatR;
+using Microsoft.AspNetCore.Connections;
 using NSubstitute;
 using Serilog;
 using Shouldly;
@@ -45,7 +47,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(instanceManager);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
@@ -71,11 +73,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(instanceManager);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA1", ["34R"], newLandingTime);
@@ -119,11 +121,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(state)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(instanceManager);
 
         var newLandingTime = now.AddMinutes(11);
         var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
@@ -170,7 +172,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(instanceManager);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
@@ -205,11 +207,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(instanceManager);
 
         flight.State.ShouldBe(State.Unstable, "Flight should initially be Unstable");
 
@@ -240,11 +242,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(state)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(instanceManager);
 
         flight.State.ShouldBe(state, $"Flight should initially be {state}");
 
@@ -285,11 +287,11 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(instanceManager);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
@@ -329,14 +331,8 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
-        var clock = clockFixture.Instance;
 
-        var handler = new MoveFlightRequestHandler(
-            instanceManager,
-            slaveConnectionManager,
-            mediator,
-            clock,
-            Substitute.For<ILogger>());
+        var handler = GetRequestHandler(instanceManager, slaveConnectionManager, mediator);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
@@ -352,13 +348,15 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         sequence.Flights[2].Callsign.ShouldBe("QFA3", "Sequence should not be modified locally when relaying to master");
     }
 
-    MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
+    MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
     {
-        var mediator = Substitute.For<IMediator>();
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        mediator ??= Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(
             instanceManager,
-            new MockLocalConnectionManager(),
+            connectionManager ?? new MockLocalConnectionManager(),
+            arrivalLookup,
             mediator,
             clock,
             Substitute.For<ILogger>());

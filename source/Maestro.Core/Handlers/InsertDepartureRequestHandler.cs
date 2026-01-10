@@ -139,6 +139,17 @@ public class InsertDepartureRequestHandler(
             }
 
             flight.SetRunway(runway.Identifier, manual: true);
+
+            var approachTypes = arrivalLookup.GetApproachTypes(
+                flight.DestinationIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes.Select(x => x.ToString()).ToArray(),
+                flight.AssignedRunwayIdentifier,
+                flight.AircraftType,
+                flight.AircraftCategory);
+
+            flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
+
             sequence.Insert(index, flight);
 
             flight.SetState(State.Stable, clock);

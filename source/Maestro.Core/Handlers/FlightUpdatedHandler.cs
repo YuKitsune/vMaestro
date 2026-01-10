@@ -29,6 +29,7 @@ public class FlightUpdatedHandler(
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
+    IArrivalLookup arrivalLookup,
     IEstimateProvider estimateProvider,
     IMediator mediator,
     IClock clock,
@@ -140,6 +141,15 @@ public class FlightUpdatedHandler(
 
                         sequencedFlight.SetRunway(runway.Identifier, manual: false);
 
+                        var approachTypes = arrivalLookup.GetApproachTypes(
+                            sequencedFlight.DestinationIdentifier,
+                            sequencedFlight.FeederFixIdentifier,
+                            sequencedFlight.Fixes.Select(x => x.ToString()).ToArray(),
+                            sequencedFlight.AssignedRunwayIdentifier,
+                            sequencedFlight.AircraftType,
+                            sequencedFlight.AircraftCategory);
+                        sequencedFlight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
+
                         instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
                         logger.Information("{Callsign} created", notification.Callsign);
                     }
@@ -209,7 +219,7 @@ public class FlightUpdatedHandler(
                             f => f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
                                  f.State != State.Unstable) + 1;
 
-                        var desiredIndex = instance.Session.Sequence.FindLastIndex(f =>
+                        var desiredIndex = instance.Session.Sequence.FindIndex(f =>
                             f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
                             f.LandingEstimate.IsAfter(sequencedFlight.LandingEstimate));
 

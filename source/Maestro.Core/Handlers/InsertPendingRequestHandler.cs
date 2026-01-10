@@ -13,6 +13,7 @@ namespace Maestro.Core.Handlers;
 public class InsertPendingRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IArrivalLookup arrivalLookup,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -87,6 +88,16 @@ public class InsertPendingRequestHandler(
             sequence.ThrowIfSlotIsUnavailable(index, runway.Identifier);
 
             flight.SetRunway(runway.Identifier, manual: true);
+
+            var approachTypes = arrivalLookup.GetApproachTypes(
+                flight.DestinationIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes.Select(x => x.ToString()).ToArray(),
+                flight.AssignedRunwayIdentifier,
+                flight.AircraftType,
+                flight.AircraftCategory);
+
+            flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
             sequence.Insert(index, flight);
 

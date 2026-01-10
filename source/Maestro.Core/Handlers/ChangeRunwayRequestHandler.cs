@@ -13,6 +13,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeRunwayRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IArrivalLookup arrivalLookup,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -47,6 +48,18 @@ public class ChangeRunwayRequestHandler(
             logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
             flight.SetRunway(request.RunwayIdentifier, true);
+
+            // Update the approach type if the new runway doesn't have the current approach type
+            var approachTypes = arrivalLookup.GetApproachTypes(
+                flight.DestinationIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes.Select(x => x.ToString()).ToArray(),
+                flight.AssignedRunwayIdentifier,
+                flight.AircraftType,
+                flight.AircraftCategory);
+
+            if (!approachTypes.Contains(flight.ApproachType))
+                flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
             // TODO: Re-calculate the landing estimate
 
