@@ -129,10 +129,10 @@ public class FlightUpdatedHandler(
                             f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
                         var insertionIndex = instance.Session.Sequence.FindIndex(
-                            Math.Max(earliestInsertionIndex, 0),
+                            earliestInsertionIndex,
                             f => f.LandingEstimate.IsAfter(landingEstimate));
                         if (insertionIndex == -1)
-                            insertionIndex = Math.Max(earliestInsertionIndex, instance.Session.Sequence.Flights.Count);
+                            insertionIndex = Math.Min(earliestInsertionIndex, instance.Session.Sequence.Flights.Count);
 
                         sequencedFlight = CreateMaestroFlight(
                             notification,
@@ -210,12 +210,16 @@ public class FlightUpdatedHandler(
                             f => f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
                                  f.State != State.Unstable) + 1;
 
-                        var desiredIndex = instance.Session.Sequence.FindLastIndex(f =>
+                        var desiredIndex = instance.Session.Sequence.FindIndex(f =>
                             f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
                             f.LandingEstimate.IsAfter(sequencedFlight.LandingEstimate));
 
-                        var newIndex = desiredIndex;
-                        if (desiredIndex < earliestIndex)
+                        var newIndex = desiredIndex == -1
+                            ? instance.Session.Sequence.Flights.Count // No flight has a later estimate - move to end of sequence
+                            : desiredIndex;
+
+                        // Cannot move before stable flights that are currently before us
+                        if (newIndex < earliestIndex)
                             newIndex = earliestIndex;
 
                         if (newIndex != currentIndex)

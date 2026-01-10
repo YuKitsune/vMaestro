@@ -1078,6 +1078,172 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         flight.LandingEstimate.ShouldBe(newLandingTime, "desequenced flight estimates should be updated");
     }
 
+    [Fact]
+    public async Task WhenUnstableEstimateMovesBack_PositionIsCalculatedCorrectly()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+
+        var flight1 = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(5))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA456")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA789")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(15))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        // Verify initial order
+        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
+        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
+        sequence.NumberInSequence(flight3).ShouldBe(3, "QFA789 should be third initially");
+
+        // Update QFA123 with a later estimate, moving it between QFA456 and QFA789
+        var newFeederFixTime = clock.UtcNow().AddMinutes(12);
+        var newLandingTime = clock.UtcNow().AddMinutes(22);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            "RIVET4",
+            _position,
+            [
+                new FixEstimate("RIVET", newFeederFixTime),
+                new FixEstimate("YSSY", newLandingTime)
+            ]);
+
+        var estimateProvider = Substitute.For<IEstimateProvider>();
+        estimateProvider.GetFeederFixEstimate(
+                Arg.Any<AirportConfiguration>(),
+                Arg.Any<string>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<FlightPosition>())
+            .Returns(newFeederFixTime);
+        estimateProvider.GetLandingEstimate(
+                Arg.Any<Flight>(),
+                Arg.Any<DateTimeOffset?>())
+            .Returns(newLandingTime);
+
+        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert - QFA123 should move to position 2 (between QFA456 and QFA789)
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first after update");
+        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second after moving forward in sequence");
+        sequence.NumberInSequence(flight3).ShouldBe(3, "QFA789 should be third after update");
+        flight1.LandingEstimate.ShouldBe(newLandingTime, "QFA123 estimate should be updated");
+    }
+
+    [Fact]
+    public async Task WhenUnstableEstimateBecomesLatest_ItMovesToEndOfSequence()
+    {
+        // Arrange
+        var clock = clockFixture.Instance;
+
+        var flight1 = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(5))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
+            .WithRunway("34L")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA456")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .Build();
+
+        var flight3 = new FlightBuilder("QFA789")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(15))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
+            .Build();
+
+        // Verify initial order
+        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
+        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
+        sequence.NumberInSequence(flight3).ShouldBe(3, "QFA789 should be third initially");
+
+        // Update QFA123 with a later estimate than all other flights
+        var newFeederFixTime = clock.UtcNow().AddMinutes(20);
+        var newLandingTime = clock.UtcNow().AddMinutes(30);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            "RIVET4",
+            _position,
+            [
+                new FixEstimate("RIVET", newFeederFixTime),
+                new FixEstimate("YSSY", newLandingTime)
+            ]);
+
+        var estimateProvider = Substitute.For<IEstimateProvider>();
+        estimateProvider.GetFeederFixEstimate(
+                Arg.Any<AirportConfiguration>(),
+                Arg.Any<string>(),
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<FlightPosition>())
+            .Returns(newFeederFixTime);
+        estimateProvider.GetLandingEstimate(
+                Arg.Any<Flight>(),
+                Arg.Any<DateTimeOffset?>())
+            .Returns(newLandingTime);
+
+        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert - QFA123 should move to end of sequence
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first after update");
+        sequence.NumberInSequence(flight3).ShouldBe(2, "QFA789 should be second after update");
+        sequence.NumberInSequence(flight1).ShouldBe(3, "QFA123 should be last after moving to end with latest estimate");
+        flight1.LandingEstimate.ShouldBe(newLandingTime, "QFA123 estimate should be updated");
+    }
+
     FlightUpdatedHandler GetHandler(
         IMaestroInstanceManager instanceManager,
         IClock clock,
