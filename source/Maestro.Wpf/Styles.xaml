@@ -330,8 +330,14 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="HasItems" Value="True"/>
+                            </MultiTrigger.Conditions>
                             <Setter Property="IsSubmenuOpen" Value="True"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="BevelBorder" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">

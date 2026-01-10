@@ -10,16 +10,23 @@ using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
 
+public record ApproachTypeLookup(string FeederFix, string Runway, string ApproachType);
+
 public partial class FlightLabelViewModel(
     IMediator mediator,
     IErrorReporter errorReporter,
     MaestroViewModel maestroViewModel,
     FlightMessage flightViewModel,
-    string[] availableRunways)
+    string[] availableRunways,
+    ApproachTypeLookup[] availableApproachTypes)
     : ObservableObject
 {
+    const string None = "NONE";
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AvailableRunways))]
+    [NotifyPropertyChangedFor(nameof(AvailableApproachTypes))]
+    [NotifyPropertyChangedFor(nameof(CanChangeApproachType))]
     [NotifyPropertyChangedFor(nameof(Indicators))]
     [NotifyCanExecuteChangedFor(nameof(ShowInformationWindowCommand))]
     FlightMessage _flightViewModel = flightViewModel;
@@ -30,6 +37,15 @@ public partial class FlightLabelViewModel(
     public string Indicators => BuildIndicators();
 
     public string[] AvailableRunways => availableRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
+
+    public string[] AvailableApproachTypes => availableApproachTypes.Where(a =>
+            a.FeederFix == FlightViewModel.FeederFixIdentifier &&
+            a.Runway == FlightViewModel.AssignedRunwayIdentifier &&
+            a.ApproachType != FlightViewModel.ApproachType)
+        .Select(a => string.IsNullOrEmpty(a.ApproachType) ? None : a.ApproachType)
+        .ToArray();
+
+    public bool CanChangeApproachType => AvailableApproachTypes.Any();
 
     public bool CanInsertBefore => FlightViewModel.State != State.Frozen;
 
@@ -119,6 +135,24 @@ public partial class FlightLabelViewModel(
         {
             mediator.Send(
                 new ChangeRunwayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, runwayIdentifier),
+                CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void ChangeApproachType(string approachType)
+    {
+        try
+        {
+            if (approachType == None)
+                approachType = string.Empty;
+
+            mediator.Send(
+                new ChangeApproachTypeRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, approachType),
                 CancellationToken.None);
         }
         catch (Exception ex)

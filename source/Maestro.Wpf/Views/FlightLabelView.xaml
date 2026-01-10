@@ -95,6 +95,11 @@
                     Width="80"/>
 
                 <TextBlock
+                    Text="{Binding FlightViewModel.ApproachType}"
+                    Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
+                    Width="16"/>
+
+                <TextBlock
                     Text="{Binding Indicators}"
                     Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
                     Width="32"/>
@@ -116,19 +121,24 @@
 
         <Border.ContextMenu>
             <ContextMenu Name="ContextMenu">
-                <MenuItem Header="Change Runway">
-                    <ItemsControl ItemsSource="{Binding AvailableRunways}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <MenuItem
-                                    Header="{Binding .}"
-                                    Command="{Binding Path=DataContext.ChangeRunwayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                    CommandParameter="{Binding .}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                <MenuItem Header="Change Runway" ItemsSource="{Binding AvailableRunways}">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                            <Setter Property="Header" Value="{Binding .}"/>
+                            <Setter Property="Command" Value="{Binding Path=DataContext.ChangeRunwayCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Setter Property="CommandParameter" Value="{Binding .}"/>
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
                 </MenuItem>
-                <!-- TODO: Change Approach Type -->
+                <MenuItem Header="Change Approach Type" ItemsSource="{Binding AvailableApproachTypes}" Visibility="{Binding CanChangeApproachType, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                            <Setter Property="Header" Value="{Binding .}"/>
+                            <Setter Property="Command" Value="{Binding Path=DataContext.ChangeApproachTypeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Setter Property="CommandParameter" Value="{Binding .}"/>
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
                 <MenuItem Header="Insert Slot">
                     <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>
                     <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
