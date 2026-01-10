@@ -238,3 +238,20 @@
 
 - ChangeRunwayMode covered by other tests
 - Slots covered by other tests
+
+---
+
+These test cases need to be implemented, but I intend on re-factoring how runways and approach types are configured, so I'm avoiding it for now.
+
+- ChangeRunwayRequestHandler
+    - If the assigned approach type is available on the new runway, the assigned approach type shouldn't change
+    - If the assigned approach type is not available on the new runway, the assigned approach type should be re-set to one that is available on that runway
+- FlightUpdatedHandler
+    - When a flight is created, and the assigned runway requires an approach type, an appropriate approach type is set
+- InsertOvershootRequestHandler
+    - When a flight is inserted, and the assigned runway requires an approach type, an appropriate approach type is set
+- InsertPendingRequestHandler
+    - When a flight is inserted, and the assigned runway requires an approach type, an appropriate approach type is set
+- MoveFlightRequestHandler
+    - If the runway is changed, and the assigned approach type is available on the new runway, the assigned approach type shouldn't change
+    - If the runway is changed, and the assigned approach type is not available on the new runway, the assigned approach type should be re-set to one that is available on that runway
