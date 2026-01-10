@@ -203,8 +203,26 @@ public class FlightUpdatedHandler(
                     // Unstable flights are repositioned in the sequence on every update
                     if (sequencedFlight.State is State.Unstable)
                     {
-                        sequencedFlight.InvalidateSequenceData();
-                        instance.Session.Sequence.RepositionByEstimate(sequencedFlight);
+                        // Do not overtake any stable flights
+                        var currentIndex = instance.Session.Sequence.IndexOf(sequencedFlight);
+                        var earliestIndex = instance.Session.Sequence.FindLastIndex(
+                            currentIndex,
+                            f => f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
+                                 f.State != State.Unstable) + 1;
+
+                        var desiredIndex = instance.Session.Sequence.FindLastIndex(f =>
+                            f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
+                            f.LandingEstimate.IsAfter(sequencedFlight.LandingEstimate));
+
+                        var newIndex = desiredIndex;
+                        if (desiredIndex < earliestIndex)
+                            newIndex = earliestIndex;
+
+                        if (newIndex != currentIndex)
+                        {
+                            sequencedFlight.InvalidateSequenceData();
+                            instance.Session.Sequence.Move(sequencedFlight, newIndex, forceRescheduleStable: false);
+                        }
                     }
 
                     sequencedFlight.UpdateStateBasedOnTime(clock);

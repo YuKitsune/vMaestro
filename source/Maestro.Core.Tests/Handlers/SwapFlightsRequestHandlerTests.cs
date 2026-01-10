@@ -6,6 +6,7 @@ using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
+using MediatR;
 using NSubstitute;
 using Serilog;
 using Shouldly;
@@ -337,17 +338,48 @@ public class SwapFlightsRequestHandlerTests(
     [Fact]
     public async Task RedirectedToMaster()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a dummy connection that simulates a non-master instance
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .Build();
+        var flight2 = new FlightBuilder("QFA2")
+            .WithFeederFix("BOREE")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithRunway("34R")
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new SwapFlightsRequestHandler(
+            instanceManager,
+            slaveConnectionManager,
+            Substitute.For<IArrivalLookup>(),
+            mediator,
+            _clock,
+            Substitute.For<ILogger>());
+
+        var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
         // Act
-        // TODO: Swap the two flights
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert that the request was redirected to the master and not handled locally
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
+        slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
+        flight1.AssignedRunwayIdentifier.ShouldBe("34L", "The runways of the flights should not have changed");
+        flight2.AssignedRunwayIdentifier.ShouldBe("34R", "The runways of the flights should not have changed");
+        flight1.LandingTime.ShouldBe(now.AddMinutes(10), "The landing times of the flights should not have changed");
+        flight2.LandingTime.ShouldBe(now.AddMinutes(15), "The landing times of the flights should not have changed");
     }
 
     SwapFlightsRequestHandler GetHandler(IMaestroInstanceManager instanceManager, Sequence sequence)

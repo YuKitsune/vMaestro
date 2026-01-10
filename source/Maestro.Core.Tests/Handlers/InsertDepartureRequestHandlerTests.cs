@@ -339,17 +339,15 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
 
         // Create two stable flights, one before (T+15) and one after (T+20) the calculated landing estimate
         var stableFlight1 = new FlightBuilder("QFA456")
-            .WithLandingEstimate(now.AddMinutes(15))
-            .WithLandingTime(now.AddMinutes(15))
-            .WithFeederFixEstimate(now.AddMinutes(3))
+            .WithLandingEstimate(now.AddMinutes(30))
+            .WithLandingTime(now.AddMinutes(30))
             .WithState(State.Stable)
             .WithRunway("34L")
             .Build();
 
         var stableFlight2 = new FlightBuilder("QFA789")
-            .WithLandingEstimate(now.AddMinutes(20))
-            .WithLandingTime(now.AddMinutes(18))
-            .WithFeederFixEstimate(now.AddMinutes(8))
+            .WithLandingEstimate(now.AddMinutes(38))
+            .WithLandingTime(now.AddMinutes(38))
             .WithState(State.Stable)
             .WithRunway("34L")
             .Build();
@@ -357,7 +355,7 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         var pendingFlight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(now.AddMinutes(60))
+            .WithLandingEstimate(now.AddMinutes(60)) // Initial ETA from the flight plan can be inaccurate
             .WithState(State.Unstable)
             .Build();
 
@@ -384,8 +382,12 @@ public class InsertDepartureRequestHandlerTests(AirportConfigurationFixture airp
         sequence.NumberInSequence(stableFlight2).ShouldBe(3, "QFA789 should be third in sequence");
 
         // The first stable flight should be unaffected
-        stableFlight1.LandingTime.ShouldBe(now.AddMinutes(15),
+        stableFlight1.LandingTime.ShouldBe(now.AddMinutes(30),
             "QFA456 should remain at its original landing time");
+
+        // The inserted flight should be scheduled to land at their calculated estimate
+        pendingFlight.LandingTime.ShouldBe(calculatedLandingEstimate,
+            "QFA123 should be scheduled to land at their calculated estimate");
 
         // The second stable flight should be delayed to maintain separation with the inserted flight
         stableFlight2.LandingTime.ShouldBe(pendingFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),

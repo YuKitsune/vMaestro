@@ -451,7 +451,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
-            .WithState(State.Stable)
+            .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
@@ -736,6 +736,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithState(State.SuperStable)
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithLandingTime(clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
             .Build();
 
@@ -755,7 +756,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             TimeSpan.FromHours(1.5),
             "RIVET4",
             _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(5)), new FixEstimate("YSSY", clock.UtcNow().AddMinutes(15))]);
 
         var handler = GetHandler(instanceManager, clock);
 
@@ -1075,80 +1076,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         sequence.Flights.ShouldBeEmpty("desequenced flight should NOT be added to the sequence");
         flight.FeederFixEstimate.ShouldBe(newFeederFixTime, "desequenced flight estimates should be updated");
         flight.LandingEstimate.ShouldBe(newLandingTime, "desequenced flight estimates should be updated");
-    }
-
-    [Fact]
-    public async Task WhenASequencedUnstableFlightIsUpdated_ItShouldBeRepositioned()
-    {
-        // Arrange
-        var clock = clockFixture.Instance;
-
-        var flight1 = new FlightBuilder("QFA123")
-            .WithState(State.Unstable)
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(30))
-            .WithRunway("34L")
-            .Build();
-
-        var flight2 = new FlightBuilder("QFA456")
-            .WithState(State.Stable)
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
-            .WithRunway("34L")
-            .Build();
-
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithFlightsInOrder(flight2, flight1))
-            .Build();
-
-        // Verify initial state
-        sequence.Flights.ShouldContain(flight1, "QFA123 should be in the sequence");
-        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first initially");
-        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second initially");
-
-        var newFeederFixTime = clock.UtcNow().AddMinutes(5);
-        var newLandingTime = clock.UtcNow().AddMinutes(15);
-
-        var notification = new FlightUpdatedNotification(
-            "QFA123",
-            "B738",
-            AircraftCategory.Jet,
-            WakeCategory.Medium,
-            "YMML",
-            "YSSY",
-            clock.UtcNow().AddHours(-1),
-            TimeSpan.FromHours(1),
-            "RIVET4",
-            _position,
-            [
-                new FixEstimate("RIVET", newFeederFixTime),
-                new FixEstimate("YSSY", newLandingTime)
-            ]);
-
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
-
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert - QFA123 should be repositioned ahead of QFA456
-        sequence.Flights.ShouldContain(flight1, "QFA123 should remain in the sequence");
-        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be repositioned to first with earlier estimate");
-        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should now be second");
-        flight1.LandingEstimate.ShouldBe(newLandingTime, "estimates should be updated");
     }
 
     FlightUpdatedHandler GetHandler(
