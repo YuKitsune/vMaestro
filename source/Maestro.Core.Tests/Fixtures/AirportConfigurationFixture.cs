@@ -114,6 +114,28 @@ public class AirportConfigurationFixture
                         { "34L", 16 },
                         { "34R", 20 },
                     }
+                },
+                new ArrivalConfiguration
+                {
+                    FeederFix = "BOREE",
+                    Category = AircraftCategory.Jet,
+                    ApproachType = "A",
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        { "34L", 23 },
+                        { "34R", 22 },
+                    }
+                },
+                new ArrivalConfiguration
+                {
+                    FeederFix = "BOREE",
+                    Category = AircraftCategory.Jet,
+                    ApproachType = "P",
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        { "34L", 24 },
+                        { "34R", 25 },
+                    }
                 }
             ],
             Views =

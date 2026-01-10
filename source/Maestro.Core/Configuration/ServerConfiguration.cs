@@ -16,6 +16,7 @@ public static class ActionKeys
     public const string ChangeLandingRates = nameof(ChangeLandingRates);
     public const string MoveFlight = nameof(MoveFlight);
     public const string ChangeFeederFixEstimate = nameof(ChangeFeederFixEstimate);
+    public const string ChangeApproachType = nameof(ChangeApproachType);
     public const string ManageSlots = nameof(ManageSlots);
     public const string InsertOvershoot = nameof(InsertOvershoot);
     public const string InsertDeparture = nameof(InsertDeparture);

@@ -23,7 +23,8 @@
       "Recompute": ["Enroute", "Flow"],
       "Desequence": ["Enroute", "Approach", "Flow"],
       "Resequence": ["Flow"],
-      "RemoveFlight": ["Enroute", "Approach", "Flow"]
+      "RemoveFlight": ["Enroute", "Approach", "Flow"],
+      "ChangeApproachType": ["Enroute", "Approach", "Flow"]
     }
   },
   "Airports": [
