@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using NSubstitute;
 using Serilog;
@@ -23,7 +22,6 @@ public class ArrivalLookupTests
                 new ArrivalConfiguration
                 {
                     FeederFix = "ABCDE",
-                    ArrivalRegex = new Regex("ABC\\dA"),
                     RunwayIntervals = new Dictionary<string, int>
                     {
                         {
@@ -36,7 +34,7 @@ public class ArrivalLookupTests
                 new ArrivalConfiguration
                 {
                     FeederFix = "ABCDE",
-                    ArrivalRegex = new Regex("ABC\\dB"),
+                    ApproachType = "B",
                     Category = AircraftCategory.Jet,
                     AdditionalAircraftTypes = ["DH8D"],
                     RunwayIntervals = new Dictionary<string, int>
@@ -51,7 +49,7 @@ public class ArrivalLookupTests
                 new ArrivalConfiguration
                 {
                     FeederFix = "ABCDE",
-                    ArrivalRegex = new Regex("ABC\\dB"),
+                    ApproachType = "B",
                     Category = AircraftCategory.NonJet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
@@ -65,7 +63,7 @@ public class ArrivalLookupTests
                 new ArrivalConfiguration
                 {
                     FeederFix = "ABCDE",
-                    ArrivalRegex = new Regex("ABC\\dC"),
+                    ApproachType = "C",
                     Category = AircraftCategory.Jet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
@@ -79,7 +77,7 @@ public class ArrivalLookupTests
                 new ArrivalConfiguration
                 {
                     FeederFix = "ABCDE",
-                    ArrivalRegex = new Regex("ABC\\dC"),
+                    ApproachType = "C",
                     AircraftType = "DH8D",
                     RunwayIntervals = new Dictionary<string, int>
                     {
@@ -93,12 +91,51 @@ public class ArrivalLookupTests
                 new ArrivalConfiguration
                 {
                     FeederFix = "ABCDE",
-                    ArrivalRegex = new Regex("ABC\\dC"),
+                    ApproachType = "C",
                     Category = AircraftCategory.NonJet,
                     RunwayIntervals = new Dictionary<string, int>
                     {
                         {
                             "01", 15
+                        }
+                    }
+                },
+
+                // D and E STARs, multiple approach types
+                new ArrivalConfiguration
+                {
+                    FeederFix = "ABCDE",
+                    ApproachType = "D",
+                    AircraftType = "DINGUS",
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        {
+                            "01", 16
+                        }
+                    }
+                },
+                new ArrivalConfiguration
+                {
+                    FeederFix = "ABCDE",
+                    ApproachType = "E",
+                    AircraftType = "DINGUS",
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        {
+                            "01", 17
+                        }
+                    }
+                },
+
+                // Alternative STAR,
+                new ArrivalConfiguration
+                {
+                    FeederFix = "ABCDE",
+                    ApproachFix = "QUIET",
+                    RunwayIntervals = new Dictionary<string, int>
+                    {
+                        {
+                            "01", 18
                         }
                     }
                 }
@@ -130,13 +167,13 @@ public class ArrivalLookupTests
         var interval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
-            "ABC1A",
+            [],
+            "",
             "01",
             aircraftType,
             category);
 
         // Assert
-        // A STAR has the same time for all types
         interval.ShouldBe(TimeSpan.FromMinutes(10));
     }
 
@@ -152,7 +189,8 @@ public class ArrivalLookupTests
         var interval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
-            "ABC1B",
+            [],
+            "B",
             "01",
             "DH8D",
             AircraftCategory.NonJet);
@@ -174,7 +212,8 @@ public class ArrivalLookupTests
         var jetInterval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
-            "ABC1B",
+            [],
+            "B",
             "01",
             "B738",
             AircraftCategory.Jet);
@@ -182,7 +221,8 @@ public class ArrivalLookupTests
         var nonJetInterval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
-            "ABC1B",
+            [],
+            "B",
             "01",
             "SF34",
             AircraftCategory.NonJet);
@@ -204,7 +244,8 @@ public class ArrivalLookupTests
         var jetInterval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
-            "ABC1C",
+            [],
+            "C",
             "01",
             "B738",
             AircraftCategory.Jet);
@@ -212,7 +253,8 @@ public class ArrivalLookupTests
         var dash8Interval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
-            "ABC1C",
+            [],
+            "C",
             "01",
             "DH8D",
             AircraftCategory.NonJet);
@@ -220,7 +262,8 @@ public class ArrivalLookupTests
         var nonJetInterval = arrivalLookup.GetArrivalInterval(
             "YZZZ",
             "ABCDE",
-            "ABC1C",
+            [],
+            "C",
             "01",
             "SF34",
             AircraftCategory.NonJet);
@@ -230,4 +273,66 @@ public class ArrivalLookupTests
         dash8Interval.ShouldBe(TimeSpan.FromMinutes(14));
         nonJetInterval.ShouldBe(TimeSpan.FromMinutes(15));
     }
+
+    [Fact]
+    public void WhenMultipleApproachTypesExist_CorrectIntervalIsReturned()
+    {
+        // Arrange
+        var arrivalLookup = new ArrivalLookup(
+            _airportConfigurationProvider,
+            Substitute.For<ILogger>());
+
+        // Act
+        var deltaInterval = arrivalLookup.GetArrivalInterval(
+            "YZZZ",
+            "ABCDE",
+            [],
+            "D",
+            "01",
+            "DINGUS",
+            AircraftCategory.Jet);
+
+        var echoInterval = arrivalLookup.GetArrivalInterval(
+            "YZZZ",
+            "ABCDE",
+            [],
+            "E",
+            "01",
+            "DINGUS",
+            AircraftCategory.Jet);
+
+        // Assert
+        deltaInterval.ShouldBe(TimeSpan.FromMinutes(16));
+        echoInterval.ShouldBe(TimeSpan.FromMinutes(17));
+    }
+
+    [Theory]
+    [InlineData("DH8D", AircraftCategory.NonJet)]
+    [InlineData("SF34", AircraftCategory.NonJet)]
+    [InlineData("B738", AircraftCategory.Jet)]
+    [InlineData("CONC", AircraftCategory.Jet)]
+    public void WhenApproachFixExists_CorrectIntervalIsReturned(string aircraftType, AircraftCategory category)
+    {
+        // Arrange
+        var arrivalLookup = new ArrivalLookup(
+            _airportConfigurationProvider,
+            Substitute.For<ILogger>());
+
+        // Act
+        var interval = arrivalLookup.GetArrivalInterval(
+            "YZZZ",
+            "ABCDE",
+            ["QUIET"],
+            "",
+            "01",
+            aircraftType,
+            category);
+
+        // Assert
+        interval.ShouldBe(TimeSpan.FromMinutes(18));
+    }
+
+    // TODO: Test cases
+    // - When different approach types are specified, correct interval is returned (add a Z approach type)
+    // - When approach fix is specified, approach fix must match
 }

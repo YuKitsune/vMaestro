@@ -18,6 +18,7 @@ public partial class FlightInformationViewModel : ObservableObject
     [ObservableProperty] DateTimeOffset? _feederFixEstimate;
     [ObservableProperty] DateTimeOffset? _feederFixTime;
     [ObservableProperty] string? _assignedRunwayIdentifier;
+    [ObservableProperty] string _approachType;
     [ObservableProperty] int _numberToLandOnRunway;
     [ObservableProperty] DateTimeOffset _initialLandingEstimate;
     [ObservableProperty] DateTimeOffset _landingEstimate;
@@ -56,6 +57,7 @@ public partial class FlightInformationViewModel : ObservableObject
         FeederFixEstimate = flightMessage.FeederFixEstimate;
         FeederFixTime = flightMessage.FeederFixTime;
         AssignedRunwayIdentifier = flightMessage.AssignedRunwayIdentifier;
+        ApproachType = flightMessage.ApproachType;
         NumberToLandOnRunway = flightMessage.NumberToLandOnRunway;
         InitialLandingEstimate = flightMessage.InitialLandingEstimate;
         LandingEstimate = flightMessage.LandingEstimate;

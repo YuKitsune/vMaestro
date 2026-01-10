@@ -62,7 +62,7 @@ public class Flight : IEquatable<Flight>
         LandingEstimate = message.LandingEstimate;
         LandingTime = message.LandingTime;
         FlowControls = message.FlowControls;
-        AssignedArrivalIdentifier = message.AssignedArrivalIdentifier;
+        ApproachType = message.ApproachType;
         Fixes = message.Fixes.ToArray();
         LastSeen = message.LastSeen;
         Position = message.Position;
@@ -107,7 +107,7 @@ public class Flight : IEquatable<Flight>
 
     public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
 
-    public string? AssignedArrivalIdentifier { get; set; }
+    public string ApproachType { get; private set; }
     public FixEstimate[] Fixes { get; set; } = [];
     public DateTimeOffset LastSeen { get; private set; }
     public FlightPosition? Position { get; private set; }
@@ -132,6 +132,11 @@ public class Flight : IEquatable<Flight>
         FeederFixEstimate = feederFixEstimate;
         InitialFeederFixEstimate = feederFixEstimate;
         ActualFeederFixTime = actualFeederFixTime;
+    }
+
+    public void SetApproachType(string approachType)
+    {
+        ApproachType = approachType;
     }
 
     public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate, bool manual = false)

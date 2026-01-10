@@ -29,7 +29,8 @@ public class EstimateProviderTests
         _arrivalLookup.GetArrivalInterval(
                 Arg.Is("YSSY"),
                 Arg.Is("RIVET"),
-                Arg.Is("RIVET4"),
+                Arg.Any<string[]>(),
+                Arg.Is(""),
                 Arg.Is("34L"),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())

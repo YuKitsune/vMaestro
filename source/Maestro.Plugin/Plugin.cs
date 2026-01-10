@@ -350,7 +350,6 @@ public class Plugin : IPlugin
             updated.DesAirport,
             ToDateTimeOffset(updated.ETD),
             updated.EET,
-            updated.STAR?.Name,
             position,
             estimates);
 

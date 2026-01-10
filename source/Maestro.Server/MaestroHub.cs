@@ -126,6 +126,11 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         return await RelayToMaster("DeleteSlot", request);
     }
 
+    public async Task<ServerResponse> ChangeApproachType(ChangeApproachTypeRequest request)
+    {
+        return await RelayToMaster("ChangeApproachType", request);
+    }
+
     async Task<ServerResponse> RelayToMaster(string methodName, IRequest request)
     {
         return await mediator.Send(

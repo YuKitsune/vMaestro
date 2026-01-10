@@ -248,12 +248,17 @@ public class Sequence
             var landingTime1 = flight1.LandingTime;
             var landingTime2 = flight2.LandingTime;
             var flowControls1 = flight1.FlowControls;
+            var flowControls2 = flight2.FlowControls;
             var runway1 = flight1.AssignedRunwayIdentifier;
             var runway2 = flight2.AssignedRunwayIdentifier;
-            var flowControls2 = flight2.FlowControls;
 
             Schedule(flight1, landingTime2, flowControls2, runway2);
             Schedule(flight2, landingTime1, flowControls1, runway1);
+
+            var approachType1 = flight1.ApproachType;
+            var approachType2 = flight2.ApproachType;
+            flight1.SetApproachType(approachType2);
+            flight2.SetApproachType(approachType1);
 
             // No need to re-schedule as we're exchanging two flights that are already scheduled
         }
@@ -641,16 +646,22 @@ public class Sequence
     {
         flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
 
+        // Update the approach type if the new runway doesn't have the current approach type
+        var approachTypes = _arrivalLookup.GetApproachTypes(
+            flight.DestinationIdentifier,
+            flight.FeederFixIdentifier,
+            flight.Fixes.Select(x => x.ToString()).ToArray(),
+            flight.AssignedRunwayIdentifier,
+            flight.AircraftType,
+            flight.AircraftCategory);
+
+        if (!approachTypes.Contains(flight.ApproachType))
+            flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
+
         DateTimeOffset? feederFixTime = null;
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && !flight.HasPassedFeederFix)
         {
-            var arrivalInterval = _arrivalLookup.GetArrivalInterval(
-                flight.DestinationIdentifier,
-                flight.FeederFixIdentifier,
-                flight.AssignedArrivalIdentifier,
-                flight.AssignedRunwayIdentifier,
-                flight.AircraftType,
-                flight.AircraftCategory);
+            var arrivalInterval = _arrivalLookup.GetArrivalInterval(flight);
             if (arrivalInterval is not null)
             {
                 feederFixTime = landingTime.Subtract(arrivalInterval.Value);

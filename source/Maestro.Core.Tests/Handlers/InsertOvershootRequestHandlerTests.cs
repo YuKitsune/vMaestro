@@ -1,3 +1,4 @@
+using Maestro.Core.Connectivity;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
@@ -28,11 +29,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -50,11 +51,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA999",
@@ -93,7 +94,7 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -122,11 +123,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -166,7 +167,7 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -214,7 +215,7 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -261,7 +262,7 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -309,7 +310,7 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -363,11 +364,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, frozenFlight1, frozenFlight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -377,7 +378,7 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
         var exception = await Should.ThrowAsync<MaestroException>(async () =>
             await handler.Handle(request, CancellationToken.None));
 
-        exception.Message.ShouldContain("Cannot insert flight", Case.Insensitive);
+        exception.Message.ShouldContain("Cannot insert flight");
     }
 
     [Fact]
@@ -395,11 +396,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -444,7 +445,7 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             now.AddMinutes(25),
             now.AddMinutes(30));
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -481,11 +482,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -522,11 +523,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -563,11 +564,11 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertOvershootRequest(
             "YSSY",
             "QFA123",
@@ -599,19 +600,14 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
-        var handler = new InsertOvershootRequestHandler(
-            instanceManager,
-            slaveConnectionManager,
-            clockFixture.Instance,
-            mediator,
-            Substitute.For<ILogger>());
+        var handler = GetRequestHandler(instanceManager, slaveConnectionManager, mediator);
 
         var request = new InsertOvershootRequest(
             "YSSY",
@@ -627,13 +623,15 @@ public class InsertOvershootRequestHandlerTests(AirportConfigurationFixture airp
         landedFlight.LandingTime.ShouldBe(now, "Flight landing time should not change when relaying to master");
     }
 
-    InsertOvershootRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, IClock clock)
+    InsertOvershootRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
     {
-        var mediator = Substitute.For<IMediator>();
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        mediator ??= Substitute.For<IMediator>();
         return new InsertOvershootRequestHandler(
             instanceManager,
-            new MockLocalConnectionManager(),
-            clock,
+            connectionManager ?? new MockLocalConnectionManager(),
+            arrivalLookup,
+            clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
     }

@@ -13,6 +13,7 @@ namespace Maestro.Core.Handlers;
 public class InsertOvershootRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IArrivalLookup arrivalLookup,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -88,6 +89,16 @@ public class InsertOvershootRequestHandler(
             landedFlight.InvalidateSequenceData();
 
             landedFlight.SetRunway(runway.Identifier, manual: true);
+
+            var approachTypes = arrivalLookup.GetApproachTypes(
+                landedFlight.DestinationIdentifier,
+                landedFlight.FeederFixIdentifier,
+                landedFlight.Fixes.Select(x => x.ToString()).ToArray(),
+                landedFlight.AssignedRunwayIdentifier,
+                landedFlight.AircraftType,
+                landedFlight.AircraftCategory);
+
+            landedFlight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
             // Set the state to Stable so that it gets re-scheduled. TODO: Need to change this behaviour
             landedFlight.SetState(State.Stable, clock);

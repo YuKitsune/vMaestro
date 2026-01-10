@@ -4,7 +4,6 @@ using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
-using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -40,7 +39,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(4),
-            "RIVET4",
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(3))]);
 
@@ -69,7 +67,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -106,7 +103,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddMinutes(10),
             TimeSpan.FromHours(20),
-            "RIVET4",
             position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -137,7 +133,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddMinutes(10),
             TimeSpan.FromHours(20),
-            "RIVET4",
             null,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -175,7 +170,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(10),
             TimeSpan.FromHours(20),
-            "RIVET4",
             position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -204,7 +198,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -220,7 +214,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -262,7 +255,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(originalLandingTime)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -275,7 +268,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             null,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddHours(1)),
@@ -305,7 +297,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(manualLandingEstimate)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -318,7 +310,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15)),
@@ -345,7 +336,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -358,7 +349,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1.5), // Different estimated departure
             TimeSpan.FromHours(2),
-            "ODALE7", // Different arrival
             new FlightPosition(new Coordinate(1, 1), 38_000, VerticalTrack.Descending, 280, false), // Different position
             [new FixEstimate("WELSH", clock.UtcNow().AddMinutes(10))]);
 
@@ -372,7 +362,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         flight.WakeCategory.ShouldBe(WakeCategory.Heavy);
         flight.OriginIdentifier.ShouldBe("YMAV");
         flight.EstimatedDepartureTime.ShouldBe(notification.EstimatedDepartureTime);
-        flight.AssignedArrivalIdentifier.ShouldBe("ODALE7");
         flight.Position!.Coordinate.Latitude.ShouldBe(notification.Position!.Coordinate.Latitude);
         flight.Position.Coordinate.Longitude.ShouldBe(notification.Position.Coordinate.Longitude);
         flight.Position.Altitude.ShouldBe(notification.Position.Altitude);
@@ -392,7 +381,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingTime(clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
         instance.Session.DeSequencedFlights.Add(flight);
 
         var newFeederFixTime = clock.UtcNow().AddMinutes(15);
@@ -407,7 +396,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -479,7 +467,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -555,7 +542,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -607,7 +593,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YBBN", // Destination with no active instance
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -625,7 +610,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     {
         // Arrange
         var clock = clockFixture.Instance;
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
 
         // Notification with no feeder fix estimates (only landing estimate)
         var notification = new FlightUpdatedNotification(
@@ -637,7 +622,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            null,
             _position,
             [new FixEstimate("YSSY", clock.UtcNow().AddMinutes(30))]); // Only landing estimate, no feeder fix
 
@@ -669,7 +653,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "BOREE4",
             _position,
             [new FixEstimate("BOREE", clock.UtcNow().AddMinutes(30))]);
 
@@ -710,7 +693,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
 
@@ -754,7 +736,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(5)), new FixEstimate("YSSY", clock.UtcNow().AddMinutes(15))]);
 
@@ -812,7 +793,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -853,7 +833,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(originalEstimate.AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -866,7 +846,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15)),
@@ -901,7 +880,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
-            "RIVET4",
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -941,7 +919,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15)),
@@ -989,7 +966,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -1047,7 +1023,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -1247,6 +1222,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     FlightUpdatedHandler GetHandler(
         IMaestroInstanceManager instanceManager,
         IClock clock,
+        IArrivalLookup? arrivalLookup = null,
         IEstimateProvider? estimateProvider = null,
         IFlightUpdateRateLimiter? rateLimiter = null,
         IMaestroConnectionManager? connectionManager = null)
@@ -1257,6 +1233,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([airportConfigurationFixture.Instance]);
 
+        arrivalLookup ??= Substitute.For<IArrivalLookup>();
         estimateProvider ??= Substitute.For<IEstimateProvider>();
         connectionManager ??= new MockLocalConnectionManager();
         var mediator = Substitute.For<IMediator>();
@@ -1266,6 +1243,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             connectionManager,
             rateLimiter,
             airportConfigurationProvider,
+            arrivalLookup,
             estimateProvider,
             mediator,
             clock,

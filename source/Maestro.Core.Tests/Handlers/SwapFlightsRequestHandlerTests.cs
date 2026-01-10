@@ -119,6 +119,7 @@ public class SwapFlightsRequestHandlerTests(
         arrivalLookup.GetArrivalInterval(
                 Arg.Any<string>(),
                 Arg.Is("RIVET"),
+                Arg.Any<string[]>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
@@ -127,6 +128,7 @@ public class SwapFlightsRequestHandlerTests(
         arrivalLookup.GetArrivalInterval(
                 Arg.Any<string>(),
                 Arg.Is("MARLN"),
+                Arg.Any<string[]>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
@@ -388,6 +390,7 @@ public class SwapFlightsRequestHandlerTests(
         arrivalLookup.GetArrivalInterval(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
+                Arg.Any<string[]>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),

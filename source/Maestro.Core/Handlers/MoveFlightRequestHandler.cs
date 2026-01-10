@@ -13,6 +13,7 @@ namespace Maestro.Core.Handlers;
 public class MoveFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IArrivalLookup arrivalLookup,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -50,6 +51,18 @@ public class MoveFlightRequestHandler(
             // TODO: Manually set the runway for now, but we need to revisit this later
             // Re: delaying into a new runway mode
             flight.SetRunway(runwayIdentifier, manual: true);
+
+            // Update the approach type if the new runway doesn't have the current approach type
+            var approachTypes = arrivalLookup.GetApproachTypes(
+                flight.DestinationIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes.Select(x => x.ToString()).ToArray(),
+                flight.AssignedRunwayIdentifier,
+                flight.AircraftType,
+                flight.AircraftCategory);
+
+            if (!approachTypes.Contains(flight.ApproachType))
+                flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
             flight.InvalidateSequenceData();
             sequence.Move(flight, newIndex, forceRescheduleStable: true);

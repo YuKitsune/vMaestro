@@ -794,13 +794,16 @@ public partial class MaestroView
             // Reuse existing flight label or create new one
             if (!_flightLabels.TryGetValue(flight.Callsign, out var flightLabel))
             {
+                var approachTypeLookups = GetApproachTypeLookups(flight);
+
                 // Create new flight label
                 var flightLabelViewModel = new FlightLabelViewModel(
                     Ioc.Default.GetRequiredService<IMediator>(),
                     Ioc.Default.GetRequiredService<IErrorReporter>(),
                     ViewModel,
                     flight,
-                    ViewModel.Runways);
+                    ViewModel.Runways,
+                    approachTypeLookups);
 
                 flightLabel = new FlightLabelView
                 {
@@ -859,6 +862,30 @@ public partial class MaestroView
                     break;
             }
         }
+    }
+
+    static ApproachTypeLookup[] GetApproachTypeLookups(FlightMessage flight)
+    {
+        ApproachTypeLookup[] approachTypeLookups = [];
+        var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
+            .Single(a => a.Identifier == flight.DestinationIdentifier);
+        if (airportConfiguration is not null)
+        {
+            var results = new HashSet<ApproachTypeLookup>();
+            foreach (var arrivalConfiguration in airportConfiguration.Arrivals)
+            {
+                foreach (var kvp in arrivalConfiguration.RunwayIntervals)
+                {
+                    var runwayIdentifier = kvp.Key;
+                    results.Add(new ApproachTypeLookup(arrivalConfiguration.FeederFix, runwayIdentifier, arrivalConfiguration.ApproachType));
+                }
+            }
+
+            approachTypeLookups = results.ToArray();
+        }
+
+        return approachTypeLookups;
     }
 
     void ClearLabels()

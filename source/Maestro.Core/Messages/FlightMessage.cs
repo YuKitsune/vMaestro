@@ -26,7 +26,7 @@ public class FlightMessage
     public required string? AssignedRunwayIdentifier { get; init; }
     public required bool RunwayManuallyAssigned { get; init; }
     public required int NumberToLandOnRunway { get; init; }
-    public required string? AssignedArrivalIdentifier { get; init; }
+    public required string ApproachType { get; init; }
     public required DateTimeOffset InitialLandingEstimate { get; init; }
     public required DateTimeOffset LandingEstimate { get; init; }
     public required DateTimeOffset LandingTime { get; init; }

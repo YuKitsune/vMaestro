@@ -179,6 +179,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             CreateSlotRequest => "CreateSlot",
             ModifySlotRequest => "ModifySlot",
             DeleteSlotRequest => "DeleteSlot",
+            ChangeApproachTypeRequest => "ChangeApproachType",
             SendCoordinationMessageRequest => "SendCoordinationMessage",
             _ => throw new ArgumentOutOfRangeException(nameof(request), "Unsupported request type: " + request.GetType().Name)
         };
@@ -402,6 +403,15 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ManageSlots);
+        });
+
+        hubConnection.On<RequestEnvelope, ServerResponse>("ChangeApproachType", async envelope =>
+        {
+            var request = (ChangeApproachTypeRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
+                return ServerResponse.CreateFailure("Airport identifier mismatch");
+
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeApproachType);
         });
     }
 

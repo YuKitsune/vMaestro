@@ -1,3 +1,4 @@
+using Maestro.Core.Connectivity;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
@@ -20,11 +21,11 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA999",
@@ -48,13 +49,13 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -93,7 +94,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -120,13 +121,13 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -167,7 +168,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -215,7 +216,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -262,7 +263,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -307,7 +308,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -363,7 +364,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA789",
@@ -418,7 +419,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA789",
@@ -468,7 +469,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(frozenFlight1, frozenFlight2))
             .Build();
 
@@ -478,7 +479,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         frozenFlight1.LandingTime.ShouldBe(now.AddMinutes(10));
         frozenFlight2.LandingTime.ShouldBe(now.AddMinutes(13));
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -488,7 +489,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         var exception = await Should.ThrowAsync<MaestroException>(async () =>
             await handler.Handle(request, CancellationToken.None));
 
-        exception.Message.ShouldContain("Cannot insert flight", Case.Insensitive);
+        exception.Message.ShouldContain("Cannot insert flight");
     }
 
     [Fact]
@@ -511,7 +512,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         instance.Session.PendingFlights.Add(pendingFlight);
         instance.Session.PendingFlights.Count.ShouldBe(1, "Should have one pending flight before insertion");
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -546,13 +547,13 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -593,7 +594,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         instance.Session.PendingFlights.Add(pendingFlight);
         instance.Session.PendingFlights.Count.ShouldBe(1, "Should have one pending flight before insertion");
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -628,13 +629,13 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -669,13 +670,13 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -720,7 +721,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         instance.Session.PendingFlights.Add(pendingFlight);
         instance.Session.PendingFlights.Count.ShouldBe(1, "Should have one pending flight before insertion");
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(instanceManager);
         var request = new InsertPendingRequest(
             "YSSY",
             "QFA123",
@@ -755,12 +756,7 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
-        var handler = new InsertPendingRequestHandler(
-            instanceManager,
-            slaveConnectionManager,
-            clockFixture.Instance,
-            mediator,
-            Substitute.For<ILogger>());
+        var handler = GetRequestHandler(instanceManager, slaveConnectionManager, mediator);
 
         var request = new InsertPendingRequest(
             "YSSY",
@@ -777,13 +773,15 @@ public class InsertPendingRequestHandlerTests(AirportConfigurationFixture airpor
         sequence.Flights.ShouldNotContain(pendingFlight, "Flight should not be inserted locally when relaying to master");
     }
 
-    InsertPendingRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, IClock clock)
+    InsertPendingRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
     {
-        var mediator = Substitute.For<IMediator>();
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        mediator ??= Substitute.For<IMediator>();
         return new InsertPendingRequestHandler(
             instanceManager,
-            new MockLocalConnectionManager(),
-            clock,
+            connectionManager ?? new MockLocalConnectionManager(),
+            arrivalLookup,
+            clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
     }

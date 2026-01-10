@@ -27,7 +27,6 @@ public class FlightUpdatedNotificationHandlerTests
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
             null,
-            null,
             []);
 
         var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
@@ -59,7 +58,6 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
-            null,
             null,
             []);
 
@@ -99,7 +97,6 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
-            null,
             null,
             []);
 
@@ -147,7 +144,6 @@ public class FlightUpdatedNotificationHandlerTests
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
             null,
-            null,
             []);
 
         var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
@@ -194,7 +190,6 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
-            null,
             null,
             []);
 

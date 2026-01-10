@@ -10,22 +10,28 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class ChangeRunwayRequestHandler(
+// TODO: test cases
+//  - When changing approach type, the assigned approach type is updated
+//  - When changing approach type, the landing estimate is updated based on the ETA_FF + TTG
+//  - When changing approach type, and we're in online mode, relay to master
+
+
+public class ChangeApproachTypeRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IArrivalLookup arrivalLookup,
     IClock clock,
     IMediator mediator,
     ILogger logger)
-    : IRequestHandler<ChangeRunwayRequest>
+    : IRequestHandler<ChangeApproachTypeRequest>
 {
-    public async Task Handle(ChangeRunwayRequest request, CancellationToken cancellationToken)
+    public async Task Handle(ChangeApproachTypeRequest request, CancellationToken cancellationToken)
     {
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeRunwayRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ChangeApproachTypeRequest for {AirportIdentifier}", request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
@@ -45,29 +51,20 @@ public class ChangeRunwayRequestHandler(
             }
 
             // TODO: Track who initiated the change
-            logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
+            logger.Information("Changing approach type for {Callsign} to {NewApproachType}.", request.Callsign, request.ApproachType);
 
-            flight.SetRunway(request.RunwayIdentifier, true);
+            // TODO: Update TTG, P and Pmax
+            flight.SetApproachType(request.ApproachType);
 
-            // Update the approach type if the new runway doesn't have the current approach type
-            var approachTypes = arrivalLookup.GetApproachTypes(
-                flight.DestinationIdentifier,
-                flight.FeederFixIdentifier,
-                flight.Fixes.Select(x => x.ToString()).ToArray(),
-                flight.AssignedRunwayIdentifier,
-                flight.AircraftType,
-                flight.AircraftCategory);
+            // Update the landing estimate
+            var timeToGo = arrivalLookup.GetArrivalInterval(flight);
+            if (flight.FeederFixEstimate is not null && timeToGo is not null)
+            {
+                var newLandingEstimate = flight.FeederFixEstimate.Value + timeToGo.Value;
 
-            if (!approachTypes.Contains(flight.ApproachType))
-                flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
-
-            // TODO: Re-calculate the landing estimate
-
-            sequence.RepositionByEstimate(flight, displaceStableFlights: true);
-
-            // Unstable flights become Stable when changing runway
-            if (flight.State is State.Unstable)
-                flight.SetState(State.Stable, clock);
+                // TODO: Calculate temp ETA if no FF is available
+                flight.UpdateLandingEstimate(newLandingEstimate);
+            }
 
             sessionMessage = instance.Session.Snapshot();
         }

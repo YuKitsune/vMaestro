@@ -20,7 +20,6 @@ public record FlightUpdatedNotification(
     string Destination,
     DateTimeOffset EstimatedDepartureTime,
     TimeSpan EstimatedFlightTime,
-    string? AssignedArrival,
     FlightPosition? Position,
     FixEstimate[] Estimates)
     : INotification;
@@ -30,6 +29,7 @@ public class FlightUpdatedHandler(
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
+    IArrivalLookup arrivalLookup,
     IEstimateProvider estimateProvider,
     IMediator mediator,
     IClock clock,
@@ -140,6 +140,15 @@ public class FlightUpdatedHandler(
                             landingEstimate);
 
                         sequencedFlight.SetRunway(runway.Identifier, manual: false);
+
+                        var approachTypes = arrivalLookup.GetApproachTypes(
+                            sequencedFlight.DestinationIdentifier,
+                            sequencedFlight.FeederFixIdentifier,
+                            sequencedFlight.Fixes.Select(x => x.ToString()).ToArray(),
+                            sequencedFlight.AssignedRunwayIdentifier,
+                            sequencedFlight.AircraftType,
+                            sequencedFlight.AircraftCategory);
+                        sequencedFlight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
                         instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
                         logger.Information("{Callsign} created", notification.Callsign);
@@ -343,7 +352,6 @@ public class FlightUpdatedHandler(
         flight.OriginIdentifier = notification.Origin;
         flight.EstimatedDepartureTime = notification.EstimatedDepartureTime;
 
-        flight.AssignedArrivalIdentifier = notification.AssignedArrival;
         flight.Fixes = notification.Estimates;
     }
 }
