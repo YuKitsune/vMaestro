@@ -828,6 +828,7 @@
         },
         {
           "FeederFix": "MENOG",
+          "ApproachType": "A",
           "Category": "Jet",
           "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
