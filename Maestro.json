@@ -840,6 +840,7 @@
         },
         {
           "FeederFix": "MENOG",
+          "ApproachType": "A",
           "Category": "NonJet",
           "RunwayIntervals": {
             "09": 12,
