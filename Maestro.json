@@ -572,7 +572,7 @@
     },
     {
       "Identifier": "YMML",
-      "FeederFixes": ["ARBEY", "BOYSE", "BOOIN", "RAZZI", "PORTS", "ALAXO"],
+      "FeederFixes": ["ARBEY", "BOYSE", "BOOIN", "RAZZI", "PORTS", "ALAXO", "MENOG"],
       "Runways": [
         { "Identifier": "09" },
         { "Identifier": "16" },
@@ -837,6 +837,29 @@
           "RunwayIntervals": {
             "16": 17
           }
+        },
+        {
+          "FeederFix": "MENOG",
+          "ApproachType": "A",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
+          "RunwayIntervals": {
+            "09": 10,
+            "16": 15,
+            "27": 11,
+            "34": 8
+          }
+        },
+        {
+          "FeederFix": "MENOG",
+          "ApproachType": "A",
+          "Category": "NonJet",
+          "RunwayIntervals": {
+            "09": 12,
+            "16": 17,
+            "27": 12,
+            "34": 9
+          }
         }
       ],
       "Views": [
@@ -859,13 +882,13 @@
           "ViewMode": "Enroute",
           "TimeHorizonMinutes": 30,
           "LeftLadder": ["RAZZI"],
-          "RightLadder": ["PORTS"]
+          "RightLadder": ["PORTS", "MENOG"]
         },
         {
           "Identifier": "ALL",
           "ViewMode": "Enroute",
           "TimeHorizonMinutes": 30,
-          "LeftLadder": ["ARBEY", "ALAXO", "PORTS"],
+          "LeftLadder": ["ARBEY", "ALAXO", "PORTS", "MENOG"],
           "RightLadder": ["BOOIN", "BOYSE", "RAZZI"]
         },
         {
