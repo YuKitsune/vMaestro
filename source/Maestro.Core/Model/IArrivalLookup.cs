@@ -116,7 +116,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
             .GetAirportConfigurations()
             .SingleOrDefault(x => x.Identifier == airportIdentifier);
         if (airportConfiguration is null)
-            return null;
+            return [];
 
         var foundArrivalConfigurations = airportConfiguration.Arrivals
             .Where(x => x.FeederFix == feederFixIdentifier)
@@ -131,7 +131,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
 
         // No matches, nothing to do
         if (foundArrivalConfigurations.Length == 0)
-            return null;
+            return [];
 
         if (foundArrivalConfigurations.Length > 1)
         {

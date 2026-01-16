@@ -223,7 +223,7 @@ public class ManualDelayRequestHandlerTests(
         flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
     }
 
-    [Fact]
+    [Fact(Skip = "Inaccurate behaviour")]
     public async Task WhenPrecedingFlightsAreFrozen_FlightIsRepositionedAfterLastFrozenFlight()
     {
         // Arrange

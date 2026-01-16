@@ -63,7 +63,7 @@ public class ChangeRunwayRequestHandler(
 
             // TODO: Re-calculate the landing estimate
 
-            sequence.RepositionByEstimate(flight, displaceStableFlights: true);
+            sequence.RepositionByEstimate(flight);
 
             // Unstable flights become Stable when changing runway
             if (flight.State is State.Unstable)

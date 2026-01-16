@@ -70,9 +70,7 @@ public class RunwayDependency(Configuration.RunwayDependency runwayDependency)
 {
     public string RunwayIdentifier { get; } = runwayDependency.RunwayIdentifier;
 
-    public TimeSpan? Separation { get; } = runwayDependency.SeparationSeconds.HasValue
-        ? TimeSpan.FromSeconds(runwayDependency.SeparationSeconds.Value)
-        : null;
+    public TimeSpan Separation { get; } = TimeSpan.FromSeconds(runwayDependency.SeparationSeconds);
 }
 
 public class RunwayRequirements(Configuration.RunwayRequirements runwayRequirements)

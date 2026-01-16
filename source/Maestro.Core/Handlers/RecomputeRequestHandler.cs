@@ -59,7 +59,7 @@ public class RecomputeRequestHandler(
             CalculateEstimates(airportConfiguration, flight);
             flight.InvalidateSequenceData();
 
-            sequence.RepositionByEstimate(flight, displaceStableFlights: true);
+            sequence.RepositionByEstimate(flight);
 
             // Reset the state
             flight.SetState(State.Unstable, clock);
