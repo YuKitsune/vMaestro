@@ -6,16 +6,14 @@ public static class SequenceExtensionMethods
 {
     public static void RepositionByEstimate(
         this Sequence sequence,
-        Flight flight,
-        bool displaceStableFlights = false)
+        Flight flight)
     {
         var newIndex = sequence.FindIndex(
-            f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
-                 f.LandingEstimate.IsAfter(flight.LandingEstimate));
+            f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
 
         if (newIndex == -1)
             newIndex = sequence.Flights.Count;
 
-        sequence.Move(flight, newIndex, displaceStableFlights);
+        sequence.Move(flight, newIndex);
     }
 }

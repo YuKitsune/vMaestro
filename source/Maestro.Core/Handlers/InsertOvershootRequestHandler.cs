@@ -102,7 +102,7 @@ public class InsertOvershootRequestHandler(
 
             // Set the state to Stable so that it gets re-scheduled. TODO: Need to change this behaviour
             landedFlight.SetState(State.Stable, clock);
-            sequence.Move(landedFlight, index, forceRescheduleStable: true);
+            sequence.Move(landedFlight, index);
             landedFlight.SetState(State.Frozen, clock);
 
             logger.Information("Inserted overshoot flight {Callsign} for {AirportIdentifier}", landedFlight.Callsign, request.AirportIdentifier);

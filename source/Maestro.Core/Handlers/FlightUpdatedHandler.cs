@@ -121,7 +121,11 @@ public class FlightUpdatedHandler(
                     {
                         // Determine the runway to assign
                         var runwayMode = instance.Session.Sequence.GetRunwayModeAt(landingEstimate);
-                        var runway = FindBestRunway(airportConfiguration, runwayMode, feederFix?.FixIdentifier ?? string.Empty);
+                        var runway = FindBestRunway(
+                            airportConfiguration,
+                            runwayMode,
+                            feederFix?.FixIdentifier ?? string.Empty,
+                            notification.Estimates.Select(f => f.FixIdentifier).ToArray());
 
                         // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
                         var earliestInsertionIndex = instance.Session.Sequence.FindLastIndex(f =>
@@ -220,7 +224,6 @@ public class FlightUpdatedHandler(
                                  f.State != State.Unstable) + 1;
 
                         var desiredIndex = instance.Session.Sequence.FindIndex(f =>
-                            f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
                             f.LandingEstimate.IsAfter(sequencedFlight.LandingEstimate));
 
                         var newIndex = desiredIndex == -1
@@ -234,7 +237,7 @@ public class FlightUpdatedHandler(
                         if (newIndex != currentIndex)
                         {
                             sequencedFlight.InvalidateSequenceData();
-                            instance.Session.Sequence.Move(sequencedFlight, newIndex, forceRescheduleStable: false);
+                            instance.Session.Sequence.Move(sequencedFlight, newIndex);
                         }
                     }
 
@@ -256,7 +259,7 @@ public class FlightUpdatedHandler(
         }
     }
 
-    Runway FindBestRunway(AirportConfiguration airportConfiguration, RunwayMode runwayMode, string feederFixIdentifier)
+    Runway FindBestRunway(AirportConfiguration airportConfiguration, RunwayMode runwayMode, string feederFixIdentifier, string[] fixNames)
     {
         if (airportConfiguration.PreferredRunways.TryGetValue(feederFixIdentifier, out var preferredRunways))
         {

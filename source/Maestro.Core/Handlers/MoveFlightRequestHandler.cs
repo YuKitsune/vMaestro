@@ -65,7 +65,7 @@ public class MoveFlightRequestHandler(
                 flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
             flight.InvalidateSequenceData();
-            sequence.Move(flight, newIndex, forceRescheduleStable: true);
+            sequence.Move(flight, newIndex);
 
             // Unstable flights become stable when moved
             if (flight.State == State.Unstable)

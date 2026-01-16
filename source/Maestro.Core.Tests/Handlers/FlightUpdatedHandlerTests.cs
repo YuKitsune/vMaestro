@@ -1105,7 +1105,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
@@ -1188,7 +1187,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             "YSSY",
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1),
-            "RIVET4",
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),

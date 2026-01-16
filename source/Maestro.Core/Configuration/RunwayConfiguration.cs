@@ -27,5 +27,5 @@ public class RunwayPreferences
 public class RunwayDependency
 {
     public required string RunwayIdentifier { get; init; }
-    public int? SeparationSeconds { get; init; }
+    public int SeparationSeconds { get; init; }
 }

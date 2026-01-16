@@ -46,7 +46,7 @@ public class ManualDelayRequestHandler(
             // Re-schedule the flight
             // This will move it forward if the delay exceeds the maximum delay
             // TODO: Should this be a different method?
-            sequence.Schedule(index, forceRescheduleStable: true);
+            sequence.Schedule(index);
 
             logger.Information("Set maximum delay for {Callsign} to {MaximumDelay}", request.Callsign, maximumDelay);
 
