@@ -2220,8 +2220,8 @@
         {
           "Identifier": "SW PLN",
           "Runways": [
-            { "Identifier": "21", "LandingRateSeconds": 180 },
-            { "Identifier": "24", "LandingRateSeconds": 180 }
+            { "Identifier": "21", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "24", "SeparationSeconds": 60}]},
+            { "Identifier": "24", "LandingRateSeconds": 180, "Dependencies": [{"RunwayIdentifier": "21", "SeparationSeconds": 60}] }
           ]
         },
         {
