@@ -572,7 +572,7 @@
     },
     {
       "Identifier": "YMML",
-      "FeederFixes": ["ARBEY", "BOYSE", "BOOIN", "RAZZI", "PORTS", "ALAXO", "MENOG"],
+      "FeederFixes": ["ARBEY", "BOYSE", "BOOIN", "RAZZI", "LATTA", "EKKAS", "ALAXO", "MENOG"],
       "Runways": [
         { "Identifier": "09" },
         { "Identifier": "16" },
@@ -780,22 +780,45 @@
           }
         },
         {
-          "FeederFix": "PORTS",
+          "ApproachFix": "PORTS",
+          "FeederFix": "EKKAS",
           "ApproachType": "A",
           "Category": "Jet",
           "AdditionalAircraftTypes": ["DH8D"],
           "RunwayIntervals": {
-            "09": 11,
-            "34": 7
+            "09": 14,
+            "34": 9
           }
         },
         {
-          "FeederFix": "PORTS",
+          "ApproachFix": "PORTS",
+          "FeederFix": "EKKAS",
           "ApproachType": "A",
           "Category": "NonJet",
           "RunwayIntervals": {
-            "09": 12,
-            "34": 8
+            "09": 16,
+            "34": 11
+          }
+        },
+        {
+          "ApproachFix": "PORTS",
+          "FeederFix": "LATTA",
+          "ApproachType": "A",
+          "Category": "Jet",
+          "AdditionalAircraftTypes": ["DH8D"],
+          "RunwayIntervals": {
+            "09": 13,
+            "34": 9
+          }
+        },
+        {
+          "ApproachFix": "PORTS",
+          "FeederFix": "LATTA",
+          "ApproachType": "A",
+          "Category": "NonJet",
+          "RunwayIntervals": {
+            "09": 15,
+            "34": 10
           }
         },
         {
@@ -882,14 +905,14 @@
           "ViewMode": "Enroute",
           "TimeHorizonMinutes": 30,
           "LeftLadder": ["RAZZI"],
-          "RightLadder": ["PORTS", "MENOG"]
+          "RightLadder": ["LATTA", "EKKAS", "MENOG"]
         },
         {
           "Identifier": "ALL",
           "ViewMode": "Enroute",
           "TimeHorizonMinutes": 30,
-          "LeftLadder": ["ARBEY", "ALAXO", "PORTS", "MENOG"],
-          "RightLadder": ["BOOIN", "BOYSE", "RAZZI"]
+          "LeftLadder": ["ARBEY", "ALAXO", "LATTA", "MENOG"],
+          "RightLadder": ["BOOIN", "BOYSE", "RAZZI", "EKKAS"]
         },
         {
           "Identifier": "RWY",
