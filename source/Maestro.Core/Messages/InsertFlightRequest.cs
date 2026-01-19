@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using System.Text.Json.Serialization;
+using Maestro.Core.Connectivity.Contracts;
+using MediatR;
 
 namespace Maestro.Core.Messages;
 
@@ -13,8 +15,12 @@ public record InsertFlightRequest(
     string? Callsign,
     string? AircraftType,
     IInsertFlightOptions Options)
-    : IRequest;
+    : IRequest, IRelayableRequest;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "OptionsType")]
+[JsonDerivedType(typeof(RelativeInsertionOptions), "Relative")]
+[JsonDerivedType(typeof(ExactInsertionOptions), "Exact")]
+[JsonDerivedType(typeof(DepartureInsertionOptions), "Departure")]
 public interface IInsertFlightOptions;
 
 public record RelativeInsertionOptions(string ReferenceCallsign, RelativePosition Position) : IInsertFlightOptions;

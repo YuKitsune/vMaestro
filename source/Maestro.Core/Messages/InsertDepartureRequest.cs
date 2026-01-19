@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Maestro.Core.Connectivity.Contracts;
+using MediatR;
 
 namespace Maestro.Core.Messages;
 
@@ -8,4 +9,4 @@ public record InsertDepartureRequest(
     string AircraftType,
     string DepartureAirport,
     IInsertFlightOptions Options)
-    : IRequest;
+    : IRequest, IRelayableRequest;

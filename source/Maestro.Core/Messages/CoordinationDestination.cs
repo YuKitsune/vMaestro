@@ -1,5 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace Maestro.Core.Messages;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "Type")]
+[JsonDerivedType(typeof(Broadcast), "Broadcast")]
+[JsonDerivedType(typeof(Controller), "Controller")]
 public abstract record CoordinationDestination
 {
     private CoordinationDestination() { }

@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Maestro.Core.Connectivity.Contracts;
+using MediatR;
 
 namespace Maestro.Core.Messages;
 
@@ -6,4 +7,4 @@ public record ChangeFeederFixEstimateRequest(
     string AirportIdentifier,
     string Callsign,
     DateTimeOffset NewFeederFixEstimate)
-    : IRequest;
+    : IRequest, IRelayableRequest;

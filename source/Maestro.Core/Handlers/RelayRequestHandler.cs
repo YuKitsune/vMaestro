@@ -15,10 +15,9 @@ public class RelayRequestHandler(IMaestroConnectionManager connectionManager, Se
         var actionKey = request.ActionKey;
 
         logger.Information("Processing {ActionKey} from {Callsign} (Role: {Role}) for airport {Airport}",
-            actionKey, envelope.OriginatingCallsign, envelope.OriginatingRole, GetAirportIdentifier(envelope.Request));
+            actionKey, envelope.OriginatingCallsign, envelope.OriginatingRole, envelope.Request.AirportIdentifier);
 
-        // Get the airport identifier from the wrapped request
-        var airportIdentifier = GetAirportIdentifier(envelope.Request);
+        var airportIdentifier = envelope.Request.AirportIdentifier;
         if (string.IsNullOrEmpty(airportIdentifier))
         {
             logger.Warning("Could not determine airport identifier from request {RequestType}", request.Envelope.Request.GetType().Name);
@@ -65,12 +64,5 @@ public class RelayRequestHandler(IMaestroConnectionManager connectionManager, Se
 
         // Otherwise, allow all actions
         return true;
-    }
-
-    static string GetAirportIdentifier(IRequest request)
-    {
-        // Use reflection to get the AirportIdentifier property from the request
-        var property = request.GetType().GetProperty("AirportIdentifier");
-        return property?.GetValue(request) as string ?? string.Empty;
     }
 }

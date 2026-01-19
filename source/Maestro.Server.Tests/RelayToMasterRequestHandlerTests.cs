@@ -11,13 +11,14 @@ namespace Maestro.Server.Tests;
 public class RelayToMasterRequestHandlerTests
 {
     const string Version = "0.0.0";
+    const string AirportIdentifier = "ZZZZ";
 
     [Fact]
     public async Task WhenTheConnectionIsNotTracked_ExceptionIsThrown()
     {
         // Arrange
         const string connectionId = "unknown-connection";
-        var testRequest = new TestRequest("test-data");
+        var testRequest = new TestRequest(AirportIdentifier, "test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
         var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
@@ -39,7 +40,7 @@ public class RelayToMasterRequestHandlerTests
     {
         // Arrange
         const string connectionId = "master-connection";
-        var testRequest = new TestRequest("test-data");
+        var testRequest = new TestRequest(AirportIdentifier, "test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
         var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
@@ -72,7 +73,7 @@ public class RelayToMasterRequestHandlerTests
     {
         // Arrange
         const string connectionId = "slave-connection";
-        var testRequest = new TestRequest("test-data");
+        var testRequest = new TestRequest(AirportIdentifier, "test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
         var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
@@ -112,7 +113,7 @@ public class RelayToMasterRequestHandlerTests
         // Arrange
         const string connectionId = "slave-connection";
         const string masterConnectionId = "master-connection";
-        var testRequest = new TestRequest("test-data");
+        var testRequest = new TestRequest(AirportIdentifier, "test-data");
         var relayRequest = new RelayToMasterRequest("TestMethod", testRequest);
         var wrappedRequest = new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(connectionId, relayRequest);
 
@@ -168,7 +169,7 @@ public class RelayToMasterRequestHandlerTests
         return new RelayToMasterRequestHandler(connectionManager, hubProxy, logger);
     }
 
-    public record TestRequest(string Data) : IRequest;
+    public record TestRequest(string AirportIdentifier, string Data) : IRequest, IRelayableRequest;
 
     delegate bool TryGetConnectionCallback(string connectionId, out Connection? connection);
 }

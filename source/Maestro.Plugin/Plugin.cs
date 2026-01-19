@@ -128,7 +128,7 @@ public class Plugin : IPlugin
                 .AddSingleton<IPerformanceLookup, VatsysPerformanceDataLookup>()
                 .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
                 .AddSingleton(logger)
-                .AddSingleton<IErrorReporter>(new ErrorReporter(Name))
+                .AddSingleton<IErrorReporter>(new ErrorReporter(Name, logger))
                 .AddSingleton<WindowManager>()
                 .BuildServiceProvider());
     }

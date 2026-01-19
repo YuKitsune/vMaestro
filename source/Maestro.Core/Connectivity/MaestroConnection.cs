@@ -5,7 +5,6 @@ using Maestro.Core.Messages;
 using MediatR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Serialization;
 using ILogger = Serilog.ILogger;
 
 namespace Maestro.Core.Connectivity;
@@ -58,11 +57,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
-            .AddNewtonsoftJsonProtocol(x =>
-            {
-                x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver();
-                x.PayloadSerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto;
-            })
+            .AddJsonProtocol()
             .Build();
 
         SubscribeToNotifications(_hubConnection);
@@ -268,6 +263,15 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDeparture);
+        });
+
+        hubConnection.On<RequestEnvelope, ServerResponse>("InsertOvershoot", async envelope =>
+        {
+            var request = (InsertOvershootRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
+                return ServerResponse.CreateFailure("Airport identifier mismatch");
+
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertOvershoot);
         });
 
         hubConnection.On<RequestEnvelope, ServerResponse>("MoveFlight", async envelope =>

@@ -1,5 +1,6 @@
-﻿using MediatR;
+﻿using Maestro.Core.Connectivity.Contracts;
+using MediatR;
 
 namespace Maestro.Core.Messages;
 
-public record ChangeApproachTypeRequest(string AirportIdentifier, string Callsign, string ApproachType) : IRequest;
+public record ChangeApproachTypeRequest(string AirportIdentifier, string Callsign, string ApproachType) : IRequest, IRelayableRequest;
