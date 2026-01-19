@@ -4,7 +4,6 @@ using Maestro.Server;
 using Maestro.Server.Handlers;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json.Serialization;
 using Serilog;
 using AssemblyMarker = Maestro.Server.AssemblyMarker;
 
@@ -47,11 +46,7 @@ try
             x.MaximumReceiveMessageSize = 32_000_000; // TODO: Just send smaller messages!!!
             x.EnableDetailedErrors = true;
         })
-        .AddNewtonsoftJsonProtocol(x =>
-        {
-            x.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver();
-            x.PayloadSerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto;
-        });
+        .AddJsonProtocol();
 
     builder.Services.AddSerilog();
     builder.Services.AddSingleton(Log.Logger);

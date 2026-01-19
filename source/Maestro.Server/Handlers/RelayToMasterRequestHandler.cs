@@ -1,11 +1,10 @@
 using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Handlers;
 using MediatR;
 using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
-public record RelayToMasterRequest(string MethodName, IRequest Message) : IRequest;
+public record RelayToMasterRequest(string MethodName, IRelayableRequest Message) : IRequest;
 
 public class RelayToMasterRequestHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
     : IRequestHandler<RequestContextWrapper<RelayToMasterRequest, ServerResponse>, ServerResponse>

@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Maestro.Core.Connectivity.Contracts;
+using MediatR;
 
 namespace Maestro.Core.Messages;
 
@@ -7,4 +8,4 @@ public record MoveFlightRequest(
     string Callsign,
     string[] RunwayIdentifiers,
     DateTimeOffset NewLandingTime)
-    : IRequest;
+    : IRequest, IRelayableRequest;

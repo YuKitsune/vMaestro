@@ -131,7 +131,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         return await RelayToMaster("ChangeApproachType", request);
     }
 
-    async Task<ServerResponse> RelayToMaster(string methodName, IRequest request)
+    async Task<ServerResponse> RelayToMaster(string methodName, IRelayableRequest request)
     {
         return await mediator.Send(
             new RequestContextWrapper<RelayToMasterRequest, ServerResponse>(
