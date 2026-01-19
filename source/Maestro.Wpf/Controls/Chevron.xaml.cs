@@ -138,7 +138,7 @@ public class Chevron : Control
         ]);
         dc.DrawGeometry(foreground, null, backgroundGeometry);
 
-        var innerBottom = new Point(width, height - lineWidth);
+        var innerBottom = new Point(width / 2, height - lineWidth);
         var innerTopLeft = new Point(lineWidth, lineWidth);
         var innerTopRight = new Point(width - lineWidth, lineWidth);
 
