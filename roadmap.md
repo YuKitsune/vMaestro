@@ -4,9 +4,15 @@
 
 - [ ] Check-in on GitHub issues. Try to reproduce the issues, fix them, or close them.
 
-## Automatic Updates
+## Revise flight insertion and Overshoot behaviour
 
-- [ ] Implement automatic plugin updates via the plugin manager
+- [ ] Verify: If you grab and drag total delay will update based on the original ETA.
+- [ ] Verify: If you reinsert I think it calculates a new ETA based on wherever you clicked to insert it
+
+## Revise all test cases
+
+- [ ] Delete redundant or inaccurate test cases
+- [ ] Compare remaining test cases with reference material
 
 ## Refactor Sequence Aggregate
 
@@ -79,10 +85,6 @@ Revisit the sequencing and scheduling algorithms.
 - [ ] Model runway allocation strategies (grographic, preferred, mixed)
 - [ ] Model runway dependencies (dependent, semi-dependent, and independent)
 - [ ] Account for GRIB winds
-
-## Unit test review
-
-- [ ] Compare test cases with reference material
 
 ## Model "Close" airports
 
