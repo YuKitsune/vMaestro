@@ -595,7 +595,7 @@ public partial class MaestroView
             // This was a drag operation - move the flight
             var finalTop = Canvas.GetTop(flightLabel);
             var canvasHeight = LadderCanvas.ActualHeight;
-            var newYOffset = canvasHeight - finalTop;
+            var newYOffset = canvasHeight - finalTop - (flightLabel.ActualHeight/2);
             var newTime = GetTimeForYOffset(ReferenceTime, newYOffset);
 
             // Get the flight from the flight label's data context
