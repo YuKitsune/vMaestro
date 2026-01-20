@@ -823,6 +823,9 @@ public partial class MaestroView
 
                 _flightLabels[flight.Callsign] = flightLabel;
                 LadderCanvas.Children.Add(flightLabel);
+
+                // Force layout update for new labels so ActualHeight is available for positioning
+                flightLabel.UpdateLayout();
             }
             else
             {
