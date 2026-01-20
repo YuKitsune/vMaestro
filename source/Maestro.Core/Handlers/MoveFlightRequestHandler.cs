@@ -42,11 +42,13 @@ public class MoveFlightRequestHandler(
 
             var newIndex = sequence.IndexOf(request.NewLandingTime);
 
+            flight.SetTargetLandingTime(request.NewLandingTime);
+
             var runwayMode = sequence.GetRunwayModeAt(request.NewLandingTime);
             var runwayIdentifier = runwayMode.Runways.FirstOrDefault(r => request.RunwayIdentifiers.Contains(r.Identifier))?.Identifier
                 ?? runwayMode.Default.Identifier;
 
-            sequence.ThrowIfSlotIsUnavailable(newIndex, runwayIdentifier);
+            sequence.ThrowIsTimeIsUnavailable(request.Callsign, request.NewLandingTime, runwayIdentifier);
 
             // TODO: Manually set the runway for now, but we need to revisit this later
             // Re: delaying into a new runway mode

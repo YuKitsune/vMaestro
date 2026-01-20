@@ -17,6 +17,7 @@ public class FlightBuilder(string callsign)
     DateTimeOffset? passedFeederFix = null;
 
     DateTimeOffset landingEstimate = default;
+    DateTimeOffset? targetLandingTime = null;
     DateTimeOffset landingTime = default;
 
     string _approachType = string.Empty;
@@ -93,6 +94,12 @@ public class FlightBuilder(string callsign)
     public FlightBuilder WithLandingEstimate(DateTimeOffset estimate)
     {
         landingEstimate = estimate;
+        return this;
+    }
+
+    public FlightBuilder WithTargetLandingTime(DateTimeOffset targetTime)
+    {
+        targetLandingTime = targetTime;
         return this;
     }
 
@@ -194,6 +201,11 @@ public class FlightBuilder(string callsign)
         if (_position is not null)
         {
             flight.UpdatePosition(_position);
+        }
+
+        if (targetLandingTime.HasValue)
+        {
+            flight.SetTargetLandingTime(targetLandingTime.Value);
         }
 
         return flight;

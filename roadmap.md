@@ -1,10 +1,15 @@
 # vMaestro Roadmap
 
-## Housekeeping
-
-- [ ] Check-in on GitHub issues. Try to reproduce the issues, fix them, or close them.
-
 ## Revise flight insertion and Overshoot behaviour
+
+- [X] MoveFlightRequestHandler - Set Target Time
+- [ ] Consolidate insertion handlers
+    - Set target time and landing estimate
+    - Add test for coupling to real flights after insertion
+- [ ] Overshoot shouldn't move the flight, it should create a new one based on the details of the landed one
+- [ ] Delete landed flights after landing
+
+---
 
 - [ ] Verify: If you grab and drag total delay will update based on the original ETA.
 - [ ] Verify: If you reinsert I think it calculates a new ETA based on wherever you clicked to insert it
