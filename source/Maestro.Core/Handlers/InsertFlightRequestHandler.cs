@@ -2,6 +2,7 @@
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -12,12 +13,13 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 // TODO: Once consolidated, we need to insert by ETA_FF rather than ETA
-
 public class InsertFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IPerformanceLookup performanceLookup,
     IAirportConfigurationProvider airportConfigurationProvider,
+    IArrivalLookup arrivalLookup,
+    IClock clock,
     IMediator mediator,
     ILogger logger)
     : IRequestHandler<InsertFlightRequest>
@@ -84,6 +86,7 @@ public class InsertFlightRequestHandler(
                     instance.Session),
 
                 DepartureInsertionOptions departureInsertionOptions => InsertDeparture(
+                    airportConfiguration,
                     request.AirportIdentifier,
                     callsign,
                     performanceData,
@@ -107,63 +110,7 @@ public class InsertFlightRequestHandler(
             // TODO Test Case: When dummy is inserted, it's frozen
             // TODO Test Case: When pending flight is inserted, it's made stable (as per configuration)
 
-            // int index;
-            // string runwayIdentifier;
-            // DateTimeOffset landingTime;
-
-            // switch (request.Options)
-            // {
-            //     case ExactInsertionOptions exactInsertionOptions:
-            //     {
-            //         index = sequence.IndexOf(exactInsertionOptions.TargetLandingTime);
-            //
-            //         var runwayMode = sequence.GetRunwayModeAt(exactInsertionOptions.TargetLandingTime);
-            //         var runway = runwayMode.Runways.FirstOrDefault(r => exactInsertionOptions.RunwayIdentifiers.Contains(r.Identifier)) ?? runwayMode.Default;
-            //         runwayIdentifier = runway.Identifier;
-            //         landingTime = exactInsertionOptions.TargetLandingTime;
-            //         break;
-            //     }
-            //     case RelativeInsertionOptions relativeInsertionOptions:
-            //     {
-            //         var referenceFlight = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
-            //         if (referenceFlight == null)
-            //             throw new MaestroException($"Reference flight {relativeInsertionOptions.ReferenceCallsign} not found in sequence.");
-            //
-            //         index = relativeInsertionOptions.Position switch
-            //         {
-            //             RelativePosition.Before => sequence.IndexOf(referenceFlight.LandingTime),
-            //             RelativePosition.After => sequence.IndexOf(referenceFlight.LandingTime) + 1,
-            //             _ => throw new ArgumentOutOfRangeException()
-            //         };
-            //
-            //         runwayIdentifier = referenceFlight.AssignedRunwayIdentifier;
-            //
-            //         var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
-            //         var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier) ?? runwayMode.Default;
-            //
-            //         landingTime = relativeInsertionOptions.Position switch
-            //         {
-            //             RelativePosition.Before => referenceFlight.LandingTime,
-            //             RelativePosition.After => referenceFlight.LandingTime.Add(runway.AcceptanceRate),
-            //             _ => throw new ArgumentOutOfRangeException()
-            //         };
-            //         break;
-            //     }
-            //     default:
-            //         throw new NotSupportedException($"Cannot insert flight with {request.Options.GetType().Name}");
-            // }
-
-            // var flight = new Flight(
-            //     callsign,
-            //     request.AircraftType,
-            //     request.AirportIdentifier,
-            //     runwayIdentifier,
-            //     landingTime,
-            //     state);
-
-            // sequence.Insert(index, flight);
-
-            // logger.Information("Inserted flight {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
+            logger.Information("Inserted flight {Callsign} with target time {TargetTime:HHmm}", callsign, targetLandingTime);
 
             sessionMessage = instance.Session.Snapshot();
         }
@@ -193,6 +140,19 @@ public class InsertFlightRequestHandler(
         // TODO Test Case: Exact time, occupied by Slot, exception is thrown
         // TODO Test Case: Exact time, occupied by Runway change, exception is thrown
 
+        foreach (var runwayIdentifier in exactInsertionOptions.RunwayIdentifiers)
+        {
+            session.Sequence.ThrowIsTimeIsUnavailable(
+                callsign,
+                exactInsertionOptions.TargetLandingTime,
+                runwayIdentifier);
+        }
+
+        var runway = FindRunway(
+            session.Sequence,
+            exactInsertionOptions.TargetLandingTime,
+            exactInsertionOptions.RunwayIdentifiers);
+
         // TODO Test Case: When inserting exact, and pending flight exists, they are inserted
         var flight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
@@ -211,13 +171,28 @@ public class InsertFlightRequestHandler(
                 exactInsertionOptions.TargetLandingTime,
                 DefaultDummyState);
 
-            // TODO: Set ApproachType
+            var approachType = FindApproachType(
+                airportIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes,
+                runway.Identifier,
+                performanceData);
+            flight.SetApproachType(approachType);
         }
         else
         {
-            flight.SetRunway(runway.Identifier);
-            // TODO: Set ApproachType
+            flight.SetRunway(runway.Identifier, manual: true);
+
+            var approachType = FindApproachType(
+                airportIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes,
+                runway.Identifier,
+                performanceData);
+            flight.SetApproachType(approachType);
+
             flight.SetTargetLandingTime(exactInsertionOptions.TargetLandingTime);
+
             flight.SetState(DefaultPendingState, clock);
         }
 
@@ -242,8 +217,10 @@ public class InsertFlightRequestHandler(
 
         // TODO Test Case: Can insert after frozen flights
 
-        var runwayMode = session.Sequence.GetRunwayModeAt(referenceFlight.LandingTime);
-        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
+        var runway = FindRunway(
+            session.Sequence,
+            referenceFlight.LandingTime,
+            [referenceFlight.AssignedRunwayIdentifier]);
 
         // TODO: Check if the next runway mode has different separation requirements, and use those if the target time sits within the new mode
 
@@ -275,12 +252,29 @@ public class InsertFlightRequestHandler(
                 runway.Identifier,
                 targetLandingTime,
                 DefaultDummyState);
+
+            var approachType = FindApproachType(
+                airportIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes,
+                runway.Identifier,
+                performanceData);
+            flight.SetApproachType(approachType);
         }
         else
         {
             flight.SetRunway(runway.Identifier, manual: true);
-            // TODO: Set ApproachType
+
+            var approachType = FindApproachType(
+                airportIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes,
+                runway.Identifier,
+                performanceData);
+            flight.SetApproachType(approachType);
+
             flight.SetTargetLandingTime(targetLandingTime);
+
             flight.SetState(DefaultPendingState, clock);
         }
 
@@ -288,6 +282,7 @@ public class InsertFlightRequestHandler(
     }
 
     Flight InsertDeparture(
+        AirportConfiguration airportConfiguration,
         string airportIdentifier,
         string callsign,
         AircraftPerformanceData performanceData,
@@ -302,6 +297,13 @@ public class InsertFlightRequestHandler(
             departureInsertionOptions.OriginIdentifier,
             performanceData);
         var landingEstimate = departureInsertionOptions.TakeoffTime.Add(enrouteTime);
+
+        // TODO: Consider feeder fix preferences when assigning a runway
+        // TODO: Consider deferring runway selection until the Scheduling phase
+        var runway = FindRunway(
+            session.Sequence,
+            landingEstimate,
+            []);
 
         var flight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
@@ -321,10 +323,27 @@ public class InsertFlightRequestHandler(
                 runway.Identifier,
                 landingEstimate,
                 DefaultDummyState);
+
+            var approachType = FindApproachType(
+                airportIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes,
+                runway.Identifier,
+                performanceData);
+            flight.SetApproachType(approachType);
         }
         else
         {
-            flight.SetRunway(runway.Identifier, manual: false);
+            flight.SetRunway(runway.Identifier, manual: true);
+
+            var approachType = FindApproachType(
+                airportIdentifier,
+                flight.FeederFixIdentifier,
+                flight.Fixes,
+                runway.Identifier,
+                performanceData);
+            flight.SetApproachType(approachType);
+
             flight.SetState(DefaultPendingState, clock);
         }
 
@@ -360,25 +379,30 @@ public class InsertFlightRequestHandler(
         return TimeSpan.FromSeconds(averageSeconds);
     }
 
-    DateTimeOffset GetEarliestLandingTimeAfter(Sequence sequence, Flight referenceFlight, string runwayIdentifier)
+    Runway FindRunway(
+        Sequence sequence,
+        DateTimeOffset targetLandingTime,
+        string[] requestedRunwayIdentifiers)
     {
-        var referenceFlightRunwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
+        var runwayMode = sequence.GetRunwayModeAt(targetLandingTime);
+        var runway = runwayMode.Runways.FirstOrDefault(r => requestedRunwayIdentifiers.Contains(r.Identifier));
+        return runway ?? runwayMode.Default;
+    }
 
-        var referenceFlightRunway = referenceFlightRunwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier) ?? referenceFlightRunwayMode.Default;
-
-        var targetRunway = referenceFlightRunwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier) ?? referenceFlightRunwayMode.Default;
-        var requiredSeparation = targetRunway.Dependencies
-            .FirstOrDefault(d => d.RunwayIdentifier == referenceFlightRunway.Identifier)
-            ?.Separation ?? targetRunway.AcceptanceRate;
-
-        var earliestLandingTime = referenceFlight.LandingTime.Add(requiredSeparation);
-        if (sequence is { LastLandingTimeForCurrentMode: not null, FirstLandingTimeForNewMode: not null } && earliestLandingTime.IsAfter(sequence.LastLandingTimeForCurrentMode.Value))
-        {
-            // Delayed into runway change
-            // TODO: Need to re-calculate the required separation
-            return sequence.FirstLandingTimeForNewMode.Value;
-        }
-
-        return earliestLandingTime;
+    string FindApproachType(
+        string airportIdentifier,
+        string feederFixIdentifier,
+        FixEstimate[] fixes,
+        string runwayIdentifier,
+        AircraftPerformanceData performanceData)
+    {
+        var arrivals = arrivalLookup.GetApproachTypes(
+            airportIdentifier,
+            feederFixIdentifier,
+            fixes.Select(x => x.FixIdentifier).ToArray(),
+            runwayIdentifier,
+            performanceData.TypeCode,
+            performanceData.AircraftCategory);
+        return arrivals.FirstOrDefault() ?? string.Empty;
     }
 }

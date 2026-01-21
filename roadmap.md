@@ -19,6 +19,11 @@
 - [ ] Delete redundant or inaccurate test cases
 - [ ] Compare remaining test cases with reference material
 
+## Streamline Approach Type and Runway Assignment
+
+- [ ] Allow runway assignment to be deferred until the Scheduling phase
+- [ ] Extract runway and approach type assignment into a separate, testable service
+
 ## Refactor Sequence Aggregate
 
 Separate the `Sequence` aggregate into a read-only aggregate (source of truth), and a mutable builder (dirty state).
