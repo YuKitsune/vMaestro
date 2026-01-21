@@ -68,6 +68,16 @@ public class InsertFlightRequestHandler(
 
             if (request.Options is ExactInsertionOptions exactInsertionOptions)
             {
+                // TODO Test Case: When inserting exact, and pending flight exists, they are inserted
+                var flight = instance.Session.PendingFlights.SingleOrDefault(f =>
+                    f.Callsign == callsign &&
+                    f.AircraftType == aircraftType);
+                if (flight is null || isDummyFlight)
+                {
+                    // TODO Test Case: When inserting exact, and the flight does not exist, a dummy flight is created
+                    // TODO: Create a dummy flight
+                }
+
                 // TODO Test Case: Exact time, target time is set
                 // TODO Test Case: Exact time, relevant runway is assigned
                 // TODO Test Case: Exact time, and pending flight is found, pending flight is inserted
@@ -82,6 +92,16 @@ public class InsertFlightRequestHandler(
 
             else if (request.Options is RelativeInsertionOptions relativeInsertionOptions)
             {
+                // TODO Test Case: When inserting relatively, and pending flight exists, they are inserted
+                var flight = instance.Session.PendingFlights.SingleOrDefault(f =>
+                    f.Callsign == callsign &&
+                    f.AircraftType == aircraftType);
+                if (flight is null || isDummyFlight)
+                {
+                    // TODO Test Case: When inserting relatively, and the flight does not exist, a dummy flight is created
+                    // TODO: Create a dummy flight
+                }
+
                 var referenceFlight = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
                 if (referenceFlight is null)
                     throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
@@ -143,28 +163,13 @@ public class InsertFlightRequestHandler(
                 // TODO Test Case: When inserting a departure, TargetLandingTime is not set
             }
 
-            // TODO: Don't allocate a runway yet, let the Sequence deal with it
-            var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
-            runway = FindBestRunway(airportConfiguration, runwayMode, flight.FeederFixIdentifier);
-
             // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
             // TODO: Check dependant runways. Backfill this behaviour to the FlightUpdated handler
+            // TODO: This insertion behaviour is the same as what's used in FlightUpdated. Consolidate this.
             // TODO Test Case: When inserting a flight, and it's estimate is ahead of an Unstable or Stable flight, it is inserted in front of that flight
             // TODO Test Case: When inserting a flight, and it's estimate is ahead of a SuperStable, Frozen, or Landed flight, it is inserted behind that flight
-            var earliestInsertionIndex = sequence.FindLastIndex(f =>
-                f.State is not State.Unstable and not State.Stable &&
-                f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
-            index = sequence.FindIndex(
-                earliestInsertionIndex,
-                f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
-
-            // TODO: We need to make sure we're doing this anywhere else we're inserting a flight
-            // If there are no flights after this one, add them to the back of the queue
-            if (index == -1)
-                index = sequence.Flights.Count;
-
-            index = Math.Max(earliestInsertionIndex, index);
+            sequence.InsertByTargetTime(flight, targetLandingTime);
 
             // TODO Test Case: When inserting a pending flight, ETA_FF is calculated
 
@@ -226,9 +231,9 @@ public class InsertFlightRequestHandler(
             //     landingTime,
             //     state);
 
-            sequence.Insert(index, flight);
+            // sequence.Insert(index, flight);
 
-            logger.Information("Inserted dummy flight {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
+            // logger.Information("Inserted flight {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
 
             sessionMessage = instance.Session.Snapshot();
         }
