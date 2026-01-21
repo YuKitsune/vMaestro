@@ -4,12 +4,6 @@ using MediatR;
 
 namespace Maestro.Core.Messages;
 
-public enum RelativePosition
-{
-    Before,
-    After
-}
-
 public record InsertFlightRequest(
     string AirportIdentifier,
     string? Callsign,
@@ -23,8 +17,14 @@ public record InsertFlightRequest(
 [JsonDerivedType(typeof(DepartureInsertionOptions), "Departure")]
 public interface IInsertFlightOptions;
 
+public enum RelativePosition
+{
+    Before,
+    After
+}
+
 public record RelativeInsertionOptions(string ReferenceCallsign, RelativePosition Position) : IInsertFlightOptions;
 
 public record ExactInsertionOptions(DateTimeOffset TargetLandingTime, string[] RunwayIdentifiers) : IInsertFlightOptions;
 
-public record DepartureInsertionOptions(DateTimeOffset TakeoffTime) : IInsertFlightOptions;
+public record DepartureInsertionOptions(string OriginIdentifier, DateTimeOffset TakeoffTime) : IInsertFlightOptions;
