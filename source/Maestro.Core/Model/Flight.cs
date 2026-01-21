@@ -20,10 +20,20 @@ public class Flight : IEquatable<Flight>
     }
 
     // Constructor for manually inserted flights (formerly DummyFlight)
-    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset targetTime, State state)
+    public Flight(
+        string callsign,
+        string aircraftType,
+        AircraftCategory aircraftCategory,
+        WakeCategory wakeCategory,
+        string destinationIdentifier,
+        string runwayIdentifier,
+        DateTimeOffset targetTime,
+        State state)
     {
         Callsign = callsign;
-        AircraftType = aircraftType ?? string.Empty;
+        AircraftType = aircraftType;
+        AircraftCategory = aircraftCategory;
+        WakeCategory = wakeCategory;
         DestinationIdentifier = destinationIdentifier;
         AssignedRunwayIdentifier = runwayIdentifier;
         InitialLandingEstimate = targetTime;
@@ -31,8 +41,6 @@ public class Flight : IEquatable<Flight>
         LandingTime = targetTime;
         State = state;
         IsManuallyInserted = true;
-        AircraftCategory = AircraftCategory.Jet;
-        WakeCategory = WakeCategory.Medium;
     }
 
     // TODO: Use memento pattern

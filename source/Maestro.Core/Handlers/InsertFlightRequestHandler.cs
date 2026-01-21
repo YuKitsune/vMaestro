@@ -2,6 +2,7 @@
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -15,6 +16,7 @@ namespace Maestro.Core.Handlers;
 public class InsertFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IPerformanceLookup performanceLookup,
     IAirportConfigurationProvider airportConfigurationProvider,
     IMediator mediator,
     ILogger logger)
@@ -22,11 +24,13 @@ public class InsertFlightRequestHandler(
 {
     const int MaxCallsignLength = 12; // TODO: Verify the VATSIM limit
 
+    // TODO: Make these configurable
+    const string DefaultAircraftType = "B738";
+    const State DefaultPendingState = State.Stable;
+    const State DefaultDummyState = State.Frozen;
+
     public async Task Handle(InsertFlightRequest request, CancellationToken cancellationToken)
     {
-        // TODO: Make configurable
-        const string DefaultAircraftType = "B738";
-
         // TODO Test Case: When connected to server, request is relayed to master
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
@@ -62,106 +66,32 @@ public class InsertFlightRequestHandler(
                 ? DefaultAircraftType
                 : request.AircraftType;
 
-            string[] assignableRunways;
-            DateTimeOffset landingEstimate;
-            DateTimeOffset? targetLandingTime = null;
+            var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
 
-            if (request.Options is ExactInsertionOptions exactInsertionOptions)
+            var flight = request.Options switch
             {
-                // TODO Test Case: When inserting exact, and pending flight exists, they are inserted
-                var flight = instance.Session.PendingFlights.SingleOrDefault(f =>
-                    f.Callsign == callsign &&
-                    f.AircraftType == aircraftType);
-                if (flight is null || isDummyFlight)
-                {
-                    // TODO Test Case: When inserting exact, and the flight does not exist, a dummy flight is created
-                    // TODO: Create a dummy flight
-                }
+                ExactInsertionOptions exactInsertionOptions => InsertExact(request.AirportIdentifier,
+                    callsign,
+                    performanceData,
+                    exactInsertionOptions,
+                    instance.Session),
 
-                // TODO Test Case: Exact time, target time is set
-                // TODO Test Case: Exact time, relevant runway is assigned
-                // TODO Test Case: Exact time, and pending flight is found, pending flight is inserted
-                // TODO Test Case: Exact time, no flight is found, dummy is inserted
-                // TODO Test Case: Exact time, and flight is coupled, system estimates are used
-                // TODO Test Case: Exact time, flight is positioned by target time
-                // TODO Test Case: Exact time, flight is sequenced by target time
-                // TODO Test Case: Exact time, occupied by Frozen flight, exception is thrown
-                // TODO Test Case: Exact time, occupied by Slot, exception is thrown
-                // TODO Test Case: Exact time, occupied by Runway change, exception is thrown
-            }
+                RelativeInsertionOptions relativeInsertionOptions => InsertRelative(
+                    request.AirportIdentifier,
+                    callsign,
+                    performanceData,
+                    relativeInsertionOptions,
+                    instance.Session),
 
-            else if (request.Options is RelativeInsertionOptions relativeInsertionOptions)
-            {
-                // TODO Test Case: When inserting relatively, and pending flight exists, they are inserted
-                var flight = instance.Session.PendingFlights.SingleOrDefault(f =>
-                    f.Callsign == callsign &&
-                    f.AircraftType == aircraftType);
-                if (flight is null || isDummyFlight)
-                {
-                    // TODO Test Case: When inserting relatively, and the flight does not exist, a dummy flight is created
-                    // TODO: Create a dummy flight
-                }
+                DepartureInsertionOptions departureInsertionOptions => InsertDeparture(
+                    request.AirportIdentifier,
+                    callsign,
+                    performanceData,
+                    departureInsertionOptions,
+                    instance.Session),
 
-                var referenceFlight = sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
-                if (referenceFlight is null)
-                    throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
-
-                // TODO Test Case: Cannot insert before frozen flights
-                if (referenceFlight.State is State.Frozen or State.Landed &&
-                    relativeInsertionOptions.Position == RelativePosition.Before)
-                {
-                    throw new MaestroException("Cannot insert a flight before a Frozen flight");
-                }
-
-                // TODO Test Case: Can insert after frozen flights
-
-                var runwayMode = sequence.GetRunwayModeAt(referenceFlight.LandingTime);
-                var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
-
-                // TODO: Check if the next runway mode has different separation requirements, and use those if the target time sits within the new mode
-
-                // TODO Test Case: When inserting before another flight, the target time is the reference flights landing time
-                // TODO Test Case: When inserting before another flight, the inserted flight is sequenced ahead of the reference flight
-                // TODO Test Case: When inserting after another flight, the target time is the reference flights landing time + landing rate
-                // TODO Test Case: When inserting after another flight, the inserted flight is sequenced behind the reference flight
-                targetLandingTime = relativeInsertionOptions.Position switch
-                {
-                    RelativePosition.Before => referenceFlight.LandingTime,
-                    RelativePosition.After => referenceFlight.LandingTime.Add(runway.AcceptanceRate),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
-                landingEstimate = targetLandingTime.Value;
-            }
-
-            else if (request.Options is DepartureInsertionOptions departureOptions)
-            {
-                // TODO Test Case: When inserting a departure, and the departure exists, they are inserted
-                var flight = instance.Session.PendingFlights.SingleOrDefault(f =>
-                    f.Callsign == callsign &&
-                    f.AircraftType == aircraftType &&
-                    f.OriginIdentifier == departureOptions.OriginIdentifier &&
-                    f.IsFromDepartureAirport);
-                if (flight is null || isDummyFlight)
-                {
-                    // TODO Test Case: When inserting a departure, and the flight does not exist, a dummy flight is created
-                    // TODO: Create a dummy flight
-                }
-
-                // TODO Test Case: When departure is uncoupled, landing estimate is calculated by TakeOffTime + ETI
-                // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
-                // If the position is known, source the estimate from the system estimate
-                if (flight.Position is null || flight.Position.IsOnGround || isDummyFlight)
-                {
-                    var enrouteTime = CalculateEnrouteTime(airportConfiguration, flight);
-                    var landingEstimate = departureOptions.TakeoffTime.Add(enrouteTime);
-                    flight.UpdateLandingEstimate(landingEstimate);
-                }
-
-                // TODO Test Case: When departure is coupled, system estimate is used
-
-                // TODO Test Case: When inserting a departure, TargetLandingTime is not set
-            }
+                _ => throw new NotSupportedException($"Unexpected insertion option: \"{request.Options.GetType()}\"")
+            };
 
             // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
             // TODO: Check dependant runways. Backfill this behaviour to the FlightUpdated handler
@@ -169,13 +99,13 @@ public class InsertFlightRequestHandler(
             // TODO Test Case: When inserting a flight, and it's estimate is ahead of an Unstable or Stable flight, it is inserted in front of that flight
             // TODO Test Case: When inserting a flight, and it's estimate is ahead of a SuperStable, Frozen, or Landed flight, it is inserted behind that flight
 
+            var targetLandingTime = flight.TargetLandingTime ?? flight.LandingEstimate;
             sequence.InsertByTargetTime(flight, targetLandingTime);
 
             // TODO Test Case: When inserting a pending flight, ETA_FF is calculated
 
             // TODO Test Case: When dummy is inserted, it's frozen
             // TODO Test Case: When pending flight is inserted, it's made stable (as per configuration)
-            var state = State.Frozen; // TODO: Make this configurable
 
             // int index;
             // string runwayIdentifier;
@@ -245,21 +175,188 @@ public class InsertFlightRequestHandler(
             cancellationToken);
     }
 
-    TimeSpan CalculateEnrouteTime(AirportConfiguration airportConfiguration, Flight flight)
+    Flight InsertExact(
+        string airportIdentifier,
+        string callsign,
+        AircraftPerformanceData performanceData,
+        ExactInsertionOptions exactInsertionOptions,
+        Session session)
     {
-        var departureAirportConfiguration = airportConfiguration.DepartureAirports.SingleOrDefault(d => d.Identifier == flight.OriginIdentifier);
-        if (departureAirportConfiguration is null)
-            throw new MaestroException($"{flight.Callsign} is not from a departure airport");
+        // TODO Test Case: Exact time, target time is set
+        // TODO Test Case: Exact time, relevant runway is assigned
+        // TODO Test Case: Exact time, and pending flight is found, pending flight is inserted
+        // TODO Test Case: Exact time, no flight is found, dummy is inserted
+        // TODO Test Case: Exact time, and flight is coupled, system estimates are used
+        // TODO Test Case: Exact time, flight is positioned by target time
+        // TODO Test Case: Exact time, flight is sequenced by target time
+        // TODO Test Case: Exact time, occupied by Frozen flight, exception is thrown
+        // TODO Test Case: Exact time, occupied by Slot, exception is thrown
+        // TODO Test Case: Exact time, occupied by Runway change, exception is thrown
 
-        var matchingTime = departureAirportConfiguration.FlightTimes.FirstOrDefault(t =>
-            (t.AircraftType is SpecificAircraftTypeConfiguration c1 && c1.TypeCode == flight.AircraftType) ||
-            (t.AircraftType is AircraftCategoryConfiguration c2 && c2.Category == flight.AircraftCategory) ||
+        // TODO Test Case: When inserting exact, and pending flight exists, they are inserted
+        var flight = session.PendingFlights.SingleOrDefault(f =>
+            f.Callsign == callsign &&
+            f.AircraftType == performanceData.TypeCode);
+        if (flight is null)
+        {
+            // TODO Test Case: When inserting exact, and the flight does not exist, a dummy flight is created
+            // Create a dummy flight
+            flight = new Flight(
+                callsign,
+                performanceData.TypeCode,
+                performanceData.AircraftCategory,
+                performanceData.WakeCategory,
+                airportIdentifier,
+                runway.Identifier,
+                exactInsertionOptions.TargetLandingTime,
+                DefaultDummyState);
+
+            // TODO: Set ApproachType
+        }
+        else
+        {
+            flight.SetRunway(runway.Identifier);
+            // TODO: Set ApproachType
+            flight.SetTargetLandingTime(exactInsertionOptions.TargetLandingTime);
+            flight.SetState(DefaultPendingState, clock);
+        }
+
+        return flight;
+    }
+
+    Flight InsertRelative(
+        string airportIdentifier,
+        string callsign,
+        AircraftPerformanceData performanceData,
+        RelativeInsertionOptions relativeInsertionOptions,
+        Session session)
+    {
+        var referenceFlight = session.Sequence.FindFlight(relativeInsertionOptions.ReferenceCallsign);
+        if (referenceFlight is null)
+            throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
+
+        // TODO Test Case: Cannot insert before frozen flights
+        if (referenceFlight.State is State.Frozen or State.Landed &&
+            relativeInsertionOptions.Position == RelativePosition.Before)
+            throw new MaestroException("Cannot insert a flight before a Frozen flight");
+
+        // TODO Test Case: Can insert after frozen flights
+
+        var runwayMode = session.Sequence.GetRunwayModeAt(referenceFlight.LandingTime);
+        var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == referenceFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
+
+        // TODO: Check if the next runway mode has different separation requirements, and use those if the target time sits within the new mode
+
+        // TODO Test Case: When inserting before another flight, the target time is the reference flights landing time
+        // TODO Test Case: When inserting before another flight, the inserted flight is sequenced ahead of the reference flight
+        // TODO Test Case: When inserting after another flight, the target time is the reference flights landing time + landing rate
+        // TODO Test Case: When inserting after another flight, the inserted flight is sequenced behind the reference flight
+        var targetLandingTime = relativeInsertionOptions.Position switch
+        {
+            RelativePosition.Before => referenceFlight.LandingTime,
+            RelativePosition.After => referenceFlight.LandingTime.Add(runway.AcceptanceRate),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        // TODO Test Case: When inserting relatively, and pending flight exists, they are inserted
+        var flight = session.PendingFlights.SingleOrDefault(f =>
+            f.Callsign == callsign &&
+            f.AircraftType == performanceData.TypeCode);
+        if (flight is null)
+        {
+            // TODO Test Case: When inserting relatively, and the flight does not exist, a dummy flight is created
+            // Create a dummy flight
+            flight = new Flight(
+                callsign,
+                performanceData.TypeCode,
+                performanceData.AircraftCategory,
+                performanceData.WakeCategory,
+                airportIdentifier,
+                runway.Identifier,
+                targetLandingTime,
+                DefaultDummyState);
+        }
+        else
+        {
+            flight.SetRunway(runway.Identifier, manual: true);
+            // TODO: Set ApproachType
+            flight.SetTargetLandingTime(targetLandingTime);
+            flight.SetState(DefaultPendingState, clock);
+        }
+
+        return flight;
+    }
+
+    Flight InsertDeparture(
+        string airportIdentifier,
+        string callsign,
+        AircraftPerformanceData performanceData,
+        DepartureInsertionOptions departureInsertionOptions,
+        Session session)
+    {
+        // TODO Test Case: When inserting a departure, and the departure exists, they are inserted
+
+        // Calculate the landing estimate based on the provided TakeOffTime + configured ETI
+        var enrouteTime = CalculateEnrouteTime(
+            airportConfiguration,
+            departureInsertionOptions.OriginIdentifier,
+            performanceData);
+        var landingEstimate = departureInsertionOptions.TakeoffTime.Add(enrouteTime);
+
+        var flight = session.PendingFlights.SingleOrDefault(f =>
+            f.Callsign == callsign &&
+            f.AircraftType == performanceData.TypeCode &&
+            f.OriginIdentifier == departureInsertionOptions.OriginIdentifier &&
+            f.IsFromDepartureAirport);
+        if (flight is null)
+        {
+            // TODO Test Case: When inserting a departure, and the flight does not exist, a dummy flight is created
+            // Create a dummy flight
+            flight = new Flight(
+                callsign,
+                performanceData.TypeCode,
+                performanceData.AircraftCategory,
+                performanceData.WakeCategory,
+                airportIdentifier,
+                runway.Identifier,
+                landingEstimate,
+                DefaultDummyState);
+        }
+        else
+        {
+            flight.SetRunway(runway.Identifier, manual: false);
+            flight.SetState(DefaultPendingState, clock);
+        }
+
+        // TODO Test Case: When inserting a departure, TargetLandingTime is not set
+
+        // TODO Test Case: When departure is coupled, system estimate is used
+        // TODO Test Case: When departure is uncoupled, landing estimate is calculated by TakeOffTime + ETI
+        // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
+        // If the position is known, source the estimate from the system estimate
+        if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
+        {
+            flight.UpdateLandingEstimate(landingEstimate);
+        }
+
+        return flight;
+    }
+
+    TimeSpan CalculateEnrouteTime(AirportConfiguration airportConfiguration, string departureIdentifier, AircraftPerformanceData performanceData)
+    {
+        var departureConfiguration = airportConfiguration.DepartureAirports.SingleOrDefault(d => d.Identifier == departureIdentifier);
+        if (departureConfiguration is null)
+            throw new MaestroException($"{departureIdentifier} is not a configured departure airport");
+
+        var matchingTime = departureConfiguration.FlightTimes.FirstOrDefault(t =>
+            (t.AircraftType is SpecificAircraftTypeConfiguration c1 && c1.TypeCode == performanceData.TypeCode) ||
+            (t.AircraftType is AircraftCategoryConfiguration c2 && c2.Category == performanceData.AircraftCategory) ||
             t.AircraftType is AllAircraftTypesConfiguration);
 
         if (matchingTime is not null)
             return matchingTime.AverageFlightTime;
 
-        var averageSeconds = departureAirportConfiguration.FlightTimes.Average(t => t.AverageFlightTime.TotalSeconds);
+        var averageSeconds = departureConfiguration.FlightTimes.Average(t => t.AverageFlightTime.TotalSeconds);
         return TimeSpan.FromSeconds(averageSeconds);
     }
 
