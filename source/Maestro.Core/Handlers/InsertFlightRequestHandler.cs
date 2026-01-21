@@ -33,7 +33,6 @@ public class InsertFlightRequestHandler(
 
     public async Task Handle(InsertFlightRequest request, CancellationToken cancellationToken)
     {
-        // TODO Test Case: When connected to server, request is relayed to master
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
             !connection.IsMaster)
@@ -56,14 +55,11 @@ public class InsertFlightRequestHandler(
         {
             var sequence = instance.Session.Sequence;
 
-            // TODO Test Case: Callsign is normalized and truncated
-            // TODO Test Case: When no callsign is provided, dummy callsign is used
-            var callsign = request.Callsign?.ToUpperInvariant().Truncate(MaxCallsignLength)!;
+            var callsign = request.Callsign?.Trim().ToUpperInvariant().Truncate(MaxCallsignLength)!;
             var isDummyFlight = string.IsNullOrWhiteSpace(callsign);
             if (isDummyFlight)
                 callsign = instance.Session.NewDummyCallsign();
 
-            // TODO Test Case: When no aircraft type is provided, default is used
             var aircraftType = string.IsNullOrEmpty(request.AircraftType)
                 ? DefaultAircraftType
                 : request.AircraftType;
@@ -99,16 +95,32 @@ public class InsertFlightRequestHandler(
             // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
             // TODO: Check dependant runways. Backfill this behaviour to the FlightUpdated handler
             // TODO: This insertion behaviour is the same as what's used in FlightUpdated. Consolidate this.
-            // TODO Test Case: When inserting a flight, and it's estimate is ahead of an Unstable or Stable flight, it is inserted in front of that flight
-            // TODO Test Case: When inserting a flight, and it's estimate is ahead of a SuperStable, Frozen, or Landed flight, it is inserted behind that flight
-
             var targetLandingTime = flight.TargetLandingTime ?? flight.LandingEstimate;
-            sequence.InsertByTargetTime(flight, targetLandingTime);
 
-            // TODO Test Case: When inserting a pending flight, ETA_FF is calculated
+            // SuperStable flights can be displaced by controller action.
+            // Inserting a flight is a manual action, so we can displace SuperStable flights.
+            // Find the index of the first flight on the same runway that isn't Unstable, Stable, or SuperStable
+            // New flights cannot be inserted beyond this point
+            var earliestInsertionIndex = sequence.FindLastIndex(f =>
+                f.State is not State.Unstable and not State.Stable and not State.SuperStable &&
+                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier) + 1;
 
-            // TODO Test Case: When dummy is inserted, it's frozen
-            // TODO Test Case: When pending flight is inserted, it's made stable (as per configuration)
+            // Determine the insertion point by landing estimate
+            // TODO: Refactor this to use the feeder fix time if available
+            var insertionIndex = sequence.FindIndex(
+                earliestInsertionIndex,
+                f => f.LandingEstimate.IsAfter(targetLandingTime));
+
+            if (insertionIndex == -1)
+                insertionIndex = Math.Min(earliestInsertionIndex, sequence.Flights.Count);
+
+            sequence.Insert(insertionIndex, flight);
+
+            // Freeze dummy flights as soon as they've been scheduled
+            if (flight.IsManuallyInserted)
+            {
+                flight.SetState(DefaultDummyState, clock);
+            }
 
             logger.Information("Inserted flight {Callsign} with target time {TargetTime:HHmm}", callsign, targetLandingTime);
 
@@ -129,17 +141,6 @@ public class InsertFlightRequestHandler(
         ExactInsertionOptions exactInsertionOptions,
         Session session)
     {
-        // TODO Test Case: Exact time, target time is set
-        // TODO Test Case: Exact time, relevant runway is assigned
-        // TODO Test Case: Exact time, and pending flight is found, pending flight is inserted
-        // TODO Test Case: Exact time, no flight is found, dummy is inserted
-        // TODO Test Case: Exact time, and flight is coupled, system estimates are used
-        // TODO Test Case: Exact time, flight is positioned by target time
-        // TODO Test Case: Exact time, flight is sequenced by target time
-        // TODO Test Case: Exact time, occupied by Frozen flight, exception is thrown
-        // TODO Test Case: Exact time, occupied by Slot, exception is thrown
-        // TODO Test Case: Exact time, occupied by Runway change, exception is thrown
-
         foreach (var runwayIdentifier in exactInsertionOptions.RunwayIdentifiers)
         {
             session.Sequence.ThrowIsTimeIsUnavailable(
@@ -153,7 +154,6 @@ public class InsertFlightRequestHandler(
             exactInsertionOptions.TargetLandingTime,
             exactInsertionOptions.RunwayIdentifiers);
 
-        // TODO Test Case: When inserting exact, and pending flight exists, they are inserted
         var flight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
             f.AircraftType == performanceData.TypeCode);
@@ -169,7 +169,7 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 runway.Identifier,
                 exactInsertionOptions.TargetLandingTime,
-                DefaultDummyState);
+                State.Stable);
 
             var approachType = FindApproachType(
                 airportIdentifier,
@@ -181,6 +181,8 @@ public class InsertFlightRequestHandler(
         }
         else
         {
+            session.PendingFlights.Remove(flight);
+
             flight.SetRunway(runway.Identifier, manual: true);
 
             var approachType = FindApproachType(
@@ -194,6 +196,13 @@ public class InsertFlightRequestHandler(
             flight.SetTargetLandingTime(exactInsertionOptions.TargetLandingTime);
 
             flight.SetState(DefaultPendingState, clock);
+        }
+
+        // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
+        // If the position is known, source the estimate from the system estimate
+        if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
+        {
+            flight.UpdateLandingEstimate(exactInsertionOptions.TargetLandingTime);
         }
 
         return flight;
@@ -251,7 +260,7 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 runway.Identifier,
                 targetLandingTime,
-                DefaultDummyState);
+                State.Stable);
 
             var approachType = FindApproachType(
                 airportIdentifier,
@@ -263,6 +272,8 @@ public class InsertFlightRequestHandler(
         }
         else
         {
+            session.PendingFlights.Remove(flight);
+
             flight.SetRunway(runway.Identifier, manual: true);
 
             var approachType = FindApproachType(
@@ -276,6 +287,15 @@ public class InsertFlightRequestHandler(
             flight.SetTargetLandingTime(targetLandingTime);
 
             flight.SetState(DefaultPendingState, clock);
+        }
+
+        // TODO Test Case: When flight is coupled, system estimate is used
+        // TODO Test Case: When flight is uncoupled, landing estimate is calculated by TakeOffTime + ETI
+        // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
+        // If the position is known, source the estimate from the system estimate
+        if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
+        {
+            flight.UpdateLandingEstimate(targetLandingTime);
         }
 
         return flight;
@@ -322,7 +342,7 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 runway.Identifier,
                 landingEstimate,
-                DefaultDummyState);
+                State.Stable);
 
             var approachType = FindApproachType(
                 airportIdentifier,
@@ -334,6 +354,8 @@ public class InsertFlightRequestHandler(
         }
         else
         {
+            session.PendingFlights.Remove(flight);
+
             flight.SetRunway(runway.Identifier, manual: true);
 
             var approachType = FindApproachType(

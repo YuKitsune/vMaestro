@@ -38,6 +38,7 @@ public class Flight : IEquatable<Flight>
         AssignedRunwayIdentifier = runwayIdentifier;
         InitialLandingEstimate = targetTime;
         LandingEstimate = targetTime;
+        TargetLandingTime = targetTime;
         LandingTime = targetTime;
         State = state;
         IsManuallyInserted = true;
