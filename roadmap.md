@@ -9,6 +9,9 @@
 - [ ] Overshoot shouldn't move the flight, it should create a new one based on the details of the landed one
 - [ ] Delete landed flights after landing
 
+- [ ] Consider permissions
+    - APP should be able to insert overshoots 
+
 ---
 
 - [ ] Verify: If you grab and drag total delay will update based on the original ETA.
