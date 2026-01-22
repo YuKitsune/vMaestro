@@ -304,7 +304,7 @@ public class Flight : IEquatable<Flight>
 
     public bool Equals(Flight? other)
     {
-        return other is not null && (ReferenceEquals(this, other) || Callsign == other.Callsign);
+        return other is not null && ReferenceEquals(this, other);
     }
 
     public override string ToString()

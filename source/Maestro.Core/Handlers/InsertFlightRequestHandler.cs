@@ -132,6 +132,9 @@ public class InsertFlightRequestHandler(
             targetLandingTime,
             runwayIdentifiers);
 
+        // Check if flight already exists in sequence
+        CheckAndRemoveExistingFlight(session.Sequence, callsign);
+
         var flight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
             f.AircraftType == performanceData.TypeCode);
@@ -252,6 +255,9 @@ public class InsertFlightRequestHandler(
             targetLandingTime,
             runway.Identifier);
 
+        // Check if flight already exists in sequence
+        CheckAndRemoveExistingFlight(session.Sequence, callsign);
+
         var flight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
             f.AircraftType == performanceData.TypeCode);
@@ -360,6 +366,9 @@ public class InsertFlightRequestHandler(
             session.Sequence,
             landingEstimate,
             []);
+
+        // Check if flight already exists in sequence
+        CheckAndRemoveExistingFlight(session.Sequence, callsign);
 
         var flight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
@@ -492,5 +501,21 @@ public class InsertFlightRequestHandler(
             performanceData.TypeCode,
             performanceData.AircraftCategory);
         return arrivals.FirstOrDefault() ?? string.Empty;
+    }
+
+    void CheckAndRemoveExistingFlight(Sequence sequence, string callsign)
+    {
+        var existingFlight = sequence.FindFlight(callsign);
+        if (existingFlight is not null)
+        {
+            if (existingFlight.State == State.Landed)
+            {
+                sequence.Remove(existingFlight);
+            }
+            else
+            {
+                throw new MaestroException($"Cannot insert {callsign} as it already exists in the sequence");
+            }
+        }
     }
 }

@@ -1596,6 +1596,233 @@ public class InsertFlightRequestHandlerTests(
         sequence.Flights.ShouldBeEmpty("Flight should not be inserted locally when relaying to master");
     }
 
+    [Theory]
+    [InlineData(State.Unstable)]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    public async Task InsertExact_FlightAlreadyExistsInSequenceAndNotLanded_Throws(State existingFlightState)
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        var existingFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithState(existingFlightState)
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new ExactInsertionOptions(now.AddMinutes(15), ["34L"]));
+
+        // Act / Assert
+        await Should.ThrowAsync<MaestroException>(async () =>
+            await handler.Handle(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task InsertExact_FlightAlreadyExistsInSequenceAndLanded_RemovesLandedFlightAndInsertsNew()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        var landedFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.Subtract(TimeSpan.FromMinutes(5)))
+            .WithLandingTime(now.Subtract(TimeSpan.FromMinutes(5)))
+            .WithState(State.Landed)
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new ExactInsertionOptions(now.AddMinutes(15), ["34L"]));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        sequence.Flights.ShouldNotContain(landedFlight, "Landed flight should be removed from sequence");
+        var newFlight = sequence.Flights.Single();
+        newFlight.Callsign.ShouldBe("QFA1", "New flight should have the same callsign");
+        newFlight.State.ShouldBe(State.Frozen, "New dummy flight should be Frozen");
+        newFlight.LandingTime.ShouldBe(now.AddMinutes(15), "New flight should be scheduled at the requested time");
+    }
+
+    [Theory]
+    [InlineData(State.Unstable)]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    public async Task InsertRelative_FlightAlreadyExistsInSequenceAndNotLanded_Throws(State existingFlightState)
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        var referenceFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(20))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var existingFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithState(existingFlightState)
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(existingFlight, referenceFlight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new RelativeInsertionOptions("QFA2", RelativePosition.Before));
+
+        // Act / Assert
+        await Should.ThrowAsync<MaestroException>(async () =>
+            await handler.Handle(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task InsertRelative_FlightAlreadyExistsInSequenceAndLanded_RemovesLandedFlightAndInsertsNew()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        var referenceFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithLandingTime(now.AddMinutes(20))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var landedFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.Subtract(TimeSpan.FromMinutes(5)))
+            .WithLandingTime(now.Subtract(TimeSpan.FromMinutes(5)))
+            .WithState(State.Landed)
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, referenceFlight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new RelativeInsertionOptions("QFA2", RelativePosition.Before));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        sequence.Flights.ShouldNotContain(landedFlight, "Landed flight should be removed from sequence");
+        var newFlight = sequence.Flights.First();
+        newFlight.Callsign.ShouldBe("QFA1", "New flight should have the same callsign");
+        newFlight.State.ShouldBe(State.Frozen, "New dummy flight should be Frozen");
+        newFlight.LandingTime.ShouldBe(now.AddMinutes(20), "New flight should be scheduled at reference flight's landing time");
+    }
+
+    [Theory]
+    [InlineData(State.Unstable)]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    public async Task InsertDeparture_FlightAlreadyExistsInSequenceAndNotLanded_Throws(State existingFlightState)
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var takeoffTime = now.AddMinutes(5);
+
+        var existingFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(35))
+            .WithLandingTime(now.AddMinutes(35))
+            .WithState(existingFlightState)
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new DepartureInsertionOptions("YSCB", takeoffTime));
+
+        // Act / Assert
+        await Should.ThrowAsync<MaestroException>(async () =>
+            await handler.Handle(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task InsertDeparture_FlightAlreadyExistsInSequenceAndLanded_RemovesLandedFlightAndInsertsNew()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var takeoffTime = now.AddMinutes(5);
+        var expectedLandingEstimate = takeoffTime.AddMinutes(30); // YSCB to YSSY is 30 mins for jets
+
+        var landedFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.Subtract(TimeSpan.FromMinutes(5)))
+            .WithLandingTime(now.Subtract(TimeSpan.FromMinutes(5)))
+            .WithState(State.Landed)
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new DepartureInsertionOptions("YSCB", takeoffTime));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        sequence.Flights.ShouldNotContain(landedFlight, "Landed flight should be removed from sequence");
+        var newFlight = sequence.Flights.Single();
+        newFlight.Callsign.ShouldBe("QFA1", "New flight should have the same callsign");
+        newFlight.State.ShouldBe(State.Frozen, "New dummy departure flight should be Frozen");
+        newFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "New flight's landing estimate should be calculated from takeoff time");
+    }
+
     InsertFlightRequestHandler GetRequestHandler(
         IMaestroInstanceManager? instanceManager = null,
         IMaestroConnectionManager? connectionManager = null,
