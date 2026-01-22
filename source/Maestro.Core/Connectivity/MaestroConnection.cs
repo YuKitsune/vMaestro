@@ -251,7 +251,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             if (request.AirportIdentifier != _airportIdentifier)
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
-            return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDummy);
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertFlight);
         });
 
         hubConnection.On<RequestEnvelope, ServerResponse>("MoveFlight", async envelope =>
