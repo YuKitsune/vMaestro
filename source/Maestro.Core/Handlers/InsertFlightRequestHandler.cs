@@ -132,7 +132,6 @@ public class InsertFlightRequestHandler(
             targetLandingTime,
             runwayIdentifiers);
 
-        // Check if flight already exists in sequence
         CheckAndRemoveExistingFlight(session.Sequence, callsign);
 
         var flight = session.PendingFlights.SingleOrDefault(f =>
@@ -140,8 +139,7 @@ public class InsertFlightRequestHandler(
             f.AircraftType == performanceData.TypeCode);
         if (flight is null)
         {
-            // TODO Test Case: When inserting exact, and the flight does not exist, a dummy flight is created
-            // Create a dummy flight
+            // Create a dummy flight if a pending flight couldn't be found
             flight = new Flight(
                 callsign,
                 performanceData.TypeCode,
@@ -198,10 +196,8 @@ public class InsertFlightRequestHandler(
         }
 
         // Calculate the insertion index based on the landing time.
-        // Note that we want to use the scheduled landing time here (STA) as the controller is requesting that the flight
-        // be specifically inserted at the specified time.
-        // Manually inserted flights can displace Unstable, Stable, and SuperStable flights.
-        // The above call to ThrowIsTimeIsUnavailable will ensure the landing time doesn't conflict with any frozen flights.
+        // We want to use the scheduled landing time here (STA) as the controller is requesting that the flight be
+        // inserted at the specified time.
         // TODO: Refactor this to use the feeder fix time if available
         var insertionIndex = session.Sequence.FindIndex(
             f => f.LandingTime.IsSameOrAfter(targetLandingTime));
@@ -263,7 +259,7 @@ public class InsertFlightRequestHandler(
             f.AircraftType == performanceData.TypeCode);
         if (flight is null)
         {
-            // Create a dummy flight
+            // Create a dummy flight if a pending flight couldn't be found
             flight = new Flight(
                 callsign,
                 performanceData.TypeCode,
@@ -320,10 +316,8 @@ public class InsertFlightRequestHandler(
         }
 
         // Calculate the insertion index based on the landing time.
-        // Note that we want to use the scheduled landing time here (STA) as the controller is requesting that the flight
-        // be specifically inserted at the specified time.
-        // Manually inserted flights can displace Unstable, Stable, and SuperStable flights.
-        // The above call to ThrowIsTimeIsUnavailable will ensure the landing time doesn't conflict with any frozen flights.
+        // We want to use the scheduled landing time here (STA) as the controller is requesting that the flight be
+        // inserted at the specified time.
         // TODO: Refactor this to use the feeder fix time if available
         var insertionIndex = session.Sequence.FindIndex(
             f => f.LandingTime.IsSameOrAfter(targetLandingTime));
@@ -351,8 +345,6 @@ public class InsertFlightRequestHandler(
         string originIdentifier,
         DateTimeOffset takeoffTime)
     {
-        // TODO: Don't allow departures to overtake SuperStable flights
-
         // Calculate the landing estimate based on the provided TakeOffTime + configured ETI
         var enrouteTime = CalculateEnrouteTime(
             airportConfiguration,
@@ -377,7 +369,7 @@ public class InsertFlightRequestHandler(
             f.IsFromDepartureAirport);
         if (flight is null)
         {
-            // Create a dummy flight
+            // Create a dummy flight if a pending flight couldn't be found
             flight = new Flight(
                 callsign,
                 performanceData.TypeCode,
@@ -437,9 +429,8 @@ public class InsertFlightRequestHandler(
             f.State is not State.Unstable and not State.Stable &&
             f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
-        // Determine the insertion point by landing estimate
-        // Note that we want to use the estimate in this case to ensure the flight is fairly sequenced
-        // on a first-come first-served basis.
+        // Determine the insertion point by landing estimate (ETA)
+        // We want to use the estimate in this case to ensure the flight is fairly sequenced on a first-come first-served basis.
         // TODO: Refactor this to use the feeder fix time if available
         var insertionIndex = session.Sequence.FindIndex(
             earliestInsertionIndex,
@@ -506,16 +497,12 @@ public class InsertFlightRequestHandler(
     void CheckAndRemoveExistingFlight(Sequence sequence, string callsign)
     {
         var existingFlight = sequence.FindFlight(callsign);
-        if (existingFlight is not null)
-        {
-            if (existingFlight.State == State.Landed)
-            {
-                sequence.Remove(existingFlight);
-            }
-            else
-            {
-                throw new MaestroException($"Cannot insert {callsign} as it already exists in the sequence");
-            }
-        }
+        if (existingFlight is null)
+            return;
+
+        if (existingFlight.State != State.Landed)
+            throw new MaestroException($"Cannot insert {callsign} as it already exists in the sequence");
+
+        sequence.Remove(existingFlight);
     }
 }
