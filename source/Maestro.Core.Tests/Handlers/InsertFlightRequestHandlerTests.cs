@@ -1354,6 +1354,56 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
+    public async Task InsertDeparture_SequencedBehindLastSuperStableFlight()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        var superStableFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithState(State.SuperStable)
+            .WithRunway("34L")
+            .Build();
+
+        var stableFlight = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingTime(now.AddMinutes(15))
+            .WithState(State.Stable)
+            .WithRunway("34L")
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(superStableFlight, stableFlight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager);
+
+        // Takeoff at T-25 means landing estimate at T05 (30 min flight time for jets)
+        var takeoffTime = now.AddMinutes(-25);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA3",
+            "B738",
+            new DepartureInsertionOptions("YSCB", takeoffTime));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        sequence.NumberInSequence(superStableFlight).ShouldBe(1, "Super Stable flight should remain first in sequence");
+        superStableFlight.LandingTime.ShouldBe(now.AddMinutes(10), "Super Stable flight should remain at T10");
+
+        var departureFlight = sequence.Flights[1];
+        departureFlight.Callsign.ShouldBe("QFA3", "Departure should be second in sequence");
+        departureFlight.LandingTime.ShouldBe(now.AddMinutes(13), "Departure should be scheduled at T13 (Super Stable + acceptance rate)");
+
+        sequence.NumberInSequence(stableFlight).ShouldBe(3, "Stable flight should be third in sequence");
+        stableFlight.LandingTime.ShouldBe(now.AddMinutes(16), "Stable flight should be scheduled at T16 (Departure + acceptance rate)");
+    }
+
+    [Fact]
     public async Task RelaysToMaster()
     {
         // Arrange
