@@ -176,7 +176,17 @@ public class InsertFlightRequestHandler(
         if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
         {
             flight.UpdateLandingEstimate(targetLandingTime);
-            // TODO: Update ETA_FF
+
+            // Update ETA_FF if the flight has a feeder fix set
+            if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
+            {
+                var arrivalInterval = arrivalLookup.GetArrivalInterval(flight);
+                if (arrivalInterval is not null)
+                {
+                    var feederFixEstimate = targetLandingTime.Subtract(arrivalInterval.Value);
+                    flight.UpdateFeederFixEstimate(feederFixEstimate);
+                }
+            }
         }
 
         // Manually inserted flights can displace Unstable, Stable, and SuperStable flights.
@@ -282,7 +292,17 @@ public class InsertFlightRequestHandler(
         if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
         {
             flight.UpdateLandingEstimate(targetLandingTime);
-            // TODO: Update ETA_FF
+
+            // Update ETA_FF if the flight has a feeder fix set
+            if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
+            {
+                var arrivalInterval = arrivalLookup.GetArrivalInterval(flight);
+                if (arrivalInterval is not null)
+                {
+                    var feederFixEstimate = targetLandingTime.Subtract(arrivalInterval.Value);
+                    flight.UpdateFeederFixEstimate(feederFixEstimate);
+                }
+            }
         }
 
         // Manually inserted flights can displace Unstable, Stable, and SuperStable flights.
@@ -379,6 +399,17 @@ public class InsertFlightRequestHandler(
         if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
         {
             flight.UpdateLandingEstimate(landingEstimate);
+
+            // Update ETA_FF if the flight has a feeder fix set
+            if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
+            {
+                var arrivalInterval = arrivalLookup.GetArrivalInterval(flight);
+                if (arrivalInterval is not null)
+                {
+                    var feederFixEstimate = landingEstimate.Subtract(arrivalInterval.Value);
+                    flight.UpdateFeederFixEstimate(feederFixEstimate);
+                }
+            }
         }
 
         // Departures can't overtake SuperStable flights, but they can overtake Unstable and Stable flights

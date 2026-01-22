@@ -467,6 +467,56 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
+    public async Task InsertExact_PendingFlightWithFeederFix_FeederFixEstimateCalculated()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var targetTime = now.AddMinutes(20);
+        var arrivalInterval = TimeSpan.FromMinutes(16); // From RIVET to 34L per fixture
+        var expectedFeederFixEstimate = targetTime.Subtract(arrivalInterval);
+
+        var pendingFlight = new FlightBuilder("QFA1")
+            .WithAircraftType("B738")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(now.AddMinutes(5))
+            .WithLandingEstimate(now.AddMinutes(21))
+            .WithState(State.Unstable)
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        arrivalLookup.GetArrivalInterval(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string[]>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<AircraftCategory>())
+            .Returns(arrivalInterval);
+
+        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new ExactInsertionOptions(targetTime, ["34L"]));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - arrival interval");
+        pendingFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
+    }
+
+    [Fact]
     public async Task InsertExact_SequencedByTargetTime()
     {
         // Arrange
@@ -1050,6 +1100,65 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
+    public async Task InsertRelative_PendingFlightWithFeederFix_FeederFixEstimateCalculated()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var arrivalInterval = TimeSpan.FromMinutes(22); // From BOREE to 34R per fixture
+
+        var stableFlight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithState(State.Stable)
+            .WithRunway("34R")
+            .Build();
+
+        var targetTime = stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate); // After QFA1
+        var expectedFeederFixEstimate = targetTime.Subtract(arrivalInterval);
+
+        var pendingFlight = new FlightBuilder("QFA2")
+            .WithAircraftType("B738")
+            .WithFeederFix("BOREE")
+            .WithFeederFixEstimate(now.AddMinutes(5))
+            .WithLandingEstimate(now.AddMinutes(27))
+            .WithState(State.Unstable)
+            .WithRunway("34R")
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
+            .Build();
+
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        arrivalLookup.GetArrivalInterval(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string[]>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<AircraftCategory>())
+            .Returns(arrivalInterval);
+
+        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA2",
+            "B738",
+            new RelativeInsertionOptions("QFA1", RelativePosition.After));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - arrival interval");
+        pendingFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
+    }
+
+    [Fact]
     public async Task InsertDeparture_PendingFlightExists_DepartureInserted()
     {
         // Arrange
@@ -1354,6 +1463,58 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
+    public async Task InsertDeparture_PendingFlightWithFeederFix_FeederFixEstimateCalculated()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var takeoffTime = now.AddMinutes(5);
+        var arrivalInterval = TimeSpan.FromMinutes(16); // From RIVET to 34L per fixture
+        var expectedLandingEstimate = takeoffTime.AddMinutes(30); // YSCB to YSSY is 30 mins for jets
+        var expectedFeederFixEstimate = expectedLandingEstimate.Subtract(arrivalInterval);
+
+        var pendingFlight = new FlightBuilder("QFA1")
+            .WithAircraftType("B738")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(now.AddMinutes(5))
+            .WithLandingEstimate(now.AddMinutes(40))
+            .WithState(State.Unstable)
+            .FromDepartureAirport()
+            .Build();
+
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithClock(clockFixture.Instance))
+            .Build();
+
+        instance.Session.PendingFlights.Add(pendingFlight);
+
+        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        arrivalLookup.GetArrivalInterval(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string[]>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<AircraftCategory>())
+            .Returns(arrivalInterval);
+
+        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
+
+        var request = new InsertFlightRequest(
+            "YSSY",
+            "QFA1",
+            "B738",
+            new DepartureInsertionOptions("YSCB", takeoffTime));
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should be calculated from takeoff time + enroute time");
+        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from landing estimate - arrival interval");
+    }
+
+    [Fact]
     public async Task InsertDeparture_SequencedBehindLastSuperStableFlight()
     {
         // Arrange
@@ -1436,20 +1597,19 @@ public class InsertFlightRequestHandlerTests(
     InsertFlightRequestHandler GetRequestHandler(
         IMaestroInstanceManager? instanceManager = null,
         IMaestroConnectionManager? connectionManager = null,
-        IMediator? mediator = null)
+        IMediator? mediator = null,
+        IArrivalLookup? arrivalLookup = null)
     {
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations()
             .Returns([airportConfigurationFixture.Instance]);
-
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
 
         return new InsertFlightRequestHandler(
             instanceManager ?? Substitute.For<IMaestroInstanceManager>(),
             connectionManager ?? new MockLocalConnectionManager(),
             performanceLookupFixture.Instance,
             airportConfigurationProvider,
-            arrivalLookup,
+            arrivalLookup ?? Substitute.For<IArrivalLookup>(),
             clockFixture.Instance,
             mediator ?? Substitute.For<IMediator>(),
             Substitute.For<ILogger>());
