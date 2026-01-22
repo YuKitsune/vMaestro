@@ -519,6 +519,8 @@ public class InsertFlightRequestHandlerTests(
     [Fact]
     public async Task InsertExact_SequencedByTargetTime()
     {
+        // TODO: Adjust the estimates so we can be sure the flight isn't being sequenced by it's landing estimate
+
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
@@ -529,7 +531,7 @@ public class InsertFlightRequestHandlerTests(
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
-            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingEstimate(now.AddMinutes(11)) // Keep the estimate forward so we can assert that the flight is inserted behind flight1 based on STA and not ETA
             .WithLandingTime(now.AddMinutes(15))
             .WithRunway("34L")
             .Build();
@@ -870,7 +872,7 @@ public class InsertFlightRequestHandlerTests(
             .Build();
 
         var stableFlight2 = new FlightBuilder("QFA2")
-            .WithLandingEstimate(now.AddMinutes(15))
+            .WithLandingEstimate(now.AddMinutes(11)) // Keep the estimate forward so we can assert that the flight is inserted behind stableFlight1 based on STA and not ETA
             .WithLandingTime(now.AddMinutes(15))
             .WithState(State.Stable)
             .WithRunway("34L")

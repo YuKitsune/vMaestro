@@ -189,11 +189,14 @@ public class InsertFlightRequestHandler(
             }
         }
 
+        // Calculate the insertion index based on the landing time.
+        // Note that we want to use the scheduled landing time here (STA) as the controller is requesting that the flight
+        // be specifically inserted at the specified time.
         // Manually inserted flights can displace Unstable, Stable, and SuperStable flights.
         // The above call to ThrowIsTimeIsUnavailable will ensure the landing time doesn't conflict with any frozen flights.
         // TODO: Refactor this to use the feeder fix time if available
         var insertionIndex = session.Sequence.FindIndex(
-            f => f.LandingEstimate.IsSameOrAfter(targetLandingTime));
+            f => f.LandingTime.IsSameOrAfter(targetLandingTime));
 
         if (insertionIndex == -1)
             insertionIndex = session.Sequence.Flights.Count;
@@ -305,11 +308,14 @@ public class InsertFlightRequestHandler(
             }
         }
 
+        // Calculate the insertion index based on the landing time.
+        // Note that we want to use the scheduled landing time here (STA) as the controller is requesting that the flight
+        // be specifically inserted at the specified time.
         // Manually inserted flights can displace Unstable, Stable, and SuperStable flights.
         // The above call to ThrowIsTimeIsUnavailable will ensure the landing time doesn't conflict with any frozen flights.
         // TODO: Refactor this to use the feeder fix time if available
         var insertionIndex = session.Sequence.FindIndex(
-            f => f.LandingEstimate.IsSameOrAfter(targetLandingTime));
+            f => f.LandingTime.IsSameOrAfter(targetLandingTime));
 
         if (insertionIndex == -1)
             insertionIndex = session.Sequence.Flights.Count;
@@ -418,6 +424,8 @@ public class InsertFlightRequestHandler(
             f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
         // Determine the insertion point by landing estimate
+        // Note that we want to use the estimate in this case to ensure the flight is fairly sequenced
+        // on a first-come first-served basis.
         // TODO: Refactor this to use the feeder fix time if available
         var insertionIndex = session.Sequence.FindIndex(
             earliestInsertionIndex,
