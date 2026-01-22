@@ -97,22 +97,15 @@ public class InsertFlightRequestHandler(
             // TODO: This insertion behaviour is the same as what's used in FlightUpdated. Consolidate this.
             var targetLandingTime = flight.TargetLandingTime ?? flight.LandingEstimate;
 
-            // SuperStable flights can be displaced by controller action.
-            // Inserting a flight is a manual action, so we can displace SuperStable flights.
-            // Find the index of the first flight on the same runway that isn't Unstable, Stable, or SuperStable
-            // New flights cannot be inserted beyond this point
-            var earliestInsertionIndex = sequence.FindLastIndex(f =>
-                f.State is not State.Unstable and not State.Stable and not State.SuperStable &&
-                f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier) + 1;
-
             // Determine the insertion point by landing estimate
+            // We assume the above InsertExact, InsertRelative, and InsertDeparture method calls have performed the
+            // validation required to prevent conflicts with Frozen flights.
             // TODO: Refactor this to use the feeder fix time if available
             var insertionIndex = sequence.FindIndex(
-                earliestInsertionIndex,
-                f => f.LandingEstimate.IsAfter(targetLandingTime));
+                f => f.LandingEstimate.IsSameOrAfter(targetLandingTime));
 
             if (insertionIndex == -1)
-                insertionIndex = Math.Min(earliestInsertionIndex, sequence.Flights.Count);
+                insertionIndex = sequence.Flights.Count;
 
             sequence.Insert(insertionIndex, flight);
 
@@ -219,12 +212,9 @@ public class InsertFlightRequestHandler(
         if (referenceFlight is null)
             throw new MaestroException($"{relativeInsertionOptions.ReferenceCallsign} not found");
 
-        // TODO Test Case: Cannot insert before frozen flights
         if (referenceFlight.State is State.Frozen or State.Landed &&
             relativeInsertionOptions.Position == RelativePosition.Before)
             throw new MaestroException("Cannot insert a flight before a Frozen flight");
-
-        // TODO Test Case: Can insert after frozen flights
 
         var runway = FindRunway(
             session.Sequence,
@@ -233,10 +223,6 @@ public class InsertFlightRequestHandler(
 
         // TODO: Check if the next runway mode has different separation requirements, and use those if the target time sits within the new mode
 
-        // TODO Test Case: When inserting before another flight, the target time is the reference flights landing time
-        // TODO Test Case: When inserting before another flight, the inserted flight is sequenced ahead of the reference flight
-        // TODO Test Case: When inserting after another flight, the target time is the reference flights landing time + landing rate
-        // TODO Test Case: When inserting after another flight, the inserted flight is sequenced behind the reference flight
         var targetLandingTime = relativeInsertionOptions.Position switch
         {
             RelativePosition.Before => referenceFlight.LandingTime,
@@ -244,13 +230,16 @@ public class InsertFlightRequestHandler(
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        // TODO Test Case: When inserting relatively, and pending flight exists, they are inserted
+        session.Sequence.ThrowIsTimeIsUnavailable(
+            callsign,
+            targetLandingTime,
+            runway.Identifier);
+
         var flight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
             f.AircraftType == performanceData.TypeCode);
         if (flight is null)
         {
-            // TODO Test Case: When inserting relatively, and the flight does not exist, a dummy flight is created
             // Create a dummy flight
             flight = new Flight(
                 callsign,
@@ -289,8 +278,6 @@ public class InsertFlightRequestHandler(
             flight.SetState(DefaultPendingState, clock);
         }
 
-        // TODO Test Case: When flight is coupled, system estimate is used
-        // TODO Test Case: When flight is uncoupled, landing estimate is calculated by TakeOffTime + ETI
         // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
         // If the position is known, source the estimate from the system estimate
         if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
