@@ -12,7 +12,12 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
+// TODO: Consider splitting this up into multiple handlers somehow.
+//  Real system seems to have functions for Insert Dummy, Insert Pending, Insert Overshoot, and Insert Departure separately
+//  There's going to be repetition, but it's probably for the best.
+
 // TODO: Once consolidated, we need to insert by ETA_FF rather than ETA
+
 public class InsertFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
