@@ -296,7 +296,7 @@ public class InsertFlightRequestHandler(
         DepartureInsertionOptions departureInsertionOptions,
         Session session)
     {
-        // TODO Test Case: When inserting a departure, and the departure exists, they are inserted
+        // TODO: Don't allow departures to overtake SuperStable flights
 
         // Calculate the landing estimate based on the provided TakeOffTime + configured ETI
         var enrouteTime = CalculateEnrouteTime(
@@ -319,7 +319,6 @@ public class InsertFlightRequestHandler(
             f.IsFromDepartureAirport);
         if (flight is null)
         {
-            // TODO Test Case: When inserting a departure, and the flight does not exist, a dummy flight is created
             // Create a dummy flight
             flight = new Flight(
                 callsign,
@@ -356,10 +355,6 @@ public class InsertFlightRequestHandler(
             flight.SetState(DefaultPendingState, clock);
         }
 
-        // TODO Test Case: When inserting a departure, TargetLandingTime is not set
-
-        // TODO Test Case: When departure is coupled, system estimate is used
-        // TODO Test Case: When departure is uncoupled, landing estimate is calculated by TakeOffTime + ETI
         // Only calculate the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
         // If the position is known, source the estimate from the system estimate
         if (flight.Position is null || flight.Position.IsOnGround || flight.IsManuallyInserted)
