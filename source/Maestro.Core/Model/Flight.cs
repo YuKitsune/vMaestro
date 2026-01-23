@@ -20,19 +20,28 @@ public class Flight : IEquatable<Flight>
     }
 
     // Constructor for manually inserted flights (formerly DummyFlight)
-    public Flight(string callsign, string? aircraftType, string destinationIdentifier, string runwayIdentifier, DateTimeOffset targetTime, State state)
+    public Flight(
+        string callsign,
+        string aircraftType,
+        AircraftCategory aircraftCategory,
+        WakeCategory wakeCategory,
+        string destinationIdentifier,
+        string runwayIdentifier,
+        DateTimeOffset targetTime,
+        State state)
     {
         Callsign = callsign;
-        AircraftType = aircraftType ?? string.Empty;
+        AircraftType = aircraftType;
+        AircraftCategory = aircraftCategory;
+        WakeCategory = wakeCategory;
         DestinationIdentifier = destinationIdentifier;
         AssignedRunwayIdentifier = runwayIdentifier;
         InitialLandingEstimate = targetTime;
         LandingEstimate = targetTime;
+        TargetLandingTime = targetTime;
         LandingTime = targetTime;
         State = state;
         IsManuallyInserted = true;
-        AircraftCategory = AircraftCategory.Jet;
-        WakeCategory = WakeCategory.Medium;
     }
 
     // TODO: Use memento pattern
@@ -100,6 +109,7 @@ public class Flight : IEquatable<Flight>
 
     public DateTimeOffset InitialLandingEstimate { get; private set; }
     public DateTimeOffset LandingEstimate { get; private set; } // ETA
+    public DateTimeOffset? TargetLandingTime { get; private set; }
     public DateTimeOffset LandingTime { get; private set; } // STA
 
     public TimeSpan TotalDelay => LandingTime - InitialLandingEstimate;
@@ -164,6 +174,17 @@ public class Flight : IEquatable<Flight>
         LandingEstimate = landingEstimate;
     }
 
+    public void SetTargetLandingTime(DateTimeOffset targetLandingTime)
+    {
+        MaximumDelay = null;
+        TargetLandingTime = targetLandingTime;
+    }
+
+    public void ClearTargetLandingTime()
+    {
+        TargetLandingTime = null;
+    }
+
     public void UpdateLastSeen(IClock clock)
     {
         LastSeen = clock.UtcNow();
@@ -177,6 +198,7 @@ public class Flight : IEquatable<Flight>
     public void SetMaximumDelay(TimeSpan? maximumDelay)
     {
         MaximumDelay = maximumDelay;
+        ClearTargetLandingTime();
     }
 
     public void InvalidateSequenceData()
@@ -214,6 +236,7 @@ public class Flight : IEquatable<Flight>
         AssignedRunwayIdentifier = null;
         RunwayManuallyAssigned = false;
         LandingEstimate = default;
+        TargetLandingTime = default;
         InitialLandingEstimate = default;
         LandingTime = default;
         State = State.Unstable;
@@ -281,7 +304,7 @@ public class Flight : IEquatable<Flight>
 
     public bool Equals(Flight? other)
     {
-        return other is not null && (ReferenceEquals(this, other) || Callsign == other.Callsign);
+        return other is not null && ReferenceEquals(this, other);
     }
 
     public override string ToString()

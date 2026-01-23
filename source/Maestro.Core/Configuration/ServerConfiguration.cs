@@ -18,9 +18,7 @@ public static class ActionKeys
     public const string ChangeFeederFixEstimate = nameof(ChangeFeederFixEstimate);
     public const string ChangeApproachType = nameof(ChangeApproachType);
     public const string ManageSlots = nameof(ManageSlots);
-    public const string InsertOvershoot = nameof(InsertOvershoot);
-    public const string InsertDeparture = nameof(InsertDeparture);
-    public const string InsertDummy = nameof(InsertDummy);
+    public const string InsertFlight = nameof(InsertFlight);
     public const string MakePending = nameof(MakePending);
     public const string ChangeRunway = nameof(ChangeRunway);
     public const string ManualDelay = nameof(ManualDelay);

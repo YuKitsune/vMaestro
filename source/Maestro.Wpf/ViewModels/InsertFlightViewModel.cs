@@ -85,34 +85,13 @@ public partial class InsertFlightViewModel : ObservableObject
     {
         try
         {
-            if (LandedFlights.Any(f => f.Callsign == Callsign))
-            {
-                _mediator.Send(
-                    new InsertOvershootRequest(
-                        _airportIdentifier,
-                        Callsign,
-                        _options),
-                    CancellationToken.None);
-            }
-            else if (PendingFlights.Any(f => f.Callsign == Callsign))
-            {
-                _mediator.Send(
-                    new InsertPendingRequest(
-                        _airportIdentifier,
-                        Callsign,
-                        _options),
-                    CancellationToken.None);
-            }
-            else
-            {
-                _mediator.Send(
-                    new InsertFlightRequest(
-                        _airportIdentifier,
-                        Callsign,
-                        AircraftType,
-                        _options),
-                    CancellationToken.None);
-            }
+            _mediator.Send(
+                new InsertFlightRequest(
+                    _airportIdentifier,
+                    Callsign,
+                    AircraftType,
+                    _options),
+                CancellationToken.None);
 
             CloseWindow();
         }

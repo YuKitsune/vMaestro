@@ -13,9 +13,7 @@
       "MoveFlight": ["Approach", "Flow"],
       "ChangeFeederFixEstimate": ["Enroute", "Flow"],
       "ManageSlots": ["Flow"],
-      "InsertOvershoot": ["Approach", "Flow"],
-      "InsertDeparture": ["Flow"],
-      "InsertDummy": ["Flow"],
+      "InsertFlight": ["Approach", "Flow"],
       "MakePending": ["Enroute", "Approach", "Flow"],
       "ChangeRunway": ["Enroute", "Approach", "Flow"],
       "ManualDelay": ["Enroute", "Approach", "Flow"],
@@ -402,15 +400,15 @@
         },
         {
           "Identifier": "YSDU",
-          "Distance": 214.0,
+          "Distance": 249.0,
           "FlightTimes": [
             {
               "AircraftType": "JET",
-              "AverageFlightTime": "00:45:40.2000000"
+              "AverageFlightTime": "00:51:05.4000000"
             },
             {
               "AircraftType": "NONJET",
-              "AverageFlightTime": "00:42:41.4000000"
+              "AverageFlightTime": "00:47:52.8000000"
             }
           ]
         },
@@ -495,20 +493,6 @@
             {
               "AircraftType": "NONJET",
               "AverageFlightTime": "00:39:43.8000000"
-            }
-          ]
-        },
-        {
-          "Identifier": "YSDU",
-          "Distance": 249.0,
-          "FlightTimes": [
-            {
-              "AircraftType": "JET",
-              "AverageFlightTime": "00:51:05.4000000"
-            },
-            {
-              "AircraftType": "NONJET",
-              "AverageFlightTime": "00:47:52.8000000"
             }
           ]
         },

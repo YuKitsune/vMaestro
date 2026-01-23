@@ -115,6 +115,71 @@ public class Sequence
         }
     }
 
+    public void ThrowIsTimeIsUnavailable(string callsign, DateTimeOffset landingTime, string runwayIdentifier)
+    {
+        lock (_gate)
+        {
+            if (LastLandingTimeForCurrentMode is not null && FirstLandingTimeForNewMode is not null)
+            {
+                if (landingTime.IsAfter(LastLandingTimeForCurrentMode.Value) &&
+                    landingTime.IsBefore(FirstLandingTimeForNewMode.Value))
+                {
+                    throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to a runway change.");
+                }
+            }
+
+            var slots = _slots.Where(s => s.RunwayIdentifiers.Contains(runwayIdentifier));
+            foreach (var slot in slots)
+            {
+                if (landingTime.IsSameOrAfter(slot.StartTime) && landingTime.IsSameOrBefore(slot.EndTime))
+                {
+                    throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to a slot.");
+                }
+            }
+
+            var frozenFlights = _flights.Where(f => f.Callsign != callsign && f.State is State.Frozen or State.Landed);
+            foreach (var frozenFlight in frozenFlights)
+            {
+                if (landingTime == frozenFlight.LandingTime)
+                {
+                    throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to insufficient separation from {frozenFlight.Callsign}.");
+                }
+
+                // Can't go in front of frozen flights because we can't delay them, but we can go behind them,
+                // hence why we don't check if the landing time is after the frozen flight
+                if (!landingTime.IsBefore(frozenFlight.LandingTime))
+                    continue;
+
+                // Selected time is in front, determine the required separation based on the frozen flights landing time
+                var runwayMode = GetRunwayModeAt(frozenFlight.LandingTime);
+                var runway = runwayMode.Runways.FirstOrDefault(f => f.Identifier == frozenFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
+
+                if (runway.Identifier == runwayIdentifier)
+                {
+                    var requiredSeparation = runway.AcceptanceRate;
+                    var actualSeparation = frozenFlight.LandingTime - landingTime;
+
+                    if (actualSeparation < requiredSeparation)
+                    {
+                        throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to insufficient separation from {frozenFlight.Callsign}.");
+                    }
+                }
+
+                var dependency = runway.Dependencies.FirstOrDefault(d => d.RunwayIdentifier == runwayIdentifier);
+                if (dependency is not null)
+                {
+                    var requiredSeparation = dependency.Separation;
+                    var actualSeparation = frozenFlight.LandingTime - landingTime;
+
+                    if (actualSeparation < requiredSeparation)
+                    {
+                        throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to insufficient separation from {frozenFlight.Callsign}.");
+                    }
+                }
+            }
+        }
+    }
+
     /// <summary>
     ///     Inserts a <see cref="Flight"/> at the specified <paramref name="index"/>, and recomputes the sequence from
     ///     the point where the flight was inserted.
@@ -209,20 +274,20 @@ public class Sequence
         lock (_gate)
         {
             var currentIndex = _flights.IndexOf(flight);
-            if (newIndex == currentIndex)
-                return;
-
-            ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
-            if (currentIndex != -1)
+            if (newIndex != currentIndex)
             {
-                _flights.RemoveAt(currentIndex);
+                ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
+                if (currentIndex != -1)
+                {
+                    _flights.RemoveAt(currentIndex);
 
-                // Removing the flight will change the index of everything behind it
-                if (newIndex > currentIndex)
-                    newIndex--;
+                    // Removing the flight will change the index of everything behind it
+                    if (newIndex > currentIndex)
+                        newIndex--;
+                }
+
+                _flights.Insert(newIndex, flight);
             }
-
-            _flights.Insert(newIndex, flight);
 
             var recomputeIndex = Math.Min(newIndex, currentIndex);
             Schedule(recomputeIndex);
@@ -447,8 +512,10 @@ public class Sequence
                              ?? currentRunwayMode.Default;
                 }
 
+                var targetLandingTime = currentFlight.TargetLandingTime ?? currentFlight.LandingEstimate;
+
                 // Determine the earliest possible landing time at this position in the sequence
-                var earliestLandingTime = GetEarliestLandingTimeForIndex(i, currentFlight.LandingEstimate, runway);
+                var earliestLandingTime = GetEarliestLandingTimeForIndex(i, targetLandingTime, runway);
 
                 // Check for conflicts with later items in the sequence that can't be moved
                 var latestLandingTime = sequence

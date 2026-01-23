@@ -8,6 +8,38 @@ public class AirportConfiguration
 {
     public required string Identifier { get; init; }
     public required string[] FeederFixes { get; init; }
+
+    /// <summary>
+    ///     The default aircraft type code to use when no type code was provided when inserting a flight manually
+    ///     into the sequence.
+    /// </summary>
+    public string DefaultInsertedFlightAircraftType { get; init; } = "B738";
+
+    /// <summary>
+    ///     The initial state assigned to a flight that has been inserted manually by the controller.
+    /// </summary>
+    public State ManuallyInsertedFlightState { get; init; } = State.Stable;
+
+    /// <summary>
+    ///     The initial state assigned to a flight departing from a configured departure airport.
+    /// </summary>
+    public State InitialDepartureFlightState { get; init; } = State.Unstable;
+
+    /// <summary>
+    ///     The initial state assigned to a dummy flight.
+    /// </summary>
+    public State DummyFlightState { get; init; } = State.Frozen;
+
+    /// <summary>
+    ///     The number of minutes before landed flights are removed from the sequence.
+    /// </summary>
+    public int LandedFlightTimeoutMinutes { get; init; } = 10;
+
+    /// <summary>
+    ///     The maximum number of Landed flights which can remain in the sequence in the event of an overshoot.
+    /// </summary>
+    public int MaxLandedFlights { get; init; } = 5;
+
     public required Dictionary<string, string[]> PreferredRunways { get; init; } = new();
     public required RunwayConfiguration[] Runways { get; init; }
     public required RunwayModeConfiguration[] RunwayModes { get; init; }

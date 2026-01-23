@@ -41,16 +41,6 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         return await RelayToMaster("InsertFlight", request);
     }
 
-    public async Task<ServerResponse> InsertOvershoot(InsertOvershootRequest request)
-    {
-        return await RelayToMaster("InsertOvershoot", request);
-    }
-
-    public async Task<ServerResponse> InsertDeparture(InsertDepartureRequest request)
-    {
-        return await RelayToMaster("InsertDeparture", request);
-    }
-
     public async Task<ServerResponse> MoveFlight(MoveFlightRequest request)
     {
         return await RelayToMaster("MoveFlight", request);

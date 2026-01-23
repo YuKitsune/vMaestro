@@ -17,8 +17,6 @@ public class RequestEnvelope
 [JsonDerivedType(typeof(ChangeRunwayModeRequest), "ChangeRunwayMode")]
 [JsonDerivedType(typeof(ChangeFeederFixEstimateRequest), "ChangeFeederFixEstimate")]
 [JsonDerivedType(typeof(InsertFlightRequest), "InsertFlight")]
-[JsonDerivedType(typeof(InsertDepartureRequest), "InsertDeparture")]
-[JsonDerivedType(typeof(InsertOvershootRequest), "InsertOvershoot")]
 [JsonDerivedType(typeof(MoveFlightRequest), "MoveFlight")]
 [JsonDerivedType(typeof(SwapFlightsRequest), "SwapFlights")]
 [JsonDerivedType(typeof(RemoveRequest), "Remove")]

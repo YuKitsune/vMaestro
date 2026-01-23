@@ -241,6 +241,34 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     }
 
     [Fact]
+    public async Task TargetLandingTimeIsReset()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var flight = new FlightBuilder("QFA1")
+            .WithState(State.Stable)
+            .WithLandingEstimate(now.AddMinutes(8))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithTargetLandingTime(now.AddMinutes(10))
+            .ManualDelay(TimeSpan.FromMinutes(5))
+            .Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+        var request = new RecomputeRequest("YSSY", "QFA1");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.TargetLandingTime.ShouldBeNull();
+        flight.LandingTime.ShouldBe(flight.LandingEstimate);
+    }
+
+    [Fact]
     public async Task WhenRecomputingAFlight_SequenceUpdatedNotificationIsPublished()
     {
         // Arrange

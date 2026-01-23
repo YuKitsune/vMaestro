@@ -160,8 +160,6 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             ChangeRunwayModeRequest => "ChangeRunwayMode",
             ChangeFeederFixEstimateRequest => "ChangeFeederFixEstimate",
             InsertFlightRequest => "InsertFlight",
-            InsertDepartureRequest => "InsertDeparture",
-            InsertOvershootRequest => "InsertOvershoot",
             MoveFlightRequest => "MoveFlight",
             SwapFlightsRequest => "SwapFlights",
             RemoveRequest => "Remove",
@@ -253,25 +251,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             if (request.AirportIdentifier != _airportIdentifier)
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
-            return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDummy);
-        });
-
-        hubConnection.On<RequestEnvelope, ServerResponse>("InsertDeparture", async envelope =>
-        {
-            var request = (InsertDepartureRequest) envelope.Request;
-            if (request.AirportIdentifier != _airportIdentifier)
-                return ServerResponse.CreateFailure("Airport identifier mismatch");
-
-            return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertDeparture);
-        });
-
-        hubConnection.On<RequestEnvelope, ServerResponse>("InsertOvershoot", async envelope =>
-        {
-            var request = (InsertOvershootRequest) envelope.Request;
-            if (request.AirportIdentifier != _airportIdentifier)
-                return ServerResponse.CreateFailure("Airport identifier mismatch");
-
-            return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertOvershoot);
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.InsertFlight);
         });
 
         hubConnection.On<RequestEnvelope, ServerResponse>("MoveFlight", async envelope =>
