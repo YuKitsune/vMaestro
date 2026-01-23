@@ -3,6 +3,7 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
+using MediatR;
 
 namespace Maestro.Core.Hosting;
 
@@ -18,7 +19,8 @@ public interface IMaestroInstanceManager
 public class MaestroInstanceManager(
     IAirportConfigurationProvider airportConfigurationProvider,
     IArrivalLookup arrivalLookup,
-    IClock clock)
+    IClock clock,
+    IMediator mediator)
     : IMaestroInstanceManager
 {
     readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -50,12 +52,12 @@ public class MaestroInstanceManager(
     public async Task DestroyInstance(string airportIdentifier, CancellationToken cancellationToken)
     {
         using var _ = await _semaphore.LockAsync(cancellationToken);
-        if (!_instances.TryGetValue(airportIdentifier, out var session))
-            throw new MaestroException($"No session exists for {airportIdentifier}.");
+        if (!_instances.TryGetValue(airportIdentifier, out var instance))
+            throw new MaestroException($"No instance exists for {airportIdentifier}.");
 
-        await session.Semaphore.WaitAsync(cancellationToken);
+        await instance.Semaphore.WaitAsync(cancellationToken);
 
-        session.Dispose();
+        await instance.DisposeAsync();
         _instances.Remove(airportIdentifier);
     }
 
@@ -70,6 +72,6 @@ public class MaestroInstanceManager(
 
         var session = new Session(new Sequence(airportConfiguration, arrivalLookup, clock));
 
-        return new MaestroInstance(airportIdentifier, session);
+        return new MaestroInstance(airportIdentifier, session, mediator);
     }
 }

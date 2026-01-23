@@ -31,11 +31,6 @@ public class InsertFlightRequestHandler(
 {
     const int MaxCallsignLength = 12; // TODO: Verify the VATSIM limit
 
-    // TODO: Make these configurable
-    const string DefaultAircraftType = "B738";
-    const State DefaultPendingState = State.Stable;
-    const State DefaultDummyState = State.Frozen;
-
     public async Task Handle(InsertFlightRequest request, CancellationToken cancellationToken)
     {
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
@@ -64,7 +59,7 @@ public class InsertFlightRequestHandler(
                 callsign = instance.Session.NewDummyCallsign();
 
             var aircraftType = string.IsNullOrEmpty(request.AircraftType)
-                ? DefaultAircraftType
+                ? airportConfiguration.DefaultInsertedFlightAircraftType
                 : request.AircraftType;
 
             var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
@@ -72,6 +67,7 @@ public class InsertFlightRequestHandler(
             var flight = request.Options switch
             {
                 ExactInsertionOptions exactInsertionOptions => InsertExact(
+                    airportConfiguration,
                     instance.Session,
                     request.AirportIdentifier,
                     callsign,
@@ -80,6 +76,7 @@ public class InsertFlightRequestHandler(
                     exactInsertionOptions.RunwayIdentifiers),
 
                 RelativeInsertionOptions relativeInsertionOptions => InsertRelative(
+                    airportConfiguration,
                     instance.Session,
                     request.AirportIdentifier,
                     callsign,
@@ -88,8 +85,8 @@ public class InsertFlightRequestHandler(
                     relativeInsertionOptions.Position),
 
                 DepartureInsertionOptions departureInsertionOptions => InsertDeparture(
-                    instance.Session,
                     airportConfiguration,
+                    instance.Session,
                     request.AirportIdentifier,
                     callsign,
                     performanceData,
@@ -112,6 +109,7 @@ public class InsertFlightRequestHandler(
     }
 
     Flight InsertExact(
+        AirportConfiguration airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -174,7 +172,7 @@ public class InsertFlightRequestHandler(
 
             flight.SetTargetLandingTime(targetLandingTime);
 
-            flight.SetState(DefaultPendingState, clock);
+            flight.SetState(airportConfiguration.ManuallyInsertedFlightState, clock);
         }
 
         // Only update the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
@@ -210,13 +208,14 @@ public class InsertFlightRequestHandler(
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
-            flight.SetState(DefaultDummyState, clock);
+            flight.SetState(airportConfiguration.DummyFlightState, clock);
         }
 
         return flight;
     }
 
     Flight InsertRelative(
+        AirportConfiguration airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -294,7 +293,7 @@ public class InsertFlightRequestHandler(
 
             flight.SetTargetLandingTime(targetLandingTime);
 
-            flight.SetState(DefaultPendingState, clock);
+            flight.SetState(airportConfiguration.ManuallyInsertedFlightState, clock);
         }
 
         // Only set the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
@@ -330,15 +329,15 @@ public class InsertFlightRequestHandler(
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
-            flight.SetState(DefaultDummyState, clock);
+            flight.SetState(airportConfiguration.DummyFlightState, clock);
         }
 
         return flight;
     }
 
     Flight InsertDeparture(
-        Session session,
         AirportConfiguration airportConfiguration,
+        Session session,
         string airportIdentifier,
         string callsign,
         AircraftPerformanceData performanceData,
@@ -403,7 +402,7 @@ public class InsertFlightRequestHandler(
             flight.SetApproachType(approachType);
 
             // Departures remain unstable as their landing estimate will become more accurate as they depart, couple, and climb
-            flight.SetState(State.Unstable, clock);
+            flight.SetState(airportConfiguration.InitialDepartureFlightState, clock);
         }
 
         // Only use the calculated the landing estimate if the position of the flight is not known (i.e. not coupled to a radar track)
@@ -443,7 +442,7 @@ public class InsertFlightRequestHandler(
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
-            flight.SetState(DefaultDummyState, clock);
+            flight.SetState(airportConfiguration.DummyFlightState, clock);
         }
 
         return flight;

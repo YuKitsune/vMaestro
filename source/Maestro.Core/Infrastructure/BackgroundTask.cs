@@ -10,10 +10,8 @@ public class BackgroundTask(Func<CancellationToken, Task> worker) : IAsyncDispos
 
     public bool IsRunning => _executingTask is { IsCompleted: false };
 
-    public async Task Start(CancellationToken _)
+    public void Start()
     {
-        await Task.CompletedTask;
-
         if (IsDisposed)
             throw new ObjectDisposedException(nameof(BackgroundTask));
 

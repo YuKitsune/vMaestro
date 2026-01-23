@@ -9,7 +9,8 @@
     - Set target time and landing estimate
     - Add test for coupling to real flights after insertion
 - [X] Overshoot shouldn't move the flight, it should create a new one based on the details of the landed one
-- [ ] Delete landed flights after landing
+- [X] Delete landed flights after landing
+- [X] Add config options mentioned in TODOs
 
 - [ ] Consider permissions
     - APP should be able to insert overshoots 
