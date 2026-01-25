@@ -2,24 +2,6 @@
 
 ## V1 Release
 
-## Revise flight insertion and Overshoot behaviour
-
-- [X] MoveFlightRequestHandler - Set Target Time
-- [X] Consolidate insertion handlers
-    - Set target time and landing estimate
-    - Add test for coupling to real flights after insertion
-- [X] Overshoot shouldn't move the flight, it should create a new one based on the details of the landed one
-- [X] Delete landed flights after landing
-- [X] Add config options mentioned in TODOs
-
-- [ ] Consider permissions
-    - APP should be able to insert overshoots 
-
----
-
-- [X] Verify: If you grab and drag total delay will update based on the original ETA.
-- [X] Verify: If you reinsert I think it calculates a new ETA based on wherever you clicked to insert it
-
 ## Revise all test cases
 
 - [ ] Delete redundant or inaccurate test cases
@@ -35,7 +17,6 @@ Consider scalling the FDRs every 30 seconds instead.
 
 - [ ] Allow runway assignment to be deferred until the Scheduling phase
 - [ ] Extract runway and approach type assignment into a separate, testable service
-
 
 ### Configuration Overhaul
 

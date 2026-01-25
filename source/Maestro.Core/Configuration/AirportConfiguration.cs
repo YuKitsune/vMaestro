@@ -39,13 +39,13 @@ public class AirportConfiguration
     ///     The maximum number of Landed flights which can remain in the sequence in the event of an overshoot.
     /// </summary>
     public int MaxLandedFlights { get; init; } = 5;
-
-    public required Dictionary<string, string[]> PreferredRunways { get; init; } = new();
     public required RunwayConfiguration[] Runways { get; init; }
     public required RunwayModeConfiguration[] RunwayModes { get; init; }
     public required ArrivalConfiguration[] Arrivals { get; init; }
     public required ViewConfiguration[] Views { get; init; }
     public required DepartureAirportConfiguration[] DepartureAirports { get; init; } = [];
+
+    // TODO: Default TTG
 }
 
 public class DepartureAirportConfiguration

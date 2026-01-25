@@ -43,6 +43,8 @@ public class FlightUpdatedHandler(
             if (!instanceManager.InstanceExists(notification.Destination))
                 return;
 
+            logger.Verbose("FDR update received for {Callsign}", notification.Callsign);
+
             var instance = await instanceManager.GetInstance(notification.Destination, cancellationToken);
             SessionMessage sessionMessage;
 
@@ -61,7 +63,7 @@ public class FlightUpdatedHandler(
                     var shouldUpdate = rateLimiter.ShouldUpdateFlight(existingFlight);
                     if (!shouldUpdate)
                     {
-                        logger.Verbose("Rate limiting {Callsign}", notification.Callsign);
+                        logger.Verbose("FDR update for {Callsign} rate-limited", notification.Callsign);
                         return;
                     }
                 }
@@ -70,7 +72,7 @@ public class FlightUpdatedHandler(
                      connection.IsConnected &&
                      !connection.IsMaster)
                 {
-                    logger.Debug("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
+                    logger.Verbose("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
                     await connection.Send(notification, cancellationToken);
                     return;
                 }
@@ -100,7 +102,7 @@ public class FlightUpdatedHandler(
 
                         instance.Session.PendingFlights.Add(newPendingFlight);
 
-                        logger.Information("{Callsign} created (pending)", notification.Callsign);
+                        logger.Information("Added {Callsign} to the Pending list (departing from a Departure airport)", notification.Callsign);
 
                         await mediator.Send(new SendCoordinationMessageRequest(
                             notification.Destination,
@@ -155,7 +157,7 @@ public class FlightUpdatedHandler(
                         sequencedFlight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
                         instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
-                        logger.Information("{Callsign} created", notification.Callsign);
+                        logger.Information("{Callsign} added to the sequence", notification.Callsign);
                     }
                     // Flights not tracking a feeder fix are added to the pending list
                     else if (feederFix is null && landingEstimate - clock.UtcNow() <= flightCreationThreshold)
@@ -174,7 +176,7 @@ public class FlightUpdatedHandler(
                                 new CoordinationDestination.Broadcast()),
                             cancellationToken);
 
-                        logger.Information("{Callsign} created (pending)", notification.Callsign);
+                        logger.Information("{Callsign} added to the Pending list (no matching FF)", notification.Callsign);
                     }
                 }
 
