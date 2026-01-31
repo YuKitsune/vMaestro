@@ -58,3 +58,24 @@ Each runway in the runway mode will define an accpetance rate.
 Additionally, a new dependency rate can be added to the runway mode to define the required separation between multiple runways.
 If the dependency rate is omitted, no additional separation is applied from flights landing on the other runways.
 If the dependency rate is specified, flights landing on runway I must be separated by the dependency rate from flights landing on runway J.
+
+## Checklist
+
+- [X] Introduce new runway assignment rules
+- [X] Introduce a service to fetch the available runways
+
+- [X] Make assigned runway nullable
+- [ ] ~~Move runway assignment into a separate service~~
+    - [ ] Assign runway and approach type in one go
+    - [ ] Use default TTG if none can be found based on search criteria
+
+- [X] Get available runways before scheduling
+    - [X] Don't re-assign runway for stable flights
+    - [ ] Re-run the scheduling if multiple runways are available
+    - [ ] Assign to the runway/approach type with the earliest ETA
+
+- [ ] When a flight is created and no FF is found, assign the default runway (first on the config)
+- [ ] Clear assigned runway on recompute
+
+- [X] Introduce dependency rate
+    - [X] Apply dependency rate to aircraft landing on other runways

@@ -1,7 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
-using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
 
 [assembly: AssemblyFixture(typeof(AirportConfigurationFixture))]
 
@@ -21,7 +20,7 @@ public class AirportConfigurationFixture
                 {
                     Identifier = "34L",
                     LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayPreferences
+                    Preferences = new RunwayAssignmentRule
                     {
                         FeederFixes = ["RIVET", "WELSH"],
                         WakeCategories = [WakeCategory.SuperHeavy, WakeCategory.Heavy]
@@ -31,7 +30,7 @@ public class AirportConfigurationFixture
                 {
                     Identifier = "34R",
                     LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayPreferences
+                    Preferences = new RunwayAssignmentRule
                     {
                         FeederFixes = ["BOREE", "YAKKA", "MARLN"]
                     }
@@ -40,7 +39,7 @@ public class AirportConfigurationFixture
                 {
                     Identifier = "16R",
                     LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayPreferences
+                    Preferences = new RunwayAssignmentRule
                     {
                         FeederFixes = ["RIVET", "WELSH"],
                         WakeCategories = [WakeCategory.SuperHeavy, WakeCategory.Heavy]
@@ -50,7 +49,7 @@ public class AirportConfigurationFixture
                 {
                     Identifier = "16L",
                     LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayPreferences
+                    Preferences = new RunwayAssignmentRule
                     {
                         FeederFixes = ["BOREE", "YAKKA", "MARLN"]
                     }

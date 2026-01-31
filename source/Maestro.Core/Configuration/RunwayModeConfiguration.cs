@@ -3,8 +3,7 @@
 public class RunwayModeConfiguration
 {
     public required string Identifier { get; init; }
-    public TimeSpan DependencyRate { get; init; } = TimeSpan.Zero;
+    public int DependencyRateSeconds { get; init; } = 0;
+    public int OffModeSeparationSeconds { get; init; } = 0;
     public required RunwayConfiguration[] Runways { get; init; }
-
-    // TODO: Runway Allocation Rules
 }

@@ -1,7 +1,6 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Shouldly;
-using RunwayPreferences = Maestro.Core.Configuration.RunwayPreferences;
 
 namespace Maestro.Core.Tests;
 
@@ -20,7 +19,7 @@ public class RunwayScoreCalculatorTests
                     {
                         Identifier = "34L",
                         LandingRateSeconds = 180,
-                        Preferences = new RunwayPreferences
+                        Preferences = new RunwayAssignmentRule
                         {
                             WakeCategories = [WakeCategory.Heavy, WakeCategory.SuperHeavy],
                             FeederFixes = ["RIVET", "WELSH"]
@@ -30,7 +29,7 @@ public class RunwayScoreCalculatorTests
                     {
                         Identifier = "34R",
                         LandingRateSeconds = 180,
-                        Preferences = new RunwayPreferences
+                        Preferences = new RunwayAssignmentRule
                         {
                             FeederFixes = ["BOREE", "YAKKA", "MARLN"]
                         }
@@ -39,7 +38,7 @@ public class RunwayScoreCalculatorTests
                     {
                         Identifier = "16R",
                         LandingRateSeconds = 180,
-                        Preferences = new RunwayPreferences
+                        Preferences = new RunwayAssignmentRule
                         {
                             WakeCategories = [WakeCategory.Heavy, WakeCategory.SuperHeavy],
                             FeederFixes = ["RIVET", "WELSH"]
@@ -49,7 +48,7 @@ public class RunwayScoreCalculatorTests
                     {
                         Identifier = "16L",
                         LandingRateSeconds = 180,
-                        Preferences = new RunwayPreferences
+                        Preferences = new RunwayAssignmentRule
                         {
                             FeederFixes = ["BOREE", "YAKKA", "MARLN"]
                         }

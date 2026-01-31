@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
 
@@ -13,6 +14,8 @@ public class RunwayMode
         Runways = runwayModeConfigurationConfiguration.Runways
             .Select(r => new Runway(r))
             .ToArray();
+        DependencyRate = TimeSpan.FromSeconds(runwayModeConfigurationConfiguration.DependencyRateSeconds);
+        OffModeSeparation = TimeSpan.FromSeconds(runwayModeConfigurationConfiguration.OffModeSeparationSeconds);
     }
 
     public RunwayMode(RunwayModeDto runwayModeDto)
@@ -25,6 +28,8 @@ public class RunwayMode
     public string Identifier { get; }
     public Runway[] Runways { get; }
     public Runway Default => Runways.First();
+    public TimeSpan DependencyRate { get; }
+    public TimeSpan OffModeSeparation { get; }
 }
 
 public class Runway
@@ -32,54 +37,28 @@ public class Runway
     public Runway(Configuration.RunwayConfiguration runwayConfiguration)
     {
         Identifier = runwayConfiguration.Identifier;
+        ApproachType = runwayConfiguration.ApproachType;
         AcceptanceRate = TimeSpan.FromSeconds(runwayConfiguration.LandingRateSeconds);
-        Dependencies = runwayConfiguration.Dependencies
-            .Select(d => new RunwayDependency(d))
-            .ToArray();
-        Requirements = runwayConfiguration.Requirements is not null
-            ? new RunwayRequirements(runwayConfiguration.Requirements)
-            : null;
-        Preferences = runwayConfiguration.Preferences is not null
-            ? new RunwayPreferences(runwayConfiguration.Preferences)
-            : null;
+        FeederFixes = runwayConfiguration.FeederFixes;
     }
 
     // DTO ctor. Need to extend for dependencies, requirements, preferences.
-    public Runway(string identifier, TimeSpan acceptance)
+    public Runway(string identifier, string approachType, TimeSpan acceptance, string[] feederFixes)
     {
         Identifier = identifier;
+        ApproachType = approachType;
         AcceptanceRate = acceptance;
-        Dependencies = [];
-        Requirements = null;
-        Preferences = null;
+        FeederFixes = feederFixes;
     }
 
     public string Identifier { get; }
+    public string ApproachType { get; }
     public TimeSpan AcceptanceRate { get; private set; }
-    public RunwayDependency[] Dependencies { get; }
-    public RunwayRequirements? Requirements { get; }
-    public RunwayPreferences? Preferences { get; }
+
+    public string[] FeederFixes { get; init; } = [];
 
     public void ChangeAcceptanceRate(TimeSpan acceptanceRate)
     {
         AcceptanceRate = acceptanceRate;
     }
-}
-
-public class RunwayDependency(Configuration.RunwayDependency runwayDependency)
-{
-    public string RunwayIdentifier { get; } = runwayDependency.RunwayIdentifier;
-
-    public TimeSpan Separation { get; } = TimeSpan.FromSeconds(runwayDependency.SeparationSeconds);
-}
-
-public class RunwayRequirements(Configuration.RunwayRequirements runwayRequirements)
-{
-    public string[] FeederFixes { get; } = runwayRequirements.FeederFixes;
-}
-
-public class RunwayPreferences(Configuration.RunwayPreferences runwayPreferences)
-{
-    public WakeCategory[] WakeCategories { get; } = runwayPreferences.WakeCategories;
-    public string[] FeederFixes { get; } = runwayPreferences.FeederFixes;
 }
