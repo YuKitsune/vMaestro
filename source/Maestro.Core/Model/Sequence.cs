@@ -614,6 +614,9 @@ public class Sequence
                     case FlightSequenceItem { Flight.State: State.Landed or State.Frozen } flightSequenceItem:
                     {
                         var requiredSeparation = GetRequiredSeparation(flightSequenceItem, referenceRunway, runwayMode);
+                        if (requiredSeparation == TimeSpan.Zero)
+                            return null;
+
                         return flightSequenceItem.Flight.LandingTime.Subtract(requiredSeparation);
                     }
 
@@ -634,6 +637,9 @@ public class Sequence
                     case FlightSequenceItem flightSequenceItem:
                     {
                         var requiredSeparation = GetRequiredSeparation(flightSequenceItem, referenceRunway, runwayMode);
+                        if (requiredSeparation == TimeSpan.Zero)
+                            return null;
+
                         return flightSequenceItem.Flight.LandingTime.Add(requiredSeparation);
                     }
 
