@@ -15,7 +15,7 @@ Consider scalling the FDRs every 30 seconds instead.
 
 ## Streamline Approach Type and Runway Assignment
 
-- [ ] Allow runway assignment to be deferred until the Scheduling phase
+- [X] Allow runway assignment to be deferred until the Scheduling phase
 - [ ] Extract runway and approach type assignment into a separate, testable service
 
 ### Configuration Overhaul
@@ -24,13 +24,13 @@ Introduce support for transitions and approach types.
 Configuration will be split into multiple files, one per airport.
 Configuration files will likely require a new format to support tabular data such as arrivals.
 
-- [ ] Re-design configuration types
-    - [ ] Introduce transition fixes
-    - [ ] Introduce approach types
-- [ ] Introduce "Change Approach Type" request and handler
-- [ ] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
+- [X] Re-design configuration types
+    - [X] Introduce transition fixes
+    - [X] Introduce approach types
+- [X] Introduce "Change Approach Type" request and handler
+- [X] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
     - [ ] Filter runway options based on feeder fix in the UI
-- [ ] Remove runway requirements and preferences
+- [X] Remove runway requirements and preferences
 - [ ] Store the processed arrival and runway mode on the Flight
     - [ ] Set landing estimate based on ETA_FF + arrival TTG
     - [ ] Set STA_FF using STA - arrival TTG
