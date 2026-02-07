@@ -34,7 +34,7 @@ public class MaestroInstanceCreatedNotificationHandler(
             _ => new MaestroView(
                 new MaestroViewModel(
                     notification.AirportIdentifier,
-                    airportConfiguration.Runways.Select(r => r.Identifier).ToArray(),
+                    airportConfiguration.Runways,
                     runwayModes,
                     airportConfiguration.Views,
                     mediator,

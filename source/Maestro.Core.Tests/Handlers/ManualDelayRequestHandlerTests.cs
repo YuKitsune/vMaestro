@@ -444,11 +444,16 @@ public class ManualDelayRequestHandlerTests(
         var newRunwayMode = new RunwayMode(new RunwayModeConfiguration
         {
             Identifier = "34R",
-            Runways = [new RunwayConfiguration
-            {
-                Identifier = "34R",
-                LandingRateSeconds = (int)airportConfigurationFixture.AcceptanceRate.TotalSeconds
-            }]
+            Runways =
+            [
+                new RunwayConfiguration
+                {
+                    Identifier = "34R",
+                    ApproachType = string.Empty,
+                    LandingRateSeconds = (int)airportConfigurationFixture.AcceptanceRate.TotalSeconds,
+                    FeederFixes = []
+                }
+            ]
         });
         sequence.ChangeRunwayMode(newRunwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode);
 

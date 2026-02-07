@@ -121,13 +121,9 @@ public class FlightUpdatedHandler(
                     // Only create flights in Maestro when they're within a specified range of the feeder fix
                     if (feederFix is not null && feederFix.Estimate - clock.UtcNow() <= flightCreationThreshold)
                     {
-                        // Determine the runway to assign
+                        // Use the default runway for now. This will get re-calculated in the scheduling phase.
                         var runwayMode = instance.Session.Sequence.GetRunwayModeAt(landingEstimate);
-                        var runway = FindBestRunway(
-                            airportConfiguration,
-                            runwayMode,
-                            feederFix?.FixIdentifier ?? string.Empty,
-                            notification.Estimates.Select(f => f.FixIdentifier).ToArray());
+                        var runway = runwayMode.Default;
 
                         // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
                         var earliestInsertionIndex = instance.Session.Sequence.FindLastIndex(f =>
@@ -259,18 +255,6 @@ public class FlightUpdatedHandler(
         {
             logger.Error(exception, "Error updating {Callsign}", notification.Callsign);
         }
-    }
-
-    Runway FindBestRunway(AirportConfiguration airportConfiguration, RunwayMode runwayMode, string feederFixIdentifier, string[] fixNames)
-    {
-        if (airportConfiguration.PreferredRunways.TryGetValue(feederFixIdentifier, out var preferredRunways))
-        {
-            return runwayMode.Runways
-                       .FirstOrDefault(r => preferredRunways.Contains(r.Identifier))
-                   ?? runwayMode.Default;
-        }
-
-        return runwayMode.Default;
     }
 
     void CalculateEstimates(Flight flight, FlightUpdatedNotification notification, AirportConfiguration airportConfiguration)

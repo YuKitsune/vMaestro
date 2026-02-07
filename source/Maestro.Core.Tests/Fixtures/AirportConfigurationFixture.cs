@@ -14,47 +14,7 @@ public class AirportConfigurationFixture
         new()
         {
             Identifier = "YSSY",
-            Runways =
-            [
-                new RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayAssignmentRule
-                    {
-                        FeederFixes = ["RIVET", "WELSH"],
-                        WakeCategories = [WakeCategory.SuperHeavy, WakeCategory.Heavy]
-                    }
-                },
-                new RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayAssignmentRule
-                    {
-                        FeederFixes = ["BOREE", "YAKKA", "MARLN"]
-                    }
-                },
-                new RunwayConfiguration
-                {
-                    Identifier = "16R",
-                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayAssignmentRule
-                    {
-                        FeederFixes = ["RIVET", "WELSH"],
-                        WakeCategories = [WakeCategory.SuperHeavy, WakeCategory.Heavy]
-                    }
-                },
-                new RunwayConfiguration
-                {
-                    Identifier = "16L",
-                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
-                    Preferences = new RunwayAssignmentRule
-                    {
-                        FeederFixes = ["BOREE", "YAKKA", "MARLN"]
-                    }
-                }
-            ],
+            Runways = [ "34L", "34R", "16L", "16R"],
             RunwayModes =
             [
                 new RunwayModeConfiguration
@@ -65,12 +25,16 @@ public class AirportConfigurationFixture
                         new RunwayConfiguration
                         {
                             Identifier = "34L",
-                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
+                            ApproachType = string.Empty,
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
+                            FeederFixes = ["RIVET", "WELSH"]
                         },
                         new RunwayConfiguration
                         {
                             Identifier = "34R",
-                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
+                            ApproachType = string.Empty,
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
+                            FeederFixes = ["BOREE", "YAKKA", "MARLN"]
                         }
                     ]
                 },
@@ -82,12 +46,16 @@ public class AirportConfigurationFixture
                         new RunwayConfiguration
                         {
                             Identifier = "16L",
-                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
+                            ApproachType = string.Empty,
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
+                            FeederFixes = ["BOREE", "YAKKA", "MARLN"]
                         },
                         new RunwayConfiguration
                         {
                             Identifier = "16R",
-                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds
+                            ApproachType = string.Empty,
+                            LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
+                            FeederFixes = ["RIVET", "WELSH"]
                         }
                     ]
                 }
@@ -149,14 +117,6 @@ public class AirportConfigurationFixture
                 }
             ],
             FeederFixes = ["RIVET", "WELSH", "BOREE", "YAKKA", "MARLN"],
-            PreferredRunways = new Dictionary<string, string[]>
-            {
-                { "RIVET", ["34L", "16R"] },
-                { "WELSH", ["34L", "16R"] },
-                { "BOREE", ["34R", "16L"] },
-                { "YAKKA", ["34R", "16L"] },
-                { "MARLN", ["34R", "16L"] }
-            },
             DepartureAirports =
             [
                 new DepartureAirportConfiguration
@@ -167,12 +127,12 @@ public class AirportConfigurationFixture
                     [
                         new DepartureAirportFlightTimeConfiguration
                         {
-                            AircraftType = new AircraftCategoryConfiguration(AircraftCategory.Jet),
+                            Aircraft = new AircraftCategoryDescriptor(AircraftCategory.Jet),
                             AverageFlightTime = TimeSpan.FromMinutes(30),
                         },
                         new DepartureAirportFlightTimeConfiguration
                         {
-                            AircraftType = new AircraftCategoryConfiguration(AircraftCategory.NonJet),
+                            Aircraft = new AircraftCategoryDescriptor(AircraftCategory.NonJet),
                             AverageFlightTime = TimeSpan.FromMinutes(45),
                         }
                     ]

@@ -21,7 +21,7 @@ public class RunwayMode
     public RunwayMode(RunwayModeDto runwayModeDto)
     {
         Identifier = runwayModeDto.Identifier;
-        Runways = runwayModeDto.AcceptanceRates.Select(kvp => new Runway(kvp.Key, TimeSpan.FromSeconds(kvp.Value)))
+        Runways = runwayModeDto.Runways.Select(r => new Runway(r.Identifier, r.ApproachType, TimeSpan.FromSeconds(r.AcceptanceRateSeconds), r.FeederFixes))
             .ToArray();
     }
 

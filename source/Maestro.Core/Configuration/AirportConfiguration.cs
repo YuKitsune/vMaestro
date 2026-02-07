@@ -40,13 +40,14 @@ public class AirportConfiguration
     /// </summary>
     public int MaxLandedFlights { get; init; } = 5;
 
-
     public int DefaultOffModeSeparationSeconds { get; init; } = 300;
 
+    public string[] Runways { get; set; }
     public required RunwayModeConfiguration[] RunwayModes { get; init; }
     public required ArrivalConfiguration[] Arrivals { get; init; }
     public required ViewConfiguration[] Views { get; init; }
     public required DepartureAirportConfiguration[] DepartureAirports { get; init; } = [];
+
     // TODO: Average taxi times and terminal assignments
 }
 

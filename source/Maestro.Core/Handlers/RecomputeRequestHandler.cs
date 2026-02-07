@@ -48,6 +48,9 @@ public class RecomputeRequestHandler(
                 return;
             }
 
+            // Reset the runway so it can be calculated in the Scheduling phase
+            flight.SetRunway(string.Empty, manual: false);
+
             // Reset the feeder fix in case of a re-route
             var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
             if (feederFix is not null)

@@ -38,6 +38,11 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
 
     public SequenceBuilder WithSingleRunway(string runwayIdentifier, TimeSpan landingRate)
     {
+        return WithSingleRunway(runwayIdentifier, string.Empty, landingRate);
+    }
+
+    public SequenceBuilder WithSingleRunway(string runwayIdentifier, string approachType, TimeSpan landingRate)
+    {
         return WithRunwayMode(
             new RunwayMode(
                 new RunwayModeConfiguration
@@ -46,7 +51,12 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
                     Runways =
                     [
                         new RunwayConfiguration
-                            { Identifier = runwayIdentifier, LandingRateSeconds = (int)landingRate.TotalSeconds }
+                        {
+                            Identifier = runwayIdentifier,
+                            ApproachType = approachType,
+                            LandingRateSeconds = (int)landingRate.TotalSeconds,
+                            FeederFixes = []
+                        }
                     ]
                 }));
     }
