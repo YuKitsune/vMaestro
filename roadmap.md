@@ -2,24 +2,6 @@
 
 ## V1 Release
 
-## Revise flight insertion and Overshoot behaviour
-
-- [X] MoveFlightRequestHandler - Set Target Time
-- [X] Consolidate insertion handlers
-    - Set target time and landing estimate
-    - Add test for coupling to real flights after insertion
-- [X] Overshoot shouldn't move the flight, it should create a new one based on the details of the landed one
-- [X] Delete landed flights after landing
-- [X] Add config options mentioned in TODOs
-
-- [ ] Consider permissions
-    - APP should be able to insert overshoots 
-
----
-
-- [X] Verify: If you grab and drag total delay will update based on the original ETA.
-- [X] Verify: If you reinsert I think it calculates a new ETA based on wherever you clicked to insert it
-
 ## Revise all test cases
 
 - [ ] Delete redundant or inaccurate test cases
@@ -33,9 +15,8 @@ Consider scalling the FDRs every 30 seconds instead.
 
 ## Streamline Approach Type and Runway Assignment
 
-- [ ] Allow runway assignment to be deferred until the Scheduling phase
+- [X] Allow runway assignment to be deferred until the Scheduling phase
 - [ ] Extract runway and approach type assignment into a separate, testable service
-
 
 ### Configuration Overhaul
 
@@ -43,13 +24,13 @@ Introduce support for transitions and approach types.
 Configuration will be split into multiple files, one per airport.
 Configuration files will likely require a new format to support tabular data such as arrivals.
 
-- [ ] Re-design configuration types
-    - [ ] Introduce transition fixes
-    - [ ] Introduce approach types
-- [ ] Introduce "Change Approach Type" request and handler
-- [ ] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
+- [X] Re-design configuration types
+    - [X] Introduce transition fixes
+    - [X] Introduce approach types
+- [X] Introduce "Change Approach Type" request and handler
+- [X] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
     - [ ] Filter runway options based on feeder fix in the UI
-- [ ] Remove runway requirements and preferences
+- [X] Remove runway requirements and preferences
 - [ ] Store the processed arrival and runway mode on the Flight
     - [ ] Set landing estimate based on ETA_FF + arrival TTG
     - [ ] Set STA_FF using STA - arrival TTG

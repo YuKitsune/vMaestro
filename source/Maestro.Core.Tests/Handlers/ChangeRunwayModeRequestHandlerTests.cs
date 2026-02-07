@@ -52,11 +52,10 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
 
         var runwayModeDto = new RunwayModeDto(
             "16IVA",
-            new Dictionary<string, int>
-            {
-                { "16L", 180 },
-                { "16R", 180 }
-            });
+            [
+                new RunwayDto("16L", string.Empty, 180, []),
+                new RunwayDto("16R", string.Empty, 180, [])
+            ]);
 
         var request = new ChangeRunwayModeRequest(
             "YSSY",
@@ -112,11 +111,10 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
 
         var runwayModeDto = new RunwayModeDto(
             "16IVA",
-            new Dictionary<string, int>
-            {
-                { "16L", 180 },
-                { "16R", 180 }
-            });
+            [
+                new RunwayDto("16L", string.Empty, 180, []),
+                new RunwayDto("16R", string.Empty, 180, [])
+            ]);
 
         var lastLandingTimeForOldMode = now.AddMinutes(20);
         var firstLandingTimeForNewMode = now.AddMinutes(25);
@@ -189,11 +187,10 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
 
         var runwayModeDto = new RunwayModeDto(
             "16IVA",
-            new Dictionary<string, int>
-            {
-                { "16L", 180 },
-                { "16R", 180 }
-            });
+            [
+                new RunwayDto("16L", string.Empty, 180, []),
+                new RunwayDto("16R", string.Empty, 180, [])
+            ]);
 
         var lastLandingTimeForOldMode = now.AddMinutes(20);
         var firstLandingTimeForNewMode = now.AddMinutes(25);
@@ -266,11 +263,10 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
         // New mode with 240-second (4-minute) acceptance rate instead of 180 seconds (3 minutes)
         var runwayModeDto = new RunwayModeDto(
             "16IVA",
-            new Dictionary<string, int>
-            {
-                { "16L", 240 },
-                { "16R", 240 }
-            });
+            [
+                new RunwayDto("16L", string.Empty, 240, []),
+                new RunwayDto("16R", string.Empty, 240, [])
+            ]);
 
         var lastLandingTimeForOldMode = now.AddMinutes(20);
         var firstLandingTimeForNewMode = now.AddMinutes(25);
@@ -355,11 +351,10 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
 
         var runwayModeDto = new RunwayModeDto(
             "16IVA",
-            new Dictionary<string, int>
-            {
-                { "16L", 180 },
-                { "16R", 180 }
-            });
+            [
+                new RunwayDto("16L", string.Empty, 180, []),
+                new RunwayDto("16R", string.Empty, 180, [])
+            ]);
 
         var request = new ChangeRunwayModeRequest(
             "YSSY",
@@ -414,11 +409,10 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
 
         var runwayModeDto = new RunwayModeDto(
             "16IVA",
-            new Dictionary<string, int>
-            {
-                { "16L", 180 },
-                { "16R", 180 }
-            });
+            [
+                new RunwayDto("16L", string.Empty, 180, []),
+                new RunwayDto("16R", string.Empty, 180, [])
+            ]);
 
         var request = new ChangeRunwayModeRequest(
             "YSSY",

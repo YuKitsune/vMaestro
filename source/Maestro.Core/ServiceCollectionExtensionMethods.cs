@@ -16,7 +16,6 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<IFlightUpdateRateLimiter, FlightUpdateRateLimiter>()
             .AddSingleton<IArrivalLookup, ArrivalLookup>()
             .AddSingleton<IEstimateProvider, EstimateProvider>()
-            .AddSingleton<IRunwayScoreCalculator, RunwayScoreCalculator>()
             .AddSingleton<IClock, SystemClock>();
     }
 }

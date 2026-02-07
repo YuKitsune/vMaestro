@@ -118,16 +118,17 @@ In this example, the selected view is a runway view, so the `STA` is `28` with a
 
 Flight labels are mirrored on each side of the ladder.
 
-Reading from innermost to outermost, the flight label contains:
+Reading from **innermost** to **outermost**, the flight label contains:
 1. `STA` (in feeder view) or `STA_FF` (in runway view)
 2. Assigned runway
 3. Callsign
-4. `#` if zero delay has been assigned
-5. `%` if manual delay (other than zero) has been assigned
-6. `+` if the flight must cross the feeder-fix at published speed
-7. `*` if the FDR is not coupled to a radar track
-8. Total delay required (based on the initial `ETA`)
-9. Delay remaining (based on the current `ETA`)
+4. Approach Type (if applicable)
+5. `#` if zero delay has been assigned
+6. `%` if manual delay (other than zero) has been assigned
+7. `+` if the flight must cross the feeder-fix at published speed
+8. `*` if the FDR is not coupled to a radar track
+9. Total delay required (based on the initial `ETA`)
+10. Delay remaining (based on the current `ETA`)
 
 Note the two separate delay values. The total delay required is the total delay Maestro has assigned to the flight. As the flight absorbs the delay (i.e. speed reduction, vectors, or holding), this value will remain unchanged.
 The remaining delay will progressively reduce as the flight absorbs the total delay required. When the remaining delay reads `00`, all required delay has been absorbed.
@@ -288,7 +289,14 @@ When the new runway is assigned:
 - if the flight was `Unstable`, it becomes `Stable`
 - the rest of the sequence is re-calculated
 
-<!-- ### Change Approach Type -->
+### Change Approach Type
+
+To change the approach type assigned by Maestro, right-click the flight, select `Change Approach Type`, then select the approach type.
+
+![Change Approach Type context menu](../../static/img/change_approach.png)
+
+When the new approach type is assigned, only the ETA is re-calculated.
+The rest of the sequence will remain unchanged.
 
 ### Change `ETA_FF`
 

@@ -53,10 +53,10 @@ public class ChangeRunwayModeRequestHandler(
             }
 
             var configuration = new RunwayMode(runwayModeConfig);
-            foreach (var kvp in request.RunwayMode.AcceptanceRates)
+            foreach (var runwayDto in request.RunwayMode.Runways)
             {
-                var runwayIdentifier = kvp.Key;
-                var acceptanceRate = kvp.Value;
+                var runwayIdentifier = runwayDto.Identifier;
+                var acceptanceRate = runwayDto.AcceptanceRateSeconds;
 
                 var runway = configuration.Runways.SingleOrDefault(r => r.Identifier == runwayIdentifier);
                 if (runway is null)

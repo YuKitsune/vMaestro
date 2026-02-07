@@ -67,11 +67,12 @@ public class MoveFlightRequestHandler(
                 flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
 
             flight.InvalidateSequenceData();
-            sequence.Move(flight, newIndex);
 
             // Unstable flights become stable when moved
             if (flight.State == State.Unstable)
                 flight.SetState(State.Stable, clock);
+
+            sequence.Move(flight, newIndex);
 
             logger.Information("Flight {Callsign} moved to {NewLandingTime}", flight.Callsign, flight.LandingTime);
 

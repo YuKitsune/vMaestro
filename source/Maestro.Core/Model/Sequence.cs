@@ -154,27 +154,14 @@ public class Sequence
                 var runwayMode = GetRunwayModeAt(frozenFlight.LandingTime);
                 var runway = runwayMode.Runways.FirstOrDefault(f => f.Identifier == frozenFlight.AssignedRunwayIdentifier) ?? runwayMode.Default;
 
-                if (runway.Identifier == runwayIdentifier)
+                var requiredSeparation = runway.Identifier == runwayIdentifier
+                    ? runway.AcceptanceRate
+                    : runwayMode.DependencyRate;
+                var actualSeparation = frozenFlight.LandingTime - landingTime;
+
+                if (actualSeparation < requiredSeparation)
                 {
-                    var requiredSeparation = runway.AcceptanceRate;
-                    var actualSeparation = frozenFlight.LandingTime - landingTime;
-
-                    if (actualSeparation < requiredSeparation)
-                    {
-                        throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to insufficient separation from {frozenFlight.Callsign}.");
-                    }
-                }
-
-                var dependency = runway.Dependencies.FirstOrDefault(d => d.RunwayIdentifier == runwayIdentifier);
-                if (dependency is not null)
-                {
-                    var requiredSeparation = dependency.Separation;
-                    var actualSeparation = frozenFlight.LandingTime - landingTime;
-
-                    if (actualSeparation < requiredSeparation)
-                    {
-                        throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to insufficient separation from {frozenFlight.Callsign}.");
-                    }
+                    throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to insufficient separation from {frozenFlight.Callsign}.");
                 }
             }
         }
@@ -316,14 +303,11 @@ public class Sequence
             var flowControls2 = flight2.FlowControls;
             var runway1 = flight1.AssignedRunwayIdentifier;
             var runway2 = flight2.AssignedRunwayIdentifier;
-
-            Schedule(flight1, landingTime2, flowControls2, runway2);
-            Schedule(flight2, landingTime1, flowControls1, runway1);
-
             var approachType1 = flight1.ApproachType;
             var approachType2 = flight2.ApproachType;
-            flight1.SetApproachType(approachType2);
-            flight2.SetApproachType(approachType1);
+
+            Schedule(flight1, landingTime2, runway2, approachType2, flowControls2);
+            Schedule(flight2, landingTime1, runway1, approachType1, flowControls1);
 
             // No need to re-schedule as we're exchanging two flights that are already scheduled
         }
@@ -484,91 +468,57 @@ public class Sequence
 
                 var currentRunwayMode = runwayModeItem.RunwayMode;
 
-                // TODO: We need to do this in case we delay a flight into the next runway mode.
-                // If we're delayed into a new mode, but the runway was manually assigned, no separation is applied to this
-                // flight against other flights on the new mode, even though this flight is landing in the new mode.
-                // Need to figure out how to handle this properly.
-
-                // If the assigned runway isn't in the current mode, use the default
-                Runway runway;
-                if (currentFlight.FeederFixIdentifier is not null && !currentFlight.RunwayManuallyAssigned)
-                {
-                    if (_airportConfiguration.PreferredRunways.TryGetValue(currentFlight.FeederFixIdentifier,
-                            out var preferredRunways))
-                    {
-                        runway = currentRunwayMode.Runways
-                                     .FirstOrDefault(r => preferredRunways.Contains(r.Identifier))
-                                 ?? currentRunwayMode.Default;
-                    }
-                    else
-                    {
-                        runway = currentRunwayMode.Default;
-                    }
-                }
-                else
-                {
-                    runway = currentRunwayMode.Runways
-                                 .FirstOrDefault(r => r.Identifier == currentFlight.AssignedRunwayIdentifier)
-                             ?? currentRunwayMode.Default;
-                }
+                // TODO: Consider how we should handle delays into new runway modes
+                var runwayOptions = GetRunways(
+                    _airportConfiguration,
+                    currentFlight,
+                    currentRunwayMode);
 
                 var targetLandingTime = currentFlight.TargetLandingTime ?? currentFlight.LandingEstimate;
 
-                // Determine the earliest possible landing time at this position in the sequence
-                var earliestLandingTime = GetEarliestLandingTimeForIndex(i, targetLandingTime, runway);
+                // Evaluate each runway option to find the one with the earliest landing time
+                var results = runwayOptions
+                    .Select(runwayOption => EvaluateRunwayOption(runwayOption, currentFlight, i, targetLandingTime, currentRunwayMode))
+                    .ToList();
 
-                // Check for conflicts with later items in the sequence that can't be moved
-                var latestLandingTime = sequence
-                    .Skip(i + 1)
-                    .Min(s => GetLatestLandingTimeFromItem(s, runway));
-                if (latestLandingTime.HasValue && earliestLandingTime.IsAfter(latestLandingTime.Value))
+                // Select the runway option with the earliest landing time
+                var result = results
+                    .OrderBy(e => e.LandingTime)
+                    .First();
+
+                // Move flight to the final position if needed
+                if (result.SequencePosition != i)
                 {
-                    // We're in conflict with something behind us in the sequence that can't move
-                    // Mose this flight back and try again.s
-                    (sequence[i], sequence[i + 1]) = (sequence[i + 1], sequence[i]);
+                    sequence.RemoveAt(i);
+
+                    // Adjust insertion position when moving backwards (to a later position)
+                    // because removal shifts all subsequent indices down by 1
+                    var insertPosition = result.SequencePosition;
+                    if (insertPosition > i)
+                        insertPosition--;
+
+                    sequence.Insert(insertPosition, currentItem);
+
+                    // Only adjust loop index when moving forward (to earlier position)
+                    // to avoid skipping flights beyond the effective start index
+                    if (result.SequencePosition < i)
+                    {
+                        i = result.SequencePosition - 1;
+                    }
                     continue;
                 }
 
-                // No conflicts behind, we can assign the STA
-                var landingTime = earliestLandingTime;
-
-                // Check that any manual delay isn't exceeded
-                var totalDelay = landingTime - currentFlight.LandingEstimate;
-                if (currentFlight.MaximumDelay.HasValue)
-                {
-                    var effectiveMaximumDelay = EffectiveMaximumDelay(currentFlight.MaximumDelay.Value, runway);
-                    if (totalDelay > effectiveMaximumDelay)
-                    {
-                        // Maximum delay has been exceeded, try to move this flight forward
-                        var newIndex = FindInsertionPointForMaximumDelay(
-                            i,
-                            currentFlight.LandingEstimate,
-                            effectiveMaximumDelay,
-                            runway);
-
-                        if (newIndex < i)
-                        {
-                            // Move the flight forward to the new position and re-process
-                            sequence.RemoveAt(i);
-                            sequence.Insert(newIndex, currentItem);
-                            i = newIndex - 1;
-                            continue;
-                        }
-                    }
-                }
+                // Assign runway, approach type, landing time, and feeder fix time
+                var landingTime = result.LandingTime;
 
                 // TODO: Double check how this is supposed to work
-                FlowControls flowControls;
-                if (currentFlight.AircraftCategory == AircraftCategory.Jet && landingTime.IsAfter(currentFlight.LandingEstimate))
-                {
-                    flowControls = FlowControls.ReduceSpeed;
-                }
-                else
-                {
-                    flowControls = FlowControls.ProfileSpeed;
-                }
+                var flowControls =
+                    currentFlight.AircraftCategory == AircraftCategory.Jet &&
+                    landingTime.IsAfter(currentFlight.LandingEstimate)
+                        ? FlowControls.ReduceSpeed
+                        : FlowControls.ProfileSpeed;
 
-                Schedule(currentFlight, landingTime, flowControls, runway.Identifier);
+                Schedule(currentFlight, landingTime, result.Option.RunwayIdentifier, result.Option.ApproachType, flowControls);
             }
 
             _flights.Clear();
@@ -585,6 +535,7 @@ public class Sequence
                 int currentIndex,
                 DateTimeOffset landingEstimate,
                 TimeSpan maximumDelay,
+                RunwayMode runwayMode,
                 Runway referenceRunway)
             {
                 // TODO: What if we move forward into a previous runway mode?
@@ -594,8 +545,8 @@ public class Sequence
 
                 for (var candidateIndex = currentIndex - 1; candidateIndex > 0; candidateIndex--)
                 {
-                    var earliestLandingTime = GetEarliestLandingTimeForIndex(candidateIndex, landingEstimate, referenceRunway);
-                    var latestLandingTime = GetLatestLandingTimeForIndex(candidateIndex, referenceRunway);
+                    var earliestLandingTime = GetEarliestLandingTimeForIndex(candidateIndex, landingEstimate, runwayMode, referenceRunway);
+                    var latestLandingTime = GetLatestLandingTimeForIndex(candidateIndex, runwayMode, referenceRunway);
 
                     // This slot isn't available, try the next one
                     if (latestLandingTime.HasValue && earliestLandingTime.IsAfter(latestLandingTime.Value))
@@ -607,7 +558,7 @@ public class Sequence
                     // When we insert here, that item gets displaced to candidateIndex+1
                     // If it's immovable (slot, runway change, frozen flight), we can't push past its time constraint
                     var itemAtPosition = sequence[candidateIndex];
-                    var latestFromDisplacedItem = GetLatestLandingTimeFromItem(itemAtPosition, referenceRunway);
+                    var latestFromDisplacedItem = GetLatestLandingTimeFromItem(itemAtPosition, runwayMode, referenceRunway);
                     if (latestFromDisplacedItem.HasValue && earliestLandingTime.IsAfter(latestFromDisplacedItem.Value))
                     {
                         // Would create a conflict with the item we're displacing
@@ -627,11 +578,11 @@ public class Sequence
                 return currentIndex;
             }
 
-            DateTimeOffset GetEarliestLandingTimeForIndex(int index, DateTimeOffset landingEstimate, Runway referenceRunway)
+            DateTimeOffset GetEarliestLandingTimeForIndex(int index, DateTimeOffset landingEstimate, RunwayMode runwayMode, Runway referenceRunway)
             {
                 var earliestLandingTime = sequence
                     .Take(index)
-                    .Max(s => GetEarliestLandingTimeFromItem(s, referenceRunway));
+                    .Max(s => GetEarliestLandingTimeFromItem(s, runwayMode, referenceRunway));
 
                 if (earliestLandingTime.HasValue && earliestLandingTime.Value.IsAfter(landingEstimate))
                     return earliestLandingTime.Value;
@@ -639,92 +590,174 @@ public class Sequence
                 return landingEstimate;
             }
 
-            DateTimeOffset? GetLatestLandingTimeForIndex(int index, Runway referenceRunway)
+            DateTimeOffset? GetLatestLandingTimeForIndex(int index, RunwayMode runwayMode, Runway referenceRunway)
             {
                 var latestLandingTime = sequence
                     .Skip(index)
-                    .Min(s => GetLatestLandingTimeFromItem(s, referenceRunway));
+                    .Min(s => GetLatestLandingTimeFromItem(s, runwayMode, referenceRunway));
 
                 return latestLandingTime;
             }
 
-            DateTimeOffset? GetLatestLandingTimeFromItem(ISequenceItem item, Runway referenceRunway)
+            DateTimeOffset? GetLatestLandingTimeFromItem(ISequenceItem item, RunwayMode runwayMode, Runway referenceRunway)
             {
-                if (item is RunwayModeChangeSequenceItem runwayModeChangeItem)
+                switch (item)
                 {
-                    return runwayModeChangeItem.LastLandingTimeInPreviousMode;
-                }
+                    case RunwayModeChangeSequenceItem runwayModeChangeItem:
+                        return runwayModeChangeItem.LastLandingTimeInPreviousMode;
 
-                if (item is SlotSequenceItem slotSequenceItem && slotSequenceItem.Slot.RunwayIdentifiers.Contains(referenceRunway.Identifier))
-                {
-                    return slotSequenceItem.Slot.StartTime;
-                }
+                    case SlotSequenceItem slotSequenceItem when slotSequenceItem.Slot.RunwayIdentifiers.Contains(referenceRunway.Identifier):
+                        return slotSequenceItem.Slot.StartTime;
 
-                // Landed and Frozen flights cannot move
-                // Any other flight can be moved, so we'll ignore them and rely on the next iteration to re-calculate their STA
-                if (item is FlightSequenceItem { Flight.State: State.Landed or State.Frozen } flightSequenceItem)
-                {
-                    if (flightSequenceItem.Flight.AssignedRunwayIdentifier == referenceRunway.Identifier)
+                    // Landed and Frozen flights cannot move
+                    // Any other flight can be moved, so we'll ignore them and rely on the next iteration to re-calculate their STA
+                    case FlightSequenceItem { Flight.State: State.Landed or State.Frozen } flightSequenceItem:
                     {
-                        return flightSequenceItem.Flight.LandingTime.Subtract(referenceRunway.AcceptanceRate);
+                        var requiredSeparation = GetRequiredSeparation(flightSequenceItem, referenceRunway, runwayMode);
+                        if (requiredSeparation == TimeSpan.Zero)
+                            return null;
+
+                        return flightSequenceItem.Flight.LandingTime.Subtract(requiredSeparation);
                     }
 
-                    var dependency = referenceRunway.Dependencies.FirstOrDefault(f => f.RunwayIdentifier == flightSequenceItem.Flight.AssignedRunwayIdentifier);
-                    if (dependency is not null)
-                    {
-                        return flightSequenceItem.Flight.LandingTime.Subtract(dependency.Separation);
-                    }
+                    default: return null;
                 }
-
-                return null;
             }
 
-            DateTimeOffset? GetEarliestLandingTimeFromItem(ISequenceItem item, Runway referenceRunway)
+            DateTimeOffset? GetEarliestLandingTimeFromItem(ISequenceItem item, RunwayMode runwayMode, Runway referenceRunway)
             {
-                if (item is RunwayModeChangeSequenceItem runwayModeChangeItem)
+                switch (item)
                 {
-                    return runwayModeChangeItem.FirstLandingTimeInNewMode;
-                }
+                    case RunwayModeChangeSequenceItem runwayModeChangeItem:
+                        return runwayModeChangeItem.FirstLandingTimeInNewMode;
 
-                if (item is SlotSequenceItem slotSequenceItem && slotSequenceItem.Slot.RunwayIdentifiers.Contains(referenceRunway.Identifier))
-                {
-                    return slotSequenceItem.Slot.EndTime;
-                }
+                    case SlotSequenceItem slotSequenceItem when slotSequenceItem.Slot.RunwayIdentifiers.Contains(referenceRunway.Identifier):
+                        return slotSequenceItem.Slot.EndTime;
 
-                if (item is FlightSequenceItem flightSequenceItem)
-                {
-                    if (flightSequenceItem.Flight.AssignedRunwayIdentifier == referenceRunway.Identifier)
+                    case FlightSequenceItem flightSequenceItem:
                     {
-                        return flightSequenceItem.Flight.LandingTime.Add(referenceRunway.AcceptanceRate);
+                        var requiredSeparation = GetRequiredSeparation(flightSequenceItem, referenceRunway, runwayMode);
+                        if (requiredSeparation == TimeSpan.Zero)
+                            return null;
+
+                        return flightSequenceItem.Flight.LandingTime.Add(requiredSeparation);
                     }
 
-                    var dependency = referenceRunway.Dependencies.FirstOrDefault(f => f.RunwayIdentifier == flightSequenceItem.Flight.AssignedRunwayIdentifier);
-                    if (dependency is not null)
+                    default: return null;
+                }
+            }
+
+            TimeSpan GetRequiredSeparation(FlightSequenceItem flightSequenceItem, Runway referenceRunway, RunwayMode runwayMode)
+            {
+                if (flightSequenceItem.Flight.AssignedRunwayIdentifier == referenceRunway.Identifier)
+                {
+                    // Same runway, use the acceptance rate
+                    return referenceRunway.AcceptanceRate;
+                }
+
+                if (runwayMode.Runways.Any(r => r.Identifier == referenceRunway.Identifier))
+                {
+                    // Same mode, use the dependency rate
+                    return runwayMode.DependencyRate;
+                }
+
+                // Runway not in mode, use off-mode rate
+                return runwayMode.OffModeSeparation;
+            }
+
+            (RunwayOption Option, DateTimeOffset LandingTime, int SequencePosition) EvaluateRunwayOption(
+                RunwayOption runwayOption,
+                Flight flight,
+                int currentIndex,
+                DateTimeOffset targetLandingTime,
+                RunwayMode runwayMode)
+            {
+                // Create a Runway object from the RunwayOption for use with helper methods
+                var runway = new Runway(
+                    runwayOption.RunwayIdentifier,
+                    runwayOption.ApproachType,
+                    runwayOption.RequiredSeparation,
+                    []);
+
+                var position = currentIndex;
+                var landingEstimate = flight.LandingEstimate;
+
+                // Calculate earliest landing time at current position
+                var earliestLandingTime = GetEarliestLandingTimeForIndex(position, targetLandingTime, runwayMode, runway);
+
+                // Check for conflicts with items behind us in the sequence (later positions)
+                var latestLandingTime = GetLatestLandingTimeForIndex(position, runwayMode, runway);
+                if (latestLandingTime.HasValue && earliestLandingTime.IsAfter(latestLandingTime.Value))
+                {
+                    // Conflict detected - need to move later in sequence
+                    var foundValidPosition = false;
+                    for (var candidateIndex = position + 1; candidateIndex <= sequence.Count; candidateIndex++)
                     {
-                        return flightSequenceItem.Flight.LandingTime.Add(dependency.Separation);
+                        var candidateEarliest = GetEarliestLandingTimeForIndex(candidateIndex, targetLandingTime, runwayMode, runway);
+                        var candidateLatest = GetLatestLandingTimeForIndex(candidateIndex, runwayMode, runway);
+
+                        // Check if this position is valid
+                        if (candidateLatest.HasValue && !candidateEarliest.IsSameOrBefore(candidateLatest.Value))
+                            continue;
+
+                        // Also check we don't conflict with the item we're displacing
+                        if (candidateIndex < sequence.Count)
+                        {
+                            var itemAtPosition = sequence[candidateIndex];
+                            var latestFromDisplacedItem = GetLatestLandingTimeFromItem(itemAtPosition, runwayMode, runway);
+                            if (latestFromDisplacedItem.HasValue && candidateEarliest.IsAfter(latestFromDisplacedItem.Value))
+                            {
+                                continue;
+                            }
+                        }
+
+                        position = candidateIndex;
+                        earliestLandingTime = candidateEarliest;
+                        foundValidPosition = true;
+                        break;
+                    }
+
+                    // If we couldn't find a valid position backwards, stay at current position
+                    if (!foundValidPosition)
+                    {
+                        position = currentIndex;
                     }
                 }
 
-                return null;
+                var landingTime = earliestLandingTime;
+
+                // Check maximum delay constraint
+                var totalDelay = landingTime - landingEstimate;
+                if (flight.MaximumDelay.HasValue)
+                {
+                    var effectiveMax = EffectiveMaximumDelay(flight.MaximumDelay.Value, runway);
+                    if (totalDelay > effectiveMax)
+                    {
+                        // Try to find a position forward that respects max delay
+                        var newPosition = FindInsertionPointForMaximumDelay(
+                            position,
+                            landingEstimate,
+                            flight.MaximumDelay.Value,
+                            runwayMode,
+                            runway);
+
+                        if (newPosition < position)
+                        {
+                            position = newPosition;
+                            landingTime = GetEarliestLandingTimeForIndex(newPosition, targetLandingTime, runwayMode, runway);
+                        }
+                    }
+                }
+
+                return (runwayOption, landingTime, position);
             }
         }
     }
 
-    void Schedule(Flight flight, DateTimeOffset landingTime, FlowControls flowControls, string runwayIdentifier)
+    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, string approachType, FlowControls flowControls)
     {
         flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
-
-        // Update the approach type if the new runway doesn't have the current approach type
-        var approachTypes = _arrivalLookup.GetApproachTypes(
-            flight.DestinationIdentifier,
-            flight.FeederFixIdentifier,
-            flight.Fixes.Select(x => x.ToString()).ToArray(),
-            flight.AssignedRunwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
-
-        if (!approachTypes.Contains(flight.ApproachType))
-            flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
+        flight.SetApproachType(approachType);
 
         DateTimeOffset? feederFixTime = null;
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && !flight.HasPassedFeederFix)
@@ -737,6 +770,54 @@ public class Sequence
         }
 
         flight.SetSequenceData(landingTime, feederFixTime, flowControls);
+    }
+
+    record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation);
+
+    // TODO: Extract this out into a separate service so we can test it
+    RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode)
+    {
+        // If a runway is assigned, and the flight is stable, leave it as-is
+        // For stable flights, preserve both the runway AND the approach type
+        if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier) && flight.State is not State.Unstable)
+        {
+            var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
+            if (runway is not null)
+            {
+                return [new RunwayOption(runway.Identifier, flight.ApproachType, runway.AcceptanceRate)];
+            }
+
+            // Runway is off-mode, create an ad-hoc option
+            var separation = runwayMode.OffModeSeparation == TimeSpan.Zero
+                ? TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds)
+                : runwayMode.OffModeSeparation;
+
+            return [new RunwayOption(flight.AssignedRunwayIdentifier, flight.ApproachType, separation)];
+        }
+
+        var possibleRunways = new HashSet<RunwayOption>();
+        foreach (var runway in runwayMode.Runways)
+        {
+            // If the runway requires a feeder fix to match, and this aircraft is tracking via that fix, we can assign it
+            if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && runway.FeederFixes.Contains(flight.FeederFixIdentifier))
+            {
+                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate));
+            }
+
+            // Runway has no specific feeder fix requirements, so we can assign it regardless of the feeder
+            if (!runway.FeederFixes.Any())
+            {
+                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate));
+            }
+        }
+
+        if (possibleRunways.Count == 0)
+        {
+            // Couldn't find a good match, just use the default
+            possibleRunways.Add(new RunwayOption(runwayMode.Default.Identifier, runwayMode.Default.ApproachType, runwayMode.Default.AcceptanceRate));
+        }
+
+        return possibleRunways.ToArray();
     }
 
     // TODO: Invoke this from handlers rather than internally.

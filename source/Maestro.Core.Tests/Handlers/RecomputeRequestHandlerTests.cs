@@ -22,8 +22,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             Identifier = "34IVA",
             Runways =
             [
-                new RunwayConfiguration { Identifier = "34L", LandingRateSeconds = 180 },
-                new RunwayConfiguration { Identifier = "34R", LandingRateSeconds = 180 }
+                new RunwayConfiguration { Identifier = "34L", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = []},
+                new RunwayConfiguration { Identifier = "34R", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = [] }
             ]
         });
 
@@ -94,7 +94,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
-            .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlightsInOrder(flight1, flight2, flight3))
+            .WithSequence(s => s.WithSingleRunway("34L", TimeSpan.FromSeconds(180)).WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
         var handler = GetRequestHandler(instanceManager, sequence);
@@ -187,17 +187,15 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     }
 
     // TODO: Revisit
-    [Theory]
-    [InlineData(true, Skip = "Intended behaviour is unclear")]
-    [InlineData(false)]
-    public async Task RunwayIsReset(bool manual)
+    [Fact]
+    public async Task RunwayIsReset()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(10))
-            .WithRunway("34R", manual)
+            .WithRunway("34R")
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)

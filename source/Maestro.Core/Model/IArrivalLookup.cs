@@ -67,9 +67,25 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
             .OrderByDescending(GetRank)
             .ToArray();
 
-        // No matches, nothing to do
+        // No matches, calculate an average
         if (foundArrivalConfigurations.Length == 0)
-            return null;
+        {
+            var average = TimeSpan.FromMinutes(airportConfiguration.Arrivals.SelectMany(a => a.RunwayIntervals.Values).Average());
+
+            logger.Warning(
+                "No arrivals with the following lookup parameters could be found: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; APCH = {ApproachType}; Type = {Type}",
+                airportIdentifier,
+                feederFixIdentifier,
+                runwayIdentifier,
+                approachType,
+                aircraftTypeCode);
+
+            logger.Warning(
+                "Calculated average {AverageTtg}",
+                average);
+
+            return average;
+        }
 
         if (foundArrivalConfigurations.Length > 1)
         {

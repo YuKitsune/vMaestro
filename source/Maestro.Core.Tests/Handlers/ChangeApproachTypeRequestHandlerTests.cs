@@ -29,6 +29,7 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithLandingEstimate(now.AddMinutes(32))
             .WithLandingTime(now.AddMinutes(32))
             .WithRunway("34R")
+            .WithState(State.Stable) // Make the flight Stable so the ApproachType doesn't get reset when scheduling
             .Build();
 
         var arrivalLookup = GetArrivalLookup();
@@ -71,6 +72,7 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithLandingEstimate(feederFixEstimate.AddMinutes(22))
             .WithLandingTime(feederFixEstimate.AddMinutes(22))
             .WithRunway("34R")
+            .WithState(State.Stable) // Make the flight Stable so the ApproachType doesn't get reset when scheduling
             .Build();
 
         var arrivalLookup = GetArrivalLookup();

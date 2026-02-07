@@ -72,6 +72,18 @@ When this happens, the enroute ladders will display the two flight labels on top
 The labels will be separated on the runway ladders.
 :::
 
+## Runway Assignment
+
+Maestro will automatically assign runways to arrivals based on the runway mode active at their ETA.
+
+If the runway mode is configured to assign runways based on the Feeder Fix, Maestro will only consider that runway when sequencing that flight.
+
+If the runway mode does not specify any requirements for Feeder Fixes or runways, Maestro will calculate the STA for each runway in the runway mode, and assign the runway that results in the earliest STA.
+
+If the flight is not tracking via any feeder fix, then the first runway defined in the runway mode will be assigned.
+
+Maestro will only assign runways for Unstable flights. Once a flight has stablised, Maestro will not make any changes to the runway assignment.
+
 ## Flight States
 
 Maestro uses various "States" for flights that affect how they are processed.

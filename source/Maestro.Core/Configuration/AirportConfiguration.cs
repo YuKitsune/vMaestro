@@ -40,12 +40,15 @@ public class AirportConfiguration
     /// </summary>
     public int MaxLandedFlights { get; init; } = 5;
 
-    public required Dictionary<string, string[]> PreferredRunways { get; init; } = new();
-    public required RunwayConfiguration[] Runways { get; init; }
+    public int DefaultOffModeSeparationSeconds { get; init; } = 300;
+
+    public string[] Runways { get; set; }
     public required RunwayModeConfiguration[] RunwayModes { get; init; }
     public required ArrivalConfiguration[] Arrivals { get; init; }
     public required ViewConfiguration[] Views { get; init; }
     public required DepartureAirportConfiguration[] DepartureAirports { get; init; } = [];
+
+    // TODO: Average taxi times and terminal assignments
 }
 
 public class DepartureAirportConfiguration
@@ -57,66 +60,101 @@ public class DepartureAirportConfiguration
 
 public class DepartureAirportFlightTimeConfiguration
 {
-    public required IAircraftTypeConfiguration AircraftType { get; init; }
+    public required IAircraftDescriptor Aircraft { get; init; }
     public required TimeSpan AverageFlightTime { get; init; }
 }
 
-[JsonConverter(typeof(AircraftTypeConfigurationJsonConverter))]
-public interface IAircraftTypeConfiguration;
+[JsonConverter(typeof(AircraftDescriptorJsonConverter))]
+public interface IAircraftDescriptor;
 
 [DebuggerDisplay("All")]
-public record AllAircraftTypesConfiguration : IAircraftTypeConfiguration;
+public record AllAircraftTypesDescriptor : IAircraftDescriptor;
 
 [DebuggerDisplay("{TypeCode}")]
-public record SpecificAircraftTypeConfiguration(string TypeCode) : IAircraftTypeConfiguration;
+public record SpecificAircraftTypeDescriptor(string TypeCode) : IAircraftDescriptor;
 
-[DebuggerDisplay("{Category}")]
-public record AircraftCategoryConfiguration(AircraftCategory Category) : IAircraftTypeConfiguration;
-
-public class AircraftTypeConfigurationJsonConverter : JsonConverter<IAircraftTypeConfiguration>
+[DebuggerDisplay("{DisplayValues}")]
+public record MultipleAircraftTypeDescriptor(string[] TypeCodes) : IAircraftDescriptor
 {
-    public override void WriteJson(JsonWriter writer, IAircraftTypeConfiguration? value, JsonSerializer serializer)
+    string DisplayValues => string.Join(", ", TypeCodes);
+}
+
+[DebuggerDisplay("{AircraftCategory}")]
+public record AircraftCategoryDescriptor(AircraftCategory AircraftCategory) : IAircraftDescriptor;
+
+[DebuggerDisplay("{WakeCategory}")]
+public record WakeCategoryDescriptor(WakeCategory WakeCategory) : IAircraftDescriptor;
+
+public class AircraftDescriptorJsonConverter : JsonConverter<IAircraftDescriptor>
+{
+    public override void WriteJson(JsonWriter writer, IAircraftDescriptor? value, JsonSerializer serializer)
     {
         switch (value)
         {
-            case AllAircraftTypesConfiguration:
+            case AllAircraftTypesDescriptor:
                 writer.WriteValue("ALL");
                 break;
 
-            case AircraftCategoryConfiguration { Category: AircraftCategory.Jet }:
+            case AircraftCategoryDescriptor { AircraftCategory: AircraftCategory.Jet }:
                 writer.WriteValue("JET");
                 break;
 
-            case AircraftCategoryConfiguration { Category: AircraftCategory.NonJet }:
+            case AircraftCategoryDescriptor { AircraftCategory: AircraftCategory.NonJet }:
                 writer.WriteValue("NONJET");
                 break;
 
-            case SpecificAircraftTypeConfiguration specificAircraftTypeConfiguration:
+            case WakeCategoryDescriptor { WakeCategory: WakeCategory.Light }:
+                writer.WriteValue("LIGHT");
+                break;
+
+            case WakeCategoryDescriptor { WakeCategory: WakeCategory.Medium }:
+                writer.WriteValue("MEDIUM");
+                break;
+
+            case WakeCategoryDescriptor { WakeCategory: WakeCategory.Heavy }:
+                writer.WriteValue("HEAVY");
+                break;
+
+            case WakeCategoryDescriptor { WakeCategory: WakeCategory.SuperHeavy }:
+                writer.WriteValue("SUPER");
+                break;
+
+            case MultipleAircraftTypeDescriptor multipleAircraftTypeDescriptor:
+                writer.WriteValue(string.Join(",", multipleAircraftTypeDescriptor.TypeCodes));
+                break;
+
+            case SpecificAircraftTypeDescriptor specificAircraftTypeConfiguration:
                 writer.WriteValue(specificAircraftTypeConfiguration.TypeCode);
                 break;
 
             default:
-                throw new JsonSerializationException("Unexpected type when writing IAircraftTypeConfiguration.");
+                throw new JsonSerializationException("Unexpected type when writing IAircraftDescriptor.");
         }
     }
 
-    public override IAircraftTypeConfiguration ReadJson(
+    public override IAircraftDescriptor ReadJson(
         JsonReader reader,
         Type objectType,
-        IAircraftTypeConfiguration? existingValue,
+        IAircraftDescriptor? existingValue,
         bool hasExistingValue,
         JsonSerializer serializer)
     {
         var value = reader.Value;
         if (value is not string valueStr)
-            throw new JsonSerializationException("Unexpected value when reading IAircraftTypeConfiguration.");
+            throw new JsonSerializationException("Unexpected value when reading IAircraftDescriptor.");
 
         return valueStr.ToUpper() switch
         {
-            "ALL" => new AllAircraftTypesConfiguration(),
-            "JET" => new AircraftCategoryConfiguration(AircraftCategory.Jet),
-            "PROP" or "NONJET" => new AircraftCategoryConfiguration(AircraftCategory.NonJet),
-            _ => new SpecificAircraftTypeConfiguration(valueStr),
+            "ALL" => new AllAircraftTypesDescriptor(),
+            "JET" => new AircraftCategoryDescriptor(AircraftCategory.Jet),
+            "PROP" or "NONJET" => new AircraftCategoryDescriptor(AircraftCategory.NonJet),
+            "LIGHT" or "L" => new WakeCategoryDescriptor(WakeCategory.Light),
+            "MEDIUM" or "M" => new WakeCategoryDescriptor(WakeCategory.Medium),
+            "HEAVY" or "H" => new WakeCategoryDescriptor(WakeCategory.Heavy),
+            "SUPERHEAVY" or "SUPER" or "S" or "J" => new WakeCategoryDescriptor(WakeCategory.SuperHeavy),
+            _ => valueStr.Contains(",")
+                ? new MultipleAircraftTypeDescriptor(valueStr.Split(','))
+                : new SpecificAircraftTypeDescriptor(valueStr)
         };
     }
 }

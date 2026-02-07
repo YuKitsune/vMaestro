@@ -48,6 +48,10 @@ public class RecomputeRequestHandler(
                 return;
             }
 
+            // Reset the runway to the default so it can be calculated in the Scheduling phase
+            var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
+            flight.SetRunway(runwayMode.Default.Identifier, manual: false);
+
             // Reset the feeder fix in case of a re-route
             var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
             if (feederFix is not null)
@@ -56,13 +60,14 @@ public class RecomputeRequestHandler(
             flight.HighPriority = feederFix is null;
             flight.SetMaximumDelay(null);
 
+            // TODO: Don't do this. Instead, just re-calculate the ETA_FF from the system estimates, then let the Sequence calculate the actual ETA when it does the runway assignment.
             CalculateEstimates(airportConfiguration, flight);
             flight.InvalidateSequenceData();
 
-            sequence.RepositionByEstimate(flight);
-
             // Reset the state
             flight.SetState(State.Unstable, clock);
+
+            sequence.RepositionByEstimate(flight);
             flight.UpdateStateBasedOnTime(clock);
 
             logger.Information("{Callsign} recomputed", flight.Callsign);

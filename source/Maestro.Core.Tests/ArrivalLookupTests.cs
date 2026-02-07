@@ -15,7 +15,6 @@ public class ArrivalLookupTests
         var airportConfiguration = new AirportConfiguration
         {
             Identifier = "YZZZ",
-            PreferredRunways = [],
             Arrivals =
             [
                 // Matches all aircraft
