@@ -1,11 +1,8 @@
 using System.ComponentModel.Composition;
 using System.Reflection;
 using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Automation.Peers;
 using System.Windows.Forms;
 using System.Windows.Media;
-using System.Xml.Linq;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Core;
@@ -20,8 +17,6 @@ using Maestro.Plugin.Handlers;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
 using Maestro.Wpf.Integrations;
-using Maestro.Wpf.ViewModels;
-using Maestro.Wpf.Views;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -29,7 +24,6 @@ using Serilog;
 using vatsys;
 using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
-using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace Maestro.Plugin;
 

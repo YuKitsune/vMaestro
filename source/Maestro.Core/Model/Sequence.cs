@@ -7,7 +7,7 @@ namespace Maestro.Core.Model;
 
 public class Sequence
 {
-    object _gate = new object();
+    readonly object _gate = new();
 
     readonly AirportConfiguration _airportConfiguration;
 
@@ -474,6 +474,8 @@ public class Sequence
                     currentFlight,
                     currentRunwayMode);
 
+                // TODO: Use ETA_FF + TTGmin if no runway has been assigned
+
                 var targetLandingTime = currentFlight.TargetLandingTime ?? currentFlight.LandingEstimate;
 
                 // Evaluate each runway option to find the one with the earliest landing time
@@ -679,8 +681,9 @@ public class Sequence
                     runwayOption.RequiredSeparation,
                     []);
 
+                // TODO: Use ETA_FF + TTG for current runway + approach type
+
                 var position = currentIndex;
-                var landingEstimate = flight.LandingEstimate;
 
                 // Calculate earliest landing time at current position
                 var earliestLandingTime = GetEarliestLandingTimeForIndex(position, targetLandingTime, runwayMode, runway);
@@ -727,6 +730,7 @@ public class Sequence
                 var landingTime = earliestLandingTime;
 
                 // Check maximum delay constraint
+                var landingEstimate = flight.LandingEstimate;
                 var totalDelay = landingTime - landingEstimate;
                 if (flight.MaximumDelay.HasValue)
                 {
@@ -759,6 +763,7 @@ public class Sequence
         flight.SetRunway(runwayIdentifier);
         flight.SetApproachType(approachType);
 
+        // TODO: Consolidate TTG lookups and ETA updates into a single place
         DateTimeOffset? feederFixTime = null;
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && !flight.HasPassedFeederFix)
         {

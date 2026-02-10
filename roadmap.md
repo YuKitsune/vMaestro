@@ -7,17 +7,6 @@
 - [ ] Delete redundant or inaccurate test cases
 - [ ] Compare remaining test cases with reference material
 
-## Test OnFdrUpdate reliability
-
-Event doesn't seem to get raised when ETAs update.
-Verify if this is the case.
-Consider scalling the FDRs every 30 seconds instead.
-
-## Streamline Approach Type and Runway Assignment
-
-- [X] Allow runway assignment to be deferred until the Scheduling phase
-- [ ] Extract runway and approach type assignment into a separate, testable service
-
 ### Configuration Overhaul
 
 Introduce support for transitions and approach types.
@@ -29,7 +18,6 @@ Configuration files will likely require a new format to support tabular data suc
     - [X] Introduce approach types
 - [X] Introduce "Change Approach Type" request and handler
 - [X] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
-    - [ ] Filter runway options based on feeder fix in the UI
 - [X] Remove runway requirements and preferences
 - [ ] Store the processed arrival and runway mode on the Flight
     - [ ] Set landing estimate based on ETA_FF + arrival TTG
@@ -71,18 +59,11 @@ Revisit the sequencing and scheduling algorithms.
 - [ ] Add support for multiple ladders and timelines
 - [ ] Implement configuration for custom label layout and colors
 
-### Configuration Zone enhancements
-
-- [ ] 10,000 ft and 6,000 ft winds (with configuration view)
-- [ ] Achieved rates
-- [ ] Units selector (NM, aircraft/hr, seconds)
-- [ ] UTC time
-
 ### Documentation
 
-- [X] Write documentation for ATC usage
-- [ ] Write documentation for configuration
-- [ ] Architecture decision record
+- [ ] Write documentation for ATC usage
+- [ ] Write documentation for configuration and server setup
+- [ ] Document limitations and differences compared to the real system
 
 ## Future Enhancements
 
@@ -123,7 +104,6 @@ repository.UpdateSequence(sequence);
     - [ ] Sequence: Accepts changes from builder
     - [ ] Scheduler: Applying required separation between flights
 
-
 ### WinForms Compatibility
 
 - [ ] Revisit the `*` WPF size, and it's compatibility with WinForms.
@@ -138,3 +118,17 @@ repository.UpdateSequence(sequence);
 - [ ] Allow flow to declare their offline sequence as the source of truth before connecting, so they don't inherit a dirty sequence
 - [ ] Show red background when in offline mode
 - [ ] Show amber background when reconnecting
+
+### Realtime TTG Calculations
+
+Real MAESTRO _seems_ to use Aircraft Class (TAS) + Trajectory (track miles + heading) + wind to calculate the TTG, P, and Pmax.
+Investigate using this method rather than pre-programmed TTG values.
+
+### Configuration Zone enhancements
+
+Blocked by realtime TTG calculations.
+
+- [ ] 10,000 ft and 6,000 ft winds (with configuration view)
+- [ ] Achieved rates
+- [ ] Units selector (NM, aircraft/hr, seconds)
+- [ ] UTC time
