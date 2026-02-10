@@ -47,7 +47,7 @@ public class ChangeRunwayRequestHandler(
             // TODO: Track who initiated the change
             logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
-            flight.SetRunway(request.RunwayIdentifier, true);
+            flight.SetRunway(request.RunwayIdentifier);
 
             // Update the approach type if the new runway doesn't have the current approach type
             var approachTypes = arrivalLookup.GetApproachTypes(

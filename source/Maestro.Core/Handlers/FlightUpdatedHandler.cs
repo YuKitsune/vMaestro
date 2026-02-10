@@ -141,7 +141,7 @@ public class FlightUpdatedHandler(
                             feederFix,
                             landingEstimate);
 
-                        sequencedFlight.SetRunway(runway.Identifier, manual: false);
+                        sequencedFlight.SetRunway(runway.Identifier);
 
                         var approachTypes = arrivalLookup.GetApproachTypes(
                             sequencedFlight.DestinationIdentifier,

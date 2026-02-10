@@ -50,7 +50,7 @@ public class RecomputeRequestHandler(
 
             // Reset the runway to the default so it can be calculated in the Scheduling phase
             var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
-            flight.SetRunway(runwayMode.Default.Identifier, manual: false);
+            flight.SetRunway(runwayMode.Default.Identifier);
 
             // Reset the feeder fix in case of a re-route
             var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));

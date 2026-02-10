@@ -56,7 +56,6 @@ public class Flight : IEquatable<Flight>
         EstimatedDepartureTime = message.EstimatedDepartureTime;
         IsFromDepartureAirport = message.IsFromDepartureAirport;
         AssignedRunwayIdentifier = message.AssignedRunwayIdentifier;
-        RunwayManuallyAssigned = message.RunwayManuallyAssigned;
         State = message.State;
         HighPriority = message.HighPriority;
         MaximumDelay = message.MaximumDelay;
@@ -92,7 +91,6 @@ public class Flight : IEquatable<Flight>
     // TODO: Consider storing the minimum separation required here
     // Either that or store the runway mode here so we can easily reference it later
     public string? AssignedRunwayIdentifier { get; private set; }
-    public bool RunwayManuallyAssigned { get; private set; }
 
     public State State { get; private set; }
     public bool HighPriority { get; set; }
@@ -127,10 +125,9 @@ public class Flight : IEquatable<Flight>
         State = state;
     }
 
-    public void SetRunway(string runwayIdentifier, bool manual)
+    public void SetRunway(string runwayIdentifier)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
-        RunwayManuallyAssigned = manual;
     }
 
     public void SetFeederFix(
@@ -234,7 +231,6 @@ public class Flight : IEquatable<Flight>
         InitialFeederFixEstimate = null;
         FeederFixTime = null;
         AssignedRunwayIdentifier = null;
-        RunwayManuallyAssigned = false;
         LandingEstimate = default;
         TargetLandingTime = default;
         InitialLandingEstimate = default;
