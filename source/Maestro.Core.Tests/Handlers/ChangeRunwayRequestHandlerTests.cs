@@ -60,7 +60,6 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         flight1.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
-        flight1.RunwayManuallyAssigned.ShouldBe(true, "runway should be marked as manually assigned");
 
         flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
         flight1.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));

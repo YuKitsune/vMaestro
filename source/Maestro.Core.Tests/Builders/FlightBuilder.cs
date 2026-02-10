@@ -22,7 +22,6 @@ public class FlightBuilder(string callsign)
 
     string _approachType = string.Empty;
     string _assignedRunway = "34L";
-    bool _manualRunway = false;
 
     bool _highPriority = false;
 
@@ -127,10 +126,9 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithRunway(string runway, bool manual = false)
+    public FlightBuilder WithRunway(string runway)
     {
         _assignedRunway = runway;
-        _manualRunway = manual;
         return this;
     }
 
@@ -181,7 +179,7 @@ public class FlightBuilder(string callsign)
 
         flight.SetSequenceData(landingTime, feederFixTime, FlowControls.ProfileSpeed);
 
-        flight.SetRunway(_assignedRunway, _manualRunway);
+        flight.SetRunway(_assignedRunway);
 
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
 

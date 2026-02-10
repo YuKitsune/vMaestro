@@ -52,7 +52,7 @@ public class MoveFlightRequestHandler(
 
             // TODO: Manually set the runway for now, but we need to revisit this later
             // Re: delaying into a new runway mode
-            flight.SetRunway(runwayIdentifier, manual: true);
+            flight.SetRunway(runwayIdentifier);
 
             // Update the approach type if the new runway doesn't have the current approach type
             var approachTypes = arrivalLookup.GetApproachTypes(

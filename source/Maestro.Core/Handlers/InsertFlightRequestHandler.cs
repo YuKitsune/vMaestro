@@ -160,7 +160,7 @@ public class InsertFlightRequestHandler(
         {
             session.PendingFlights.Remove(flight);
 
-            flight.SetRunway(runway.Identifier, manual: true);
+            flight.SetRunway(runway.Identifier);
 
             var approachType = FindApproachType(
                 airportIdentifier,
@@ -281,7 +281,7 @@ public class InsertFlightRequestHandler(
         {
             session.PendingFlights.Remove(flight);
 
-            flight.SetRunway(runway.Identifier, manual: true);
+            flight.SetRunway(runway.Identifier);
 
             var approachType = FindApproachType(
                 airportIdentifier,
@@ -391,7 +391,7 @@ public class InsertFlightRequestHandler(
         {
             session.PendingFlights.Remove(flight);
 
-            flight.SetRunway(runway.Identifier, manual: true);
+            flight.SetRunway(runway.Identifier);
 
             var approachType = FindApproachType(
                 airportIdentifier,

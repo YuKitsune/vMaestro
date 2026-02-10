@@ -756,7 +756,7 @@ public class Sequence
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, string approachType, FlowControls flowControls)
     {
-        flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
+        flight.SetRunway(runwayIdentifier);
         flight.SetApproachType(approachType);
 
         DateTimeOffset? feederFixTime = null;

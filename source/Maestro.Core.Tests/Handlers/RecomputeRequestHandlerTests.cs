@@ -210,7 +210,6 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34L"); // Default runway from runway mode
-        flight.RunwayManuallyAssigned.ShouldBeFalse();
     }
 
     [Fact]

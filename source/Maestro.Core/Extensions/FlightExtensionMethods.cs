@@ -36,7 +36,6 @@ public static class FlightExtensionMethods
             MaximumDelay = flight.MaximumDelay,
             ManualFeederFixEstimate = flight.ManualFeederFixEstimate,
             ActualFeederFixTime = flight.ActualFeederFixTime,
-            RunwayManuallyAssigned = flight.RunwayManuallyAssigned,
             ApproachType = flight.ApproachType,
             LastSeen = flight.LastSeen,
             Fixes = flight.Fixes,

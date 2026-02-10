@@ -105,7 +105,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway("34L", manual: true)
+            .WithRunway("34L")
             .Build();
 
         // Set some additional properties that should be reset
@@ -130,7 +130,6 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         flight.InitialFeederFixEstimate.ShouldBeNull("InitialFeederFixEstimate should be reset to null");
         flight.FeederFixTime.ShouldBeNull("FeederFixTime should be reset to null");
         flight.AssignedRunwayIdentifier.ShouldBeNull("AssignedRunwayIdentifier should be reset to null");
-        flight.RunwayManuallyAssigned.ShouldBeFalse("RunwayManuallyAssigned should be reset to false");
         flight.LandingEstimate.ShouldBe(default(DateTimeOffset), "LandingEstimate should be reset to default");
         flight.InitialLandingEstimate.ShouldBe(default(DateTimeOffset), "InitialLandingEstimate should be reset to default");
         flight.LandingTime.ShouldBe(default(DateTimeOffset), "LandingTime should be reset to default");
