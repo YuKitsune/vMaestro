@@ -14,6 +14,7 @@ public class MoveFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IArrivalLookup arrivalLookup,
+    ITrajectoryService trajectoryService,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -52,19 +53,29 @@ public class MoveFlightRequestHandler(
 
             // TODO: Manually set the runway for now, but we need to revisit this later
             // Re: delaying into a new runway mode
-            flight.SetRunway(runwayIdentifier);
 
-            // Update the approach type if the new runway doesn't have the current approach type
+            // Determine the approach type for the new runway
             var approachTypes = arrivalLookup.GetApproachTypes(
                 flight.DestinationIdentifier,
                 flight.FeederFixIdentifier,
-                flight.Fixes.Select(x => x.ToString()).ToArray(),
-                flight.AssignedRunwayIdentifier,
+                flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
+                runwayIdentifier,
                 flight.AircraftType,
                 flight.AircraftCategory);
 
-            if (!approachTypes.Contains(flight.ApproachType))
-                flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
+            var newApproachType = approachTypes.Contains(flight.ApproachType)
+                ? flight.ApproachType
+                : approachTypes.FirstOrDefault() ?? string.Empty;
+
+            // Lookup trajectory for the new runway and approach before updating flight
+            var trajectory = trajectoryService.GetTrajectory(flight, runwayIdentifier, newApproachType);
+
+            // Atomic update: runway + trajectory + ETA + STA_FF
+            flight.SetRunway(runwayIdentifier, trajectory!);
+
+            // Update approach type if it changed
+            if (flight.ApproachType != newApproachType)
+                flight.SetApproachType(newApproachType, trajectory!);
 
             flight.InvalidateSequenceData();
 

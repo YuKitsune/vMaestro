@@ -14,6 +14,7 @@ public class ChangeRunwayRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IArrivalLookup arrivalLookup,
+    ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -47,21 +48,27 @@ public class ChangeRunwayRequestHandler(
             // TODO: Track who initiated the change
             logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
-            flight.SetRunway(request.RunwayIdentifier);
-
-            // Update the approach type if the new runway doesn't have the current approach type
+            // Determine the approach type for the new runway
             var approachTypes = arrivalLookup.GetApproachTypes(
                 flight.DestinationIdentifier,
                 flight.FeederFixIdentifier,
-                flight.Fixes.Select(x => x.ToString()).ToArray(),
-                flight.AssignedRunwayIdentifier,
+                flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
+                request.RunwayIdentifier,
                 flight.AircraftType,
                 flight.AircraftCategory);
 
-            if (!approachTypes.Contains(flight.ApproachType))
-                flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
+            var newApproachType = approachTypes.Contains(flight.ApproachType)
+                ? flight.ApproachType
+                : approachTypes.FirstOrDefault() ?? string.Empty;
 
-            // TODO: Re-calculate the landing estimate
+            // Lookup trajectory for the new runway and approach before updating flight
+            var trajectory = trajectoryService.GetTrajectory(flight, request.RunwayIdentifier, newApproachType);
+
+            flight.SetRunway(request.RunwayIdentifier, trajectory);
+
+            // Update approach type if it changed
+            if (flight.ApproachType != newApproachType)
+                flight.SetApproachType(newApproachType, trajectory);
 
             // Unstable flights become Stable when changing runway
             if (flight.State is State.Unstable)

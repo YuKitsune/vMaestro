@@ -9,6 +9,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
 {
     readonly DateTimeOffset _time = clockFixture.Instance.UtcNow();
     readonly TimeSpan _landingRate = TimeSpan.FromSeconds(180);
+    readonly TimeSpan _defaultTtg = TimeSpan.FromMinutes(20);
 
     [Fact]
     public void RepositionByEstimate_WithOnlyOneFlight_NoChangesAreMade()
@@ -62,7 +63,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         sequence.NumberInSequence(flight2).ShouldBe(2);
 
         // Act: Update flight2's estimate to be earlier than flight1 and reposition
-        flight2.UpdateLandingEstimate(_time.AddMinutes(3));
+        flight2.UpdateFeederFixEstimate(_time.AddMinutes(3).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(flight2);
 
         // Assert: Positions should be swapped
@@ -103,7 +104,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         sequence.NumberInSequence(unstableFlight).ShouldBe(2);
 
         // Act: Update unstableFlight's estimate to be earlier than stableFlight but close enough to conflict (within landing rate)
-        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(4));
+        unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(4).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved behind the stable flight due to conflict
@@ -144,7 +145,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         sequence.NumberInSequence(unstableFlight).ShouldBe(2);
 
         // Act: Update unstableFlight's estimate to be earlier than stableFlight with enough separation (no conflict)
-        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(5));
+        unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(5).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved in front of the stable flight
@@ -185,7 +186,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         sequence.NumberInSequence(stableFlight).ShouldBe(2);
 
         // Act: Update unstableFlight's estimate to be 2 minutes before the stable flight (causing conflict with 3-minute spacing)
-        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(7));
+        unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(7).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved behind the stable flight due to conflict
@@ -226,7 +227,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         sequence.NumberInSequence(stableFlight).ShouldBe(2);
 
         // Act: Update unstableFlight's estimate to be later but still with enough separation (no conflict)
-        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(6));
+        unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(6).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(unstableFlight);
 
         // Assert: unstableFlight should remain in front of the stable flight
@@ -268,7 +269,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         sequence.NumberInSequence(unstableFlight).ShouldBe(2);
 
         // Act: Update unstableFlight's estimate to conflict with the frozen flight
-        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(9));
+        unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(9).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved behind the frozen flight
@@ -311,7 +312,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         var originalStableLandingTime = stableFlight.LandingTime;
 
         // Act: Update unstableFlight's estimate to be earlier than stableFlight but close enough to conflict (within landing rate)
-        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(4));
+        unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(4).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved in front and land at its estimate, stable flight should be displaced
@@ -355,7 +356,7 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
         var originalStableLandingTime = stableFlight.LandingTime;
 
         // Act: Update unstableFlight's estimate to be 2 minutes before the stable flight (causing conflict with 3-minute spacing)
-        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(8));
+        unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(8).Subtract(_defaultTtg));
         sequence.RepositionByEstimate(unstableFlight);
 
         // Assert: unstableFlight should remain in front and land at its new estimate, stable flight should be displaced

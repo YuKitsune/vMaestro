@@ -523,12 +523,14 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
     {
         var arrivalLookup = Substitute.For<IArrivalLookup>();
+        var trajectoryService = Substitute.For<ITrajectoryService>();
         mediator ??= Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(
             instanceManager,
             connectionManager ?? new MockLocalConnectionManager(),
             arrivalLookup,
+            trajectoryService,
             mediator,
             clock,
             Substitute.For<ILogger>());

@@ -1,4 +1,4 @@
-﻿using Maestro.Core.Model;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Shouldly;
@@ -7,6 +7,7 @@ namespace Maestro.Core.Tests.Model;
 
 public class FlightTests(ClockFixture clockFixture)
 {
+    readonly TimeSpan _defaultTtg = TimeSpan.FromMinutes(20);
     readonly DateTimeOffset _landingTime = clockFixture.Instance.UtcNow();
 
     [Fact]
@@ -23,15 +24,15 @@ public class FlightTests(ClockFixture clockFixture)
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
-        // Act: New estimate after slowing down
-        flight.UpdateLandingEstimate(_landingTime.AddMinutes(2));
+        // Act: New estimate after slowing down (update via feeder fix estimate, ETA = ETA_FF + TTG)
+        flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(2).Subtract(_defaultTtg));
 
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(3));
 
         // Act: New estimate after slowing down
-        flight.UpdateLandingEstimate(_landingTime.AddMinutes(5));
+        flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(5).Subtract(_defaultTtg));
 
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
@@ -52,15 +53,15 @@ public class FlightTests(ClockFixture clockFixture)
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
-        // Act: New estimate after speeding up
-        flight.UpdateLandingEstimate(_landingTime.AddMinutes(-2));
+        // Act: New estimate after speeding up (update via feeder fix estimate, ETA = ETA_FF + TTG)
+        flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(-2).Subtract(_defaultTtg));
 
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(7));
 
-        // Act: New estimate after slowing down
-        flight.UpdateLandingEstimate(_landingTime.AddMinutes(-5));
+        // Act: New estimate after speeding up more
+        flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(-5).Subtract(_defaultTtg));
 
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
@@ -81,8 +82,8 @@ public class FlightTests(ClockFixture clockFixture)
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));
         flight.RemainingDelay.ShouldBe(TimeSpan.FromMinutes(5));
 
-        // Act: New estimate after speeding up
-        flight.UpdateLandingEstimate(_landingTime.AddMinutes(8));
+        // Act: New estimate after slowing down too much (update via feeder fix estimate, ETA = ETA_FF + TTG)
+        flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(8).Subtract(_defaultTtg));
 
         // Assert
         flight.TotalDelay.ShouldBe(TimeSpan.FromMinutes(5));

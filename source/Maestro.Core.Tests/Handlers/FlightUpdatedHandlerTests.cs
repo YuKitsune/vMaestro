@@ -191,11 +191,13 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     {
         // Arrange
         var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
         var flight = new FlightBuilder("QFA123")
             .WithState(state)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(ttg)
             .Build();
 
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
@@ -220,26 +222,19 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
+        trajectoryService.GetTrajectory(Arg.Any<Flight>(), Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new Trajectory(ttg));
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
         flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
-        flight.LandingEstimate.ShouldBe(newLandingTime);
+        // Landing estimate now calculated automatically when updating feeder fix estimate: FF + TTG
+        flight.LandingEstimate.ShouldBe(newFeederFixTime.Add(ttg));
     }
 
     [Fact]
@@ -361,7 +356,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         flight.AircraftType.ShouldBe("B744");
         flight.WakeCategory.ShouldBe(WakeCategory.Heavy);
         flight.OriginIdentifier.ShouldBe("YMAV");
-        flight.EstimatedDepartureTime.ShouldBe(notification.EstimatedDepartureTime);
         flight.Position!.Coordinate.Latitude.ShouldBe(notification.Position!.Coordinate.Latitude);
         flight.Position.Coordinate.Longitude.ShouldBe(notification.Position.Coordinate.Longitude);
         flight.Position.Altitude.ShouldBe(notification.Position.Altitude);
@@ -402,19 +396,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -473,19 +457,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -548,19 +522,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -799,19 +763,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -972,19 +926,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -1029,19 +973,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -1111,19 +1045,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -1193,19 +1117,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
                 new FixEstimate("YSSY", newLandingTime)
             ]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetFeederFixEstimate(
-                Arg.Any<AirportConfiguration>(),
-                Arg.Any<string>(),
-                Arg.Any<DateTimeOffset>(),
-                Arg.Any<FlightPosition>())
-            .Returns(newFeederFixTime);
-        estimateProvider.GetLandingEstimate(
-                Arg.Any<Flight>(),
-                Arg.Any<DateTimeOffset?>())
-            .Returns(newLandingTime);
+        var trajectoryService = Substitute.For<ITrajectoryService>();
 
-        var handler = GetHandler(instanceManager, clock, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -1221,7 +1135,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         IMaestroInstanceManager instanceManager,
         IClock clock,
         IArrivalLookup? arrivalLookup = null,
-        IEstimateProvider? estimateProvider = null,
+        ITrajectoryService? trajectoryService = null,
         IFlightUpdateRateLimiter? rateLimiter = null,
         IMaestroConnectionManager? connectionManager = null)
     {
@@ -1232,7 +1146,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         airportConfigurationProvider.GetAirportConfigurations().Returns([airportConfigurationFixture.Instance]);
 
         arrivalLookup ??= Substitute.For<IArrivalLookup>();
-        estimateProvider ??= Substitute.For<IEstimateProvider>();
+        trajectoryService ??= Substitute.For<ITrajectoryService>();
         connectionManager ??= new MockLocalConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
@@ -1242,7 +1156,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             rateLimiter,
             airportConfigurationProvider,
             arrivalLookup,
-            estimateProvider,
+            trajectoryService,
             mediator,
             clock,
             Substitute.For<ILogger>());

@@ -7,10 +7,28 @@ namespace Maestro.Core.Tests.Builders;
 
 public class SequenceBuilder(AirportConfiguration airportConfiguration)
 {
+    static readonly Trajectory DefaultTrajectory = new(TimeSpan.FromMinutes(20));
+
     RunwayMode? _runwayMode;
     IArrivalLookup _arrivalLookup = Substitute.For<IArrivalLookup>();
+    ITrajectoryService _trajectoryService = CreateDefaultTrajectoryService();
     IClock _clock = Substitute.For<IClock>();
     List<Flight> _flights = [];
+
+    static ITrajectoryService CreateDefaultTrajectoryService()
+    {
+        var service = Substitute.For<ITrajectoryService>();
+        service.GetTrajectory(Arg.Any<Flight>(), Arg.Any<string>(), Arg.Any<string>()).Returns(DefaultTrajectory);
+        service.GetTrajectory(
+            Arg.Any<string>(),
+            Arg.Any<AircraftCategory>(),
+            Arg.Any<string>(),
+            Arg.Any<string?>(),
+            Arg.Any<string>(),
+            Arg.Any<string>()).Returns(DefaultTrajectory);
+        service.GetAverageTrajectory(Arg.Any<string>()).Returns(DefaultTrajectory);
+        return service;
+    }
 
     public SequenceBuilder WithArrivalLookup(IArrivalLookup arrivalLookup)
     {
@@ -21,6 +39,12 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
     public SequenceBuilder WithClock(IClock clock)
     {
         _clock = clock;
+        return this;
+    }
+
+    public SequenceBuilder WithTrajectoryService(ITrajectoryService trajectoryService)
+    {
+        _trajectoryService = trajectoryService;
         return this;
     }
 
@@ -75,7 +99,7 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
 
     public Sequence Build()
     {
-        var sequence = new Sequence(airportConfiguration, _arrivalLookup, _clock);
+        var sequence = new Sequence(airportConfiguration, _arrivalLookup, _trajectoryService, _clock);
         sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(airportConfiguration.RunwayModes.First()));
         for (var i = 0; i < _flights.Count; i++)
         {

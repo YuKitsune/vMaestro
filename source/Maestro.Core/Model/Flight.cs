@@ -1,4 +1,4 @@
-﻿using Maestro.Core.Extensions;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 
@@ -6,45 +6,132 @@ namespace Maestro.Core.Model;
 
 public class Flight : IEquatable<Flight>
 {
-    public Flight(string callsign, string destinationIdentifier, DateTimeOffset initialLandingEstimate, DateTimeOffset activatedTime, string aircraftType, AircraftCategory aircraftCategory, WakeCategory wakeCategory)
+    /// <summary>
+    /// Constructor for real flights from vatSys.
+    /// </summary>
+    public Flight(
+        // Core identification
+        string callsign,
+        string aircraftType,
+        AircraftCategory aircraftCategory,
+        WakeCategory wakeCategory,
+        string destinationIdentifier,
+
+        // Origin info
+        string? originIdentifier,
+        bool isFromDepartureAirport,
+        DateTimeOffset? estimatedDepartureTime,
+
+        // Runway and trajectory
+        string assignedRunwayIdentifier,
+        string approachType,
+        Trajectory trajectory,
+
+        // Feeder fix info (optional - flight may not track via FF)
+        string? feederFixIdentifier,
+        DateTimeOffset? feederFixEstimate,
+
+        // Landing estimate (required)
+        DateTimeOffset landingEstimate,
+
+        // Activation
+        DateTimeOffset activatedTime,
+
+        // Optional vatSys data
+        FixEstimate[]? fixes = null,
+        FlightPosition? position = null)
     {
         Callsign = callsign;
-        DestinationIdentifier = destinationIdentifier;
-        State = State.Unstable;
-        ActivatedTime = activatedTime;
         AircraftType = aircraftType;
         AircraftCategory = aircraftCategory;
         WakeCategory = wakeCategory;
-        UpdateLandingEstimate(initialLandingEstimate);
+        DestinationIdentifier = destinationIdentifier;
         IsManuallyInserted = false;
+
+        OriginIdentifier = originIdentifier;
+        IsFromDepartureAirport = isFromDepartureAirport;
+        EstimatedDepartureTime = estimatedDepartureTime;
+
+        AssignedRunwayIdentifier = assignedRunwayIdentifier;
+        ApproachType = approachType;
+        Trajectory = trajectory;
+
+        FeederFixIdentifier = feederFixIdentifier;
+
+        // Calculate estimates based on whether flight tracks via feeder fix
+        if (!string.IsNullOrEmpty(feederFixIdentifier) && feederFixEstimate.HasValue)
+        {
+            FeederFixEstimate = feederFixEstimate.Value;
+            LandingEstimate = feederFixEstimate.Value.Add(trajectory.TimeToGo);
+        }
+        else
+        {
+            LandingEstimate = landingEstimate;
+            FeederFixEstimate = landingEstimate.Subtract(trajectory.TimeToGo);
+        }
+
+        InitialFeederFixEstimate = FeederFixEstimate;
+        InitialLandingEstimate = LandingEstimate;
+        LandingTime = LandingEstimate;
+        FeederFixTime = FeederFixEstimate;
+
+        ActivatedTime = activatedTime;
+        State = State.Unstable;
+
+        Fixes = fixes ?? [];
+        Position = position;
     }
 
-    // Constructor for manually inserted flights (formerly DummyFlight)
+    /// <summary>
+    /// Constructor for manually inserted (dummy) flights.
+    /// </summary>
     public Flight(
         string callsign,
         string aircraftType,
         AircraftCategory aircraftCategory,
         WakeCategory wakeCategory,
         string destinationIdentifier,
-        string runwayIdentifier,
-        DateTimeOffset targetTime,
-        State state)
+        string assignedRunwayIdentifier,
+        string approachType,
+        Trajectory trajectory,
+        DateTimeOffset targetLandingTime,
+        State state = State.Frozen)
     {
         Callsign = callsign;
         AircraftType = aircraftType;
         AircraftCategory = aircraftCategory;
         WakeCategory = wakeCategory;
         DestinationIdentifier = destinationIdentifier;
-        AssignedRunwayIdentifier = runwayIdentifier;
-        InitialLandingEstimate = targetTime;
-        LandingEstimate = targetTime;
-        TargetLandingTime = targetTime;
-        LandingTime = targetTime;
-        State = state;
         IsManuallyInserted = true;
+
+        OriginIdentifier = null;
+        IsFromDepartureAirport = false;
+        EstimatedDepartureTime = null;
+
+        AssignedRunwayIdentifier = assignedRunwayIdentifier;
+        ApproachType = approachType;
+        Trajectory = trajectory;
+
+        FeederFixIdentifier = null;
+
+        LandingEstimate = targetLandingTime;
+        FeederFixEstimate = targetLandingTime.Subtract(trajectory.TimeToGo);
+        InitialFeederFixEstimate = FeederFixEstimate;
+        InitialLandingEstimate = LandingEstimate;
+
+        TargetLandingTime = targetLandingTime;
+        LandingTime = targetLandingTime;
+        FeederFixTime = FeederFixEstimate;
+
+        State = state;
+
+        Fixes = [];
+        Position = null;
     }
 
-    // TODO: Use memento pattern
+    /// <summary>
+    /// Constructor for deserialization from FlightMessage.
+    /// </summary>
     public Flight(FlightMessage message)
     {
         Callsign = message.Callsign;
@@ -53,28 +140,41 @@ public class Flight : IEquatable<Flight>
         WakeCategory = message.WakeCategory;
         OriginIdentifier = message.OriginIdentifier;
         DestinationIdentifier = message.DestinationIdentifier;
+        IsManuallyInserted = message.IsManuallyInserted;
         EstimatedDepartureTime = message.EstimatedDepartureTime;
         IsFromDepartureAirport = message.IsFromDepartureAirport;
-        AssignedRunwayIdentifier = message.AssignedRunwayIdentifier;
+
+        AssignedRunwayIdentifier = message.AssignedRunwayIdentifier
+            ?? throw new ArgumentException("AssignedRunwayIdentifier required", nameof(message));
+        ApproachType = message.ApproachType
+            ?? throw new ArgumentException("ApproachType required", nameof(message));
+        Trajectory = message.TimeToGo.HasValue
+            ? new Trajectory(message.TimeToGo.Value)
+            : throw new ArgumentException("TimeToGo required", nameof(message));
+
+        FeederFixIdentifier = message.FeederFixIdentifier;
+        FeederFixEstimate = message.FeederFixEstimate
+            ?? throw new ArgumentException("FeederFixEstimate required", nameof(message));
+        InitialFeederFixEstimate = message.InitialFeederFixEstimate
+            ?? throw new ArgumentException("InitialFeederFixEstimate required", nameof(message));
+        ManualFeederFixEstimate = message.ManualFeederFixEstimate;
+        FeederFixTime = message.FeederFixTime
+            ?? throw new ArgumentException("FeederFixTime required", nameof(message));
+        ActualFeederFixTime = message.ActualFeederFixTime;
+
+        InitialLandingEstimate = message.InitialLandingEstimate;
+        LandingEstimate = message.LandingEstimate;
+        TargetLandingTime = message.TargetLandingTime;
+        LandingTime = message.LandingTime;
+
         State = message.State;
         HighPriority = message.HighPriority;
         MaximumDelay = message.MaximumDelay;
         ActivatedTime = message.ActivatedTime;
-        FeederFixIdentifier = message.FeederFixIdentifier;
-        InitialFeederFixEstimate = message.InitialFeederFixEstimate;
-        FeederFixEstimate = message.FeederFixEstimate;
-        ManualFeederFixEstimate = message.ManualFeederFixEstimate;
-        FeederFixTime = message.FeederFixTime;
-        ActualFeederFixTime = message.ActualFeederFixTime;
-        InitialLandingEstimate = message.InitialLandingEstimate;
-        LandingEstimate = message.LandingEstimate;
-        LandingTime = message.LandingTime;
         FlowControls = message.FlowControls;
-        ApproachType = message.ApproachType;
-        Fixes = message.Fixes.ToArray();
+        Fixes = message.Fixes?.ToArray() ?? [];
         LastSeen = message.LastSeen;
         Position = message.Position;
-        IsManuallyInserted = message.IsManuallyInserted;
     }
 
     public string Callsign { get; }
@@ -88,9 +188,7 @@ public class Flight : IEquatable<Flight>
 
     public bool IsFromDepartureAirport { get; set; }
 
-    // TODO: Consider storing the minimum separation required here
-    // Either that or store the runway mode here so we can easily reference it later
-    public string? AssignedRunwayIdentifier { get; private set; }
+    public string AssignedRunwayIdentifier { get; private set; }
 
     public State State { get; private set; }
     public bool HighPriority { get; set; }
@@ -98,10 +196,10 @@ public class Flight : IEquatable<Flight>
     public DateTimeOffset? ActivatedTime { get; private set; }
 
     public string? FeederFixIdentifier { get; private set; }
-    public DateTimeOffset? InitialFeederFixEstimate { get; private set; }
-    public DateTimeOffset? FeederFixEstimate { get; private set; } // ETA_FF
+    public DateTimeOffset InitialFeederFixEstimate { get; private set; }
+    public DateTimeOffset FeederFixEstimate { get; private set; } // ETA_FF
     public bool ManualFeederFixEstimate { get; private set; }
-    public DateTimeOffset? FeederFixTime { get; private set; } // STA_FF
+    public DateTimeOffset FeederFixTime { get; private set; } // STA_FF
     public DateTimeOffset? ActualFeederFixTime { get; private set; } // ATO_FF
     public bool HasPassedFeederFix => ActualFeederFixTime is not null;
 
@@ -119,56 +217,44 @@ public class Flight : IEquatable<Flight>
     public FixEstimate[] Fixes { get; set; } = [];
     public DateTimeOffset LastSeen { get; private set; }
     public FlightPosition? Position { get; private set; }
+    public Trajectory Trajectory { get; private set; }
 
     public void SetState(State state, IClock clock)
     {
         State = state;
     }
 
-    public void SetRunway(string runwayIdentifier)
+    public void SetRunway(string runwayIdentifier, Trajectory trajectory)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
+        UpdateTrajectoryAndEstimates(trajectory);
     }
 
-    public void SetFeederFix(
-        string feederFixIdentifier,
-        DateTimeOffset feederFixEstimate,
-        DateTimeOffset? actualFeederFixTime = null)
-    {
-        FeederFixIdentifier = feederFixIdentifier;
-        FeederFixEstimate = feederFixEstimate;
-        InitialFeederFixEstimate = feederFixEstimate;
-        ActualFeederFixTime = actualFeederFixTime;
-    }
-
-    public void SetApproachType(string approachType)
+    public void SetApproachType(string approachType, Trajectory trajectory)
     {
         ApproachType = approachType;
+        UpdateTrajectoryAndEstimates(trajectory);
     }
 
     public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate, bool manual = false)
     {
-        if (string.IsNullOrEmpty(FeederFixIdentifier))
-            throw new MaestroException("No feeder fix has been set");
-
         FeederFixEstimate = feederFixEstimate;
         ManualFeederFixEstimate = manual;
+
+        LandingEstimate = feederFixEstimate.Add(Trajectory.TimeToGo);
+        if (State is State.Unstable)
+        {
+            InitialFeederFixEstimate = FeederFixEstimate;
+            InitialLandingEstimate = LandingEstimate;
+        }
     }
 
     public void PassedFeederFix(DateTimeOffset feederFixTime)
     {
-        if (string.IsNullOrEmpty(FeederFixIdentifier))
-            throw new MaestroException("No feeder fix has been set");
-
         if (HasPassedFeederFix)
             throw new MaestroException("Flight has already passed the feeder fix");
 
         ActualFeederFixTime = feederFixTime;
-    }
-
-    public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
-    {
-        LandingEstimate = landingEstimate;
     }
 
     public void SetTargetLandingTime(DateTimeOffset targetLandingTime)
@@ -192,6 +278,38 @@ public class Flight : IEquatable<Flight>
         Position = position;
     }
 
+    private void UpdateTrajectoryAndEstimates(Trajectory trajectory)
+    {
+        Trajectory = trajectory;
+
+        // Calculate ETA using ETA_FF + TTG
+        if (!string.IsNullOrEmpty(FeederFixIdentifier))
+        {
+            LandingEstimate = FeederFixEstimate.Add(Trajectory.TimeToGo);
+
+            if (State is State.Unstable)
+                InitialLandingEstimate = LandingEstimate;
+        }
+        else
+        {
+            // If no feeder fix, calculate ETA_FF from last fix estimate - TTG
+            if (Fixes.Length > 0)
+            {
+                var lastEstimate = Fixes.Last().Estimate;
+                FeederFixEstimate = lastEstimate.Subtract(Trajectory.TimeToGo);
+
+                if (State is State.Unstable)
+                    InitialFeederFixEstimate = FeederFixEstimate;
+            }
+        }
+
+        // Calculate STA_FF using STA - TTG
+        if (LandingTime != default)
+        {
+            FeederFixTime = LandingTime.Subtract(Trajectory.TimeToGo);
+        }
+    }
+
     public void SetMaximumDelay(TimeSpan? maximumDelay)
     {
         MaximumDelay = maximumDelay;
@@ -200,44 +318,36 @@ public class Flight : IEquatable<Flight>
 
     public void InvalidateSequenceData()
     {
-        InitialLandingEstimate = LandingEstimate;
-        InitialFeederFixEstimate = FeederFixEstimate;
-
         LandingTime = LandingEstimate;
         FeederFixTime = FeederFixEstimate;
         FlowControls = FlowControls.ProfileSpeed;
     }
 
-    public void SetSequenceData(
-        DateTimeOffset landingTime,
-        DateTimeOffset? feederFixTime,
-        FlowControls flowControls)
-    {
-        InitialLandingEstimate = LandingEstimate;
-        InitialFeederFixEstimate = FeederFixEstimate;
-
-        LandingTime = landingTime;
-        FeederFixTime = feederFixTime;
-        FlowControls = flowControls;
-    }
-
     public void Reset()
     {
-        // TODO: Prevent if the flight has departed
-        // Only allowed between Preactive and Departure
-
-        ActivatedTime = null;
-        FeederFixEstimate = null;
-        InitialFeederFixEstimate = null;
-        FeederFixTime = null;
-        AssignedRunwayIdentifier = null;
-        LandingEstimate = default;
-        TargetLandingTime = default;
-        InitialLandingEstimate = default;
-        LandingTime = default;
+        // Reset state
         State = State.Unstable;
+
+        // Reset activation
+        ActivatedTime = null;
+
+        // Reset sequence data
         FlowControls = FlowControls.ProfileSpeed;
+
+        // Reset delay controls
         MaximumDelay = null;
+        TargetLandingTime = null;
+
+        // Note: Trajectory is kept as-is and will be recalculated when re-inserted into the sequence
+    }
+
+    public void SetSequenceData(
+        DateTimeOffset landingTime,
+        FlowControls flowControls)
+    {
+        LandingTime = landingTime;
+        FeederFixTime = landingTime.Subtract(Trajectory.TimeToGo);
+        FlowControls = flowControls;
     }
 
     public void UpdateStateBasedOnTime(IClock clock)
@@ -247,13 +357,11 @@ public class Flight : IEquatable<Flight>
             return;
 
         if (ActivatedTime is null ||
-            LandingTime == default ||
-            InitialFeederFixEstimate is null ||
-            FeederFixEstimate is null)
+            LandingTime == default)
             return;
 
         // Sticky states
-        if (State is State.Landed)
+        if (State is State.Landed or State.Desequenced)
             return;
 
         // TODO: Make configurable
@@ -282,7 +390,7 @@ public class Flight : IEquatable<Flight>
             return;
         }
 
-        if (InitialFeederFixEstimate is not null && InitialFeederFixEstimate.Value.IsSameOrBefore(now))
+        if (InitialFeederFixEstimate.IsSameOrBefore(now))
         {
             SetState(State.SuperStable, clock);
             return;
@@ -294,8 +402,6 @@ public class Flight : IEquatable<Flight>
             SetState(State.Stable, clock);
             return;
         }
-
-        // SetState(State.Unstable, clock);
     }
 
     public bool Equals(Flight? other)
@@ -305,7 +411,7 @@ public class Flight : IEquatable<Flight>
 
     public override string ToString()
     {
-        return $"{Callsign}: State: {State}; Runway {AssignedRunwayIdentifier ?? "null"}; STA {LandingTime:HH:mm};";
+        return $"{Callsign}: State: {State}; Runway {AssignedRunwayIdentifier}; STA {LandingTime:HH:mm};";
     }
 }
 

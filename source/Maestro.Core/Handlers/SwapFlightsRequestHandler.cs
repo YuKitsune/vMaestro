@@ -13,7 +13,6 @@ namespace Maestro.Core.Handlers;
 public class SwapFlightsRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IArrivalLookup arrivalLookup,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -89,11 +88,9 @@ public class SwapFlightsRequestHandler(
 
     DateTimeOffset? GetFeederFixTime(Flight flight)
     {
-        var interval = arrivalLookup.GetArrivalInterval(flight);
-
-        if (interval is null)
+        if (flight.Trajectory is null)
             return null;
 
-        return flight.LandingTime.Subtract(interval.Value);
+        return flight.LandingTime.Subtract(flight.Trajectory.TimeToGo);
     }
 }

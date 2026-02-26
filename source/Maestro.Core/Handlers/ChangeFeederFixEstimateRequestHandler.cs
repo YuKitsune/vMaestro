@@ -13,7 +13,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeFeederFixEstimateRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IEstimateProvider estimateProvider,
+    ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -46,13 +46,6 @@ public class ChangeFeederFixEstimateRequestHandler(
             logger.Information("Changing feeder fix estimate for flight {Callsign} to {NewFeederFixEstimate}.", request.Callsign, request.NewFeederFixEstimate);
 
             flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
-
-            // Re-calculate the landing estimate based on the new feeder fix estimate
-            var landingEstimate = estimateProvider.GetLandingEstimate(
-                flight,
-                flight.Fixes.Last().Estimate);
-            if (landingEstimate is not null)
-                flight.UpdateLandingEstimate(landingEstimate.Value);
 
             instance.Session.Sequence.RepositionByEstimate(flight);
             if (flight.State is State.Unstable)

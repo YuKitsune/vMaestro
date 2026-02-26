@@ -15,6 +15,7 @@ namespace Maestro.Core.Tests.Handlers;
 public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
 {
     readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
+    readonly TimeSpan _defaultTtg = TimeSpan.FromMinutes(20);
 
     readonly RunwayMode _runwayMode = new(
         new RunwayModeConfiguration
@@ -54,7 +55,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var handler = GetRequestHandler(instanceManager, sequence);
 
         // Change the landing estimate of the second flight to be earlier than the first flight
-        flight2.UpdateLandingEstimate(now.AddMinutes(5));
+        flight2.UpdateFeederFixEstimate(now.AddMinutes(5).Subtract(_defaultTtg));
 
         var request = new RecomputeRequest("YSSY", "QFA2");
 
@@ -102,7 +103,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var originalFlight1LandingTime = flight1.LandingTime;
 
         // Change the landing estimate of the last flight to be earlier than the second flight
-        flight3.UpdateLandingEstimate(now.AddMinutes(12));
+        flight3.UpdateFeederFixEstimate(now.AddMinutes(12).Subtract(_defaultTtg));
 
         var request = new RecomputeRequest("YSSY", "QFA3");
 
@@ -376,7 +377,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
+        var trajectoryService = Substitute.For<ITrajectoryService>();
         var mediator = Substitute.For<IMediator>();
         var logger = Substitute.For<Serilog.ILogger>();
 
@@ -384,7 +385,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             instanceManager,
             slaveConnectionManager,
             airportConfigurationProvider,
-            estimateProvider,
+            trajectoryService,
             clockFixture.Instance,
             mediator,
             logger);
@@ -405,13 +406,13 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
     RecomputeRequestHandler GetRequestHandler(
         IMaestroInstanceManager instanceManager,
         Sequence sequence,
-        IEstimateProvider? estimateProvider = null,
+        ITrajectoryService? trajectoryService = null,
         IMediator? mediator = null)
     {
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
 
-        estimateProvider ??= CreateEstimateProvider();
+        trajectoryService ??= Substitute.For<ITrajectoryService>();
         mediator ??= Substitute.For<IMediator>();
 
         var logger = Substitute.For<Serilog.ILogger>();
@@ -420,19 +421,9 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             instanceManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
-            estimateProvider,
+            trajectoryService,
             clockFixture.Instance,
             mediator,
             logger);
-
-        IEstimateProvider CreateEstimateProvider()
-        {
-            var estimateProvider = Substitute.For<IEstimateProvider>();
-            estimateProvider.GetLandingEstimate(Arg.Any<Flight>(), Arg.Any<DateTimeOffset?>())
-                .Returns(call => call.Arg<Flight>().LandingEstimate);
-            estimateProvider.GetFeederFixEstimate(Arg.Any<AirportConfiguration>(), Arg.Any<string>(), Arg.Any<DateTimeOffset>(), Arg.Any<FlightPosition>())
-                .Returns(call => call.Arg<DateTimeOffset>());
-            return estimateProvider;
-        }
     }
 }
