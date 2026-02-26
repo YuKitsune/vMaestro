@@ -1,6 +1,6 @@
-## Trajectories
+# Trajectories
 
-### Overview
+## Overview
 
 In MAESTRO, a trajectory is a pre-calculated set of times from a feeder fix to a runway, via a specific approach type, for a specific aircraft type or category.
 
@@ -13,6 +13,7 @@ Trajectories are currently modelled as `ArrivalConfiguration` in the code.
 The TTG is calculated ad-hoc using the `IArrivalLookup` whenever it is required.
 
 The TTG is required when:
+
 - receiving flight updates from vatSys, and calculating the ETA using ETA_FF + TTG (via `EstimateProvider`)
 - recomputing flights via the `RecomputeRequestHandler`, and calculating the ETA using ETA_FF + TTG (via `EstimateProvider`)
 - changing the `ETA_FF` manually via the `ChangeFeederFixEstimateRequestHandler`, and calculating the ETA using ETA_FF + TTG (via `EstimateProvider`)
@@ -25,12 +26,14 @@ Each time we need the TTG, we look it up based on parameters contained within th
 ### Future State
 
 The airport configuration should provide a look-up table, where trajectories can be looked up based on:
+
 - Feeder Fix
 - Approach Type
 - Runway
 - Aircraft Category **OR** Type (one category, AND/OR multiple types can be defined per trajectory)
 
 Terminal Trajectory data should contain:
+
 - Distance (reserved for future use)
 - Time To Go (as described above)
 - Pressure (reserved for future use)
