@@ -109,10 +109,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .Build();
 
         // Set some additional properties that should be reset
-        flight.SetSequenceData(
-            clockFixture.Instance.UtcNow().AddMinutes(30),
-            clockFixture.Instance.UtcNow().AddMinutes(20),
-            FlowControls.ReduceSpeed);
+        flight.SetSequenceData(clockFixture.Instance.UtcNow().AddMinutes(30), FlowControls.ReduceSpeed);
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
@@ -124,17 +121,13 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         // Act
         await handler.Handle(request, CancellationToken.None);
 
-        // Assert - verify all details are reset
+        // Assert - verify Reset() behavior: state, activation, and flow controls are reset
+        // Note: Trajectory and estimates are kept - they will be recalculated when re-inserted
         flight.ActivatedTime.ShouldBeNull("ActivatedTime should be reset to null");
-        flight.FeederFixEstimate.ShouldBeNull("FeederFixEstimate should be reset to null");
-        flight.InitialFeederFixEstimate.ShouldBeNull("InitialFeederFixEstimate should be reset to null");
-        flight.FeederFixTime.ShouldBeNull("FeederFixTime should be reset to null");
-        flight.AssignedRunwayIdentifier.ShouldBeNull("AssignedRunwayIdentifier should be reset to null");
-        flight.LandingEstimate.ShouldBe(default(DateTimeOffset), "LandingEstimate should be reset to default");
-        flight.InitialLandingEstimate.ShouldBe(default(DateTimeOffset), "InitialLandingEstimate should be reset to default");
-        flight.LandingTime.ShouldBe(default(DateTimeOffset), "LandingTime should be reset to default");
         flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
+        flight.MaximumDelay.ShouldBeNull("MaximumDelay should be reset to null");
+        flight.TargetLandingTime.ShouldBeNull("TargetLandingTime should be reset to null");
     }
 
     [Fact]

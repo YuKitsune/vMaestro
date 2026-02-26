@@ -13,6 +13,7 @@ public class Sequence
 
     // TODO: Figure out how to get rid of these from here
     readonly IArrivalLookup _arrivalLookup;
+    readonly ITrajectoryService _trajectoryService;
     readonly IClock _clock;
 
     readonly List<Slot> _slots = [];
@@ -28,10 +29,11 @@ public class Sequence
     public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
     public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
 
-    public Sequence(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
+    public Sequence(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, ITrajectoryService trajectoryService, IClock clock)
     {
         _airportConfiguration = airportConfiguration;
         _arrivalLookup = arrivalLookup;
+        _trajectoryService = trajectoryService;
         _clock = clock;
 
         AirportIdentifier = airportConfiguration.Identifier;
@@ -760,21 +762,14 @@ public class Sequence
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, string approachType, FlowControls flowControls)
     {
-        flight.SetRunway(runwayIdentifier);
-        flight.SetApproachType(approachType);
+        // Lookup trajectory before setting runway/approach
+        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType);
 
-        // TODO: Consolidate TTG lookups and ETA updates into a single place
-        DateTimeOffset? feederFixTime = null;
-        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && !flight.HasPassedFeederFix)
-        {
-            var arrivalInterval = _arrivalLookup.GetArrivalInterval(flight);
-            if (arrivalInterval is not null)
-            {
-                feederFixTime = landingTime.Subtract(arrivalInterval.Value);
-            }
-        }
+        // Atomic update: runway + trajectory + ETA + STA_FF
+        flight.SetRunway(runwayIdentifier, trajectory);
+        flight.SetApproachType(approachType, trajectory);
 
-        flight.SetSequenceData(landingTime, feederFixTime, flowControls);
+        flight.SetSequenceData(landingTime, flowControls);
     }
 
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation);

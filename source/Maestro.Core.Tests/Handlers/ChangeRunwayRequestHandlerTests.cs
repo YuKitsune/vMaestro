@@ -49,6 +49,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            Substitute.For<ITrajectoryService>(),
             Substitute.For<IClock>(),
             mediator,
             Substitute.For<ILogger>());
@@ -106,6 +107,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            Substitute.For<ITrajectoryService>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -166,6 +168,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            Substitute.For<ITrajectoryService>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -205,6 +208,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            Substitute.For<ITrajectoryService>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -247,6 +251,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            Substitute.For<ITrajectoryService>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -285,6 +290,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             slaveConnectionManager,
             Substitute.For<IArrivalLookup>(),
+            Substitute.For<ITrajectoryService>(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());

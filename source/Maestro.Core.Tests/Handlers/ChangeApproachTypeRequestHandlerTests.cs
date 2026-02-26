@@ -1,4 +1,3 @@
-﻿using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -32,17 +31,19 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithState(State.Stable) // Make the flight Stable so the ApproachType doesn't get reset when scheduling
             .Build();
 
-        var arrivalLookup = GetArrivalLookup();
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(flight))
+            .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
+        var trajectoryService = Substitute.For<ITrajectoryService>();
+        trajectoryService.GetTrajectory(Arg.Any<Flight>(), Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new Trajectory(TimeSpan.FromMinutes(22)));
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            arrivalLookup,
+            trajectoryService,
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -56,6 +57,7 @@ public class ChangeApproachTypeRequestHandlerTests(
 
         // Assert
         flight.ApproachType.ShouldBe("P", "Approach type should be changed to P");
+        trajectoryService.Received(1).GetTrajectory(flight, "34R", "P");
     }
 
     [Fact]
@@ -75,17 +77,21 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithState(State.Stable) // Make the flight Stable so the ApproachType doesn't get reset when scheduling
             .Build();
 
-        var arrivalLookup = GetArrivalLookup();
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(flight))
+            .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
+
+        // Set up trajectory service to return a different TTG for the new approach type
+        var trajectoryService = Substitute.For<ITrajectoryService>();
+        trajectoryService.GetTrajectory(Arg.Any<Flight>(), Arg.Any<string>(), "P")
+            .Returns(new Trajectory(TimeSpan.FromMinutes(25)));
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            arrivalLookup,
+            trajectoryService,
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -118,18 +124,18 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithRunway("34R")
             .Build();
 
-        var arrivalLookup = GetArrivalLookup();
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(flight))
+            .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
+        var trajectoryService = Substitute.For<ITrajectoryService>();
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
             instanceManager,
             slaveConnectionManager,
-            arrivalLookup,
+            trajectoryService,
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -145,11 +151,5 @@ public class ChangeApproachTypeRequestHandlerTests(
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         flight.ApproachType.ShouldBe(originalApproachType, "Local flight should not be modified when relaying to master");
-    }
-
-    IArrivalLookup GetArrivalLookup()
-    {
-        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
-        return new ArrivalLookup(airportConfigurationProvider, Substitute.For<ILogger>());
     }
 }

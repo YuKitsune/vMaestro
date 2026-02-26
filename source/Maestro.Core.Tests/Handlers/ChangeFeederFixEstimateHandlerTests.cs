@@ -56,20 +56,20 @@ public class ChangeFeederFixEstimateHandlerTests(
             .Build();
 
         var newFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
-        var expectedLandingEstimate = clockFixture.Instance.UtcNow().AddMinutes(25);
+        var timeToGo = TimeSpan.FromMinutes(10);
+        var expectedLandingEstimate = newFeederFixEstimate.Add(timeToGo);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetLandingEstimate(flight, Arg.Any<DateTimeOffset>())
-            .Returns(expectedLandingEstimate);
+        // Set up a trajectory on the flight via SetRunway
+        var trajectory = new Trajectory(timeToGo);
+        flight.SetRunway(flight.AssignedRunwayIdentifier ?? "34L", trajectory);
 
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(instanceManager, sequence, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, sequence);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        estimateProvider.Received(1).GetLandingEstimate(flight, Arg.Any<DateTimeOffset>());
         flight.LandingEstimate.ShouldBe(expectedLandingEstimate);
     }
 
@@ -98,14 +98,15 @@ public class ChangeFeederFixEstimateHandlerTests(
         sequence.NumberInSequence(flight1).ShouldBe(2);
 
         var newFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(5);
-        var newLandingEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
+        var timeToGo = TimeSpan.FromMinutes(10);
+        var newLandingEstimate = newFeederFixEstimate.Add(timeToGo);
 
-        var estimateProvider = Substitute.For<IEstimateProvider>();
-        estimateProvider.GetLandingEstimate(flight1, Arg.Any<DateTimeOffset>())
-            .Returns(newLandingEstimate);
+        // Set up a trajectory on the flight via SetRunway
+        var trajectory = new Trajectory(timeToGo);
+        flight1.SetRunway(flight1.AssignedRunwayIdentifier ?? "34L", trajectory);
 
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(instanceManager, sequence, estimateProvider: estimateProvider);
+        var handler = GetHandler(instanceManager, sequence);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -195,7 +196,7 @@ public class ChangeFeederFixEstimateHandlerTests(
         var handler = new ChangeFeederFixEstimateRequestHandler(
             instanceManager,
             mockConnectionManager,
-            Substitute.For<IEstimateProvider>(),
+            Substitute.For<ITrajectoryService>(),
             clockFixture.Instance,
             Substitute.For<IMediator>(),
             Substitute.For<ILogger>());
@@ -215,18 +216,18 @@ public class ChangeFeederFixEstimateHandlerTests(
     ChangeFeederFixEstimateRequestHandler GetHandler(
         IMaestroInstanceManager instanceManager,
         Sequence sequence,
-        IEstimateProvider? estimateProvider = null,
+        ITrajectoryService? trajectoryService = null,
         IMediator? mediator = null,
         ILogger? logger = null)
     {
-        estimateProvider ??= Substitute.For<IEstimateProvider>();
+        trajectoryService ??= Substitute.For<ITrajectoryService>();
         mediator ??= Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
 
         return new ChangeFeederFixEstimateRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            estimateProvider,
+            trajectoryService,
             clockFixture.Instance,
             mediator,
             logger);

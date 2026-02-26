@@ -116,7 +116,7 @@ public class SwapFlightsRequestHandlerTests(
 
         // Arrival intervals here are different to demonstrate that feeder fix times are re-calculated
         var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
+        arrivalLookup.GetTrajectory(
                 Arg.Any<string>(),
                 Arg.Is("RIVET"),
                 Arg.Any<string[]>(),
@@ -124,8 +124,8 @@ public class SwapFlightsRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
-            .Returns(TimeSpan.FromMinutes(10));
-        arrivalLookup.GetArrivalInterval(
+            .Returns(new Trajectory(TimeSpan.FromMinutes(10)));
+        arrivalLookup.GetTrajectory(
                 Arg.Any<string>(),
                 Arg.Is("MARLN"),
                 Arg.Any<string[]>(),
@@ -133,7 +133,9 @@ public class SwapFlightsRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
-            .Returns(TimeSpan.FromMinutes(15));
+            .Returns(new Trajectory(TimeSpan.FromMinutes(15)));
+        arrivalLookup.GetAverageTrajectory(Arg.Any<string>())
+            .Returns(new Trajectory(TimeSpan.FromMinutes(12)));
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(firstFlight, secondFlight))
@@ -324,7 +326,7 @@ public class SwapFlightsRequestHandlerTests(
             .Build();
 
         // Artificial 10-minute delay to ensure recomputation is not performed
-        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), _clock.UtcNow().AddMinutes(30), FlowControls.ReduceSpeed);
+        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), FlowControls.ReduceSpeed);
 
         var handler = GetHandler(instanceManager, sequence);
 
@@ -365,7 +367,6 @@ public class SwapFlightsRequestHandlerTests(
         var handler = new SwapFlightsRequestHandler(
             instanceManager,
             slaveConnectionManager,
-            Substitute.For<IArrivalLookup>(),
             mediator,
             _clock,
             Substitute.For<ILogger>());
@@ -386,21 +387,9 @@ public class SwapFlightsRequestHandlerTests(
 
     SwapFlightsRequestHandler GetHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
     {
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string[]>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(TimeSpan.FromMinutes(10));
-
         return new SwapFlightsRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            arrivalLookup,
             Substitute.For<MediatR.IMediator>(),
             _clock,
             Substitute.For<ILogger>());

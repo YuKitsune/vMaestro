@@ -19,7 +19,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeApproachTypeRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IArrivalLookup arrivalLookup,
+    ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -53,18 +53,13 @@ public class ChangeApproachTypeRequestHandler(
             // TODO: Track who initiated the change
             logger.Information("Changing approach type for {Callsign} to {NewApproachType}.", request.Callsign, request.ApproachType);
 
-            // TODO: Update TTG, P and Pmax
-            flight.SetApproachType(request.ApproachType);
+            // Lookup trajectory for the new approach type
+            var trajectory = trajectoryService.GetTrajectory(
+                flight,
+                flight.AssignedRunwayIdentifier ?? string.Empty,
+                request.ApproachType);
 
-            // Update the landing estimate
-            var timeToGo = arrivalLookup.GetArrivalInterval(flight);
-            if (flight.FeederFixEstimate is not null && timeToGo is not null)
-            {
-                var newLandingEstimate = flight.FeederFixEstimate.Value + timeToGo.Value;
-
-                // TODO: Calculate temp ETA if no FF is available
-                flight.UpdateLandingEstimate(newLandingEstimate);
-            }
+            flight.SetApproachType(request.ApproachType, trajectory!);
 
             sessionMessage = instance.Session.Snapshot();
         }

@@ -490,7 +490,7 @@ public class InsertFlightRequestHandlerTests(
         instance.Session.PendingFlights.Add(pendingFlight);
 
         var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
+        arrivalLookup.GetTrajectory(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string[]>(),
@@ -498,7 +498,7 @@ public class InsertFlightRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
-            .Returns(arrivalInterval);
+            .Returns(new Trajectory(arrivalInterval));
 
         var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
 
@@ -1134,7 +1134,7 @@ public class InsertFlightRequestHandlerTests(
         instance.Session.PendingFlights.Add(pendingFlight);
 
         var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
+        arrivalLookup.GetTrajectory(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string[]>(),
@@ -1142,7 +1142,7 @@ public class InsertFlightRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
-            .Returns(arrivalInterval);
+            .Returns(new Trajectory(arrivalInterval));
 
         var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
 
@@ -1490,7 +1490,7 @@ public class InsertFlightRequestHandlerTests(
         instance.Session.PendingFlights.Add(pendingFlight);
 
         var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetArrivalInterval(
+        arrivalLookup.GetTrajectory(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string[]>(),
@@ -1498,7 +1498,7 @@ public class InsertFlightRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
-            .Returns(arrivalInterval);
+            .Returns(new Trajectory(arrivalInterval));
 
         var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
 
@@ -1839,6 +1839,7 @@ public class InsertFlightRequestHandlerTests(
             performanceLookupFixture.Instance,
             airportConfigurationProvider,
             arrivalLookup ?? Substitute.For<IArrivalLookup>(),
+            Substitute.For<ITrajectoryService>(),
             clockFixture.Instance,
             mediator ?? Substitute.For<IMediator>(),
             Substitute.For<ILogger>());

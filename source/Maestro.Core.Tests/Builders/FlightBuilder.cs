@@ -1,4 +1,4 @@
-﻿using Maestro.Core.Model;
+using Maestro.Core.Model;
 
 namespace Maestro.Core.Tests.Builders;
 
@@ -9,16 +9,16 @@ public class FlightBuilder(string callsign)
     WakeCategory _wakeCategory = WakeCategory.Medium;
     string _origin = "YMML";
     string _destination = "YSSY";
-    string _feederFixIdentifier = "RIVET";
-    DateTimeOffset activationTime = DateTimeOffset.Now.AddHours(-1);
-    DateTimeOffset feederFixEstimate = default;
-    bool manualFeederFixEstimate = false;
-    DateTimeOffset feederFixTime = default;
-    DateTimeOffset? passedFeederFix = null;
+    string? _feederFixIdentifier = "RIVET";
+    DateTimeOffset _activationTime = DateTimeOffset.Now.AddHours(-1);
+    DateTimeOffset _feederFixEstimate = default;
+    bool _manualFeederFixEstimate = false;
+    DateTimeOffset _feederFixTime = default;
+    DateTimeOffset? _passedFeederFix = null;
 
-    DateTimeOffset landingEstimate = default;
-    DateTimeOffset? targetLandingTime = null;
-    DateTimeOffset landingTime = default;
+    DateTimeOffset _landingEstimate = default;
+    DateTimeOffset? _targetLandingTime = null;
+    DateTimeOffset _landingTime = default;
 
     string _approachType = string.Empty;
     string _assignedRunway = "34L";
@@ -32,10 +32,12 @@ public class FlightBuilder(string callsign)
     DateTimeOffset _lastSeen = default;
     bool _isFromDepartureAirport = false;
     FlightPosition? _position = null;
+    TimeSpan _timeToGo = TimeSpan.FromMinutes(20);
+    bool _isManuallyInserted = false;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
     {
-        activationTime = time;
+        _activationTime = time;
         return this;
     }
 
@@ -59,52 +61,52 @@ public class FlightBuilder(string callsign)
 
     public FlightBuilder WithFeederFix(string? feederFixIdentifier)
     {
-        _feederFixIdentifier = feederFixIdentifier ?? string.Empty;
+        _feederFixIdentifier = feederFixIdentifier;
         return this;
     }
 
     public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate, bool manual = false)
     {
-        feederFixEstimate = estimate;
-        manualFeederFixEstimate = manual;
+        _feederFixEstimate = estimate;
+        _manualFeederFixEstimate = manual;
         return this;
     }
 
     public FlightBuilder WithFeederFixEstimate(DateTimeOffset estimate, TimeSpan arrivalInterval, bool manual = false)
     {
-        feederFixEstimate = estimate;
-        manualFeederFixEstimate = manual;
-        landingEstimate = estimate + arrivalInterval;
+        _feederFixEstimate = estimate;
+        _manualFeederFixEstimate = manual;
+        _landingEstimate = estimate + arrivalInterval;
         return this;
     }
 
     public FlightBuilder WithFeederFixTime(DateTimeOffset time)
     {
-        feederFixTime = time;
+        _feederFixTime = time;
         return this;
     }
 
     public FlightBuilder PassedFeederFixAt(DateTimeOffset time)
     {
-        passedFeederFix = time;
+        _passedFeederFix = time;
         return this;
     }
 
     public FlightBuilder WithLandingEstimate(DateTimeOffset estimate)
     {
-        landingEstimate = estimate;
+        _landingEstimate = estimate;
         return this;
     }
 
     public FlightBuilder WithTargetLandingTime(DateTimeOffset targetTime)
     {
-        targetLandingTime = targetTime;
+        _targetLandingTime = targetTime;
         return this;
     }
 
     public FlightBuilder WithLandingTime(DateTimeOffset time)
     {
-        landingTime = time;
+        _landingTime = time;
         return this;
     }
 
@@ -157,53 +159,91 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithTrajectory(TimeSpan timeToGo)
+    {
+        _timeToGo = timeToGo;
+        return this;
+    }
+
+    public FlightBuilder AsManuallyInserted(bool value = true)
+    {
+        _isManuallyInserted = value;
+        return this;
+    }
+
     public Flight Build()
     {
-        var flight = new Flight(
-            callsign,
-            _destination,
-            landingEstimate,
-            activationTime,
-            _aircraftType,
-            _aircraftCategory,
-            _wakeCategory)
+        var trajectory = new Trajectory(_timeToGo);
+
+        Flight flight;
+        if (_isManuallyInserted)
         {
-            OriginIdentifier = _origin
-        };
+            // Use the dummy flight constructor
+            flight = new Flight(
+                callsign: callsign,
+                aircraftType: _aircraftType,
+                aircraftCategory: _aircraftCategory,
+                wakeCategory: _wakeCategory,
+                destinationIdentifier: _destination,
+                assignedRunwayIdentifier: _assignedRunway,
+                approachType: _approachType,
+                trajectory: trajectory,
+                targetLandingTime: _targetLandingTime ?? _landingTime,
+                state: _state);
+        }
+        else
+        {
+            // Use the real flight constructor
+            flight = new Flight(
+                callsign: callsign,
+                aircraftType: _aircraftType,
+                aircraftCategory: _aircraftCategory,
+                wakeCategory: _wakeCategory,
+                destinationIdentifier: _destination,
+                originIdentifier: _origin,
+                isFromDepartureAirport: _isFromDepartureAirport,
+                estimatedDepartureTime: null,
+                assignedRunwayIdentifier: _assignedRunway,
+                approachType: _approachType,
+                trajectory: trajectory,
+                feederFixIdentifier: _feederFixIdentifier,
+                feederFixEstimate: _feederFixEstimate != default ? _feederFixEstimate : null,
+                landingEstimate: _landingEstimate,
+                activatedTime: _activationTime,
+                fixes: [
+                    new FixEstimate(_feederFixIdentifier ?? _destination, _feederFixEstimate != default ? _feederFixEstimate : _landingEstimate.Subtract(_timeToGo), _passedFeederFix),
+                    new FixEstimate(_destination, _landingEstimate)
+                ],
+                position: _position);
+        }
 
-        flight.SetApproachType(_approachType);
+        // Update state
+        flight.SetState(_state, new FixedClock(_activationTime));
 
-        flight.SetFeederFix(_feederFixIdentifier, feederFixEstimate, passedFeederFix);
-        if (!string.IsNullOrEmpty(_feederFixIdentifier))
-            flight.UpdateFeederFixEstimate(feederFixEstimate, manualFeederFixEstimate);
+        // Update feeder fix estimate if specified
+        if (_feederFixEstimate != default && !string.IsNullOrEmpty(_feederFixIdentifier))
+        {
+            flight.UpdateFeederFixEstimate(_feederFixEstimate, _manualFeederFixEstimate);
+        }
 
-        flight.SetSequenceData(landingTime, feederFixTime, FlowControls.ProfileSpeed);
+        // Mark as passed feeder fix
+        if (_passedFeederFix.HasValue && !flight.HasPassedFeederFix)
+        {
+            flight.PassedFeederFix(_passedFeederFix.Value);
+        }
 
-        flight.SetRunway(_assignedRunway);
+        // Set sequence data
+        var landingTimeToUse = _landingTime != default ? _landingTime : flight.LandingEstimate;
+        flight.SetSequenceData(landingTimeToUse, FlowControls.ProfileSpeed);
 
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
-
-        flight.SetState(_state, new FixedClock(activationTime));
 
         flight.SetMaximumDelay(_manualDelay);
         flight.HighPriority = _highPriority;
 
-        flight.Fixes =
-        [
-            new FixEstimate(_feederFixIdentifier, feederFixEstimate, passedFeederFix),
-            new FixEstimate(_destination, landingEstimate)
-        ];
-
-        flight.IsFromDepartureAirport = _isFromDepartureAirport;
-
-        if (_position is not null)
+        if (_targetLandingTime.HasValue && !_isManuallyInserted)
         {
-            flight.UpdatePosition(_position);
-        }
-
-        if (targetLandingTime.HasValue)
-        {
-            flight.SetTargetLandingTime(targetLandingTime.Value);
+            flight.SetTargetLandingTime(_targetLandingTime.Value);
         }
 
         return flight;

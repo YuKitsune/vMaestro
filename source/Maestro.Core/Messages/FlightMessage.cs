@@ -28,6 +28,7 @@ public class FlightMessage
     public required string ApproachType { get; init; }
     public required DateTimeOffset InitialLandingEstimate { get; init; }
     public required DateTimeOffset LandingEstimate { get; init; }
+    public DateTimeOffset? TargetLandingTime { get; init; }
     public required DateTimeOffset LandingTime { get; init; }
     public required TimeSpan InitialDelay { get; init; }
     public required TimeSpan RemainingDelay { get; init; }
@@ -36,4 +37,5 @@ public class FlightMessage
     public required FixEstimate[] Fixes { get; init; } = []; // TODO: DTO
     public required FlightPosition? Position { get; init; } // TODO: DTO
     public required bool IsManuallyInserted { get; init; }
+    public TimeSpan? TimeToGo { get; init; }
 }
