@@ -2,18 +2,18 @@
 
 ## V1 Release
 
-## Revise all test cases
+### Revise all test cases
 
 - [ ] Delete redundant or inaccurate test cases
 - [ ] Compare remaining test cases with reference material
 
-## Test OnFdrUpdate reliability
+### Test OnFdrUpdate reliability
 
 Event doesn't seem to get raised when ETAs update.
 Verify if this is the case.
 Consider scalling the FDRs every 30 seconds instead.
 
-## Streamline Approach Type and Runway Assignment
+### Streamline Approach Type and Runway Assignment
 
 - [X] Allow runway assignment to be deferred until the Scheduling phase
 - [ ] Extract runway and approach type assignment into a separate, testable service
