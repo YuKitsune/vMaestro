@@ -1,7 +1,6 @@
 {
   "Logging": {
     "LogLevel": "Information",
-    "OutputDirectory": "MaestroLogs",
     "MaxFileAgeDays": 7
   },
   "Server": {
@@ -2633,7 +2632,8 @@
     "General Holding.",
     "{Callsign} MEDEVAC",
     "{Callsign} diverting",
-    "{Callsign} request high speed descent"
+    "{Callsign} request high speed descent",
+    "{Callsign} subject to CDO"
     ]
   }
 }
