@@ -48,6 +48,10 @@ public class ChangeRunwayRequestHandler(
             // TODO: Track who initiated the change
             logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
+            // TODO: @claude, load the runway mode at the LandingTime, and see if the runway is in that mode first
+            //  if it is, then use the approach type associated with that runway, otherwise, defer to the arrival lookup
+            //  to find an approach type.
+
             // Determine the approach type for the new runway
             var approachTypes = arrivalLookup.GetApproachTypes(
                 flight.DestinationIdentifier,
@@ -62,7 +66,10 @@ public class ChangeRunwayRequestHandler(
                 : approachTypes.FirstOrDefault() ?? string.Empty;
 
             // Lookup trajectory for the new runway and approach before updating flight
-            var trajectory = trajectoryService.GetTrajectory(flight, request.RunwayIdentifier, newApproachType);
+            var trajectory = trajectoryService.GetTrajectory(
+                flight,
+                request.RunwayIdentifier,
+                newApproachType);
 
             flight.SetRunway(request.RunwayIdentifier, trajectory);
 
@@ -74,7 +81,7 @@ public class ChangeRunwayRequestHandler(
             if (flight.State is State.Unstable)
                 flight.SetState(State.Stable, clock);
 
-            sequence.RepositionByEstimate(flight);
+            sequence.RepositionByEstimate(flight); // TODO: Reposition by ETA_FF, not ETA
 
             sessionMessage = instance.Session.Snapshot();
         }

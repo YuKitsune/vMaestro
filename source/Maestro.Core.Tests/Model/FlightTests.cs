@@ -1,4 +1,4 @@
-using Maestro.Core.Model;
+﻿using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Shouldly;
@@ -9,6 +9,24 @@ public class FlightTests(ClockFixture clockFixture)
 {
     readonly TimeSpan _defaultTtg = TimeSpan.FromMinutes(20);
     readonly DateTimeOffset _landingTime = clockFixture.Instance.UtcNow();
+
+    [Fact]
+    public void WhenFeederFixEstimateChanges_LandingEstimateIsUpdated()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight
+
+        // Act
+        // TODO: Change the FeederFixEstimate
+
+        // Assert
+        // TODO: Assert the new LandingEstimate has changed
+        // TODO: Assert the new LandingEstimate is FeederFixEstimate + Trajectory.TimeToGo
+
+        Assert.Fail();
+    }
 
     [Fact]
     public void WhenAFlightIsDelayed_AndItSlowsDown_DelayReduces()

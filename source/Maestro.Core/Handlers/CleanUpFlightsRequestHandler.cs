@@ -36,14 +36,14 @@ public class CleanUpFlightsRequestHandler(
                 var landedFlight = landedFlights[i];
                 var timeSinceLanded = clock.UtcNow() - landedFlight.LandingTime;
                 var landedFlightTimeout = TimeSpan.FromMinutes(airportConfiguration.LandedFlightTimeoutMinutes);
-                if (i >= airportConfiguration.MaxLandedFlights || timeSinceLanded >= landedFlightTimeout)
-                {
-                    sequence.Remove(landedFlight);
-                    logger.Information(
-                        "Deleting {Callsign} from {AirportIdentifier} as it has landed.",
-                        landedFlight.Callsign,
-                        sequence.AirportIdentifier);
-                }
+                if (i < airportConfiguration.MaxLandedFlights && timeSinceLanded < landedFlightTimeout)
+                    continue;
+
+                sequence.Remove(landedFlight);
+                logger.Information(
+                    "Deleting {Callsign} from {AirportIdentifier} as it has landed.",
+                    landedFlight.Callsign,
+                    sequence.AirportIdentifier);
             }
         }
     }

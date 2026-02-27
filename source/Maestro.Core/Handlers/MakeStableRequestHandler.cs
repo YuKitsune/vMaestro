@@ -10,11 +10,6 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-// TODO: Test cases
-// - Unstable flight becomes stable
-// - Flights in other modes are ignored
-// - Flight does not become unstable when manually stablised
-
 public class MakeStableRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,

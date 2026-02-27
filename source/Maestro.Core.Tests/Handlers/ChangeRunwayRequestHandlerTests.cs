@@ -71,6 +71,45 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
     }
 
     [Fact]
+    public async Task WhenchangingRunway__TheTrajectoryIsUpdated()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight
+        // TODO: Record it's current trajectory
+
+        // Act
+        // TODO: Change the runway
+
+        // Assert
+        // TODO: The new trajectory should not be the same as the original trajectory
+
+        Assert.Fail();
+        await Task.CompletedTask;
+    }
+
+    [Fact]
+    public async Task WhenchangingRunway_LandingEstimateIsUpdated()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight
+        // TODO: Record it's current landing estimate
+
+        // Act
+        // TODO: Change the runway
+
+        // Assert
+        // TODO: Assert the new landing estimate is not the same as the original one
+        // TODO: Assert the new landing estimate is now FeederFixEstimate + Trajectory.TimeToGo
+
+        Assert.Fail();
+        await Task.CompletedTask;
+    }
+
+    [Fact]
     public async Task WhenChangingRunway_TheFlightIsMovedBasedOnItsLandingEstimate()
     {
         var now = clockFixture.Instance.UtcNow();
@@ -229,7 +268,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
     [InlineData(State.SuperStable)]
     [InlineData(State.Frozen)]
     [InlineData(State.Landed)]
-    public async Task WhenChangingRunway_AndTheFlightWasNotUnstable_ItBecomesStable(State state)
+    public async Task WhenChangingRunway_AndTheFlightWasNotUnstable_StateRemainsUnchanged(State state)
     {
         var now = clockFixture.Instance.UtcNow();
 

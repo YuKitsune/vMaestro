@@ -53,8 +53,11 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
     }
 
     [Fact]
-    public async Task FlightIsInsertedByLandingEstimate()
+    public async Task FlightIsInsertedByFeederFixEstimate()
     {
+        // TODO @claude, re-write this test to assert that the flight is inserted based on it's FeederFixEstimate, and not it's LandingEstimate.
+        //  Vary the TTG values such that the ordering would be different if they were ordered by LandingEstimate.
+
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
@@ -107,7 +110,7 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
     }
 
     [Fact]
-    public async Task WhenEstimateIsBetweenTwoFrozenFlightsWithInsufficientSpace_ItIsMovedBackUntilThereIsSpace()
+    public async Task WhenLandingEstimateIsBetweenTwoFrozenFlightsWithInsufficientSpace_ItIsMovedBackUntilThereIsSpace()
     {
         var now = clockFixture.Instance.UtcNow();
 
