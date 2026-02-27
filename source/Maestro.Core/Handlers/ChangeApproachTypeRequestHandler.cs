@@ -10,12 +10,6 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-// TODO: test cases
-//  - When changing approach type, the assigned approach type is updated
-//  - When changing approach type, the landing estimate is updated based on the ETA_FF + TTG
-//  - When changing approach type, and we're in online mode, relay to master
-
-
 public class ChangeApproachTypeRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
@@ -56,10 +50,10 @@ public class ChangeApproachTypeRequestHandler(
             // Lookup trajectory for the new approach type
             var trajectory = trajectoryService.GetTrajectory(
                 flight,
-                flight.AssignedRunwayIdentifier ?? string.Empty,
+                flight.AssignedRunwayIdentifier,
                 request.ApproachType);
 
-            flight.SetApproachType(request.ApproachType, trajectory!);
+            flight.SetApproachType(request.ApproachType, trajectory);
 
             sessionMessage = instance.Session.Snapshot();
         }

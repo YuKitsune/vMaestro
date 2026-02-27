@@ -27,10 +27,5 @@ public enum State
     /// <summary>
     ///     No changes can be made to flights in this state.
     /// </summary>
-    Landed,
-
-    /// <summary>
-    ///     The flight is ignored by the scheduling algorithm but remains visible in the sequence display.
-    /// </summary>
-    Desequenced
+    Landed
 }

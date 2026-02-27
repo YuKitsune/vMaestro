@@ -9,7 +9,7 @@ public static class SequenceExtensionMethods
         Flight flight)
     {
         var newIndex = sequence.FindIndex(
-            f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
+            f => f.FeederFixEstimate.IsAfter(flight.FeederFixEstimate));
 
         if (newIndex == -1)
             newIndex = sequence.Flights.Count;

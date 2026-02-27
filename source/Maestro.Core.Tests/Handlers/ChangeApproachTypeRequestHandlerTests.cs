@@ -1,4 +1,4 @@
-using Maestro.Core.Handlers;
+﻿using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -61,8 +61,29 @@ public class ChangeApproachTypeRequestHandlerTests(
     }
 
     [Fact]
+    public async Task WhenChangingApproachType_TheTrajectoryIsUpdated()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight
+        // TODO: Record it's current trajectory
+
+        // Act
+        // TODO: Change the approach type
+
+        // Assert
+        // TODO: The new trajectory should not be the same as the original trajectory
+
+        Assert.Fail();
+        await Task.CompletedTask;
+    }
+
+    [Fact]
     public async Task WhenChangingApproachType_TheLandingEstimateIsUpdated()
     {
+        // TODO: @claude Update this test case to ensure the LandingEstimate is FeederFixEstimate + Trajectory.TTG.
+
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange

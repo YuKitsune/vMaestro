@@ -13,7 +13,6 @@ namespace Maestro.Core.Handlers;
 public class ChangeFeederFixEstimateRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -47,7 +46,7 @@ public class ChangeFeederFixEstimateRequestHandler(
 
             flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
 
-            instance.Session.Sequence.RepositionByEstimate(flight);
+            instance.Session.Sequence.RepositionByEstimate(flight); // TODO: Reposition by ETA_FF, not ETA.
             if (flight.State is State.Unstable)
                 flight.SetState(State.Stable, clock); // TODO: Make configurable
 

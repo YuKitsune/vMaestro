@@ -14,6 +14,9 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
+// TODO: @claude, the test TODOs and stubs in this file are incomplete. Please reference InsertFlightRequestHandler.cs
+//  for any test cases. Use your best judgement when determining if a test case is already implemented, or needs to be implemented.
+
 public class InsertFlightRequestHandlerTests(
     AirportConfigurationFixture airportConfigurationFixture,
     ClockFixture clockFixture,
@@ -259,6 +262,34 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
+    public async Task InsertExact_DummyFlight_FeederFixEstimateIsSet()
+    {
+        // TODO: @claude, please implement this test case
+        // Arrange
+
+
+        // Act
+        // TODO: Insert a dummy flight at a target time
+
+        // Assert
+        // TODO: FeederFixEstimate should be TargetTime - Trajectory.TimeToGo
+    }
+
+    [Fact]
+    public async Task InsertExact_PendingFlight_FeederFixEstimateIsSet()
+    {
+        // TODO: @claude, please implement this test case
+        // Arrange
+        // TODO: Create a pending flight
+
+        // Act
+        // TODO: Insert the flight at a target time
+
+        // Assert
+        // TODO: FeederFixEstimate should be TargetTime - Trajectory.TimeToGo
+    }
+
+    [Fact]
     public async Task InsertExact_RelevantRunwayIsAssigned()
     {
         // Arrange
@@ -384,6 +415,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
+        // TODO: @claude, please change this assertion to ensure the FeederFixEstimate is sourced from the flight plan route,
+        //  and the LandingEstimate is the FeederFixEstimate + Trajectory.TimeToGo
         pendingFlight.LandingEstimate.ShouldBe(originalEstimate, "Landing estimate should remain unchanged for coupled flight");
         pendingFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
     }
@@ -426,6 +459,10 @@ public class InsertFlightRequestHandlerTests(
     [Fact]
     public async Task InsertExact_PositionedByTargetTime()
     {
+        // TODO: @claude, please update this test case to ensure the feeder fix times would cause the flights to be
+        //  positioned different if they were positioned based on FeederFixEstimate.
+        //  You'll need to use two different TTG values to ensure one flight arrives at the FF earlier but lands later.
+
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
@@ -913,6 +950,37 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
+    public async Task InsertRelative_DummyFlight_FeederFixEstimateIsSet()
+    {
+        // TODO: @claude, please implement this test case
+
+        // Arrange
+        // TODO: Create an existing flight
+
+        // Act
+        // TODO: Insert a dummy flight behind the existing flight
+
+        // Assert
+        // TODO: FeederFixEstimate should be ExistingFlight.LandingTime - AcceptanceRate - Trajectory.TimeToGo
+    }
+
+    [Fact]
+    public async Task InsertRelative_PendingFlight_FeederFixEstimateIsSet()
+    {
+        // TODO: @claude, please implement this test case
+
+        // Arrange
+        // TODO: Create an existing flight
+        // TODO: Create a pending flight
+
+        // Act
+        // TODO: Insert the flight behind the existing flight
+
+        // Assert
+        // TODO: FeederFixEstimate should be ExistingFlight.LandingTime - AcceptanceRate - Trajectory.TimeToGo
+    }
+
+    [Fact]
     public async Task InsertRelative_PendingFlightExists_PendingFlightInserted()
     {
         // Arrange
@@ -1044,6 +1112,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
+        // TODO: @claude, please change this assertion to ensure the FeederFixEstimate is sourced from the flight plan route,
+        //  and the LandingEstimate is the FeederFixEstimate + Trajectory.TimeToGo
         pendingFlight.TargetLandingTime.ShouldBe(
             stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
             "Pending flight target time should be reference flight's landing time + acceptance rate");

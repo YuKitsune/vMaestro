@@ -205,7 +205,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             .Build();
 
         var newFeederFixTime = clock.UtcNow().AddMinutes(15);
-        var newLandingTime = clock.UtcNow().AddMinutes(25);
+        var routeLandingTime = clock.UtcNow().AddMinutes(26); // 1 min off to ensure we're not sourcing landing ETA from the route
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
@@ -219,7 +219,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
-                new FixEstimate("YSSY", newLandingTime)
+                new FixEstimate("YSSY", routeLandingTime)
             ]);
 
         var trajectoryService = Substitute.For<ITrajectoryService>();
@@ -233,8 +233,70 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
 
         // Assert
         flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
-        // Landing estimate now calculated automatically when updating feeder fix estimate: FF + TTG
+        flight.LandingEstimate.ShouldNotBe(routeLandingTime);
         flight.LandingEstimate.ShouldBe(newFeederFixTime.Add(ttg));
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndItIsNotTrackingViaAFeederFix_EstimatesAreRecalculated()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight, not tracking via any feeder fix
+
+        // Act
+        // TODO: Update the landing estimate (last point in the route)
+
+        // Assert
+        // TODO: Assert the FeederFix has changed
+        // TODO: Assert the FeederFix estimate is newLandingEstimate - Trajectory.TimeToGo
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndItPassesTheFeederFix_PassedFeederFixTimeIsSet()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight
+
+        // Act
+        // TODO: Update the route estimate to include an ActualTime in the feeder fix
+
+        // Assert
+        // TODO: ActualFeederFixTime should now be set
+        // TODO: Landing estimate is calculated based on ATO_FF + Trajectory.TimeToGo (Use a slightly different value, i.e. 1 minute off, for ETA_FF and ATO_FF to ensure ATO_FF is used and not ETA_FF)
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndItIsNotTrackingViaAFeederFix_AndItPassesTheFeederFixPoint_PassedFeederFixTimeIsSet()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight, not tracking via any feeder fix
+
+        // Act
+        // TODO: Update the landing estimate to be now + Trajectory.TTG
+
+        // Assert
+        // TODO: ActualFeederFixTime should be set to newLandingEstimate - Trajectory.TTG
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndItHasPassedTheFeederFix_EstimatesAreNoLongerUpdated()
+    {
+        // TODO: @claude, please implement this test case.
+
+        // Arrange
+        // TODO: Create a flight, with an ATO_FF set
+
+        // Act
+        // TODO: Update the ETA_FF and landing estimate (last ETA in route)
+
+        // Assert
+        // TODO: FeederFixEstimate and LandingEstimate should not change
     }
 
     [Fact]
@@ -368,18 +430,20 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     public async Task WhenADesequencedFlightIsUpdated_ItsEstimatesAreStillUpdated()
     {
         // Arrange
+        var ttg = TimeSpan.FromMinutes(10);
         var clock = clockFixture.Instance;
         var flight = new FlightBuilder("QFA123")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .WithLandingTime(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(ttg)
             .Build();
 
         var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
         instance.Session.DeSequencedFlights.Add(flight);
 
         var newFeederFixTime = clock.UtcNow().AddMinutes(15);
-        var newLandingTime = clock.UtcNow().AddMinutes(25);
+        var routeLandingTime = clock.UtcNow().AddMinutes(26); // 1 min off to ensure we're not sourcing landing ETA from the route
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
@@ -393,7 +457,7 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
-                new FixEstimate("YSSY", newLandingTime)
+                new FixEstimate("YSSY", routeLandingTime)
             ]);
 
         var trajectoryService = Substitute.For<ITrajectoryService>();
@@ -405,12 +469,18 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
 
         // Assert
         flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
-        flight.LandingEstimate.ShouldBe(newLandingTime);
+        flight.LandingEstimate.ShouldNotBe(routeLandingTime);
+        flight.LandingEstimate.ShouldBe(newFeederFixTime.Add(ttg));
     }
 
     [Fact]
     public async Task WhenAnUnstableFlightIsUpdated_ItsPositionInSequenceIsRecalculated()
     {
+        // TODO: @claude please re-factor this test to ensure flights are positioned based on their FeederFix estimate,
+        //  and not their landing estimate.
+        //  Use different TTG values to make flight1 land earlier than flight2 based on landing time, but the different
+        //  FeederFixEstimates should make flight2 overtake flight1.
+
         // Arrange
         var clock = clockFixture.Instance;
 
@@ -476,6 +546,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     [InlineData(State.Frozen)]
     public async Task WhenAStableFlightIsUpdated_ItsPositionInSequenceIsNotRecalculated(State state)
     {
+        // TODO: @claude please re-factor this test to ensure flights are positioned based on their FeederFix estimate,
+        //  and not their landing estimate. As with the previous test.
+
         // Arrange
         var clock = clockFixture.Instance;
 
@@ -631,8 +704,11 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
-    public async Task WhenNewFlightLandingEstimateIsEarlierThanStableFlight_FlightIsInsertedBefore()
+    public async Task WhenNewFlightFeederFixEstimateIsEarlierThanStableFlight_FlightIsInsertedBefore()
     {
+        // TODO: @claude please re-factor this test to ensure flights are positioned based on their FeederFix estimate,
+        //  and not their landing estimate. As with the previous tests.
+
         // Arrange
         var clock = clockFixture.Instance;
 
@@ -673,8 +749,11 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
-    public async Task WhenNewFlightLandingEstimateIsEarlierThanSuperStableFlight_FlightIsInsertedAfter()
+    public async Task WhenNewFlightFeederFixEstimateIsEarlierThanSuperStableFlight_FlightIsInsertedAfter()
     {
+        // TODO: @claude please re-factor this test to ensure flights are positioned based on their FeederFix estimate,
+        //  and not their landing estimate. As with the previous tests.
+
         // Arrange
         var clock = clockFixture.Instance;
 
@@ -716,8 +795,11 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     }
 
     [Fact]
-    public async Task WhenUnstableFlightEstimateIsAheadOfStableFlight_ItDoesNotOvertakeStableFlight()
+    public async Task WhenUnstableFeederFixEstimateIsAheadOfStableFlight_ItDoesNotOvertakeStableFlight()
     {
+        // TODO: @claude please re-factor this test to ensure flights are positioned based on their FeederFix estimate,
+        //  and not their landing estimate. As with the previous tests.
+
         // Arrange
         var clock = clockFixture.Instance;
 
@@ -990,6 +1072,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     [Fact]
     public async Task WhenUnstableEstimateMovesBack_PositionIsCalculatedCorrectly()
     {
+        // TODO: @claude please re-factor this test to ensure flights are positioned based on their FeederFix estimate,
+        //  and not their landing estimate. As with the previous tests.
+
         // Arrange
         var clock = clockFixture.Instance;
 
@@ -1062,6 +1147,9 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     [Fact]
     public async Task WhenUnstableEstimateBecomesLatest_ItMovesToEndOfSequence()
     {
+        // TODO: @claude please re-factor this test to ensure flights are positioned based on their FeederFix estimate,
+        //  and not their landing estimate. As with the previous tests.
+
         // Arrange
         var clock = clockFixture.Instance;
 

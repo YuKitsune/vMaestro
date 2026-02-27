@@ -48,6 +48,10 @@ public class RecomputeRequestHandler(
                 return;
             }
 
+            // TODO: @claude, in this instance, we need to change the feeder fix identifier, estimate and actual time over, not just the estimates.
+            //  The feeder fix may change if the flight is re-routed.
+            //  Implement this change here, and backfill it to FlightUpdatedHandler.cs
+
             // Update the feeder fix estimate in case of a re-route
             var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
             if (feederFix is not null && feederFix.FixIdentifier == flight.FeederFixIdentifier)
@@ -64,13 +68,17 @@ public class RecomputeRequestHandler(
 
             // Reset the runway to the default so it can be calculated in the Scheduling phase
             var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
-            var runwayIdentifier = runwayMode.Default.Identifier;
+            var runway = runwayMode.Default;
 
             // Lookup trajectory for the default runway and current approach type
-            var trajectory = trajectoryService.GetTrajectory(flight, runwayIdentifier, flight.ApproachType);
+            var trajectory = trajectoryService.GetTrajectory(
+                flight,
+                runway.Identifier,
+                runway.ApproachType);
 
-            // Atomic update: runway + trajectory + ETA + STA_FF
-            flight.SetRunway(runwayIdentifier, trajectory);
+            flight.SetRunway(runway.Identifier, trajectory);
+            flight.SetApproachType(runway.ApproachType, trajectory);
+
             flight.InvalidateSequenceData();
 
             // Reset the state

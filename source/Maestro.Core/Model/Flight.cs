@@ -249,6 +249,21 @@ public class Flight : IEquatable<Flight>
         }
     }
 
+    public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
+    {
+        if (ManualFeederFixEstimate || HasPassedFeederFix)
+            throw new MaestroException("Cannot update LandingEstimate when FeederFixEstimate is fixed");
+
+        LandingEstimate = landingEstimate;
+        FeederFixEstimate = LandingEstimate.Subtract(Trajectory.TimeToGo);
+
+        if (State is State.Unstable)
+        {
+            InitialFeederFixEstimate = FeederFixEstimate;
+            InitialLandingEstimate = LandingEstimate;
+        }
+    }
+
     public void PassedFeederFix(DateTimeOffset feederFixTime)
     {
         if (HasPassedFeederFix)
@@ -361,7 +376,7 @@ public class Flight : IEquatable<Flight>
             return;
 
         // Sticky states
-        if (State is State.Landed or State.Desequenced)
+        if (State is State.Landed)
             return;
 
         // TODO: Make configurable

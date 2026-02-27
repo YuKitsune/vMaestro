@@ -29,8 +29,11 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         });
 
     [Fact]
-    public async Task TheFlightIsMovedBasedOnItsLandingEstimate()
+    public async Task TheFlightIsMovedBasedOnItsFeederFixEstimate()
     {
+        // TODO @claude, re-write this test to assert that the flight is repositioned based on it's FeederFixEstimate, and not it's LandingEstimate.
+        //  Vary the TTG values such that the ordering would be different if they were ordered by LandingEstimate.
+
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
@@ -121,8 +124,6 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Flight 2 should be behind flight 3 separated by acceptance rate");
     }
 
-    // TODO: Check STA_FF and ETA_FF
-
     [Fact]
     public async Task ManualFeederFixEstimateIsRemoved()
     {
@@ -187,7 +188,6 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         flight.FeederFixEstimate.ShouldBe(newFeederFixEstimate);
     }
 
-    // TODO: Revisit
     [Fact]
     public async Task RunwayIsReset()
     {
