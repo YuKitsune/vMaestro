@@ -46,7 +46,7 @@ public class ChangeFeederFixEstimateRequestHandler(
 
             flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
 
-            instance.Session.Sequence.RepositionByEstimate(flight); // TODO: Reposition by ETA_FF, not ETA.
+            instance.Session.Sequence.RepositionByEstimate(flight);
             if (flight.State is State.Unstable)
                 flight.SetState(State.Stable, clock); // TODO: Make configurable
 
