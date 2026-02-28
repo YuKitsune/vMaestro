@@ -81,7 +81,7 @@ public class ChangeRunwayRequestHandler(
             if (flight.State is State.Unstable)
                 flight.SetState(State.Stable, clock);
 
-            sequence.RepositionByEstimate(flight); // TODO: Reposition by ETA_FF, not ETA
+            sequence.RepositionByEstimate(flight);
 
             sessionMessage = instance.Session.Snapshot();
         }
