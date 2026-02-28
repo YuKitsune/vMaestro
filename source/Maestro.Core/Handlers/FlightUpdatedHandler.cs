@@ -205,7 +205,7 @@ public class FlightUpdatedHandler(
                             notification.Destination,
                             null,
                             runway.Identifier,
-                            runway.Identifier);
+                            runway.ApproachType);
 
                         pendingFlight = new Flight(
                             callsign: notification.Callsign,
