@@ -48,34 +48,26 @@ public class ChangeRunwayRequestHandler(
             // TODO: Track who initiated the change
             logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
-            // TODO: @claude, load the runway mode at the LandingTime, and see if the runway is in that mode first
-            //  if it is, then use the approach type associated with that runway, otherwise, defer to the arrival lookup
-            //  to find an approach type.
+            var runwayIdentifier = request.RunwayIdentifier;
 
-            // Determine the approach type for the new runway
-            var approachTypes = arrivalLookup.GetApproachTypes(
-                flight.DestinationIdentifier,
-                flight.FeederFixIdentifier,
-                flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
-                request.RunwayIdentifier,
-                flight.AircraftType,
-                flight.AircraftCategory);
+            var runwayMode = sequence.GetRunwayModeAt(flight.LandingTime);
+            var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier);
 
-            var newApproachType = approachTypes.Contains(flight.ApproachType)
-                ? flight.ApproachType
-                : approachTypes.FirstOrDefault() ?? string.Empty;
+            // Use the approach type defined in the current runway mode if this runway is in mode
+            // Otherwise, use the first available approach type for that runway
+            var approachType = runway?.ApproachType ?? GetApproachType(flight, runwayIdentifier);
 
             // Lookup trajectory for the new runway and approach before updating flight
             var trajectory = trajectoryService.GetTrajectory(
                 flight,
                 request.RunwayIdentifier,
-                newApproachType);
+                approachType);
 
             flight.SetRunway(request.RunwayIdentifier, trajectory);
 
             // Update approach type if it changed
-            if (flight.ApproachType != newApproachType)
-                flight.SetApproachType(newApproachType, trajectory);
+            if (flight.ApproachType != approachType)
+                flight.SetApproachType(approachType, trajectory);
 
             // Unstable flights become Stable when changing runway
             if (flight.State is State.Unstable)
@@ -91,5 +83,20 @@ public class ChangeRunwayRequestHandler(
                 instance.AirportIdentifier,
                 sessionMessage),
             cancellationToken);
+    }
+
+    string GetApproachType(Flight flight, string runwayIdentifier)
+    {
+        var approachTypes = arrivalLookup.GetApproachTypes(
+            flight.DestinationIdentifier,
+            flight.FeederFixIdentifier,
+            flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
+            runwayIdentifier,
+            flight.AircraftType,
+            flight.AircraftCategory);
+
+        return approachTypes.Contains(flight.ApproachType)
+            ? flight.ApproachType
+            : approachTypes.FirstOrDefault() ?? string.Empty;
     }
 }
