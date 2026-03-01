@@ -46,7 +46,7 @@ public class SwapFlightsRequestHandlerTests(
         sequence.NumberForRunway(secondFlight).ShouldBe(1);
         sequence.NumberInSequence(secondFlight).ShouldBe(2);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -74,11 +74,11 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -95,53 +95,39 @@ public class SwapFlightsRequestHandlerTests(
     {
         // Arrange
         var firstLandingTime = _clock.UtcNow().AddMinutes(10);
+        var firstTtg = TimeSpan.FromMinutes(10);
+        var firstFeederFixTime = firstLandingTime.Subtract(firstTtg); // now + 0
+
+        var secondLandingTime = _clock.UtcNow().AddMinutes(20);
+        var secondTtg = TimeSpan.FromMinutes(15);
+        var secondFeederFixTime = secondLandingTime.Subtract(secondTtg); // now + 5
+
         var firstFlight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34L")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(0))
-            .WithFeederFixTime(_clock.UtcNow().AddMinutes(0))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(10))
+            .WithFeederFixEstimate(firstFeederFixTime)
             .WithLandingTime(firstLandingTime)
+            .WithTrajectory(new Trajectory(firstTtg))
             .Build();
 
-        var secondLandingTime = _clock.UtcNow().AddMinutes(20);
         var secondFlight = new FlightBuilder("QFA2")
             .WithFeederFix("MARLN") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34R")
-            .WithFeederFixEstimate(_clock.UtcNow().AddMinutes(10))
-            .WithFeederFixTime(_clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
+            .WithFeederFixEstimate(secondFeederFixTime)
             .WithLandingTime(secondLandingTime)
+            .WithTrajectory(new Trajectory(secondTtg))
             .Build();
 
-        // Arrival intervals here are different to demonstrate that feeder fix times are re-calculated
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetTrajectory(
-                Arg.Any<string>(),
-                Arg.Is("RIVET"),
-                Arg.Any<string[]>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(new Trajectory(TimeSpan.FromMinutes(10)));
-        arrivalLookup.GetTrajectory(
-                Arg.Any<string>(),
-                Arg.Is("MARLN"),
-                Arg.Any<string[]>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(new Trajectory(TimeSpan.FromMinutes(15)));
-        arrivalLookup.GetAverageTrajectory(Arg.Any<string>())
-            .Returns(new Trajectory(TimeSpan.FromMinutes(12)));
+        // TTGs here are different to demonstrate that feeder fix times are re-calculated
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory().OnRunway("34L").Returns(new Trajectory(firstTtg))
+            .WithTrajectory().OnRunway("34R").Returns(new Trajectory(secondTtg));
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
-            .WithSequence(s => s.WithArrivalLookup(arrivalLookup).WithFlightsInOrder(firstFlight, secondFlight))
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -149,8 +135,8 @@ public class SwapFlightsRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        firstFlight.FeederFixTime.ShouldBe(secondLandingTime.Subtract(TimeSpan.FromMinutes(10)));
-        secondFlight.FeederFixTime.ShouldBe(firstLandingTime.Subtract(TimeSpan.FromMinutes(15)));
+        firstFlight.FeederFixTime.ShouldBe(secondLandingTime.Subtract(secondTtg));
+        secondFlight.FeederFixTime.ShouldBe(firstLandingTime.Subtract(firstTtg));
     }
 
     [Fact]
@@ -169,11 +155,11 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -201,11 +187,11 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(secondFlight, firstFlight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -226,11 +212,11 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -251,11 +237,11 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -286,11 +272,11 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.SuperStable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -321,14 +307,14 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(30))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight, thirdFlight))
             .Build();
 
         // Artificial 10-minute delay to ensure recomputation is not performed
         thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), FlowControls.ReduceSpeed);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(instanceManager);
 
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
@@ -385,7 +371,7 @@ public class SwapFlightsRequestHandlerTests(
         flight2.LandingTime.ShouldBe(now.AddMinutes(15), "The landing times of the flights should not have changed");
     }
 
-    SwapFlightsRequestHandler GetHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
+    SwapFlightsRequestHandler GetHandler(IMaestroInstanceManager instanceManager)
     {
         return new SwapFlightsRequestHandler(
             instanceManager,

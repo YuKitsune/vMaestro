@@ -329,7 +329,7 @@ public class FlightUpdatedHandler(
     void CalculateEstimates(Flight flight, FlightUpdatedNotification notification)
     {
         // Stop re-calculating estimates after passing the feeder
-        if (flight.HasPassedFeederFix)
+        if (flight.HasPassedFeederFix || flight.ManualFeederFixEstimate)
             return;
 
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))

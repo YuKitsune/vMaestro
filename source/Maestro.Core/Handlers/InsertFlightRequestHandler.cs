@@ -168,7 +168,7 @@ public class InsertFlightRequestHandler(
             existingPendingFlight.SetRunway(runway.Identifier, trajectory);
             existingPendingFlight.SetApproachType(runway.ApproachType, trajectory);
             existingPendingFlight.SetTargetLandingTime(targetLandingTime);
-            existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo));// TODO: test case - When inserting a pending flight, at an exact time, FeederFixEstimate is TargetTime - Trajectory.TimeToGo
+            existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo)); // TODO: test case - When inserting a pending flight, at an exact time, FeederFixEstimate is TargetTime - Trajectory.TimeToGo
 
             existingPendingFlight.SetState(airportConfiguration.ManuallyInsertedFlightState, clock);
 

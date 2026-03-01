@@ -136,30 +136,33 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        // Configure trajectory service with TTG = 12 minutes for both flights
+        // flight1: FF=-2, TTG=12, Landing=+10
+        // flight2: FF=-1, TTG=12, Landing=+11
+        var trajectoryService = new MockTrajectoryService(TimeSpan.FromMinutes(12));
+
         // Create two flights where flight2 is delayed behind flight1
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(10))
-            .WithLandingEstimate(now.AddMinutes(10))
             .WithFeederFixEstimate(now.AddMinutes(-2))
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(13)) // 3 minutes after flight1 (acceptance rate)
-            .WithLandingEstimate(now.AddMinutes(11)) // Original estimate is earlier
             .WithFeederFixEstimate(now.AddMinutes(-1))
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
             .WithRunway("34L")
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
         // Verify initial state
-        flight1.LandingTime.ShouldBe(now.AddMinutes(10));
-        flight2.LandingTime.ShouldBe(now.AddMinutes(13));
+        flight1.LandingTime.ShouldBe(now.AddMinutes(10), "flight1 lands at FF + TTG = -2 + 12");
+        flight2.LandingTime.ShouldBe(now.AddMinutes(13), "flight2 delayed behind flight1 by acceptance rate");
 
         var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");

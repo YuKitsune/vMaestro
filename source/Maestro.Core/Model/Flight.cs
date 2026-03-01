@@ -270,6 +270,42 @@ public class Flight : IEquatable<Flight>
             throw new MaestroException("Flight has already passed the feeder fix");
 
         ActualFeederFixTime = feederFixTime;
+        LandingEstimate = ActualFeederFixTime.Value.Add(Trajectory.TimeToGo);
+    }
+
+    public void SetFeederFix(
+        string? feederFixIdentifier,
+        Trajectory trajectory,
+        DateTimeOffset? feederFixEstimate,
+        DateTimeOffset? actualFeederFixTime,
+        DateTimeOffset landingEstimate)
+    {
+        ManualFeederFixEstimate = false;
+        FeederFixIdentifier = feederFixIdentifier;
+        Trajectory = trajectory;
+        ActualFeederFixTime = actualFeederFixTime;
+
+        // Calculate estimates based on whether flight tracks via feeder fix
+        if (!string.IsNullOrEmpty(feederFixIdentifier) && feederFixEstimate.HasValue)
+        {
+            FeederFixEstimate = feederFixEstimate.Value;
+            LandingEstimate = feederFixEstimate.Value.Add(trajectory.TimeToGo);
+        }
+        else
+        {
+            LandingEstimate = landingEstimate;
+            FeederFixEstimate = landingEstimate.Subtract(trajectory.TimeToGo);
+        }
+
+        // Always reset initial estimates when feeder fix changes
+        InitialFeederFixEstimate = FeederFixEstimate;
+        InitialLandingEstimate = LandingEstimate;
+
+        // Recalculate STA_FF using STA - TTG
+        if (LandingTime != default)
+        {
+            FeederFixTime = LandingTime.Subtract(trajectory.TimeToGo);
+        }
     }
 
     public void SetTargetLandingTime(DateTimeOffset targetLandingTime)
@@ -297,9 +333,17 @@ public class Flight : IEquatable<Flight>
     {
         Trajectory = trajectory;
 
-        // Calculate ETA using ETA_FF + TTG
-        if (!string.IsNullOrEmpty(FeederFixIdentifier))
+        if (ActualFeederFixTime.HasValue)
         {
+            // Calculate ETA using ATO_FF + TTG
+            LandingEstimate = ActualFeederFixTime.Value.Add(trajectory.TimeToGo);
+
+            if (State is State.Unstable)
+                InitialLandingEstimate = LandingEstimate;
+        }
+        else if (!string.IsNullOrEmpty(FeederFixIdentifier))
+        {
+            // Calculate ETA using ETA_FF + TTG
             LandingEstimate = FeederFixEstimate.Add(Trajectory.TimeToGo);
 
             if (State is State.Unstable)
