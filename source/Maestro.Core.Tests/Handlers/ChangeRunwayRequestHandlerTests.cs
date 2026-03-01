@@ -71,42 +71,100 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
     }
 
     [Fact]
-    public async Task WhenchangingRunway__TheTrajectoryIsUpdated()
+    public async Task WhenChangingRunway_TheTrajectoryIsUpdated()
     {
-        // TODO: @claude, please implement this test case.
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a flight
-        // TODO: Record it's current trajectory
+        var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(now.AddMinutes(20))
+            .WithRunway("34L")
+            .WithTrajectory(originalTrajectory)
+            .Build();
+
+        var newTrajectory = new Trajectory(TimeSpan.FromMinutes(15));
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
+            .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
+            .Build();
+
+        // Verify initial runway assignments and ordering
+        flight.AssignedRunwayIdentifier.ShouldBe("34L");
+        flight.Trajectory.ShouldBe(originalTrajectory);
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
+            Substitute.For<IClock>(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
 
         // Act
-        // TODO: Change the runway
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: The new trajectory should not be the same as the original trajectory
-
-        Assert.Fail("Stub");
-        await Task.CompletedTask;
+        flight.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
+        flight.Trajectory.ShouldBe(newTrajectory);
     }
 
     [Fact]
-    public async Task WhenchangingRunway_LandingEstimateIsUpdated()
+    public async Task WhenChangingRunway_LandingEstimateIsUpdated()
     {
-        // TODO: @claude, please implement this test case.
+        var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        // TODO: Create a flight
-        // TODO: Record it's current landing estimate
+        var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(now.AddMinutes(20))
+            .WithRunway("34L")
+            .WithTrajectory(originalTrajectory)
+            .Build();
+
+        var originalLandingEstimate = flight.LandingEstimate;
+
+        var newTrajectory = new Trajectory(TimeSpan.FromMinutes(15));
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
+            .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
+            .Build();
+
+        // Verify initial runway assignments and ordering
+        flight.AssignedRunwayIdentifier.ShouldBe("34L");
+        flight.Trajectory.ShouldBe(originalTrajectory);
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
+            Substitute.For<IClock>(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
 
         // Act
-        // TODO: Change the runway
+        await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: Assert the new landing estimate is not the same as the original one
-        // TODO: Assert the new landing estimate is now FeederFixEstimate + Trajectory.TimeToGo
-
-        Assert.Fail("Stub");
-        await Task.CompletedTask;
+        flight.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
+        flight.LandingEstimate.ShouldBe(flight.FeederFixEstimate.Add(newTrajectory.TimeToGo));
+        flight.LandingEstimate.ShouldNotBe(originalLandingEstimate);
     }
 
     [Fact]
