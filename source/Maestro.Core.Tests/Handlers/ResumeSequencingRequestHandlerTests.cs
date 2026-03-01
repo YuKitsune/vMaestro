@@ -55,29 +55,38 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
     [Fact]
     public async Task FlightIsInsertedByFeederFixEstimate()
     {
-        // TODO @claude, re-write this test to assert that the flight is inserted based on it's FeederFixEstimate, and not it's LandingEstimate.
-        //  Vary the TTG values such that the ordering would be different if they were ordered by LandingEstimate.
-
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        // Use different TTG values to prove positioning is based on FeederFixEstimate when resuming
+        // flight1: FF=+5, TTG=15, Landing=+20
+        // flight2: FF=+15, TTG=10, Landing=+25
+        // flight3: FF=+10, TTG=8, Landing=+18
+        // ResumeSequencing positions by FF: flight1 (+5), flight3 (+10), flight2 (+15)
+        // Even though flight3 has the earliest landing estimate (+18), it's positioned by FF (+10)
         var flight1 = new FlightBuilder("QFA1")
-            .WithLandingEstimate(now.AddMinutes(10))
+            .WithFeederFixEstimate(now.AddMinutes(5))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
-            .WithLandingEstimate(now.AddMinutes(15))
+            .WithFeederFixEstimate(now.AddMinutes(15))
             .WithRunway("34L")
             .Build();
 
         var flight3 = new FlightBuilder("QFA3")
-            .WithLandingEstimate(now.AddMinutes(12))
+            .WithFeederFixEstimate(now.AddMinutes(10))
             .WithRunway("34L")
             .Build();
 
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectoryForFlight(flight1, new Trajectory(TimeSpan.FromMinutes(15)))
+            .WithTrajectoryForFlight(flight2, new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectoryForFlight(flight3, new Trajectory(TimeSpan.FromMinutes(8)));
+
         var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s
+                .WithTrajectoryService(trajectoryService)
                 .WithFlightsInOrder(flight1, flight2)
                 .WithClock(clockFixture.Instance))
             .Build();
@@ -98,15 +107,19 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
+        // Flight inserted based on FeederFixEstimate (ResumeSequencing uses FF for positioning)
         sequence.Flights.Count.ShouldBe(3, "Three flights should be in sequence");
-        sequence.Flights[0].Callsign.ShouldBe("QFA1", "First flight should be QFA1");
-        sequence.Flights[1].Callsign.ShouldBe("QFA3", "Second flight should be QFA3");
-        sequence.Flights[2].Callsign.ShouldBe("QFA2", "Third flight should be QFA2");
+        sequence.Flights[0].Callsign.ShouldBe("QFA1", "First flight should be QFA1 (FF=+5)");
+        sequence.Flights[1].Callsign.ShouldBe("QFA3", "Second flight should be QFA3 (FF=+10)");
+        sequence.Flights[2].Callsign.ShouldBe("QFA2", "Third flight should be QFA2 (FF=+15)");
 
-        // Assert that each flight's landing time is separated by the acceptance rate
-        var acceptanceRate = airportConfigurationFixture.AcceptanceRate;
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(acceptanceRate), "QFA3 should be delayed behind QFA1 by acceptance rate");
-        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(acceptanceRate), "QFA2 should be delayed behind QFA3 by acceptance rate");
+        // Verify landing estimates to prove FF-based positioning
+        flight3.LandingEstimate.ShouldBe(now.AddMinutes(18), "QFA3 landing estimate should be FF + TTG = 10 + 8");
+        flight1.LandingEstimate.ShouldBe(now.AddMinutes(20), "QFA1 landing estimate should be FF + TTG = 5 + 15");
+        flight2.LandingEstimate.ShouldBe(now.AddMinutes(25), "QFA2 landing estimate should be FF + TTG = 15 + 10");
+
+        // Prove positioning is by FF estimate, not landing estimate
+        flight3.LandingEstimate.ShouldBeLessThan(flight1.LandingEstimate, "QFA3 lands earlier than QFA1, but positioned later due to FF estimate");
     }
 
     [Fact]

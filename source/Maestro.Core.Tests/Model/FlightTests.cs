@@ -13,19 +13,25 @@ public class FlightTests(ClockFixture clockFixture)
     [Fact]
     public void WhenFeederFixEstimateChanges_LandingEstimateIsUpdated()
     {
-        // TODO: @claude, please implement this test case.
-
         // Arrange
-        // TODO: Create a flight
+        var trajectory = new Trajectory(_defaultTtg);
+        var initialFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(10);
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(initialFeederFixEstimate)
+            .WithTrajectory(trajectory)
+            .Build();
+
+        var initialLandingEstimate = flight.LandingEstimate;
+        initialLandingEstimate.ShouldBe(initialFeederFixEstimate.Add(trajectory.TimeToGo));
 
         // Act
-        // TODO: Change the FeederFixEstimate
+        var newFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
+        flight.UpdateFeederFixEstimate(newFeederFixEstimate);
 
         // Assert
-        // TODO: Assert the new LandingEstimate has changed
-        // TODO: Assert the new LandingEstimate is FeederFixEstimate + Trajectory.TimeToGo
-
-        Assert.Fail();
+        flight.FeederFixEstimate.ShouldBe(newFeederFixEstimate);
+        flight.LandingEstimate.ShouldBe(newFeederFixEstimate.Add(trajectory.TimeToGo));
+        flight.LandingEstimate.ShouldNotBe(initialLandingEstimate);
     }
 
     [Fact]
@@ -167,6 +173,7 @@ public class FlightTests(ClockFixture clockFixture)
     {
         // Arrange - Create a flight within 15 minutes of landing
         var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(5))
             .WithLandingTime(clockFixture.Instance.UtcNow().AddMinutes(15)) // Within frozen threshold of 15 minutes
             .WithState(State.SuperStable)
             .Build();
@@ -183,6 +190,7 @@ public class FlightTests(ClockFixture clockFixture)
     {
         // Arrange
         var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(-15))
             .WithLandingTime(clockFixture.Instance.UtcNow()) // Scheduled time slightly out
             .WithState(State.Frozen)
             .Build();

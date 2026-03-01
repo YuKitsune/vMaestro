@@ -48,33 +48,33 @@ public class RecomputeRequestHandler(
                 return;
             }
 
-            // TODO: @claude, in this instance, we need to change the feeder fix identifier, estimate and actual time over, not just the estimates.
-            //  The feeder fix may change if the flight is re-routed.
-            //  Implement this change here, and backfill it to FlightUpdatedHandler.cs
-
-            // Update the feeder fix estimate in case of a re-route
+            // Recalculate the feeder fix in case of a re-route
             var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-            if (feederFix is not null && feederFix.FixIdentifier == flight.FeederFixIdentifier)
-            {
-                flight.UpdateFeederFixEstimate(feederFix.Estimate);
-                if (feederFix.ActualTimeOver.HasValue && !flight.HasPassedFeederFix)
-                {
-                    flight.PassedFeederFix(feederFix.ActualTimeOver.Value);
-                }
-            }
+            var landingEstimate = flight.Fixes.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
 
             flight.HighPriority = feederFix is null;
             flight.SetMaximumDelay(null);
 
             // Reset the runway to the default so it can be calculated in the Scheduling phase
-            var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
+            var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
             var runway = runwayMode.Default;
 
-            // Lookup trajectory for the default runway and current approach type
+            // Lookup trajectory for the (possibly new) feeder fix + default runway + default approach type
             var trajectory = trajectoryService.GetTrajectory(
-                flight,
+                flight.AircraftType,
+                flight.AircraftCategory,
+                flight.DestinationIdentifier,
+                feederFix?.FixIdentifier,
                 runway.Identifier,
                 runway.ApproachType);
+
+            // Update feeder fix (may have changed due to re-routing)
+            flight.SetFeederFix(
+                feederFix?.FixIdentifier,
+                trajectory,
+                feederFix?.Estimate,
+                feederFix?.ActualTimeOver,
+                landingEstimate);
 
             flight.SetRunway(runway.Identifier, trajectory);
             flight.SetApproachType(runway.ApproachType, trajectory);

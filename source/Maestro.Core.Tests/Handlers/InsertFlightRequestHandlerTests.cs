@@ -1909,7 +1909,7 @@ public class InsertFlightRequestHandlerTests(
             performanceLookupFixture.Instance,
             airportConfigurationProvider,
             arrivalLookup ?? Substitute.For<IArrivalLookup>(),
-            Substitute.For<ITrajectoryService>(),
+            new MockTrajectoryService(),
             clockFixture.Instance,
             mediator ?? Substitute.For<IMediator>(),
             Substitute.For<ILogger>());

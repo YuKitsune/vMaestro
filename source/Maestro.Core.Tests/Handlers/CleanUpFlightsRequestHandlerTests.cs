@@ -38,10 +38,12 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     {
         // Arrange
         var flight1 = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(20)))
             .WithState(State.Unstable)
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(10)))
             .WithState(State.Stable)
             .Build();
 
@@ -69,6 +71,7 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
         // Arrange
         var landedFlights = Enumerable.Range(1, 5)
             .Select(i => new FlightBuilder($"QFA{i}")
+                .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(25)))
                 .WithLandingTime(_now.AddMinutes(-5))
                 .WithState(State.Landed)
                 .Build())
@@ -96,6 +99,7 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
         // Arrange
         var landedFlights = Enumerable.Range(1, 8)
             .Select(i => new FlightBuilder($"QFA{i}")
+                .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(25)))
                 .WithLandingTime(_now.AddMinutes(-5))
                 .WithState(State.Landed)
                 .Build())
@@ -130,11 +134,13 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     {
         // Arrange
         var oldFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(35)))
             .WithLandingTime(_now.AddMinutes(-15))
             .WithState(State.Landed)
             .Build();
 
         var recentFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(25)))
             .WithLandingTime(_now.AddMinutes(-5))
             .WithState(State.Landed)
             .Build();
@@ -162,6 +168,7 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     {
         // Arrange
         var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(30)))
             .WithLandingTime(_now.AddMinutes(-10))
             .WithState(State.Landed)
             .Build();
@@ -187,19 +194,23 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     {
         // Arrange
         var unstableFlight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(20)))
             .WithState(State.Unstable)
             .Build();
 
         var oldLandedFlight = new FlightBuilder("QFA2")
+            .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(40)))
             .WithLandingTime(_now.AddMinutes(-20))
             .WithState(State.Landed)
             .Build();
 
         var stableFlight = new FlightBuilder("QFA3")
+            .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(10)))
             .WithState(State.Stable)
             .Build();
 
         var recentLandedFlight = new FlightBuilder("QFA4")
+            .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(25)))
             .WithLandingTime(_now.AddMinutes(-5))
             .WithState(State.Landed)
             .Build();
@@ -230,6 +241,7 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
         // Arrange
         var landedFlights = Enumerable.Range(1, 10)
             .Select(i => new FlightBuilder($"QFA{i}")
+                .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(40)))
                 .WithLandingTime(_now.AddMinutes(-20))
                 .WithState(State.Landed)
                 .Build())

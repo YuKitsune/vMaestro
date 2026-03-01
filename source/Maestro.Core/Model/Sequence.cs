@@ -12,7 +12,6 @@ public class Sequence
     readonly AirportConfiguration _airportConfiguration;
 
     // TODO: Figure out how to get rid of these from here
-    readonly IArrivalLookup _arrivalLookup;
     readonly ITrajectoryService _trajectoryService;
     readonly IClock _clock;
 
@@ -29,10 +28,9 @@ public class Sequence
     public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
     public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
 
-    public Sequence(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, ITrajectoryService trajectoryService, IClock clock)
+    public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock)
     {
         _airportConfiguration = airportConfiguration;
-        _arrivalLookup = arrivalLookup;
         _trajectoryService = trajectoryService;
         _clock = clock;
 

@@ -32,7 +32,7 @@ public class FlightBuilder(string callsign)
     DateTimeOffset _lastSeen = default;
     bool _isFromDepartureAirport = false;
     FlightPosition? _position = null;
-    TimeSpan _timeToGo = TimeSpan.FromMinutes(20);
+    Trajectory _trajectory = new(TimeSpan.FromMinutes(20));
     bool _isManuallyInserted = false;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
@@ -159,9 +159,9 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithTrajectory(TimeSpan timeToGo)
+    public FlightBuilder WithTrajectory(Trajectory trajectory)
     {
-        _timeToGo = timeToGo;
+        _trajectory = trajectory;
         return this;
     }
 
@@ -173,8 +173,6 @@ public class FlightBuilder(string callsign)
 
     public Flight Build()
     {
-        var trajectory = new Trajectory(_timeToGo);
-
         Flight flight;
         if (_isManuallyInserted)
         {
@@ -187,7 +185,7 @@ public class FlightBuilder(string callsign)
                 destinationIdentifier: _destination,
                 assignedRunwayIdentifier: _assignedRunway,
                 approachType: _approachType,
-                trajectory: trajectory,
+                trajectory: _trajectory,
                 targetLandingTime: _targetLandingTime ?? _landingTime,
                 state: _state);
         }
@@ -205,13 +203,13 @@ public class FlightBuilder(string callsign)
                 estimatedDepartureTime: null,
                 assignedRunwayIdentifier: _assignedRunway,
                 approachType: _approachType,
-                trajectory: trajectory,
+                trajectory: _trajectory,
                 feederFixIdentifier: _feederFixIdentifier,
                 feederFixEstimate: _feederFixEstimate != default ? _feederFixEstimate : null,
                 landingEstimate: _landingEstimate,
                 activatedTime: _activationTime,
                 fixes: [
-                    new FixEstimate(_feederFixIdentifier ?? _destination, _feederFixEstimate != default ? _feederFixEstimate : _landingEstimate.Subtract(_timeToGo), _passedFeederFix),
+                    new FixEstimate(_feederFixIdentifier ?? _destination, _feederFixEstimate != default ? _feederFixEstimate : (_landingEstimate != default ? _landingEstimate.Subtract(_trajectory.TimeToGo) : default), _passedFeederFix),
                     new FixEstimate(_destination, _landingEstimate)
                 ],
                 position: _position);
