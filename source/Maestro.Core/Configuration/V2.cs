@@ -53,11 +53,14 @@ public class RunwayConfigurationV2
 
 public class TrajectoryConfigurationV2
 {
+    // Lookup Parameters
     public required string FeederFix { get; init; }
-    public required IAircraftDescriptor[] Aircraft { get; init; }
+    public required IAircraftDescriptor[] Aircraft { get; init; } // TODO: Match any
     public string ApproachType { get; init; } = string.Empty;
     public string ApproachFix { get; init; } = string.Empty;
     public required string RunwayIdentifier { get; init; }
+
+    // Lookup Values
     public required double TrackMiles { get; init; }
     public required int TimeToGoMinutes { get; init; }
     public int PressureMinutes { get; init; }
@@ -68,6 +71,7 @@ public class ViewConfigurationV2
 {
     public required string Identifier { get; init; }
     public required int TimeHorizonMinutes { get; init; }
+    // TODO: Naming, Timeline vs Ladder?
     public required LadderReference LadderReference { get; init; }
     public required ILadderConfiguration[] Ladders { get; init; }
     // TODO: Labels
@@ -88,8 +92,12 @@ public record RunwayLadderConfiguration(string[] RunwayIdentifiers) : ILadderCon
 
 public class DepartureConfigurationV2
 {
+    // Lookup Parameters
     public required string Identifier { get; init; }
+    // public required string FeederFix { get; init; }
+    public required IAircraftDescriptor[] Aircraft { get; init; } // TODO: Match any
+
+    // Lookup Values
     public required double Distance { get; init; }
-    public required IAircraftDescriptor[] Aircraft { get; init; }
     public required int EstimatedFlightTimeMinutes { get; init; }
 }
