@@ -1,10 +1,10 @@
 using Maestro.Core.Configuration;
 
-namespace Maestro.Plugin.Configuration;
+namespace Temp;
 
 public static class ConfigurationConverter
 {
-    public static PluginConfigurationV2 ConvertPluginConfiguration(PluginConfiguration v1)
+    public static PluginConfigurationV2 ConvertPluginConfiguration(PluginConfigurationV1 v1)
     {
         return new PluginConfigurationV2
         {
@@ -83,7 +83,7 @@ public static class ConfigurationConverter
             foreach (var kvp in arrival.RunwayIntervals)
             {
                 var runway = kvp.Key;
-                var intervalSeconds = kvp.Value;
+                var intervalMinutes = kvp.Value;
                 trajectories.Add(new TrajectoryConfigurationV2
                 {
                     FeederFix = arrival.FeederFix,
@@ -92,7 +92,7 @@ public static class ConfigurationConverter
                     ApproachFix = arrival.ApproachFix,
                     RunwayIdentifier = runway,
                     TrackMiles = 0, // TODO: No V1 equivalent - must be configured manually
-                    TimeToGoMinutes = intervalSeconds / 60,
+                    TimeToGoMinutes = intervalMinutes,
                     PressureMinutes = 0,
                     MaxPressureMinutes = 0
                 });

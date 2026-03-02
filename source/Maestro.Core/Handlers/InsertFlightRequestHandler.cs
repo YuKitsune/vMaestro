@@ -414,10 +414,10 @@ public class InsertFlightRequestHandler(
             throw new MaestroException($"{departureIdentifier} is not a configured departure airport");
 
         var matchingTime = departureConfiguration.FlightTimes.FirstOrDefault(t =>
-            (t.Aircraft is SpecificAircraftTypeDescriptor c1 && c1.TypeCode == performanceData.TypeCode) ||
-            (t.Aircraft is AircraftCategoryDescriptor c2 && c2.AircraftCategory == performanceData.AircraftCategory) ||
-            (t.Aircraft is WakeCategoryDescriptor c3 && c3.WakeCategory == performanceData.WakeCategory) ||
-            t.Aircraft is AllAircraftTypesDescriptor);
+            (t.AircraftType is SpecificAircraftTypeDescriptor c1 && c1.TypeCode == performanceData.TypeCode) ||
+            (t.AircraftType is AircraftCategoryDescriptor c2 && c2.AircraftCategory == performanceData.AircraftCategory) ||
+            (t.AircraftType is WakeCategoryDescriptor c3 && c3.WakeCategory == performanceData.WakeCategory) ||
+            t.AircraftType is AllAircraftTypesDescriptor);
 
         if (matchingTime is not null)
             return matchingTime.AverageFlightTime;

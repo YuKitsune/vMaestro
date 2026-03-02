@@ -60,7 +60,7 @@ public class DepartureAirportConfiguration
 
 public class DepartureAirportFlightTimeConfiguration
 {
-    public required IAircraftDescriptor Aircraft { get; init; }
+    public required IAircraftDescriptor AircraftType { get; init; }
     public required TimeSpan AverageFlightTime { get; init; }
 }
 

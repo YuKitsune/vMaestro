@@ -12,4 +12,5 @@
   <Project Path="Maestro.Server.Tests/Maestro.Server.Tests.csproj" />
   <Project Path="Maestro.Server/Maestro.Server.csproj" />
   <Project Path="Maestro.Wpf/Maestro.Wpf.csproj" />
+  <Project Path="Temp/Temp.csproj" />
 </Solution>
