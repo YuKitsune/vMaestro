@@ -70,25 +70,32 @@ public class TrajectoryConfigurationV2
 public class ViewConfigurationV2
 {
     public required string Identifier { get; init; }
-    public required int TimeHorizonMinutes { get; init; }
+    public required int TimeWindowMinutes { get; init; }
+
     // TODO: Naming, Timeline vs Ladder?
-    public required LadderReference LadderReference { get; init; }
-    public required ILadderConfiguration[] Ladders { get; init; }
-    // TODO: Labels
-    // TODO: What else?
+    public required LadderDirection Direction { get; init; }
+    public required ViewReference Reference { get; init; }
+    public required LadderConfigurationV2[] Ladders { get; init; }
+    public required LabelItemConfiguration[] LabelItems { get; init; }
 }
 
-public enum LadderReference
+public enum ViewReference
 {
     LandingTime,
     FeederFixTime
 }
 
-public interface ILadderConfiguration;
+public enum LadderDirection
+{
+    Down,
+    Up
+}
 
-public record FeederFixLadderConfiguration(string[] FeederFixes) : ILadderConfiguration;
-
-public record RunwayLadderConfiguration(string[] RunwayIdentifiers) : ILadderConfiguration;
+public class LadderConfigurationV2
+{
+    public string[] FeederFixes { get; init; } = [];
+    public string[] Runways { get; init; } = [];
+}
 
 public class DepartureConfigurationV2
 {
@@ -100,4 +107,43 @@ public class DepartureConfigurationV2
     // Lookup Values
     public required double Distance { get; init; }
     public required int EstimatedFlightTimeMinutes { get; init; }
+}
+
+public class LabelItemConfiguration
+{
+    public required LabelItemType Type { get; init; }
+    public required LabelItemColour Colour { get; init; }
+}
+
+public enum LabelItemType
+{
+    Callsign,
+    AircraftType,
+    AircraftWakeCategory,
+    Runway,
+    ApproachType,
+    LandingTime,
+    FeederFixTime,
+    TotalDelay,
+    RemainingDelay,
+    // TODO: ProfileSpeed symbol
+    // TODO: ManualDelay symbol
+    // TODO: Coupling status symbol
+}
+
+// TODO: Find a better way to make colours dependent the value of certain properties
+public enum LabelItemColourSource
+{
+    ApproachType,
+    FeederFix,
+    RunwayMode,
+    Runway,
+    Status
+}
+
+public class LabelItemColour
+{
+    public required LabelItemColourSource Source { get; init; }
+    public required string Value { get; init; }
+    public required string Colour { get; init; }
 }
