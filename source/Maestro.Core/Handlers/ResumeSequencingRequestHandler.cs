@@ -52,7 +52,7 @@ public class ResumeSequencingRequestHandler(
 
             var index = sequence.FindIndex(
                 earliestInsertionIndex,
-                f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
+                f => f.FeederFixEstimate.IsBefore(flight.FeederFixEstimate)) + 1;
 
             sequence.Insert(Math.Max(earliestInsertionIndex, index), flight);
             instance.Session.DeSequencedFlights.Remove(flight);

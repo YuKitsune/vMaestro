@@ -163,7 +163,7 @@ public class ArrivalLookupTests
             Substitute.For<ILogger>());
 
         // Act
-        var interval = arrivalLookup.GetArrivalInterval(
+        var interval = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -173,7 +173,8 @@ public class ArrivalLookupTests
             category);
 
         // Assert
-        interval.ShouldBe(TimeSpan.FromMinutes(10));
+        interval.ShouldNotBeNull();
+        interval.TimeToGo.ShouldBe(TimeSpan.FromMinutes(10));
     }
 
     [Fact]
@@ -185,7 +186,7 @@ public class ArrivalLookupTests
             Substitute.For<ILogger>());
 
         // Act
-        var interval = arrivalLookup.GetArrivalInterval(
+        var interval = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -196,7 +197,8 @@ public class ArrivalLookupTests
 
         // Assert
         // Despite DH8D being non-jet, it should still match based on aircraft type
-        interval.ShouldBe(TimeSpan.FromMinutes(11));
+        interval.ShouldNotBeNull();
+        interval.TimeToGo.ShouldBe(TimeSpan.FromMinutes(11));
     }
 
     [Fact]
@@ -208,7 +210,7 @@ public class ArrivalLookupTests
             Substitute.For<ILogger>());
 
         // Act
-        var jetInterval = arrivalLookup.GetArrivalInterval(
+        var jetTrajectory = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -217,7 +219,7 @@ public class ArrivalLookupTests
             "B738",
             AircraftCategory.Jet);
 
-        var nonJetInterval = arrivalLookup.GetArrivalInterval(
+        var nonJetTrajectory = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -227,8 +229,10 @@ public class ArrivalLookupTests
             AircraftCategory.NonJet);
 
         // Assert
-        jetInterval.ShouldBe(TimeSpan.FromMinutes(11));
-        nonJetInterval.ShouldBe(TimeSpan.FromMinutes(12));
+        jetTrajectory.ShouldNotBeNull();
+        jetTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(11));
+        nonJetTrajectory.ShouldNotBeNull();
+        nonJetTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(12));
     }
 
     [Fact]
@@ -240,7 +244,7 @@ public class ArrivalLookupTests
             Substitute.For<ILogger>());
 
         // Act
-        var jetInterval = arrivalLookup.GetArrivalInterval(
+        var jetTrajectory = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -249,7 +253,7 @@ public class ArrivalLookupTests
             "B738",
             AircraftCategory.Jet);
 
-        var dash8Interval = arrivalLookup.GetArrivalInterval(
+        var dash8Trajectory = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -258,7 +262,7 @@ public class ArrivalLookupTests
             "DH8D",
             AircraftCategory.NonJet);
 
-        var nonJetInterval = arrivalLookup.GetArrivalInterval(
+        var nonJetTrajectory = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -268,9 +272,12 @@ public class ArrivalLookupTests
             AircraftCategory.NonJet);
 
         // Assert
-        jetInterval.ShouldBe(TimeSpan.FromMinutes(13));
-        dash8Interval.ShouldBe(TimeSpan.FromMinutes(14));
-        nonJetInterval.ShouldBe(TimeSpan.FromMinutes(15));
+        jetTrajectory.ShouldNotBeNull();
+        jetTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(13));
+        dash8Trajectory.ShouldNotBeNull();
+        dash8Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(14));
+        nonJetTrajectory.ShouldNotBeNull();
+        nonJetTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(15));
     }
 
     [Fact]
@@ -282,7 +289,7 @@ public class ArrivalLookupTests
             Substitute.For<ILogger>());
 
         // Act
-        var deltaInterval = arrivalLookup.GetArrivalInterval(
+        var deltaTrajectory = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -291,7 +298,7 @@ public class ArrivalLookupTests
             "DINGUS",
             AircraftCategory.Jet);
 
-        var echoInterval = arrivalLookup.GetArrivalInterval(
+        var echoTrajectory = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             [],
@@ -301,8 +308,10 @@ public class ArrivalLookupTests
             AircraftCategory.Jet);
 
         // Assert
-        deltaInterval.ShouldBe(TimeSpan.FromMinutes(16));
-        echoInterval.ShouldBe(TimeSpan.FromMinutes(17));
+        deltaTrajectory.ShouldNotBeNull();
+        deltaTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(16));
+        echoTrajectory.ShouldNotBeNull();
+        echoTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(17));
     }
 
     [Theory]
@@ -318,7 +327,7 @@ public class ArrivalLookupTests
             Substitute.For<ILogger>());
 
         // Act
-        var interval = arrivalLookup.GetArrivalInterval(
+        var interval = arrivalLookup.GetTrajectory(
             "YZZZ",
             "ABCDE",
             ["QUIET"],
@@ -328,7 +337,8 @@ public class ArrivalLookupTests
             category);
 
         // Assert
-        interval.ShouldBe(TimeSpan.FromMinutes(18));
+        interval.ShouldNotBeNull();
+        interval.TimeToGo.ShouldBe(TimeSpan.FromMinutes(18));
     }
 
     // TODO: Test cases

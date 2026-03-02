@@ -49,6 +49,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
             Substitute.For<IClock>(),
             mediator,
             Substitute.For<ILogger>());
@@ -60,7 +61,6 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         flight1.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
-        flight1.RunwayManuallyAssigned.ShouldBe(true, "runway should be marked as manually assigned");
 
         flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
         flight1.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
@@ -68,6 +68,103 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         // Verify QFA1 is now scheduled on 34R and positioned appropriately
         sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R");
         sequence.NumberForRunway(flight1).ShouldBe(2, "QFA1 should be #2 on 34R after moving to 34R");
+    }
+
+    [Fact]
+    public async Task WhenChangingRunway_TheTrajectoryIsUpdated()
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(now.AddMinutes(20))
+            .WithRunway("34L")
+            .WithTrajectory(originalTrajectory)
+            .Build();
+
+        var newTrajectory = new Trajectory(TimeSpan.FromMinutes(15));
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
+            .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
+            .Build();
+
+        // Verify initial runway assignments and ordering
+        flight.AssignedRunwayIdentifier.ShouldBe("34L");
+        flight.Trajectory.ShouldBe(originalTrajectory);
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
+            Substitute.For<IClock>(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
+        flight.Trajectory.ShouldBe(newTrajectory);
+    }
+
+    [Fact]
+    public async Task WhenChangingRunway_LandingEstimateIsUpdated()
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFixEstimate(now.AddMinutes(20))
+            .WithRunway("34L")
+            .WithTrajectory(originalTrajectory)
+            .Build();
+
+        var originalLandingEstimate = flight.LandingEstimate;
+
+        var newTrajectory = new Trajectory(TimeSpan.FromMinutes(15));
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
+            .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
+            .Build();
+
+        // Verify initial runway assignments and ordering
+        flight.AssignedRunwayIdentifier.ShouldBe("34L");
+        flight.Trajectory.ShouldBe(originalTrajectory);
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeRunwayRequestHandler(
+            instanceManager,
+            new MockLocalConnectionManager(),
+            Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
+            Substitute.For<IClock>(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeRunwayRequest("YSSY", "QFA1", "34R");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
+        flight.LandingEstimate.ShouldBe(flight.FeederFixEstimate.Add(newTrajectory.TimeToGo));
+        flight.LandingEstimate.ShouldNotBe(originalLandingEstimate);
     }
 
     [Fact]
@@ -107,6 +204,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -167,6 +265,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -206,6 +305,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -226,7 +326,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
     [InlineData(State.SuperStable)]
     [InlineData(State.Frozen)]
     [InlineData(State.Landed)]
-    public async Task WhenChangingRunway_AndTheFlightWasNotUnstable_ItBecomesStable(State state)
+    public async Task WhenChangingRunway_AndTheFlightWasNotUnstable_StateRemainsUnchanged(State state)
     {
         var now = clockFixture.Instance.UtcNow();
 
@@ -248,6 +348,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             new MockLocalConnectionManager(),
             Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());
@@ -286,6 +387,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             instanceManager,
             slaveConnectionManager,
             Substitute.For<IArrivalLookup>(),
+            new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
             Substitute.For<ILogger>());

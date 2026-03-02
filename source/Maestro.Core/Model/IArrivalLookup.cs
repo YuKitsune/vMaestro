@@ -5,34 +5,40 @@ namespace Maestro.Core.Model;
 
 public interface IArrivalLookup
 {
-    public TimeSpan? GetArrivalInterval(
+    Trajectory? GetTrajectory(
         string airportIdentifier,
-        string feederFixIdentifier,
+        string? feederFixIdentifier,
         string[] fixNames,
         string approachType,
         string runwayIdentifier,
         string aircraftTypeCode,
         AircraftCategory aircraftCategory);
 
-    public string[] GetApproachTypes(
+    string[] GetApproachTypes(
         string airportIdentifier,
-        string feederFixIdentifier,
+        string? feederFixIdentifier,
         string[] fixNames,
         string runwayIdentifier,
         string aircraftTypeCode,
         AircraftCategory aircraftCategory);
+
+    Trajectory GetAverageTrajectory(string airportIdentifier);
 }
 
 public static class ArrivalLookupExtensionMethods
 {
-    public static TimeSpan? GetArrivalInterval(this IArrivalLookup arrivalLookup, Flight flight)
+    public static Trajectory? GetTrajectory(
+        this IArrivalLookup arrivalLookup,
+        Flight flight,
+        string runwayIdentifier,
+        string approachType)
     {
-        return arrivalLookup.GetArrivalInterval(
+        return arrivalLookup.GetTrajectory(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
             flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
-            flight.ApproachType,
-            flight.AssignedRunwayIdentifier,
+            approachType,
+            runwayIdentifier,
             flight.AircraftType,
             flight.AircraftCategory);
     }
@@ -41,9 +47,9 @@ public static class ArrivalLookupExtensionMethods
 public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
     : IArrivalLookup
 {
-    public TimeSpan? GetArrivalInterval(
+    public Trajectory? GetTrajectory(
         string airportIdentifier,
-        string feederFixIdentifier,
+        string? feederFixIdentifier,
         string[] fixNames,
         string approachType,
         string runwayIdentifier,
@@ -67,31 +73,24 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
             .OrderByDescending(GetRank)
             .ToArray();
 
-        // No matches, calculate an average
+        // No matches, return null (caller should use GetAverageTrajectory as fallback)
         if (foundArrivalConfigurations.Length == 0)
         {
-            var average = TimeSpan.FromMinutes(airportConfiguration.Arrivals.SelectMany(a => a.RunwayIntervals.Values).Average());
-
             logger.Warning(
-                "No arrivals with the following lookup parameters could be found: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; APCH = {ApproachType}; Type = {Type}",
+                "No trajectory found: Airport={AirportIdentifier}, FF={FeederFix}, RWY={RunwayIdentifier}, APCH={ApproachType}, Type={Type}",
                 airportIdentifier,
                 feederFixIdentifier,
                 runwayIdentifier,
                 approachType,
                 aircraftTypeCode);
 
-            logger.Warning(
-                "Calculated average {AverageTtg}",
-                average);
-
-            return average;
+            return null;
         }
 
         if (foundArrivalConfigurations.Length > 1)
         {
-            // TODO: Show vatSys error
             logger.Warning(
-                "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; APCH = {ApproachType}; Type = {Type}",
+                "Multiple trajectories found: Airport={AirportIdentifier}, FF={FeederFix}, RWY={RunwayIdentifier}, APCH={ApproachType}, Type={Type}",
                 airportIdentifier,
                 feederFixIdentifier,
                 runwayIdentifier,
@@ -99,7 +98,11 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
                 aircraftTypeCode);
         }
 
-        return TimeSpan.FromMinutes(foundArrivalConfigurations.First().RunwayIntervals[runwayIdentifier]);
+        var arrivalConfig = foundArrivalConfigurations.First();
+        if (!arrivalConfig.RunwayIntervals.TryGetValue(runwayIdentifier, out var ttgMinutes))
+            return null;
+
+        return new Trajectory(TimeSpan.FromMinutes(ttgMinutes));
 
         int GetRank(ArrivalConfiguration arrivalConfiguration)
         {
@@ -122,7 +125,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
 
     public string[] GetApproachTypes(
         string airportIdentifier,
-        string feederFixIdentifier,
+        string? feederFixIdentifier,
         string[] fixNames,
         string runwayIdentifier,
         string aircraftTypeCode,
@@ -145,15 +148,13 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
             .OrderByDescending(GetRank)
             .ToArray();
 
-        // No matches, nothing to do
         if (foundArrivalConfigurations.Length == 0)
             return [];
 
         if (foundArrivalConfigurations.Length > 1)
         {
-            // TODO: Show vatSys error
             logger.Warning(
-                "Found multiple arrivals with the following lookup parameters: Airport = {AirportIdentifier}; FF = {FeederFix} RWY = {RunwayIdentifier}; Type = {Type}",
+                "Multiple approach types found: Airport={AirportIdentifier}, FF={FeederFix}, RWY={RunwayIdentifier}, Type={Type}",
                 airportIdentifier,
                 feederFixIdentifier,
                 runwayIdentifier,
@@ -173,5 +174,31 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
 
             return rank;
         }
+    }
+
+    public Trajectory GetAverageTrajectory(string airportIdentifier)
+    {
+        var airportConfiguration = airportConfigurationProvider
+            .GetAirportConfigurations()
+            .SingleOrDefault(x => x.Identifier == airportIdentifier);
+
+        if (airportConfiguration is null || airportConfiguration.Arrivals.Length == 0)
+        {
+            logger.Warning("No airport configuration for {AirportIdentifier}, using default TTG", airportIdentifier);
+            return new Trajectory(TimeSpan.FromMinutes(20));
+        }
+
+        var allIntervals = airportConfiguration.Arrivals
+            .SelectMany(a => a.RunwayIntervals.Values)
+            .ToList();
+
+        if (allIntervals.Count == 0)
+        {
+            logger.Warning("No arrival intervals for {AirportIdentifier}, using default TTG", airportIdentifier);
+            return new Trajectory(TimeSpan.FromMinutes(20));
+        }
+
+        var averageTtg = TimeSpan.FromMinutes(allIntervals.Average());
+        return new Trajectory(averageTtg);
     }
 }

@@ -15,7 +15,7 @@ public class RecomputeRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IEstimateProvider estimateProvider,
+    ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -48,20 +48,37 @@ public class RecomputeRequestHandler(
                 return;
             }
 
-            // Reset the runway to the default so it can be calculated in the Scheduling phase
-            var runwayMode = sequence.GetRunwayModeAt(flight.LandingEstimate);
-            flight.SetRunway(runwayMode.Default.Identifier, manual: false);
-
-            // Reset the feeder fix in case of a re-route
+            // Recalculate the feeder fix in case of a re-route
             var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-            if (feederFix is not null)
-                flight.SetFeederFix(feederFix.FixIdentifier, feederFix.Estimate, feederFix.ActualTimeOver);
+            var landingEstimate = flight.Fixes.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
 
             flight.HighPriority = feederFix is null;
             flight.SetMaximumDelay(null);
 
-            // TODO: Don't do this. Instead, just re-calculate the ETA_FF from the system estimates, then let the Sequence calculate the actual ETA when it does the runway assignment.
-            CalculateEstimates(airportConfiguration, flight);
+            // Reset the runway to the default so it can be calculated in the Scheduling phase
+            var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
+            var runway = runwayMode.Default;
+
+            // Lookup trajectory for the (possibly new) feeder fix + default runway + default approach type
+            var trajectory = trajectoryService.GetTrajectory(
+                flight.AircraftType,
+                flight.AircraftCategory,
+                flight.DestinationIdentifier,
+                feederFix?.FixIdentifier,
+                runway.Identifier,
+                runway.ApproachType);
+
+            // Update feeder fix (may have changed due to re-routing)
+            flight.SetFeederFix(
+                feederFix?.FixIdentifier,
+                trajectory,
+                feederFix?.Estimate,
+                feederFix?.ActualTimeOver,
+                landingEstimate);
+
+            flight.SetRunway(runway.Identifier, trajectory);
+            flight.SetApproachType(runway.ApproachType, trajectory);
+
             flight.InvalidateSequenceData();
 
             // Reset the state
@@ -80,53 +97,5 @@ public class RecomputeRequestHandler(
                 instance.AirportIdentifier,
                 sessionMessage),
             cancellationToken);
-    }
-
-    // TODO: This is copied from FlightUpdatedHandler, consider refactoring
-    void CalculateEstimates(AirportConfiguration airportConfiguration, Flight flight)
-    {
-        var feederFixSystemEstimate = flight.Fixes.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
-        if (!flight.HasPassedFeederFix && feederFixSystemEstimate?.ActualTimeOver is not null)
-        {
-            flight.PassedFeederFix(feederFixSystemEstimate.ActualTimeOver.Value);
-            logger.Information(
-                "{Callsign} passed {FeederFix} at {ActualTimeOver}",
-                flight.Callsign,
-                flight.FeederFixIdentifier,
-                feederFixSystemEstimate.ActualTimeOver);
-        }
-
-        // Don't update ETA_FF once passed FF
-        if (feederFixSystemEstimate is not null && !flight.HasPassedFeederFix)
-        {
-            var calculatedFeederFixEstimate = estimateProvider.GetFeederFixEstimate(
-                airportConfiguration,
-                flight.FeederFixIdentifier!,
-                feederFixSystemEstimate!.Estimate,
-                flight.Position);
-            if (calculatedFeederFixEstimate is not null && flight.FeederFixEstimate is not null)
-            {
-                var diff = flight.FeederFixEstimate.Value - calculatedFeederFixEstimate.Value;
-                flight.UpdateFeederFixEstimate(calculatedFeederFixEstimate.Value);
-                logger.Debug(
-                    "{Callsign} ETA_FF now {FeederFixEstimate} (diff {Difference})",
-                    flight.Callsign,
-                    flight.FeederFixEstimate,
-                    diff.ToHoursAndMinutesString());
-            }
-        }
-
-        var landingSystemEstimate = flight.Fixes.LastOrDefault();
-        var calculatedLandingEstimate = estimateProvider.GetLandingEstimate(flight, landingSystemEstimate?.Estimate);
-        if (calculatedLandingEstimate is not null)
-        {
-            var diff = flight.LandingEstimate - calculatedLandingEstimate.Value;
-            flight.UpdateLandingEstimate(calculatedLandingEstimate.Value);
-            logger.Debug(
-                "{Callsign} ETA now {LandingEstimate} (diff {Difference})",
-                flight.Callsign,
-                flight.LandingEstimate,
-                diff.ToHoursAndMinutesString());
-        }
     }
 }

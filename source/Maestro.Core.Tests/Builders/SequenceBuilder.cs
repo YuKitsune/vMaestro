@@ -1,6 +1,7 @@
 ﻿using Maestro.Core.Configuration;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Tests.Mocks;
 using NSubstitute;
 
 namespace Maestro.Core.Tests.Builders;
@@ -8,19 +9,19 @@ namespace Maestro.Core.Tests.Builders;
 public class SequenceBuilder(AirportConfiguration airportConfiguration)
 {
     RunwayMode? _runwayMode;
-    IArrivalLookup _arrivalLookup = Substitute.For<IArrivalLookup>();
+    ITrajectoryService _trajectoryService = new MockTrajectoryService();
     IClock _clock = Substitute.For<IClock>();
     List<Flight> _flights = [];
-
-    public SequenceBuilder WithArrivalLookup(IArrivalLookup arrivalLookup)
-    {
-        _arrivalLookup = arrivalLookup;
-        return this;
-    }
 
     public SequenceBuilder WithClock(IClock clock)
     {
         _clock = clock;
+        return this;
+    }
+
+    public SequenceBuilder WithTrajectoryService(ITrajectoryService trajectoryService)
+    {
+        _trajectoryService = trajectoryService;
         return this;
     }
 
@@ -75,7 +76,7 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
 
     public Sequence Build()
     {
-        var sequence = new Sequence(airportConfiguration, _arrivalLookup, _clock);
+        var sequence = new Sequence(airportConfiguration, _trajectoryService, _clock);
         sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(airportConfiguration.RunwayModes.First()));
         for (var i = 0; i < _flights.Count; i++)
         {

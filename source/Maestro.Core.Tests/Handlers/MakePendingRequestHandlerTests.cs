@@ -129,11 +129,11 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway("34L", manual: true)
+            .WithRunway("34L")
             .Build();
 
         // Set some additional properties that should be reset
-        flight.SetSequenceData(flight.LandingTime, flight.FeederFixTime, FlowControls.ReduceSpeed);
+        flight.SetSequenceData(flight.LandingTime, FlowControls.ReduceSpeed);
         flight.IsFromDepartureAirport = true;
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
@@ -146,17 +146,13 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
         // Act
         await handler.Handle(request, CancellationToken.None);
 
-        // Assert - verify all details are reset as specified in the TODO
+        // Assert - verify Reset() behavior: state, activation, and flow controls are reset
+        // Note: Trajectory and estimates are kept - they will be recalculated when re-inserted
         flight.ActivatedTime.ShouldBeNull("ActivatedTime should be reset to null");
-        flight.FeederFixEstimate.ShouldBeNull("FeederFixEstimate should be reset to null");
-        flight.InitialFeederFixEstimate.ShouldBeNull("InitialFeederFixEstimate should be reset to null");
-        flight.FeederFixTime.ShouldBeNull("FeederFixTime should be reset to null");
-        flight.AssignedRunwayIdentifier.ShouldBeNull("AssignedRunwayIdentifier should be reset to null");
-        flight.RunwayManuallyAssigned.ShouldBeFalse("RunwayManuallyAssigned should be reset to false");
-        flight.LandingEstimate.ShouldBe(default(DateTimeOffset), "LandingEstimate should be reset to default");
-        flight.LandingTime.ShouldBe(default(DateTimeOffset), "LandingTime should be reset to default");
         flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
+        flight.MaximumDelay.ShouldBeNull("MaximumDelay should be reset to null");
+        flight.TargetLandingTime.ShouldBeNull("TargetLandingTime should be reset to null");
     }
 
     MakePendingRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, ILogger? logger = null)

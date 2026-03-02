@@ -14,9 +14,9 @@ public static class FlightExtensionMethods
             AircraftCategory = flight.AircraftCategory,
             WakeCategory = flight.WakeCategory,
             OriginIdentifier = flight.OriginIdentifier,
-            EstimatedDepartureTime = flight.EstimatedDepartureTime,
             DestinationIdentifier = flight.DestinationIdentifier,
             IsFromDepartureAirport = flight.IsFromDepartureAirport,
+            EstimatedDepartureTime = flight.EstimatedDepartureTime,
             State = flight.State,
             NumberInSequence = sequence.NumberInSequence(flight),
             FeederFixIdentifier = flight.FeederFixIdentifier,
@@ -27,6 +27,7 @@ public static class FlightExtensionMethods
             NumberToLandOnRunway = sequence.NumberForRunway(flight),
             InitialLandingEstimate = flight.InitialLandingEstimate,
             LandingEstimate = flight.LandingEstimate,
+            TargetLandingTime = flight.TargetLandingTime,
             LandingTime = flight.LandingTime,
             InitialDelay = flight.TotalDelay,
             RemainingDelay = flight.RemainingDelay,
@@ -36,12 +37,12 @@ public static class FlightExtensionMethods
             MaximumDelay = flight.MaximumDelay,
             ManualFeederFixEstimate = flight.ManualFeederFixEstimate,
             ActualFeederFixTime = flight.ActualFeederFixTime,
-            RunwayManuallyAssigned = flight.RunwayManuallyAssigned,
             ApproachType = flight.ApproachType,
             LastSeen = flight.LastSeen,
             Fixes = flight.Fixes,
             Position = flight.Position,
             IsManuallyInserted = flight.IsManuallyInserted,
+            TimeToGo = flight.Trajectory.TimeToGo,
         };
     }
 }

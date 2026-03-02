@@ -157,6 +157,9 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     [Fact]
     public async Task FlightIsPositionedBasedOnTargetTime()
     {
+        // TODO: @claude, ensure this scenario does not position flights based on FeederFixTimes.
+        //  Vary the TTG for the other flights, such that if they were positioned by FeederFixTime, the landing order would be different.
+
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
@@ -523,12 +526,14 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
     MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
     {
         var arrivalLookup = Substitute.For<IArrivalLookup>();
+        var trajectoryService = new MockTrajectoryService();
         mediator ??= Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(
             instanceManager,
             connectionManager ?? new MockLocalConnectionManager(),
             arrivalLookup,
+            trajectoryService,
             mediator,
             clock,
             Substitute.For<ILogger>());

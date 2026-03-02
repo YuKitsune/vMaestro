@@ -7,12 +7,12 @@ namespace Maestro.Core.Model;
 
 public class Sequence
 {
-    object _gate = new object();
+    readonly object _gate = new();
 
     readonly AirportConfiguration _airportConfiguration;
 
     // TODO: Figure out how to get rid of these from here
-    readonly IArrivalLookup _arrivalLookup;
+    readonly ITrajectoryService _trajectoryService;
     readonly IClock _clock;
 
     readonly List<Slot> _slots = [];
@@ -28,10 +28,10 @@ public class Sequence
     public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
     public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
 
-    public Sequence(AirportConfiguration airportConfiguration, IArrivalLookup arrivalLookup, IClock clock)
+    public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock)
     {
         _airportConfiguration = airportConfiguration;
-        _arrivalLookup = arrivalLookup;
+        _trajectoryService = trajectoryService;
         _clock = clock;
 
         AirportIdentifier = airportConfiguration.Identifier;
@@ -474,6 +474,8 @@ public class Sequence
                     currentFlight,
                     currentRunwayMode);
 
+                // TODO: Use ETA_FF + TTGmin if no runway has been assigned
+
                 var targetLandingTime = currentFlight.TargetLandingTime ?? currentFlight.LandingEstimate;
 
                 // Evaluate each runway option to find the one with the earliest landing time
@@ -679,8 +681,9 @@ public class Sequence
                     runwayOption.RequiredSeparation,
                     []);
 
+                // TODO: Use ETA_FF + TTG for current runway + approach type
+
                 var position = currentIndex;
-                var landingEstimate = flight.LandingEstimate;
 
                 // Calculate earliest landing time at current position
                 var earliestLandingTime = GetEarliestLandingTimeForIndex(position, targetLandingTime, runwayMode, runway);
@@ -727,6 +730,7 @@ public class Sequence
                 var landingTime = earliestLandingTime;
 
                 // Check maximum delay constraint
+                var landingEstimate = flight.LandingEstimate;
                 var totalDelay = landingTime - landingEstimate;
                 if (flight.MaximumDelay.HasValue)
                 {
@@ -756,20 +760,14 @@ public class Sequence
 
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, string approachType, FlowControls flowControls)
     {
-        flight.SetRunway(runwayIdentifier, manual: flight.RunwayManuallyAssigned);
-        flight.SetApproachType(approachType);
+        // Lookup trajectory before setting runway/approach
+        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType);
 
-        DateTimeOffset? feederFixTime = null;
-        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && !flight.HasPassedFeederFix)
-        {
-            var arrivalInterval = _arrivalLookup.GetArrivalInterval(flight);
-            if (arrivalInterval is not null)
-            {
-                feederFixTime = landingTime.Subtract(arrivalInterval.Value);
-            }
-        }
+        // Atomic update: runway + trajectory + ETA + STA_FF
+        flight.SetRunway(runwayIdentifier, trajectory);
+        flight.SetApproachType(approachType, trajectory);
 
-        flight.SetSequenceData(landingTime, feederFixTime, flowControls);
+        flight.SetSequenceData(landingTime, flowControls);
     }
 
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation);

@@ -14,6 +14,7 @@ public class MoveFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IArrivalLookup arrivalLookup,
+    ITrajectoryService trajectoryService,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -45,26 +46,26 @@ public class MoveFlightRequestHandler(
             flight.SetTargetLandingTime(request.NewLandingTime);
 
             var runwayMode = sequence.GetRunwayModeAt(request.NewLandingTime);
-            var runwayIdentifier = runwayMode.Runways.FirstOrDefault(r => request.RunwayIdentifiers.Contains(r.Identifier))?.Identifier
-                ?? runwayMode.Default.Identifier;
+            var runway = runwayMode.Runways.FirstOrDefault(r => request.RunwayIdentifiers.Contains(r.Identifier))
+                         ?? runwayMode.Default;
 
-            sequence.ThrowIsTimeIsUnavailable(request.Callsign, request.NewLandingTime, runwayIdentifier);
+            sequence.ThrowIsTimeIsUnavailable(request.Callsign, request.NewLandingTime, runway.Identifier);
 
             // TODO: Manually set the runway for now, but we need to revisit this later
             // Re: delaying into a new runway mode
-            flight.SetRunway(runwayIdentifier, manual: true);
 
-            // Update the approach type if the new runway doesn't have the current approach type
-            var approachTypes = arrivalLookup.GetApproachTypes(
-                flight.DestinationIdentifier,
-                flight.FeederFixIdentifier,
-                flight.Fixes.Select(x => x.ToString()).ToArray(),
-                flight.AssignedRunwayIdentifier,
-                flight.AircraftType,
-                flight.AircraftCategory);
+            // Lookup trajectory for the new runway and approach before updating flight
+            var trajectory = trajectoryService.GetTrajectory(
+                flight,
+                runway.Identifier,
+                runway.ApproachType);
 
-            if (!approachTypes.Contains(flight.ApproachType))
-                flight.SetApproachType(approachTypes.FirstOrDefault() ?? string.Empty);
+            // Atomic update: runway + trajectory + ETA + STA_FF
+            flight.SetRunway(runway.Identifier, trajectory);
+
+            // Update approach type if it changed
+            if (flight.ApproachType != runway.ApproachType)
+                flight.SetApproachType(runway.ApproachType, trajectory);
 
             flight.InvalidateSequenceData();
 

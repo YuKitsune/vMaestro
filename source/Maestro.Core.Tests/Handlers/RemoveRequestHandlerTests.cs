@@ -105,14 +105,11 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway("34L", manual: true)
+            .WithRunway("34L")
             .Build();
 
         // Set some additional properties that should be reset
-        flight.SetSequenceData(
-            clockFixture.Instance.UtcNow().AddMinutes(30),
-            clockFixture.Instance.UtcNow().AddMinutes(20),
-            FlowControls.ReduceSpeed);
+        flight.SetSequenceData(clockFixture.Instance.UtcNow().AddMinutes(30), FlowControls.ReduceSpeed);
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
@@ -124,18 +121,13 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         // Act
         await handler.Handle(request, CancellationToken.None);
 
-        // Assert - verify all details are reset
+        // Assert - verify Reset() behavior: state, activation, and flow controls are reset
+        // Note: Trajectory and estimates are kept - they will be recalculated when re-inserted
         flight.ActivatedTime.ShouldBeNull("ActivatedTime should be reset to null");
-        flight.FeederFixEstimate.ShouldBeNull("FeederFixEstimate should be reset to null");
-        flight.InitialFeederFixEstimate.ShouldBeNull("InitialFeederFixEstimate should be reset to null");
-        flight.FeederFixTime.ShouldBeNull("FeederFixTime should be reset to null");
-        flight.AssignedRunwayIdentifier.ShouldBeNull("AssignedRunwayIdentifier should be reset to null");
-        flight.RunwayManuallyAssigned.ShouldBeFalse("RunwayManuallyAssigned should be reset to false");
-        flight.LandingEstimate.ShouldBe(default(DateTimeOffset), "LandingEstimate should be reset to default");
-        flight.InitialLandingEstimate.ShouldBe(default(DateTimeOffset), "InitialLandingEstimate should be reset to default");
-        flight.LandingTime.ShouldBe(default(DateTimeOffset), "LandingTime should be reset to default");
         flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
+        flight.MaximumDelay.ShouldBeNull("MaximumDelay should be reset to null");
+        flight.TargetLandingTime.ShouldBeNull("TargetLandingTime should be reset to null");
     }
 
     [Fact]
@@ -144,30 +136,33 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        // Configure trajectory service with TTG = 12 minutes for both flights
+        // flight1: FF=-2, TTG=12, Landing=+10
+        // flight2: FF=-1, TTG=12, Landing=+11
+        var trajectoryService = new MockTrajectoryService(TimeSpan.FromMinutes(12));
+
         // Create two flights where flight2 is delayed behind flight1
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(10))
-            .WithLandingEstimate(now.AddMinutes(10))
             .WithFeederFixEstimate(now.AddMinutes(-2))
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(13)) // 3 minutes after flight1 (acceptance rate)
-            .WithLandingEstimate(now.AddMinutes(11)) // Original estimate is earlier
             .WithFeederFixEstimate(now.AddMinutes(-1))
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
             .WithRunway("34L")
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
         // Verify initial state
-        flight1.LandingTime.ShouldBe(now.AddMinutes(10));
-        flight2.LandingTime.ShouldBe(now.AddMinutes(13));
+        flight1.LandingTime.ShouldBe(now.AddMinutes(10), "flight1 lands at FF + TTG = -2 + 12");
+        flight2.LandingTime.ShouldBe(now.AddMinutes(13), "flight2 delayed behind flight1 by acceptance rate");
 
         var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
