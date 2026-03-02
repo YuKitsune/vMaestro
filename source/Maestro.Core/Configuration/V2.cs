@@ -122,7 +122,7 @@ public class AirportColourConfigurationV2
 public class ColourConfigurationV2
 {
     public Dictionary<State, string> States { get; init; } = new();
-    public Dictionary<string, string> ControlActions { get; init; } = new();
+    public Dictionary<ControlAction, string> ControlActions { get; init; } = new();
     public string DeferredRunwayMode { get; init; } = string.Empty;
 }
 
