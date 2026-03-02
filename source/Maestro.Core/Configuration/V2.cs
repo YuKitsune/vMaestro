@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Configuration;
@@ -7,8 +8,6 @@ public class AirportConfigurationV2
     public required string Identifier { get; init; }
     public required string[] FeederFixes { get; init; }
     public required string[] Runways { get; init; }
-
-    public required AirportColourConfigurationV2 Colours { get; init; }
 
     // Defaults
     public string DefaultAircraftType { get; init; } = "B738";
@@ -35,6 +34,16 @@ public class AirportConfigurationV2
 
     // TODO: Close airports
     // TODO: Average taxi times and terminal assignments
+
+    // Everything beyond this point is purely for presentation, and not used within Maestro.Core
+
+    // Presentation
+    public AirportColourConfigurationV2? Colours { get; init; }
+    public required ViewConfigurationV2[] Views { get; init; }
+
+    // Coordination Messages
+    public required string[] GlobalCoordinationMessages { get; init; }
+    public required string[] FlightCoordinationMessages { get; init; }
 }
 
 public class RunwayModeConfigurationV2
@@ -126,20 +135,10 @@ public class ColourConfigurationV2
     public string DeferredRunwayMode { get; init; } = string.Empty;
 }
 
-public class LabelLayoutsConfigurationV2
+public class LabelsConfigurationV2
 {
     public required ColourConfigurationV2 Colours { get; init; }
-    public required SymbolConfigurationV2 Symbols { get; init; }
     public required LabelLayoutConfigurationV2[] Layouts { get; init; }
-}
-
-// Symbol configuration - shared across all airports
-public class SymbolConfigurationV2
-{
-    public required string ZeroDelay { get; init; }
-    public required string ManualDelay { get; init; }
-    public required string ProfileSpeed { get; init; }
-    public required string CouplingStatus { get; init; }
 }
 
 // Reusable label layout - defined once, referenced by views
@@ -149,12 +148,90 @@ public class LabelLayoutConfigurationV2
     public required LabelItemConfigurationV2[] Items { get; init; }
 }
 
-public class LabelItemConfigurationV2
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "Type")]
+[JsonDerivedType(typeof(CallsignItemConfigurationV2), nameof(LabelItemType.Callsign))]
+[JsonDerivedType(typeof(AircraftTypeItemConfigurationV2), nameof(LabelItemType.AircraftType))]
+[JsonDerivedType(typeof(AircraftWakeCategoryItemConfigurationV2), nameof(LabelItemType.AircraftWakeCategory))]
+[JsonDerivedType(typeof(RunwayItemConfigurationV2), nameof(LabelItemType.Runway))]
+[JsonDerivedType(typeof(ApproachTypeItemConfigurationV2), nameof(LabelItemType.ApproachType))]
+[JsonDerivedType(typeof(LandingTimeItemConfigurationV2), nameof(LabelItemType.LandingTime))]
+[JsonDerivedType(typeof(FeederFixTimeItemConfigurationV2), nameof(LabelItemType.FeederFixTime))]
+[JsonDerivedType(typeof(RequiredDelayItemConfigurationV2), nameof(LabelItemType.RequiredDelay))]
+[JsonDerivedType(typeof(RemainingDelayItemConfigurationV2), nameof(LabelItemType.RemainingDelay))]
+[JsonDerivedType(typeof(ManualDelayItemConfigurationV2), nameof(LabelItemType.ManualDelay))]
+[JsonDerivedType(typeof(ProfileSpeedItemConfigurationV2), nameof(LabelItemType.ProfileSpeed))]
+[JsonDerivedType(typeof(CouplingStatusItemConfigurationV2), nameof(LabelItemType.CouplingStatus))]
+public abstract class LabelItemConfigurationV2
 {
-    public required LabelItemType Type { get; init; }
+    public abstract LabelItemType Type { get; }
     public LabelItemColourSource[] ColourSources { get; init; } = [LabelItemColourSource.State];
     public required int Width { get; init; }
     public int Padding { get; init; } = 1;
+}
+
+public class CallsignItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.Callsign;
+}
+
+public class AircraftTypeItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.AircraftType;
+}
+
+public class AircraftWakeCategoryItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.AircraftWakeCategory;
+}
+
+public class RunwayItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.Runway;
+}
+
+public class ApproachTypeItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.ApproachType;
+}
+
+public class LandingTimeItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.LandingTime;
+}
+
+public class FeederFixTimeItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.FeederFixTime;
+}
+
+public class RequiredDelayItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.RequiredDelay;
+    public required string ZeroDelaySymbol { get; init; }
+}
+
+public class RemainingDelayItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.RemainingDelay;
+}
+
+public class ManualDelayItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.ManualDelay;
+    public required string ZeroDelaySymbol { get; init; }
+    public required string ManualDelaySymbol { get; init; }
+}
+
+public class ProfileSpeedItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.ProfileSpeed;
+    public required string Symbol { get; init; }
+}
+
+public class CouplingStatusItemConfigurationV2 : LabelItemConfigurationV2
+{
+    public override LabelItemType Type => LabelItemType.CouplingStatus;
+    public required string UncoupledSymbol { get; init; }
 }
 
 public enum LabelItemType
@@ -183,71 +260,92 @@ public enum LabelItemColourSource
     ControlAction,
 }
 
+public static class ColourDefaults
+{
+    public static ColourConfigurationV2 Default() => new()
+    {
+        States = new Dictionary<State, string>
+        {
+            { State.Unstable, "255,205,105" },
+            { State.Stable, "0, 0, 96" },
+            { State.SuperStable, "255, 255, 255" },
+            { State.Frozen, "96, 0, 0" },
+            { State.Landed, "0, 235, 235" }
+        },
+        ControlActions = new Dictionary<ControlAction, string>
+        {
+            { ControlAction.Expedite, "0, 105, 0" },
+            { ControlAction.NoDelay, "0, 0, 96" },
+            { ControlAction.Resume, "0, 0, 96" },
+            { ControlAction.SpeedReduction, "0, 235, 235" },
+            { ControlAction.PathStretching, "255, 255, 255" },
+            { ControlAction.Holding, "235, 235, 0" }
+        },
+        DeferredRunwayMode = "255,255,255"
+    };
+}
+
 public static class LabelItemDefaults
 {
     public static LabelItemConfigurationV2[] DefaultEnrouteLabelItem()
     {
         return
         [
-            new LabelItemConfigurationV2
+            new FeederFixTimeItemConfigurationV2
             {
-                Type = LabelItemType.FeederFixTime,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 2
             },
-            new LabelItemConfigurationV2
+            new RunwayItemConfigurationV2
             {
-                Type = LabelItemType.Runway,
                 ColourSources =
                     [LabelItemColourSource.RunwayMode, LabelItemColourSource.Runway, LabelItemColourSource.State],
                 Width = 3,
                 Padding = 1
             },
-            new LabelItemConfigurationV2
+            new CallsignItemConfigurationV2
             {
-                Type = LabelItemType.Callsign,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 10,
                 Padding = 1
             },
-            new LabelItemConfigurationV2
+            new ApproachTypeItemConfigurationV2
             {
-                Type = LabelItemType.ApproachType,
                 ColourSources = [LabelItemColourSource.ApproachType, LabelItemColourSource.State],
                 Width = 1,
                 Padding = 1
             },
-            new LabelItemConfigurationV2
+            new ManualDelayItemConfigurationV2
             {
-                Type = LabelItemType.ManualDelay,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 1,
-                Padding = 0
+                Padding = 0,
+                ZeroDelaySymbol = "#",
+                ManualDelaySymbol = "%"
             },
-            new LabelItemConfigurationV2
+            new ProfileSpeedItemConfigurationV2
             {
-                Type = LabelItemType.ProfileSpeed,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 1,
-                Padding = 0
+                Padding = 0,
+                Symbol = "+"
             },
-            new LabelItemConfigurationV2
+            new CouplingStatusItemConfigurationV2
             {
-                Type = LabelItemType.CouplingStatus,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 1,
-                Padding = 0
+                Padding = 0,
+                UncoupledSymbol = "*"
             },
-            new LabelItemConfigurationV2
+            new RequiredDelayItemConfigurationV2
             {
-                Type = LabelItemType.RequiredDelay,
                 ColourSources = [LabelItemColourSource.ControlAction],
                 Width = 2,
-                Padding = 1
+                Padding = 1,
+                ZeroDelaySymbol = "#"
             },
-            new LabelItemConfigurationV2
+            new RemainingDelayItemConfigurationV2
             {
-                Type = LabelItemType.RemainingDelay,
                 ColourSources = [LabelItemColourSource.ControlAction],
                 Width = 2,
                 Padding = 0
@@ -259,57 +357,53 @@ public static class LabelItemDefaults
     {
         return
         [
-            new LabelItemConfigurationV2
+            new LandingTimeItemConfigurationV2
             {
-                Type = LabelItemType.LandingTime,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 2
             },
-            new LabelItemConfigurationV2
+            new RunwayItemConfigurationV2
             {
-                Type = LabelItemType.Runway,
                 ColourSources = [LabelItemColourSource.RunwayMode, LabelItemColourSource.Runway, LabelItemColourSource.State],
                 Width = 3,
                 Padding = 1
             },
-            new LabelItemConfigurationV2
+            new CallsignItemConfigurationV2
             {
-                Type = LabelItemType.Callsign,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 10,
                 Padding = 1
             },
-            new LabelItemConfigurationV2
+            new ApproachTypeItemConfigurationV2
             {
-                Type = LabelItemType.ApproachType,
                 ColourSources = [LabelItemColourSource.ApproachType, LabelItemColourSource.State],
                 Width = 1,
                 Padding = 1
             },
-            new LabelItemConfigurationV2
+            new ManualDelayItemConfigurationV2
             {
-                Type = LabelItemType.ManualDelay,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 1,
-                Padding = 0
+                Padding = 0,
+                ZeroDelaySymbol = "#",
+                ManualDelaySymbol = "%"
             },
-            new LabelItemConfigurationV2
+            new ProfileSpeedItemConfigurationV2
             {
-                Type = LabelItemType.ProfileSpeed,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 1,
-                Padding = 0
+                Padding = 0,
+                Symbol = "+"
             },
-            new LabelItemConfigurationV2
+            new CouplingStatusItemConfigurationV2
             {
-                Type = LabelItemType.CouplingStatus,
                 ColourSources = [LabelItemColourSource.State],
                 Width = 1,
-                Padding = 0
+                Padding = 0,
+                UncoupledSymbol = "*"
             },
-            new LabelItemConfigurationV2
+            new RemainingDelayItemConfigurationV2
             {
-                Type = LabelItemType.RemainingDelay,
                 ColourSources = [LabelItemColourSource.ControlAction],
                 Width = 2,
                 Padding = 0
