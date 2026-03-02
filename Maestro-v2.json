@@ -1,0 +1,6811 @@
+{
+  "Server": {
+    "Uri": "https://maestro.eoinmotherway.dev/hub",
+    "Partitions": [
+      "VATSIM",
+      "SweatBox-1",
+      "SweatBox-2"
+    ],
+    "TimeoutSeconds": 30,
+    "Permissions": {
+      "ChangeTerminalConfiguration": [
+        "Flow"
+      ],
+      "ChangeLandingRates": [
+        "Flow"
+      ],
+      "MoveFlight": [
+        "Approach",
+        "Flow"
+      ],
+      "ChangeFeederFixEstimate": [
+        "Enroute",
+        "Flow"
+      ],
+      "ManageSlots": [
+        "Flow"
+      ],
+      "InsertFlight": [
+        "Approach",
+        "Flow"
+      ],
+      "MakePending": [
+        "Enroute",
+        "Approach",
+        "Flow"
+      ],
+      "ChangeRunway": [
+        "Enroute",
+        "Approach",
+        "Flow"
+      ],
+      "ManualDelay": [
+        "Enroute",
+        "Approach",
+        "Flow"
+      ],
+      "MakeStable": [
+        "Enroute",
+        "Flow"
+      ],
+      "Recompute": [
+        "Enroute",
+        "Flow"
+      ],
+      "Desequence": [
+        "Enroute",
+        "Approach",
+        "Flow"
+      ],
+      "Resequence": [
+        "Flow"
+      ],
+      "RemoveFlight": [
+        "Enroute",
+        "Approach",
+        "Flow"
+      ],
+      "ChangeApproachType": [
+        "Enroute",
+        "Approach",
+        "Flow"
+      ]
+    }
+  },
+  "Logging": {
+    "LogLevel": "Information",
+    "MaxFileAgeDays": 7
+  },
+  "Airports": [
+    {
+      "Identifier": "YSSY",
+      "FeederFixes": [
+        "RIVET",
+        "WELSH",
+        "BOREE",
+        "YAKKA",
+        "MARLN"
+      ],
+      "Runways": [
+        "34L",
+        "34R",
+        "16R",
+        "16L",
+        "07",
+        "25"
+      ],
+      "DefaultAircraftType": "B738",
+      "DefaultPendingFlightState": "Stable",
+      "DefaultDepartureFlightState": "Unstable",
+      "DefaultDummyFlightState": "Frozen",
+      "DefaultOffModeSeparationSeconds": 300,
+      "MinimumUnstableMinutes": 5,
+      "StabilityThresholdMinutes": 25,
+      "FrozenThresholdMinutes": 15,
+      "MaxLandedFlights": 5,
+      "LandedFlightTimeoutMinutes": 10,
+      "LostFlightTimeoutMinutes": 10,
+      "RunwayModes": [
+        {
+          "Identifier": "34IVA",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "34L",
+              "ApproachType": "",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "RIVET",
+                "WELSH"
+              ]
+            },
+            {
+              "Identifier": "34R",
+              "ApproachType": "",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "BOREE",
+                "YAKKA",
+                "MARLN"
+              ]
+            }
+          ]
+        },
+        {
+          "Identifier": "34I",
+          "DependencyRateSeconds": 60,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "34L",
+              "ApproachType": "",
+              "LandingRateSeconds": 210,
+              "FeederFixes": [
+                "RIVET",
+                "WELSH"
+              ]
+            },
+            {
+              "Identifier": "34R",
+              "ApproachType": "",
+              "LandingRateSeconds": 210,
+              "FeederFixes": [
+                "BOREE",
+                "YAKKA",
+                "MARLN"
+              ]
+            }
+          ]
+        },
+        {
+          "Identifier": "16IVA",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "16R",
+              "ApproachType": "",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "RIVET",
+                "WELSH"
+              ]
+            },
+            {
+              "Identifier": "16L",
+              "ApproachType": "",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "BOREE",
+                "YAKKA",
+                "MARLN"
+              ]
+            }
+          ]
+        },
+        {
+          "Identifier": "16I",
+          "DependencyRateSeconds": 60,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "16R",
+              "ApproachType": "",
+              "LandingRateSeconds": 210,
+              "FeederFixes": [
+                "RIVET",
+                "WELSH"
+              ]
+            },
+            {
+              "Identifier": "16L",
+              "ApproachType": "",
+              "LandingRateSeconds": 210,
+              "FeederFixes": [
+                "BOREE",
+                "YAKKA",
+                "MARLN"
+              ]
+            }
+          ]
+        },
+        {
+          "Identifier": "25I",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "25",
+              "ApproachType": "",
+              "LandingRateSeconds": 210,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "07I",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "07",
+              "ApproachType": "",
+              "LandingRateSeconds": 210,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "SODPROPS",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "34L",
+              "ApproachType": "",
+              "LandingRateSeconds": 300,
+              "FeederFixes": []
+            }
+          ]
+        }
+      ],
+      "Trajectories": [
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOREE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "YAKKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MARLN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RIVET",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 21,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "07",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WELSH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "",
+          "RunwayIdentifier": "25",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        }
+      ],
+      "DepartureAirports": [
+        {
+          "Identifier": "YPMQ",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 209.0,
+          "EstimatedFlightTimeMinutes": 44
+        },
+        {
+          "Identifier": "YPMQ",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 209.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YCOM",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 221.0,
+          "EstimatedFlightTimeMinutes": 46
+        },
+        {
+          "Identifier": "YCOM",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 221.0,
+          "EstimatedFlightTimeMinutes": 43
+        },
+        {
+          "Identifier": "YSCB",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 178.0,
+          "EstimatedFlightTimeMinutes": 40
+        },
+        {
+          "Identifier": "YSCB",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 178.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YGLB",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 111.0,
+          "EstimatedFlightTimeMinutes": 29
+        },
+        {
+          "Identifier": "YGLB",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 111.0,
+          "EstimatedFlightTimeMinutes": 27
+        },
+        {
+          "Identifier": "YCWR",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 163.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YCWR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 163.0,
+          "EstimatedFlightTimeMinutes": 35
+        },
+        {
+          "Identifier": "YPKS",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 221.0,
+          "EstimatedFlightTimeMinutes": 46
+        },
+        {
+          "Identifier": "YPKS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 221.0,
+          "EstimatedFlightTimeMinutes": 43
+        },
+        {
+          "Identifier": "YORG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 140.0,
+          "EstimatedFlightTimeMinutes": 34
+        },
+        {
+          "Identifier": "YORG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 140.0,
+          "EstimatedFlightTimeMinutes": 31
+        },
+        {
+          "Identifier": "YBTH",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 175.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YBTH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 175.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YSDU",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 249.0,
+          "EstimatedFlightTimeMinutes": 51
+        },
+        {
+          "Identifier": "YSDU",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 249.0,
+          "EstimatedFlightTimeMinutes": 47
+        },
+        {
+          "Identifier": "YSCO",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 117.0,
+          "EstimatedFlightTimeMinutes": 30
+        },
+        {
+          "Identifier": "YSCO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 117.0,
+          "EstimatedFlightTimeMinutes": 28
+        },
+        {
+          "Identifier": "YSTW",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 191.0,
+          "EstimatedFlightTimeMinutes": 42
+        },
+        {
+          "Identifier": "YSTW",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 191.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YARM",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 214.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YARM",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 214.0,
+          "EstimatedFlightTimeMinutes": 42
+        },
+        {
+          "Identifier": "YGFN",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 298.0,
+          "EstimatedFlightTimeMinutes": 58
+        },
+        {
+          "Identifier": "YGFN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 298.0,
+          "EstimatedFlightTimeMinutes": 55
+        },
+        {
+          "Identifier": "YNBR",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 255.0,
+          "EstimatedFlightTimeMinutes": 52
+        },
+        {
+          "Identifier": "YNBR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 255.0,
+          "EstimatedFlightTimeMinutes": 48
+        },
+        {
+          "Identifier": "YCBB",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 194.0,
+          "EstimatedFlightTimeMinutes": 42
+        },
+        {
+          "Identifier": "YCBB",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 194.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YMDG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 179.0,
+          "EstimatedFlightTimeMinutes": 40
+        },
+        {
+          "Identifier": "YMDG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 179.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YMAY",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 286.0,
+          "EstimatedFlightTimeMinutes": 56
+        },
+        {
+          "Identifier": "YMAY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 286.0,
+          "EstimatedFlightTimeMinutes": 53
+        },
+        {
+          "Identifier": "YSWG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 214.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YSWG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 214.0,
+          "EstimatedFlightTimeMinutes": 42
+        },
+        {
+          "Identifier": "YMER",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 236.0,
+          "EstimatedFlightTimeMinutes": 49
+        },
+        {
+          "Identifier": "YMER",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 236.0,
+          "EstimatedFlightTimeMinutes": 45
+        }
+      ],
+      "Colours": null,
+      "Views": [
+        {
+          "Identifier": "GUN/BIK",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "RIVET"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "WELSH"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "ARL",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "BOREE"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "YAKKA"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "OCN",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "MARLN"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "ARL/OCN",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "BOREE",
+                "YAKKA"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "MARLN"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "ALL",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "RIVET",
+                "WELSH"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "YAKKA",
+                "MARLN",
+                "BOREE"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "RWY",
+          "TimeWindowMinutes": 45,
+          "Direction": "Up",
+          "Reference": "LandingTime",
+          "Ladders": [],
+          "LabelLayout": "TMA"
+        }
+      ],
+      "GlobalCoordinationMessages": [
+        "WX Dev have commenced.",
+        "Standby for configuration change.",
+        "Flow Planning in progress - do not use delay times until advised.",
+        "Maestro delay times accurate.",
+        "Contingency - No FMP.",
+        "General Holding."
+      ],
+      "FlightCoordinationMessages": [
+        "{Callsign} MEDEVAC",
+        "{Callsign} diverting",
+        "{Callsign} request high speed descent",
+        "{Callsign} subject to CDO"
+      ]
+    },
+    {
+      "Identifier": "YMML",
+      "FeederFixes": [
+        "ARBEY",
+        "BOYSE",
+        "BOOIN",
+        "RAZZI",
+        "LATTA",
+        "EKKAS",
+        "ALAXO",
+        "MENOG"
+      ],
+      "Runways": [
+        "09",
+        "16",
+        "27",
+        "34"
+      ],
+      "DefaultAircraftType": "B738",
+      "DefaultPendingFlightState": "Stable",
+      "DefaultDepartureFlightState": "Unstable",
+      "DefaultDummyFlightState": "Frozen",
+      "DefaultOffModeSeparationSeconds": 300,
+      "MinimumUnstableMinutes": 5,
+      "StabilityThresholdMinutes": 25,
+      "FrozenThresholdMinutes": 15,
+      "MaxLandedFlights": 5,
+      "LandedFlightTimeoutMinutes": 10,
+      "LostFlightTimeoutMinutes": 10,
+      "RunwayModes": [
+        {
+          "Identifier": "09",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "09",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "16",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "16",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "27",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "27",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "34",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "34",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "34/27",
+          "DependencyRateSeconds": 60,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "34",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            },
+            {
+              "Identifier": "27",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "34/09",
+          "DependencyRateSeconds": 60,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "34",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            },
+            {
+              "Identifier": "09",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "16/27",
+          "DependencyRateSeconds": 90,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "16",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            },
+            {
+              "Identifier": "27",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "16/09",
+          "DependencyRateSeconds": 90,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "16",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            },
+            {
+              "Identifier": "09",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        }
+      ],
+      "Trajectories": [
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 9,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ARBEY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOOIN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOYSE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOYSE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOYSE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOYSE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BOYSE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 9,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 9,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "M",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "RAZZI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "M",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "EKKAS",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "EKKAS",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 9,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "EKKAS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "EKKAS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LATTA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LATTA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 9,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LATTA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LATTA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "PORTS",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "P",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ALAXO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "P",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 8,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "09",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "16",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "27",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MENOG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "34",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 9,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        }
+      ],
+      "DepartureAirports": [
+        {
+          "Identifier": "YHAY",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 214.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YHAY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 214.0,
+          "EstimatedFlightTimeMinutes": 42
+        },
+        {
+          "Identifier": "YDLQ",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 147.0,
+          "EstimatedFlightTimeMinutes": 35
+        },
+        {
+          "Identifier": "YDLQ",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 147.0,
+          "EstimatedFlightTimeMinutes": 32
+        },
+        {
+          "Identifier": "YECH",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 93.0,
+          "EstimatedFlightTimeMinutes": 26
+        },
+        {
+          "Identifier": "YECH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 93.0,
+          "EstimatedFlightTimeMinutes": 24
+        },
+        {
+          "Identifier": "YMNG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 78.0,
+          "EstimatedFlightTimeMinutes": 24
+        },
+        {
+          "Identifier": "YMNG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 78.0,
+          "EstimatedFlightTimeMinutes": 22
+        },
+        {
+          "Identifier": "YSHT",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 114.0,
+          "EstimatedFlightTimeMinutes": 30
+        },
+        {
+          "Identifier": "YSHT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 114.0,
+          "EstimatedFlightTimeMinutes": 27
+        },
+        {
+          "Identifier": "YNAR",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 225.0,
+          "EstimatedFlightTimeMinutes": 47
+        },
+        {
+          "Identifier": "YNAR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 225.0,
+          "EstimatedFlightTimeMinutes": 44
+        },
+        {
+          "Identifier": "YCOR",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 158.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YCOR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 158.0,
+          "EstimatedFlightTimeMinutes": 34
+        },
+        {
+          "Identifier": "YBLA",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 126.0,
+          "EstimatedFlightTimeMinutes": 32
+        },
+        {
+          "Identifier": "YBLA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 126.0,
+          "EstimatedFlightTimeMinutes": 29
+        },
+        {
+          "Identifier": "YWGT",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 116.0,
+          "EstimatedFlightTimeMinutes": 30
+        },
+        {
+          "Identifier": "YWGT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 116.0,
+          "EstimatedFlightTimeMinutes": 28
+        },
+        {
+          "Identifier": "YMAY",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 154.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YMAY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 154.0,
+          "EstimatedFlightTimeMinutes": 33
+        },
+        {
+          "Identifier": "YSWG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 210.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YSWG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 210.0,
+          "EstimatedFlightTimeMinutes": 42
+        },
+        {
+          "Identifier": "YCRG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 205.0,
+          "EstimatedFlightTimeMinutes": 44
+        },
+        {
+          "Identifier": "YCRG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 205.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YHOT",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 139.0,
+          "EstimatedFlightTimeMinutes": 34
+        },
+        {
+          "Identifier": "YHOT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 139.0,
+          "EstimatedFlightTimeMinutes": 31
+        },
+        {
+          "Identifier": "YLTV",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 130.0,
+          "EstimatedFlightTimeMinutes": 32
+        },
+        {
+          "Identifier": "YLTV",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 130.0,
+          "EstimatedFlightTimeMinutes": 30
+        },
+        {
+          "Identifier": "YFLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 251.0,
+          "EstimatedFlightTimeMinutes": 51
+        },
+        {
+          "Identifier": "YFLI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 251.0,
+          "EstimatedFlightTimeMinutes": 48
+        },
+        {
+          "Identifier": "YDPO",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 249.0,
+          "EstimatedFlightTimeMinutes": 51
+        },
+        {
+          "Identifier": "YDPO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 249.0,
+          "EstimatedFlightTimeMinutes": 47
+        },
+        {
+          "Identifier": "YMLT",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 282.0,
+          "EstimatedFlightTimeMinutes": 56
+        },
+        {
+          "Identifier": "YMLT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 282.0,
+          "EstimatedFlightTimeMinutes": 52
+        },
+        {
+          "Identifier": "YWYY",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 243.0,
+          "EstimatedFlightTimeMinutes": 50
+        },
+        {
+          "Identifier": "YWYY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 243.0,
+          "EstimatedFlightTimeMinutes": 46
+        },
+        {
+          "Identifier": "YKII",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 199.0,
+          "EstimatedFlightTimeMinutes": 43
+        },
+        {
+          "Identifier": "YKII",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 199.0,
+          "EstimatedFlightTimeMinutes": 40
+        },
+        {
+          "Identifier": "YWBL",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 174.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YWBL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 174.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YPOD",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 189.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YPOD",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 189.0,
+          "EstimatedFlightTimeMinutes": 38
+        },
+        {
+          "Identifier": "YMTG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 209.0,
+          "EstimatedFlightTimeMinutes": 44
+        },
+        {
+          "Identifier": "YMTG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 209.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YHML",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 203.0,
+          "EstimatedFlightTimeMinutes": 43
+        },
+        {
+          "Identifier": "YHML",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 203.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YBLT",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 70.0,
+          "EstimatedFlightTimeMinutes": 23
+        },
+        {
+          "Identifier": "YBLT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 70.0,
+          "EstimatedFlightTimeMinutes": 21
+        },
+        {
+          "Identifier": "YARA",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 163.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YARA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 163.0,
+          "EstimatedFlightTimeMinutes": 35
+        },
+        {
+          "Identifier": "YSWL",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 174.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YSWL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 174.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YNRC",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 257.0,
+          "EstimatedFlightTimeMinutes": 52
+        },
+        {
+          "Identifier": "YNRC",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 257.0,
+          "EstimatedFlightTimeMinutes": 49
+        },
+        {
+          "Identifier": "YHSM",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 167.0,
+          "EstimatedFlightTimeMinutes": 38
+        },
+        {
+          "Identifier": "YHSM",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 167.0,
+          "EstimatedFlightTimeMinutes": 35
+        },
+        {
+          "Identifier": "YHNL",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 203.0,
+          "EstimatedFlightTimeMinutes": 43
+        },
+        {
+          "Identifier": "YHNL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 203.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YWKB",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 170.0,
+          "EstimatedFlightTimeMinutes": 38
+        },
+        {
+          "Identifier": "YWKB",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 170.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YBDG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 83.0,
+          "EstimatedFlightTimeMinutes": 25
+        },
+        {
+          "Identifier": "YBDG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 83.0,
+          "EstimatedFlightTimeMinutes": 23
+        },
+        {
+          "Identifier": "YSWH",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 153.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YSWH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 153.0,
+          "EstimatedFlightTimeMinutes": 33
+        },
+        {
+          "Identifier": "YGTH",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 234.0,
+          "EstimatedFlightTimeMinutes": 48
+        },
+        {
+          "Identifier": "YGTH",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 234.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YCOM",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 233.0,
+          "EstimatedFlightTimeMinutes": 48
+        },
+        {
+          "Identifier": "YCOM",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 233.0,
+          "EstimatedFlightTimeMinutes": 45
+        }
+      ],
+      "Colours": null,
+      "Views": [
+        {
+          "Identifier": "BLA/ELW",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "BOOIN"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "BOYSE"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "MUN/YWE",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "ARBEY"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "ALAXO"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "HUO/WON",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "RAZZI"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "LATTA",
+                "EKKAS",
+                "MENOG"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "ALL",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "ARBEY",
+                "ALAXO",
+                "LATTA",
+                "MENOG"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "BOOIN",
+                "BOYSE",
+                "RAZZI",
+                "EKKAS"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "RWY",
+          "TimeWindowMinutes": 45,
+          "Direction": "Up",
+          "Reference": "LandingTime",
+          "Ladders": [],
+          "LabelLayout": "TMA"
+        }
+      ],
+      "GlobalCoordinationMessages": [
+        "WX Dev have commenced.",
+        "Standby for configuration change.",
+        "Flow Planning in progress - do not use delay times until advised.",
+        "Maestro delay times accurate.",
+        "Contingency - No FMP.",
+        "General Holding."
+      ],
+      "FlightCoordinationMessages": [
+        "{Callsign} MEDEVAC",
+        "{Callsign} diverting",
+        "{Callsign} request high speed descent",
+        "{Callsign} subject to CDO"
+      ]
+    },
+    {
+      "Identifier": "YBBN",
+      "FeederFixes": [
+        "BLAKA",
+        "GOMOL",
+        "ENLIP",
+        "MORBI",
+        "SMOKA",
+        "TEBOT",
+        "UGTUG",
+        "WOODY"
+      ],
+      "Runways": [
+        "01L",
+        "01R",
+        "19L",
+        "19R"
+      ],
+      "DefaultAircraftType": "B738",
+      "DefaultPendingFlightState": "Stable",
+      "DefaultDepartureFlightState": "Unstable",
+      "DefaultDummyFlightState": "Frozen",
+      "DefaultOffModeSeparationSeconds": 300,
+      "MinimumUnstableMinutes": 5,
+      "StabilityThresholdMinutes": 25,
+      "FrozenThresholdMinutes": 15,
+      "MaxLandedFlights": 5,
+      "LandedFlightTimeoutMinutes": 10,
+      "LostFlightTimeoutMinutes": 10,
+      "RunwayModes": [
+        {
+          "Identifier": "19",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "19L",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "BLAKA",
+                "GOMOL",
+                "TEBOT",
+                "UGTUG"
+              ]
+            },
+            {
+              "Identifier": "19R",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "ENLIP",
+                "WOODY",
+                "MORBI",
+                "SMOKA"
+              ]
+            }
+          ]
+        },
+        {
+          "Identifier": "01",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "01L",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "ENLIP",
+                "WOODY",
+                "MORBI",
+                "SMOKA"
+              ]
+            },
+            {
+              "Identifier": "01R",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": [
+                "BLAKA",
+                "GOMOL",
+                "TEBOT",
+                "UGTUG"
+              ]
+            }
+          ]
+        },
+        {
+          "Identifier": "SODPROPS",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "19R",
+              "ApproachType": "A",
+              "LandingRateSeconds": 300,
+              "FeederFixes": []
+            }
+          ]
+        }
+      ],
+      "Trajectories": [
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 21,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 22,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 24,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "BLAKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 22,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 23,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "ENLIP",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 23,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 21,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 23,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "GOMOL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 21,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "MORBI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "M",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "M",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SMOKA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 21,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "TEBOT",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "UGTUG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "",
+          "ApproachFix": "ISPON",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "01L",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "WOODY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "19R",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        }
+      ],
+      "DepartureAirports": [
+        {
+          "Identifier": "YCFS",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 189.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YCFS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 189.0,
+          "EstimatedFlightTimeMinutes": 38
+        },
+        {
+          "Identifier": "YGFN",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 158.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YGFN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 158.0,
+          "EstimatedFlightTimeMinutes": 34
+        },
+        {
+          "Identifier": "YLIS",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 96.0,
+          "EstimatedFlightTimeMinutes": 27
+        },
+        {
+          "Identifier": "YLIS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 96.0,
+          "EstimatedFlightTimeMinutes": 25
+        },
+        {
+          "Identifier": "YBNA",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 28.0,
+          "EstimatedFlightTimeMinutes": 16
+        },
+        {
+          "Identifier": "YBNA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 28.0,
+          "EstimatedFlightTimeMinutes": 15
+        },
+        {
+          "Identifier": "YBCG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 59.0,
+          "EstimatedFlightTimeMinutes": 21
+        },
+        {
+          "Identifier": "YBCG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 59.0,
+          "EstimatedFlightTimeMinutes": 19
+        },
+        {
+          "Identifier": "YARM",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 236.0,
+          "EstimatedFlightTimeMinutes": 49
+        },
+        {
+          "Identifier": "YARM",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 236.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YGLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 172.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YGLI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 172.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YIVL",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 185.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YIVL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 185.0,
+          "EstimatedFlightTimeMinutes": 38
+        },
+        {
+          "Identifier": "YSPE",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 115.0,
+          "EstimatedFlightTimeMinutes": 30
+        },
+        {
+          "Identifier": "YSPE",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 115.0,
+          "EstimatedFlightTimeMinutes": 28
+        },
+        {
+          "Identifier": "YWCK",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 106.0,
+          "EstimatedFlightTimeMinutes": 28
+        },
+        {
+          "Identifier": "YWCK",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 106.0,
+          "EstimatedFlightTimeMinutes": 26
+        },
+        {
+          "Identifier": "YMOR",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 243.0,
+          "EstimatedFlightTimeMinutes": 50
+        },
+        {
+          "Identifier": "YMOR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 243.0,
+          "EstimatedFlightTimeMinutes": 46
+        },
+        {
+          "Identifier": "YGDI",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 171.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YGDI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 171.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YMLS",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 198.0,
+          "EstimatedFlightTimeMinutes": 43
+        },
+        {
+          "Identifier": "YMLS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 198.0,
+          "EstimatedFlightTimeMinutes": 40
+        },
+        {
+          "Identifier": "YCCA",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 175.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YCCA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 175.0,
+          "EstimatedFlightTimeMinutes": 36
+        },
+        {
+          "Identifier": "YKRY",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 102.0,
+          "EstimatedFlightTimeMinutes": 28
+        },
+        {
+          "Identifier": "YKRY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 102.0,
+          "EstimatedFlightTimeMinutes": 26
+        },
+        {
+          "Identifier": "YTAM",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 235.0,
+          "EstimatedFlightTimeMinutes": 48
+        },
+        {
+          "Identifier": "YTAM",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 235.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YGAY",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 163.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YGAY",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 163.0,
+          "EstimatedFlightTimeMinutes": 35
+        },
+        {
+          "Identifier": "YTNG",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 266.0,
+          "EstimatedFlightTimeMinutes": 53
+        },
+        {
+          "Identifier": "YTNG",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 266.0,
+          "EstimatedFlightTimeMinutes": 50
+        },
+        {
+          "Identifier": "YBUD",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 185.0,
+          "EstimatedFlightTimeMinutes": 41
+        },
+        {
+          "Identifier": "YBUD",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 185.0,
+          "EstimatedFlightTimeMinutes": 38
+        },
+        {
+          "Identifier": "YMYB",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 162.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YMYB",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 162.0,
+          "EstimatedFlightTimeMinutes": 34
+        },
+        {
+          "Identifier": "YHBA",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 176.0,
+          "EstimatedFlightTimeMinutes": 39
+        },
+        {
+          "Identifier": "YHBA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 176.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YBSU",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 84.0,
+          "EstimatedFlightTimeMinutes": 25
+        },
+        {
+          "Identifier": "YBSU",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 84.0,
+          "EstimatedFlightTimeMinutes": 23
+        }
+      ],
+      "Colours": null,
+      "Views": [
+        {
+          "Identifier": "INL",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "BLAKA"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "GOMOL"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "DOS",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "ENLIP"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "WOODY"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "BUR",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "MORBI"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "SMOKA"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "SDY",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "TEBOT"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "UGTUG"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "ALL",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "BLAKA",
+                "ENLIP",
+                "GOMOL",
+                "MORBI"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "SMOKA",
+                "TEBOT",
+                "UGTUG",
+                "WOODY"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "RWY",
+          "TimeWindowMinutes": 45,
+          "Direction": "Up",
+          "Reference": "LandingTime",
+          "Ladders": [],
+          "LabelLayout": "TMA"
+        }
+      ],
+      "GlobalCoordinationMessages": [
+        "WX Dev have commenced.",
+        "Standby for configuration change.",
+        "Flow Planning in progress - do not use delay times until advised.",
+        "Maestro delay times accurate.",
+        "Contingency - No FMP.",
+        "General Holding."
+      ],
+      "FlightCoordinationMessages": [
+        "{Callsign} MEDEVAC",
+        "{Callsign} diverting",
+        "{Callsign} request high speed descent",
+        "{Callsign} subject to CDO"
+      ]
+    },
+    {
+      "Identifier": "YPPH",
+      "FeederFixes": [
+        "KAGMI",
+        "JULIM",
+        "KABLI",
+        "SOLUS",
+        "DAYLR",
+        "LAVEX",
+        "SAPKO"
+      ],
+      "Runways": [
+        "03",
+        "06",
+        "21",
+        "24"
+      ],
+      "DefaultAircraftType": "B738",
+      "DefaultPendingFlightState": "Stable",
+      "DefaultDepartureFlightState": "Unstable",
+      "DefaultDummyFlightState": "Frozen",
+      "DefaultOffModeSeparationSeconds": 300,
+      "MinimumUnstableMinutes": 5,
+      "StabilityThresholdMinutes": 25,
+      "FrozenThresholdMinutes": 15,
+      "MaxLandedFlights": 5,
+      "LandedFlightTimeoutMinutes": 10,
+      "LostFlightTimeoutMinutes": 10,
+      "RunwayModes": [
+        {
+          "Identifier": "21/24",
+          "DependencyRateSeconds": 30,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "21",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            },
+            {
+              "Identifier": "24",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "03",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "03",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "06",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "06",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "21",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "21",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        },
+        {
+          "Identifier": "24",
+          "DependencyRateSeconds": 0,
+          "OffModeSeparationSeconds": 0,
+          "Runways": [
+            {
+              "Identifier": "24",
+              "ApproachType": "A",
+              "LandingRateSeconds": 180,
+              "FeederFixes": []
+            }
+          ]
+        }
+      ],
+      "Trajectories": [
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "JET",
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KAGMI",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "JULIM",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "JULIM",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "JULIM",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "JULIM",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "JULIM",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "JULIM",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "JULIM",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KABLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KABLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KABLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KABLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KABLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KABLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "KABLI",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "JET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 19,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "DH8D"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 10,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "DAYLR",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "LAVEX",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 15,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 20,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 22,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 18,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SAPKO",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 17,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "21",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 16,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "A",
+          "ApproachFix": "",
+          "RunwayIdentifier": "24",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 14,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 12,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "V",
+          "ApproachFix": "",
+          "RunwayIdentifier": "06",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 13,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        },
+        {
+          "FeederFix": "SOLUS",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "ApproachType": "X",
+          "ApproachFix": "",
+          "RunwayIdentifier": "03",
+          "TrackMiles": 0.0,
+          "TimeToGoMinutes": 11,
+          "PressureMinutes": 0,
+          "MaxPressureMinutes": 0
+        }
+      ],
+      "DepartureAirports": [
+        {
+          "Identifier": "YABA",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 230.0,
+          "EstimatedFlightTimeMinutes": 48
+        },
+        {
+          "Identifier": "YABA",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 230.0,
+          "EstimatedFlightTimeMinutes": 45
+        },
+        {
+          "Identifier": "YBLN",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 162.0,
+          "EstimatedFlightTimeMinutes": 37
+        },
+        {
+          "Identifier": "YBLN",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 162.0,
+          "EstimatedFlightTimeMinutes": 34
+        },
+        {
+          "Identifier": "YGEL",
+          "Aircraft": [
+            "JET"
+          ],
+          "Distance": 229.0,
+          "EstimatedFlightTimeMinutes": 47
+        },
+        {
+          "Identifier": "YGEL",
+          "Aircraft": [
+            "NONJET"
+          ],
+          "Distance": 229.0,
+          "EstimatedFlightTimeMinutes": 44
+        }
+      ],
+      "Colours": null,
+      "Views": [
+        {
+          "Identifier": "PIY",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "JULIM",
+                "SAPKO"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "KABLI",
+                "DAYLR",
+                "LAVEX"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "LEA",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "KAGMI"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "JAR",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "SOLUS"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "ALL/HYD",
+          "TimeWindowMinutes": 30,
+          "Direction": "Down",
+          "Reference": "FeederFixTime",
+          "Ladders": [
+            {
+              "FeederFixes": [
+                "JULIM",
+                "SAPKO",
+                "KAGMI",
+                "SOLUS"
+              ],
+              "Runways": []
+            },
+            {
+              "FeederFixes": [
+                "KABLI",
+                "DAYLR",
+                "LAVEX"
+              ],
+              "Runways": []
+            }
+          ],
+          "LabelLayout": "Enroute"
+        },
+        {
+          "Identifier": "RWY",
+          "TimeWindowMinutes": 45,
+          "Direction": "Up",
+          "Reference": "LandingTime",
+          "Ladders": [],
+          "LabelLayout": "TMA"
+        }
+      ],
+      "GlobalCoordinationMessages": [
+        "WX Dev have commenced.",
+        "Standby for configuration change.",
+        "Flow Planning in progress - do not use delay times until advised.",
+        "Maestro delay times accurate.",
+        "Contingency - No FMP.",
+        "General Holding."
+      ],
+      "FlightCoordinationMessages": [
+        "{Callsign} MEDEVAC",
+        "{Callsign} diverting",
+        "{Callsign} request high speed descent",
+        "{Callsign} subject to CDO"
+      ]
+    }
+  ],
+  "Colours": {
+    "States": {
+      "Unstable": "255,205,105",
+      "Stable": "0, 0, 96",
+      "SuperStable": "255, 255, 255",
+      "Frozen": "96, 0, 0",
+      "Landed": "0, 235, 235"
+    },
+    "ControlActions": {
+      "Expedite": "0, 105, 0",
+      "NoDelay": "0, 0, 96",
+      "Resume": "0, 0, 96",
+      "SpeedReduction": "0, 235, 235",
+      "PathStretching": "255, 255, 255",
+      "Holding": "235, 235, 0"
+    },
+    "DeferredRunwayMode": "255,255,255"
+  },
+  "Labels": {
+    "Colours": {
+      "States": {
+        "Unstable": "255,205,105",
+        "Stable": "0, 0, 96",
+        "SuperStable": "255, 255, 255",
+        "Frozen": "96, 0, 0",
+        "Landed": "0, 235, 235"
+      },
+      "ControlActions": {
+        "Expedite": "0, 105, 0",
+        "NoDelay": "0, 0, 96",
+        "Resume": "0, 0, 96",
+        "SpeedReduction": "0, 235, 235",
+        "PathStretching": "255, 255, 255",
+        "Holding": "235, 235, 0"
+      },
+      "DeferredRunwayMode": "255,255,255"
+    },
+    "Layouts": [
+      {
+        "Identifier": "Enroute",
+        "Items": [
+          {
+            "Type": "FeederFixTime",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 2,
+            "Padding": 1
+          },
+          {
+            "Type": "Runway",
+            "ColourSources": [
+              "RunwayMode",
+              "Runway",
+              "State"
+            ],
+            "Width": 3,
+            "Padding": 1
+          },
+          {
+            "Type": "Callsign",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 10,
+            "Padding": 1
+          },
+          {
+            "Type": "ApproachType",
+            "ColourSources": [
+              "ApproachType",
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 1
+          },
+          {
+            "Type": "ManualDelay",
+            "ZeroDelaySymbol": "#",
+            "ManualDelaySymbol": "%",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 0
+          },
+          {
+            "Type": "ProfileSpeed",
+            "Symbol": "+",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 0
+          },
+          {
+            "Type": "CouplingStatus",
+            "UncoupledSymbol": "*",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 0
+          },
+          {
+            "Type": "RequiredDelay",
+            "ZeroDelaySymbol": "#",
+            "ColourSources": [
+              "ControlAction"
+            ],
+            "Width": 2,
+            "Padding": 1
+          },
+          {
+            "Type": "RemainingDelay",
+            "ColourSources": [
+              "ControlAction"
+            ],
+            "Width": 2,
+            "Padding": 0
+          }
+        ]
+      },
+      {
+        "Identifier": "TMA",
+        "Items": [
+          {
+            "Type": "LandingTime",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 2,
+            "Padding": 1
+          },
+          {
+            "Type": "Runway",
+            "ColourSources": [
+              "RunwayMode",
+              "Runway",
+              "State"
+            ],
+            "Width": 3,
+            "Padding": 1
+          },
+          {
+            "Type": "Callsign",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 10,
+            "Padding": 1
+          },
+          {
+            "Type": "ApproachType",
+            "ColourSources": [
+              "ApproachType",
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 1
+          },
+          {
+            "Type": "ManualDelay",
+            "ZeroDelaySymbol": "#",
+            "ManualDelaySymbol": "%",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 0
+          },
+          {
+            "Type": "ProfileSpeed",
+            "Symbol": "+",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 0
+          },
+          {
+            "Type": "CouplingStatus",
+            "UncoupledSymbol": "*",
+            "ColourSources": [
+              "State"
+            ],
+            "Width": 1,
+            "Padding": 0
+          },
+          {
+            "Type": "RemainingDelay",
+            "ColourSources": [
+              "ControlAction"
+            ],
+            "Width": 2,
+            "Padding": 0
+          }
+        ]
+      }
+    ]
+  }
+}
