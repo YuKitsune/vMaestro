@@ -168,7 +168,10 @@ public class InsertFlightRequestHandler(
             existingPendingFlight.SetRunway(runway.Identifier, trajectory);
             existingPendingFlight.SetApproachType(runway.ApproachType, trajectory);
             existingPendingFlight.SetTargetLandingTime(targetLandingTime);
-            existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo)); // TODO: test case - When inserting a pending flight, at an exact time, FeederFixEstimate is TargetTime - Trajectory.TimeToGo
+
+            // Don't change ETA_FF if the flight is coupled to a radar track
+            if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
+                existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo));
 
             existingPendingFlight.SetState(airportConfiguration.ManuallyInsertedFlightState, clock);
 
@@ -273,7 +276,11 @@ public class InsertFlightRequestHandler(
             existingPendingFlight.SetRunway(runway.Identifier, trajectory);
             existingPendingFlight.SetApproachType(runway.ApproachType, trajectory);
             existingPendingFlight.SetTargetLandingTime(targetLandingTime);
-            existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo)); // TODO: test case - When inserting a pending flight, relative to another, FeederFixEstimate is ReferenceFlight.LandingTime - AcceptanceRate - Trajectory.TimeToGo
+
+            // Don't change ETA_FF if the flight is coupled to a radar track
+            if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
+                existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo));
+
             existingPendingFlight.SetState(airportConfiguration.ManuallyInsertedFlightState, clock);
 
             flight = existingPendingFlight;
@@ -365,8 +372,10 @@ public class InsertFlightRequestHandler(
 
             existingPendingFlight.SetRunway(runway.Identifier, trajectory);
             existingPendingFlight.SetApproachType(runway.ApproachType, trajectory);
-            existingPendingFlight.UpdateFeederFixEstimate(landingEstimate.Subtract(trajectory.TimeToGo)); // TODO: test case - When inserting a flight, from a departure airport, the FeederFixEstimate is TakeOffTime + DepartureETI - Trajectory.TimeToGo
 
+            // Don't change ETA_FF if the flight is coupled to a radar track
+            if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
+                existingPendingFlight.UpdateFeederFixEstimate(landingEstimate.Subtract(trajectory.TimeToGo));
 
             // Departures remain unstable as their landing estimate will become more accurate as they depart, couple, and climb
             existingPendingFlight.SetState(airportConfiguration.InitialDepartureFlightState, clock);

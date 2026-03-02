@@ -19,10 +19,10 @@ Configuration files will likely require a new format to support tabular data suc
 - [X] Introduce "Change Approach Type" request and handler
 - [X] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
 - [X] Remove runway requirements and preferences
-- [ ] Store the processed arrival and runway mode on the Flight
-    - [ ] Set landing estimate based on ETA_FF + arrival TTG
-    - [ ] Set STA_FF using STA - arrival TTG
-    - [ ] If ATO_FF is set, ETA should be ATO_FF + arrival TTG (this value won't change after passing FF, this is accurate)
+- [X] Store the processed arrival and runway mode on the Flight
+    - [X] Set landing estimate based on ETA_FF + arrival TTG
+    - [X] Set STA_FF using STA - arrival TTG
+    - [X] If ATO_FF is set, ETA should be ATO_FF + arrival TTG (this value won't change after passing FF, this is accurate)
 - [ ] Consider new config file format
 
 ### Refactoring
@@ -31,6 +31,11 @@ Configuration files will likely require a new format to support tabular data suc
 - [ ] Improve separation between domain models, DTOs, and view models
 - [ ] Remove (or trim down) SequenceMessage and introduce smaller DTOs or notifications (consider CRDTs) to reduce the size of the sequence when serialised
 - [ ] Consider moving some of the sequence logic into the individual handlers so they can be tested more easily.
+- [ ] Clean up tests
+    - [ ] Use a Mock sequence, that doesn't do any scheduling
+    - [ ] Test scheduling separately
+    - [ ] Clean up Flight builder so that you can't build an invalid flight (make ETA and ETA_FF mutually exclusive? Or calculate a TTG based on ETA - ETA_FF if no trajectory is set?)
+    - [ ] Clean up the handler tests to remove all the unnecessary setup (i.e. trajectories)
 
 ### Algorithm Overhaul
 

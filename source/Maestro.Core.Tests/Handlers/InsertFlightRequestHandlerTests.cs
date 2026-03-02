@@ -240,7 +240,7 @@ public class InsertFlightRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -382,12 +382,16 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var originalEstimate = now.AddMinutes(12);
         var targetTime = now.AddMinutes(10);
+
+        var feederFixEstimate = now.AddMinutes(20);
+        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var expectedLandingEstimate = feederFixEstimate.Add(trajectory.TimeToGo);
 
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
-            .WithLandingEstimate(originalEstimate)
+            .WithFeederFixEstimate(feederFixEstimate)
+            .WithTrajectory(trajectory)
             .WithState(State.Unstable)
             .WithPosition(new FlightPosition(
                 new Coordinate(0, 0),
@@ -397,7 +401,7 @@ public class InsertFlightRequestHandlerTests(
                 false))
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -415,10 +419,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: @claude, please change this assertion to ensure the FeederFixEstimate is sourced from the flight plan route,
-        //  and the LandingEstimate is the FeederFixEstimate + Trajectory.TimeToGo
-        pendingFlight.LandingEstimate.ShouldBe(originalEstimate, "Landing estimate should remain unchanged for coupled flight");
         pendingFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
+        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should remain unchanged for coupled flight");
     }
 
     [Fact]
@@ -434,7 +436,7 @@ public class InsertFlightRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -509,18 +511,18 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
         var targetTime = now.AddMinutes(20);
-        var arrivalInterval = TimeSpan.FromMinutes(16); // From RIVET to 34L per fixture
-        var expectedFeederFixEstimate = targetTime.Subtract(arrivalInterval);
+
+        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
 
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(now.AddMinutes(5))
-            .WithLandingEstimate(now.AddMinutes(21))
+            .WithLandingEstimate(targetTime)
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -535,7 +537,7 @@ public class InsertFlightRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
-            .Returns(new Trajectory(arrivalInterval));
+            .Returns(trajectory);
 
         var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
 
@@ -549,8 +551,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - arrival interval");
         pendingFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
+        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - arrival interval");
     }
 
     [Fact]
@@ -1073,7 +1075,8 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var originalEstimate = now.AddMinutes(20);
+        var feederFixEstimate = now.AddMinutes(20);
+        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
 
         var stableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -1084,7 +1087,8 @@ public class InsertFlightRequestHandlerTests(
 
         var pendingFlight = new FlightBuilder("QFA2")
             .WithAircraftType("B738")
-            .WithLandingEstimate(originalEstimate)
+            .WithFeederFixEstimate(feederFixEstimate)
+            .WithTrajectory(trajectory)
             .WithState(State.Unstable)
             .WithPosition(new FlightPosition(
                 new Coordinate(0, 0),
@@ -1094,7 +1098,7 @@ public class InsertFlightRequestHandlerTests(
                 false))
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
@@ -1112,15 +1116,15 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // TODO: @claude, please change this assertion to ensure the FeederFixEstimate is sourced from the flight plan route,
-        //  and the LandingEstimate is the FeederFixEstimate + Trajectory.TimeToGo
         pendingFlight.TargetLandingTime.ShouldBe(
             stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
             "Pending flight target time should be reference flight's landing time + acceptance rate");
-        pendingFlight.LandingEstimate.ShouldBe(originalEstimate, "Pending flight landing estimate should remain unchanged for coupled flight");
         pendingFlight.LandingTime.ShouldBe(
             pendingFlight.TargetLandingTime!.Value,
             "Pending flight landing time should match target time");
+        pendingFlight.FeederFixEstimate.ShouldBe(feederFixEstimate, "Pending flight feeder fix estimate should remain unchanged for coupled flight");
+        pendingFlight.LandingEstimate.ShouldBe(feederFixEstimate.Add(trajectory.TimeToGo), "Pending flight landing estimate should remain unchanged for coupled flight");
+
     }
 
     [Fact]
@@ -1142,7 +1146,7 @@ public class InsertFlightRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
@@ -1176,45 +1180,41 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var arrivalInterval = TimeSpan.FromMinutes(22); // From BOREE to 34R per fixture
+
+        var trajectory = new Trajectory(TimeSpan.FromMinutes(22));
 
         var stableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
             .WithState(State.Stable)
+            .WithTrajectory(trajectory)
             .WithRunway("34R")
             .Build();
 
         var targetTime = stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate); // After QFA1
-        var expectedFeederFixEstimate = targetTime.Subtract(arrivalInterval);
+        var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
 
         var pendingFlight = new FlightBuilder("QFA2")
-            .WithAircraftType("B738")
-            .WithFeederFix("BOREE")
-            .WithFeederFixEstimate(now.AddMinutes(5))
-            .WithLandingEstimate(now.AddMinutes(27))
+            .WithFeederFixEstimate(now.AddMinutes(21))
+            .WithTrajectory(trajectory)
             .WithState(State.Unstable)
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectoryForFlight(pendingFlight, trajectory);
+
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
         var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetTrajectory(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string[]>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(new Trajectory(arrivalInterval));
+        arrivalLookup.GetTrajectory(pendingFlight, Arg.Any<string>(), Arg.Any<string>())
+            .Returns(trajectory);
 
-        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
+        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup, trajectoryService: trajectoryService);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1226,8 +1226,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - arrival interval");
         pendingFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
+        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - TTG");
     }
 
     [Fact]
@@ -1311,7 +1311,7 @@ public class InsertFlightRequestHandlerTests(
             .FromDepartureAirport()
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -1346,7 +1346,7 @@ public class InsertFlightRequestHandlerTests(
             .FromDepartureAirport()
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -1402,11 +1402,11 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
         var takeoffTime = now.AddMinutes(5);
-        var originalEstimate = now.AddMinutes(40);
+        var originalFeederFixEstimate = now.AddMinutes(30);
 
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
-            .WithLandingEstimate(originalEstimate)
+            .WithFeederFixEstimate(originalFeederFixEstimate)
             .WithState(State.Unstable)
             .FromDepartureAirport()
             .WithPosition(new FlightPosition(
@@ -1417,7 +1417,7 @@ public class InsertFlightRequestHandlerTests(
                 false))
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -1435,7 +1435,7 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.LandingEstimate.ShouldBe(originalEstimate, "Landing estimate should remain unchanged for coupled flight");
+        pendingFlight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate, "Feeder fix estimate should remain unchanged for coupled flight");
     }
 
     [Fact]
@@ -1540,20 +1540,21 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
         var takeoffTime = now.AddMinutes(5);
-        var arrivalInterval = TimeSpan.FromMinutes(16); // From RIVET to 34L per fixture
         var expectedLandingEstimate = takeoffTime.AddMinutes(30); // YSCB to YSSY is 30 mins for jets
-        var expectedFeederFixEstimate = expectedLandingEstimate.Subtract(arrivalInterval);
+
+        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
 
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(now.AddMinutes(5))
             .WithLandingEstimate(now.AddMinutes(40))
+            .WithTrajectory(trajectory)
             .WithState(State.Unstable)
             .FromDepartureAirport()
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -1568,7 +1569,7 @@ public class InsertFlightRequestHandlerTests(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<AircraftCategory>())
-            .Returns(new Trajectory(arrivalInterval));
+            .Returns(trajectory);
 
         var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
 
@@ -1583,7 +1584,7 @@ public class InsertFlightRequestHandlerTests(
 
         // Assert
         pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should be calculated from takeoff time + enroute time");
-        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from landing estimate - arrival interval");
+        pendingFlight.FeederFixEstimate.ShouldBe(expectedLandingEstimate.Subtract(trajectory.TimeToGo), "Feeder fix estimate should be calculated from landing estimate - TTG");
     }
 
     [Fact]
@@ -1642,7 +1643,7 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -1897,7 +1898,8 @@ public class InsertFlightRequestHandlerTests(
         IMaestroInstanceManager? instanceManager = null,
         IMaestroConnectionManager? connectionManager = null,
         IMediator? mediator = null,
-        IArrivalLookup? arrivalLookup = null)
+        IArrivalLookup? arrivalLookup = null,
+        ITrajectoryService? trajectoryService = null)
     {
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations()
@@ -1909,7 +1911,7 @@ public class InsertFlightRequestHandlerTests(
             performanceLookupFixture.Instance,
             airportConfigurationProvider,
             arrivalLookup ?? Substitute.For<IArrivalLookup>(),
-            new MockTrajectoryService(),
+            trajectoryService ?? new MockTrajectoryService(),
             clockFixture.Instance,
             mediator ?? Substitute.For<IMediator>(),
             Substitute.For<ILogger>());
