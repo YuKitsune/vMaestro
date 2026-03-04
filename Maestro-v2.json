@@ -1482,7 +1482,24 @@
           "TimeWindowMinutes": 45,
           "Direction": "Up",
           "Reference": "LandingTime",
-          "Ladders": [],
+          "Ladders": [
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "34L",
+                "16R",
+                "07"
+              ]
+            },
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "34R",
+                "16L",
+                "25"
+              ]
+            }
+          ],
           "LabelLayout": "TMA"
         }
       ],
@@ -3209,7 +3226,22 @@
           "TimeWindowMinutes": 45,
           "Direction": "Up",
           "Reference": "LandingTime",
-          "Ladders": [],
+          "Ladders": [
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "16",
+                "34"
+              ]
+            },
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "09",
+                "27"
+              ]
+            }
+          ],
           "LabelLayout": "TMA"
         }
       ],
@@ -5263,7 +5295,22 @@
           "TimeWindowMinutes": 45,
           "Direction": "Up",
           "Reference": "LandingTime",
-          "Ladders": [],
+          "Ladders": [
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "01L",
+                "19R"
+              ]
+            },
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "01R",
+                "19L"
+              ]
+            }
+          ],
           "LabelLayout": "TMA"
         }
       ],
@@ -6587,7 +6634,22 @@
           "TimeWindowMinutes": 45,
           "Direction": "Up",
           "Reference": "LandingTime",
-          "Ladders": [],
+          "Ladders": [
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "03",
+                "21"
+              ]
+            },
+            {
+              "FeederFixes": [],
+              "Runways": [
+                "06",
+                "24"
+              ]
+            }
+          ],
           "LabelLayout": "TMA"
         }
       ],

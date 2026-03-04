@@ -127,12 +127,12 @@ public class AirportConfigurationFixture
                     [
                         new DepartureAirportFlightTimeConfiguration
                         {
-                            Aircraft = new AircraftCategoryDescriptor(AircraftCategory.Jet),
+                            AircraftType = new AircraftCategoryDescriptor(AircraftCategory.Jet),
                             AverageFlightTime = TimeSpan.FromMinutes(30),
                         },
                         new DepartureAirportFlightTimeConfiguration
                         {
-                            Aircraft = new AircraftCategoryDescriptor(AircraftCategory.NonJet),
+                            AircraftType = new AircraftCategoryDescriptor(AircraftCategory.NonJet),
                             AverageFlightTime = TimeSpan.FromMinutes(45),
                         }
                     ]

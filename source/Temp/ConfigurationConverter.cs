@@ -177,7 +177,7 @@ public static class ConfigurationConverter
                     Runways = []
                 });
             }
-            else if (v1.ViewMode == ViewMode.Enroute)
+            else if (v1.ViewMode == ViewMode.Approach)
             {
                 ladders.Add(new LadderConfigurationV2
                 {
