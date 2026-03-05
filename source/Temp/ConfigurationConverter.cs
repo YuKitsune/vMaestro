@@ -14,7 +14,6 @@ public static class ConfigurationConverter
                 a,
                 v1.CoordinationMessages.Templates.Where(s => !s.Contains("{Callsign}")).ToArray(),
                 v1.CoordinationMessages.Templates.Where(s => s.Contains("{Callsign}")).ToArray())).ToArray(),
-            Colours = ColourDefaults.Default(),
             Labels = CreateDefaultLabels()
         };
     }
