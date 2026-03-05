@@ -5,25 +5,81 @@ namespace Maestro.Core.Configuration;
 
 public class AirportConfigurationV2
 {
+    /// <summary>
+    ///     The ICAO code of the airport.
+    /// </summary>
     public required string Identifier { get; init; }
+
+    /// <summary>
+    ///     The feeder fixes available at this airport.
+    /// </summary>
     public required string[] FeederFixes { get; init; }
+
+    /// <summary>
+    ///     The runways available at this airport.
+    /// </summary>
     public required string[] Runways { get; init; }
 
     // Defaults
+
+    /// <summary>
+    ///     The default aircraft type to use when the aircraft type cannot be determined for a flight,
+    ///     or when inserting a flight manually, and no aircraft type is specified.
+    /// </summary>
     public string DefaultAircraftType { get; init; } = "B738";
+
+    /// <summary>
+    ///     The default <see cref="State"/> of pending flights on insertion into the sequence.
+    /// </summary>
     public State DefaultPendingFlightState { get; init; } = State.Stable;
+
+    /// <summary>
+    ///     The default <see cref="State"/> of departures on insertion into the sequence.
+    /// </summary>
     public State DefaultDepartureFlightState { get; init; } = State.Unstable;
+
+    /// <summary>
+    ///     The default <see cref="State"/> of dummy flights on insertion into the sequence.
+    /// </summary>
     public State DefaultDummyFlightState { get; init; } = State.Frozen;
+
+    /// <summary>
+    ///     The default amount of separation to apply to a flight landing on a runway that is not defined in the active runway mode.
+    /// </summary>
     public int DefaultOffModeSeparationSeconds { get; init; } = 300;
 
     // State transition times
+
+    /// <summary>
+    ///     The minimum amount of time a flight must be considered <see cref="State.Unstable"/> before it may progress to <see cref="State.Stable"/>.
+    /// </summary>
     public int MinimumUnstableMinutes { get; init; } = 5;
+
+    /// <summary>
+    ///     The amount of time before the STA_FF that a flight will transition to the <see cref="State.Stable"/> state.
+    /// </summary>
     public int StabilityThresholdMinutes { get; init; } = 25;
+
+    /// <summary>
+    ///     The amount of time before the STA that a flight will transition to the <see cref="State.Frozen"/> state.
+    /// </summary>
     public int FrozenThresholdMinutes { get; init; } = 15;
 
     // Retention
+
+    /// <summary>
+    ///     The maximum number of <see cref="State.Landed"/> flights to retain after landing.
+    /// </summary>
     public int MaxLandedFlights { get; init; } = 5;
+
+    /// <summary>
+    ///     The maximum amount of time before <see cref="State.Landed"/> flights are removed.
+    /// </summary>
     public int LandedFlightTimeoutMinutes { get; init; } = 10;
+
+    /// <summary>
+    ///     The maximum amount of time before lost flights are removed.
+    /// </summary>
     public int LostFlightTimeoutMinutes { get; init; } = 10;
 
     public required RunwayModeConfigurationV2[] RunwayModes { get; init; }
@@ -38,6 +94,7 @@ public class AirportConfigurationV2
     // Everything beyond this point is purely for presentation, and not used within Maestro.Core
 
     // Presentation
+
     public AirportColourConfigurationV2? Colours { get; init; }
     public required ViewConfigurationV2[] Views { get; init; }
 
@@ -48,17 +105,44 @@ public class AirportConfigurationV2
 
 public class RunwayModeConfigurationV2
 {
+    /// <summary>
+    ///     The identifier for this runway mode.
+    /// </summary>
     public required string Identifier { get; init; }
+
+    /// <summary>
+    ///     The minimum amount of separation to apply to flights landing on different runways in this runway mode.
+    /// </summary>
     public int DependencyRateSeconds { get; init; } = 0;
+
+    /// <summary>
+    ///     The minimum amount of separation to apply to flights landing on a runway not defined in this runway mode.
+    /// </summary>
     public int OffModeSeparationSeconds { get; init; } = 0;
+
     public required RunwayConfigurationV2[] Runways { get; init; }
 }
 
 public class RunwayConfigurationV2
 {
+    /// <summary>
+    ///     The identifier of the runway.
+    /// </summary>
     public required string Identifier { get; init; }
+
+    /// <summary>
+    ///     The Approach Type to use for this runway, if any.
+    /// </summary>
     public string ApproachType { get; init; } = string.Empty;
+
+    /// <summary>
+    ///     The minimum amount of separation to apply between flights landing on this runway.
+    /// </summary>
     public required int LandingRateSeconds { get; init; }
+
+    /// <summary>
+    ///     The feeder fixes which must be tracked via for flights to be assigned to this runway.
+    /// </summary>
     public string[] FeederFixes { get; init; } = [];
 }
 
@@ -72,21 +156,47 @@ public class TrajectoryConfigurationV2
     public required string RunwayIdentifier { get; init; }
 
     // Lookup Values
-    public required double TrackMiles { get; init; }
+    public double TrackMiles { get; init; } = 0.0; // Reserved for future use
+
+    /// <summary>
+    ///     The amount of time an aircraft matching <see cref="Aircraft"/> would take to fly from the
+    ///     <see cref="FeederFix"/>, via the <see cref="ApproachType"/> to the <see cref="RunwayIdentifier"/>.
+    /// </summary>
     public required int TimeToGoMinutes { get; init; }
-    public int PressureMinutes { get; init; }
-    public int MaxPressureMinutes { get; init; }
+    public int PressureMinutes { get; init; } = 0; // Reserved for future use
+    public int MaxPressureMinutes { get; init; } = 0; // Reserved for future use
 }
 
 public class ViewConfigurationV2
 {
+    /// <summary>
+    ///     The Identifier for this view.
+    /// </summary>
     public required string Identifier { get; init; }
+
+    /// <summary>
+    ///     The Identifier of the label layout to use in this view.
+    /// </summary>
+    public required string LabelLayout { get; init; }
+
+    /// <summary>
+    ///     The time which flights will be positioned on the ladder by.
+    ///     If set to <see cref="LadderReference.LandingTime"/>, flights will be positioned on the lader based on their STA.
+    ///     If set to <see cref="LadderReference.FeederFixTime"/>, flights will be positioned on the lader based on their STA_FF.
+    /// </summary>
+    public required LadderReference Reference { get; init; }
+
+    /// <summary>
+    ///     The window of time to be displayed in the sequence display area.
+    /// </summary>
     public required int TimeWindowMinutes { get; init; }
 
+    /// <summary>
+    ///     The direction the ladder should scroll.
+    /// </summary>
     public required LadderDirection Direction { get; init; }
-    public required LadderReference Reference { get; init; }
+
     public required LadderConfigurationV2[] Ladders { get; init; }
-    public required string LabelLayout { get; init; }
 }
 
 public enum LadderReference
@@ -103,7 +213,14 @@ public enum LadderDirection
 
 public class LadderConfigurationV2
 {
+    /// <summary>
+    ///     The feeder fixes to filter this ladder to.
+    /// </summary>
     public string[] FeederFixes { get; init; } = [];
+
+    /// <summary>
+    ///     The runways to filter this ladder to.
+    /// </summary>
     public string[] Runways { get; init; } = [];
 }
 
@@ -116,22 +233,49 @@ public class DepartureConfigurationV2
 
     // Lookup Values
     public required double Distance { get; init; }
+
+    /// <summary>
+    ///     The time it would take for an aircraft matching <see cref="Aircraft"/> to fly from <see cref="Identifier"/>
+    ///     to the sequenced airport.
+    /// </summary>
     public required int EstimatedFlightTimeMinutes { get; init; }
 }
 
 // Colour mappings - per-airport since runways/feeder fixes/approach types vary by airport
 public class AirportColourConfigurationV2
 {
+    /// <summary>
+    ///     The colors to apply to specific runways.
+    /// </summary>
     public Dictionary<string, string> Runways { get; init; } = new();
+
+    /// <summary>
+    ///     The colors to apply to specific approach types.
+    /// </summary>
     public Dictionary<string, string> ApproachTypes { get; init; } = new();
+
+    /// <summary>
+    ///     The colors to apply to specific feeder fixes.
+    /// </summary>
     public Dictionary<string, string> FeederFixes { get; init; } = new();
 }
 
 // Shared colour mappings - same across all airports
 public class ColourConfigurationV2
 {
+    /// <summary>
+    ///     The colors to apply to specific states.
+    /// </summary>
     public Dictionary<State, string> States { get; init; } = new();
+
+    /// <summary>
+    ///     The colors to apply to specific control actions.
+    /// </summary>
     public Dictionary<ControlAction, string> ControlActions { get; init; } = new();
+
+    /// <summary>
+    ///     The color to apply to flights scheduled to land in a deferred runway mode.
+    /// </summary>
     public string DeferredRunwayMode { get; init; } = string.Empty;
 }
 
@@ -144,7 +288,14 @@ public class LabelsConfigurationV2
 // Reusable label layout - defined once, referenced by views
 public class LabelLayoutConfigurationV2
 {
+    /// <summary>
+    ///     The identifier of this label layout.
+    /// </summary>
     public required string Identifier { get; init; }
+
+    /// <summary>
+    ///     The label items, from innermost to outermost.
+    /// </summary>
     public required LabelItemConfigurationV2[] Items { get; init; }
 }
 
@@ -258,156 +409,4 @@ public enum LabelItemColourSource
     State,
     RunwayMode,
     ControlAction,
-}
-
-public static class ColourDefaults
-{
-    public static ColourConfigurationV2 Default() => new()
-    {
-        States = new Dictionary<State, string>
-        {
-            { State.Unstable, "255,205,105" },
-            { State.Stable, "0, 0, 96" },
-            { State.SuperStable, "255, 255, 255" },
-            { State.Frozen, "96, 0, 0" },
-            { State.Landed, "0, 235, 235" }
-        },
-        ControlActions = new Dictionary<ControlAction, string>
-        {
-            { ControlAction.Expedite, "0, 105, 0" },
-            { ControlAction.NoDelay, "0, 0, 96" },
-            { ControlAction.Resume, "0, 0, 96" },
-            { ControlAction.SpeedReduction, "0, 235, 235" },
-            { ControlAction.PathStretching, "255, 255, 255" },
-            { ControlAction.Holding, "235, 235, 0" }
-        },
-        DeferredRunwayMode = "255,255,255"
-    };
-}
-
-public static class LabelItemDefaults
-{
-    public static LabelItemConfigurationV2[] DefaultEnrouteLabelItem()
-    {
-        return
-        [
-            new FeederFixTimeItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 2
-            },
-            new RunwayItemConfigurationV2
-            {
-                ColourSources =
-                    [LabelItemColourSource.RunwayMode, LabelItemColourSource.Runway, LabelItemColourSource.State],
-                Width = 3,
-                Padding = 1
-            },
-            new CallsignItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 10,
-                Padding = 1
-            },
-            new ApproachTypeItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.ApproachType, LabelItemColourSource.State],
-                Width = 1,
-                Padding = 1
-            },
-            new ManualDelayItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 1,
-                Padding = 0,
-                ZeroDelaySymbol = "#",
-                ManualDelaySymbol = "%"
-            },
-            new ProfileSpeedItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 1,
-                Padding = 0,
-                Symbol = "+"
-            },
-            new CouplingStatusItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 1,
-                Padding = 0,
-                UncoupledSymbol = "*"
-            },
-            new RequiredDelayItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.ControlAction],
-                Width = 2,
-                Padding = 1,
-                ZeroDelaySymbol = "#"
-            },
-            new RemainingDelayItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.ControlAction],
-                Width = 2,
-                Padding = 0
-            }
-        ];
-    }
-
-    public static LabelItemConfigurationV2[] DefaultTmaLabelItem()
-    {
-        return
-        [
-            new LandingTimeItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 2
-            },
-            new RunwayItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.RunwayMode, LabelItemColourSource.Runway, LabelItemColourSource.State],
-                Width = 3,
-                Padding = 1
-            },
-            new CallsignItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 10,
-                Padding = 1
-            },
-            new ApproachTypeItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.ApproachType, LabelItemColourSource.State],
-                Width = 1,
-                Padding = 1
-            },
-            new ManualDelayItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 1,
-                Padding = 0,
-                ZeroDelaySymbol = "#",
-                ManualDelaySymbol = "%"
-            },
-            new ProfileSpeedItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 1,
-                Padding = 0,
-                Symbol = "+"
-            },
-            new CouplingStatusItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.State],
-                Width = 1,
-                Padding = 0,
-                UncoupledSymbol = "*"
-            },
-            new RemainingDelayItemConfigurationV2
-            {
-                ColourSources = [LabelItemColourSource.ControlAction],
-                Width = 2,
-                Padding = 0
-            }
-        ];
-    }
 }
