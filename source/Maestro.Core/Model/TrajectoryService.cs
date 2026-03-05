@@ -1,3 +1,4 @@
+using Maestro.Core.Integration;
 using Serilog;
 
 namespace Maestro.Core.Model;
@@ -21,8 +22,7 @@ public class TrajectoryService(IArrivalLookup arrivalLookup, ILogger logger) : I
     }
 
     public Trajectory GetTrajectory(
-        string aircraftType,
-        AircraftCategory aircraftCategory,
+        AircraftPerformanceData aircraftPerformanceData,
         string destinationIdentifier,
         string? feederFixIdentifier,
         string runwayIdentifier,
@@ -34,14 +34,13 @@ public class TrajectoryService(IArrivalLookup arrivalLookup, ILogger logger) : I
             [],
             approachType,
             runwayIdentifier,
-            aircraftType,
-            aircraftCategory);
+            aircraftPerformanceData);
 
         if (trajectory is null)
         {
             logger.Warning(
                 "No trajectory found for {AircraftType} to {Destination} via {FeederFix} on RWY {RunwayIdentifier} APCH {ApproachType}, using average",
-                aircraftType,
+                aircraftPerformanceData.TypeCode,
                 destinationIdentifier,
                 feederFixIdentifier ?? "N/A",
                 runwayIdentifier,

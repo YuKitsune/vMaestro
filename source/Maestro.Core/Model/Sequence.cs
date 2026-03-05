@@ -9,7 +9,7 @@ public class Sequence
 {
     readonly object _gate = new();
 
-    readonly AirportConfiguration _airportConfiguration;
+    readonly AirportConfigurationV2 _airportConfiguration;
 
     // TODO: Figure out how to get rid of these from here
     readonly ITrajectoryService _trajectoryService;
@@ -28,7 +28,7 @@ public class Sequence
     public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
     public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
 
-    public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock)
+    public Sequence(AirportConfigurationV2 airportConfiguration, ITrajectoryService trajectoryService, IClock clock)
     {
         _airportConfiguration = airportConfiguration;
         _trajectoryService = trajectoryService;
@@ -773,7 +773,7 @@ public class Sequence
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation);
 
     // TODO: Extract this out into a separate service so we can test it
-    RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode)
+    RunwayOption[] GetRunways(AirportConfigurationV2 airportConfiguration, Flight flight, RunwayMode runwayMode)
     {
         // If a runway is assigned, and the flight is stable, leave it as-is
         // For stable flights, preserve both the runway AND the approach type

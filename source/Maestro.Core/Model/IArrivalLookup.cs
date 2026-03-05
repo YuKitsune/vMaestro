@@ -1,4 +1,6 @@
 ﻿using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
+using Maestro.Core.Integration;
 using Serilog;
 
 namespace Maestro.Core.Model;
@@ -11,16 +13,14 @@ public interface IArrivalLookup
         string[] fixNames,
         string approachType,
         string runwayIdentifier,
-        string aircraftTypeCode,
-        AircraftCategory aircraftCategory);
+        AircraftPerformanceData aircraftPerformanceData);
 
     string[] GetApproachTypes(
         string airportIdentifier,
         string? feederFixIdentifier,
         string[] fixNames,
         string runwayIdentifier,
-        string aircraftTypeCode,
-        AircraftCategory aircraftCategory);
+        AircraftPerformanceData aircraftPerformanceData);
 
     Trajectory GetAverageTrajectory(string airportIdentifier);
 }
@@ -39,12 +39,11 @@ public static class ArrivalLookupExtensionMethods
             flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
             approachType,
             runwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
+            flight.GetPerformanceData());
     }
 }
 
-public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
+public class ArrivalLookup(IAirportConfigurationProviderV2 airportConfigurationProvider, ILogger logger)
     : IArrivalLookup
 {
     public Trajectory? GetTrajectory(
@@ -53,23 +52,16 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         string[] fixNames,
         string approachType,
         string runwayIdentifier,
-        string aircraftTypeCode,
-        AircraftCategory aircraftCategory)
+        AircraftPerformanceData aircraftPerformanceData)
     {
-        var airportConfiguration = airportConfigurationProvider
-            .GetAirportConfigurations()
-            .SingleOrDefault(x => x.Identifier == airportIdentifier);
-        if (airportConfiguration is null)
-            return null;
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
 
-        var foundArrivalConfigurations = airportConfiguration.Arrivals
+        var foundArrivalConfigurations = airportConfiguration.Trajectories
             .Where(x => x.FeederFix == feederFixIdentifier)
             .Where(x => x.ApproachType == approachType)
             .Where(x => string.IsNullOrEmpty(x.ApproachFix) || fixNames.Contains(x.ApproachFix))
-            .Where(x =>
-                ((string.IsNullOrEmpty(x.AircraftType) || x.AircraftType == aircraftTypeCode) &&
-                 (x.Category is null || x.Category == aircraftCategory)) ||
-                x.AdditionalAircraftTypes.Contains(aircraftTypeCode))
+            .Where(x => x.RunwayIdentifier == runwayIdentifier)
+            .Where(x => x.Aircraft.Matches(aircraftPerformanceData))
             .OrderByDescending(GetRank)
             .ToArray();
 
@@ -82,7 +74,7 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
                 feederFixIdentifier,
                 runwayIdentifier,
                 approachType,
-                aircraftTypeCode);
+                aircraftPerformanceData.TypeCode);
 
             return null;
         }
@@ -95,26 +87,24 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
                 feederFixIdentifier,
                 runwayIdentifier,
                 approachType,
-                aircraftTypeCode);
+                aircraftPerformanceData.TypeCode);
         }
 
-        var arrivalConfig = foundArrivalConfigurations.First();
-        if (!arrivalConfig.RunwayIntervals.TryGetValue(runwayIdentifier, out var ttgMinutes))
-            return null;
+        var ttg = foundArrivalConfigurations.Average(x => x.TimeToGoMinutes);
 
-        return new Trajectory(TimeSpan.FromMinutes(ttgMinutes));
+        return new Trajectory(TimeSpan.FromMinutes(ttg));
 
-        int GetRank(ArrivalConfiguration arrivalConfiguration)
+        int GetRank(TrajectoryConfigurationV2 trajectoryConfiguration)
         {
             var rank = 0;
-            if (!string.IsNullOrEmpty(arrivalConfiguration.ApproachType) &&
-                arrivalConfiguration.ApproachType == approachType)
+            if (!string.IsNullOrEmpty(trajectoryConfiguration.ApproachType) &&
+                trajectoryConfiguration.ApproachType == approachType)
             {
                 rank++;
             }
 
-            if (!string.IsNullOrEmpty(arrivalConfiguration.ApproachFix) &&
-                fixNames.Contains(arrivalConfiguration.ApproachFix))
+            if (!string.IsNullOrEmpty(trajectoryConfiguration.ApproachFix) &&
+                fixNames.Contains(trajectoryConfiguration.ApproachFix))
             {
                 rank++;
             }
@@ -128,23 +118,15 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
         string? feederFixIdentifier,
         string[] fixNames,
         string runwayIdentifier,
-        string aircraftTypeCode,
-        AircraftCategory aircraftCategory)
+        AircraftPerformanceData aircraftPerformanceData)
     {
-        var airportConfiguration = airportConfigurationProvider
-            .GetAirportConfigurations()
-            .SingleOrDefault(x => x.Identifier == airportIdentifier);
-        if (airportConfiguration is null)
-            return [];
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
 
-        var foundArrivalConfigurations = airportConfiguration.Arrivals
+        var foundArrivalConfigurations = airportConfiguration.Trajectories
             .Where(x => x.FeederFix == feederFixIdentifier)
-            .Where(x => x.RunwayIntervals.ContainsKey(runwayIdentifier))
+            .Where(x => x.RunwayIdentifier == runwayIdentifier)
             .Where(x => string.IsNullOrEmpty(x.ApproachFix) || fixNames.Contains(x.ApproachFix))
-            .Where(x =>
-                ((string.IsNullOrEmpty(x.AircraftType) || x.AircraftType == aircraftTypeCode) &&
-                 (x.Category is null || x.Category == aircraftCategory)) ||
-                x.AdditionalAircraftTypes.Contains(aircraftTypeCode))
+            .Where(x => x.Aircraft.Matches(aircraftPerformanceData))
             .OrderByDescending(GetRank)
             .ToArray();
 
@@ -158,16 +140,16 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
                 airportIdentifier,
                 feederFixIdentifier,
                 runwayIdentifier,
-                aircraftTypeCode);
+                aircraftPerformanceData.TypeCode);
         }
 
         return foundArrivalConfigurations.Select(a => a.ApproachType).ToArray();
 
-        int GetRank(ArrivalConfiguration arrivalConfiguration)
+        int GetRank(TrajectoryConfigurationV2 trajectoryConfiguration)
         {
             var rank = 0;
-            if (!string.IsNullOrEmpty(arrivalConfiguration.ApproachFix) &&
-                fixNames.Contains(arrivalConfiguration.ApproachFix))
+            if (!string.IsNullOrEmpty(trajectoryConfiguration.ApproachFix) &&
+                fixNames.Contains(trajectoryConfiguration.ApproachFix))
             {
                 rank++;
             }
@@ -178,22 +160,15 @@ public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationPro
 
     public Trajectory GetAverageTrajectory(string airportIdentifier)
     {
-        var airportConfiguration = airportConfigurationProvider
-            .GetAirportConfigurations()
-            .SingleOrDefault(x => x.Identifier == airportIdentifier);
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
 
-        if (airportConfiguration is null || airportConfiguration.Arrivals.Length == 0)
-        {
-            logger.Warning("No airport configuration for {AirportIdentifier}, using default TTG", airportIdentifier);
-            return new Trajectory(TimeSpan.FromMinutes(20));
-        }
-
-        var allIntervals = airportConfiguration.Arrivals
-            .SelectMany(a => a.RunwayIntervals.Values)
+        var allIntervals = airportConfiguration.Trajectories
+            .Select(a => a.TimeToGoMinutes)
             .ToList();
 
         if (allIntervals.Count == 0)
         {
+            // TODO: Make default trajectory configurable
             logger.Warning("No arrival intervals for {AirportIdentifier}, using default TTG", airportIdentifier);
             return new Trajectory(TimeSpan.FromMinutes(20));
         }

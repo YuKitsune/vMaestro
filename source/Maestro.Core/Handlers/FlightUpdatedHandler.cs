@@ -3,6 +3,7 @@ using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -28,7 +29,7 @@ public class FlightUpdatedHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
-    IAirportConfigurationProvider airportConfigurationProvider,
+    IAirportConfigurationProviderV2 airportConfigurationProvider,
     IArrivalLookup arrivalLookup,
     ITrajectoryService trajectoryService,
     IMediator mediator,
@@ -77,9 +78,7 @@ public class FlightUpdatedHandler(
                     return;
                 }
 
-                var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-                    .Single(a => a.Identifier == notification.Destination);
-
+                var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.Destination);
                 if (existingFlight is null)
                 {
                     // TODO: Make configurable
@@ -100,8 +99,7 @@ public class FlightUpdatedHandler(
                         var runway = runwayMode.Default;
 
                         var trajectory = trajectoryService.GetTrajectory(
-                            notification.AircraftType,
-                            notification.AircraftCategory,
+                            new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                             notification.Destination,
                             feederFix?.FixIdentifier,
                             runway.Identifier,
@@ -152,8 +150,7 @@ public class FlightUpdatedHandler(
                         var runway = runwayMode.Default;
 
                         var trajectory = trajectoryService.GetTrajectory(
-                            notification.AircraftType,
-                            notification.AircraftCategory,
+                            new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                             notification.Destination,
                             feederFix.FixIdentifier,
                             runway.Identifier,
@@ -200,8 +197,7 @@ public class FlightUpdatedHandler(
                         var runway = runwayMode.Default;
 
                         var trajectory = trajectoryService.GetTrajectory(
-                            notification.AircraftType,
-                            notification.AircraftCategory,
+                            new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                             notification.Destination,
                             null,
                             runway.Identifier,

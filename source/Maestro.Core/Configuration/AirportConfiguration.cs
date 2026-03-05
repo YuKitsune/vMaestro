@@ -73,12 +73,6 @@ public record AllAircraftTypesDescriptor : IAircraftDescriptor;
 [DebuggerDisplay("{TypeCode}")]
 public record SpecificAircraftTypeDescriptor(string TypeCode) : IAircraftDescriptor;
 
-[DebuggerDisplay("{DisplayValues}")]
-public record MultipleAircraftTypeDescriptor(string[] TypeCodes) : IAircraftDescriptor
-{
-    string DisplayValues => string.Join(", ", TypeCodes);
-}
-
 [DebuggerDisplay("{AircraftCategory}")]
 public record AircraftCategoryDescriptor(AircraftCategory AircraftCategory) : IAircraftDescriptor;
 
@@ -119,10 +113,6 @@ public class AircraftDescriptorJsonConverter : JsonConverter<IAircraftDescriptor
                 writer.WriteValue("SUPER");
                 break;
 
-            case MultipleAircraftTypeDescriptor multipleAircraftTypeDescriptor:
-                writer.WriteValue(string.Join(",", multipleAircraftTypeDescriptor.TypeCodes));
-                break;
-
             case SpecificAircraftTypeDescriptor specificAircraftTypeConfiguration:
                 writer.WriteValue(specificAircraftTypeConfiguration.TypeCode);
                 break;
@@ -152,9 +142,7 @@ public class AircraftDescriptorJsonConverter : JsonConverter<IAircraftDescriptor
             "MEDIUM" or "M" => new WakeCategoryDescriptor(WakeCategory.Medium),
             "HEAVY" or "H" => new WakeCategoryDescriptor(WakeCategory.Heavy),
             "SUPERHEAVY" or "SUPER" or "S" or "J" => new WakeCategoryDescriptor(WakeCategory.SuperHeavy),
-            _ => valueStr.Contains(",")
-                ? new MultipleAircraftTypeDescriptor(valueStr.Split(','))
-                : new SpecificAircraftTypeDescriptor(valueStr)
+            _ => new SpecificAircraftTypeDescriptor(valueStr)
         };
     }
 }

@@ -16,8 +16,7 @@ public class InsertFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IPerformanceLookup performanceLookup,
-    IAirportConfigurationProvider airportConfigurationProvider,
-    IArrivalLookup arrivalLookup,
+    IAirportConfigurationProviderV2 airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
@@ -37,11 +36,7 @@ public class InsertFlightRequestHandler(
             return;
         }
 
-        var airportConfiguration = airportConfigurationProvider
-            .GetAirportConfigurations()
-            .SingleOrDefault(a => a.Identifier == request.AirportIdentifier);
-        if (airportConfiguration is null)
-            throw new MaestroException($"Couldn't find airport configuration for {request.AirportIdentifier}");
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionMessage sessionMessage;
@@ -54,7 +49,7 @@ public class InsertFlightRequestHandler(
                 callsign = instance.Session.NewDummyCallsign();
 
             var aircraftType = string.IsNullOrEmpty(request.AircraftType)
-                ? airportConfiguration.DefaultInsertedFlightAircraftType
+                ? airportConfiguration.DefaultAircraftType
                 : request.AircraftType;
 
             var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
@@ -104,7 +99,7 @@ public class InsertFlightRequestHandler(
     }
 
     Flight InsertExact(
-        AirportConfiguration airportConfiguration,
+        AirportConfigurationV2 airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -136,8 +131,7 @@ public class InsertFlightRequestHandler(
         {
             // Create a dummy flight if a pending flight couldn't be found
             var trajectory = trajectoryService.GetTrajectory(
-                performanceData.TypeCode,
-                performanceData.AircraftCategory,
+                performanceData,
                 airportIdentifier,
                 null,
                 runway.Identifier,
@@ -173,7 +167,7 @@ public class InsertFlightRequestHandler(
             if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
                 existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo));
 
-            existingPendingFlight.SetState(airportConfiguration.ManuallyInsertedFlightState, clock);
+            existingPendingFlight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
 
             flight = existingPendingFlight;
         }
@@ -191,14 +185,14 @@ public class InsertFlightRequestHandler(
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
-            flight.SetState(airportConfiguration.DummyFlightState, clock);
+            flight.SetState(airportConfiguration.DefaultDummyFlightState, clock);
         }
 
         return flight;
     }
 
     Flight InsertRelative(
-        AirportConfiguration airportConfiguration,
+        AirportConfigurationV2 airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -244,8 +238,7 @@ public class InsertFlightRequestHandler(
             // Create a dummy flight if a pending flight couldn't be found
 
             var trajectory = trajectoryService.GetTrajectory(
-                performanceData.TypeCode,
-                performanceData.AircraftCategory,
+                performanceData,
                 airportIdentifier,
                 null,
                 runway.Identifier,
@@ -281,7 +274,7 @@ public class InsertFlightRequestHandler(
             if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
                 existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo));
 
-            existingPendingFlight.SetState(airportConfiguration.ManuallyInsertedFlightState, clock);
+            existingPendingFlight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
 
             flight = existingPendingFlight;
         }
@@ -299,14 +292,14 @@ public class InsertFlightRequestHandler(
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
-            flight.SetState(airportConfiguration.DummyFlightState, clock);
+            flight.SetState(airportConfiguration.DefaultDummyFlightState, clock);
         }
 
         return flight;
     }
 
     Flight InsertDeparture(
-        AirportConfiguration airportConfiguration,
+        AirportConfigurationV2 airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -341,8 +334,7 @@ public class InsertFlightRequestHandler(
             // Create a dummy flight if a pending flight couldn't be found
 
             var trajectory = trajectoryService.GetTrajectory(
-                performanceData.TypeCode,
-                performanceData.AircraftCategory,
+                performanceData,
                 airportIdentifier,
                 null,
                 runway.Identifier,
@@ -378,7 +370,7 @@ public class InsertFlightRequestHandler(
                 existingPendingFlight.UpdateFeederFixEstimate(landingEstimate.Subtract(trajectory.TimeToGo));
 
             // Departures remain unstable as their landing estimate will become more accurate as they depart, couple, and climb
-            existingPendingFlight.SetState(airportConfiguration.InitialDepartureFlightState, clock);
+            existingPendingFlight.SetState(airportConfiguration.DefaultDepartureFlightState, clock);
 
             flight = existingPendingFlight;
         }
@@ -401,29 +393,29 @@ public class InsertFlightRequestHandler(
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
-            flight.SetState(airportConfiguration.DummyFlightState, clock);
+            flight.SetState(airportConfiguration.DefaultDummyFlightState, clock);
         }
 
         return flight;
     }
 
-    TimeSpan CalculateEnrouteTime(AirportConfiguration airportConfiguration, string departureIdentifier, AircraftPerformanceData performanceData)
+    TimeSpan CalculateEnrouteTime(
+        AirportConfigurationV2 airportConfiguration,
+        string departureIdentifier,
+        AircraftPerformanceData performanceData)
     {
-        var departureConfiguration = airportConfiguration.DepartureAirports.SingleOrDefault(d => d.Identifier == departureIdentifier);
-        if (departureConfiguration is null)
-            throw new MaestroException($"{departureIdentifier} is not a configured departure airport");
+        var departureConfigurations = airportConfiguration.DepartureAirports
+            .Where(d => d.Identifier == departureIdentifier && d.Aircraft.Matches(performanceData))
+            .ToArray();
 
-        var matchingTime = departureConfiguration.FlightTimes.FirstOrDefault(t =>
-            (t.AircraftType is SpecificAircraftTypeDescriptor c1 && c1.TypeCode == performanceData.TypeCode) ||
-            (t.AircraftType is AircraftCategoryDescriptor c2 && c2.AircraftCategory == performanceData.AircraftCategory) ||
-            (t.AircraftType is WakeCategoryDescriptor c3 && c3.WakeCategory == performanceData.WakeCategory) ||
-            t.AircraftType is AllAircraftTypesDescriptor);
+        if (departureConfigurations.Length == 0)
+        {
+            var average = airportConfiguration.DepartureAirports.Average(d => d.EstimatedFlightTimeMinutes);
+            return TimeSpan.FromMinutes(average);
+        }
 
-        if (matchingTime is not null)
-            return matchingTime.AverageFlightTime;
-
-        var averageSeconds = departureConfiguration.FlightTimes.Average(t => t.AverageFlightTime.TotalSeconds);
-        return TimeSpan.FromSeconds(averageSeconds);
+        // TODO: Log a warning on multiple matches
+        return TimeSpan.FromMinutes(departureConfigurations.Average(d => d.EstimatedFlightTimeMinutes));
     }
 
     Runway FindRunway(

@@ -11,7 +11,7 @@ namespace Maestro.Core.Handlers;
 
 public class CleanUpFlightsRequestHandler(
     IMaestroInstanceManager instanceManager,
-    IAirportConfigurationProvider airportConfigurationProvider,
+    IAirportConfigurationProviderV2 airportConfigurationProvider,
     IClock clock,
     ILogger logger)
     : IRequestHandler<CleanUpFlightsRequest>
@@ -23,9 +23,7 @@ public class CleanUpFlightsRequestHandler(
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
             var sequence = instance.Session.Sequence;
-            var airportConfiguration = airportConfigurationProvider
-                .GetAirportConfigurations()
-                .First(c => c.Identifier == sequence.AirportIdentifier);
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
             var landedFlights = sequence.Flights
                 .Where(f => f.State == State.Landed)

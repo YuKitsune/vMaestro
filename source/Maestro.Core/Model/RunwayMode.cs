@@ -8,7 +8,7 @@ namespace Maestro.Core.Model;
 
 public class RunwayMode
 {
-    public RunwayMode(Configuration.RunwayModeConfiguration runwayModeConfigurationConfiguration)
+    public RunwayMode(RunwayModeConfigurationV2 runwayModeConfigurationConfiguration)
     {
         Identifier = runwayModeConfigurationConfiguration.Identifier;
         Runways = runwayModeConfigurationConfiguration.Runways
@@ -34,7 +34,7 @@ public class RunwayMode
 
 public class Runway
 {
-    public Runway(Configuration.RunwayConfiguration runwayConfiguration)
+    public Runway(RunwayConfigurationV2 runwayConfiguration)
     {
         Identifier = runwayConfiguration.Identifier;
         ApproachType = runwayConfiguration.ApproachType;
@@ -55,7 +55,7 @@ public class Runway
     public string ApproachType { get; }
     public TimeSpan AcceptanceRate { get; private set; }
 
-    public string[] FeederFixes { get; init; } = [];
+    public string[] FeederFixes { get; init; }
 
     public void ChangeAcceptanceRate(TimeSpan acceptanceRate)
     {

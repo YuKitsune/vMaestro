@@ -92,8 +92,7 @@ public class ChangeRunwayRequestHandler(
             flight.FeederFixIdentifier,
             flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
             runwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
+            flight.GetPerformanceData());
 
         return approachTypes.Contains(flight.ApproachType)
             ? flight.ApproachType

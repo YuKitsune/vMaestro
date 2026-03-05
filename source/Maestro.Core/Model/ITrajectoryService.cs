@@ -1,3 +1,5 @@
+using Maestro.Core.Integration;
+
 namespace Maestro.Core.Model;
 
 public interface ITrajectoryService
@@ -5,8 +7,7 @@ public interface ITrajectoryService
     Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType);
 
     Trajectory GetTrajectory(
-        string aircraftType,
-        AircraftCategory aircraftCategory,
+        AircraftPerformanceData aircraftPerformanceData,
         string destinationIdentifier,
         string? feederFixIdentifier,
         string runwayIdentifier,

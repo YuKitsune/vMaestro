@@ -7,17 +7,9 @@ public interface IPerformanceLookup
     AircraftPerformanceData GetPerformanceDataFor(string aircraftType);
 }
 
-public class AircraftPerformanceData
+public class AircraftPerformanceData(string typeCode, AircraftCategory aircraftCategory, WakeCategory wakeCategory)
 {
-    public required string TypeCode { get; init; }
-    public required WakeCategory WakeCategory { get; init; }
-
-    public required AircraftCategory AircraftCategory { get; init; }
-
-    public static AircraftPerformanceData Default => new()
-    {
-        TypeCode = "Unknown",
-        WakeCategory = WakeCategory.Medium,
-        AircraftCategory = AircraftCategory.Jet
-    };
+    public string TypeCode { get; } = typeCode;
+    public AircraftCategory AircraftCategory { get; } =  aircraftCategory;
+    public WakeCategory WakeCategory { get; } = wakeCategory;
 }
