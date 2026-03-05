@@ -43,6 +43,8 @@ public class CleanUpFlightsRequestHandler(
                     landedFlight.Callsign,
                     sequence.AirportIdentifier);
             }
+
+            // TODO: Lost flights
         }
     }
 }

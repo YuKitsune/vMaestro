@@ -25,7 +25,6 @@ public partial class FlightLabelView : UserControl
     public static readonly DependencyProperty IsDraggingProperty = DependencyProperty.Register(
         nameof(IsDragging), typeof(bool), typeof(FlightLabelView), new PropertyMetadata(false));
 
-
     public LadderPosition LadderPosition
     {
         get => (LadderPosition)GetValue(LadderPositionProperty);

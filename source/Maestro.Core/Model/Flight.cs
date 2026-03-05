@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -409,7 +410,8 @@ public class Flight : IEquatable<Flight>
         FlowControls = flowControls;
     }
 
-    public void UpdateStateBasedOnTime(IClock clock)
+    // TODO: Move this into Flight Updated handler
+    public void UpdateStateBasedOnTime(IClock clock, AirportConfigurationV2 airportConfiguration)
     {
         // Manually-inserted flights don't auto-update their state
         if (IsManuallyInserted)
@@ -423,10 +425,9 @@ public class Flight : IEquatable<Flight>
         if (State is State.Landed)
             return;
 
-        // TODO: Make configurable
-        var stableThreshold = TimeSpan.FromMinutes(25);
-        var frozenThreshold = TimeSpan.FromMinutes(15);
-        var minUnstableTime = TimeSpan.FromSeconds(180);
+        var stableThreshold = TimeSpan.FromMinutes(airportConfiguration.StabilityThresholdMinutes);
+        var frozenThreshold = TimeSpan.FromMinutes(airportConfiguration.FrozenThresholdMinutes);
+        var minUnstableTime = TimeSpan.FromSeconds(airportConfiguration.MinimumUnstableMinutes);
 
         // Keep the flight unstable until it's passed the minimum unstable time
         var timeActive = clock.UtcNow() - ActivatedTime;

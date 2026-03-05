@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Connectivity;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
@@ -13,6 +14,7 @@ namespace Maestro.Core.Handlers;
 public class SwapFlightsRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IAirportConfigurationProviderV2 airportConfigurationProvider,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -32,6 +34,7 @@ public class SwapFlightsRequestHandler(
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionMessage sessionMessage;
 
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
             var sequence = instance.Session.Sequence;
@@ -71,8 +74,8 @@ public class SwapFlightsRequestHandler(
             // secondFlight.SetRunway(firstRunway, manual: true);
 
             // Unstable flights become stable when swapped
-            if (firstFlight.State == State.Unstable) firstFlight.SetState(State.Stable, clock);
-            if (secondFlight.State == State.Unstable) secondFlight.SetState(State.Stable, clock);
+            if (firstFlight.State == State.Unstable) firstFlight.SetState(airportConfiguration.ManualInteractionState, clock);
+            if (secondFlight.State == State.Unstable) secondFlight.SetState(airportConfiguration.ManualInteractionState, clock);
 
             logger.Information("Flights {FirstFlightCallsign} and {SecondFlightCallsign} swapped", firstFlight.Callsign, secondFlight.Callsign);
 

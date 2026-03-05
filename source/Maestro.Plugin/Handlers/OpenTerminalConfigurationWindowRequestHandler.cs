@@ -42,7 +42,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 
                 var firstLandingTime = sequenceMessage.FirstLandingTimeForNextMode == default
                     ? clock.UtcNow()
-                    : lastLandingTime.AddMinutes(5); // Make configurable
+                    : lastLandingTime.AddMinutes(5);
 
                 var viewModel = new TerminalConfigurationViewModel(
                     request.AirportIdentifier,

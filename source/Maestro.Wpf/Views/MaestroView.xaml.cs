@@ -869,26 +869,15 @@ public partial class MaestroView
 
     static ApproachTypeLookup[] GetApproachTypeLookups(FlightMessage flight)
     {
-        ApproachTypeLookup[] approachTypeLookups = [];
-        var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-            .Single(a => a.Identifier == flight.DestinationIdentifier);
-        if (airportConfiguration is not null)
+        var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProviderV2>();
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(flight.DestinationIdentifier);
+        var results = new HashSet<ApproachTypeLookup>();
+        foreach (var arrivalConfiguration in airportConfiguration.Trajectories)
         {
-            var results = new HashSet<ApproachTypeLookup>();
-            foreach (var arrivalConfiguration in airportConfiguration.Arrivals)
-            {
-                foreach (var kvp in arrivalConfiguration.RunwayIntervals)
-                {
-                    var runwayIdentifier = kvp.Key;
-                    results.Add(new ApproachTypeLookup(arrivalConfiguration.FeederFix, runwayIdentifier, arrivalConfiguration.ApproachType));
-                }
-            }
-
-            approachTypeLookups = results.ToArray();
+            results.Add(new ApproachTypeLookup(arrivalConfiguration.FeederFix, arrivalConfiguration.RunwayIdentifier, arrivalConfiguration.ApproachType));
         }
 
-        return approachTypeLookups;
+        return results.ToArray();
     }
 
     void ClearLabels()

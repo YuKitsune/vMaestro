@@ -44,11 +44,16 @@ public class AirportConfigurationV2
     public State DefaultDummyFlightState { get; init; } = State.Frozen;
 
     /// <summary>
-    ///     The default amount of separation to apply to a flight landing on a runway that is not defined in the active runway mode.
+    ///     The <see cref="State"/> to move flights into once manual interaction has been performed by the controller.
     /// </summary>
-    public int DefaultOffModeSeparationSeconds { get; init; } = 300;
+    public State ManualInteractionState { get; init; } = State.Stable;
 
     // State transition times
+
+    /// <summary>
+    ///     The maximum amount of time a flight must be away from landing before it is tracked by Maestro.
+    /// </summary>
+    public int FlightCreationThresholdMinutes { get; init; } = 120;
 
     /// <summary>
     ///     The minimum amount of time a flight must be considered <see cref="State.Unstable"/> before it may progress to <see cref="State.Stable"/>.
@@ -228,11 +233,11 @@ public class DepartureConfigurationV2
 {
     // Lookup Parameters
     public required string Identifier { get; init; }
-    // public required string FeederFix { get; init; }
+    // public required string FeederFix { get; init; } // Reserved for future use
     public required IAircraftDescriptor[] Aircraft { get; init; } // TODO: Match any
 
     // Lookup Values
-    public required double Distance { get; init; }
+    public required double Distance { get; init; } // Reserved for future use
 
     /// <summary>
     ///     The time it would take for an aircraft matching <see cref="Aircraft"/> to fly from <see cref="Identifier"/>

@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Connectivity;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
@@ -13,6 +14,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeRunwayRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IAirportConfigurationProviderV2 airportConfigurationProviderV2,
     IArrivalLookup arrivalLookup,
     ITrajectoryService trajectoryService,
     IClock clock,
@@ -30,6 +32,8 @@ public class ChangeRunwayRequestHandler(
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        var airportConfiguration = airportConfigurationProviderV2.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionMessage sessionMessage;
@@ -71,7 +75,7 @@ public class ChangeRunwayRequestHandler(
 
             // Unstable flights become Stable when changing runway
             if (flight.State is State.Unstable)
-                flight.SetState(State.Stable, clock);
+                flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
             sequence.RepositionByEstimate(flight);
 
