@@ -273,6 +273,7 @@ Airports:
     Ladders:
     - {FeederFixes: [RIVET, WELSH]}
     - {FeederFixes: [YAKKA, MARLN, BOREE]}
+    - {FeederFixes: [BOREE]}
 
   - Identifier: RWY
     LabelLayout: TMA
@@ -282,6 +283,19 @@ Airports:
     Ladders:
     - {Runways: [34L, 16R, "07"]}
     - {Runways: [34R, 16L, "25"]}
+
+  - Identifier: FMP
+    LabelLayout: TMA
+    TimeWindowMinutes: 45
+    Direction: Up
+    Reference: LandingTime
+    Ladders:
+    - {Runways: [34L]}
+    - {Runways: [16R]}
+    - {Runways: ["07"]}
+    - {Runways: [34R]}
+    - {Runways: [16L]}
+    - {Runways: ["25"]}
 
   GlobalCoordinationMessages:
   - WX Dev have commenced.

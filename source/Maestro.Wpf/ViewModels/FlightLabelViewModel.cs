@@ -209,13 +209,17 @@ public partial class FlightLabelViewModel(
     {
         try
         {
+            var runways = FlightViewModel.AssignedRunwayIdentifier != null
+                ? [FlightViewModel.AssignedRunwayIdentifier]
+                : Array.Empty<string>();
+
             mediator.Send(
                 new OpenSlotWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     SlotId: null, // slotId is null for new slots
                     StartTime: FlightViewModel.LandingTime.Subtract(TimeSpan.FromMinutes(6)),
                     EndTime: FlightViewModel.LandingTime.Subtract(TimeSpan.FromMinutes(1)),
-                    [FlightViewModel.AssignedRunwayIdentifier]));
+                    runways));
         }
         catch (Exception ex)
         {
@@ -228,13 +232,17 @@ public partial class FlightLabelViewModel(
     {
         try
         {
+            var runways = FlightViewModel.AssignedRunwayIdentifier != null
+                ? [FlightViewModel.AssignedRunwayIdentifier]
+                : Array.Empty<string>();
+
             mediator.Send(
                 new OpenSlotWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     SlotId: null, // slotId is null for new slots
                     StartTime: FlightViewModel.LandingTime.Add(TimeSpan.FromMinutes(1)),
                     EndTime: FlightViewModel.LandingTime.Add(TimeSpan.FromMinutes(6)),
-                    [FlightViewModel.AssignedRunwayIdentifier]));
+                    runways));
         }
         catch (Exception ex)
         {
