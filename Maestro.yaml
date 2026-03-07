@@ -58,7 +58,7 @@ Labels:
     - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: +}
     - {Type: CouplingStatus, Width: 1, Padding: 0, ColourSources: [State], UncoupledSymbol: '*'}
-    - {Type: RequiredDelay, Width: 2, ColourSources: [ControlAction], ZeroDelaySymbol: '#'}
+    - {Type: RequiredDelay, Width: 2, ColourSources: [ControlAction]}
     - {Type: RemainingDelay, Width: 2, Padding: 0, ColourSources: [ControlAction]}
     
   - Identifier: TMA
@@ -80,7 +80,6 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
-  DefaultOffModeSeparationSeconds: 300
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15
@@ -318,7 +317,6 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
-  DefaultOffModeSeparationSeconds: 300
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15
@@ -573,7 +571,6 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
-  DefaultOffModeSeparationSeconds: 300
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15
@@ -828,7 +825,6 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
-  DefaultOffModeSeparationSeconds: 300
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15

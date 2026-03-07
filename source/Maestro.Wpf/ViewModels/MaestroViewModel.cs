@@ -15,7 +15,6 @@ public partial class MaestroViewModel : ObservableObject
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
     readonly LabelsConfigurationV2? _labelsConfiguration;
-    readonly ColourConfigurationV2? _colourConfiguration;
     readonly AirportColourConfigurationV2? _airportColourConfiguration;
 
     [ObservableProperty]
@@ -88,14 +87,12 @@ public partial class MaestroViewModel : ObservableObject
         ViewConfigurationV2[] views,
         IMediator mediator,
         IErrorReporter errorReporter,
-        LabelsConfigurationV2? labelsConfiguration = null,
-        ColourConfigurationV2? colourConfiguration = null,
-        AirportColourConfigurationV2? airportColourConfiguration = null)
+        LabelsConfigurationV2? labelsConfiguration,
+        AirportColourConfigurationV2? airportColourConfiguration)
     {
         _mediator = mediator;
         _errorReporter = errorReporter;
         _labelsConfiguration = labelsConfiguration;
-        _colourConfiguration = colourConfiguration;
         _airportColourConfiguration = airportColourConfiguration;
 
         AirportIdentifier = airportIdentifier;

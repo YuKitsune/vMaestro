@@ -49,9 +49,7 @@ public class AircraftDescriptorTypeConverter : IYamlTypeConverter
             "MEDIUM" or "M" => new WakeCategoryDescriptor(WakeCategory.Medium),
             "HEAVY" or "H" => new WakeCategoryDescriptor(WakeCategory.Heavy),
             "SUPERHEAVY" or "SUPER" or "S" or "J" => new WakeCategoryDescriptor(WakeCategory.SuperHeavy),
-            _ => value.Contains(",")
-                ? new MultipleAircraftTypeDescriptor(value.Split(','))
-                : new SpecificAircraftTypeDescriptor(value)
+            _ => new SpecificAircraftTypeDescriptor(value)
         };
     }
 
@@ -66,7 +64,6 @@ public class AircraftDescriptorTypeConverter : IYamlTypeConverter
             WakeCategoryDescriptor { WakeCategory: WakeCategory.Medium } => "MEDIUM",
             WakeCategoryDescriptor { WakeCategory: WakeCategory.Heavy } => "HEAVY",
             WakeCategoryDescriptor { WakeCategory: WakeCategory.SuperHeavy } => "SUPER",
-            MultipleAircraftTypeDescriptor multiple => string.Join(",", multiple.TypeCodes),
             SpecificAircraftTypeDescriptor specific => specific.TypeCode,
             _ => throw new YamlException("Unexpected type when writing IAircraftDescriptor")
         };
@@ -139,18 +136,37 @@ public class LabelItemNodeDeserializer : INodeDeserializer
             reader.Consume<MappingStart>();
 
             string? typeValue = null;
-            var properties = new Dictionary<string, string>();
+            var properties = new Dictionary<string, object>();
 
             while (!reader.Accept<MappingEnd>(out _))
             {
                 var key = reader.Consume<Scalar>();
-                var val = reader.Consume<Scalar>();
 
                 if (key.Value == "Type")
                 {
+                    var val = reader.Consume<Scalar>();
                     typeValue = val.Value;
+                    properties[key.Value] = val.Value;
                 }
-                properties[key.Value] = val.Value;
+                else if (key.Value == "ColourSources")
+                {
+                    // Handle array/sequence
+                    var sources = new List<string>();
+                    reader.Consume<SequenceStart>();
+                    while (!reader.Accept<SequenceEnd>(out _))
+                    {
+                        var item = reader.Consume<Scalar>();
+                        sources.Add(item.Value);
+                    }
+                    reader.Consume<SequenceEnd>();
+                    properties[key.Value] = sources;
+                }
+                else
+                {
+                    // Handle scalar values
+                    var val = reader.Consume<Scalar>();
+                    properties[key.Value] = val.Value;
+                }
             }
 
             reader.Consume<MappingEnd>();
@@ -193,12 +209,12 @@ public class LabelItemNodeDeserializer : INodeDeserializer
         };
     }
 
-    private static object DeserializeLabelItem(Type concreteType, Dictionary<string, string> properties)
+    private static object DeserializeLabelItem(Type concreteType, Dictionary<string, object> properties)
     {
-        var width = int.Parse(properties["Width"]);
-        var padding = properties.ContainsKey("Padding") ? int.Parse(properties["Padding"]) : 1;
+        var width = int.Parse((string)properties["Width"]);
+        var padding = properties.ContainsKey("Padding") ? int.Parse((string)properties["Padding"]) : 1;
         var colourSources = properties.ContainsKey("ColourSources")
-            ? ParseColourSources(properties["ColourSources"])
+            ? ParseColourSources((List<string>)properties["ColourSources"])
             : new[] { LabelItemColourSource.State };
 
         return concreteType.Name switch
@@ -249,8 +265,7 @@ public class LabelItemNodeDeserializer : INodeDeserializer
             {
                 Width = width,
                 Padding = padding,
-                ColourSources = colourSources,
-                ZeroDelaySymbol = properties["ZeroDelaySymbol"]
+                ColourSources = colourSources
             },
             nameof(RemainingDelayItemConfigurationV2) => new RemainingDelayItemConfigurationV2
             {
@@ -263,38 +278,35 @@ public class LabelItemNodeDeserializer : INodeDeserializer
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources,
-                ZeroDelaySymbol = properties["ZeroDelaySymbol"],
-                ManualDelaySymbol = properties["ManualDelaySymbol"]
+                ZeroDelaySymbol = (string)properties["ZeroDelaySymbol"],
+                ManualDelaySymbol = (string)properties["ManualDelaySymbol"]
             },
             nameof(ProfileSpeedItemConfigurationV2) => new ProfileSpeedItemConfigurationV2
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources,
-                Symbol = properties["Symbol"]
+                Symbol = (string)properties["Symbol"]
             },
             nameof(CouplingStatusItemConfigurationV2) => new CouplingStatusItemConfigurationV2
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources,
-                UncoupledSymbol = properties["UncoupledSymbol"]
+                UncoupledSymbol = (string)properties["UncoupledSymbol"]
             },
             _ => throw new YamlException($"Unsupported label item type: {concreteType.Name}")
         };
     }
 
-    private static LabelItemColourSource[] ParseColourSources(string value)
+    private static LabelItemColourSource[] ParseColourSources(List<string> sources)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (sources == null || sources.Count == 0)
             return new[] { LabelItemColourSource.State };
 
-        var trimmed = value.Trim('[', ']', ' ');
-        var sources = trimmed.Split(',')
+        return sources
             .Select(s => (LabelItemColourSource)Enum.Parse(typeof(LabelItemColourSource), s.Trim()))
             .ToArray();
-
-        return sources.Length > 0 ? sources : new[] { LabelItemColourSource.State };
     }
 }
 

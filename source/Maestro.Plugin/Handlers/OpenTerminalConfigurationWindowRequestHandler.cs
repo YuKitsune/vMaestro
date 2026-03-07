@@ -12,7 +12,7 @@ namespace Maestro.Plugin.Handlers;
 
 public class OpenTerminalConfigurationWindowRequestHandler(
     WindowManager windowManager,
-    IAirportConfigurationProvider airportConfigurationProvider,
+    IAirportConfigurationProviderV2 airportConfigurationProvider,
     IMaestroInstanceManager instanceManager,
     IMediator mediator,
     IClock clock,
@@ -21,8 +21,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 {
     public async Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
     {
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-            .Single(a => a.Identifier == request.AirportIdentifier);
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         var sequenceMessage = instance.Session.Sequence.ToMessage();

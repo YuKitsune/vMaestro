@@ -98,7 +98,7 @@ public class Plugin : IPlugin
         Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeights.Bold : FontWeights.Regular;
     }
 
-    void ConfigureServices(PluginConfiguration pluginConfiguration)
+    void ConfigureServices(PluginConfigurationV2 pluginConfiguration)
     {
         var logger = ConfigureLogger(pluginConfiguration.Logging);
 
@@ -127,9 +127,9 @@ public class Plugin : IPlugin
                 .BuildServiceProvider());
     }
 
-    PluginConfiguration ConfigureConfiguration()
+    PluginConfigurationV2 ConfigureConfiguration()
     {
-        const string configFileName = "Maestro.json";
+        const string configFileName = "Maestro.yaml";
 
         var searchDirectories = new List<string>();
 
@@ -162,8 +162,8 @@ public class Plugin : IPlugin
         if (string.IsNullOrEmpty(configFilePath))
             throw new MaestroException($"Unable to locate {configFileName}");
 
-        var configurationJson = File.ReadAllText(configFilePath);
-        var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
+        var configurationYaml = File.ReadAllText(configFilePath);
+        var configuration = YamlConfigurationLoader.LoadFromYaml(configurationYaml);
 
         return configuration;
     }
@@ -187,7 +187,7 @@ public class Plugin : IPlugin
         return logger;
     }
 
-    void AddToolbarItems(PluginConfiguration pluginConfiguration)
+    void AddToolbarItems(PluginConfigurationV2 pluginConfiguration)
     {
         const string MenuItemCategory = "TFMS";
 

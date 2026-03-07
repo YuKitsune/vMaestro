@@ -361,20 +361,34 @@ public partial class FlightLabelViewModel(
     {
         LabelItems.Clear();
 
-        // Determine if this ladder uses right-to-left rendering (odd-indexed ladders)
-        bool rightToLeft = ladderIndex % 2 == 1;
-
-        foreach (var itemConfig in labelLayout.Items)
+        // Determine if this ladder uses right-to-left rendering (even-indexed ladders)
+        var rightToLeft = ladderIndex % 2 == 0;
+        if (rightToLeft)
         {
-            var content = GetItemContent(itemConfig, flight);
-            var color = GetItemColor(itemConfig, flight);
+            for (var i = labelLayout.Items.Length - 1; i >= 0; i--)
+            {
+                ToLabelItemViewModel(labelLayout.Items[i]);
+            }
+        }
+        else
+        {
+            for (var i = 0; i < labelLayout.Items.Length; i++)
+            {
+                ToLabelItemViewModel(labelLayout.Items[i]);
+            }
+        }
+
+        void ToLabelItemViewModel(LabelItemConfigurationV2 item)
+        {
+            var content = GetItemContent(item, flight);
+            var color = GetItemColor(item, flight);
 
             LabelItems.Add(new LabelItemViewModel
             {
                 Content = content,
                 Foreground = color,
-                Width = itemConfig.Width,
-                Padding = itemConfig.Padding,
+                Width = item.Width,
+                Padding = item.Padding,
                 RightToLeft = rightToLeft
             });
         }
@@ -391,7 +405,7 @@ public partial class FlightLabelViewModel(
             ApproachTypeItemConfigurationV2 => flight.ApproachType ?? "",
             LandingTimeItemConfigurationV2 => flight.LandingTime.ToString("mm"),
             FeederFixTimeItemConfigurationV2 => flight.FeederFixEstimate?.ToString("mm") ?? "",
-            RequiredDelayItemConfigurationV2 => flight.RemainingDelay.TotalMinutes.ToString("00"),
+            RequiredDelayItemConfigurationV2 => flight.InitialDelay.TotalMinutes.ToString("00"),
             RemainingDelayItemConfigurationV2 => flight.RemainingDelay.TotalMinutes.ToString("00"),
             ManualDelayItemConfigurationV2 manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
             ProfileSpeedItemConfigurationV2 profile => flight.FlowControls == FlowControls.ProfileSpeed ? profile.Symbol : "",

@@ -261,7 +261,7 @@ class Build : NukeBuild
                 Log.Information("Plugin uninstalled from {Directory}", pluginDirectory);
             }
 
-            var configFilePath = pluginsDirectory / "Configs" / "Maestro" / "Maestro.json";
+            var configFilePath = pluginsDirectory / "Configs" / "Maestro" / "Maestro.yaml";
             if (configFilePath.FileExists())
             {
                 configFilePath.DeleteFile();
@@ -291,7 +291,7 @@ class Build : NukeBuild
             }
 
             // Copy config
-            var configFile = RootDirectory / "Maestro.json";
+            var configFile = RootDirectory / "Maestro.yaml";
             var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
             configDestinationDirectory.CreateOrCleanDirectory();
 
@@ -308,7 +308,7 @@ class Build : NukeBuild
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
             var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
-            var configFile = RootDirectory / "Maestro.json";
+            var configFile = RootDirectory / "Maestro.yaml";
 
             PackageDirectory.CreateOrCleanDirectory();
 

@@ -13,7 +13,8 @@ using vatsys;
 namespace Maestro.Plugin.Handlers;
 
 public class MaestroInstanceCreatedNotificationHandler(
-    IAirportConfigurationProvider airportConfigurationProvider,
+    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    LabelsConfigurationV2 labelsConfiguration,
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter)
@@ -21,8 +22,7 @@ public class MaestroInstanceCreatedNotificationHandler(
 {
     public async Task Handle(MaestroInstanceCreatedNotification notification, CancellationToken cancellationToken)
     {
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-            .Single(a => a.Identifier == notification.AirportIdentifier);
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.AirportIdentifier);
 
         var runwayModes = airportConfiguration.RunwayModes
             .Select(rm => new RunwayModeViewModel(rm))
@@ -38,7 +38,9 @@ public class MaestroInstanceCreatedNotificationHandler(
                     runwayModes,
                     airportConfiguration.Views,
                     mediator,
-                    errorReporter)),
+                    errorReporter,
+                    labelsConfiguration,
+                    airportConfiguration.Colours)),
             shrinkToContent: false,
             new Size(640, 800),
             configureForm: form =>

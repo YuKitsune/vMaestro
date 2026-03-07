@@ -29,7 +29,7 @@ public partial class RunwayModeViewModel : ObservableObject
     [ObservableProperty]
     RunwayViewModel[] _runways = [];
 
-    public RunwayModeViewModel(RunwayModeConfiguration runwayModeConfiguration)
+    public RunwayModeViewModel(RunwayModeConfigurationV2 runwayModeConfiguration)
         : this(runwayModeConfiguration.Identifier, runwayModeConfiguration.Runways.Select(r => new RunwayViewModel(r.Identifier, r.ApproachType, r.LandingRateSeconds, r.FeederFixes)).ToArray())
     {
     }
