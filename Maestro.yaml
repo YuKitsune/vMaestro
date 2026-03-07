@@ -51,26 +51,26 @@ Labels:
 
   - Identifier: Enroute
     Items:
-    - {Type: FeederFixTime, Width: 2, ColourSources: [State]}
-    - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway, State]}
+    - {Type: FeederFixTime, Width: 2}
+    - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, ColourSources: [State]}
     - {Type: ApproachType, Width: 1, ColourSources: [ApproachType, State]}
     - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
-    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: +}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
     - {Type: CouplingStatus, Width: 1, Padding: 0, ColourSources: [State], UncoupledSymbol: '*'}
-    - {Type: RequiredDelay, Width: 2, ColourSources: [ControlAction]}
-    - {Type: RemainingDelay, Width: 2, Padding: 0, ColourSources: [ControlAction]}
+    - {Type: RequiredDelay, Width: 3, ColourSources: [ControlAction]}
+    - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
     
   - Identifier: TMA
     Items:
-    - {Type: LandingTime, Width: 2, ColourSources: [State]}
-    - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway, State]}
+    - {Type: LandingTime, Width: 2}
+    - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, ColourSources: [State]}
     - {Type: ApproachType, Width: 1, ColourSources: [ApproachType, State]}
     - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
-    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: +}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
     - {Type: CouplingStatus, Width: 1, Padding: 0, ColourSources: [State], UncoupledSymbol: '*'}
-    - {Type: RemainingDelay, Width: 2, Padding: 0, ColourSources: [ControlAction]}
+    - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
 
 Airports:
 - Identifier: YSSY

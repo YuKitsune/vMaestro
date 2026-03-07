@@ -1158,12 +1158,15 @@ public partial class MaestroView
                 if (!_flightLabels.TryGetValue(key, out var flightLabel))
                 {
                     var approachTypeLookups = GetApproachTypeLookups(flight);
+                    // TODO: Grab the config from the View constructor or something
+                    var labelConfiguration = Ioc.Default.GetRequiredService<LabelsConfigurationV2>();
 
                     // Create new flight label
                     var flightLabelViewModel = new FlightLabelViewModel(
                         Ioc.Default.GetRequiredService<IMediator>(),
                         Ioc.Default.GetRequiredService<IErrorReporter>(),
                         ViewModel,
+                        labelConfiguration.Colours,
                         flight,
                         ViewModel.Runways,
                         approachTypeLookups);

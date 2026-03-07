@@ -252,17 +252,17 @@ public class AirportColourConfigurationV2
     /// <summary>
     ///     The colors to apply to specific runways.
     /// </summary>
-    public Dictionary<string, string> Runways { get; init; } = new();
+    public Dictionary<string, ColorConfiguration> Runways { get; init; } = new();
 
     /// <summary>
     ///     The colors to apply to specific approach types.
     /// </summary>
-    public Dictionary<string, string> ApproachTypes { get; init; } = new();
+    public Dictionary<string, ColorConfiguration> ApproachTypes { get; init; } = new();
 
     /// <summary>
     ///     The colors to apply to specific feeder fixes.
     /// </summary>
-    public Dictionary<string, string> FeederFixes { get; init; } = new();
+    public Dictionary<string, ColorConfiguration> FeederFixes { get; init; } = new();
 }
 
 // Shared colour mappings - same across all airports
@@ -271,12 +271,12 @@ public class ColourConfigurationV2
     /// <summary>
     ///     The colors to apply to specific states.
     /// </summary>
-    public Dictionary<State, string> States { get; init; } = new();
+    public Dictionary<State, ColorConfiguration> States { get; init; } = new();
 
     /// <summary>
     ///     The colors to apply to specific control actions.
     /// </summary>
-    public Dictionary<ControlAction, string> ControlActions { get; init; } = new();
+    public Dictionary<ControlAction, ColorConfiguration> ControlActions { get; init; } = new();
 
     /// <summary>
     ///     The color to apply to flights scheduled to land in a deferred runway mode.
@@ -320,7 +320,7 @@ public class LabelLayoutConfigurationV2
 public abstract class LabelItemConfigurationV2
 {
     public abstract LabelItemType Type { get; }
-    public LabelItemColourSource[] ColourSources { get; init; } = [LabelItemColourSource.State];
+    public LabelItemColourSource[] ColourSources { get; init; } = [];
     public required int Width { get; init; }
     public int Padding { get; init; } = 1;
 }
@@ -414,3 +414,5 @@ public enum LabelItemColourSource
     RunwayMode,
     ControlAction,
 }
+
+public record ColorConfiguration(int Red, int Green, int Blue);

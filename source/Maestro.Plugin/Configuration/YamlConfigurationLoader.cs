@@ -13,6 +13,7 @@ public static class YamlConfigurationLoader
     public static PluginConfigurationV2 LoadFromYaml(string yamlContent)
     {
         var deserializerBuilder = new DeserializerBuilder()
+            .WithTypeConverter(new ColorConfigurationTypeConverter())
             .WithTypeConverter(new AircraftDescriptorTypeConverter())
             .WithTypeConverter(new AircraftDescriptorArrayTypeConverter())
             .WithNodeDeserializer(
@@ -22,6 +23,47 @@ public static class YamlConfigurationLoader
 
         var deserializer = deserializerBuilder.Build();
         return deserializer.Deserialize<PluginConfigurationV2>(yamlContent);
+    }
+}
+
+public class ColorConfigurationTypeConverter : IYamlTypeConverter
+{
+    public bool Accepts(Type type)
+    {
+        return type == typeof(ColorConfiguration);
+    }
+
+    public object? ReadYaml(IParser parser, Type type)
+    {
+        var scalar = parser.Consume<Scalar>();
+        var value = scalar.Value;
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new YamlException("Color configuration cannot be empty");
+
+        var parts = value.Split(',');
+        if (parts.Length != 3)
+            throw new YamlException($"Color configuration must be in 'R,G,B' format, got: {value}");
+
+        if (!int.TryParse(parts[0].Trim(), out var red) || red < 0 || red > 255)
+            throw new YamlException($"Invalid red value in color configuration: {parts[0]}");
+
+        if (!int.TryParse(parts[1].Trim(), out var green) || green < 0 || green > 255)
+            throw new YamlException($"Invalid green value in color configuration: {parts[1]}");
+
+        if (!int.TryParse(parts[2].Trim(), out var blue) || blue < 0 || blue > 255)
+            throw new YamlException($"Invalid blue value in color configuration: {parts[2]}");
+
+        return new ColorConfiguration(red, green, blue);
+    }
+
+    public void WriteYaml(IEmitter emitter, object? value, Type type)
+    {
+        if (value is not ColorConfiguration color)
+            throw new YamlException("Expected ColorConfiguration but got different type");
+
+        var stringValue = $"{color.Red},{color.Green},{color.Blue}";
+        emitter.Emit(new Scalar(stringValue));
     }
 }
 

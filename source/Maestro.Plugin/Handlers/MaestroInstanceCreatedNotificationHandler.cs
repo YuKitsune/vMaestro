@@ -34,13 +34,13 @@ public class MaestroInstanceCreatedNotificationHandler(
             _ => new MaestroView(
                 new MaestroViewModel(
                     notification.AirportIdentifier,
-                    airportConfiguration.Runways,
+                    airportConfiguration.Runways, // TODO: Remove these, and just use the Airport Configuration
                     runwayModes,
                     airportConfiguration.Views,
                     mediator,
                     errorReporter,
                     labelsConfiguration,
-                    airportConfiguration.Colours)),
+                    airportConfiguration)),
             shrinkToContent: false,
             new Size(640, 800),
             configureForm: form =>

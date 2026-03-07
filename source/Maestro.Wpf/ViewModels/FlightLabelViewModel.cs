@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Text;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,6 +19,7 @@ public partial class FlightLabelViewModel(
     IMediator mediator,
     IErrorReporter errorReporter,
     MaestroViewModel maestroViewModel,
+    ColourConfigurationV2 globalColorConfiguration,
     FlightMessage flightViewModel,
     string[] availableRunways,
     ApproachTypeLookup[] availableApproachTypes)
@@ -386,7 +388,7 @@ public partial class FlightLabelViewModel(
             LabelItems.Add(new LabelItemViewModel
             {
                 Content = content,
-                Foreground = color,
+                Foreground = new SolidColorBrush(color),
                 Width = item.Width,
                 Padding = item.Padding,
                 RightToLeft = rightToLeft
@@ -405,8 +407,8 @@ public partial class FlightLabelViewModel(
             ApproachTypeItemConfigurationV2 => flight.ApproachType ?? "",
             LandingTimeItemConfigurationV2 => flight.LandingTime.ToString("mm"),
             FeederFixTimeItemConfigurationV2 => flight.FeederFixEstimate?.ToString("mm") ?? "",
-            RequiredDelayItemConfigurationV2 => flight.InitialDelay.TotalMinutes.ToString("00"),
-            RemainingDelayItemConfigurationV2 => flight.RemainingDelay.TotalMinutes.ToString("00"),
+            RequiredDelayItemConfigurationV2 => ((int)flight.InitialDelay.TotalMinutes).ToString(CultureInfo.InvariantCulture),
+            RemainingDelayItemConfigurationV2 => ((int)flight.RemainingDelay.TotalMinutes).ToString(CultureInfo.InvariantCulture),
             ManualDelayItemConfigurationV2 manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
             ProfileSpeedItemConfigurationV2 profile => flight.FlowControls == FlowControls.ProfileSpeed ? profile.Symbol : "",
             CouplingStatusItemConfigurationV2 coupling => flight.Position is not null ? "" : coupling.UncoupledSymbol,
@@ -424,18 +426,120 @@ public partial class FlightLabelViewModel(
             : manualDelaySymbol;
     }
 
+    // TODO: Reconsider allowing users to customise what colours each label item.
+    //  Hard code what colours which item. Allow users to customise the specific colours.
     Color GetItemColor(LabelItemConfigurationV2 itemConfig, FlightMessage flight)
     {
-        // TODO: Implement color selection based on itemConfig.ColourSources
-        // For now, return white as placeholder
-        return Colors.White;
+        foreach (var itemConfigColourSource in itemConfig.ColourSources)
+        {
+            var color = itemConfigColourSource switch
+            {
+                LabelItemColourSource.Runway when maestroViewModel.AirportConfiguration.Colours is not null => GetColorByRunway(maestroViewModel.AirportConfiguration.Colours, flight),
+                LabelItemColourSource.ApproachType when maestroViewModel.AirportConfiguration.Colours is not null => GetColorByApproachType(maestroViewModel.AirportConfiguration.Colours, flight),
+                LabelItemColourSource.FeederFix when maestroViewModel.AirportConfiguration.Colours is not null => GetColorByFeederFix(maestroViewModel.AirportConfiguration.Colours, flight),
+                LabelItemColourSource.State => GetColorByState(globalColorConfiguration, flight),
+                LabelItemColourSource.RunwayMode => GetColorByRunwayMode(globalColorConfiguration, flight),
+                LabelItemColourSource.ControlAction => GetColorByControlAction(itemConfig, globalColorConfiguration, flight),
+                _ => null
+            };
+
+            if (color.HasValue)
+            {
+                return color.Value;
+            }
+        }
+
+        // Default to interactive text
+        return Theme.InteractiveTextColor.Color;
     }
+
+    Color? GetColorByRunway(AirportColourConfigurationV2 airportColourConfiguration, FlightMessage flight)
+    {
+        if (airportColourConfiguration.Runways.TryGetValue(flight.AssignedRunwayIdentifier, out var runwayColour))
+        {
+            return ToColor(runwayColour);
+        }
+
+        return null;
+    }
+
+    Color? GetColorByApproachType(AirportColourConfigurationV2 airportColourConfiguration, FlightMessage flight)
+    {
+        if (airportColourConfiguration.ApproachTypes.TryGetValue(flight.ApproachType, out var approachColor))
+        {
+            return ToColor(approachColor);
+        }
+
+        return null;
+    }
+
+    Color? GetColorByFeederFix(AirportColourConfigurationV2 airportColourConfiguration, FlightMessage flight)
+    {
+        if (airportColourConfiguration.FeederFixes.TryGetValue(flight.FeederFixIdentifier, out var feederFixColor))
+        {
+            return ToColor(feederFixColor);
+        }
+
+        return null;
+    }
+
+    Color? GetColorByState(ColourConfigurationV2 colourConfiguration, FlightMessage flight)
+    {
+        if (colourConfiguration.States.TryGetValue(flight.State, out var stateColor))
+        {
+            return ToColor(stateColor);
+        }
+
+        return null;
+    }
+
+    Color? GetColorByControlAction(LabelItemConfigurationV2 labelItemConfigurationV2, ColourConfigurationV2 colourConfiguration, FlightMessage flight)
+    {
+        // TODO: Move this calculation into Core
+        //  Re-calculate it every 30 seconds along with the flight state
+        // if (colourConfiguration.ControlActions.TryGetValue(flight.ControlAction, out var actionColor))
+        // {
+        //     return ToColor(actionColor);
+        // }
+
+        var total = labelItemConfigurationV2.Type switch
+        {
+            LabelItemType.RequiredDelay => flight.InitialDelay,
+            LabelItemType.RemainingDelay => flight.RemainingDelay,
+            _ => TimeSpan.Zero,
+        };
+
+        var totalMinutes = total.TotalMinutes;
+
+        if (totalMinutes >= 8 && colourConfiguration.ControlActions.TryGetValue(ControlAction.Holding, out var holdingColor))
+            return ToColor(holdingColor);
+
+        if (totalMinutes >= 1 && colourConfiguration.ControlActions.TryGetValue(ControlAction.SpeedReduction, out var delayMinorColor))
+            return ToColor(delayMinorColor);
+
+        if (totalMinutes >= -1 && colourConfiguration.ControlActions.TryGetValue(ControlAction.NoDelay, out var noDelayColor))
+            return ToColor(noDelayColor);
+
+        if (totalMinutes < -1 && colourConfiguration.ControlActions.TryGetValue(ControlAction.Expedite, out var expediteColor))
+            return ToColor(expediteColor);
+
+        return null;
+    }
+
+    Color? GetColorByRunwayMode(ColourConfigurationV2 colourConfiguration, FlightMessage flight)
+    {
+        // TODO: Need to know what the current runway mode is, and whether the flight has been processed in the current one
+        //  or the next one.
+        return null;
+    }
+
+    Color ToColor(ColorConfiguration config) => Color.FromArgb(255, (byte)config.Red, (byte)config.Green, (byte)config.Blue);
 }
 
 public class LabelItemViewModel
 {
     public required string Content { get; set; }
-    public required Color Foreground { get; set; }
+    public required Brush Foreground { get; set; }
     public required int Width { get; set; }
     public required int Padding { get; set; }
     public required bool RightToLeft { get; set; }
@@ -445,13 +549,25 @@ public class LabelItemViewModel
         get
         {
             // Truncate or pad content to exact width
-            var text = Content.Length > Width
-                ? Content.Substring(0, Width)
-                : Content.PadRight(Width);
+            string text;
+            if (Content.Length > Width)
+            {
+                text = Content.Substring(0, Width);
+            }
+            else
+            {
+                // For RTL, pad on the left (spaces before content)
+                // For LTR, pad on the right (spaces after content)
+                text = RightToLeft
+                    ? Content.PadLeft(Width)
+                    : Content.PadRight(Width);
+            }
 
             // Apply padding characters
             var padding = new string(' ', Padding);
 
+            // Odd ladders (RightToLeft=false) should have padding on right (text + padding)
+            // Even ladders (RightToLeft=true) should have padding on left (padding + text)
             return RightToLeft
                 ? padding + text
                 : text + padding;

@@ -15,7 +15,6 @@ public partial class MaestroViewModel : ObservableObject
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
     readonly LabelsConfigurationV2? _labelsConfiguration;
-    readonly AirportColourConfigurationV2? _airportColourConfiguration;
 
     [ObservableProperty]
     ViewConfigurationV2[] _views = [];
@@ -80,6 +79,8 @@ public partial class MaestroViewModel : ObservableObject
     public bool IsScrollingUp => ScrollOffset > TimeSpan.Zero;
     public bool IsScrollingDown => ScrollOffset < TimeSpan.Zero;
 
+    public AirportConfigurationV2 AirportConfiguration { get; }
+
     public MaestroViewModel(
         string airportIdentifier,
         string[] runways,
@@ -88,12 +89,13 @@ public partial class MaestroViewModel : ObservableObject
         IMediator mediator,
         IErrorReporter errorReporter,
         LabelsConfigurationV2? labelsConfiguration,
-        AirportColourConfigurationV2? airportColourConfiguration)
+        AirportConfigurationV2 airportConfiguration)
     {
+        AirportConfiguration = airportConfiguration;
+
         _mediator = mediator;
         _errorReporter = errorReporter;
         _labelsConfiguration = labelsConfiguration;
-        _airportColourConfiguration = airportColourConfiguration;
 
         AirportIdentifier = airportIdentifier;
         Runways = runways;
@@ -139,13 +141,19 @@ public partial class MaestroViewModel : ObservableObject
     [RelayCommand]
     void ScrollDown()
     {
-        ScrollOffset = ScrollOffset.Subtract(TimeSpan.FromMinutes(15));
+        // When direction is Up, invert the scroll behavior
+        ScrollOffset = SelectedView.Direction == LadderDirection.Up
+            ? ScrollOffset.Add(TimeSpan.FromMinutes(15))
+            : ScrollOffset.Subtract(TimeSpan.FromMinutes(15));
     }
 
     [RelayCommand]
     void ScrollUp()
     {
-        ScrollOffset = ScrollOffset.Add(TimeSpan.FromMinutes(15));
+        // When direction is Up, invert the scroll behavior
+        ScrollOffset = SelectedView.Direction == LadderDirection.Up
+            ? ScrollOffset.Subtract(TimeSpan.FromMinutes(15))
+            : ScrollOffset.Add(TimeSpan.FromMinutes(15));
     }
 
     [RelayCommand]
