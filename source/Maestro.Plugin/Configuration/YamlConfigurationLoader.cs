@@ -17,12 +17,93 @@ public static class YamlConfigurationLoader
             .WithTypeConverter(new AircraftDescriptorTypeConverter())
             .WithTypeConverter(new AircraftDescriptorArrayTypeConverter())
             .WithNodeDeserializer(
+                inner => new ColorConfigurationDictionaryNodeDeserializer(inner),
+                s => s.InsteadOf<DictionaryNodeDeserializer>())
+            .WithNodeDeserializer(
                 inner => new LabelItemNodeDeserializer(inner),
                 s => s.InsteadOf<ObjectNodeDeserializer>())
             .WithNamingConvention(NullNamingConvention.Instance);
 
         var deserializer = deserializerBuilder.Build();
         return deserializer.Deserialize<PluginConfigurationV2>(yamlContent);
+    }
+}
+
+public class ColorConfigurationDictionaryNodeDeserializer : INodeDeserializer
+{
+    private readonly INodeDeserializer _inner;
+    private static readonly ColorConfigurationTypeConverter _colorConverter = new();
+
+    public ColorConfigurationDictionaryNodeDeserializer(INodeDeserializer inner)
+    {
+        _inner = inner;
+    }
+
+    public bool Deserialize(
+        IParser reader,
+        Type expectedType,
+        Func<IParser, Type, object?> nestedObjectDeserializer,
+        out object? value,
+        ObjectDeserializer rootDeserializer)
+    {
+        // Check if this is a dictionary with ColorConfiguration values
+        if (expectedType.IsGenericType &&
+            expectedType.GetGenericTypeDefinition() == typeof(Dictionary<,>) &&
+            expectedType.GetGenericArguments()[1] == typeof(ColorConfiguration))
+        {
+            if (!reader.Accept<MappingStart>(out _))
+            {
+                value = null;
+                return false;
+            }
+
+            reader.Consume<MappingStart>();
+
+            var keyType = expectedType.GetGenericArguments()[0];
+            var dictionaryType = typeof(Dictionary<,>).MakeGenericType(keyType, typeof(ColorConfiguration));
+            var dictionary = Activator.CreateInstance(dictionaryType);
+            var addMethod = dictionaryType.GetMethod("Add");
+
+            while (!reader.Accept<MappingEnd>(out _))
+            {
+                var keyScalar = reader.Consume<Scalar>();
+
+                // Use the color converter to deserialize the value
+                var colorValue = _colorConverter.ReadYaml(reader, typeof(ColorConfiguration), rootDeserializer);
+
+                if (colorValue != null)
+                {
+                    object? key;
+                    if (keyType == typeof(string))
+                    {
+                        key = keyScalar.Value;
+                    }
+                    else if (keyType.IsEnum)
+                    {
+                        try
+                        {
+                            key = Enum.Parse(keyType, keyScalar.Value);
+                        }
+                        catch
+                        {
+                            continue; // Skip invalid enum values
+                        }
+                    }
+                    else
+                    {
+                        continue; // Unsupported key type
+                    }
+
+                    addMethod?.Invoke(dictionary, new[] { key, colorValue });
+                }
+            }
+
+            reader.Consume<MappingEnd>();
+            value = dictionary;
+            return true;
+        }
+
+        return _inner.Deserialize(reader, expectedType, nestedObjectDeserializer, out value, rootDeserializer);
     }
 }
 
@@ -33,7 +114,7 @@ public class ColorConfigurationTypeConverter : IYamlTypeConverter
         return type == typeof(ColorConfiguration);
     }
 
-    public object? ReadYaml(IParser parser, Type type)
+    public object? ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
     {
         var scalar = parser.Consume<Scalar>();
         var value = scalar.Value;
@@ -57,7 +138,8 @@ public class ColorConfigurationTypeConverter : IYamlTypeConverter
         return new ColorConfiguration(red, green, blue);
     }
 
-    public void WriteYaml(IEmitter emitter, object? value, Type type)
+
+    public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
     {
         if (value is not ColorConfiguration color)
             throw new YamlException("Expected ColorConfiguration but got different type");
@@ -74,7 +156,7 @@ public class AircraftDescriptorTypeConverter : IYamlTypeConverter
         return type == typeof(IAircraftDescriptor);
     }
 
-    public object? ReadYaml(IParser parser, Type type)
+    public object? ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
     {
         var scalar = parser.Consume<Scalar>();
         var value = scalar.Value;
@@ -95,7 +177,7 @@ public class AircraftDescriptorTypeConverter : IYamlTypeConverter
         };
     }
 
-    public void WriteYaml(IEmitter emitter, object? value, Type type)
+    public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
     {
         var stringValue = value switch
         {
@@ -123,14 +205,14 @@ public class AircraftDescriptorArrayTypeConverter : IYamlTypeConverter
         return type == typeof(IAircraftDescriptor[]);
     }
 
-    public object? ReadYaml(IParser parser, Type type)
+    public object? ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
     {
         var descriptors = new List<IAircraftDescriptor>();
 
         parser.Consume<SequenceStart>();
         while (!parser.TryConsume<SequenceEnd>(out _))
         {
-            var descriptor = _singleConverter.ReadYaml(parser, typeof(IAircraftDescriptor));
+            var descriptor = _singleConverter.ReadYaml(parser, typeof(IAircraftDescriptor), rootDeserializer);
             if (descriptor != null)
             {
                 descriptors.Add((IAircraftDescriptor)descriptor);
@@ -140,7 +222,7 @@ public class AircraftDescriptorArrayTypeConverter : IYamlTypeConverter
         return descriptors.ToArray();
     }
 
-    public void WriteYaml(IEmitter emitter, object? value, Type type)
+    public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
     {
         if (value is not IAircraftDescriptor[] descriptors)
         {
@@ -150,7 +232,7 @@ public class AircraftDescriptorArrayTypeConverter : IYamlTypeConverter
         emitter.Emit(new SequenceStart(null, null, false, SequenceStyle.Flow));
         foreach (var descriptor in descriptors)
         {
-            _singleConverter.WriteYaml(emitter, descriptor, typeof(IAircraftDescriptor));
+            _singleConverter.WriteYaml(emitter, descriptor, typeof(IAircraftDescriptor), serializer);
         }
         emitter.Emit(new SequenceEnd());
     }
@@ -165,7 +247,12 @@ public class LabelItemNodeDeserializer : INodeDeserializer
         _inner = inner;
     }
 
-    public bool Deserialize(IParser reader, Type expectedType, Func<IParser, Type, object?> nestedObjectDeserializer, out object? value)
+    public bool Deserialize(
+        IParser reader,
+        Type expectedType,
+        Func<IParser, Type, object?> nestedObjectDeserializer,
+        out object? value,
+        ObjectDeserializer rootDeserializer)
     {
         if (expectedType == typeof(LabelItemConfigurationV2) || expectedType.IsSubclassOf(typeof(LabelItemConfigurationV2)))
         {
@@ -228,7 +315,7 @@ public class LabelItemNodeDeserializer : INodeDeserializer
             return true;
         }
 
-        return _inner.Deserialize(reader, expectedType, nestedObjectDeserializer, out value);
+        return _inner.Deserialize(reader, expectedType, nestedObjectDeserializer, out value, rootDeserializer);
     }
 
     private static Type? GetLabelItemType(string typeValue)
