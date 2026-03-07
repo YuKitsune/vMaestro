@@ -55,8 +55,8 @@ Labels:
     - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, ColourSources: [State]}
     - {Type: ApproachType, Width: 1, ColourSources: [ApproachType, State]}
-    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: CouplingStatus, Width: 1, Padding: 0, ColourSources: [State], UncoupledSymbol: '*'}
     - {Type: RequiredDelay, Width: 3, ColourSources: [ControlAction]}
     - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
@@ -67,10 +67,20 @@ Labels:
     - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, ColourSources: [State]}
     - {Type: ApproachType, Width: 1, ColourSources: [ApproachType, State]}
-    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: CouplingStatus, Width: 1, Padding: 0, ColourSources: [State], UncoupledSymbol: '*'}
     - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+    
+  - Identifier: SY_FMP
+    Items:
+    - {Type: Callsign, Width: 10, ColourSources: [State]}
+    - {Type: AircraftWakeCategory, Width: 1, Padding: 1, ColourSources: [State]}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+    - {Type: CouplingStatus, Width: 1, Padding: 1, ColourSources: [State], UncoupledSymbol: '*'}
+    - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [State]}
+    - {Type: RemainingDelay, Width: 3, Padding: 1, ColourSources: [State]}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
 
 Airports:
 - Identifier: YSSY
@@ -86,6 +96,14 @@ Airports:
   MaxLandedFlights: 5
   LandedFlightTimeoutMinutes: 10
   LostFlightTimeoutMinutes: 10
+
+  Colours:
+    FeederFixes:
+      RIVET: 96, 0, 0
+      WELSH: 96, 0, 0
+      BOREE: 0, 235, 235
+      YAKKA: 0, 235, 235
+      MARLN: 0, 235, 235
 
   RunwayModes:
 
@@ -271,7 +289,7 @@ Airports:
     Reference: FeederFixTime
     Ladders:
     - {FeederFixes: [RIVET, WELSH]}
-    - {FeederFixes: [YAKKA, MARLN, BOREE]}
+    - {FeederFixes: [YAKKA, MARLN]}
     - {FeederFixes: [BOREE]}
 
   - Identifier: RWY
@@ -294,6 +312,17 @@ Airports:
     - {Runways: ["07"]}
     - {Runways: [34R]}
     - {Runways: [16L]}
+    - {Runways: ["25"]}
+
+  - Identifier: FLO_RWY
+    LabelLayout: SY_FMP
+    TimeWindowMinutes: 45
+    Direction: Down
+    Reference: LandingTime
+    Ladders:
+    - {Runways: [16R, 34L]}
+    - {Runways: [16L, 34R]}
+    - {Runways: ["07"]}
     - {Runways: ["25"]}
 
   GlobalCoordinationMessages:
