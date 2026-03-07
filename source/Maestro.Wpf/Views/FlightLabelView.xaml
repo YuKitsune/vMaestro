@@ -74,49 +74,22 @@
                 </controls:BeveledBorder.Style>
             </controls:BeveledBorder>
 
-            <StackPanel Orientation="Horizontal" Margin="{x:Static local:Theme.BeveledBorderThickness}">
-                <TextBlock
-                    Text="{Binding FlightViewModel.LandingTime, Converter={StaticResource MinutesConverter}}"
-                    Width="24"
-                    Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Enroute}}"/>
-
-                <TextBlock
-                    Text="{Binding FlightViewModel.FeederFixTime, Converter={StaticResource MinutesConverter}}"
-                    Width="24"
-                    Visibility="{Binding ViewMode, RelativeSource={RelativeSource AncestorType={x:Type views:FlightLabelView}}, Converter={StaticResource ViewModeToVisibilityConverter}, ConverterParameter={x:Static configuration:ViewMode.Approach}}"/>
-
-                <TextBlock
-                    Text="{Binding FlightViewModel.AssignedRunwayIdentifier}"
-                    Width="32" />
-
-                <TextBlock
-                    Text="{Binding FlightViewModel.Callsign}"
-                    Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
-                    Width="80"/>
-
-                <TextBlock
-                    Text="{Binding FlightViewModel.ApproachType}"
-                    Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
-                    Width="16"/>
-
-                <TextBlock
-                    Text="{Binding Indicators}"
-                    Foreground="{Binding FlightViewModel.State, Converter={StaticResource StateToColorConverter}}"
-                    Width="32"/>
-
-                <TextBlock
-                    Text="{Binding FlightViewModel.InitialDelay, Converter={StaticResource MinutesConverter}}"
-                    Foreground="{Binding FlightViewModel.InitialDelay, Converter={StaticResource DelayToColorConverter}}"
-                    Width="32"
-                    FlowDirection="LeftToRight" />
-
-                <TextBlock
-                    Text="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource MinutesConverter}}"
-                    Foreground="{Binding FlightViewModel.RemainingDelay, Converter={StaticResource DelayToColorConverter}}"
-                    Width="32"
-                    FlowDirection="LeftToRight" />
-
-            </StackPanel>
+            <ItemsControl
+                ItemsSource="{Binding LabelItems}"
+                Margin="{x:Static local:Theme.BeveledBorderThickness}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock
+                            Text="{Binding PaddedText}"
+                            Foreground="{Binding Foreground}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
 
         <Border.ContextMenu>

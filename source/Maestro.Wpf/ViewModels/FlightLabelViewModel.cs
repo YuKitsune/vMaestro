@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Collections.ObjectModel;
+using System.Text;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maestro.Core.Configuration;
@@ -341,6 +343,96 @@ public partial class FlightLabelViewModel(
         catch (Exception ex)
         {
             errorReporter.ReportError(ex);
+        }
+    }
+
+    [ObservableProperty]
+    ObservableCollection<LabelItemViewModel> _labelItems = [];
+
+    public void UpdateLabelItems(LabelLayoutConfigurationV2 labelLayout, FlightMessage flight, int ladderIndex)
+    {
+        LabelItems.Clear();
+
+        // Determine if this ladder uses right-to-left rendering (odd-indexed ladders)
+        bool rightToLeft = ladderIndex % 2 == 1;
+
+        foreach (var itemConfig in labelLayout.Items)
+        {
+            var content = GetItemContent(itemConfig, flight);
+            var color = GetItemColor(itemConfig, flight);
+
+            LabelItems.Add(new LabelItemViewModel
+            {
+                Content = content,
+                Foreground = color,
+                Width = itemConfig.Width,
+                Padding = itemConfig.Padding,
+                RightToLeft = rightToLeft
+            });
+        }
+    }
+
+    string GetItemContent(LabelItemConfigurationV2 itemConfig, FlightMessage flight)
+    {
+        return itemConfig switch
+        {
+            CallsignItemConfigurationV2 => flight.Callsign,
+            AircraftTypeItemConfigurationV2 => flight.AircraftType,
+            AircraftWakeCategoryItemConfigurationV2 => flight.WakeCategory.ToString(),
+            RunwayItemConfigurationV2 => flight.AssignedRunwayIdentifier ?? "",
+            ApproachTypeItemConfigurationV2 => flight.ApproachType ?? "",
+            LandingTimeItemConfigurationV2 => flight.LandingTime.ToString("mm"),
+            FeederFixTimeItemConfigurationV2 => flight.FeederFixEstimate?.ToString("mm") ?? "",
+            RequiredDelayItemConfigurationV2 => flight.RemainingDelay.TotalMinutes.ToString("00"),
+            RemainingDelayItemConfigurationV2 => flight.RemainingDelay.TotalMinutes.ToString("00"),
+            ManualDelayItemConfigurationV2 manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
+            ProfileSpeedItemConfigurationV2 profile => flight.FlowControls == FlowControls.ProfileSpeed ? profile.Symbol : "",
+            CouplingStatusItemConfigurationV2 coupling => flight.Position is not null ? "" : coupling.UncoupledSymbol,
+            _ => ""
+        };
+    }
+
+    string FormatManualDelay(FlightMessage flight, string zeroDelaySymbol, string manualDelaySymbol)
+    {
+        if (flight.MaximumDelay == null)
+            return "";
+
+        return flight.MaximumDelay == TimeSpan.Zero
+            ? zeroDelaySymbol
+            : manualDelaySymbol;
+    }
+
+    Color GetItemColor(LabelItemConfigurationV2 itemConfig, FlightMessage flight)
+    {
+        // TODO: Implement color selection based on itemConfig.ColourSources
+        // For now, return white as placeholder
+        return Colors.White;
+    }
+}
+
+public class LabelItemViewModel
+{
+    public required string Content { get; set; }
+    public required Color Foreground { get; set; }
+    public required int Width { get; set; }
+    public required int Padding { get; set; }
+    public required bool RightToLeft { get; set; }
+
+    public string PaddedText
+    {
+        get
+        {
+            // Truncate or pad content to exact width
+            var text = Content.Length > Width
+                ? Content.Substring(0, Width)
+                : Content.PadRight(Width);
+
+            // Apply padding characters
+            var padding = new string(' ', Padding);
+
+            return RightToLeft
+                ? padding + text
+                : text + padding;
         }
     }
 }

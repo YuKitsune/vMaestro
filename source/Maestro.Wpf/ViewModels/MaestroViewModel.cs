@@ -14,12 +14,15 @@ public partial class MaestroViewModel : ObservableObject
 {
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
+    readonly LabelsConfigurationV2? _labelsConfiguration;
+    readonly ColourConfigurationV2? _colourConfiguration;
+    readonly AirportColourConfigurationV2? _airportColourConfiguration;
 
     [ObservableProperty]
-    ViewConfiguration[] _views = [];
+    ViewConfigurationV2[] _views = [];
 
     [ObservableProperty]
-    ViewConfiguration _selectedView;
+    ViewConfigurationV2 _selectedView;
 
     [ObservableProperty]
     RunwayModeViewModel[] _runwayModes;
@@ -82,12 +85,18 @@ public partial class MaestroViewModel : ObservableObject
         string airportIdentifier,
         string[] runways,
         RunwayModeViewModel[] runwayModes,
-        ViewConfiguration[] views,
+        ViewConfigurationV2[] views,
         IMediator mediator,
-        IErrorReporter errorReporter)
+        IErrorReporter errorReporter,
+        LabelsConfigurationV2? labelsConfiguration = null,
+        ColourConfigurationV2? colourConfiguration = null,
+        AirportColourConfigurationV2? airportColourConfiguration = null)
     {
         _mediator = mediator;
         _errorReporter = errorReporter;
+        _labelsConfiguration = labelsConfiguration;
+        _colourConfiguration = colourConfiguration;
+        _airportColourConfiguration = airportColourConfiguration;
 
         AirportIdentifier = airportIdentifier;
         Runways = runways;
@@ -119,6 +128,15 @@ public partial class MaestroViewModel : ObservableObject
             Flights = notification.Session.Sequence.Flights.ToList();
             Slots = notification.Session.Sequence.Slots.ToList();
         });
+    }
+
+    public LabelLayoutConfigurationV2? GetLabelLayout(ViewConfigurationV2 view)
+    {
+        if (_labelsConfiguration == null)
+            return null;
+
+        return _labelsConfiguration.Layouts
+            .FirstOrDefault(l => l.Identifier == view.LabelLayout);
     }
 
     [RelayCommand]
@@ -284,7 +302,7 @@ public partial class MaestroViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void SelectView(ViewConfiguration viewConfiguration)
+    void SelectView(ViewConfigurationV2 viewConfiguration)
     {
         SelectedView = viewConfiguration;
     }

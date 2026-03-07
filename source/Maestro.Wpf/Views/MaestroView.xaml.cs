@@ -118,6 +118,86 @@ public partial class MaestroView
 
     double MinuteHeight(int timeHorizonMinutes) => LadderCanvas.ActualHeight / timeHorizonMinutes;
 
+    double MeasureCharacterWidth(string character)
+    {
+        var textBlock = new TextBlock
+        {
+            FontFamily = Theme.FontFamily,
+            FontSize = Theme.FontSize,
+            Text = character
+        };
+
+        textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return textBlock.DesiredSize.Width;
+    }
+
+    LayoutInfo CalculateLadderLayout(ViewConfigurationV2 view, LabelLayoutConfigurationV2 labelLayout, double canvasWidth)
+    {
+        // Calculate character width by measuring '_'
+        double characterWidth = MeasureCharacterWidth("_");
+
+        // Calculate ladder width from label items (character count * character width)
+        int totalCharacters = labelLayout.Items.Sum(item => item.Width + item.Padding);
+        double ladderWidth = totalCharacters * characterWidth;
+
+        const double tickWidth = 8;
+        const double timelineWidth = 16;
+
+        // Build visual elements in order: Ladder -> Ticks -> Timeline -> Ticks -> Ladder -> ...
+        var elements = new List<VisualElement>();
+        double xPos = 0;
+
+        for (int i = 0; i < view.Ladders.Length; i++)
+        {
+            // Add ladder
+            elements.Add(new LadderElement
+            {
+                Index = i,
+                X = xPos,
+                Width = ladderWidth,
+                Config = view.Ladders[i]
+            });
+            xPos += ladderWidth;
+
+            // Add ticks to right of ladder
+            elements.Add(new TicksElement
+            {
+                X = xPos,
+                Width = tickWidth,
+                LadderIndex = i
+            });
+            xPos += tickWidth;
+
+            // Add timeline (shared between this ladder and next)
+            // Only add if this is an even-indexed ladder OR the last ladder
+            if (i % 2 == 0 || i == view.Ladders.Length - 1)
+            {
+                elements.Add(new TimelineElement
+                {
+                    X = xPos,
+                    Width = timelineWidth,
+                    LeftLadderIndex = i,
+                    RightLadderIndex = i + 1 < view.Ladders.Length ? i + 1 : -1
+                });
+                xPos += timelineWidth;
+
+                // Add ticks to right of timeline if there's a next ladder
+                if (i + 1 < view.Ladders.Length)
+                {
+                    elements.Add(new TicksElement
+                    {
+                        X = xPos,
+                        Width = tickWidth,
+                        LadderIndex = i + 1
+                    });
+                    xPos += tickWidth;
+                }
+            }
+        }
+
+        return new LayoutInfo { VisualElements = elements };
+    }
+
     void RedrawLadder(DateTimeOffset referenceTime)
     {
         // Remove all elements that are NOT flight labels
@@ -888,5 +968,36 @@ public partial class MaestroView
         }
 
         _flightLabels.Clear();
+    }
+
+    // V2 Layout Helper Classes
+    private abstract class VisualElement { }
+
+    private class LadderElement : VisualElement
+    {
+        public required int Index { get; init; }
+        public required double X { get; init; }
+        public required double Width { get; init; }
+        public required LadderConfigurationV2 Config { get; init; }
+    }
+
+    private class TicksElement : VisualElement
+    {
+        public required double X { get; init; }
+        public required double Width { get; init; }
+        public required int LadderIndex { get; init; }
+    }
+
+    private class TimelineElement : VisualElement
+    {
+        public required double X { get; init; }
+        public required double Width { get; init; }
+        public required int LeftLadderIndex { get; init; }
+        public required int RightLadderIndex { get; init; }
+    }
+
+    private class LayoutInfo
+    {
+        public required List<VisualElement> VisualElements { get; init; }
     }
 }

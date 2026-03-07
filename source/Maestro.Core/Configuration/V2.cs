@@ -363,7 +363,6 @@ public class FeederFixTimeItemConfigurationV2 : LabelItemConfigurationV2
 public class RequiredDelayItemConfigurationV2 : LabelItemConfigurationV2
 {
     public override LabelItemType Type => LabelItemType.RequiredDelay;
-    public required string ZeroDelaySymbol { get; init; }
 }
 
 public class RemainingDelayItemConfigurationV2 : LabelItemConfigurationV2
