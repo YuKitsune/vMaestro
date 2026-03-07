@@ -36,6 +36,9 @@ public partial class MaestroViewModel : ObservableObject
     RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
+    DateTimeOffset? _runwayModeChangeTime;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasDesequencedFlight))]
     List<FlightMessage> _deSequencedFlights = [];
 
@@ -64,8 +67,8 @@ public partial class MaestroViewModel : ObservableObject
     public string[] Runways { get; }
 
     public string TerminalConfiguration =>
-        NextRunwayMode is not null
-            ? $"{CurrentRunwayMode.Identifier} → {NextRunwayMode.Identifier}"
+        NextRunwayMode is not null && RunwayModeChangeTime is not null
+            ? $"{CurrentRunwayMode.Identifier} → {NextRunwayMode.Identifier} at {RunwayModeChangeTime.Value:HH:mm}"
             : CurrentRunwayMode.Identifier;
 
     public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
@@ -126,6 +129,7 @@ public partial class MaestroViewModel : ObservableObject
             NextRunwayMode = notification.Session.Sequence.NextRunwayMode is not null
                 ? new RunwayModeViewModel(notification.Session.Sequence.NextRunwayMode)
                 : null;
+            RunwayModeChangeTime = notification.Session.Sequence.FirstLandingTimeForNextMode;
 
             DeSequencedFlights = notification.Session.DeSequencedFlights.ToList();
             PendingFlights = notification.Session.PendingFlights.ToList();
