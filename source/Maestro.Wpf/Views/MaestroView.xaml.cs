@@ -55,6 +55,16 @@ public partial class MaestroView
 
         Loaded += ControlLoaded;
         SizeChanged += OnSizeChanged;
+
+        // Subscribe to property changes that affect rendering
+        maestroViewModel.PropertyChanged += (sender, args) =>
+        {
+            if (args.PropertyName == nameof(MaestroViewModel.ScrollOffset) ||
+                args.PropertyName == nameof(MaestroViewModel.SelectedView))
+            {
+                DrawTimeline();
+            }
+        };
     }
 
     public MaestroViewModel ViewModel => (MaestroViewModel)DataContext;
@@ -288,17 +298,53 @@ public partial class MaestroView
                     break;
                 case TimelineElement timeline:
                     DrawTimeline(timeline, ladderHeight, referenceTime, view.TimeWindowMinutes, view.Direction, ladderYOffset);
-                    DrawTimeReferenceBox(timeline, referenceTime, view.Direction, canvasHeight);
-                    DrawLadderFooter(timeline, view, view.Direction, canvasHeight);
                     break;
             }
         }
 
         // Draw slots
         DrawSlotsV2(referenceTime, view, layout, ladderHeight, ladderYOffset);
+
+        // Draw footer background (covers any overlapping elements)
+        DrawFooterBackground(view.Direction, canvasWidth, canvasHeight);
+
+        // Draw footer content on top of background
+        foreach (var element in layout.VisualElements.OfType<TimelineElement>())
+        {
+            DrawTimeReferenceBox(element, referenceTime, view.Direction, canvasHeight);
+            DrawLadderFooter(element, view, view.Direction, canvasHeight);
+        }
     }
 
     // V2 Drawing Methods
+    void DrawFooterBackground(LadderDirection direction, double canvasWidth, double canvasHeight)
+    {
+        const double footerHeight = 32;
+
+        var background = new System.Windows.Shapes.Rectangle
+        {
+            Width = canvasWidth,
+            Height = footerHeight,
+            Fill = Theme.BackgroundColor
+        };
+
+        // Position at top when Direction is Up, bottom when Direction is Down
+        if (direction == LadderDirection.Up)
+        {
+            background.Loaded += PositionOnCanvas(
+                left: 0,
+                top: 0);
+        }
+        else
+        {
+            background.Loaded += PositionOnCanvas(
+                left: 0,
+                bottom: 0);
+        }
+
+        LadderCanvas.Children.Add(background);
+    }
+
     void DrawLadderBorder(LadderElement ladder, double canvasHeight, double ladderYOffset)
     {
         // No border needed - separation is provided by ticks and timeline
@@ -568,8 +614,9 @@ public partial class MaestroView
                 var ladder = view.Ladders[i];
 
                 // Check if slot's runways match this ladder's filter
-                bool shouldDraw = slot.RunwayIdentifiers.All(slotRunway =>
-                    ladder.Runways.Length == 0 || ladder.Runways.Contains(slotRunway));
+                // Draw if ladder has no filter OR if any of the slot's runways are in the ladder's filter
+                bool shouldDraw = ladder.Runways.Length == 0 ||
+                    slot.RunwayIdentifiers.Any(slotRunway => ladder.Runways.Contains(slotRunway));
 
                 if (!shouldDraw)
                     continue;
@@ -701,16 +748,31 @@ public partial class MaestroView
         return newTime;
     }
 
+    DateTimeOffset GetTimeForClickPosition(double clickY)
+    {
+        var canvasHeight = LadderCanvas.ActualHeight;
+        var view = ViewModel.SelectedView;
+
+        const double footerHeight = 32;
+        var ladderHeight = canvasHeight - footerHeight;
+        var ladderYOffset = view.Direction == LadderDirection.Up ? footerHeight : 0;
+
+        var adjustedY = clickY - ladderYOffset;
+        var yOffset = view.Direction == LadderDirection.Up
+            ? adjustedY
+            : ladderHeight - adjustedY;
+
+        return GetTimeForYOffset(ReferenceTime, yOffset);
+    }
+
     void OnCanvasLeftClick(object sender, MouseButtonEventArgs e)
     {
         // If there's a selected flight, move it to the clicked position
         if (ViewModel.SelectedFlight != null)
         {
             var clickPosition = e.GetPosition(LadderCanvas);
-            var canvasHeight = LadderCanvas.ActualHeight;
             var canvasWidth = LadderCanvas.ActualWidth;
-            var yOffset = canvasHeight - clickPosition.Y;
-            var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
+            var clickTime = GetTimeForClickPosition(clickPosition.Y);
 
             // Get the clicked ladder's runway filters
             var view = ViewModel.SelectedView;
@@ -813,9 +875,7 @@ public partial class MaestroView
 
         // Use the stored right-click position to determine the time
         var mousePosition = _contextMenuPosition.Value;
-        var canvasHeight = canvas.ActualHeight;
-        var yOffset = canvasHeight - mousePosition.Y;
-        var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
+        var clickTime = GetTimeForClickPosition(mousePosition.Y);
 
         // Get the clicked ladder's runway filters
         var view = ViewModel.SelectedView;
@@ -921,9 +981,8 @@ public partial class MaestroView
         {
             // This was a drag operation - move the flight
             var finalTop = Canvas.GetTop(flightLabel);
-            var canvasHeight = LadderCanvas.ActualHeight;
-            var newYOffset = canvasHeight - finalTop - (flightLabel.ActualHeight/2);
-            var newTime = GetTimeForYOffset(ReferenceTime, newYOffset);
+            var centerY = finalTop + (flightLabel.ActualHeight / 2);
+            var newTime = GetTimeForClickPosition(centerY);
 
             // Get the flight from the flight label's data context
             if (flightLabel.DataContext is FlightLabelViewModel flightLabelViewModel)
@@ -1086,25 +1145,8 @@ public partial class MaestroView
             .Where(f => f.State is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed)
             .ToList();
 
-        // Build a set of expected keys (callsign + ladder index)
+        // Build a set of expected keys (callsign + ladder index) for visible flights only
         var expectedKeys = new HashSet<string>();
-        foreach (var flight in currentFlights)
-        {
-            var matchingLadders = GetMatchingLadders(flight);
-            foreach (var ladderIndex in matchingLadders)
-            {
-                expectedKeys.Add($"{flight.Callsign}_{ladderIndex}");
-            }
-        }
-
-        // Remove flight labels that no longer exist
-        var keysToRemove = _flightLabels.Keys.Except(expectedKeys).ToList();
-        foreach (var key in keysToRemove)
-        {
-            var flightLabel = _flightLabels[key];
-            LadderCanvas.Children.Remove(flightLabel);
-            _flightLabels.Remove(key);
-        }
 
         // Update or create flight labels for current flights
         foreach (var flight in currentFlights)
@@ -1126,11 +1168,8 @@ public partial class MaestroView
             double yOffset = GetYOffsetForTime(referenceTime, referenceFlightTime.Value, view.TimeWindowMinutes);
             var yPosition = GetYPositionForOffset(yOffset, ladderHeight, view.Direction) + ladderYOffset;
 
-            if (yOffset < 0 || yOffset >= ladderHeight)
-            {
-                // Flight is off-screen
-                continue;
-            }
+            // Check if flight is visible
+            var isVisible = yOffset >= 0 && yOffset < ladderHeight;
 
             var matchingLadders = GetMatchingLadders(flight);
             if (matchingLadders.Count == 0)
@@ -1145,6 +1184,18 @@ public partial class MaestroView
             foreach (var ladderIndex in matchingLadders)
             {
                 var key = $"{flight.Callsign}_{ladderIndex}";
+
+                // Only add to expected keys if visible
+                if (isVisible)
+                {
+                    expectedKeys.Add(key);
+                }
+
+                // Skip creating/updating label if not visible
+                if (!isVisible)
+                {
+                    continue;
+                }
 
                 // Find the ladder element for this index
                 var ladderElement = layout.VisualElements
@@ -1215,6 +1266,15 @@ public partial class MaestroView
                 Canvas.SetTop(flightLabel, yPosition - flightLabel.ActualHeight / 2);
                 flightLabel.Width = ladderElement.Width;
             }
+        }
+
+        // Remove flight labels that are no longer visible
+        var keysToRemove = _flightLabels.Keys.Except(expectedKeys).ToList();
+        foreach (var key in keysToRemove)
+        {
+            var flightLabel = _flightLabels[key];
+            LadderCanvas.Children.Remove(flightLabel);
+            _flightLabels.Remove(key);
         }
     }
 

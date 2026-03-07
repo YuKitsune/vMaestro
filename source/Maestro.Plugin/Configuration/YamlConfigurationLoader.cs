@@ -257,7 +257,7 @@ public class LabelItemNodeDeserializer : INodeDeserializer
         var padding = properties.ContainsKey("Padding") ? int.Parse((string)properties["Padding"]) : 1;
         var colourSources = properties.ContainsKey("ColourSources")
             ? ParseColourSources((List<string>)properties["ColourSources"])
-            : new[] { LabelItemColourSource.State };
+            : [];
 
         return concreteType.Name switch
         {
@@ -343,8 +343,8 @@ public class LabelItemNodeDeserializer : INodeDeserializer
 
     private static LabelItemColourSource[] ParseColourSources(List<string> sources)
     {
-        if (sources == null || sources.Count == 0)
-            return new[] { LabelItemColourSource.State };
+        if (sources.Count == 0)
+            return [];
 
         return sources
             .Select(s => (LabelItemColourSource)Enum.Parse(typeof(LabelItemColourSource), s.Trim()))

@@ -20,6 +20,7 @@ public partial class MaestroViewModel : ObservableObject
     ViewConfigurationV2[] _views = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsScrollingUp), nameof(IsScrollingDown))]
     ViewConfigurationV2 _selectedView;
 
     [ObservableProperty]
@@ -76,8 +77,12 @@ public partial class MaestroViewModel : ObservableObject
     [ObservableProperty, NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
     TimeSpan _scrollOffset = TimeSpan.Zero;
     public bool IsScrolling => ScrollOffset != TimeSpan.Zero;
-    public bool IsScrollingUp => ScrollOffset > TimeSpan.Zero;
-    public bool IsScrollingDown => ScrollOffset < TimeSpan.Zero;
+    public bool IsScrollingUp => SelectedView.Direction == LadderDirection.Up
+        ? ScrollOffset < TimeSpan.Zero
+        : ScrollOffset > TimeSpan.Zero;
+    public bool IsScrollingDown => SelectedView.Direction == LadderDirection.Up
+        ? ScrollOffset > TimeSpan.Zero
+        : ScrollOffset < TimeSpan.Zero;
 
     public AirportConfigurationV2 AirportConfiguration { get; }
 
