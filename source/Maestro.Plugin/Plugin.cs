@@ -98,7 +98,7 @@ public class Plugin : IPlugin
         Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeights.Bold : FontWeights.Regular;
     }
 
-    void ConfigureServices(PluginConfigurationV2 pluginConfiguration)
+    void ConfigureServices(PluginConfiguration pluginConfiguration)
     {
         var logger = ConfigureLogger(pluginConfiguration.Logging);
 
@@ -127,7 +127,7 @@ public class Plugin : IPlugin
                 .BuildServiceProvider());
     }
 
-    PluginConfigurationV2 ConfigureConfiguration()
+    PluginConfiguration ConfigureConfiguration()
     {
         const string configFileName = "Maestro.yaml";
 
@@ -187,7 +187,7 @@ public class Plugin : IPlugin
         return logger;
     }
 
-    void AddToolbarItems(PluginConfigurationV2 pluginConfiguration)
+    void AddToolbarItems(PluginConfiguration pluginConfiguration)
     {
         const string MenuItemCategory = "TFMS";
 

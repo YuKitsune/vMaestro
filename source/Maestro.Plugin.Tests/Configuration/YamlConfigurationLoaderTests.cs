@@ -200,17 +200,17 @@ Labels:
         layout.Identifier.ShouldBe("TestLayout");
         layout.Items.Length.ShouldBe(4);
 
-        layout.Items[0].ShouldBeOfType<CallsignItemConfigurationV2>();
+        layout.Items[0].ShouldBeOfType<CallsignItemConfiguration>();
         layout.Items[0].Width.ShouldBe(10);
 
-        layout.Items[1].ShouldBeOfType<RunwayItemConfigurationV2>();
+        layout.Items[1].ShouldBeOfType<RunwayItemConfiguration>();
         layout.Items[1].Width.ShouldBe(3);
 
-        var manualDelay = layout.Items[2].ShouldBeOfType<ManualDelayItemConfigurationV2>();
+        var manualDelay = layout.Items[2].ShouldBeOfType<ManualDelayItemConfiguration>();
         manualDelay.ZeroDelaySymbol.ShouldBe("#");
         manualDelay.ManualDelaySymbol.ShouldBe("%");
 
-        var profileSpeed = layout.Items[3].ShouldBeOfType<ProfileSpeedItemConfigurationV2>();
+        var profileSpeed = layout.Items[3].ShouldBeOfType<ProfileSpeedItemConfiguration>();
         profileSpeed.Symbol.ShouldBe("+");
     }
 }

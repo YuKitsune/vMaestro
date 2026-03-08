@@ -4,9 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
-             xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
              xmlns:views="clr-namespace:Maestro.Wpf.Views"
-             xmlns:configuration="clr-namespace:Maestro.Core.Configuration;assembly=Maestro.Core"
              xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
              xmlns:local="clr-namespace:Maestro.Wpf"
              Padding="{x:Static local:Theme.BeveledBorderThickness}"
@@ -19,11 +17,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
-            <converters:MinutesConverter x:Key="MinutesConverter"/>
-            <converters:StateToColorConverter x:Key="StateToColorConverter"/>
-            <converters:DelayToColorConverter x:Key="DelayToColorConverter"/>
-            <converters:ViewModeToVisibilityConverter x:Key="ViewModeToVisibilityConverter"/>
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}" />
 

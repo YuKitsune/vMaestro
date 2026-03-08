@@ -13,8 +13,8 @@ using vatsys;
 namespace Maestro.Plugin.Handlers;
 
 public class MaestroInstanceCreatedNotificationHandler(
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
-    LabelsConfigurationV2 labelsConfiguration,
+    IAirportConfigurationProvider airportConfigurationProvider,
+    LabelsConfiguration labelsConfiguration,
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter)

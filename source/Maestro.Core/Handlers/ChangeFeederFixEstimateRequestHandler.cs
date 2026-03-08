@@ -14,7 +14,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeFeederFixEstimateRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IAirportConfigurationProviderV2 airportConfigurationProviderV2,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -31,7 +31,7 @@ public class ChangeFeederFixEstimateRequestHandler(
             return;
         }
 
-        var airportConfiguration = airportConfigurationProviderV2.GetAirportConfiguration(request.AirportIdentifier);
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionMessage sessionMessage;

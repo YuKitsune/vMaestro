@@ -11,7 +11,7 @@ namespace Maestro.Core.Handlers;
 
 public class CleanUpFlightsRequestHandler(
     IMaestroInstanceManager instanceManager,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
     ILogger logger)
     : IRequestHandler<CleanUpFlightsRequest>

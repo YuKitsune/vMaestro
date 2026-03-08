@@ -1,148 +1,108 @@
-﻿using System.Diagnostics;
 using Maestro.Core.Model;
-using Newtonsoft.Json;
 
 namespace Maestro.Core.Configuration;
 
 public class AirportConfiguration
 {
+    /// <summary>
+    ///     The ICAO code of the airport.
+    /// </summary>
     public required string Identifier { get; init; }
+
+    /// <summary>
+    ///     The feeder fixes available at this airport.
+    /// </summary>
     public required string[] FeederFixes { get; init; }
 
     /// <summary>
-    ///     The default aircraft type code to use when no type code was provided when inserting a flight manually
-    ///     into the sequence.
+    ///     The runways available at this airport.
     /// </summary>
-    public string DefaultInsertedFlightAircraftType { get; init; } = "B738";
+    public required string[] Runways { get; init; }
+
+    // Defaults
 
     /// <summary>
-    ///     The initial state assigned to a flight that has been inserted manually by the controller.
+    ///     The default aircraft type to use when the aircraft type cannot be determined for a flight,
+    ///     or when inserting a flight manually, and no aircraft type is specified.
     /// </summary>
-    public State ManuallyInsertedFlightState { get; init; } = State.Stable;
+    public string DefaultAircraftType { get; init; } = "B738";
 
     /// <summary>
-    ///     The initial state assigned to a flight departing from a configured departure airport.
+    ///     The default <see cref="State"/> of pending flights on insertion into the sequence.
     /// </summary>
-    public State InitialDepartureFlightState { get; init; } = State.Unstable;
+    public State DefaultPendingFlightState { get; init; } = State.Stable;
 
     /// <summary>
-    ///     The initial state assigned to a dummy flight.
+    ///     The default <see cref="State"/> of departures on insertion into the sequence.
     /// </summary>
-    public State DummyFlightState { get; init; } = State.Frozen;
+    public State DefaultDepartureFlightState { get; init; } = State.Unstable;
 
     /// <summary>
-    ///     The number of minutes before landed flights are removed from the sequence.
+    ///     The default <see cref="State"/> of dummy flights on insertion into the sequence.
+    /// </summary>
+    public State DefaultDummyFlightState { get; init; } = State.Frozen;
+
+    /// <summary>
+    ///     The <see cref="State"/> to move flights into once manual interaction has been performed by the controller.
+    /// </summary>
+    public State ManualInteractionState { get; init; } = State.Stable;
+
+    // State transition times
+
+    /// <summary>
+    ///     The maximum amount of time a flight must be away from landing before it is tracked by Maestro.
+    /// </summary>
+    public int FlightCreationThresholdMinutes { get; init; } = 120;
+
+    /// <summary>
+    ///     The minimum amount of time a flight must be considered <see cref="State.Unstable"/> before it may progress to <see cref="State.Stable"/>.
+    /// </summary>
+    public int MinimumUnstableMinutes { get; init; } = 5;
+
+    /// <summary>
+    ///     The amount of time before the STA_FF that a flight will transition to the <see cref="State.Stable"/> state.
+    /// </summary>
+    public int StabilityThresholdMinutes { get; init; } = 25;
+
+    /// <summary>
+    ///     The amount of time before the STA that a flight will transition to the <see cref="State.Frozen"/> state.
+    /// </summary>
+    public int FrozenThresholdMinutes { get; init; } = 15;
+
+    // Retention
+
+    /// <summary>
+    ///     The maximum number of <see cref="State.Landed"/> flights to retain after landing.
+    /// </summary>
+    public int MaxLandedFlights { get; init; } = 5;
+
+    /// <summary>
+    ///     The maximum amount of time before <see cref="State.Landed"/> flights are removed.
     /// </summary>
     public int LandedFlightTimeoutMinutes { get; init; } = 10;
 
     /// <summary>
-    ///     The maximum number of Landed flights which can remain in the sequence in the event of an overshoot.
+    ///     The maximum amount of time before lost flights are removed.
     /// </summary>
-    public int MaxLandedFlights { get; init; } = 5;
+    public int LostFlightTimeoutMinutes { get; init; } = 10;
 
-    public int DefaultOffModeSeparationSeconds { get; init; } = 300;
-
-    public string[] Runways { get; set; }
     public required RunwayModeConfiguration[] RunwayModes { get; init; }
-    public required ArrivalConfiguration[] Arrivals { get; init; }
-    public required ViewConfiguration[] Views { get; init; }
-    public required DepartureAirportConfiguration[] DepartureAirports { get; init; } = [];
 
+    // Look-up tables
+    public required TrajectoryConfiguration[] Trajectories { get; init; }
+    public required DepartureConfiguration[] DepartureAirports { get; init; }
+
+    // TODO: Close airports
     // TODO: Average taxi times and terminal assignments
-}
 
-public class DepartureAirportConfiguration
-{
-    public required string Identifier { get; init; }
-    public required double Distance { get; init; }
-    public DepartureAirportFlightTimeConfiguration[] FlightTimes { get; init; } = [];
-}
+    // Everything beyond this point is purely for presentation, and not used within Maestro.Core
 
-public class DepartureAirportFlightTimeConfiguration
-{
-    public required IAircraftDescriptor AircraftType { get; init; }
-    public required TimeSpan AverageFlightTime { get; init; }
-}
+    // Presentation
 
-[JsonConverter(typeof(AircraftDescriptorJsonConverter))]
-public interface IAircraftDescriptor;
+    public AirportColourConfiguration? Colours { get; init; }
+    public required ViewConfiguration[] Views { get; init; }
 
-[DebuggerDisplay("All")]
-public record AllAircraftTypesDescriptor : IAircraftDescriptor;
-
-[DebuggerDisplay("{TypeCode}")]
-public record SpecificAircraftTypeDescriptor(string TypeCode) : IAircraftDescriptor;
-
-[DebuggerDisplay("{AircraftCategory}")]
-public record AircraftCategoryDescriptor(AircraftCategory AircraftCategory) : IAircraftDescriptor;
-
-[DebuggerDisplay("{WakeCategory}")]
-public record WakeCategoryDescriptor(WakeCategory WakeCategory) : IAircraftDescriptor;
-
-public class AircraftDescriptorJsonConverter : JsonConverter<IAircraftDescriptor>
-{
-    public override void WriteJson(JsonWriter writer, IAircraftDescriptor? value, JsonSerializer serializer)
-    {
-        switch (value)
-        {
-            case AllAircraftTypesDescriptor:
-                writer.WriteValue("ALL");
-                break;
-
-            case AircraftCategoryDescriptor { AircraftCategory: AircraftCategory.Jet }:
-                writer.WriteValue("JET");
-                break;
-
-            case AircraftCategoryDescriptor { AircraftCategory: AircraftCategory.NonJet }:
-                writer.WriteValue("NONJET");
-                break;
-
-            case WakeCategoryDescriptor { WakeCategory: WakeCategory.Light }:
-                writer.WriteValue("LIGHT");
-                break;
-
-            case WakeCategoryDescriptor { WakeCategory: WakeCategory.Medium }:
-                writer.WriteValue("MEDIUM");
-                break;
-
-            case WakeCategoryDescriptor { WakeCategory: WakeCategory.Heavy }:
-                writer.WriteValue("HEAVY");
-                break;
-
-            case WakeCategoryDescriptor { WakeCategory: WakeCategory.SuperHeavy }:
-                writer.WriteValue("SUPER");
-                break;
-
-            case SpecificAircraftTypeDescriptor specificAircraftTypeConfiguration:
-                writer.WriteValue(specificAircraftTypeConfiguration.TypeCode);
-                break;
-
-            default:
-                throw new JsonSerializationException("Unexpected type when writing IAircraftDescriptor.");
-        }
-    }
-
-    public override IAircraftDescriptor ReadJson(
-        JsonReader reader,
-        Type objectType,
-        IAircraftDescriptor? existingValue,
-        bool hasExistingValue,
-        JsonSerializer serializer)
-    {
-        var value = reader.Value;
-        if (value is not string valueStr)
-            throw new JsonSerializationException("Unexpected value when reading IAircraftDescriptor.");
-
-        return valueStr.ToUpper() switch
-        {
-            "ALL" => new AllAircraftTypesDescriptor(),
-            "JET" => new AircraftCategoryDescriptor(AircraftCategory.Jet),
-            "PROP" or "NONJET" => new AircraftCategoryDescriptor(AircraftCategory.NonJet),
-            "LIGHT" or "L" => new WakeCategoryDescriptor(WakeCategory.Light),
-            "MEDIUM" or "M" => new WakeCategoryDescriptor(WakeCategory.Medium),
-            "HEAVY" or "H" => new WakeCategoryDescriptor(WakeCategory.Heavy),
-            "SUPERHEAVY" or "SUPER" or "S" or "J" => new WakeCategoryDescriptor(WakeCategory.SuperHeavy),
-            _ => new SpecificAircraftTypeDescriptor(valueStr)
-        };
-    }
+    // Coordination Messages
+    public required string[] GlobalCoordinationMessages { get; init; }
+    public required string[] FlightCoordinationMessages { get; init; }
 }

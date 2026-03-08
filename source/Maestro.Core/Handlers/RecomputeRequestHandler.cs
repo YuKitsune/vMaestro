@@ -14,7 +14,7 @@ namespace Maestro.Core.Handlers;
 public class RecomputeRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,

@@ -14,7 +14,7 @@ namespace Maestro.Core.Handlers;
 public class MoveFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IMediator mediator,
     IClock clock,

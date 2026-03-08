@@ -1,7 +1,14 @@
-﻿namespace Maestro.Core.Configuration;
+namespace Maestro.Core.Configuration;
 
 public class LadderConfiguration
 {
-    public required string[] FeederFixes { get; init; }
-    public required string[] Runways { get; init; }
+    /// <summary>
+    ///     The feeder fixes to filter this ladder to.
+    /// </summary>
+    public string[] FeederFixes { get; init; } = [];
+
+    /// <summary>
+    ///     The runways to filter this ladder to.
+    /// </summary>
+    public string[] Runways { get; init; } = [];
 }

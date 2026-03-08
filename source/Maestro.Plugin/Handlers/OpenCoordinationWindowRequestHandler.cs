@@ -14,13 +14,12 @@ public class OpenCoordinationWindowRequestHandler(
     IMediator mediator,
     IErrorReporter errorReporter,
     IMaestroConnectionManager connectionManager,
-    CoordinationMessageConfiguration coordinationMessageConfiguration)
+    AirportConfigurationProvider airportConfigurationProvider)
     : IRequestHandler<OpenCoordinationWindowRequest>
 {
     public Task Handle(OpenCoordinationWindowRequest request, CancellationToken cancellationToken)
     {
-        var generalCoordinationMessages = coordinationMessageConfiguration.Templates.Where(m => !m.Contains("{Callsign}")).ToArray();
-        var flightSpecificMessages = coordinationMessageConfiguration.Templates.Where(m => m.Contains("{Callsign}")).Select(s => RenderMessageTemplate(s, request.Callsign)).ToArray();
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         string[] peers = [];
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection))
@@ -39,7 +38,9 @@ public class OpenCoordinationWindowRequestHandler(
                     windowHandle,
                     mediator,
                     errorReporter,
-                    request.Callsign is not null ? flightSpecificMessages : generalCoordinationMessages,
+                    request.Callsign is not null
+                        ? airportConfiguration.FlightCoordinationMessages.Select(s => RenderMessageTemplate(s, request.Callsign)).ToArray()
+                        : airportConfiguration.GlobalCoordinationMessages,
                     peers);
 
                 return new CoordinationView(viewModel);

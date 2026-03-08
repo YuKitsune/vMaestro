@@ -8,7 +8,7 @@ namespace Maestro.Core.Model;
 
 public class RunwayMode
 {
-    public RunwayMode(RunwayModeConfigurationV2 runwayModeConfigurationConfiguration)
+    public RunwayMode(RunwayModeConfiguration runwayModeConfigurationConfiguration)
     {
         Identifier = runwayModeConfigurationConfiguration.Identifier;
         Runways = runwayModeConfigurationConfiguration.Runways
@@ -34,7 +34,7 @@ public class RunwayMode
 
 public class Runway
 {
-    public Runway(RunwayConfigurationV2 runwayConfiguration)
+    public Runway(RunwayConfiguration runwayConfiguration)
     {
         Identifier = runwayConfiguration.Identifier;
         ApproachType = runwayConfiguration.ApproachType;

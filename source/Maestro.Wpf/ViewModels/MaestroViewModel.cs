@@ -14,14 +14,14 @@ public partial class MaestroViewModel : ObservableObject
 {
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
-    readonly LabelsConfigurationV2? _labelsConfiguration;
+    readonly LabelsConfiguration? _labelsConfiguration;
 
     [ObservableProperty]
-    ViewConfigurationV2[] _views = [];
+    ViewConfiguration[] _views = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsScrollingUp), nameof(IsScrollingDown))]
-    ViewConfigurationV2 _selectedView;
+    ViewConfiguration _selectedView;
 
     [ObservableProperty]
     RunwayModeViewModel[] _runwayModes;
@@ -80,24 +80,24 @@ public partial class MaestroViewModel : ObservableObject
     [ObservableProperty, NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
     TimeSpan _scrollOffset = TimeSpan.Zero;
     public bool IsScrolling => ScrollOffset != TimeSpan.Zero;
-    public bool IsScrollingUp => SelectedView.Direction == LadderDirection.Up
+    public bool IsScrollingUp => SelectedView.Direction == TimelineDirection.Up
         ? ScrollOffset < TimeSpan.Zero
         : ScrollOffset > TimeSpan.Zero;
-    public bool IsScrollingDown => SelectedView.Direction == LadderDirection.Up
+    public bool IsScrollingDown => SelectedView.Direction == TimelineDirection.Up
         ? ScrollOffset > TimeSpan.Zero
         : ScrollOffset < TimeSpan.Zero;
 
-    public AirportConfigurationV2 AirportConfiguration { get; }
+    public AirportConfiguration AirportConfiguration { get; }
 
     public MaestroViewModel(
         string airportIdentifier,
         string[] runways,
         RunwayModeViewModel[] runwayModes,
-        ViewConfigurationV2[] views,
+        ViewConfiguration[] views,
         IMediator mediator,
         IErrorReporter errorReporter,
-        LabelsConfigurationV2? labelsConfiguration,
-        AirportConfigurationV2 airportConfiguration)
+        LabelsConfiguration? labelsConfiguration,
+        AirportConfiguration airportConfiguration)
     {
         AirportConfiguration = airportConfiguration;
 
@@ -138,7 +138,7 @@ public partial class MaestroViewModel : ObservableObject
         });
     }
 
-    public LabelLayoutConfigurationV2? GetLabelLayout(ViewConfigurationV2 view)
+    public LabelLayoutConfiguration? GetLabelLayout(ViewConfiguration view)
     {
         if (_labelsConfiguration == null)
             return null;
@@ -151,7 +151,7 @@ public partial class MaestroViewModel : ObservableObject
     void ScrollDown()
     {
         // When direction is Up, invert the scroll behavior
-        ScrollOffset = SelectedView.Direction == LadderDirection.Up
+        ScrollOffset = SelectedView.Direction == TimelineDirection.Up
             ? ScrollOffset.Add(TimeSpan.FromMinutes(15))
             : ScrollOffset.Subtract(TimeSpan.FromMinutes(15));
     }
@@ -160,7 +160,7 @@ public partial class MaestroViewModel : ObservableObject
     void ScrollUp()
     {
         // When direction is Up, invert the scroll behavior
-        ScrollOffset = SelectedView.Direction == LadderDirection.Up
+        ScrollOffset = SelectedView.Direction == TimelineDirection.Up
             ? ScrollOffset.Subtract(TimeSpan.FromMinutes(15))
             : ScrollOffset.Add(TimeSpan.FromMinutes(15));
     }
@@ -316,7 +316,7 @@ public partial class MaestroViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void SelectView(ViewConfigurationV2 viewConfiguration)
+    void SelectView(ViewConfiguration viewConfiguration)
     {
         SelectedView = viewConfiguration;
     }

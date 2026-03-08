@@ -14,7 +14,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeRunwayModeRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
     IMediator mediator,
     ILogger logger)

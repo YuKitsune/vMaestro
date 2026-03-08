@@ -16,7 +16,7 @@ public class InsertFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IPerformanceLookup performanceLookup,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
@@ -99,7 +99,7 @@ public class InsertFlightRequestHandler(
     }
 
     Flight InsertExact(
-        AirportConfigurationV2 airportConfiguration,
+        AirportConfiguration airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -192,7 +192,7 @@ public class InsertFlightRequestHandler(
     }
 
     Flight InsertRelative(
-        AirportConfigurationV2 airportConfiguration,
+        AirportConfiguration airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -299,7 +299,7 @@ public class InsertFlightRequestHandler(
     }
 
     Flight InsertDeparture(
-        AirportConfigurationV2 airportConfiguration,
+        AirportConfiguration airportConfiguration,
         Session session,
         string airportIdentifier,
         string callsign,
@@ -400,7 +400,7 @@ public class InsertFlightRequestHandler(
     }
 
     TimeSpan CalculateEnrouteTime(
-        AirportConfigurationV2 airportConfiguration,
+        AirportConfiguration airportConfiguration,
         string departureIdentifier,
         AircraftPerformanceData performanceData)
     {

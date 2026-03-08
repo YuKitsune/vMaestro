@@ -14,7 +14,7 @@ namespace Maestro.Core.Handlers;
 public class SwapFlightsRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IMediator mediator,
     IClock clock,
     ILogger logger)

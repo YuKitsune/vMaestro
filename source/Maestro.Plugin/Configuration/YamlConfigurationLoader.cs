@@ -9,7 +9,7 @@ namespace Maestro.Plugin.Configuration;
 
 public static class YamlConfigurationLoader
 {
-    public static PluginConfigurationV2 LoadFromYaml(string yamlContent)
+    public static PluginConfiguration LoadFromYaml(string yamlContent)
     {
         var deserializerBuilder = new DeserializerBuilder()
             .WithTypeConverter(new ColorConfigurationTypeConverter())
@@ -19,7 +19,7 @@ public static class YamlConfigurationLoader
             .WithNamingConvention(NullNamingConvention.Instance);
 
         var deserializer = deserializerBuilder.Build();
-        var result = deserializer.Deserialize<PluginConfigurationV2>(yamlContent);
+        var result = deserializer.Deserialize<PluginConfiguration>(yamlContent);
 
         return result;
     }
@@ -29,7 +29,7 @@ public class ColorConfigurationTypeConverter : IYamlTypeConverter
 {
     public bool Accepts(Type type)
     {
-        return type == typeof(ColorConfiguration);
+        return type == typeof(Color);
     }
 
     public object ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
@@ -53,13 +53,13 @@ public class ColorConfigurationTypeConverter : IYamlTypeConverter
         if (!int.TryParse(parts[2].Trim(), out var blue) || blue < 0 || blue > 255)
             throw new YamlException($"Invalid blue value in color configuration: {parts[2]}");
 
-        return new ColorConfiguration(red, green, blue);
+        return new Color(red, green, blue);
     }
 
 
     public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
     {
-        if (value is not ColorConfiguration color)
+        if (value is not Color color)
             throw new YamlException("Expected ColorConfiguration but got different type");
 
         var stringValue = $"{color.Red},{color.Green},{color.Blue}";
@@ -157,12 +157,12 @@ public class LabelItemTypeConverter : IYamlTypeConverter
 {
     public bool Accepts(Type type)
     {
-        return type == typeof(LabelItemConfigurationV2) || type.IsSubclassOf(typeof(LabelItemConfigurationV2));
+        return type == typeof(LabelItemConfiguration) || type.IsSubclassOf(typeof(LabelItemConfiguration));
     }
 
     public object ReadYaml(IParser reader, Type type, ObjectDeserializer rootDeserializer)
     {
-        if (type == typeof(LabelItemConfigurationV2) || type.IsSubclassOf(typeof(LabelItemConfigurationV2)))
+        if (type == typeof(LabelItemConfiguration) || type.IsSubclassOf(typeof(LabelItemConfiguration)))
         {
             reader.Consume<MappingStart>();
 
@@ -228,18 +228,18 @@ public class LabelItemTypeConverter : IYamlTypeConverter
     {
         return typeValue switch
         {
-            "Callsign" => typeof(CallsignItemConfigurationV2),
-            "AircraftType" => typeof(AircraftTypeItemConfigurationV2),
-            "AircraftWakeCategory" => typeof(AircraftWakeCategoryItemConfigurationV2),
-            "Runway" => typeof(RunwayItemConfigurationV2),
-            "ApproachType" => typeof(ApproachTypeItemConfigurationV2),
-            "LandingTime" => typeof(LandingTimeItemConfigurationV2),
-            "FeederFixTime" => typeof(FeederFixTimeItemConfigurationV2),
-            "RequiredDelay" => typeof(RequiredDelayItemConfigurationV2),
-            "RemainingDelay" => typeof(RemainingDelayItemConfigurationV2),
-            "ManualDelay" => typeof(ManualDelayItemConfigurationV2),
-            "ProfileSpeed" => typeof(ProfileSpeedItemConfigurationV2),
-            "CouplingStatus" => typeof(CouplingStatusItemConfigurationV2),
+            "Callsign" => typeof(CallsignItemConfiguration),
+            "AircraftType" => typeof(AircraftTypeItemConfiguration),
+            "AircraftWakeCategory" => typeof(AircraftWakeCategoryItemConfiguration),
+            "Runway" => typeof(RunwayItemConfiguration),
+            "ApproachType" => typeof(ApproachTypeItemConfiguration),
+            "LandingTime" => typeof(LandingTimeItemConfiguration),
+            "FeederFixTime" => typeof(FeederFixTimeItemConfiguration),
+            "RequiredDelay" => typeof(RequiredDelayItemConfiguration),
+            "RemainingDelay" => typeof(RemainingDelayItemConfiguration),
+            "ManualDelay" => typeof(ManualDelayItemConfiguration),
+            "ProfileSpeed" => typeof(ProfileSpeedItemConfiguration),
+            "CouplingStatus" => typeof(CouplingStatusItemConfiguration),
             _ => null
         };
     }
@@ -254,61 +254,61 @@ public class LabelItemTypeConverter : IYamlTypeConverter
 
         return concreteType.Name switch
         {
-            nameof(CallsignItemConfigurationV2) => new CallsignItemConfigurationV2
+            nameof(CallsignItemConfiguration) => new CallsignItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(AircraftTypeItemConfigurationV2) => new AircraftTypeItemConfigurationV2
+            nameof(AircraftTypeItemConfiguration) => new AircraftTypeItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(AircraftWakeCategoryItemConfigurationV2) => new AircraftWakeCategoryItemConfigurationV2
+            nameof(AircraftWakeCategoryItemConfiguration) => new AircraftWakeCategoryItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(RunwayItemConfigurationV2) => new RunwayItemConfigurationV2
+            nameof(RunwayItemConfiguration) => new RunwayItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(ApproachTypeItemConfigurationV2) => new ApproachTypeItemConfigurationV2
+            nameof(ApproachTypeItemConfiguration) => new ApproachTypeItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(LandingTimeItemConfigurationV2) => new LandingTimeItemConfigurationV2
+            nameof(LandingTimeItemConfiguration) => new LandingTimeItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(FeederFixTimeItemConfigurationV2) => new FeederFixTimeItemConfigurationV2
+            nameof(FeederFixTimeItemConfiguration) => new FeederFixTimeItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(RequiredDelayItemConfigurationV2) => new RequiredDelayItemConfigurationV2
+            nameof(RequiredDelayItemConfiguration) => new RequiredDelayItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(RemainingDelayItemConfigurationV2) => new RemainingDelayItemConfigurationV2
+            nameof(RemainingDelayItemConfiguration) => new RemainingDelayItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources
             },
-            nameof(ManualDelayItemConfigurationV2) => new ManualDelayItemConfigurationV2
+            nameof(ManualDelayItemConfiguration) => new ManualDelayItemConfiguration
             {
                 Width = width,
                 Padding = padding,
@@ -316,14 +316,14 @@ public class LabelItemTypeConverter : IYamlTypeConverter
                 ZeroDelaySymbol = (string)properties["ZeroDelaySymbol"],
                 ManualDelaySymbol = (string)properties["ManualDelaySymbol"]
             },
-            nameof(ProfileSpeedItemConfigurationV2) => new ProfileSpeedItemConfigurationV2
+            nameof(ProfileSpeedItemConfiguration) => new ProfileSpeedItemConfiguration
             {
                 Width = width,
                 Padding = padding,
                 ColourSources = colourSources,
                 Symbol = (string)properties["Symbol"]
             },
-            nameof(CouplingStatusItemConfigurationV2) => new CouplingStatusItemConfigurationV2
+            nameof(CouplingStatusItemConfiguration) => new CouplingStatusItemConfiguration
             {
                 Width = width,
                 Padding = padding,

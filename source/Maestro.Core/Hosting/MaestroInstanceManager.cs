@@ -17,7 +17,7 @@ public interface IMaestroInstanceManager
 }
 
 public class MaestroInstanceManager(
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator)

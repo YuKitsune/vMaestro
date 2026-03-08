@@ -411,7 +411,7 @@ public class Flight : IEquatable<Flight>
     }
 
     // TODO: Move this into Flight Updated handler
-    public void UpdateStateBasedOnTime(IClock clock, AirportConfigurationV2 airportConfiguration)
+    public void UpdateStateBasedOnTime(IClock clock, AirportConfiguration airportConfiguration)
     {
         // Manually-inserted flights don't auto-update their state
         if (IsManuallyInserted)

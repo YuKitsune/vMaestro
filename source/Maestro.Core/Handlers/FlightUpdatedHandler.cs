@@ -29,7 +29,7 @@ public class FlightUpdatedHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IArrivalLookup arrivalLookup,
     ITrajectoryService trajectoryService,
     IMediator mediator,

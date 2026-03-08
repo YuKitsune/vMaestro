@@ -12,7 +12,7 @@ namespace Maestro.Plugin.Handlers;
 
 public class OpenTerminalConfigurationWindowRequestHandler(
     WindowManager windowManager,
-    IAirportConfigurationProviderV2 airportConfigurationProvider,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IMaestroInstanceManager instanceManager,
     IMediator mediator,
     IClock clock,

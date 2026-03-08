@@ -43,7 +43,7 @@ public static class ArrivalLookupExtensionMethods
     }
 }
 
-public class ArrivalLookup(IAirportConfigurationProviderV2 airportConfigurationProvider, ILogger logger)
+public class ArrivalLookup(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
     : IArrivalLookup
 {
     public Trajectory? GetTrajectory(
@@ -94,7 +94,7 @@ public class ArrivalLookup(IAirportConfigurationProviderV2 airportConfigurationP
 
         return new Trajectory(TimeSpan.FromMinutes(ttg));
 
-        int GetRank(TrajectoryConfigurationV2 trajectoryConfiguration)
+        int GetRank(TrajectoryConfiguration trajectoryConfiguration)
         {
             var rank = 0;
             if (!string.IsNullOrEmpty(trajectoryConfiguration.ApproachType) &&
@@ -145,7 +145,7 @@ public class ArrivalLookup(IAirportConfigurationProviderV2 airportConfigurationP
 
         return foundArrivalConfigurations.Select(a => a.ApproachType).ToArray();
 
-        int GetRank(TrajectoryConfigurationV2 trajectoryConfiguration)
+        int GetRank(TrajectoryConfiguration trajectoryConfiguration)
         {
             var rank = 0;
             if (!string.IsNullOrEmpty(trajectoryConfiguration.ApproachFix) &&
