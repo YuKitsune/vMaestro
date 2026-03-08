@@ -402,9 +402,16 @@ public partial class FlightLabelViewModel(
         {
             CallsignItemConfigurationV2 => flight.Callsign,
             AircraftTypeItemConfigurationV2 => flight.AircraftType,
-            AircraftWakeCategoryItemConfigurationV2 => flight.WakeCategory.ToString(),
-            RunwayItemConfigurationV2 => flight.AssignedRunwayIdentifier ?? "",
-            ApproachTypeItemConfigurationV2 => flight.ApproachType ?? "",
+            AircraftWakeCategoryItemConfigurationV2 => flight.WakeCategory switch
+            {
+                WakeCategory.Light => "L",
+                WakeCategory.Medium => "M",
+                WakeCategory.Heavy => "H",
+                WakeCategory.SuperHeavy => "J",
+                _ => "?"
+            },
+            RunwayItemConfigurationV2 => flight.AssignedRunwayIdentifier,
+            ApproachTypeItemConfigurationV2 => flight.ApproachType,
             LandingTimeItemConfigurationV2 => flight.LandingTime.ToString("mm"),
             FeederFixTimeItemConfigurationV2 => flight.FeederFixEstimate?.ToString("mm") ?? "",
             RequiredDelayItemConfigurationV2 => ((int)flight.InitialDelay.TotalMinutes).ToString(CultureInfo.InvariantCulture),
@@ -412,7 +419,7 @@ public partial class FlightLabelViewModel(
             ManualDelayItemConfigurationV2 manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
             ProfileSpeedItemConfigurationV2 profile => flight.FlowControls == FlowControls.ProfileSpeed ? profile.Symbol : "",
             CouplingStatusItemConfigurationV2 coupling => flight.Position is not null ? "" : coupling.UncoupledSymbol,
-            _ => ""
+            _ => "?"
         };
     }
 
