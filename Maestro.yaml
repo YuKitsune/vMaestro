@@ -31,7 +31,7 @@ Labels:
   Colours:
 
     States:
-      Unstable: 255,205,105
+      Unstable: 255, 205, 105
       Stable: 0, 0, 96
       SuperStable: 255, 255, 255
       Frozen: 96, 0, 0
@@ -45,7 +45,7 @@ Labels:
       PathStretching: 255, 255, 255
       Holding: 235, 235, 0
 
-    DeferredRunwayMode: 255,255,255
+    DeferredRunwayMode: 255, 255, 255
 
   Layouts:
 
@@ -54,10 +54,10 @@ Labels:
     - {Type: FeederFixTime, Width: 2}
     - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, ColourSources: [State]}
-    - {Type: ApproachType, Width: 1, ColourSources: [ApproachType, State]}
-    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
-    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
-    - {Type: CouplingStatus, Width: 1, Padding: 0, ColourSources: [State], UncoupledSymbol: '*'}
+    - {Type: ApproachType, Width: 1, ColourSources: [ApproachType]}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+    - {Type: CouplingStatus, Width: 1, Padding: 0, UncoupledSymbol: '*'}
     - {Type: RequiredDelay, Width: 3, ColourSources: [ControlAction]}
     - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
     
@@ -66,21 +66,21 @@ Labels:
     - {Type: LandingTime, Width: 2}
     - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, ColourSources: [State]}
-    - {Type: ApproachType, Width: 1, ColourSources: [ApproachType, State]}
-    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
-    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
-    - {Type: CouplingStatus, Width: 1, Padding: 0, ColourSources: [State], UncoupledSymbol: '*'}
+    - {Type: ApproachType, Width: 1, ColourSources: [ApproachType]}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+    - {Type: CouplingStatus, Width: 1, Padding: 0, UncoupledSymbol: '*'}
     - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
     
   - Identifier: SY_FMP
     Items:
-    - {Type: Callsign, Width: 10, ColourSources: [State]}
-    - {Type: AircraftWakeCategory, Width: 1, Padding: 1, ColourSources: [State]}
-    - {Type: ManualDelay, Width: 1, Padding: 0, ColourSources: [State], ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
-    - {Type: CouplingStatus, Width: 1, Padding: 1, ColourSources: [State], UncoupledSymbol: '*'}
+    - {Type: Callsign, Width: 10, ColourSources: [FeederFix, State]}
+    - {Type: AircraftWakeCategory, Width: 1, Padding: 1, ColourSources: [FeederFix, State]}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+    - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
     - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [State]}
     - {Type: RemainingDelay, Width: 3, Padding: 1, ColourSources: [State]}
-    - {Type: ProfileSpeed, Width: 1, Padding: 0, ColourSources: [State], Symbol: '+'}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
 
 Airports:
 - Identifier: YSSY
@@ -242,9 +242,7 @@ Airports:
   - {Identifier: YSWG, Aircraft: [NONJET], Distance: 214, EstimatedFlightTimeMinutes: 42}
   - {Identifier: YMER, Aircraft: [JET], Distance: 236, EstimatedFlightTimeMinutes: 49}
   - {Identifier: YMER, Aircraft: [NONJET], Distance: 236, EstimatedFlightTimeMinutes: 45}
-  
-  Colours: 
-    
+
   Views:
 
   - Identifier: GUN/BIK
@@ -295,24 +293,11 @@ Airports:
   - Identifier: RWY
     LabelLayout: TMA
     TimeWindowMinutes: 45
-    Direction: Up
+    Direction: Down
     Reference: LandingTime
     Ladders:
     - {Runways: [34L, 16R, "07"]}
     - {Runways: [34R, 16L, "25"]}
-
-  - Identifier: FMP
-    LabelLayout: TMA
-    TimeWindowMinutes: 45
-    Direction: Up
-    Reference: LandingTime
-    Ladders:
-    - {Runways: [34L]}
-    - {Runways: [16R]}
-    - {Runways: ["07"]}
-    - {Runways: [34R]}
-    - {Runways: [16L]}
-    - {Runways: ["25"]}
 
   - Identifier: FLO_RWY
     LabelLayout: SY_FMP
