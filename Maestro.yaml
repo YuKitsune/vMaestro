@@ -51,30 +51,30 @@ Labels:
 
   - Identifier: Enroute
     Items:
-    - {Type: FeederFixTime, Width: 2}
-    - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
-    - {Type: Callsign, Width: 10, ColourSources: [State]}
-    - {Type: ApproachType, Width: 1, ColourSources: [ApproachType]}
+    - {Type: FeederFixTime, Width: 2, Padding: 1}
+    - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
+    - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
+    - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
     - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
     - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
-    - {Type: CouplingStatus, Width: 1, Padding: 0, UncoupledSymbol: '*'}
-    - {Type: RequiredDelay, Width: 3, ColourSources: [ControlAction]}
+    - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
+    - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [ControlAction]}
     - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
     
   - Identifier: TMA
     Items:
-    - {Type: LandingTime, Width: 2}
-    - {Type: Runway, Width: 3, ColourSources: [RunwayMode, Runway]}
-    - {Type: Callsign, Width: 10, ColourSources: [State]}
-    - {Type: ApproachType, Width: 1, ColourSources: [ApproachType]}
+    - {Type: LandingTime, Width: 2, Padding: 1}
+    - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
+    - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
+    - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
     - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
     - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
-    - {Type: CouplingStatus, Width: 1, Padding: 0, UncoupledSymbol: '*'}
+    - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
     - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
     
   - Identifier: SY_FMP
     Items:
-    - {Type: Callsign, Width: 10, ColourSources: [FeederFix, State]}
+    - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [FeederFix, State]}
     - {Type: AircraftWakeCategory, Width: 1, Padding: 1, ColourSources: [FeederFix, State]}
     - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}

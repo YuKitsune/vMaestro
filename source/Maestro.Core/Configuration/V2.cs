@@ -322,7 +322,7 @@ public abstract class LabelItemConfigurationV2
     public abstract LabelItemType Type { get; }
     public LabelItemColourSource[] ColourSources { get; init; } = [];
     public required int Width { get; init; }
-    public int Padding { get; init; } = 1;
+    public int Padding { get; init; } = 0;
 }
 
 public class CallsignItemConfigurationV2 : LabelItemConfigurationV2
