@@ -414,7 +414,7 @@ public partial class FlightLabelViewModel(
             RunwayItemConfiguration => flight.AssignedRunwayIdentifier,
             ApproachTypeItemConfiguration => flight.ApproachType,
             LandingTimeItemConfiguration => flight.LandingTime.ToString("mm"),
-            FeederFixTimeItemConfiguration => flight.FeederFixEstimate?.ToString("mm") ?? "",
+            FeederFixTimeItemConfiguration => flight.FeederFixTime?.ToString("mm") ?? "",
             RequiredDelayItemConfiguration => ((int)flight.InitialDelay.TotalMinutes).ToString(CultureInfo.InvariantCulture),
             RemainingDelayItemConfiguration => ((int)flight.RemainingDelay.TotalMinutes).ToString(CultureInfo.InvariantCulture),
             ManualDelayItemConfiguration manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
