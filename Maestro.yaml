@@ -51,7 +51,7 @@ Labels:
 
   - Identifier: Enroute
     Items:
-    - {Type: FeederFixTime, Width: 2, Padding: 1}
+    - {Type: LandingTime, Width: 2, Padding: 1}
     - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
     - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
@@ -63,7 +63,7 @@ Labels:
     
   - Identifier: TMA
     Items:
-    - {Type: LandingTime, Width: 2, Padding: 1}
+    - {Type: FeederFixTime, Width: 2, Padding: 1}
     - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
     - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
     - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
