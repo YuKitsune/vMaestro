@@ -483,7 +483,8 @@ public partial class FlightLabelViewModel(
 
     System.Windows.Media.Color? GetColorByFeederFix(AirportColourConfiguration airportColourConfiguration, FlightMessage flight)
     {
-        if (airportColourConfiguration.FeederFixes.TryGetValue(flight.FeederFixIdentifier, out var feederFixColor))
+        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) &&
+            airportColourConfiguration.FeederFixes.TryGetValue(flight.FeederFixIdentifier, out var feederFixColor))
         {
             return ToColor(feederFixColor);
         }
