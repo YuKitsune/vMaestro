@@ -30,7 +30,6 @@ public class FlightUpdatedHandler(
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IArrivalLookup arrivalLookup,
     ITrajectoryService trajectoryService,
     IMediator mediator,
     IClock clock,

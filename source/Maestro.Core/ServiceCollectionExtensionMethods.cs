@@ -14,7 +14,6 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton<IMaestroInstanceManager, MaestroInstanceManager>()
             .AddSingleton<IMaestroConnectionManager, MaestroConnectionManager>()
             .AddSingleton<IFlightUpdateRateLimiter, FlightUpdateRateLimiter>()
-            .AddSingleton<IArrivalLookup, ArrivalLookup>()
             .AddSingleton<ITrajectoryService, TrajectoryService>()
             .AddSingleton<IClock, SystemClock>();
     }

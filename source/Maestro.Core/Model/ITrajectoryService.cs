@@ -14,4 +14,11 @@ public interface ITrajectoryService
         string approachType);
 
     Trajectory GetAverageTrajectory(string airportIdentifier);
+
+    string[] GetApproachTypes(
+        string airportIdentifier,
+        string? feederFixIdentifier,
+        string[] fixNames,
+        string runwayIdentifier,
+        AircraftPerformanceData aircraftPerformanceData);
 }

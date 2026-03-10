@@ -15,7 +15,6 @@ public class ChangeRunwayRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IArrivalLookup arrivalLookup,
     ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
@@ -91,7 +90,7 @@ public class ChangeRunwayRequestHandler(
 
     string GetApproachType(Flight flight, string runwayIdentifier)
     {
-        var approachTypes = arrivalLookup.GetApproachTypes(
+        var approachTypes = trajectoryService.GetApproachTypes(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
             flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
