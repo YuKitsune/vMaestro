@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Handlers;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -11,9 +12,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ChangeApproachTypeRequestHandlerTests(
-    AirportConfigurationFixture airportConfigurationFixture,
-    ClockFixture clockFixture)
+public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
 {
     [Fact]
     public async Task WhenChangingApproachType_TheApproachTypeIsChanged()
@@ -21,6 +20,11 @@ public class ChangeApproachTypeRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "A", 20)
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "P", 25)
+            .Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(now.AddMinutes(10))
@@ -33,14 +37,14 @@ public class ChangeApproachTypeRequestHandlerTests(
 
         // Configure sequence builder with trajectory service to ensure initial landing estimate is correct
         var sequenceTrajectoryService = new MockTrajectoryService(TimeSpan.FromMinutes(22));
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(sequenceTrajectoryService).WithFlightsInOrder(flight))
             .Build();
 
-        // Use NSubstitute for handler trajectory service to verify call
-        var trajectoryService = Substitute.For<ITrajectoryService>();
-        trajectoryService.GetTrajectory(Arg.Any<Flight>(), Arg.Any<string>(), Arg.Any<string>())
-            .Returns(new Trajectory(TimeSpan.FromMinutes(22)));
+        var trajectoryService = new TrajectoryService(
+            new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<ILogger>());
+
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
@@ -60,7 +64,7 @@ public class ChangeApproachTypeRequestHandlerTests(
 
         // Assert
         flight.ApproachType.ShouldBe("P", "Approach type should be changed to P");
-        trajectoryService.Received(1).GetTrajectory(flight, "34R", "P");
+        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(25), "Changing approach type should update the trajectory");
     }
 
     [Fact]
@@ -69,6 +73,11 @@ public class ChangeApproachTypeRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "A", 20)
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "P", 25)
+            .Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(now.AddMinutes(10))
@@ -79,11 +88,11 @@ public class ChangeApproachTypeRequestHandlerTests(
             .Build();
 
         // Set up trajectory service to return different TTG for each approach type
-        var trajectoryService = new MockTrajectoryService()
-            .WithTrajectory().WithApproach("A").Returns(new Trajectory(TimeSpan.FromMinutes(20)))
-            .WithTrajectory().WithApproach("P").Returns(new Trajectory(TimeSpan.FromMinutes(25)));
+        var trajectoryService = new TrajectoryService(
+            new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<ILogger>());
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
@@ -117,6 +126,11 @@ public class ChangeApproachTypeRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "A", 20)
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "P", 25)
+            .Build();
+
         var feederFixEstimate = now.AddMinutes(10);
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
@@ -129,11 +143,11 @@ public class ChangeApproachTypeRequestHandlerTests(
             .Build();
 
         // Set up trajectory service to return different TTG for each approach type
-        var trajectoryService = new MockTrajectoryService()
-            .WithTrajectory().WithApproach("A").Returns(new Trajectory(TimeSpan.FromMinutes(22)))
-            .WithTrajectory().WithApproach("P").Returns(new Trajectory(TimeSpan.FromMinutes(25)));
+        var trajectoryService = new TrajectoryService(
+            new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<ILogger>());
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
@@ -166,6 +180,8 @@ public class ChangeApproachTypeRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(now.AddMinutes(10))
@@ -175,7 +191,7 @@ public class ChangeApproachTypeRequestHandlerTests(
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 

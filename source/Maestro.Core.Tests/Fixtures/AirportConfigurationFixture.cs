@@ -2,11 +2,10 @@
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Fixtures;
 
-[assembly: AssemblyFixture(typeof(AirportConfigurationFixture))]
-
 namespace Maestro.Core.Tests.Fixtures;
 
-public class AirportConfigurationFixture
+[Obsolete]
+public class AirportConfigurationFixture_OLD
 {
     public TimeSpan AcceptanceRate => TimeSpan.FromSeconds(180);
 

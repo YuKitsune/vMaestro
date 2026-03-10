@@ -1395,7 +1395,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
     FlightUpdatedHandler GetHandler(
         IMaestroInstanceManager instanceManager,
         IClock clock,
-        IArrivalLookup? arrivalLookup = null,
         ITrajectoryService? trajectoryService = null,
         IFlightUpdateRateLimiter? rateLimiter = null,
         IMaestroConnectionManager? connectionManager = null)
@@ -1409,7 +1408,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
         var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
         airportConfigurationProvider.GetAirportConfigurations().Returns([airportConfigurationFixture.Instance]);
 
-        arrivalLookup ??= Substitute.For<IArrivalLookup>();
         trajectoryService ??= new MockTrajectoryService();
         connectionManager ??= new MockLocalConnectionManager();
         var mediator = Substitute.For<IMediator>();
@@ -1419,7 +1417,6 @@ public class FlightUpdatedHandlerTests(AirportConfigurationFixture airportConfig
             connectionManager,
             rateLimiter,
             airportConfigurationProvider,
-            arrivalLookup,
             trajectoryService,
             mediator,
             clock,

@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Handlers;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -12,26 +13,26 @@ using Serilog;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ChangeFeederFixEstimateHandlerTests(
-    AirportConfigurationFixture airportConfigurationFixture,
-    ClockFixture clockFixture)
+public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
 {
     [Fact]
     public async Task WhenChangingFeederFixEstimate_ManualFeederFixShouldBeTrue()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
         var newEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newEstimate);
-        var handler = GetHandler(instanceManager);
+        var handler = GetHandler(airportConfiguration, instanceManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -45,17 +46,24 @@ public class ChangeFeederFixEstimateHandlerTests(
     public async Task WhenChangingFeederFixEstimate_LandingEstimateShouldBeRecalculated()
     {
         // Arrange
-        var timeToGo = TimeSpan.FromMinutes(10);
-        var trajectory = new Trajectory(timeToGo);
+        var timeToGoMinutes = 10;
+        var timeToGo = TimeSpan.FromMinutes(timeToGoMinutes);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithTrajectory("RIVET", "34L", timeToGoMinutes)
+            .Build();
+
+        var trajectoryService = new TrajectoryService(
+            new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<ILogger>());
+
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
-            .WithTrajectory(trajectory)
+            .WithRunway("34L")
             .Build();
 
-        var trajectoryService = new MockTrajectoryService(timeToGo);
-
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
             .Build();
 
@@ -63,7 +71,7 @@ public class ChangeFeederFixEstimateHandlerTests(
         var expectedLandingEstimate = newFeederFixEstimate.Add(timeToGo);
 
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(instanceManager);
+        var handler = GetHandler(airportConfiguration, instanceManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -76,20 +84,32 @@ public class ChangeFeederFixEstimateHandlerTests(
     public async Task WhenChangingFeederFixEstimate_SequenceIsRecalculated()
     {
         // Arrange
+        var timeToGoMinutes = 10;
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithTrajectory("RIVET", "34L", timeToGoMinutes)
+            .Build();
+
+        var trajectoryService = new TrajectoryService(
+            new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<ILogger>());
+
         var flight1 = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(15))
             .WithLandingEstimate(clockFixture.Instance.UtcNow().AddMinutes(25))
+            .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .WithLandingEstimate(clockFixture.Instance.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
-            .WithSequence(s => s.WithFlightsInOrder(flight2, flight1)) // QFA2 first, QFA1 second
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight2, flight1)) // QFA2 first, QFA1 second
             .Build();
 
         // Verify initial order
@@ -97,15 +117,11 @@ public class ChangeFeederFixEstimateHandlerTests(
         sequence.NumberInSequence(flight1).ShouldBe(2);
 
         var newFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(5);
-        var timeToGo = TimeSpan.FromMinutes(10);
+        var timeToGo = TimeSpan.FromMinutes(timeToGoMinutes);
         var newLandingEstimate = newFeederFixEstimate.Add(timeToGo);
 
-        // Set up a trajectory on the flight via SetRunway
-        var trajectory = new Trajectory(timeToGo);
-        flight1.SetRunway(flight1.AssignedRunwayIdentifier ?? "34L", trajectory);
-
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(instanceManager);
+        var handler = GetHandler(airportConfiguration, instanceManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -119,13 +135,15 @@ public class ChangeFeederFixEstimateHandlerTests(
     public async Task WhenFlightIsUnstable_ItShouldBeMadeStable()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -133,7 +151,7 @@ public class ChangeFeederFixEstimateHandlerTests(
             "YSSY",
             "QFA1",
             clockFixture.Instance.UtcNow().AddMinutes(15));
-        var handler = GetHandler(instanceManager);
+        var handler = GetHandler(airportConfiguration, instanceManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -150,13 +168,15 @@ public class ChangeFeederFixEstimateHandlerTests(
     public async Task WhenFlightIsNotUnstable_StateIsRetained(State state)
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithState(state)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -164,7 +184,7 @@ public class ChangeFeederFixEstimateHandlerTests(
             "YSSY",
             "QFA1",
             clockFixture.Instance.UtcNow().AddMinutes(15));
-        var handler = GetHandler(instanceManager);
+        var handler = GetHandler(airportConfiguration, instanceManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -177,13 +197,15 @@ public class ChangeFeederFixEstimateHandlerTests(
     public async Task RedirectedToMaster()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var originalFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(10);
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(originalFeederFixEstimate)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -195,6 +217,7 @@ public class ChangeFeederFixEstimateHandlerTests(
         var handler = new ChangeFeederFixEstimateRequestHandler(
             instanceManager,
             mockConnectionManager,
+            new AirportConfigurationProvider([airportConfiguration]),
             clockFixture.Instance,
             Substitute.For<IMediator>(),
             Substitute.For<ILogger>());
@@ -212,6 +235,7 @@ public class ChangeFeederFixEstimateHandlerTests(
     }
 
     ChangeFeederFixEstimateRequestHandler GetHandler(
+        AirportConfiguration airportConfiguration,
         IMaestroInstanceManager instanceManager,
         IMediator? mediator = null,
         ILogger? logger = null)
@@ -222,6 +246,7 @@ public class ChangeFeederFixEstimateHandlerTests(
         return new ChangeFeederFixEstimateRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
+            new AirportConfigurationProvider([airportConfiguration]),
             clockFixture.Instance,
             mediator,
             logger);

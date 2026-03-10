@@ -48,7 +48,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             Substitute.For<IClock>(),
             mediator,
@@ -101,7 +101,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             Substitute.For<IClock>(),
             mediator,
@@ -150,7 +150,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             Substitute.For<IClock>(),
             mediator,
@@ -203,7 +203,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -264,7 +264,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -304,7 +304,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -347,7 +347,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -386,7 +386,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             slaveConnectionManager,
-            Substitute.For<IArrivalLookup>(),
+            airportConfigurationFixture.Provider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
