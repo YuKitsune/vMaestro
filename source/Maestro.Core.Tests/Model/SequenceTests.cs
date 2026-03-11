@@ -15,8 +15,8 @@ public class SequenceTests(ClockFixture clockFixture)
     public void Schedule_FlightsOnSameRunway_AreSeparatedByAcceptanceRate()
     {
         // Arrange
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithSingleRunway("34L", _acceptanceRate)
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -57,31 +57,8 @@ public class SequenceTests(ClockFixture clockFixture)
         // Arrange
         var dependencyRateSeconds = 90;
         var dependencyRate = TimeSpan.FromSeconds(dependencyRateSeconds);
-        var runwayModeConfig = new Configuration.RunwayModeConfiguration
-        {
-            Identifier = "34IVA",
-            DependencyRateSeconds = dependencyRateSeconds,
-            Runways =
-            [
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                },
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                }
-            ]
-        };
-
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithRunwayMode(runwayModeConfig)
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate, dependencyRateSeconds: dependencyRateSeconds);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -123,8 +100,8 @@ public class SequenceTests(ClockFixture clockFixture)
     public void Schedule_WhenNoRunwayIsAssigned_AndOneRunwayIsAvailable_ThatRunwayIsAssigned(State flightState)
     {
         // Arrange
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithSingleRunway("34L", _acceptanceRate)
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -153,31 +130,8 @@ public class SequenceTests(ClockFixture clockFixture)
         // Arrange
         var dependencyRateSeconds = 90;
         var dependencyRate = TimeSpan.FromSeconds(dependencyRateSeconds);
-        var runwayModeConfig = new Configuration.RunwayModeConfiguration
-        {
-            Identifier = "34IVA",
-            DependencyRateSeconds = dependencyRateSeconds,
-            Runways =
-            [
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                },
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                }
-            ]
-        };
-
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithRunwayMode(runwayModeConfig)
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate, dependencyRateSeconds: dependencyRateSeconds);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -218,30 +172,11 @@ public class SequenceTests(ClockFixture clockFixture)
     public void Schedule_WhenNoRunwayIsAssigned_AndMultipleRunwaysHaveFeederFixRequirements_TheRunwayWithMatchingFeederFixIsAssigned(State flightState)
     {
         // Arrange
-        var runwayModeConfig = new Configuration.RunwayModeConfiguration
-        {
-            Identifier = "34IVA",
-            Runways =
-            [
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = ["RIVET", "WELSH"]
-                },
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = ["BOREE", "YAKKA"]
-                }
-            ]
-        };
-
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithRunwayMode(runwayModeConfig)
+        var airportConfig = CreateDualRunwayConfiguration(
+            _acceptanceRate,
+            runway34LFeederFixes: ["RIVET", "WELSH"],
+            runway34RFeederFixes: ["BOREE", "YAKKA"]);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -276,30 +211,8 @@ public class SequenceTests(ClockFixture clockFixture)
     public void Schedule_WhenFlightIsUnstable_AndMultipleRunwaysAreAvailable_TheRunwayWithEarliestSTAIsAssigned()
     {
         // Arrange
-        var runwayModeConfig = new Configuration.RunwayModeConfiguration
-        {
-            Identifier = "34IVA",
-            Runways =
-            [
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                },
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                }
-            ]
-        };
-
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithRunwayMode(runwayModeConfig)
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -339,30 +252,8 @@ public class SequenceTests(ClockFixture clockFixture)
     public void Schedule_WhenFlightIsStable_AndNonPreferredRunwayIsAssigned_RunwayIsNotChanged(State stableFlightState)
     {
         // Arrange
-        var runwayModeConfig = new Configuration.RunwayModeConfiguration
-        {
-            Identifier = "34IVA",
-            Runways =
-            [
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                },
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                }
-            ]
-        };
-
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithRunwayMode(runwayModeConfig)
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -404,31 +295,8 @@ public class SequenceTests(ClockFixture clockFixture)
     {
         // Arrange
         var offModeSeparation = TimeSpan.FromSeconds(300);
-        var runwayModeConfig = new Configuration.RunwayModeConfiguration
-        {
-            Identifier = "34IVA",
-            OffModeSeparationSeconds = (int)offModeSeparation.TotalSeconds,
-            Runways =
-            [
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34L",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                },
-                new Configuration.RunwayConfiguration
-                {
-                    Identifier = "34R",
-                    ApproachType = string.Empty,
-                    LandingRateSeconds = (int)_acceptanceRate.TotalSeconds,
-                    FeederFixes = []
-                }
-            ]
-        };
-
-        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
-            .WithRunwayMode(runwayModeConfig)
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate, offModeSeparationSeconds: (int)offModeSeparation.TotalSeconds);
+        var sequence = new SequenceBuilder(airportConfig)
             .WithClock(clockFixture.Instance)
             .Build();
 
@@ -465,5 +333,53 @@ public class SequenceTests(ClockFixture clockFixture)
             "stable flight should retain its off-mode runway assignment");
         offModeFlight.LandingTime.ShouldBe(inModeFlight.LandingTime.Add(offModeSeparation),
             "off-mode flight should land exactly one off-mode separation after the in-mode flight");
+    }
+
+    static AirportConfiguration CreateSingleRunwayConfiguration(string runwayIdentifier, TimeSpan acceptanceRate)
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(runwayIdentifier)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = runwayIdentifier,
+                LandingRateSeconds = (int)acceptanceRate.TotalSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
+    static AirportConfiguration CreateDualRunwayConfiguration(
+        TimeSpan acceptanceRate,
+        int? dependencyRateSeconds = null,
+        int? offModeSeparationSeconds = null,
+        string[]? runway34LFeederFixes = null,
+        string[]? runway34RFeederFixes = null)
+    {
+        var runwayModeConfig = new RunwayModeConfiguration
+        {
+            Identifier = "34IVA",
+            DependencyRateSeconds = dependencyRateSeconds ?? 0,
+            OffModeSeparationSeconds = offModeSeparationSeconds ?? 0,
+            Runways =
+            [
+                new RunwayConfiguration
+                {
+                    Identifier = "34L",
+                    LandingRateSeconds = (int)acceptanceRate.TotalSeconds,
+                    FeederFixes = runway34LFeederFixes ?? []
+                },
+                new RunwayConfiguration
+                {
+                    Identifier = "34R",
+                    LandingRateSeconds = (int)acceptanceRate.TotalSeconds,
+                    FeederFixes = runway34RFeederFixes ?? []
+                }
+            ]
+        };
+
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithRunwayMode(runwayModeConfig)
+            .Build();
     }
 }
