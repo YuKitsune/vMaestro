@@ -12,12 +12,24 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     readonly TimeSpan _landingRate = TimeSpan.FromSeconds(180);
     readonly TimeSpan _defaultTtg = TimeSpan.FromMinutes(20);
 
+    static AirportConfiguration CreateSingleRunwayConfiguration(string runwayIdentifier, TimeSpan acceptanceRate)
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(runwayIdentifier)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = runwayIdentifier,
+                LandingRateSeconds = (int)acceptanceRate.TotalSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
     [Fact]
     public void RepositionByEstimate_WithOnlyOneFlight_NoChangesAreMade()
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var flight = new FlightBuilder("ABC123")
@@ -41,7 +53,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var flight1 = new FlightBuilder("ABC123")
@@ -82,7 +93,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var stableFlight = new FlightBuilder("ABC123")
@@ -123,7 +133,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var stableFlight = new FlightBuilder("ABC123")
@@ -164,7 +173,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var unstableFlight = new FlightBuilder("ABC123")
@@ -205,7 +213,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var unstableFlight = new FlightBuilder("ABC123")
@@ -244,7 +251,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var frozenFlight = new FlightBuilder("ABC123")
@@ -288,7 +294,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var stableFlight = new FlightBuilder("ABC123")
@@ -332,7 +337,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     {
         // Arrange
         var sequence = GetSequenceBuilder()
-            .WithSingleRunway("34L", _landingRate)
             .Build();
 
         var unstableFlight = new FlightBuilder("ABC123")
@@ -370,5 +374,5 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     }
 
     SequenceBuilder GetSequenceBuilder() =>
-        new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build()).WithClock(clockFixture.Instance);
+        new SequenceBuilder(CreateSingleRunwayConfiguration("34L", _landingRate)).WithClock(clockFixture.Instance);
 }
