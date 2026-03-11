@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Handlers;
+using Maestro.Core.Configuration;
+using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -12,14 +13,24 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
 {
+    static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
+
     [Fact]
     public async Task WhenChangingRunway_TheRunwayIsChanged()
     {
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(11))
             .WithLandingTime(now.AddMinutes(11))
@@ -33,7 +44,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithFeederFix("BOREE") // TODO: Sequence will re-assign the runway based on feeder fix preferences; need to remove this from the sequencing logic
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -43,12 +54,13 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         sequence.NumberForRunway(flight1).ShouldBe(1, "QFA1 should be #1 on 34L initially");
         sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R initially");
 
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             Substitute.For<IClock>(),
             mediator,
@@ -62,7 +74,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         // Assert
         flight1.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
 
-        flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
+        flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
         flight1.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
 
         // Verify QFA1 is now scheduled on 34R and positioned appropriately
@@ -76,6 +88,14 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
         var flight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(now.AddMinutes(20))
@@ -88,7 +108,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
             .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
@@ -96,12 +116,13 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         flight.AssignedRunwayIdentifier.ShouldBe("34L");
         flight.Trajectory.ShouldBe(originalTrajectory);
 
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             Substitute.For<IClock>(),
             mediator,
@@ -123,6 +144,14 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
         var flight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(now.AddMinutes(20))
@@ -137,7 +166,7 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
             .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
@@ -145,12 +174,13 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         flight.AssignedRunwayIdentifier.ShouldBe("34L");
         flight.Trajectory.ShouldBe(originalTrajectory);
 
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             Substitute.For<IClock>(),
             mediator,
@@ -173,6 +203,14 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -194,16 +232,17 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -227,6 +266,14 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -255,16 +302,17 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
 
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -277,9 +325,9 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
 
         // Assert
         flight2.AssignedRunwayIdentifier.ShouldBe("34R", "QFA2 should be assigned to 34R");
-        flight4.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA4 landing time should be adjusted to maintain separation from QFA2");
+        flight4.LandingTime.ShouldBe(flight2.LandingTime.Add(AcceptanceRate), "QFA4 landing time should be adjusted to maintain separation from QFA2");
 
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA3 landing time should be reduced to minimize delay after QFA2 moved to 34R");
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate), "QFA3 landing time should be reduced to minimize delay after QFA2 moved to 34R");
     }
 
     [Fact]
@@ -288,6 +336,14 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -295,16 +351,17 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -331,6 +388,14 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -338,16 +403,17 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
             .WithState(state)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,
@@ -370,23 +436,32 @@ public class ChangeRunwayRequestHandlerTests(AirportConfigurationFixture airport
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
             instanceManager,
             slaveConnectionManager,
-            airportConfigurationFixture.Provider,
+            airportConfigurationProvider,
             new MockTrajectoryService(),
             clockFixture.Instance,
             mediator,

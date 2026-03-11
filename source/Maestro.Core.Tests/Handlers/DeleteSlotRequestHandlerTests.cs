@@ -11,7 +11,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
 {
     [Fact]
     public async Task TheSlotIsDeleted()
@@ -19,7 +19,9 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 
@@ -53,6 +55,8 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(12))
             .WithLandingTime(now.AddMinutes(12))
@@ -65,7 +69,7 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -103,7 +107,9 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 

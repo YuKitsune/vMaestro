@@ -11,7 +11,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
 {
     readonly DateTimeOffset _now = clockFixture.Instance.UtcNow();
 
@@ -19,12 +19,14 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenNoFlights_NothingIsRemoved()
     {
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -37,6 +39,8 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenNoLandedFlights_NothingIsRemoved()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(20)))
             .WithState(State.Unstable)
@@ -47,14 +51,14 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -69,6 +73,8 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenFewLandedFlightsWithinTimeout_NothingIsRemoved()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var landedFlights = Enumerable.Range(1, 5)
             .Select(i => new FlightBuilder($"QFA{i}")
                 .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(25)))
@@ -77,14 +83,14 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
                 .Build())
             .ToArray();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(landedFlights))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -97,6 +103,8 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenMoreThanMaxLandedFlights_ExcessFlightsAreRemoved()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var landedFlights = Enumerable.Range(1, 8)
             .Select(i => new FlightBuilder($"QFA{i}")
                 .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(25)))
@@ -105,14 +113,14 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
                 .Build())
             .ToArray();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(landedFlights))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -133,6 +141,8 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenLandedFlightExceedsTimeout_FlightIsRemoved()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var oldFlight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(35)))
             .WithLandingTime(_now.AddMinutes(-15))
@@ -145,14 +155,14 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
             .WithState(State.Landed)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(oldFlight, recentFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -167,20 +177,22 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenLandedFlightExactlyAtTimeout_FlightIsRemoved()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(30)))
             .WithLandingTime(_now.AddMinutes(-10))
             .WithState(State.Landed)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -193,6 +205,8 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenMixOfLandedAndNonLandedFlights_OnlyLandedFlightsAreAffected()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var unstableFlight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(20)))
             .WithState(State.Unstable)
@@ -215,14 +229,14 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
             .WithState(State.Landed)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(unstableFlight, oldLandedFlight, stableFlight, recentLandedFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -239,6 +253,8 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
     public async Task WhenMultipleFlightsExceedBothLimits_AllAreRemoved()
     {
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var landedFlights = Enumerable.Range(1, 10)
             .Select(i => new FlightBuilder($"QFA{i}")
                 .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(40)))
@@ -247,14 +263,14 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
                 .Build())
             .ToArray();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(landedFlights))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
-        var request = new CleanUpFlightsRequest(airportConfigurationFixture.Instance.Identifier);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -263,10 +279,12 @@ public class CleanUpFlightsRequestHandlerTests(AirportConfigurationFixture airpo
         sequence.Flights.ShouldBeEmpty();
     }
 
-    CleanUpFlightsRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager)
+    CleanUpFlightsRequestHandler GetRequestHandler(
+        IMaestroInstanceManager instanceManager,
+        AirportConfiguration airportConfiguration)
     {
         var logger = Substitute.For<ILogger>();
-        var configProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
+        var configProvider = new AirportConfigurationProvider([airportConfiguration]);
         return new CleanUpFlightsRequestHandler(instanceManager, configProvider, clockFixture.Instance, logger);
     }
 }

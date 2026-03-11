@@ -1,11 +1,12 @@
-﻿using Maestro.Core.Model;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Model;
 
-public class SequenceTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class SequenceTests(ClockFixture clockFixture)
 {
     readonly DateTimeOffset _time = clockFixture.Instance.UtcNow();
     readonly TimeSpan _acceptanceRate = TimeSpan.FromSeconds(180);
@@ -14,7 +15,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
     public void Schedule_FlightsOnSameRunway_AreSeparatedByAcceptanceRate()
     {
         // Arrange
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSingleRunway("34L", _acceptanceRate)
             .WithClock(clockFixture.Instance)
             .Build();
@@ -79,7 +80,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
             ]
         };
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithRunwayMode(runwayModeConfig)
             .WithClock(clockFixture.Instance)
             .Build();
@@ -122,7 +123,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
     public void Schedule_WhenNoRunwayIsAssigned_AndOneRunwayIsAvailable_ThatRunwayIsAssigned(State flightState)
     {
         // Arrange
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSingleRunway("34L", _acceptanceRate)
             .WithClock(clockFixture.Instance)
             .Build();
@@ -175,7 +176,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
             ]
         };
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithRunwayMode(runwayModeConfig)
             .WithClock(clockFixture.Instance)
             .Build();
@@ -239,7 +240,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
             ]
         };
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithRunwayMode(runwayModeConfig)
             .WithClock(clockFixture.Instance)
             .Build();
@@ -297,7 +298,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
             ]
         };
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithRunwayMode(runwayModeConfig)
             .WithClock(clockFixture.Instance)
             .Build();
@@ -360,7 +361,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
             ]
         };
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithRunwayMode(runwayModeConfig)
             .WithClock(clockFixture.Instance)
             .Build();
@@ -426,7 +427,7 @@ public class SequenceTests(AirportConfigurationFixture airportConfigurationFixtu
             ]
         };
 
-        var sequence = new SequenceBuilder(airportConfigurationFixture.Instance)
+        var sequence = new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithRunwayMode(runwayModeConfig)
             .WithClock(clockFixture.Instance)
             .Build();

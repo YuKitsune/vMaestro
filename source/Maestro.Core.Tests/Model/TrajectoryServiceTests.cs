@@ -16,12 +16,13 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetTrajectory_ReturnsMatchingTrajectory()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
             .WithTrajectory("RIVET", "34L", 15)
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         var flight = new FlightBuilder("QFA1")
@@ -42,13 +43,14 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetTrajectory_WhenNoMatch_ReturnsAverageTrajectory()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET", "BOREE")
             .WithRunways("34L", "34R")
             .WithTrajectory("RIVET", "34L", 15)
             .WithTrajectory("BOREE", "34R", 20)
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         var flight = new FlightBuilder("QFA1")
@@ -69,13 +71,14 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetTrajectory_WithApproachType_ReturnsMatchingTrajectory()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
             .WithTrajectory("RIVET", [new AllAircraftTypesDescriptor()], "A", "34L", 18)
             .WithTrajectory("RIVET", [new AllAircraftTypesDescriptor()], "B", "34L", 20)
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         var flight = new FlightBuilder("QFA1")
@@ -96,13 +99,14 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetTrajectory_WithAircraftCategory_ReturnsMatchingTrajectory()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
             .WithTrajectory("RIVET", [new AircraftCategoryDescriptor(AircraftCategory.Jet)], "34L", 15)
             .WithTrajectory("RIVET", [new AircraftCategoryDescriptor(AircraftCategory.NonJet)], "34L", 18)
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         // Act
@@ -129,7 +133,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetAverageTrajectory_ReturnsAverageOfAllTrajectories()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET", "BOREE")
             .WithRunways("34L", "34R")
             .WithTrajectory("RIVET", "34L", 10)
@@ -138,6 +142,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .WithTrajectory("BOREE", "34R", 22)
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         // Act
@@ -151,11 +156,12 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetAverageTrajectory_WhenNoTrajectories_ReturnsDefault()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         // Act
@@ -169,13 +175,14 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetApproachTypes_ReturnsMatchingApproachTypes()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
             .WithTrajectory("RIVET", [new AllAircraftTypesDescriptor()], "A", "34L", 18)
             .WithTrajectory("RIVET", [new AllAircraftTypesDescriptor()], "B", "34L", 20)
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         // Act
@@ -195,12 +202,13 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     public void GetApproachTypes_WhenNoMatch_ReturnsEmpty()
     {
         // Arrange
-        var (provider, _) = new AirportConfigurationBuilder("YSSY")
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
             .WithTrajectory("RIVET", [new AllAircraftTypesDescriptor()], "A", "34L", 18)
             .Build();
 
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, Substitute.For<ILogger>());
 
         // Act

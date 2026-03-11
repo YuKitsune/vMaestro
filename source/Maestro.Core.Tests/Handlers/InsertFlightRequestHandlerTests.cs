@@ -18,20 +18,42 @@ namespace Maestro.Core.Tests.Handlers;
 //  for any test cases. Use your best judgement when determining if a test case is already implemented, or needs to be implemented.
 
 public class InsertFlightRequestHandlerTests(
-    AirportConfigurationFixture airportConfigurationFixture,
     ClockFixture clockFixture,
     PerformanceLookupFixture performanceLookupFixture)
 {
+    static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
+
+    static AirportConfiguration GetDefaultAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "WELSH", "BOREE", "YAKKA", "MARLN")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET", "WELSH"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE", "YAKKA", "MARLN"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE", "YAKKA", "MARLN"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET", "WELSH"] })
+            .WithTrajectory("RIVET", [new AllAircraftTypesDescriptor()], "34L", 16)
+            .WithTrajectory("RIVET", [new AllAircraftTypesDescriptor()], "34R", 20)
+            .WithTrajectory("WELSH", [new AllAircraftTypesDescriptor()], "34L", 16)
+            .WithTrajectory("WELSH", [new AllAircraftTypesDescriptor()], "34R", 20)
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "34L", 23)
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "34R", 22)
+            .WithDepartureAirport("YSCB", [new AllAircraftTypesDescriptor()], 30)
+            .Build();
+    }
     [Fact]
     public async Task CallsignIsNormalizedAndTruncated()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -55,11 +77,12 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -82,11 +105,12 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -111,6 +135,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -118,11 +144,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight1))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -147,11 +173,12 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -173,18 +200,20 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -207,11 +236,12 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var targetTime = now.AddMinutes(10);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -234,19 +264,21 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var targetTime = now.AddMinutes(10);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -295,11 +327,12 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -321,19 +354,21 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -355,11 +390,12 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -384,6 +420,8 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var targetTime = now.AddMinutes(10);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var feederFixEstimate = now.AddMinutes(20);
         var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
         var expectedLandingEstimate = feederFixEstimate.Add(trajectory.TimeToGo);
@@ -401,13 +439,13 @@ public class InsertFlightRequestHandlerTests(
                 false))
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -430,19 +468,21 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var targetTime = now.AddMinutes(10);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithLandingEstimate(now.AddMinutes(12))
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -468,6 +508,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -480,11 +522,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -512,6 +554,8 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var targetTime = now.AddMinutes(20);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
         var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
 
@@ -522,24 +566,13 @@ public class InsertFlightRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetTrajectory(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string[]>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(trajectory);
-
-        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -563,6 +596,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -575,11 +610,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -608,6 +643,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -615,11 +652,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight1))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -638,7 +675,9 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -648,7 +687,7 @@ public class InsertFlightRequestHandlerTests(
             now.AddMinutes(15),
             ["34L"]);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -667,17 +706,25 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "16L")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = [] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = [] })
+            .Build();
+
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         // Schedule a runway change from T10 to T15
         instance.Session.Sequence.ChangeRunwayMode(
-            new RunwayMode(airportConfigurationFixture.Instance.RunwayModes[1]),
+            new RunwayMode(airportConfiguration.RunwayModes[1]),
             now.AddMinutes(10),
             now.AddMinutes(15));
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -696,6 +743,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var frozenFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -703,11 +752,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(frozenFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -726,6 +775,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var frozenFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -733,11 +784,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(frozenFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -755,7 +806,7 @@ public class InsertFlightRequestHandlerTests(
         var insertedFlight = sequence.Flights[1];
         insertedFlight.Callsign.ShouldBe("QFA2", "Inserted flight should be second in sequence");
         insertedFlight.LandingTime.ShouldBe(
-            frozenFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            frozenFlight.LandingTime.Add(AcceptanceRate),
             "Inserted flight should be scheduled after frozen flight with separation");
     }
 
@@ -764,6 +815,8 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = GetDefaultAirportConfiguration();
 
         var frozenFlight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -779,11 +832,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(frozenFlight1, frozenFlight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -802,6 +855,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var frozenFlight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -816,11 +871,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(frozenFlight1, frozenFlight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -838,7 +893,7 @@ public class InsertFlightRequestHandlerTests(
         var insertedFlight = sequence.Flights[1];
         insertedFlight.Callsign.ShouldBe("QFA3", "Inserted flight should be second in sequence");
         insertedFlight.LandingTime.ShouldBe(
-            frozenFlight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            frozenFlight1.LandingTime.Add(AcceptanceRate),
             "Inserted flight should be scheduled after first frozen flight with separation");
 
         sequence.NumberInSequence(frozenFlight2).ShouldBe(3, "Second frozen flight should become third in sequence");
@@ -850,6 +905,8 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = GetDefaultAirportConfiguration();
 
         var stableFlight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -865,11 +922,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(stableFlight1, stableFlight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -888,12 +945,12 @@ public class InsertFlightRequestHandlerTests(
 
         sequence.NumberInSequence(stableFlight1).ShouldBe(2, "First stable flight should be second in sequence");
         stableFlight1.LandingTime.ShouldBe(
-            insertedFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            insertedFlight.LandingTime.Add(AcceptanceRate),
             "First stable flight should be delayed for separation with inserted flight");
 
         sequence.NumberInSequence(stableFlight2).ShouldBe(3, "Second stable flight should be third in sequence");
         stableFlight2.LandingTime.ShouldBe(
-            stableFlight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            stableFlight1.LandingTime.Add(AcceptanceRate),
             "Second stable flight should be delayed for separation with first stable flight");
     }
 
@@ -902,6 +959,8 @@ public class InsertFlightRequestHandlerTests(
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = GetDefaultAirportConfiguration();
 
         var stableFlight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -917,11 +976,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(stableFlight1, stableFlight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -939,7 +998,7 @@ public class InsertFlightRequestHandlerTests(
         var insertedFlight = sequence.Flights[1];
         insertedFlight.Callsign.ShouldBe("QFA3", "Inserted flight should be second in sequence");
         insertedFlight.TargetLandingTime.ShouldBe(
-            stableFlight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            stableFlight1.LandingTime.Add(AcceptanceRate),
             "Inserted flight's target time should be reference flight's landing time + acceptance rate");
         insertedFlight.LandingTime.ShouldBe(
             insertedFlight.TargetLandingTime!.Value,
@@ -947,7 +1006,7 @@ public class InsertFlightRequestHandlerTests(
 
         sequence.NumberInSequence(stableFlight2).ShouldBe(3, "Second stable flight should be third in sequence");
         stableFlight2.LandingTime.ShouldBe(
-            insertedFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            insertedFlight.LandingTime.Add(AcceptanceRate),
             "Second stable flight should be delayed for separation with inserted flight");
     }
 
@@ -988,6 +1047,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var stableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -1001,13 +1062,13 @@ public class InsertFlightRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1022,7 +1083,7 @@ public class InsertFlightRequestHandlerTests(
         instance.Session.PendingFlights.ShouldBeEmpty("Pending flight should be removed from pending list");
         sequence.Flights.ShouldContain(pendingFlight, "Pending flight should be in the sequence");
         pendingFlight.LandingTime.ShouldBe(
-            stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            stableFlight.LandingTime.Add(AcceptanceRate),
             "Pending flight should be scheduled at target time");
         pendingFlight.State.ShouldBe(State.Stable, "Pending flight should have default state (Stable)");
     }
@@ -1033,6 +1094,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var stableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -1040,11 +1103,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1060,7 +1123,7 @@ public class InsertFlightRequestHandlerTests(
         dummyFlight.Callsign.ShouldBe("QFA2", "Dummy flight should be added to the sequence");
         dummyFlight.State.ShouldBe(State.Frozen, "Dummy flight should have default state (Frozen)");
         dummyFlight.TargetLandingTime.ShouldBe(
-            stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            stableFlight.LandingTime.Add(AcceptanceRate),
             "Dummy flight target time should be reference flight's landing time + acceptance rate");
         dummyFlight.LandingEstimate.ShouldBe(
             dummyFlight.TargetLandingTime!.Value,
@@ -1077,6 +1140,8 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var feederFixEstimate = now.AddMinutes(20);
         var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
+
+        var airportConfiguration = GetDefaultAirportConfiguration();
 
         var stableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -1098,13 +1163,13 @@ public class InsertFlightRequestHandlerTests(
                 false))
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1117,7 +1182,7 @@ public class InsertFlightRequestHandlerTests(
 
         // Assert
         pendingFlight.TargetLandingTime.ShouldBe(
-            stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            stableFlight.LandingTime.Add(AcceptanceRate),
             "Pending flight target time should be reference flight's landing time + acceptance rate");
         pendingFlight.LandingTime.ShouldBe(
             pendingFlight.TargetLandingTime!.Value,
@@ -1133,6 +1198,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var stableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -1146,13 +1213,13 @@ public class InsertFlightRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1165,7 +1232,7 @@ public class InsertFlightRequestHandlerTests(
 
         // Assert
         pendingFlight.TargetLandingTime.ShouldBe(
-            stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate),
+            stableFlight.LandingTime.Add(AcceptanceRate),
             "Pending flight target time should be reference flight's landing time + acceptance rate");
         pendingFlight.LandingEstimate.ShouldBe(
             pendingFlight.TargetLandingTime!.Value,
@@ -1181,6 +1248,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var trajectory = new Trajectory(TimeSpan.FromMinutes(22));
 
         var stableFlight = new FlightBuilder("QFA1")
@@ -1191,7 +1260,7 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34R")
             .Build();
 
-        var targetTime = stableFlight.LandingTime.Add(airportConfigurationFixture.AcceptanceRate); // After QFA1
+        var targetTime = stableFlight.LandingTime.Add(AcceptanceRate); // After QFA1
         var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
 
         var pendingFlight = new FlightBuilder("QFA2")
@@ -1204,17 +1273,13 @@ public class InsertFlightRequestHandlerTests(
         var trajectoryService = new MockTrajectoryService()
             .WithTrajectoryForFlight(pendingFlight, trajectory);
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetTrajectory(pendingFlight, Arg.Any<string>(), Arg.Any<string>())
-            .Returns(trajectory);
-
-        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup, trajectoryService: trajectoryService);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager, trajectoryService: trajectoryService);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1237,6 +1302,8 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var takeoffTime = now.AddMinutes(5);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithLandingEstimate(now.AddMinutes(40))
@@ -1244,13 +1311,13 @@ public class InsertFlightRequestHandlerTests(
             .FromDepartureAirport()
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1274,11 +1341,12 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var takeoffTime = now.AddMinutes(5);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1304,6 +1372,8 @@ public class InsertFlightRequestHandlerTests(
         var takeoffTime = now.AddMinutes(5);
         var expectedLandingEstimate = takeoffTime.AddMinutes(30); // YSCB to YSSY is 30 mins for jets
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithLandingEstimate(now.AddMinutes(40))
@@ -1311,13 +1381,13 @@ public class InsertFlightRequestHandlerTests(
             .FromDepartureAirport()
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1339,6 +1409,8 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var takeoffTime = now.AddMinutes(5);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithLandingEstimate(now.AddMinutes(40))
@@ -1346,13 +1418,13 @@ public class InsertFlightRequestHandlerTests(
             .FromDepartureAirport()
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1375,11 +1447,12 @@ public class InsertFlightRequestHandlerTests(
         var takeoffTime = now.AddMinutes(5);
         var expectedLandingEstimate = takeoffTime.AddMinutes(30); // YSCB to YSSY is 30 mins for jets
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1404,6 +1477,8 @@ public class InsertFlightRequestHandlerTests(
         var takeoffTime = now.AddMinutes(5);
         var originalFeederFixEstimate = now.AddMinutes(30);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var pendingFlight = new FlightBuilder("QFA1")
             .WithAircraftType("B738")
             .WithFeederFixEstimate(originalFeederFixEstimate)
@@ -1417,13 +1492,13 @@ public class InsertFlightRequestHandlerTests(
                 false))
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1444,6 +1519,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -1458,11 +1535,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         // Takeoff at T-15 means landing at T15 (30 min flight time for jets)
         var takeoffTime = now.AddMinutes(-15);
@@ -1492,6 +1569,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -1506,11 +1585,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         // Takeoff at T-19 means landing estimate at T11 (30 min flight time for jets)
         var takeoffTime = now.AddMinutes(-19);
@@ -1542,6 +1621,8 @@ public class InsertFlightRequestHandlerTests(
         var takeoffTime = now.AddMinutes(5);
         var expectedLandingEstimate = takeoffTime.AddMinutes(30); // YSCB to YSSY is 30 mins for jets
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
 
         var pendingFlight = new FlightBuilder("QFA1")
@@ -1554,24 +1635,13 @@ public class InsertFlightRequestHandlerTests(
             .FromDepartureAirport()
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         instance.Session.PendingFlights.Add(pendingFlight);
 
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
-        arrivalLookup.GetTrajectory(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string[]>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<AircraftCategory>())
-            .Returns(trajectory);
-
-        var handler = GetRequestHandler(instanceManager, arrivalLookup: arrivalLookup);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1593,6 +1663,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var superStableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -1607,11 +1679,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(superStableFlight, stableFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         // Takeoff at T-25 means landing estimate at T05 (30 min flight time for jets)
         var takeoffTime = now.AddMinutes(-25);
@@ -1643,14 +1715,16 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
-        var handler = GetRequestHandler(instanceManager, slaveConnectionManager, mediator);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager, slaveConnectionManager, mediator);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1677,6 +1751,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var existingFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -1684,11 +1760,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1707,6 +1783,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var landedFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.Subtract(TimeSpan.FromMinutes(5)))
             .WithLandingTime(now.Subtract(TimeSpan.FromMinutes(5)))
@@ -1714,11 +1792,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1747,6 +1825,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var referenceFlight = new FlightBuilder("QFA2")
             .WithLandingEstimate(now.AddMinutes(20))
             .WithLandingTime(now.AddMinutes(20))
@@ -1761,11 +1841,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(existingFlight, referenceFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1784,6 +1864,8 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var referenceFlight = new FlightBuilder("QFA2")
             .WithLandingEstimate(now.AddMinutes(20))
             .WithLandingTime(now.AddMinutes(20))
@@ -1798,11 +1880,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(landedFlight, referenceFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1832,6 +1914,8 @@ public class InsertFlightRequestHandlerTests(
         var now = clockFixture.Instance.UtcNow();
         var takeoffTime = now.AddMinutes(5);
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var existingFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(35))
             .WithLandingTime(now.AddMinutes(35))
@@ -1839,11 +1923,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(existingFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1864,6 +1948,8 @@ public class InsertFlightRequestHandlerTests(
         var takeoffTime = now.AddMinutes(5);
         var expectedLandingEstimate = takeoffTime.AddMinutes(30); // YSCB to YSSY is 30 mins for jets
 
+        var airportConfiguration = GetDefaultAirportConfiguration();
+
         var landedFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.Subtract(TimeSpan.FromMinutes(5)))
             .WithLandingTime(now.Subtract(TimeSpan.FromMinutes(5)))
@@ -1871,11 +1957,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(landedFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
         var request = new InsertFlightRequest(
             "YSSY",
@@ -1895,22 +1981,19 @@ public class InsertFlightRequestHandlerTests(
     }
 
     InsertFlightRequestHandler GetRequestHandler(
+        AirportConfiguration airportConfiguration,
         IMaestroInstanceManager? instanceManager = null,
         IMaestroConnectionManager? connectionManager = null,
         IMediator? mediator = null,
-        IArrivalLookup? arrivalLookup = null,
         ITrajectoryService? trajectoryService = null)
     {
-        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
-        airportConfigurationProvider.GetAirportConfigurations()
-            .Returns([airportConfigurationFixture.Instance]);
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
 
         return new InsertFlightRequestHandler(
             instanceManager ?? Substitute.For<IMaestroInstanceManager>(),
             connectionManager ?? new MockLocalConnectionManager(),
             performanceLookupFixture.Instance,
             airportConfigurationProvider,
-            arrivalLookup ?? Substitute.For<IArrivalLookup>(),
             trajectoryService ?? new MockTrajectoryService(),
             clockFixture.Instance,
             mediator ?? Substitute.For<IMediator>(),

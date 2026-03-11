@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -11,7 +12,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ModifySlotRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class ModifySlotRequestHandlerTests(ClockFixture clockFixture)
 {
     [Fact]
     public async Task TheSlotIsModified()
@@ -19,7 +20,8 @@ public class ModifySlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 
@@ -74,7 +76,8 @@ public class ModifySlotRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -135,7 +138,8 @@ public class ModifySlotRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Frozen)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -180,7 +184,8 @@ public class ModifySlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 

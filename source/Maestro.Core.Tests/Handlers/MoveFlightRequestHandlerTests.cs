@@ -14,9 +14,9 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
 {
-    readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
+    static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
 
     [Fact]
     public async Task TargetLandingTimeIsSet()
@@ -32,7 +32,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -68,7 +68,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -101,7 +101,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -136,7 +136,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(state)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -181,7 +181,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -228,7 +228,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -249,7 +249,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         // Assert
         flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "Leading flight should remain unchanged");
-        flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Moved flight should be moved forward to the target time, then delayed for separation with the leading flight");
+        flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate), "Moved flight should be moved forward to the target time, then delayed for separation with the leading flight");
         flight3.LandingTime.ShouldBe(flight3.LandingEstimate, "Third flight should be unaffected");
     }
 
@@ -277,7 +277,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -299,7 +299,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
         // Assert
         flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "First flight should remain unchanged");
         flight2.LandingTime.ShouldBe(newLandingTime, "Moved flight should be moved back to the target time");
-        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Third flight should be delayed behind the moved flight");
+        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(AcceptanceRate), "Third flight should be delayed behind the moved flight");
     }
 
     [Fact]
@@ -322,7 +322,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -360,7 +360,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -408,7 +408,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -453,7 +453,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -472,8 +472,8 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
         // Assert
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "First frozen flight should remain unchanged");
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Moved flight should be sequenced between the two frozen flight");
-        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Second frozen flight should remain unchanged");
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate), "Moved flight should be sequenced between the two frozen flight");
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(AcceptanceRate), "Second frozen flight should remain unchanged");
     }
 
     [Fact]
@@ -500,7 +500,7 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -525,14 +525,15 @@ public class MoveFlightRequestHandlerTests(AirportConfigurationFixture airportCo
 
     MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
     {
-        var arrivalLookup = Substitute.For<IArrivalLookup>();
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var configProvider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new MockTrajectoryService();
         mediator ??= Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(
             instanceManager,
             connectionManager ?? new MockLocalConnectionManager(),
-            arrivalLookup,
+            configProvider,
             trajectoryService,
             mediator,
             clock,

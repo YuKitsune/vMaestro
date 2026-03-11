@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -5,7 +6,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Model;
 
-public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 {
     readonly DateTimeOffset _time = clockFixture.Instance.UtcNow();
     readonly TimeSpan _landingRate = TimeSpan.FromSeconds(180);
@@ -369,5 +370,5 @@ public class SequenceExtensionMethodsTests(AirportConfigurationFixture airportCo
     }
 
     SequenceBuilder GetSequenceBuilder() =>
-        new SequenceBuilder(airportConfigurationFixture.Instance).WithClock(clockFixture.Instance);
+        new SequenceBuilder(new AirportConfigurationBuilder("YSSY").Build()).WithClock(clockFixture.Instance);
 }

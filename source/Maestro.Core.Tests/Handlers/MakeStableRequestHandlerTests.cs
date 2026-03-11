@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Handlers;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -13,13 +14,15 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class MakeStableRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
 {
     [Fact]
     public async Task TheFlightIsMarkedAsStable()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
 
         var unstableFlight = new FlightBuilder("QFA123")
             .WithLandingEstimate(now.AddMinutes(20))
@@ -29,7 +32,7 @@ public class MakeStableRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(unstableFlight))
             .Build();
 
@@ -53,6 +56,8 @@ public class MakeStableRequestHandlerTests(AirportConfigurationFixture airportCo
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var flight = new FlightBuilder("QFA123")
             .WithLandingEstimate(now.AddMinutes(20))
             .WithLandingTime(now.AddMinutes(20))
@@ -61,7 +66,7 @@ public class MakeStableRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
@@ -81,6 +86,8 @@ public class MakeStableRequestHandlerTests(AirportConfigurationFixture airportCo
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+
         var unstableFlight = new FlightBuilder("QFA123")
             .WithLandingEstimate(now.AddMinutes(20))
             .WithLandingTime(now.AddMinutes(20))
@@ -89,7 +96,7 @@ public class MakeStableRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(unstableFlight))
             .Build();
 

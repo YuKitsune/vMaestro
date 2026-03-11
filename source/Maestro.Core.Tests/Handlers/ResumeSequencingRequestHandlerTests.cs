@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Handlers;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
@@ -11,8 +12,10 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
 {
+    static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
+
     [Fact]
     public async Task FlightIsInsertedIntoTheSequenceAndRemovedFromTheDeSequencedList()
     {
@@ -24,7 +27,7 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -84,7 +87,7 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
             .WithTrajectoryForFlight(flight2, new Trajectory(TimeSpan.FromMinutes(10)))
             .WithTrajectoryForFlight(flight3, new Trajectory(TimeSpan.FromMinutes(8)));
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithFlightsInOrder(flight1, flight2)
@@ -149,7 +152,7 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s
                 .WithFlightsInOrder(frozenFlight1, frozenFlight2)
                 .WithClock(clockFixture.Instance))
@@ -184,8 +187,7 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
         frozenFlight2.LandingTime.ShouldBe(originalFrozenFlight2LandingTime, "QFA2 landing time should not change");
 
         // QFA3 should be placed after the second frozen flight with proper separation
-        var acceptanceRate = airportConfigurationFixture.AcceptanceRate;
-        flight3.LandingTime.ShouldBe(frozenFlight2.LandingTime.Add(acceptanceRate), "QFA3 should be placed after QFA2 with proper separation");
+        flight3.LandingTime.ShouldBe(frozenFlight2.LandingTime.Add(AcceptanceRate), "QFA3 should be placed after QFA2 with proper separation");
     }
 
     [Fact]
@@ -199,7 +201,7 @@ public class ResumeSequencingRequestHandlerTests(AirportConfigurationFixture air
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
