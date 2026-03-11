@@ -35,6 +35,12 @@ public class AirportConfigurationBuilder(string identifier)
         return this;
     }
 
+    public AirportConfigurationBuilder WithRunwayMode(RunwayModeConfiguration runwayMode)
+    {
+        _runwayModes.Add(runwayMode);
+        return this;
+    }
+
     public AirportConfigurationBuilder WithTrajectory(
         string feederFix,
         IAircraftDescriptor[] aircraftDescriptors,
