@@ -14,21 +14,24 @@ namespace Maestro.Core.Tests.Handlers;
 
 public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
 {
+    const string FirstApproachType = "A";
+    const int FirstApproachTypeTtg = 20;
+
+    const string SecondApproachType = "P";
+    const int SecondApproachTypeTtg = 25;
+
     [Fact]
     public async Task WhenChangingApproachType_TheApproachTypeIsChanged()
     {
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
-            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "A", 20)
-            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "P", 25)
-            .Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(now.AddMinutes(10))
-            .WithApproachType("A")
+            .WithApproachType(FirstApproachType)
             .WithLandingEstimate(now.AddMinutes(32))
             .WithLandingTime(now.AddMinutes(32))
             .WithRunway("34R")
@@ -55,16 +58,16 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             mediator,
             Substitute.For<ILogger>());
 
-        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", "P");
+        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", SecondApproachType);
 
-        flight.ApproachType.ShouldBe("A", "Initial approach type should be A");
+        flight.ApproachType.ShouldBe(FirstApproachType, $"Initial approach type should be {FirstApproachType}");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.ApproachType.ShouldBe("P", "Approach type should be changed to P");
-        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(25), "Changing approach type should update the trajectory");
+        flight.ApproachType.ShouldBe(SecondApproachType, $"Approach type should be changed to {SecondApproachType}");
+        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(SecondApproachTypeTtg), "Changing approach type should update the trajectory");
     }
 
     [Fact]
@@ -73,16 +76,13 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
-            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "A", 20)
-            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "P", 25)
-            .Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(now.AddMinutes(10))
-            .WithApproachType("A")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(20)))
+            .WithApproachType(FirstApproachType)
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(FirstApproachTypeTtg)))
             .WithRunway("34R")
             .WithState(State.Stable) // Make the flight Stable so the ApproachType doesn't get reset when scheduling
             .Build();
@@ -106,18 +106,18 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             mediator,
             Substitute.For<ILogger>());
 
-        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", "P");
+        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", SecondApproachType);
 
         // Record the current trajectory
         var originalTrajectory = flight.Trajectory;
-        originalTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(20), "Initial trajectory should be 20 minutes");
+        originalTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(FirstApproachTypeTtg), $"Initial trajectory should be {FirstApproachTypeTtg} minutes");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
         flight.Trajectory.ShouldNotBe(originalTrajectory, "Trajectory should be updated");
-        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(25), "Trajectory should be updated to 25 minutes for approach P");
+        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(SecondApproachTypeTtg), $"Trajectory should be updated to {SecondApproachTypeTtg} minutes for approach {SecondApproachType}");
     }
 
     [Fact]
@@ -126,18 +126,15 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
-            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "A", 20)
-            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], "P", 25)
-            .Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var feederFixEstimate = now.AddMinutes(10);
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(feederFixEstimate)
-            .WithApproachType("A")
-            .WithLandingEstimate(feederFixEstimate.AddMinutes(22))
-            .WithLandingTime(feederFixEstimate.AddMinutes(22))
+            .WithApproachType(FirstApproachType)
+            .WithLandingEstimate(feederFixEstimate.AddMinutes(FirstApproachTypeTtg))
+            .WithLandingTime(feederFixEstimate.AddMinutes(FirstApproachTypeTtg))
             .WithRunway("34R")
             .WithState(State.Stable) // Make the flight Stable so the ApproachType doesn't get reset when scheduling
             .Build();
@@ -161,17 +158,17 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             mediator,
             Substitute.For<ILogger>());
 
-        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", "P");
+        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", SecondApproachType);
 
-        flight.ApproachType.ShouldBe("A", "Initial approach type should be A");
-        flight.LandingEstimate.ShouldBe(feederFixEstimate.AddMinutes(22), "Initial landing estimate should be FF + 22 minutes (A approach)");
+        flight.ApproachType.ShouldBe(FirstApproachType, $"Initial approach type should be {FirstApproachType}");
+        flight.LandingEstimate.ShouldBe(feederFixEstimate.AddMinutes(FirstApproachTypeTtg), $"Initial landing estimate should be FF + {FirstApproachTypeTtg} minutes ({FirstApproachType} approach)");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.ApproachType.ShouldBe("P", "Approach type should be changed to P");
-        flight.LandingEstimate.ShouldBe(feederFixEstimate.AddMinutes(25), "Landing estimate should be updated to FF + 25 minutes (P approach)");
+        flight.ApproachType.ShouldBe(SecondApproachType, $"Approach type should be changed to {SecondApproachType}");
+        flight.LandingEstimate.ShouldBe(feederFixEstimate.AddMinutes(SecondApproachTypeTtg), $"Landing estimate should be updated to FF + {SecondApproachTypeTtg} minutes ({SecondApproachType} approach)");
     }
 
     [Fact]
@@ -180,12 +177,12 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(now.AddMinutes(10))
-            .WithApproachType("A")
+            .WithApproachType(FirstApproachType)
             .WithLandingEstimate(now.AddMinutes(32))
             .WithLandingTime(now.AddMinutes(32))
             .WithRunway("34R")
@@ -207,7 +204,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             mediator,
             Substitute.For<ILogger>());
 
-        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", "P");
+        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", SecondApproachType);
 
         var originalApproachType = flight.ApproachType;
 
@@ -218,5 +215,20 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         flight.ApproachType.ShouldBe(originalApproachType, "Local flight should not be modified when relaying to master");
+    }
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34R")
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = "34R",
+                LandingRateSeconds = 180,
+                FeederFixes = []
+            })
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], FirstApproachType, "34R", FirstApproachTypeTtg)
+            .WithTrajectory("BOREE", [new AllAircraftTypesDescriptor()], SecondApproachType, "34R", SecondApproachTypeTtg)
+            .Build();
     }
 }
