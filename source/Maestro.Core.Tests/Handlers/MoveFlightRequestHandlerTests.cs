@@ -504,14 +504,15 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
-        var handler = GetRequestHandler(instanceManager, slaveConnectionManager, mediator);
+        var handler = GetRequestHandler(instanceManager, airportConfiguration, slaveConnectionManager, mediator);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
@@ -568,7 +569,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .Build();
     }
 
-    MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, AirportConfiguration? airportConfiguration = null, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
+    MoveFlightRequestHandler GetRequestHandler(
+        IMaestroInstanceManager instanceManager,
+        AirportConfiguration? airportConfiguration = null,
+        IMaestroConnectionManager? connectionManager = null,
+        IMediator? mediator = null)
     {
         airportConfiguration ??= CreateAirportConfiguration();
         var configProvider = new AirportConfigurationProvider([airportConfiguration]);
