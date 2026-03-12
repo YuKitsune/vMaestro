@@ -15,11 +15,14 @@ namespace Maestro.Core.Tests.Handlers;
 
 public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
 {
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
     [Fact]
     public async Task WhenChangingFeederFixEstimate_ManualFeederFixShouldBeTrue()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
@@ -49,9 +52,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         var timeToGoMinutes = 10;
         var timeToGo = TimeSpan.FromMinutes(timeToGoMinutes);
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
-            .WithTrajectory("RIVET", "34L", timeToGoMinutes)
-            .Build();
+        var airportConfiguration = CreateAirportConfiguration(timeToGoMinutes);
 
         var trajectoryService = new TrajectoryService(
             new AirportConfigurationProvider([airportConfiguration]),
@@ -60,7 +61,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
@@ -86,9 +87,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         // Arrange
         var timeToGoMinutes = 10;
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
-            .WithTrajectory("RIVET", "34L", timeToGoMinutes)
-            .Build();
+        var airportConfiguration = CreateAirportConfiguration(timeToGoMinutes);
 
         var trajectoryService = new TrajectoryService(
             new AirportConfigurationProvider([airportConfiguration]),
@@ -98,14 +97,14 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(15))
             .WithLandingEstimate(clockFixture.Instance.UtcNow().AddMinutes(25))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .WithLandingEstimate(clockFixture.Instance.UtcNow().AddMinutes(20))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
@@ -135,7 +134,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
     public async Task WhenFlightIsUnstable_ItShouldBeMadeStable()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithState(State.Unstable)
@@ -168,7 +167,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
     public async Task WhenFlightIsNotUnstable_StateIsRetained(State state)
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithState(state)
@@ -197,7 +196,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
     public async Task RedirectedToMaster()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var originalFeederFixEstimate = clockFixture.Instance.UtcNow().AddMinutes(10);
         var flight = new FlightBuilder("QFA1")
@@ -232,6 +231,25 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         // Verify the flight was NOT modified locally (proving redirection occurred)
         flight.ManualFeederFixEstimate.ShouldBeFalse("flight should not have been modified locally");
         flight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate, "feeder fix estimate should remain unchanged");
+    }
+
+    static AirportConfiguration CreateAirportConfiguration(int? timeToGoMinutes = null)
+    {
+        var builder = new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            });
+
+        if (timeToGoMinutes.HasValue)
+        {
+            builder.WithTrajectory("RIVET", DefaultRunway, timeToGoMinutes.Value);
+        }
+
+        return builder.Build();
     }
 
     ChangeFeederFixEstimateRequestHandler GetHandler(
