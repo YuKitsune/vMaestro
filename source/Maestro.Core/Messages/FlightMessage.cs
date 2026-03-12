@@ -23,7 +23,7 @@ public class FlightMessage
     public required bool ManualFeederFixEstimate { get; init; }
     public required DateTimeOffset? FeederFixTime { get; init; }
     public required DateTimeOffset? ActualFeederFixTime { get; init; }
-    public required string? AssignedRunwayIdentifier { get; init; }
+    public required string AssignedRunwayIdentifier { get; init; }
     public required int NumberToLandOnRunway { get; init; }
     public required string ApproachType { get; init; }
     public required DateTimeOffset InitialLandingEstimate { get; init; }

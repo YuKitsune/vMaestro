@@ -35,7 +35,6 @@ public partial class TerminalConfigurationViewModel : ObservableObject
 
     public RunwayModeViewModel[] AvailableRunwayModes { get; }
 
-    // TODO: Make configurable
     public double MinimumLandingRateSeconds => 30;
     public double MaximumLandingRateSeconds => 60 * 5; // 5 Minutes
 

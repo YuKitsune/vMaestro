@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Model;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Shouldly;
@@ -9,6 +10,7 @@ public class FlightTests(ClockFixture clockFixture)
 {
     readonly TimeSpan _defaultTtg = TimeSpan.FromMinutes(20);
     readonly DateTimeOffset _landingTime = clockFixture.Instance.UtcNow();
+    readonly AirportConfiguration _airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
 
     [Fact]
     public void WhenFeederFixEstimateChanges_LandingEstimateIsUpdated()
@@ -125,7 +127,7 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        flight.UpdateStateBasedOnTime(clockFixture.Instance);
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, _airportConfiguration);
 
         // Assert
         flight.State.ShouldBe(State.Unstable);
@@ -144,7 +146,7 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        flight.UpdateStateBasedOnTime(clockFixture.Instance);
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, _airportConfiguration);
 
         // Assert
         flight.State.ShouldBe(State.Stable);
@@ -162,7 +164,7 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        flight.UpdateStateBasedOnTime(clockFixture.Instance);
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, _airportConfiguration);
 
         // Assert
         flight.State.ShouldBe(State.SuperStable);
@@ -179,7 +181,7 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        flight.UpdateStateBasedOnTime(clockFixture.Instance);
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, _airportConfiguration);
 
         // Assert
         flight.State.ShouldBe(State.Frozen);
@@ -196,7 +198,7 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        flight.UpdateStateBasedOnTime(clockFixture.Instance);
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, _airportConfiguration);
 
         // Assert
         flight.State.ShouldBe(State.Landed);

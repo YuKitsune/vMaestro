@@ -3,6 +3,7 @@ using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Integration;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -29,7 +30,6 @@ public class FlightUpdatedHandler(
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IArrivalLookup arrivalLookup,
     ITrajectoryService trajectoryService,
     IMediator mediator,
     IClock clock,
@@ -77,13 +77,10 @@ public class FlightUpdatedHandler(
                     return;
                 }
 
-                var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-                    .Single(a => a.Identifier == notification.Destination);
-
+                var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.Destination);
                 if (existingFlight is null)
                 {
-                    // TODO: Make configurable
-                    var flightCreationThreshold = TimeSpan.FromHours(2);
+                    var flightCreationThreshold = TimeSpan.FromMinutes(airportConfiguration.FlightCreationThresholdMinutes);
 
                     var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
                     var approximateLandingEstimate = notification.Estimates.Last().Estimate;
@@ -100,8 +97,7 @@ public class FlightUpdatedHandler(
                         var runway = runwayMode.Default;
 
                         var trajectory = trajectoryService.GetTrajectory(
-                            notification.AircraftType,
-                            notification.AircraftCategory,
+                            new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                             notification.Destination,
                             feederFix?.FixIdentifier,
                             runway.Identifier,
@@ -152,8 +148,7 @@ public class FlightUpdatedHandler(
                         var runway = runwayMode.Default;
 
                         var trajectory = trajectoryService.GetTrajectory(
-                            notification.AircraftType,
-                            notification.AircraftCategory,
+                            new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                             notification.Destination,
                             feederFix.FixIdentifier,
                             runway.Identifier,
@@ -200,8 +195,7 @@ public class FlightUpdatedHandler(
                         var runway = runwayMode.Default;
 
                         var trajectory = trajectoryService.GetTrajectory(
-                            notification.AircraftType,
-                            notification.AircraftCategory,
+                            new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                             notification.Destination,
                             null,
                             runway.Identifier,
@@ -263,7 +257,7 @@ public class FlightUpdatedHandler(
                     if (notification.Position is not null && !notification.Position.IsOnGround)
                         CalculateEstimates(desequencedFlight, notification);
 
-                    desequencedFlight.UpdateStateBasedOnTime(clock);
+                    desequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
                     logger.Verbose("Desequenced flight updated: {Flight}", desequencedFlight);
                 }
                 // Handle sequenced flights: update flight data, calculate estimates, and reposition if unstable
@@ -308,7 +302,7 @@ public class FlightUpdatedHandler(
                         }
                     }
 
-                    sequencedFlight.UpdateStateBasedOnTime(clock);
+                    sequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
                 }
 
                 sessionMessage = instance.Session.Snapshot();

@@ -14,11 +14,13 @@ public partial class MaestroViewModel : ObservableObject
 {
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
+    readonly LabelsConfiguration? _labelsConfiguration;
 
     [ObservableProperty]
     ViewConfiguration[] _views = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsScrollingUp), nameof(IsScrollingDown))]
     ViewConfiguration _selectedView;
 
     [ObservableProperty]
@@ -32,6 +34,9 @@ public partial class MaestroViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(TerminalConfiguration))]
     [NotifyPropertyChangedFor(nameof(RunwayChangeIsPlanned))]
     RunwayModeViewModel? _nextRunwayMode;
+
+    [ObservableProperty]
+    DateTimeOffset? _runwayModeChangeTime;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasDesequencedFlight))]
@@ -62,8 +67,8 @@ public partial class MaestroViewModel : ObservableObject
     public string[] Runways { get; }
 
     public string TerminalConfiguration =>
-        NextRunwayMode is not null
-            ? $"{CurrentRunwayMode.Identifier} → {NextRunwayMode.Identifier}"
+        NextRunwayMode is not null && RunwayModeChangeTime is not null
+            ? $"{CurrentRunwayMode.Identifier} → {NextRunwayMode.Identifier} at {RunwayModeChangeTime.Value:HH:mm}"
             : CurrentRunwayMode.Identifier;
 
     public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
@@ -75,8 +80,14 @@ public partial class MaestroViewModel : ObservableObject
     [ObservableProperty, NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
     TimeSpan _scrollOffset = TimeSpan.Zero;
     public bool IsScrolling => ScrollOffset != TimeSpan.Zero;
-    public bool IsScrollingUp => ScrollOffset > TimeSpan.Zero;
-    public bool IsScrollingDown => ScrollOffset < TimeSpan.Zero;
+    public bool IsScrollingUp => SelectedView.Direction == TimelineDirection.Up
+        ? ScrollOffset < TimeSpan.Zero
+        : ScrollOffset > TimeSpan.Zero;
+    public bool IsScrollingDown => SelectedView.Direction == TimelineDirection.Up
+        ? ScrollOffset > TimeSpan.Zero
+        : ScrollOffset < TimeSpan.Zero;
+
+    public AirportConfiguration AirportConfiguration { get; }
 
     public MaestroViewModel(
         string airportIdentifier,
@@ -84,10 +95,15 @@ public partial class MaestroViewModel : ObservableObject
         RunwayModeViewModel[] runwayModes,
         ViewConfiguration[] views,
         IMediator mediator,
-        IErrorReporter errorReporter)
+        IErrorReporter errorReporter,
+        LabelsConfiguration? labelsConfiguration,
+        AirportConfiguration airportConfiguration)
     {
+        AirportConfiguration = airportConfiguration;
+
         _mediator = mediator;
         _errorReporter = errorReporter;
+        _labelsConfiguration = labelsConfiguration;
 
         AirportIdentifier = airportIdentifier;
         Runways = runways;
@@ -113,6 +129,7 @@ public partial class MaestroViewModel : ObservableObject
             NextRunwayMode = notification.Session.Sequence.NextRunwayMode is not null
                 ? new RunwayModeViewModel(notification.Session.Sequence.NextRunwayMode)
                 : null;
+            RunwayModeChangeTime = notification.Session.Sequence.FirstLandingTimeForNextMode;
 
             DeSequencedFlights = notification.Session.DeSequencedFlights.ToList();
             PendingFlights = notification.Session.PendingFlights.ToList();
@@ -121,16 +138,31 @@ public partial class MaestroViewModel : ObservableObject
         });
     }
 
+    public LabelLayoutConfiguration? GetLabelLayout(ViewConfiguration view)
+    {
+        if (_labelsConfiguration == null)
+            return null;
+
+        return _labelsConfiguration.Layouts
+            .FirstOrDefault(l => l.Identifier == view.LabelLayout);
+    }
+
     [RelayCommand]
     void ScrollDown()
     {
-        ScrollOffset = ScrollOffset.Subtract(TimeSpan.FromMinutes(15));
+        // When direction is Up, invert the scroll behavior
+        ScrollOffset = SelectedView.Direction == TimelineDirection.Up
+            ? ScrollOffset.Add(TimeSpan.FromMinutes(15))
+            : ScrollOffset.Subtract(TimeSpan.FromMinutes(15));
     }
 
     [RelayCommand]
     void ScrollUp()
     {
-        ScrollOffset = ScrollOffset.Add(TimeSpan.FromMinutes(15));
+        // When direction is Up, invert the scroll behavior
+        ScrollOffset = SelectedView.Direction == TimelineDirection.Up
+            ? ScrollOffset.Subtract(TimeSpan.FromMinutes(15))
+            : ScrollOffset.Add(TimeSpan.FromMinutes(15));
     }
 
     [RelayCommand]

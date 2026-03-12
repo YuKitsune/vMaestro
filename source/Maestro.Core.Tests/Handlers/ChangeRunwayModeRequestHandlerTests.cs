@@ -12,7 +12,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
 {
     [Fact]
     public async Task WhenStartTimeIsNowOrEarlier_CurrentRunwayModeIsChanged()
@@ -20,6 +20,17 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -32,14 +43,14 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
         // Verify initial runway mode
         sequence.CurrentRunwayMode.Identifier.ShouldBe("34IVA");
 
-        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayModeRequestHandler(
@@ -79,6 +90,17 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -91,14 +113,14 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
         // Verify initial runway mode
         sequence.CurrentRunwayMode.Identifier.ShouldBe("34IVA");
 
-        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayModeRequestHandler(
@@ -142,6 +164,17 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -170,11 +203,11 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
             .WithFeederFix("BOREE")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
 
-        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayModeRequestHandler(
@@ -217,6 +250,17 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -245,11 +289,11 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
             .WithFeederFix("BOREE")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
 
-        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayModeRequestHandler(
@@ -302,6 +346,17 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -334,11 +389,11 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
 
-        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayModeRequestHandler(
@@ -385,18 +440,29 @@ public class ChangeRunwayModeRequestHandlerTests(AirportConfigurationFixture air
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
-        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfigurationFixture.Instance]);
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayModeRequestHandler(

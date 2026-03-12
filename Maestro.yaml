@@ -1,0 +1,1005 @@
+Logging:
+  LogLevel: Information
+  MaxFileAgeDays: 7
+
+Server:
+  Uri: https://maestro.eoinmotherway.dev/hub
+  Partitions:
+  - VATSIM
+  - SweatBox-1
+  - SweatBox-2
+  TimeoutSeconds: 30
+  Permissions:
+    ChangeTerminalConfiguration: [Flow]
+    ChangeLandingRates: [Flow]
+    MoveFlight: [Approach, Flow]
+    ChangeFeederFixEstimate: [Enroute, Flow]
+    ManageSlots: [Flow]
+    InsertFlight: [Approach, Flow]
+    MakePending: [Enroute, Approach, Flow]
+    ChangeRunway: [Enroute, Approach, Flow]
+    ManualDelay: [Enroute, Approach, Flow]
+    MakeStable: [Enroute, Flow]
+    Recompute: [Enroute, Flow]
+    Desequence: [Enroute, Approach, Flow]
+    Resequence: [Flow]
+    RemoveFlight: [Enroute, Approach, Flow]
+    ChangeApproachType: [Enroute, Approach, Flow]
+
+Labels:
+
+  Colours:
+
+    States:
+      Unstable: 255, 205, 105
+      Stable: 0, 0, 96
+      SuperStable: 255, 255, 255
+      Frozen: 96, 0, 0
+      Landed: 0, 235, 235
+
+    ControlActions:
+      Expedite: 0, 105, 0
+      NoDelay: 0, 0, 96
+      Resume: 0, 0, 96
+      SpeedReduction: 0, 235, 235
+      PathStretching: 255, 255, 255
+      Holding: 235, 235, 0
+
+    DeferredRunwayMode: 255, 255, 255
+
+  Layouts:
+
+  - Identifier: Enroute
+    Items:
+    - {Type: LandingTime, Width: 2, Padding: 1}
+    - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
+    - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
+    - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+    - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
+    - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [ControlAction]}
+    - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+    
+  - Identifier: TMA
+    Items:
+    - {Type: FeederFixTime, Width: 2, Padding: 1}
+    - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
+    - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
+    - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+    - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
+    - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+    
+  - Identifier: SY_FMP
+    Items:
+    - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [FeederFix, State]}
+    - {Type: AircraftWakeCategory, Width: 1, Padding: 1, ColourSources: [FeederFix, State]}
+    - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+    - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
+    - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [State]}
+    - {Type: RemainingDelay, Width: 3, Padding: 1, ColourSources: [State]}
+    - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+
+Airports:
+- Identifier: YSSY
+  FeederFixes: [RIVET, WELSH, BOREE, YAKKA, MARLN]
+  Runways: [34L, 34R, 16L, 16R, "07", "25"]
+  DefaultAircraftType: B738
+  DefaultPendingFlightState: Stable
+  DefaultDepartureFlightState: Unstable
+  DefaultDummyFlightState: Frozen
+  MinimumUnstableMinutes: 5
+  StabilityThresholdMinutes: 25
+  FrozenThresholdMinutes: 15
+  MaxLandedFlights: 5
+  LandedFlightTimeoutMinutes: 10
+  LostFlightTimeoutMinutes: 10
+
+  Colours:
+    FeederFixes:
+      RIVET: 96, 0, 0
+      WELSH: 96, 0, 0
+      BOREE: 0, 235, 235
+      YAKKA: 0, 235, 235
+      MARLN: 0, 235, 235
+
+  RunwayModes:
+
+  - Identifier: 34IVA
+    Runways:
+    - {Identifier: 34L, LandingRateSeconds: 180, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 34R, LandingRateSeconds: 180, FeederFixes: [BOREE, YAKKA, MARLN]}
+
+  - Identifier: 34I
+    DependencyRateSeconds: 60
+    Runways:
+    - {Identifier: 34L, LandingRateSeconds: 210, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 34R, LandingRateSeconds: 210, FeederFixes: [BOREE, YAKKA, MARLN]}
+
+  - Identifier: 16IVA
+    Runways:
+    - {Identifier: 16R, LandingRateSeconds: 180, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 16L, LandingRateSeconds: 180, FeederFixes: [BOREE, YAKKA, MARLN]}
+
+  - Identifier: 16I
+    DependencyRateSeconds: 60
+    Runways:
+    - {Identifier: 16R, LandingRateSeconds: 210, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 16L, LandingRateSeconds: 210, FeederFixes: [BOREE, YAKKA, MARLN]}
+
+  - Identifier: 25I
+    Runways:
+    - {Identifier: "25", LandingRateSeconds: 210}
+
+  - Identifier: 07I
+    Runways:
+    - {Identifier: "07", LandingRateSeconds: 210}
+
+  - Identifier: SODPROPS
+    Runways:
+    - {Identifier: 34L, LandingRateSeconds: 300}
+
+  Trajectories:
+  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
+  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 17}
+  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 11}
+  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 11}
+  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 15}
+  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 14}
+  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
+  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 12}
+  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 12}
+  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 17}
+  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 16}
+  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 18}
+  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
+  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 12}
+  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 11}
+  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 15}
+  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 15}
+  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
+  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 13}
+  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 13}
+  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 17}
+  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 16}
+  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 18}
+  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 15}
+  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 17}
+  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 17}
+  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 16}
+  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 12}
+  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
+  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 17}
+  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 19}
+  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 20}
+  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 18}
+  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 13}
+  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 15}
+  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
+  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 18}
+  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 15}
+  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 11}
+  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 16}
+  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
+  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 20}
+  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 17}
+  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 12}
+  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 18}
+  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 16}
+  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
+  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 18}
+  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 16}
+  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 11}
+  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 17}
+  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 18}
+  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 21}
+  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 18}
+  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 13}
+  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 19}
+  
+  DepartureAirports:
+  - {Identifier: YPMQ, Aircraft: [JET], Distance: 209, EstimatedFlightTimeMinutes: 44}
+  - {Identifier: YPMQ, Aircraft: [NONJET], Distance: 209, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YCOM, Aircraft: [JET], Distance: 221, EstimatedFlightTimeMinutes: 46}
+  - {Identifier: YCOM, Aircraft: [NONJET], Distance: 221, EstimatedFlightTimeMinutes: 43}
+  - {Identifier: YSCB, Aircraft: [JET], Distance: 178, EstimatedFlightTimeMinutes: 40}
+  - {Identifier: YSCB, Aircraft: [NONJET], Distance: 178, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YGLB, Aircraft: [JET], Distance: 111, EstimatedFlightTimeMinutes: 29}
+  - {Identifier: YGLB, Aircraft: [NONJET], Distance: 111, EstimatedFlightTimeMinutes: 27}
+  - {Identifier: YCWR, Aircraft: [JET], Distance: 163, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YCWR, Aircraft: [NONJET], Distance: 163, EstimatedFlightTimeMinutes: 35}
+  - {Identifier: YPKS, Aircraft: [JET], Distance: 221, EstimatedFlightTimeMinutes: 46}
+  - {Identifier: YPKS, Aircraft: [NONJET], Distance: 221, EstimatedFlightTimeMinutes: 43}
+  - {Identifier: YORG, Aircraft: [JET], Distance: 140, EstimatedFlightTimeMinutes: 34}
+  - {Identifier: YORG, Aircraft: [NONJET], Distance: 140, EstimatedFlightTimeMinutes: 31}
+  - {Identifier: YBTH, Aircraft: [JET], Distance: 175, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YBTH, Aircraft: [NONJET], Distance: 175, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YSDU, Aircraft: [JET], Distance: 249, EstimatedFlightTimeMinutes: 51}
+  - {Identifier: YSDU, Aircraft: [NONJET], Distance: 249, EstimatedFlightTimeMinutes: 47}
+  - {Identifier: YSCO, Aircraft: [JET], Distance: 117, EstimatedFlightTimeMinutes: 30}
+  - {Identifier: YSCO, Aircraft: [NONJET], Distance: 117, EstimatedFlightTimeMinutes: 28}
+  - {Identifier: YSTW, Aircraft: [JET], Distance: 191, EstimatedFlightTimeMinutes: 42}
+  - {Identifier: YSTW, Aircraft: [NONJET], Distance: 191, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YARM, Aircraft: [JET], Distance: 214, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YARM, Aircraft: [NONJET], Distance: 214, EstimatedFlightTimeMinutes: 42}
+  - {Identifier: YGFN, Aircraft: [JET], Distance: 298, EstimatedFlightTimeMinutes: 58}
+  - {Identifier: YGFN, Aircraft: [NONJET], Distance: 298, EstimatedFlightTimeMinutes: 55}
+  - {Identifier: YNBR, Aircraft: [JET], Distance: 255, EstimatedFlightTimeMinutes: 52}
+  - {Identifier: YNBR, Aircraft: [NONJET], Distance: 255, EstimatedFlightTimeMinutes: 48}
+  - {Identifier: YCBB, Aircraft: [JET], Distance: 194, EstimatedFlightTimeMinutes: 42}
+  - {Identifier: YCBB, Aircraft: [NONJET], Distance: 194, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YMDG, Aircraft: [JET], Distance: 179, EstimatedFlightTimeMinutes: 40}
+  - {Identifier: YMDG, Aircraft: [NONJET], Distance: 179, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YMAY, Aircraft: [JET], Distance: 286, EstimatedFlightTimeMinutes: 56}
+  - {Identifier: YMAY, Aircraft: [NONJET], Distance: 286, EstimatedFlightTimeMinutes: 53}
+  - {Identifier: YSWG, Aircraft: [JET], Distance: 214, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YSWG, Aircraft: [NONJET], Distance: 214, EstimatedFlightTimeMinutes: 42}
+  - {Identifier: YMER, Aircraft: [JET], Distance: 236, EstimatedFlightTimeMinutes: 49}
+  - {Identifier: YMER, Aircraft: [NONJET], Distance: 236, EstimatedFlightTimeMinutes: 45}
+
+  Views:
+
+  - Identifier: GUN/BIK
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [RIVET]}
+    - {FeederFixes: [WELSH]}
+
+  - Identifier: ARL
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [BOREE]}
+    - {FeederFixes: [YAKKA]}
+
+  - Identifier: OCN
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [MARLN]}
+
+  - Identifier: ARL/OCN
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [BOREE, YAKKA]}
+    - {FeederFixes: [MARLN]}
+
+  - Identifier: ALL
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [RIVET, WELSH]}
+    - {FeederFixes: [YAKKA, MARLN]}
+    - {FeederFixes: [BOREE]}
+
+  - Identifier: RWY
+    LabelLayout: TMA
+    TimeWindowMinutes: 45
+    Reference: LandingTime
+    Ladders:
+    - {Runways: [34L, 16R, "07"]}
+    - {Runways: [34R, 16L, "25"]}
+
+  - Identifier: FLO_RWY
+    LabelLayout: SY_FMP
+    TimeWindowMinutes: 45
+    Reference: LandingTime
+    Ladders:
+    - {Runways: [16R, 34L]}
+    - {Runways: [16L, 34R]}
+    - {Runways: ["07"]}
+    - {Runways: ["25"]}
+
+  GlobalCoordinationMessages:
+  - WX Dev have commenced.
+  - Standby for configuration change.
+  - Flow Planning in progress - do not use delay times until advised.
+  - Maestro delay times accurate.
+  - Contingency - No FMP.
+  - General Holding.
+
+  FlightCoordinationMessages:
+  - '{Callsign} MEDEVAC'
+  - '{Callsign} diverting'
+  - '{Callsign} request high speed descent'
+  - '{Callsign} subject to CDO'
+
+- Identifier: YMML
+  FeederFixes: [ARBEY, BOYSE, BOOIN, RAZZI, LATTA, EKKAS, ALAXO ,MENOG]
+  Runways: ["09", "16", "27", "34"]
+  DefaultAircraftType: B738
+  DefaultPendingFlightState: Stable
+  DefaultDepartureFlightState: Unstable
+  DefaultDummyFlightState: Frozen
+  MinimumUnstableMinutes: 5
+  StabilityThresholdMinutes: 25
+  FrozenThresholdMinutes: 15
+  MaxLandedFlights: 5
+  LandedFlightTimeoutMinutes: 10
+  LostFlightTimeoutMinutes: 10
+
+  RunwayModes:
+  - Identifier: 09
+    Runways:
+    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: 16
+    Runways:
+    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: 27
+    Runways:
+    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: 34
+    Runways:
+    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: 34/27
+    DependencyRateSeconds: 60
+    Runways:
+    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: 34/09
+    DependencyRateSeconds: 60
+    Runways:
+    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: 16/27
+    DependencyRateSeconds: 90
+    Runways:
+    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: 16/09
+    DependencyRateSeconds: 90
+    Runways:
+    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
+
+  Trajectories:
+  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 11}
+  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 9}
+  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 12}
+  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 13}
+  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 12}
+  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 10}
+  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 14}
+  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 15}
+  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 15}
+  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 12}
+  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 10}
+  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 13}
+  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 12}
+  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 17}
+  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 14}
+  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 11}
+  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 15}
+  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 14}
+  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 18}
+  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 15}
+  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 13}
+  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 16}
+  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 15}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 16}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 13}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 9}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 10}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 18}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 15}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 10}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 11}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "09", TimeToGoMinutes: 16}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "16", TimeToGoMinutes: 13}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "27", TimeToGoMinutes: 9}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 10}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "09", TimeToGoMinutes: 18}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "16", TimeToGoMinutes: 15}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "27", TimeToGoMinutes: 10}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 11}
+  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: M, RunwayIdentifier: "16", TimeToGoMinutes: 11}
+  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: M, RunwayIdentifier: "16", TimeToGoMinutes: 13}
+  - {FeederFix: EKKAS, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 14}
+  - {FeederFix: EKKAS, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 9}
+  - {FeederFix: EKKAS, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 16}
+  - {FeederFix: EKKAS, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 11}
+  - {FeederFix: LATTA, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 13}
+  - {FeederFix: LATTA, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 9}
+  - {FeederFix: LATTA, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 15}
+  - {FeederFix: LATTA, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 10}
+  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 11}
+  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 17}
+  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 15}
+  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 12}
+  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 12}
+  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 19}
+  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 17}
+  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 14}
+  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: P, RunwayIdentifier: "16", TimeToGoMinutes: 15}
+  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: P, RunwayIdentifier: "16", TimeToGoMinutes: 17}
+  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 10}
+  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 15}
+  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 11}
+  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 8}
+  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 12}
+  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 17}
+  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 12}
+  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 9}
+  
+  DepartureAirports:
+  - {Identifier: YHAY, Aircraft: [JET], Distance: 214, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YHAY, Aircraft: [NONJET], Distance: 214, EstimatedFlightTimeMinutes: 42}
+  - {Identifier: YDLQ, Aircraft: [JET], Distance: 147, EstimatedFlightTimeMinutes: 35}
+  - {Identifier: YDLQ, Aircraft: [NONJET], Distance: 147, EstimatedFlightTimeMinutes: 32}
+  - {Identifier: YECH, Aircraft: [JET], Distance: 93, EstimatedFlightTimeMinutes: 26}
+  - {Identifier: YECH, Aircraft: [NONJET], Distance: 93, EstimatedFlightTimeMinutes: 24}
+  - {Identifier: YMNG, Aircraft: [JET], Distance: 78, EstimatedFlightTimeMinutes: 24}
+  - {Identifier: YMNG, Aircraft: [NONJET], Distance: 78, EstimatedFlightTimeMinutes: 22}
+  - {Identifier: YSHT, Aircraft: [JET], Distance: 114, EstimatedFlightTimeMinutes: 30}
+  - {Identifier: YSHT, Aircraft: [NONJET], Distance: 114, EstimatedFlightTimeMinutes: 27}
+  - {Identifier: YNAR, Aircraft: [JET], Distance: 225, EstimatedFlightTimeMinutes: 47}
+  - {Identifier: YNAR, Aircraft: [NONJET], Distance: 225, EstimatedFlightTimeMinutes: 44}
+  - {Identifier: YCOR, Aircraft: [JET], Distance: 158, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YCOR, Aircraft: [NONJET], Distance: 158, EstimatedFlightTimeMinutes: 34}
+  - {Identifier: YBLA, Aircraft: [JET], Distance: 126, EstimatedFlightTimeMinutes: 32}
+  - {Identifier: YBLA, Aircraft: [NONJET], Distance: 126, EstimatedFlightTimeMinutes: 29}
+  - {Identifier: YWGT, Aircraft: [JET], Distance: 116, EstimatedFlightTimeMinutes: 30}
+  - {Identifier: YWGT, Aircraft: [NONJET], Distance: 116, EstimatedFlightTimeMinutes: 28}
+  - {Identifier: YMAY, Aircraft: [JET], Distance: 154, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YMAY, Aircraft: [NONJET], Distance: 154, EstimatedFlightTimeMinutes: 33}
+  - {Identifier: YSWG, Aircraft: [JET], Distance: 210, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YSWG, Aircraft: [NONJET], Distance: 210, EstimatedFlightTimeMinutes: 42}
+  - {Identifier: YCRG, Aircraft: [JET], Distance: 205, EstimatedFlightTimeMinutes: 44}
+  - {Identifier: YCRG, Aircraft: [NONJET], Distance: 205, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YHOT, Aircraft: [JET], Distance: 139, EstimatedFlightTimeMinutes: 34}
+  - {Identifier: YHOT, Aircraft: [NONJET], Distance: 139, EstimatedFlightTimeMinutes: 31}
+  - {Identifier: YLTV, Aircraft: [JET], Distance: 130, EstimatedFlightTimeMinutes: 32}
+  - {Identifier: YLTV, Aircraft: [NONJET], Distance: 130, EstimatedFlightTimeMinutes: 30}
+  - {Identifier: YFLI, Aircraft: [JET], Distance: 251, EstimatedFlightTimeMinutes: 51}
+  - {Identifier: YFLI, Aircraft: [NONJET], Distance: 251, EstimatedFlightTimeMinutes: 48}
+  - {Identifier: YDPO, Aircraft: [JET], Distance: 249, EstimatedFlightTimeMinutes: 51}
+  - {Identifier: YDPO, Aircraft: [NONJET], Distance: 249, EstimatedFlightTimeMinutes: 47}
+  - {Identifier: YMLT, Aircraft: [JET], Distance: 282, EstimatedFlightTimeMinutes: 56}
+  - {Identifier: YMLT, Aircraft: [NONJET], Distance: 282, EstimatedFlightTimeMinutes: 52}
+  - {Identifier: YWYY, Aircraft: [JET], Distance: 243, EstimatedFlightTimeMinutes: 50}
+  - {Identifier: YWYY, Aircraft: [NONJET], Distance: 243, EstimatedFlightTimeMinutes: 46}
+  - {Identifier: YKII, Aircraft: [JET], Distance: 199, EstimatedFlightTimeMinutes: 43}
+  - {Identifier: YKII, Aircraft: [NONJET], Distance: 199, EstimatedFlightTimeMinutes: 40}
+  - {Identifier: YWBL, Aircraft: [JET], Distance: 174, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YWBL, Aircraft: [NONJET], Distance: 174, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YPOD, Aircraft: [JET], Distance: 189, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YPOD, Aircraft: [NONJET], Distance: 189, EstimatedFlightTimeMinutes: 38}
+  - {Identifier: YMTG, Aircraft: [JET], Distance: 209, EstimatedFlightTimeMinutes: 44}
+  - {Identifier: YMTG, Aircraft: [NONJET], Distance: 209, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YHML, Aircraft: [JET], Distance: 203, EstimatedFlightTimeMinutes: 43}
+  - {Identifier: YHML, Aircraft: [NONJET], Distance: 203, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YBLT, Aircraft: [JET], Distance: 70, EstimatedFlightTimeMinutes: 23}
+  - {Identifier: YBLT, Aircraft: [NONJET], Distance: 70, EstimatedFlightTimeMinutes: 21}
+  - {Identifier: YARA, Aircraft: [JET], Distance: 163, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YARA, Aircraft: [NONJET], Distance: 163, EstimatedFlightTimeMinutes: 35}
+  - {Identifier: YSWL, Aircraft: [JET], Distance: 174, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YSWL, Aircraft: [NONJET], Distance: 174, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YNRC, Aircraft: [JET], Distance: 257, EstimatedFlightTimeMinutes: 52}
+  - {Identifier: YNRC, Aircraft: [NONJET], Distance: 257, EstimatedFlightTimeMinutes: 49}
+  - {Identifier: YHSM, Aircraft: [JET], Distance: 167, EstimatedFlightTimeMinutes: 38}
+  - {Identifier: YHSM, Aircraft: [NONJET], Distance: 167, EstimatedFlightTimeMinutes: 35}
+  - {Identifier: YHNL, Aircraft: [JET], Distance: 203, EstimatedFlightTimeMinutes: 43}
+  - {Identifier: YHNL, Aircraft: [NONJET], Distance: 203, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YWKB, Aircraft: [JET], Distance: 170, EstimatedFlightTimeMinutes: 38}
+  - {Identifier: YWKB, Aircraft: [NONJET], Distance: 170, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YBDG, Aircraft: [JET], Distance: 83, EstimatedFlightTimeMinutes: 25}
+  - {Identifier: YBDG, Aircraft: [NONJET], Distance: 83, EstimatedFlightTimeMinutes: 23}
+  - {Identifier: YSWH, Aircraft: [JET], Distance: 153, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YSWH, Aircraft: [NONJET], Distance: 153, EstimatedFlightTimeMinutes: 33}
+  - {Identifier: YGTH, Aircraft: [JET], Distance: 234, EstimatedFlightTimeMinutes: 48}
+  - {Identifier: YGTH, Aircraft: [NONJET], Distance: 234, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YCOM, Aircraft: [JET], Distance: 233, EstimatedFlightTimeMinutes: 48}
+  - {Identifier: YCOM, Aircraft: [NONJET], Distance: 233, EstimatedFlightTimeMinutes: 45}
+
+  Views:
+  - Identifier: BLA/ELW
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [BOOIN]}
+    - {FeederFixes: [BOYSE]}
+
+  - Identifier: MUN/YWE
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [ARBEY]}
+    - {FeederFixes: [ALAXO]}
+
+  - Identifier: HUO/WON
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [RAZZI]}
+    - {FeederFixes: [LATTA, EKKAS, MENOG]}
+
+  - Identifier: ALL
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [ARBEY, ALAXO, LATTA, MENOG]}
+    - {FeederFixes: [BOOIN, BOYSE, RAZZI, EKKAS]}
+
+  - Identifier: RWY
+    LabelLayout: TMA
+    TimeWindowMinutes: 45
+    Reference: LandingTime
+    Ladders:
+    - {Runways: ["16", "34"]}
+    - {Runways: ["09", "27"]}
+
+  GlobalCoordinationMessages:
+  - WX Dev have commenced.
+  - Standby for configuration change.
+  - Flow Planning in progress - do not use delay times until advised.
+  - Maestro delay times accurate.
+  - Contingency - No FMP.
+  - General Holding.
+
+  FlightCoordinationMessages:
+  - '{Callsign} MEDEVAC'
+  - '{Callsign} diverting'
+  - '{Callsign} request high speed descent'
+  - '{Callsign} subject to CDO'
+
+- Identifier: YBBN
+  FeederFixes: [BLAKA,  GOMOL,  ENLIP,  MORBI,  SMOKA,  TEBOT,  UGTUG,  WOODY]
+  Runways: [01L, 01R, 19L, 19R]
+  DefaultAircraftType: B738
+  DefaultPendingFlightState: Stable
+  DefaultDepartureFlightState: Unstable
+  DefaultDummyFlightState: Frozen
+  MinimumUnstableMinutes: 5
+  StabilityThresholdMinutes: 25
+  FrozenThresholdMinutes: 15
+  MaxLandedFlights: 5
+  LandedFlightTimeoutMinutes: 10
+  LostFlightTimeoutMinutes: 10
+
+  RunwayModes:
+  - Identifier: 19
+    Runways:
+    - {Identifier: 19L, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [BLAKA, GOMOL, TEBOT, UGTUG]}
+    - {Identifier: 19R, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [ENLIP, WOODY, MORBI, SMOKA]}
+
+  - Identifier: 01
+    Runways:
+    - {Identifier: 01L, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [ENLIP, WOODY, MORBI, SMOKA]}
+    - {Identifier: 01R, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [BLAKA, GOMOL, TEBOT, UGTUG]}
+
+  - Identifier: SODPROPS
+    Runways:
+    - {Identifier: 19R, ApproachType: A, LandingRateSeconds: 300}
+
+  Trajectories:
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 19}
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 21}
+  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 15}
+  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
+  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 22}
+  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 24}
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 12}
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 16}
+  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
+  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 18}
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 19}
+  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 22}
+  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 11}
+  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 11}
+  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 20}
+  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 18}
+  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
+  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
+  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 23}
+  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 20}
+  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 16}
+  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 16}
+  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 19}
+  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 18}
+  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 20}
+  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 23}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 18}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 20}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 16}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 21}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 23}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 19L, TimeToGoMinutes: 17}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 12}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 16}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 18}
+  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 19}
+  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 21}
+  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 16}
+  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
+  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
+  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 12}
+  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 18}
+  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 17}
+  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 14}
+  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
+  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
+  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 11}
+  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
+  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 12}
+  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 15}
+  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
+  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
+  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 13}
+  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 17}
+  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 16}
+  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
+  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 15}
+  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: M, RunwayIdentifier: 01R, TimeToGoMinutes: 12}
+  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: M, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
+  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
+  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 11}
+  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
+  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 13}
+  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 18}
+  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 18}
+  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 11}
+  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 11}
+  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 20}
+  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 21}
+  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 12}
+  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 13}
+  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
+  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 17}
+  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 15}
+  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
+  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
+  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
+  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 17}
+  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 17}
+  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
+  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 16}
+  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
+  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 12}
+  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
+  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
+  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
+  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 15}
+  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
+  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
+  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
+  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 15}
+  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 16}
+  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
+  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 17}
+  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 16}
+  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 11}
+  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 12}
+  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
+  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
+
+  DepartureAirports:
+  - {Identifier: YCFS, Aircraft: [JET], Distance: 189, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YCFS, Aircraft: [NONJET], Distance: 189, EstimatedFlightTimeMinutes: 38}
+  - {Identifier: YGFN, Aircraft: [JET], Distance: 158, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YGFN, Aircraft: [NONJET], Distance: 158, EstimatedFlightTimeMinutes: 34}
+  - {Identifier: YLIS, Aircraft: [JET], Distance: 96, EstimatedFlightTimeMinutes: 27}
+  - {Identifier: YLIS, Aircraft: [NONJET], Distance: 96, EstimatedFlightTimeMinutes: 25}
+  - {Identifier: YBNA, Aircraft: [JET], Distance: 28, EstimatedFlightTimeMinutes: 16}
+  - {Identifier: YBNA, Aircraft: [NONJET], Distance: 28, EstimatedFlightTimeMinutes: 15}
+  - {Identifier: YBCG, Aircraft: [JET], Distance: 59, EstimatedFlightTimeMinutes: 21}
+  - {Identifier: YBCG, Aircraft: [NONJET], Distance: 59, EstimatedFlightTimeMinutes: 19}
+  - {Identifier: YARM, Aircraft: [JET], Distance: 236, EstimatedFlightTimeMinutes: 49}
+  - {Identifier: YARM, Aircraft: [NONJET], Distance: 236, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YGLI, Aircraft: [JET], Distance: 172, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YGLI, Aircraft: [NONJET], Distance: 172, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YIVL, Aircraft: [JET], Distance: 185, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YIVL, Aircraft: [NONJET], Distance: 185, EstimatedFlightTimeMinutes: 38}
+  - {Identifier: YSPE, Aircraft: [JET], Distance: 115, EstimatedFlightTimeMinutes: 30}
+  - {Identifier: YSPE, Aircraft: [NONJET], Distance: 115, EstimatedFlightTimeMinutes: 28}
+  - {Identifier: YWCK, Aircraft: [JET], Distance: 106, EstimatedFlightTimeMinutes: 28}
+  - {Identifier: YWCK, Aircraft: [NONJET], Distance: 106, EstimatedFlightTimeMinutes: 26}
+  - {Identifier: YMOR, Aircraft: [JET], Distance: 243, EstimatedFlightTimeMinutes: 50}
+  - {Identifier: YMOR, Aircraft: [NONJET], Distance: 243, EstimatedFlightTimeMinutes: 46}
+  - {Identifier: YGDI, Aircraft: [JET], Distance: 171, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YGDI, Aircraft: [NONJET], Distance: 171, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YMLS, Aircraft: [JET], Distance: 198, EstimatedFlightTimeMinutes: 43}
+  - {Identifier: YMLS, Aircraft: [NONJET], Distance: 198, EstimatedFlightTimeMinutes: 40}
+  - {Identifier: YCCA, Aircraft: [JET], Distance: 175, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YCCA, Aircraft: [NONJET], Distance: 175, EstimatedFlightTimeMinutes: 36}
+  - {Identifier: YKRY, Aircraft: [JET], Distance: 102, EstimatedFlightTimeMinutes: 28}
+  - {Identifier: YKRY, Aircraft: [NONJET], Distance: 102, EstimatedFlightTimeMinutes: 26}
+  - {Identifier: YTAM, Aircraft: [JET], Distance: 235, EstimatedFlightTimeMinutes: 48}
+  - {Identifier: YTAM, Aircraft: [NONJET], Distance: 235, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YGAY, Aircraft: [JET], Distance: 163, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YGAY, Aircraft: [NONJET], Distance: 163, EstimatedFlightTimeMinutes: 35}
+  - {Identifier: YTNG, Aircraft: [JET], Distance: 266, EstimatedFlightTimeMinutes: 53}
+  - {Identifier: YTNG, Aircraft: [NONJET], Distance: 266, EstimatedFlightTimeMinutes: 50}
+  - {Identifier: YBUD, Aircraft: [JET], Distance: 185, EstimatedFlightTimeMinutes: 41}
+  - {Identifier: YBUD, Aircraft: [NONJET], Distance: 185, EstimatedFlightTimeMinutes: 38}
+  - {Identifier: YMYB, Aircraft: [JET], Distance: 162, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YMYB, Aircraft: [NONJET], Distance: 162, EstimatedFlightTimeMinutes: 34}
+  - {Identifier: YHBA, Aircraft: [JET], Distance: 176, EstimatedFlightTimeMinutes: 39}
+  - {Identifier: YHBA, Aircraft: [NONJET], Distance: 176, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YBSU, Aircraft: [JET], Distance: 84, EstimatedFlightTimeMinutes: 25}
+  - {Identifier: YBSU, Aircraft: [NONJET], Distance: 84, EstimatedFlightTimeMinutes: 23}
+  
+  Views:
+  - Identifier: INL
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [BLAKA]}
+    - {FeederFixes: [GOMOL]}
+
+  - Identifier: DOS
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [ENLIP]}
+    - {FeederFixes: [WOODY]}
+
+  - Identifier: BUR
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [MORBI]}
+    - {FeederFixes: [SMOKA]}
+
+  - Identifier: SDY
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [TEBOT]}
+    - {FeederFixes: [UGTUG]}
+   
+  - Identifier: ALL
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [BLAKA, ENLIP, GOMOL, MORBI]}
+    - {FeederFixes: [SMOKA, TEBOT, UGTUG, WOODY]}
+
+  - Identifier: RWY
+    LabelLayout: TMA
+    TimeWindowMinutes: 45
+    Reference: LandingTime
+    Ladders:
+    - {Runways: [01L, 19R]}
+    - {Runways: [01R, 19L]}
+
+  GlobalCoordinationMessages:
+  - WX Dev have commenced.
+  - Standby for configuration change.
+  - Flow Planning in progress - do not use delay times until advised.
+  - Maestro delay times accurate.
+  - Contingency - No FMP.
+  - General Holding.
+
+  FlightCoordinationMessages:
+  - '{Callsign} MEDEVAC'
+  - '{Callsign} diverting'
+  - '{Callsign} request high speed descent'
+  - '{Callsign} subject to CDO'
+
+- Identifier: YPPH
+  FeederFixes: [KAGMI, JULIM, KABLI, SOLUS, DAYLR, LAVEX, SAPKO]
+  Runways: ["03", "06", "21", "24"]
+  DefaultAircraftType: B738
+  DefaultPendingFlightState: Stable
+  DefaultDepartureFlightState: Unstable
+  DefaultDummyFlightState: Frozen
+  MinimumUnstableMinutes: 5
+  StabilityThresholdMinutes: 25
+  FrozenThresholdMinutes: 15
+  MaxLandedFlights: 5
+  LandedFlightTimeoutMinutes: 10
+  LostFlightTimeoutMinutes: 10
+
+  RunwayModes:
+  - Identifier: 21/24
+    DependencyRateSeconds: 30
+    OffModeSeparationSeconds: 0
+    Runways:
+    - {Identifier: "21", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: "03"
+    DependencyRateSeconds: 0
+    OffModeSeparationSeconds: 0
+    Runways:
+    - {Identifier: "03", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: "06"
+    DependencyRateSeconds: 0
+    OffModeSeparationSeconds: 0
+    Runways:
+    - {Identifier: "06", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: "21"
+    DependencyRateSeconds: 0
+    OffModeSeparationSeconds: 0
+    Runways:
+    - {Identifier: "21", ApproachType: A, LandingRateSeconds: 180}
+
+  - Identifier: "24"
+    DependencyRateSeconds: 0
+    OffModeSeparationSeconds: 0
+    Runways:
+    - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
+
+  Trajectories:
+  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 17}
+  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 14}
+  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 15}
+  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 17}
+  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 19}
+  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 16}
+  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 17}
+  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 20}
+  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 17}
+  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 19}
+  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 10}
+  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 10}
+  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 15}
+  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 16}
+  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 15}
+  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 15}
+  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 16}
+  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 15}
+  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 15}
+  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 13}
+  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 14}
+  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 13}
+  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 11}
+  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 12}
+  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 14}
+  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 12}
+  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 10}
+  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 11}
+  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 10}
+  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 12}
+  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 13}
+  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 10}
+  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 11}
+  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 10}
+  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 16}
+  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 17}
+  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 14}
+  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 13}
+  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 14}
+  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 14}
+  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 13}
+  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 18}
+  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 19}
+  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 10}
+  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 10}
+  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 15}
+  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 16}
+  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 15}
+  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 11}
+  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 12}
+  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 14}
+  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 12}
+  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 10}
+  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 11}
+  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 10}
+  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 13}
+  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 15}
+  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 12}
+  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 13}
+  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 11}
+  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 18}
+  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 20}
+  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 16}
+  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 15}
+  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 15}
+  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 16}
+  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 15}
+  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 20}
+  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 22}
+  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 11}
+  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 11}
+  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 17}
+  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 18}
+  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 17}
+  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 12}
+  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 14}
+  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 16}
+  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 14}
+  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 12}
+  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 13}
+  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 11}
+
+  DepartureAirports:
+  - {Identifier: YABA, Aircraft: [JET], Distance: 230, EstimatedFlightTimeMinutes: 48}
+  - {Identifier: YABA, Aircraft: [NONJET], Distance: 230, EstimatedFlightTimeMinutes: 45}
+  - {Identifier: YBLN, Aircraft: [JET], Distance: 162, EstimatedFlightTimeMinutes: 37}
+  - {Identifier: YBLN, Aircraft: [NONJET], Distance: 162, EstimatedFlightTimeMinutes: 34}
+  - {Identifier: YGEL, Aircraft: [JET], Distance: 229, EstimatedFlightTimeMinutes: 47}
+  - {Identifier: YGEL, Aircraft: [NONJET], Distance: 229, EstimatedFlightTimeMinutes: 44}
+
+  Views:
+  - Identifier: PIY
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [JULIM, SAPKO]}
+    - {FeederFixes: [KABLI, DAYLR, LAVEX]}
+
+  - Identifier: LEA
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [KAGMI]}
+    
+  - Identifier: JAR
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [SOLUS]}
+
+  - Identifier: ALL/HYD
+    LabelLayout: Enroute
+    TimeWindowMinutes: 30
+    Reference: FeederFixTime
+    Ladders:
+    - {FeederFixes: [JULIM, SAPKO, KAGMI, SOLUS]}
+    - {FeederFixes: [KABLI, DAYLR, LAVEX]}
+    
+  - Identifier: RWY
+    LabelLayout: TMA
+    TimeWindowMinutes: 45
+    Reference: LandingTime
+    Ladders:
+    - {Runways: [03, 21]}
+    - {Runways: [06, 24]}
+
+  GlobalCoordinationMessages:
+  - WX Dev have commenced.
+  - Standby for configuration change.
+  - Flow Planning in progress - do not use delay times until advised.
+  - Maestro delay times accurate.
+  - Contingency - No FMP.
+  - General Holding.
+
+  FlightCoordinationMessages:
+  - '{Callsign} MEDEVAC'
+  - '{Callsign} diverting'
+  - '{Callsign} request high speed descent'
+  - '{Callsign} subject to CDO'

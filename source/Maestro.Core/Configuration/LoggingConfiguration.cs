@@ -11,6 +11,5 @@ public interface ILoggingConfiguration
 public class LoggingConfiguration : ILoggingConfiguration
 {
     public required LogEventLevel LogLevel { get; init; }
-    public required string OutputDirectory { get; init; }
     public required int MaxFileAgeDays { get; init; }
 }

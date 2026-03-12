@@ -12,10 +12,29 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
 {
-    readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
+    static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
     readonly TimeSpan _defaultTtg = TimeSpan.FromMinutes(20);
+
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithFeederFixes("RIVET", "WELSH")
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = ["RIVET", "WELSH"]
+            })
+            .WithTrajectory("RIVET", DefaultRunway, 15)
+            .WithTrajectory("WELSH", DefaultRunway, 17)
+            .Build();
+    }
 
     readonly RunwayMode _runwayMode = new(
         new RunwayModeConfiguration
@@ -23,8 +42,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             Identifier = "34IVA",
             Runways =
             [
-                new RunwayConfiguration { Identifier = "34L", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = []},
-                new RunwayConfiguration { Identifier = "34R", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = [] }
+                new RunwayConfiguration { Identifier = "34L", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = ["RIVET", "WELSH"]},
+                new RunwayConfiguration { Identifier = "34R", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = ["RIVET", "WELSH"] }
             ]
         });
 
@@ -65,7 +84,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithTrajectoryForFlight(flight1, new Trajectory(flight1Ttg))
             .WithTrajectoryForFlight(flight2, new Trajectory(flight2Ttg));
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithRunwayMode(_runwayMode)
@@ -133,7 +152,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithSingleRunway("34L", TimeSpan.FromSeconds(180))
@@ -165,8 +184,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
 
         flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "First flight's landing time should be unchanged");
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "First flight should land at its estimate");
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Flight 3 should be behind flight 1 separated by acceptance rate");
-        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "Flight 2 should be behind flight 3 separated by acceptance rate");
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate), "Flight 3 should be behind flight 1 separated by acceptance rate");
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(AcceptanceRate), "Flight 2 should be behind flight 3 separated by acceptance rate");
     }
 
     [Fact]
@@ -184,7 +203,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithFeederFixEstimate(now.AddMinutes(5), manual: true)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -213,7 +232,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithLandingTime(landingTime)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -245,7 +264,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -271,7 +290,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .ManualDelay(TimeSpan.FromMinutes(5))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -298,7 +317,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .ManualDelay(TimeSpan.FromMinutes(5))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -327,7 +346,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithTrajectory(new Trajectory(_defaultTtg))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -393,7 +412,7 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithActivationTime(now.Subtract(TimeSpan.FromMinutes(10)))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -420,13 +439,13 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
-        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
-        airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
+        var airportConfiguration = CreateAirportConfiguration();
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
 
         var trajectoryService = new MockTrajectoryService();
         var mediator = Substitute.For<IMediator>();
@@ -460,8 +479,8 @@ public class RecomputeRequestHandlerTests(AirportConfigurationFixture airportCon
         ITrajectoryService? trajectoryService = null,
         IMediator? mediator = null)
     {
-        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
-        airportConfigurationProvider.GetAirportConfigurations().Returns([_airportConfiguration]);
+        var airportConfiguration = CreateAirportConfiguration();
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
 
         trajectoryService ??= new MockTrajectoryService();
         mediator ??= Substitute.For<IMediator>();

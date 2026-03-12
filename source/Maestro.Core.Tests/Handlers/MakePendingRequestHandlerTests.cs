@@ -13,15 +13,32 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
 {
-    readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
 
     [Fact]
     public async Task WhenMakingFlightPending_ItIsRemovedFromTheSequence()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = CreateAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA123")
             .FromDepartureAirport()
             .WithState(State.Stable)
@@ -29,17 +46,17 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(15))
             .WithLandingEstimate(now.AddMinutes(13))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -74,7 +91,8 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
     public async Task WhenFlightNotFound_WarningIsLoggedAndHandlerReturns()
     {
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration).Build();
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
 
         var logger = Substitute.For<ILogger>();
         var handler = GetRequestHandler(instanceManager, sequence, logger: logger);
@@ -92,19 +110,22 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = CreateAirportConfiguration();
+
         var flight = new FlightBuilder("QFA123")
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(10))
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         // Mark flight as NOT from departure airport
         flight.IsFromDepartureAirport = false;
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
@@ -123,20 +144,23 @@ public class MakePendingRequestHandlerTests(AirportConfigurationFixture airportC
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = CreateAirportConfiguration();
+
         var flight = new FlightBuilder("QFA123")
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(10))
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         // Set some additional properties that should be reset
         flight.SetSequenceData(flight.LandingTime, FlowControls.ReduceSpeed);
         flight.IsFromDepartureAirport = true;
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 

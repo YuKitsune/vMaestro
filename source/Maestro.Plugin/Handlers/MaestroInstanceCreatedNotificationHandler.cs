@@ -14,6 +14,7 @@ namespace Maestro.Plugin.Handlers;
 
 public class MaestroInstanceCreatedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
+    LabelsConfiguration labelsConfiguration,
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter)
@@ -21,8 +22,7 @@ public class MaestroInstanceCreatedNotificationHandler(
 {
     public async Task Handle(MaestroInstanceCreatedNotification notification, CancellationToken cancellationToken)
     {
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-            .Single(a => a.Identifier == notification.AirportIdentifier);
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.AirportIdentifier);
 
         var runwayModes = airportConfiguration.RunwayModes
             .Select(rm => new RunwayModeViewModel(rm))
@@ -34,11 +34,13 @@ public class MaestroInstanceCreatedNotificationHandler(
             _ => new MaestroView(
                 new MaestroViewModel(
                     notification.AirportIdentifier,
-                    airportConfiguration.Runways,
+                    airportConfiguration.Runways, // TODO: Remove these, and just use the Airport Configuration
                     runwayModes,
                     airportConfiguration.Views,
                     mediator,
-                    errorReporter)),
+                    errorReporter,
+                    labelsConfiguration,
+                    airportConfiguration)),
             shrinkToContent: false,
             new Size(640, 800),
             configureForm: form =>

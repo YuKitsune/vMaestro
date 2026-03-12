@@ -38,8 +38,7 @@ public class RecomputeRequestHandler(
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
             var sequence = instance.Session.Sequence;
-            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-                .Single(a => a.Identifier == request.AirportIdentifier);
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
             var flight = sequence.FindFlight(request.Callsign);
             if (flight == null)
@@ -61,8 +60,7 @@ public class RecomputeRequestHandler(
 
             // Lookup trajectory for the (possibly new) feeder fix + default runway + default approach type
             var trajectory = trajectoryService.GetTrajectory(
-                flight.AircraftType,
-                flight.AircraftCategory,
+                flight.GetPerformanceData(),
                 flight.DestinationIdentifier,
                 feederFix?.FixIdentifier,
                 runway.Identifier,
@@ -85,7 +83,7 @@ public class RecomputeRequestHandler(
             flight.SetState(State.Unstable, clock);
 
             sequence.RepositionByEstimate(flight);
-            flight.UpdateStateBasedOnTime(clock);
+            flight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
             logger.Information("{Callsign} recomputed", flight.Callsign);
 

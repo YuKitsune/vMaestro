@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -11,22 +12,27 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
 {
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
     [Fact]
     public async Task TheSlotIsDeleted()
     {
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 
         var slotId = sequence.CreateSlot(
             now.AddMinutes(10),
             now.AddMinutes(15),
-            ["34L"]);
+            [DefaultRunway]);
 
         sequence.Slots.Count.ShouldBe(1, "Slot should be created");
 
@@ -53,19 +59,21 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = CreateAirportConfiguration();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(12))
             .WithLandingTime(now.AddMinutes(12))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
             .WithLandingEstimate(now.AddMinutes(18))
             .WithLandingTime(now.AddMinutes(18))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -73,7 +81,7 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var slotId = sequence.CreateSlot(
             now.AddMinutes(10),
             now.AddMinutes(15),
-            ["34L"]);
+            [DefaultRunway]);
 
         // Flight1 should have been delayed to after the slot
         flight1.LandingTime.ShouldBe(now.AddMinutes(15), "QFA1 should be delayed to slot end time");
@@ -103,14 +111,16 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 
         var slotId = sequence.CreateSlot(
             now.AddMinutes(10),
             now.AddMinutes(15),
-            ["34L"]);
+            [DefaultRunway]);
 
         sequence.Slots.Count.ShouldBe(1, "Slot should be created");
 
@@ -132,5 +142,18 @@ public class DeleteSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         sequence.Slots.Count.ShouldBe(1, "Slot should not be deleted locally when relaying to master");
+    }
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
     }
 }

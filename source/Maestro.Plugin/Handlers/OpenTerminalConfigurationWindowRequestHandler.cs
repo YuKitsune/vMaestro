@@ -21,8 +21,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 {
     public async Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
     {
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-            .Single(a => a.Identifier == request.AirportIdentifier);
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         var sequenceMessage = instance.Session.Sequence.ToMessage();
@@ -42,7 +41,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 
                 var firstLandingTime = sequenceMessage.FirstLandingTimeForNextMode == default
                     ? clock.UtcNow()
-                    : lastLandingTime.AddMinutes(5); // Make configurable
+                    : lastLandingTime.AddMinutes(5);
 
                 var viewModel = new TerminalConfigurationViewModel(
                     request.AirportIdentifier,

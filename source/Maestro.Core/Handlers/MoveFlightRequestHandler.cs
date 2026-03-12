@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Connectivity;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
@@ -13,7 +14,7 @@ namespace Maestro.Core.Handlers;
 public class MoveFlightRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IArrivalLookup arrivalLookup,
+    IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IMediator mediator,
     IClock clock,
@@ -34,6 +35,7 @@ public class MoveFlightRequestHandler(
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionMessage sessionMessage;
 
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
             var sequence = instance.Session.Sequence;
@@ -71,7 +73,7 @@ public class MoveFlightRequestHandler(
 
             // Unstable flights become stable when moved
             if (flight.State == State.Unstable)
-                flight.SetState(State.Stable, clock);
+                flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
             sequence.Move(flight, newIndex);
 
