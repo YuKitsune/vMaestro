@@ -17,11 +17,27 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
 {
     static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
 
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task WhenFlightDoesNotExist_ThrowsException()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
         var handler = GetHandler(instanceManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA999", 5);
@@ -40,7 +56,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(15))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
@@ -70,7 +86,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(20))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
@@ -104,7 +120,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
         var originalLandingTime = flight2.LandingTime;
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
@@ -145,7 +161,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(15))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
@@ -199,7 +215,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(19))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
@@ -253,7 +269,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(21))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
@@ -314,7 +330,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(19))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
@@ -369,7 +385,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(18))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
@@ -410,7 +426,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(10))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
@@ -444,7 +460,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(10))
             .Build();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();

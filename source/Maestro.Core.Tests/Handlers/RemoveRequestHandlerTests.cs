@@ -15,6 +15,22 @@ namespace Maestro.Core.Tests.Handlers;
 
 public class RemoveRequestHandlerTests(ClockFixture clockFixture)
 {
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task WhenAnActiveFlightIsRemoved_ItIsPlacedInThePendingList()
     {
@@ -36,7 +52,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -76,7 +92,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -112,7 +128,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         // Set some additional properties that should be reset
         flight.SetSequenceData(clockFixture.Instance.UtcNow().AddMinutes(30), FlowControls.ReduceSpeed);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
@@ -157,7 +173,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -182,7 +198,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenRemovingAFlightThatDoesNotExist_AnExceptionIsThrown()
     {
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -205,7 +221,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingEstimate(now.AddMinutes(8))
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -234,7 +250,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 

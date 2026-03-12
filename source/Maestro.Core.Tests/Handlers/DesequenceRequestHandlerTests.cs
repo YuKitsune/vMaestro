@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -15,18 +16,21 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
 {
     static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
 
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
     [Fact]
     public async Task TheFlightIsRemovedFromTheSequenceAndAddedToTheDesequencedList()
     {
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, session, sequence) = new InstanceBuilder(airportConfiguration)
@@ -61,24 +65,24 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(13))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var flight3 = new FlightBuilder("QFA3")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(16))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
@@ -111,12 +115,12 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, session, sequence) = new InstanceBuilder(airportConfiguration)
@@ -144,5 +148,18 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         sequence.Flights.Count.ShouldBe(1, "Flight should not be removed locally when relaying to master");
         session.DeSequencedFlights.Count.ShouldBe(0, "Flight should not be desequenced locally when relaying to master");
+    }
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
     }
 }

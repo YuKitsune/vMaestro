@@ -16,20 +16,36 @@ namespace Maestro.Core.Tests.Handlers;
 
 public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
 {
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task TheFlightIsMarkedAsStable()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var unstableFlight = new FlightBuilder("QFA123")
             .WithLandingEstimate(now.AddMinutes(20))
             .WithLandingTime(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
@@ -56,14 +72,14 @@ public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA123")
             .WithLandingEstimate(now.AddMinutes(20))
             .WithLandingTime(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(state)
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
@@ -86,14 +102,14 @@ public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var unstableFlight = new FlightBuilder("QFA123")
             .WithLandingEstimate(now.AddMinutes(20))
             .WithLandingTime(now.AddMinutes(20))
             .WithFeederFixEstimate(now.AddMinutes(8))
             .WithState(State.Unstable)
-            .WithRunway("34L")
+            .WithRunway(DefaultRunway)
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)

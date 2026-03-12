@@ -16,6 +16,22 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
 {
     static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
 
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task FlightIsInsertedIntoTheSequenceAndRemovedFromTheDeSequencedList()
     {
@@ -27,7 +43,7 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -87,7 +103,7 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithTrajectoryForFlight(flight2, new Trajectory(TimeSpan.FromMinutes(10)))
             .WithTrajectoryForFlight(flight3, new Trajectory(TimeSpan.FromMinutes(8)));
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithFlightsInOrder(flight1, flight2)
@@ -152,7 +168,7 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithFlightsInOrder(frozenFlight1, frozenFlight2)
                 .WithClock(clockFixture.Instance))
@@ -201,7 +217,7 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 

@@ -15,11 +15,14 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
 {
     readonly DateTimeOffset _now = clockFixture.Instance.UtcNow();
 
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
     [Fact]
     public async Task WhenNoFlights_NothingIsRemoved()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
@@ -39,7 +42,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenNoLandedFlights_NothingIsRemoved()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight1 = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(20)))
@@ -73,7 +76,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenFewLandedFlightsWithinTimeout_NothingIsRemoved()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var landedFlights = Enumerable.Range(1, 5)
             .Select(i => new FlightBuilder($"QFA{i}")
@@ -103,7 +106,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenMoreThanMaxLandedFlights_ExcessFlightsAreRemoved()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var landedFlights = Enumerable.Range(1, 8)
             .Select(i => new FlightBuilder($"QFA{i}")
@@ -141,7 +144,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenLandedFlightExceedsTimeout_FlightIsRemoved()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var oldFlight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(35)))
@@ -177,7 +180,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenLandedFlightExactlyAtTimeout_FlightIsRemoved()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(30)))
@@ -205,7 +208,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenMixOfLandedAndNonLandedFlights_OnlyLandedFlightsAreAffected()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var unstableFlight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(_now.Add(TimeSpan.FromMinutes(20)))
@@ -253,7 +256,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenMultipleFlightsExceedBothLimits_AllAreRemoved()
     {
         // Arrange
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        var airportConfiguration = CreateAirportConfiguration();
 
         var landedFlights = Enumerable.Range(1, 10)
             .Select(i => new FlightBuilder($"QFA{i}")
@@ -277,6 +280,19 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         sequence.Flights.ShouldBeEmpty();
+    }
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
     }
 
     CleanUpFlightsRequestHandler GetRequestHandler(

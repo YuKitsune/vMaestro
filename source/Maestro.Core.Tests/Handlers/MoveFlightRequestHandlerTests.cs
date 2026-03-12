@@ -18,6 +18,9 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
 {
     static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
 
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
     [Fact]
     public async Task TargetLandingTimeIsSet()
     {
@@ -32,7 +35,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -68,11 +71,12 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var airportConfig = CreateDualRunwayConfiguration();
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfig)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(instanceManager, airportConfig);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest(
@@ -101,7 +105,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -136,7 +140,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(state)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -181,7 +185,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -228,7 +232,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -277,7 +281,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -322,7 +326,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -360,7 +364,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -408,7 +412,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -453,7 +457,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -500,7 +504,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(new AirportConfigurationBuilder("YSSY").Build())
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -523,9 +527,50 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         sequence.Flights[2].Callsign.ShouldBe("QFA3", "Sequence should not be modified locally when relaying to master");
     }
 
-    MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
+    static AirportConfiguration CreateAirportConfiguration()
     {
-        var airportConfiguration = new AirportConfigurationBuilder("YSSY").Build();
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
+    static AirportConfiguration CreateDualRunwayConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithRunwayMode(new RunwayModeConfiguration
+            {
+                Identifier = "34IVA",
+                DependencyRateSeconds = 0,
+                OffModeSeparationSeconds = 0,
+                Runways =
+                [
+                    new RunwayConfiguration
+                    {
+                        Identifier = "34L",
+                        LandingRateSeconds = DefaultLandingRateSeconds,
+                        FeederFixes = []
+                    },
+                    new RunwayConfiguration
+                    {
+                        Identifier = "34R",
+                        LandingRateSeconds = DefaultLandingRateSeconds,
+                        FeederFixes = []
+                    }
+                ]
+            })
+            .Build();
+    }
+
+    MoveFlightRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, AirportConfiguration? airportConfiguration = null, IMaestroConnectionManager? connectionManager = null, IMediator? mediator = null)
+    {
+        airportConfiguration ??= CreateAirportConfiguration();
         var configProvider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new MockTrajectoryService();
         mediator ??= Substitute.For<IMediator>();
