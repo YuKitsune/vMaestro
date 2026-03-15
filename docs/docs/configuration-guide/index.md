@@ -25,12 +25,29 @@ For most installations, placing the file at `{ProfileDirectory}/Maestro.yaml` is
 
 ## Configuration Structure
 
-The configuration file is divided into four main sections:
+The configuration file is divided into the following main sections:
 
-1. **Logging**: Log file settings
-2. **Server**: Server configuration and permissions for online use
-3. **Labels**: Shared label layouts and color definitions
-4. **Airports**: Airport-specific configuration (runway modes, trajectories, views)
+1. **CheckForUpdates**: Plugin update behavior (root level property)
+2. **Logging**: Log file settings
+3. **Server**: Server configuration and permissions for online use
+4. **Labels**: Shared label layouts and color definitions
+5. **Airports**: Airport-specific configuration (runway modes, trajectories, views)
+
+## Plugin Configuration
+
+Controls plugin-level behavior.
+
+### Update Checking
+
+```yaml
+CheckForUpdates: false
+```
+
+#### Properties
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `CheckForUpdates` | boolean | No | `true` | Controls whether the plugin checks for updates. Set to `false` if the AIS team needs to maintain control over which version of the plugin is installed (for compatibility with the server and provided configuration file) |
 
 ## Logging Configuration
 

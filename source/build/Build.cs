@@ -75,10 +75,6 @@ class Build : NukeBuild
 
     [Parameter("Path to vatSys installation")]
     AbsolutePath VatSysPath { get; }
-
-    [Parameter("Path to configuration file to install")]
-    AbsolutePath Config { get; }
-
     AbsolutePath VatSysSetupDirectory => TemporaryDirectory / "vatsys-setup";
     AbsolutePath VatSysExePath => VatSysPath ?? VatSysSetupDirectory / "bin" / "vatSys.exe";
 
@@ -293,22 +289,12 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
-            // Copy config if provided
-            if (Config != null)
-            {
-                if (!Config.FileExists())
-                    throw new Exception($"Config file not found: {Config}");
+            // Copy config
+            var configFile = RootDirectory / "Maestro.json";
+            var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
+            configDestinationDirectory.CreateOrCleanDirectory();
 
-                var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
-                configDestinationDirectory.CreateOrCleanDirectory();
-
-                Config.CopyToDirectory(configDestinationDirectory, ExistsPolicy.MergeAndOverwrite);
-                Log.Information("Config file installed from {ConfigFile}", Config);
-            }
-            else
-            {
-                Log.Information("No config file specified, skipping config installation");
-            }
+            configFile.CopyToDirectory(configDestinationDirectory, ExistsPolicy.MergeAndOverwrite);
 
             Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
         });
@@ -321,6 +307,7 @@ class Build : NukeBuild
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
             var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
+            var configFile = RootDirectory / "Maestro.yaml";
 
             PackageDirectory.CreateOrCleanDirectory();
 
@@ -330,19 +317,8 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(PackageDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
-            // Copy config if provided
-            if (Config != null)
-            {
-                if (!Config.FileExists())
-                    throw new Exception($"Config file not found: {Config}");
-
-                Config.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
-                Log.Information("Config file included in package from {ConfigFile}", Config);
-            }
-            else
-            {
-                Log.Information("No config file specified, skipping config in package");
-            }
+            // Temporary for testing - include the config with the package
+            configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
 
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
