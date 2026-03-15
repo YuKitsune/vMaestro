@@ -28,7 +28,7 @@ Server:
 
 Labels:
 
-  Colours:
+  GlobalColours:
 
     States:
       Unstable: 255, 205, 105
