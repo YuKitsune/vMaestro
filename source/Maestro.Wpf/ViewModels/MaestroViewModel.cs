@@ -87,6 +87,22 @@ public partial class MaestroViewModel : ObservableObject
         ? ScrollOffset > TimeSpan.Zero
         : ScrollOffset < TimeSpan.Zero;
 
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsScrollingHorizontally))]
+    int _horizontalScrollOffset = 0;
+    public bool IsScrollingHorizontally => HorizontalScrollOffset > 0;
+
+    partial void OnHorizontalScrollOffsetChanged(int value)
+    {
+        ScrollLeftCommand.NotifyCanExecuteChanged();
+        ScrollRightCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedViewChanged(ViewConfiguration value)
+    {
+        HorizontalScrollOffset = 0;
+        ScrollRightCommand.NotifyCanExecuteChanged();
+    }
+
     public AirportConfiguration AirportConfiguration { get; }
 
     public MaestroViewModel(
@@ -169,6 +185,30 @@ public partial class MaestroViewModel : ObservableObject
     void ResetScroll()
     {
         ScrollOffset = TimeSpan.Zero;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanScrollLeft))]
+    void ScrollLeft()
+    {
+        HorizontalScrollOffset--;
+    }
+
+    bool CanScrollLeft() => HorizontalScrollOffset > 0;
+
+    [RelayCommand(CanExecute = nameof(CanScrollRight))]
+    void ScrollRight()
+    {
+        HorizontalScrollOffset++;
+    }
+
+    bool CanScrollRight()
+    {
+        if (SelectedView?.Ladders == null || SelectedView.Ladders.Length < 3)
+            return false;
+
+        // Ensure at least 3 ladders remain visible after scrolling
+        var remainingLadders = SelectedView.Ladders.Length - ((HorizontalScrollOffset + 1) * 2);
+        return remainingLadders > 0;
     }
 
     [RelayCommand]

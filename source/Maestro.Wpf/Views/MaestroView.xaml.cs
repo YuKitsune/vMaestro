@@ -58,7 +58,8 @@ public partial class MaestroView
         maestroViewModel.PropertyChanged += (sender, args) =>
         {
             if (args.PropertyName == nameof(MaestroViewModel.ScrollOffset) ||
-                args.PropertyName == nameof(MaestroViewModel.SelectedView))
+                args.PropertyName == nameof(MaestroViewModel.SelectedView) ||
+                args.PropertyName == nameof(MaestroViewModel.HorizontalScrollOffset))
             {
                 DrawTimeline();
             }
@@ -169,6 +170,13 @@ public partial class MaestroView
 
         const double tickWidth = 8;
         const double timelineWidth = 24;
+        const double gapWidth = 24;
+
+        // Calculate horizontal offset based on HorizontalScrollOffset
+        // Each scroll unit represents 2 ladders (one complete pattern)
+        // Pattern: Ladder 0 → Ticks → Timeline → Ticks → Ladder 1 → Gap → Ladder 2 → ...
+        int laddersToSkip = ViewModel.HorizontalScrollOffset * 2;
+        double horizontalOffset = ViewModel.HorizontalScrollOffset * (2 * ladderWidth + 2 * tickWidth + timelineWidth + gapWidth);
 
         // Build visual elements in order: Ladder -> Ticks -> Timeline -> Ticks -> Ladder -> ...
         var elements = new List<VisualElement>();
@@ -176,11 +184,28 @@ public partial class MaestroView
 
         for (int i = 0; i < view.Ladders.Length; i++)
         {
-            // Add ladder
+            // Skip ladders that are scrolled out of view
+            if (i < laddersToSkip)
+            {
+                // Still need to advance xPos to maintain correct spacing for later calculations
+                xPos += ladderWidth;
+
+                if (i % 2 == 0)
+                {
+                    xPos += tickWidth + timelineWidth + tickWidth;
+                }
+                else if (i + 1 < view.Ladders.Length)
+                {
+                    xPos += gapWidth;
+                }
+                continue;
+            }
+
+            // Add ladder with offset applied
             elements.Add(new LadderElement
             {
                 Index = i,
-                X = xPos,
+                X = xPos - horizontalOffset,
                 Width = ladderWidth,
                 Config = view.Ladders[i]
             });
@@ -193,7 +218,7 @@ public partial class MaestroView
                 // Add ticks to right of even-indexed ladder
                 elements.Add(new TicksElement
                 {
-                    X = xPos,
+                    X = xPos - horizontalOffset,
                     Width = tickWidth,
                     LadderIndex = i
                 });
@@ -202,7 +227,7 @@ public partial class MaestroView
                 // Add timeline after even-indexed ladder
                 elements.Add(new TimelineElement
                 {
-                    X = xPos,
+                    X = xPos - horizontalOffset,
                     Width = timelineWidth,
                     LeftLadderIndex = i,
                     RightLadderIndex = i + 1 < view.Ladders.Length ? i + 1 : -1
@@ -214,7 +239,7 @@ public partial class MaestroView
                 {
                     elements.Add(new TicksElement
                     {
-                        X = xPos,
+                        X = xPos - horizontalOffset,
                         Width = tickWidth,
                         LadderIndex = i + 1
                     });
@@ -226,7 +251,7 @@ public partial class MaestroView
                 // Odd-indexed ladders (1, 3, 5...) have a gap after them if not the last ladder
                 if (i + 1 < view.Ladders.Length)
                 {
-                    xPos += 24; // 24px gap between ladders without timeline
+                    xPos += gapWidth;
                 }
             }
         }
@@ -1166,13 +1191,7 @@ public partial class MaestroView
             {
                 var key = $"{flight.Callsign}_{ladderIndex}";
 
-                // Only add to expected keys if visible
-                if (isVisible)
-                {
-                    expectedKeys.Add(key);
-                }
-
-                // Skip creating/updating label if not visible
+                // Skip creating/updating label if not visible in time window
                 if (!isVisible)
                 {
                     continue;
@@ -1183,8 +1202,12 @@ public partial class MaestroView
                     .OfType<LadderElement>()
                     .FirstOrDefault(l => l.Index == ladderIndex);
 
+                // Skip if ladder is scrolled out of view (no ladder element exists)
                 if (ladderElement == null)
                     continue;
+
+                // Only track labels that are both time-visible AND on visible ladders
+                expectedKeys.Add(key);
 
                 // Reuse existing flight label or create new one
                 if (!_flightLabels.TryGetValue(key, out var flightLabel))
