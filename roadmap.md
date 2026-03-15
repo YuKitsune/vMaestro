@@ -23,7 +23,7 @@ Configuration files will likely require a new format to support tabular data suc
     - [X] Set landing estimate based on ETA_FF + arrival TTG
     - [X] Set STA_FF using STA - arrival TTG
     - [X] If ATO_FF is set, ETA should be ATO_FF + arrival TTG (this value won't change after passing FF, this is accurate)
-- [ ] Consider new config file format
+- [X] Consider new config file format
 
 ### Refactoring
 
@@ -36,6 +36,24 @@ Configuration files will likely require a new format to support tabular data suc
     - [ ] Test scheduling separately
     - [ ] Clean up Flight builder so that you can't build an invalid flight (make ETA and ETA_FF mutually exclusive? Or calculate a TTG based on ETA - ETA_FF if no trajectory is set?)
     - [ ] Clean up the handler tests to remove all the unnecessary setup (i.e. trajectories)
+
+### Model "Close" airports
+
+- [ ] Flights within 25 mins flight time of the FF are from "Close" airports (e.g: Inside the TMA)
+- [ ] Flights from "Close" airports will be added to the pending list
+
+### Ladder and Timeline enhancements
+
+- [X] Add support for multiple ladders and timelines
+- [X] Implement configuration for custom label layout and colors
+
+### Documentation
+
+- [ ] Write documentation for ATC usage
+- [ ] Write documentation for configuration and server setup
+- [ ] Document limitations and differences compared to the real system
+
+## Future Enhancements
 
 ### Algorithm Overhaul
 
@@ -53,24 +71,6 @@ Revisit the sequencing and scheduling algorithms.
 - [ ] Model runway allocation strategies (geo, preferred, mixed)
 - [ ] Model runway dependencies (dependent, semi-dependent, and independent)
 - [ ] Account for GRIB winds
-
-### Model "Close" airports
-
-- [ ] Flights within 25 mins flight time of the FF are from "Close" airports (e.g: Inside the TMA)
-- [ ] Flights from "Close" airports will be added to the pending list
-
-### Ladder and Timeline enhancements
-
-- [ ] Add support for multiple ladders and timelines
-- [ ] Implement configuration for custom label layout and colors
-
-### Documentation
-
-- [ ] Write documentation for ATC usage
-- [ ] Write documentation for configuration and server setup
-- [ ] Document limitations and differences compared to the real system
-
-## Future Enhancements
 
 ### Refactor Sequence Aggregate
 
