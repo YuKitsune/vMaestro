@@ -232,7 +232,7 @@ public class FlightBuilder(string callsign)
 
         // Set sequence data
         var landingTimeToUse = _landingTime != default ? _landingTime : flight.LandingEstimate;
-        flight.SetSequenceData(landingTimeToUse, FlowControls.ProfileSpeed);
+        flight.SetSequenceData(landingTimeToUse, FlowControls.HighSpeed);
 
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
 

@@ -1,3 +1,4 @@
+using Maestro.Core.Integration;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Tests.Mocks;
@@ -7,6 +8,7 @@ public class MockTrajectoryService : ITrajectoryService
     readonly Trajectory _defaultTrajectory;
     readonly Dictionary<string, Trajectory> _flightTrajectories = new();
     readonly List<TrajectoryConfiguration> _configurations = new();
+    readonly Dictionary<(string, string?, string), string[]> _approachTypes = new();
 
     public MockTrajectoryService(TimeSpan? defaultTtg = null)
     {
@@ -16,6 +18,16 @@ public class MockTrajectoryService : ITrajectoryService
     public MockTrajectoryService WithTrajectoryForFlight(Flight flight, Trajectory trajectory)
     {
         _flightTrajectories[flight.Callsign] = trajectory;
+        return this;
+    }
+
+    public MockTrajectoryService WithApproachTypes(
+        string airportIdentifier,
+        string? feederFixIdentifier,
+        string runwayIdentifier,
+        params string[] approachTypes)
+    {
+        _approachTypes[(airportIdentifier, feederFixIdentifier, runwayIdentifier)] = approachTypes;
         return this;
     }
 
@@ -34,20 +46,32 @@ public class MockTrajectoryService : ITrajectoryService
     }
 
     public Trajectory GetTrajectory(
-        string aircraftType,
-        AircraftCategory aircraftCategory,
+        AircraftPerformanceData aircraftPerformanceData,
         string destinationIdentifier,
         string? feederFixIdentifier,
         string runwayIdentifier,
         string approachType)
     {
-        var match = FindBestMatch(aircraftType, destinationIdentifier, feederFixIdentifier, runwayIdentifier, approachType);
+        var match = FindBestMatch(aircraftPerformanceData.TypeCode, destinationIdentifier, feederFixIdentifier, runwayIdentifier, approachType);
         return match ?? _defaultTrajectory;
     }
 
     public Trajectory GetAverageTrajectory(string airportIdentifier)
     {
         return _defaultTrajectory;
+    }
+
+    public string[] GetApproachTypes(
+        string airportIdentifier,
+        string? feederFixIdentifier,
+        string[] fixNames,
+        string runwayIdentifier,
+        AircraftPerformanceData aircraftPerformanceData)
+    {
+        if (_approachTypes.TryGetValue((airportIdentifier, feederFixIdentifier, runwayIdentifier), out var types))
+            return types;
+
+        return [];
     }
 
     Trajectory? FindBestMatch(

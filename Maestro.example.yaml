@@ -1,0 +1,524 @@
+# Maestro Configuration Example
+# This file demonstrates all configuration options for the MAESTRO Plugin for vatSys
+# Copy this file to Maestro.yaml in your vatSys profile directory and customize for your airport
+
+# ==============================================================================
+# LOGGING CONFIGURATION
+# ==============================================================================
+# Controls log file output for troubleshooting and monitoring
+
+Logging:
+  # Minimum log level to record
+  # Options: Verbose, Debug, Information, Warning, Error, Fatal
+  LogLevel: Information
+
+  # Number of days to retain log files before automatic deletion
+  MaxFileAgeDays: 7
+
+# ==============================================================================
+# SERVER CONFIGURATION
+# ==============================================================================
+# Configures connection to Maestro server for multi-user (online) mode
+
+Server:
+  # SignalR URL of the Maestro server hub
+  Uri: https://maestro.example.com/hub
+
+  # Network partitions for isolating sessions
+  # Each partition represents a separate instance (e.g., VATSIM, SweatBox sessions)
+  Partitions:
+    - VATSIM
+    - SweatBox-1
+    - SweatBox-2
+
+  # Connection timeout in seconds (optional, default: 30)
+  TimeoutSeconds: 30
+
+  # Role-based permissions for actions
+  # Define which roles can perform each action
+  # Available roles: Enroute, Approach, Flow
+  Permissions:
+    ChangeTerminalConfiguration: [Flow]
+    ChangeLandingRates: [Flow]
+    MoveFlight: [Approach, Flow]
+    ChangeFeederFixEstimate: [Enroute, Flow]
+    ManageSlots: [Flow]
+    InsertFlight: [Approach, Flow]
+    MakePending: [Enroute, Approach, Flow]
+    ChangeRunway: [Enroute, Approach, Flow]
+    ManualDelay: [Enroute, Approach, Flow]
+    MakeStable: [Enroute, Flow]
+    Recompute: [Enroute, Flow]
+    Desequence: [Enroute, Approach, Flow]
+    Resequence: [Flow]
+    RemoveFlight: [Enroute, Approach, Flow]
+    ChangeApproachType: [Enroute, Approach, Flow]
+
+# ==============================================================================
+# LABELS CONFIGURATION
+# ==============================================================================
+# Defines global colors and reusable label layouts for flight display
+
+Labels:
+
+  # ---------------------------------------------------------------------------
+  # Global Colors
+  # ---------------------------------------------------------------------------
+  # Colors shared across all airports
+  # Format: Red, Green, Blue (each 0-255)
+
+  GlobalColours:
+
+    # Flight state colors
+    States:
+      Unstable: 255, 205, 105
+      Stable: 0, 0, 96
+      SuperStable: 255, 255, 255
+      Frozen: 96, 0, 0
+      Landed: 0, 235, 235
+
+    # Control action colors (for delay indicators)
+    ControlActions:
+      Expedite: 0, 105, 0
+      NoDelay: 0, 0, 96
+      Resume: 0, 0, 96
+      SpeedReduction: 0, 235, 235
+      PathStretching: 255, 255, 255
+      Holding: 235, 235, 0
+
+    # Color for flights scheduled in deferred (future) runway modes
+    DeferredRunwayMode: 255, 255, 255
+
+  # ---------------------------------------------------------------------------
+  # Label Layouts
+  # ---------------------------------------------------------------------------
+  # Reusable label formats for different controller positions
+  # Items are arranged from innermost to outermost
+  #
+  # Available Label Item Types:
+  #
+  # Callsign: Aircraft callsign
+  # AircraftType: ICAO aircraft type code (e.g., "B738", "A388")
+  # AircraftWakeCategory: Wake turbulence category (L, M, H, J)
+  # Runway: Displays the assigned runway (e.g., "34L", "16R")
+  # ApproachType: Displays the assigned approach type
+  # LandingTime: Scheduled landing time (STA) - minutes only
+  # FeederFixTime: Scheduled feeder fix time (STA_FF) - minutes only
+  # RequiredDelay: Total delay required in minutes
+  # RemainingDelay: Remaining delay to absorb in minutes
+  # ManualDelay: Indicates whether a manual delay has been assigned.
+  #   - Additional Properties:
+  #     - ZeroDelaySymbol: Character to display when a manual delay of zero is assigned (required)
+  #     - ManualDelaySymbol: Character to display when a manual delay other than zero is assigned (required)
+  # HighSpeed: High speed indicator symbol when active
+  #   - Additional Properties:
+  #     - Symbol: Character to display when high speed descent is assigned (required)
+  # CouplingStatus: Displayed when the flight is not coupled to a radar track.
+  #   - Additional Properties:
+  #     - UncoupledSymbol: Character to display when flight is uncoupled from radar track (required)
+
+  # Common Properties for All Items:
+  #   - Type: Label item type (required)
+  #   - Width: Display width in characters (required)
+  #   - Padding: Padding in characters (optional, default: 0)
+  #   - ColourSources: Array of color sources in priority order (optional)
+  #     Available color sources: Runway, ApproachType, FeederFix, State, RunwayMode, ControlAction
+
+  Layouts:
+
+    - Identifier: Enroute
+      Items:
+      - {Type: LandingTime, Width: 2, Padding: 1}
+      - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
+      - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
+      - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
+      - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
+      - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+      - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
+      - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [ControlAction]}
+      - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+
+    - Identifier: TMA
+      Items:
+      - {Type: FeederFixTime, Width: 2, Padding: 1}
+      - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
+      - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
+      - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
+      - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
+      - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
+      - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
+      - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+
+# ==============================================================================
+# AIRPORTS CONFIGURATION
+# ==============================================================================
+# Airport-specific configuration including runway modes, trajectories, and views
+# You can define multiple airports in this section
+
+Airports:
+
+# ------------------------------------------------------------------------------
+# Example Airport: Sydney (YSSY)
+# ------------------------------------------------------------------------------
+- Identifier: YSSY
+
+  # List of feeder fixes for this airport
+  FeederFixes: [RIVET, WELSH, BOREE, YAKKA, MARLN]
+
+  # List of available runways (quote numeric-only runways like "07")
+  Runways: [34L, 34R, 16L, 16R, "07", "25"]
+
+  # ---------------------------------------------------------------------------
+  # Default Values (all optional)
+  # ---------------------------------------------------------------------------
+
+  # Default aircraft type when type cannot be determined
+  # Default: B738
+  DefaultAircraftType: B738
+
+  # Default state for pending flights (flights not yet airborne)
+  # Options: Unstable, Stable, SuperStable, Frozen
+  # Default: Stable
+  DefaultPendingFlightState: Stable
+
+  # Default state for departure flights when inserted
+  # Default: Unstable
+  DefaultDepartureFlightState: Unstable
+
+  # Default state for dummy/slot flights
+  # Default: Frozen
+  DefaultDummyFlightState: Frozen
+
+  # State to assign flights after manual controller interaction
+  # Default: Stable
+  ManualInteractionState: Stable
+
+  # ---------------------------------------------------------------------------
+  # State Transition Times (all optional)
+  # ---------------------------------------------------------------------------
+
+  # Maximum time before landing to start tracking flights (minutes)
+  # Flights further out than this are ignored
+  # Default: 120
+  FlightCreationThresholdMinutes: 120
+
+  # Minimum time a flight must remain in Unstable state (minutes)
+  # Prevents rapid state transitions
+  # Default: 5
+  MinimumUnstableMinutes: 5
+
+  # Time before feeder fix when flights become Stable (minutes)
+  # Default: 25
+  StabilityThresholdMinutes: 25
+
+  # Time before landing when flights become Frozen (minutes)
+  # Default: 15
+  FrozenThresholdMinutes: 15
+
+  # ---------------------------------------------------------------------------
+  # Flight Retention (all optional)
+  # ---------------------------------------------------------------------------
+
+  # Maximum number of landed flights to keep displayed
+  # Default: 5
+  MaxLandedFlights: 5
+
+  # Time before removing landed flights (minutes)
+  # Default: 10
+  LandedFlightTimeoutMinutes: 10
+
+  # Time before removing lost/stale flights (minutes)
+  # Default: 10
+  LostFlightTimeoutMinutes: 10
+
+  # ---------------------------------------------------------------------------
+  # Airport-Specific Colors (optional)
+  # ---------------------------------------------------------------------------
+
+  Colours:
+
+    # Runway colors (optional)
+    Runways:
+      34L: 255, 0, 0
+      34R: 0, 255, 0
+      16L: 0, 0, 255
+      16R: 255, 255, 0
+
+    # Approach type colors (optional)
+    ApproachTypes:
+      I: 255, 255, 0
+      V: 0, 255, 255
+
+    # Feeder fix colors (optional)
+    FeederFixes:
+      RIVET: 96, 0, 0
+      WELSH: 96, 0, 0
+      BOREE: 0, 235, 235
+      YAKKA: 0, 235, 235
+      MARLN: 0, 235, 235
+
+  # ---------------------------------------------------------------------------
+  # Runway Modes
+  # ---------------------------------------------------------------------------
+  # Define terminal configurations with landing rates
+
+  RunwayModes:
+
+    # Example: 34LR Independent Visual Approaches
+    - Identifier: 34IVA
+
+      # Inter-runway separation (seconds, optional, default: 0)
+      DependencyRateSeconds: 0
+
+      # Separation for runways not in this mode (seconds, optional, default: 0)
+      OffModeSeparationSeconds: 0
+
+      Runways:
+
+        # 34L configuration
+        - Identifier: 34L
+
+          # Minimum seconds between landings on this runway
+          LandingRateSeconds: 180
+
+          # Feeder fixes that prefer this runway (optional)
+          FeederFixes: [RIVET, WELSH]
+
+          # Approach type for this runway (optional)
+          # ApproachType: I
+
+        # 34R configuration
+        - Identifier: 34R
+          LandingRateSeconds: 180
+          FeederFixes: [BOREE, YAKKA, MARLN]
+
+    # Example: 34s Independent with dependency
+    - Identifier: 34I
+
+      # 60 second separation between runways within this mode
+      DependencyRateSeconds: 60
+
+      Runways:
+        - Identifier: 34L
+          LandingRateSeconds: 210
+          FeederFixes: [RIVET, WELSH]
+          ApproachType: I
+
+        - Identifier: 34R
+          LandingRateSeconds: 210
+          FeederFixes: [BOREE, YAKKA, MARLN]
+          ApproachType: I
+
+    # Example: Single runway mode
+    - Identifier: 07I
+      Runways:
+        - Identifier: "07"
+          LandingRateSeconds: 210
+
+  # ---------------------------------------------------------------------------
+  # Trajectories
+  # ---------------------------------------------------------------------------
+  # Define flight times from feeder fixes to runways for different aircraft
+  #
+  # Aircraft types: JET, NONJET, LIGHT, MEDIUM, HEAVY, SUPER, or specific ICAO type code
+  #
+  # If a trajectory is not defined for a specific combination, Maestro will calculate
+  # an average from all matching trajectories for that aircraft type. However, it's
+  # recommended to define trajectories for all combinations to ensure accuracy.
+  #
+  # Compact single-line format (recommended):
+  # - {FeederFix: BOREE, Aircraft: [JET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
+  #
+  # Optional fields:
+  #   ApproachType: Specific approach type
+  #   ApproachFix: Specific approach fix/transition
+
+  Trajectories:
+    # BOREE trajectories
+    - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
+    - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 17}
+    - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
+    - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+
+    # RIVET trajectories
+    - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 15}
+    - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
+    - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
+    - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+
+    # Continue defining trajectories for all feeder fixes and runways
+    # Recommended to define for all combinations:
+    #   - Each feeder fix (RIVET, WELSH, BOREE, YAKKA, MARLN)
+    #   - To each runway (34L, 34R, 16L, 16R, 07, 25)
+    #   - For at minimum JET and NONJET categories
+
+  # ---------------------------------------------------------------------------
+  # Departure Airports
+  # ---------------------------------------------------------------------------
+  # Define flight times from departure airports to this airport
+  # Used to calculate ETAs for departures from nearby airports.
+
+  DepartureAirports:
+
+    # Port Macquarie - Jets
+    - Identifier: YPMQ
+      Aircraft: [JET]
+      Distance: 209                   # Nautical miles (reserved for future use)
+      EstimatedFlightTimeMinutes: 44
+
+    # Port Macquarie - Non-jets
+    - Identifier: YPMQ
+      Aircraft: [NONJET]
+      Distance: 209
+      EstimatedFlightTimeMinutes: 41
+
+    # Canberra - Jets
+    - Identifier: YSCB
+      Aircraft: [JET]
+      Distance: 178
+      EstimatedFlightTimeMinutes: 40
+
+    # Canberra - Non-jets
+    - Identifier: YSCB
+      Aircraft: [NONJET]
+      Distance: 178
+      EstimatedFlightTimeMinutes: 37
+
+    # Continue for all relevant departure airports...
+
+  # ---------------------------------------------------------------------------
+  # Views
+  # ---------------------------------------------------------------------------
+  # Define display configurations for different controller positions
+
+  Views:
+
+    # Enroute controllers (feeder fix based)
+    - Identifier: GUN/BIK
+      LabelLayout: Enroute            # References label layout defined above
+      TimeWindowMinutes: 30           # Time range to display (minutes)
+      Reference: FeederFixTime        # Use feeder fix times for positioning (options: FeederFixTime, LandingTime)
+      Direction: Down                 # Timeline scrolls down (optional, default: Down, options: Up, Down)
+      Ladders:
+        # First ladder: RIVET arrivals
+        - FeederFixes: [RIVET]
+          Runways: []                  # Empty = all runways
+        # Second ladder: WELSH arrivals
+        - FeederFixes: [WELSH]
+          Runways: []
+
+    # Another enroute view
+    - Identifier: ARL/OCN
+      LabelLayout: Enroute
+      TimeWindowMinutes: 30
+      Reference: FeederFixTime
+      Ladders:
+        # Combined ladder for BOREE and YAKKA
+        - FeederFixes: [BOREE, YAKKA]
+        # Separate ladder for MARLN
+        - FeederFixes: [MARLN]
+
+    # Tower/Approach view (runway based)
+    - Identifier: RWY
+      LabelLayout: TMA
+      TimeWindowMinutes: 45
+      Reference: LandingTime           # Use landing times for positioning
+      Ladders:
+        # First ladder: 34L, 16R, and 07
+        - Runways: [34L, 16R, "07"]
+          FeederFixes: []              # Empty = all feeder fixes
+
+        # Second ladder: 34R, 16L, and 25
+        - Runways: [34R, 16L, "25"]
+          FeederFixes: []
+
+    # Flow management view
+    - Identifier: FlowManagement
+      LabelLayout: FlowManagement
+      TimeWindowMinutes: 45
+      Reference: LandingTime
+      Ladders:
+
+        # Separate ladder for each runway
+        - Runways: [34L, 16R]
+        - Runways: [34R, 16L]
+        - Runways: ["07"]
+        - Runways: ["25"]
+
+  # ---------------------------------------------------------------------------
+  # Coordination Messages
+  # ---------------------------------------------------------------------------
+
+  # Global coordination messages for general information
+  GlobalCoordinationMessages:
+    - WX Dev have commenced.
+    - Standby for configuration change.
+    - Flow Planning in progress - do not use delay times until advised.
+    - Maestro delay times accurate.
+    - Contingency - No FMP.
+    - General Holding.
+
+  # Flight-specific coordination messages
+  # Use {Callsign} placeholder for the flight's callsign
+  FlightCoordinationMessages:
+    - '{Callsign} MEDEVAC'
+    - '{Callsign} diverting'
+    - '{Callsign} request high speed descent'
+    - '{Callsign} subject to CDO'
+    - '{Callsign} priority handling requested'
+
+# ------------------------------------------------------------------------------
+# Additional airports can be added below
+# ------------------------------------------------------------------------------
+
+# Example: Melbourne (YMML) - Minimal configuration
+- Identifier: YMML
+  FeederFixes: [ARBEY, BOYSE, BOOIN, RAZZI]
+  Runways: ["09", "16", "27", "34"]
+
+  # Use defaults for most settings
+  DefaultAircraftType: B738
+
+  # Define runway modes
+  RunwayModes:
+    - Identifier: "09"
+      Runways:
+        - Identifier: "09"
+          ApproachType: A
+          LandingRateSeconds: 180
+
+    - Identifier: "16"
+      Runways:
+        - Identifier: "16"
+          ApproachType: A
+          LandingRateSeconds: 180
+
+  # Define trajectories (abbreviated example)
+  Trajectories:
+    - {FeederFix: ARBEY, Aircraft: [JET], RunwayIdentifier: "09", TimeToGoMinutes: 15}
+    - {FeederFix: ARBEY, Aircraft: [NONJET], RunwayIdentifier: "09", TimeToGoMinutes: 17}
+    # ... continue for all combinations
+
+  # Define departure airports (abbreviated example)
+  DepartureAirports:
+    - {Identifier: YSCB, Aircraft: [JET], Distance: 161, EstimatedFlightTimeMinutes: 37}
+    # ... continue for all departure airports
+
+  # Define views
+  Views:
+    - Identifier: Enroute
+      LabelLayout: Enroute
+      TimeWindowMinutes: 30
+      Reference: FeederFixTime
+      Ladders:
+        - {FeederFixes: [ARBEY, BOYSE]}
+        - {FeederFixes: [BOOIN, RAZZI]}
+
+  # Coordination messages
+  GlobalCoordinationMessages:
+    - Flow Planning in progress.
+    - Maestro delay times accurate.
+
+  FlightCoordinationMessages:
+    - '{Callsign} MEDEVAC'
+    - '{Callsign} diverting'

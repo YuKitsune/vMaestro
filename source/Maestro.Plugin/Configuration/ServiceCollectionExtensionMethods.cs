@@ -11,6 +11,6 @@ public static class ServiceCollectionExtensionMethods
             .AddSingleton(pluginConfiguration)
             .AddSingleton<ILoggingConfiguration>(pluginConfiguration.Logging)
             .AddSingleton<IAirportConfigurationProvider>(new AirportConfigurationProvider(pluginConfiguration.Airports))
-            .AddSingleton<CoordinationMessageConfiguration>(pluginConfiguration.CoordinationMessages);
+            .AddSingleton(pluginConfiguration.Labels);
     }
 }

@@ -38,12 +38,7 @@ public class ChangeRunwayModeRequestHandler(
         {
             var sequence = instance.Session.Sequence;
 
-            var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations().SingleOrDefault(c => c.Identifier == request.AirportIdentifier);
-            if (airportConfiguration == null)
-            {
-                logger.Warning("Airport configuration not found for {AirportIdentifier}.", request.AirportIdentifier);
-                return;
-            }
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
             var runwayModeConfig = airportConfiguration.RunwayModes.SingleOrDefault(rm => rm.Identifier == request.RunwayMode.Identifier);
             if (runwayModeConfig is null)

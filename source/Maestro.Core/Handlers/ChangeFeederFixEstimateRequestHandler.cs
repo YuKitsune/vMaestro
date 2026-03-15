@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Connectivity;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
@@ -13,6 +14,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeFeederFixEstimateRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
+    IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
     IMediator mediator,
     ILogger logger)
@@ -28,6 +30,8 @@ public class ChangeFeederFixEstimateRequestHandler(
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionMessage sessionMessage;
@@ -48,7 +52,7 @@ public class ChangeFeederFixEstimateRequestHandler(
 
             instance.Session.Sequence.RepositionByEstimate(flight);
             if (flight.State is State.Unstable)
-                flight.SetState(State.Stable, clock); // TODO: Make configurable
+                flight.SetState(airportConfiguration.ManualInteractionState, clock); // TODO: Make configurable
 
             sessionMessage = instance.Session.Snapshot();
         }

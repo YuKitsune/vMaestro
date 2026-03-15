@@ -518,7 +518,7 @@ public class Sequence
                     currentFlight.AircraftCategory == AircraftCategory.Jet &&
                     landingTime.IsAfter(currentFlight.LandingEstimate)
                         ? FlowControls.ReduceSpeed
-                        : FlowControls.ProfileSpeed;
+                        : FlowControls.HighSpeed;
 
                 Schedule(currentFlight, landingTime, result.Option.RunwayIdentifier, result.Option.ApproachType, flowControls);
             }
@@ -786,10 +786,7 @@ public class Sequence
             }
 
             // Runway is off-mode, create an ad-hoc option
-            var separation = runwayMode.OffModeSeparation == TimeSpan.Zero
-                ? TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds)
-                : runwayMode.OffModeSeparation;
-
+            var separation = runwayMode.OffModeSeparation;
             return [new RunwayOption(flight.AssignedRunwayIdentifier, flight.ApproachType, separation)];
         }
 

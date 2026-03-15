@@ -25,13 +25,11 @@ public class VatsysPerformanceDataLookup : IPerformanceLookup
             _ => WakeCategory.Heavy
         };
 
-        return new AircraftPerformanceData
-        {
-            TypeCode = aircraftType,
-            WakeCategory = wakeCategory,
-            AircraftCategory = performanceData.IsJet
+        return new AircraftPerformanceData(
+            aircraftType,
+            performanceData.IsJet
                 ? AircraftCategory.Jet
-                : AircraftCategory.NonJet
-        };
+                : AircraftCategory.NonJet,
+            wakeCategory);
     }
 }

@@ -13,15 +13,32 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class ManualDelayRequestHandlerTests(
-    AirportConfigurationFixture airportConfigurationFixture,
-    ClockFixture clockFixture)
+public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
 {
+    static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
+
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task WhenFlightDoesNotExist_ThrowsException()
     {
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance).Build();
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
         var handler = GetHandler(instanceManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA999", 5);
 
@@ -39,7 +56,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(15))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -68,7 +86,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -101,7 +120,8 @@ public class ManualDelayRequestHandlerTests(
             .Build();
         var originalLandingTime = flight2.LandingTime;
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -141,7 +161,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(15))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -166,8 +187,8 @@ public class ManualDelayRequestHandlerTests(
         sequence.NumberInSequence(flight2).ShouldBe(3);
 
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate);
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
-        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate));
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(AcceptanceRate));
     }
 
     [Fact]
@@ -194,7 +215,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(19))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -211,7 +233,7 @@ public class ManualDelayRequestHandlerTests(
 
         // Assert
         flight3.MaximumDelay.ShouldBe(TimeSpan.Zero);
-        flight3.TotalDelay.ShouldBeLessThan(airportConfigurationFixture.AcceptanceRate);
+        flight3.TotalDelay.ShouldBeLessThan(AcceptanceRate);
 
         // Landing order should be updated
         sequence.NumberInSequence(flight1).ShouldBe(1);
@@ -219,8 +241,8 @@ public class ManualDelayRequestHandlerTests(
         sequence.NumberInSequence(flight2).ShouldBe(3);
 
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate);
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
-        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate));
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(AcceptanceRate));
     }
 
     [Fact(Skip = "Inaccurate behaviour")]
@@ -247,7 +269,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(21))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -271,8 +294,8 @@ public class ManualDelayRequestHandlerTests(
         sequence.NumberInSequence(flight2).ShouldBe(3);
 
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate);
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
-        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate));
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(AcceptanceRate));
     }
 
     [Fact]
@@ -307,7 +330,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(19))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
 
@@ -331,9 +355,9 @@ public class ManualDelayRequestHandlerTests(
         sequence.NumberInSequence(flight3).ShouldBe(4);
 
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate);
-        flight4.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
-        flight2.LandingTime.ShouldBe(flight4.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
-        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
+        flight4.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate));
+        flight2.LandingTime.ShouldBe(flight4.LandingTime.Add(AcceptanceRate));
+        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(AcceptanceRate));
     }
 
     [Fact]
@@ -361,7 +385,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(18))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -383,8 +408,8 @@ public class ManualDelayRequestHandlerTests(
         sequence.NumberInSequence(flight2).ShouldBe(3, "flight2 should give way to flight3");
 
         flight1.LandingTime.ShouldBe(flight1.LandingEstimate);
-        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
-        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(airportConfigurationFixture.AcceptanceRate));
+        flight3.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate));
+        flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(AcceptanceRate));
     }
 
     // TODO: Assert on exception instead
@@ -401,7 +426,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -434,7 +460,8 @@ public class ManualDelayRequestHandlerTests(
             .WithLandingTime(now.AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var airportConfiguration = CreateAirportConfiguration();
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -450,7 +477,7 @@ public class ManualDelayRequestHandlerTests(
                 {
                     Identifier = "34R",
                     ApproachType = string.Empty,
-                    LandingRateSeconds = (int)airportConfigurationFixture.AcceptanceRate.TotalSeconds,
+                    LandingRateSeconds = (int)AcceptanceRate.TotalSeconds,
                     FeederFixes = []
                 }
             ]

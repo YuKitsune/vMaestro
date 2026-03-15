@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Connectivity;
+﻿using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
@@ -13,7 +14,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeRunwayRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
-    IArrivalLookup arrivalLookup,
+    IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
@@ -30,6 +31,8 @@ public class ChangeRunwayRequestHandler(
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionMessage sessionMessage;
@@ -71,7 +74,7 @@ public class ChangeRunwayRequestHandler(
 
             // Unstable flights become Stable when changing runway
             if (flight.State is State.Unstable)
-                flight.SetState(State.Stable, clock);
+                flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
             sequence.RepositionByEstimate(flight);
 
@@ -87,13 +90,12 @@ public class ChangeRunwayRequestHandler(
 
     string GetApproachType(Flight flight, string runwayIdentifier)
     {
-        var approachTypes = arrivalLookup.GetApproachTypes(
+        var approachTypes = trajectoryService.GetApproachTypes(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
             flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
             runwayIdentifier,
-            flight.AircraftType,
-            flight.AircraftCategory);
+            flight.GetPerformanceData());
 
         return approachTypes.Contains(flight.ApproachType)
             ? flight.ApproachType

@@ -13,12 +13,12 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class SwapFlightsRequestHandlerTests(
-    AirportConfigurationFixture airportConfigurationFixture,
-    ClockFixture clockFixture)
+public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
 {
-    readonly AirportConfiguration _airportConfiguration = airportConfigurationFixture.Instance;
     readonly FixedClock _clock = clockFixture.Instance;
+
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
 
     [Fact]
     public async Task WhenSwappingTwoFlights_TheirPositionsAreSwapped()
@@ -36,7 +36,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
@@ -74,7 +74,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
@@ -123,7 +123,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithTrajectory().OnRunway("34L").Returns(new Trajectory(firstTtg))
             .WithTrajectory().OnRunway("34R").Returns(new Trajectory(secondTtg));
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
@@ -155,7 +155,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(20))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
@@ -187,7 +187,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(secondFlight, firstFlight))
             .Build();
 
@@ -212,7 +212,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -237,7 +237,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -272,7 +272,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithState(State.SuperStable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
@@ -307,7 +307,7 @@ public class SwapFlightsRequestHandlerTests(
             .WithLandingEstimate(_clock.UtcNow().AddMinutes(30))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(_airportConfiguration)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(firstFlight, secondFlight, thirdFlight))
             .Build();
 
@@ -343,16 +343,20 @@ public class SwapFlightsRequestHandlerTests(
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
+        var airportConfiguration = CreateAirportConfiguration();
+        var configProvider = new AirportConfigurationProvider([airportConfiguration]);
+
         var handler = new SwapFlightsRequestHandler(
             instanceManager,
             slaveConnectionManager,
+            configProvider,
             mediator,
             _clock,
             Substitute.For<ILogger>());
@@ -371,11 +375,39 @@ public class SwapFlightsRequestHandlerTests(
         flight2.LandingTime.ShouldBe(now.AddMinutes(15), "The landing times of the flights should not have changed");
     }
 
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "MARLN", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration
+                {
+                    Identifier = "34L",
+                    LandingRateSeconds = DefaultLandingRateSeconds,
+                    FeederFixes = ["RIVET"]
+                },
+                new RunwayConfiguration
+                {
+                    Identifier = "34R",
+                    LandingRateSeconds = DefaultLandingRateSeconds,
+                    FeederFixes = ["MARLN", "BOREE"]
+                })
+            .WithTrajectory("RIVET", "34L", 15)
+            .WithTrajectory("MARLN", "34R", 15)
+            .WithTrajectory("BOREE", "34R", 15)
+            .Build();
+    }
+
     SwapFlightsRequestHandler GetHandler(IMaestroInstanceManager instanceManager)
     {
+        var airportConfiguration = CreateAirportConfiguration();
+        var configProvider = new AirportConfigurationProvider([airportConfiguration]);
+
         return new SwapFlightsRequestHandler(
             instanceManager,
             new MockLocalConnectionManager(),
+            configProvider,
             Substitute.For<MediatR.IMediator>(),
             _clock,
             Substitute.For<ILogger>());

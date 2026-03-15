@@ -64,9 +64,7 @@ public class MaestroInstanceManager(
     // TODO: Maybe extract into a factory
     MaestroInstance CreateInstance(string airportIdentifier)
     {
-        var airportConfiguration = airportConfigurationProvider
-            .GetAirportConfigurations()
-            .FirstOrDefault(a => a.Identifier == airportIdentifier);
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
         if (airportConfiguration is null)
             throw new MaestroException($"No configuration found for {airportIdentifier}");
 

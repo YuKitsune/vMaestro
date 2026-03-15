@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
@@ -11,14 +12,22 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class CreateSlotRequestHandlerTests(ClockFixture clockFixture)
 {
+    static readonly TimeSpan AcceptanceRate = TimeSpan.FromSeconds(180);
+
     [Fact]
     public async Task WhenCreatingSlot_FlightsLandingAfterTheStartTimeAreRescheduled()
     {
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = [] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -37,7 +46,7 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -66,7 +75,7 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         // Assert
         flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "QFA1 lands before slot, should remain unchanged");
         flight2.LandingTime.ShouldBe(slotEndTime, "QFA2 should land exactly at slot end time");
-        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(airportConfigurationFixture.AcceptanceRate), "QFA3 should land exactly one acceptance rate after QFA2");
+        flight3.LandingTime.ShouldBe(flight2.LandingTime.Add(AcceptanceRate), "QFA3 should land exactly one acceptance rate after QFA2");
 
         sequence.Slots.Count.ShouldBe(1, "One slot should be created");
         sequence.Slots[0].StartTime.ShouldBe(slotStartTime);
@@ -79,6 +88,12 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = [] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -92,7 +107,7 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -129,6 +144,12 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = [] })
+            .Build();
+
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
@@ -142,7 +163,7 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -172,7 +193,7 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         flight1.LandingTime.ShouldBe(originalFlight1LandingTime, "Frozen flight QFA1 should remain unchanged");
 
         // QFA2 must land after both the slot ends AND maintain separation from the frozen flight
-        var expectedFlight2LandingTime = flight1.LandingTime.Add(airportConfigurationFixture.AcceptanceRate);
+        var expectedFlight2LandingTime = flight1.LandingTime.Add(AcceptanceRate);
         flight2.LandingTime.ShouldBe(expectedFlight2LandingTime, "QFA2 should maintain separation from frozen flight QFA1");
     }
 
@@ -182,13 +203,19 @@ public class CreateSlotRequestHandlerTests(AirportConfigurationFixture airportCo
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = [] })
+            .Build();
+
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
             .WithLandingTime(now.AddMinutes(10))
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 

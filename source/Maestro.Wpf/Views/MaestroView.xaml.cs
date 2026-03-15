@@ -8,7 +8,6 @@ using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.Integrations;
-using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using MediatR;
 using Point = System.Windows.Point;
@@ -20,8 +19,7 @@ namespace Maestro.Wpf.Views;
 /// </summary>
 public partial class MaestroView
 {
-    const int LadderWidth = 24;
-    const int TickWidth = 8;
+    const int FooterHeight = 32;
     const int LineThickness = 2;
 
     readonly DispatcherTimer _dispatcherTimer;
@@ -55,13 +53,23 @@ public partial class MaestroView
 
         Loaded += ControlLoaded;
         SizeChanged += OnSizeChanged;
+
+        // Subscribe to property changes that affect rendering
+        maestroViewModel.PropertyChanged += (sender, args) =>
+        {
+            if (args.PropertyName == nameof(MaestroViewModel.ScrollOffset) ||
+                args.PropertyName == nameof(MaestroViewModel.SelectedView) ||
+                args.PropertyName == nameof(MaestroViewModel.HorizontalScrollOffset))
+            {
+                DrawTimeline();
+            }
+        };
     }
 
     public MaestroViewModel ViewModel => (MaestroViewModel)DataContext;
 
     void TimerTick(object sender, EventArgs args)
     {
-        ClockText.Text = ReferenceTime.ToString("HH:mm:ss");
         DrawTimelineIfAllowed();
     }
 
@@ -95,28 +103,161 @@ public partial class MaestroView
         DrawTimeline();
     }
 
-    LadderPosition? GetLadderPositionFor(FlightMessage flight)
+    List<int> GetMatchingLadders(FlightMessage flight)
     {
-        var searchTerm = ViewModel.SelectedView.ViewMode switch
+        var view = (ViewConfiguration)ViewModel.SelectedView;
+        var matching = new List<int>();
+
+        for (int i = 0; i < view.Ladders.Length; i++)
         {
-            ViewMode.Enroute => flight.FeederFixIdentifier,
-            ViewMode.Approach => flight.AssignedRunwayIdentifier,
-            _ => throw new ArgumentOutOfRangeException($"Unexpected LadderReferenceTime: {ViewModel.SelectedView.ViewMode}")
-        };
+            var ladder = view.Ladders[i];
 
-        if (string.IsNullOrEmpty(searchTerm))
-            return null;
+            // Empty arrays match all
+            bool matchesRunway = ladder.Runways.Length == 0 ||
+                ladder.Runways.Contains(flight.AssignedRunwayIdentifier);
+            bool matchesFeeder = ladder.FeederFixes.Length == 0 ||
+                (flight.FeederFixIdentifier != null && ladder.FeederFixes.Contains(flight.FeederFixIdentifier));
 
-        if (ViewModel.SelectedView.LeftLadder.Contains(searchTerm))
-            return LadderPosition.Left;
+            if (matchesRunway && matchesFeeder)
+            {
+                matching.Add(i);
+            }
+        }
 
-        if (ViewModel.SelectedView.RightLadder.Contains(searchTerm))
-            return LadderPosition.Right;
+        return matching;
+    }
+
+    LadderElement? GetClickedLadder(double clickX, LayoutInfo layout)
+    {
+        // Find which ladder the click position is in
+        foreach (var element in layout.VisualElements.OfType<LadderElement>())
+        {
+            if (clickX >= element.X && clickX <= element.X + element.Width)
+            {
+                return element;
+            }
+        }
 
         return null;
     }
 
     double MinuteHeight(int timeHorizonMinutes) => LadderCanvas.ActualHeight / timeHorizonMinutes;
+
+    double MeasureCharacterWidth(string character)
+    {
+        var textBlock = new TextBlock
+        {
+            FontFamily = Theme.FontFamily,
+            FontSize = Theme.FontSize,
+            Text = character
+        };
+
+        textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return textBlock.DesiredSize.Width;
+    }
+
+    LayoutInfo CalculateLadderLayout(ViewConfiguration view, LabelLayoutConfiguration labelLayout, double canvasWidth)
+    {
+        // Calculate character width by measuring '_'
+        double characterWidth = MeasureCharacterWidth("_");
+
+        // Calculate ladder width from label items (character count * character width)
+        int totalCharacters = labelLayout.Items.Sum(item => item.Width + item.Padding);
+        // Add padding from UserControl and margin from ItemsControl in FlightLabelView
+        // UserControl.Padding + ItemsControl.Margin = 2 * BeveledBorderThickness on each side
+        double horizontalSpacing = 2 * (Theme.BeveledBorderThickness.Left + Theme.BeveledBorderThickness.Right);
+        double ladderWidth = totalCharacters * characterWidth + horizontalSpacing;
+
+        const double tickWidth = 8;
+        const double timelineWidth = 24;
+        const double gapWidth = 24;
+
+        // Calculate horizontal offset based on HorizontalScrollOffset
+        // Each scroll unit represents 2 ladders (one complete pattern)
+        // Pattern: Ladder 0 → Ticks → Timeline → Ticks → Ladder 1 → Gap → Ladder 2 → ...
+        int laddersToSkip = ViewModel.HorizontalScrollOffset * 2;
+        double horizontalOffset = ViewModel.HorizontalScrollOffset * (2 * ladderWidth + 2 * tickWidth + timelineWidth + gapWidth);
+
+        // Build visual elements in order: Ladder -> Ticks -> Timeline -> Ticks -> Ladder -> ...
+        var elements = new List<VisualElement>();
+        double xPos = 0;
+
+        for (int i = 0; i < view.Ladders.Length; i++)
+        {
+            // Skip ladders that are scrolled out of view
+            if (i < laddersToSkip)
+            {
+                // Still need to advance xPos to maintain correct spacing for later calculations
+                xPos += ladderWidth;
+
+                if (i % 2 == 0)
+                {
+                    xPos += tickWidth + timelineWidth + tickWidth;
+                }
+                else if (i + 1 < view.Ladders.Length)
+                {
+                    xPos += gapWidth;
+                }
+                continue;
+            }
+
+            // Add ladder with offset applied
+            elements.Add(new LadderElement
+            {
+                Index = i,
+                X = xPos - horizontalOffset,
+                Width = ladderWidth,
+                Config = view.Ladders[i]
+            });
+            xPos += ladderWidth;
+
+            // Only even-indexed ladders (0, 2, 4...) have ticks and timeline after them
+            // Pattern: Ladder 0 → Ticks 0 → Timeline → Ticks 1 → Ladder 1 → Ladder 2 → Ticks 2 → Timeline → ...
+            if (i % 2 == 0)
+            {
+                // Add ticks to right of even-indexed ladder
+                elements.Add(new TicksElement
+                {
+                    X = xPos - horizontalOffset,
+                    Width = tickWidth,
+                    LadderIndex = i
+                });
+                xPos += tickWidth;
+
+                // Add timeline after even-indexed ladder
+                elements.Add(new TimelineElement
+                {
+                    X = xPos - horizontalOffset,
+                    Width = timelineWidth,
+                    LeftLadderIndex = i,
+                    RightLadderIndex = i + 1 < view.Ladders.Length ? i + 1 : -1
+                });
+                xPos += timelineWidth;
+
+                // Add ticks to left of next ladder if it exists
+                if (i + 1 < view.Ladders.Length)
+                {
+                    elements.Add(new TicksElement
+                    {
+                        X = xPos - horizontalOffset,
+                        Width = tickWidth,
+                        LadderIndex = i + 1
+                    });
+                    xPos += tickWidth;
+                }
+            }
+            else
+            {
+                // Odd-indexed ladders (1, 3, 5...) have a gap after them if not the last ladder
+                if (i + 1 < view.Ladders.Length)
+                {
+                    xPos += gapWidth;
+                }
+            }
+        }
+
+        return new LayoutInfo { VisualElements = elements };
+    }
 
     void RedrawLadder(DateTimeOffset referenceTime)
     {
@@ -130,22 +271,128 @@ public partial class MaestroView
             }
         }
 
-        var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
+        var canvasHeight = LadderCanvas.ActualHeight;
+
+        // Get current view first to check direction
+        var view = ViewModel.SelectedView;
+        var labelLayout = ViewModel.GetLabelLayout(view);
+
+        if (labelLayout == null)
+        {
+            // TODO: Display an error
+            //  Ideally before the plugin starts.
+            return;
+        }
+
+        // Reserve space for footer (reference boxes and filter text)
+        var ladderHeight = canvasHeight - FooterHeight;
 
         // Prevent rendering when canvas is too small to avoid infinite loop hangs
-        // MinuteHeight() would return a value approaching 0, causing while loops to iterate excessively
         const double minCanvasSize = 10.0;
-        if (canvasHeight < minCanvasSize || canvasWidth < minCanvasSize)
+        if (ladderHeight < minCanvasSize || canvasWidth < minCanvasSize)
         {
             return;
         }
 
-        var middlePoint = canvasWidth / 2;
-        var ladderLeftPosition = middlePoint - LadderWidth / 2 - LineThickness;
-        var ladderRightPosition = middlePoint + LadderWidth / 2 + LineThickness;
+        var layout = CalculateLadderLayout(view, labelLayout, canvasWidth);
 
-        var leftLine = new BeveledLine
+        // Calculate ladder offset based on direction
+        var ladderYOffset = view.Direction == TimelineDirection.Up ? FooterHeight : 0;
+
+        // Draw all visual elements using ladderHeight for the drawing area
+        foreach (var element in layout.VisualElements)
+        {
+            switch (element)
+            {
+                case TicksElement ticks:
+                    DrawTicks(ticks, ladderHeight, referenceTime, view.TimeWindowMinutes, view.Direction, ladderYOffset);
+                    break;
+
+                case TimelineElement timeline:
+                    DrawTimeline(timeline, ladderHeight, referenceTime, view.TimeWindowMinutes, view.Direction, ladderYOffset);
+                    break;
+            }
+        }
+
+        DrawSlots(referenceTime, view, layout, ladderHeight, ladderYOffset);
+        DrawFooter(referenceTime, view, canvasWidth, canvasHeight, layout);
+    }
+
+    void DrawFooter(
+        DateTimeOffset referenceTime,
+        ViewConfiguration view,
+        double canvasWidth,
+        double canvasHeight,
+        LayoutInfo layout)
+    {
+        DrawFooterBackground(view.Direction, canvasWidth);
+        foreach (var element in layout.VisualElements.OfType<TimelineElement>())
+        {
+            DrawTimeReferenceBox(element, referenceTime, view.Direction);
+            DrawLadderFooter(element, view, view.Direction, canvasHeight);
+        }
+    }
+
+    void DrawFooterBackground(TimelineDirection direction, double canvasWidth)
+    {
+        const double footerHeight = 32;
+
+        var background = new System.Windows.Shapes.Rectangle
+        {
+            Width = canvasWidth,
+            Height = footerHeight,
+            Fill = Theme.BackgroundColor
+        };
+
+        // Position at top when Direction is Up, bottom when Direction is Down
+        if (direction == TimelineDirection.Up)
+        {
+            background.Loaded += PositionOnCanvas(
+                left: 0,
+                top: 0);
+        }
+        else
+        {
+            background.Loaded += PositionOnCanvas(
+                left: 0,
+                bottom: 0);
+        }
+
+        LadderCanvas.Children.Add(background);
+    }
+
+    void DrawTicks(TicksElement ticks, double canvasHeight, DateTimeOffset referenceTime, int timeWindowMinutes, TimelineDirection direction, double ladderYOffset)
+    {
+        // Draw a tick for every minute
+        var nextMinute = referenceTime.Add(new TimeSpan(0, 0, 60 - referenceTime.Second));
+        var yOffset = GetYOffsetForTime(referenceTime, nextMinute, timeWindowMinutes);
+
+        while (yOffset <= canvasHeight)
+        {
+            var yPosition = GetYPositionForOffset(yOffset, canvasHeight, direction) + ladderYOffset;
+
+            var tick = new BeveledLine
+            {
+                Orientation = Orientation.Horizontal,
+                Height = LineThickness,
+                Width = ticks.Width,
+            };
+
+            tick.Loaded += PositionOnCanvas(
+                x: ticks.X + ticks.Width / 2,
+                y: yPosition);
+
+            LadderCanvas.Children.Add(tick);
+
+            yOffset += MinuteHeight(timeWindowMinutes);
+        }
+    }
+
+    void DrawTimeline(TimelineElement timeline, double canvasHeight, DateTimeOffset referenceTime, int timeWindowMinutes, TimelineDirection direction, double ladderYOffset)
+    {
+        // Draw left border
+        var leftBorder = new BeveledLine
         {
             Orientation = Orientation.Vertical,
             Width = LineThickness,
@@ -153,14 +400,14 @@ public partial class MaestroView
             ClipToBounds = true,
         };
 
-        leftLine.Loaded += PositionOnCanvas(
-            top: 0,
-            bottom: canvasHeight,
-            x: ladderLeftPosition);
+        leftBorder.Loaded += PositionOnCanvas(
+            top: ladderYOffset,
+            x: timeline.X);
 
-        LadderCanvas.Children.Add(leftLine);
+        LadderCanvas.Children.Add(leftBorder);
 
-        var rightLine = new BeveledLine
+        // Draw right border
+        var rightBorder = new BeveledLine
         {
             Orientation = Orientation.Vertical,
             Width = LineThickness,
@@ -169,138 +416,252 @@ public partial class MaestroView
             Flipped = true,
         };
 
-        rightLine.Loaded += PositionOnCanvas(
-            top: 0,
-            bottom: canvasHeight,
-            x: ladderRightPosition);
+        rightBorder.Loaded += PositionOnCanvas(
+            top: ladderYOffset,
+            x: timeline.X + timeline.Width);
 
-        LadderCanvas.Children.Add(rightLine);
+        LadderCanvas.Children.Add(rightBorder);
 
-        // Draw a tick for every minute
-        var nextMinute = referenceTime.Add(new TimeSpan(0, 0, 60 - referenceTime.Second));
-        var yOffset = GetYOffsetForTime(referenceTime, nextMinute);
-        while (yOffset <= canvasHeight)
-        {
-            var yPosition = canvasHeight - yOffset;
-
-            var leftTickXPosition = ladderLeftPosition - LineThickness - TickWidth / 2;
-            var rightTickXPosition = ladderRightPosition + LineThickness + TickWidth / 2;
-
-            var leftTick = new BeveledLine
-            {
-                Orientation = Orientation.Horizontal,
-                Height = LineThickness,
-                Width = TickWidth
-            };
-            leftTick.Loaded += PositionOnCanvas(
-                x: leftTickXPosition,
-                y: yPosition);
-            LadderCanvas.Children.Add(leftTick);
-
-            var rightTick = new BeveledLine
-            {
-                Orientation = Orientation.Horizontal,
-                Height = LineThickness,
-                Width = TickWidth
-            };
-
-            rightTick.Loaded += PositionOnCanvas(
-                x: rightTickXPosition,
-                y: yPosition);
-            LadderCanvas.Children.Add(rightTick);
-
-            yOffset += MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes);
-        }
-
-        // At each 5-minute interval, draw text with 2-digit minutes
+        // Draw 5-minute markers
         var nextTime = GetNearest5Minutes(referenceTime);
-        yOffset = GetYOffsetForTime(referenceTime, nextTime);
+        var yOffset = GetYOffsetForTime(referenceTime, nextTime, timeWindowMinutes);
+
         while (yOffset <= canvasHeight)
         {
-            var yPosition = canvasHeight - yOffset;
+            var yPosition = GetYPositionForOffset(yOffset, canvasHeight, direction) + ladderYOffset;
             var text = new TextBlock
             {
                 Text = nextTime.Minute.ToString("00")
             };
 
             text.Loaded += PositionOnCanvas(
-                x: middlePoint,
+                x: timeline.X + timeline.Width / 2,
                 y: yPosition);
 
             LadderCanvas.Children.Add(text);
 
             nextTime = nextTime.AddMinutes(5);
-            yOffset += MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes) * 5;
+            yOffset += MinuteHeight(timeWindowMinutes) * 5;
         }
-
-        // Draw slots
-        DrawSlots(referenceTime);
     }
 
-    void DrawSlots(DateTimeOffset currentTime)
+    void DrawTimeReferenceBox(TimelineElement timeline, DateTimeOffset referenceTime, TimelineDirection direction)
     {
-        // Slots are only drawn in Approach mode
-        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
-            return;
+        // Draw reference time using BeveledBorder (like V1)
+        const double refBoxWidth = 80;
 
-        var canvasHeight = LadderCanvas.ActualHeight;
-        var canvasWidth = LadderCanvas.ActualWidth;
-        var middlePoint = canvasWidth / 2;
-        var ladderLeftPosition = middlePoint - LadderWidth / 2 - LineThickness;
-        var ladderRightPosition = middlePoint + LadderWidth / 2 + LineThickness;
+        var refTimeText = new TextBlock
+        {
+            Text = referenceTime.ToString("HH:mm:ss"),
+            TextAlignment = TextAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = ViewModel.IsScrolling ? Theme.InteractiveTextColor : Theme.GenericTextColor
+        };
+
+        var border = new BeveledBorder
+        {
+            Width = refBoxWidth,
+            Height = 32,
+            BevelType = BevelType.Outline,
+            BorderThickness = Theme.BeveledBorderThickness,
+            Child = refTimeText
+        };
+
+        // Position at top when Direction is Up, bottom when Direction is Down
+        if (direction == TimelineDirection.Up)
+        {
+            border.Loaded += PositionOnCanvas(
+                x: timeline.X + timeline.Width / 2,
+                top: 0);
+        }
+        else
+        {
+            border.Loaded += PositionOnCanvas(
+                x: timeline.X + timeline.Width / 2,
+                bottom: 0);
+        }
+
+        LadderCanvas.Children.Add(border);
+    }
+
+    void DrawLadderFooter(TimelineElement timeline, ViewConfiguration view, TimelineDirection direction, double canvasHeight)
+    {
+        // Draw info for both left and right ladders if they exist
+        if (timeline.LeftLadderIndex >= 0 && timeline.LeftLadderIndex < view.Ladders.Length)
+        {
+            DrawLadderInfo(timeline.LeftLadderIndex, view, timeline, isLeftLadder: true, direction, canvasHeight);
+        }
+
+        if (timeline.RightLadderIndex >= 0 && timeline.RightLadderIndex < view.Ladders.Length)
+        {
+            DrawLadderInfo(timeline.RightLadderIndex, view, timeline, isLeftLadder: false, direction, canvasHeight);
+        }
+    }
+
+    void DrawLadderInfo(int ladderIndex, ViewConfiguration view, TimelineElement timeline, bool isLeftLadder, TimelineDirection direction, double canvasHeight)
+    {
+        var ladder = view.Ladders[ladderIndex];
+
+        // Format filter text
+        var feeders = ladder.FeederFixes.Length == 0
+            ? "All Feeders"
+            : string.Join(", ", ladder.FeederFixes);
+
+        var runways = ladder.Runways.Length == 0
+            ? "All Runways"
+            : string.Join(", ", ladder.Runways);
+
+        // Timeline reference box is wider than timeline
+        const double refBoxWidth = 80;
+        double refBoxCenter = timeline.X + (timeline.Width / 2);
+
+        if (isLeftLadder)
+        {
+            // Even-indexed ladder: Filter text on LEFT of ref box, right-aligned
+            double textX = refBoxCenter - (refBoxWidth / 2) - 10;
+
+            var runwayText = new TextBlock
+            {
+                Text = runways,
+                TextAlignment = TextAlignment.Right,
+                Foreground = Theme.GenericTextColor
+            };
+
+            var feederText = new TextBlock
+            {
+                Text = feeders,
+                TextAlignment = TextAlignment.Right,
+                Foreground = Theme.GenericTextColor
+            };
+
+            if (direction == TimelineDirection.Up)
+            {
+                runwayText.Loaded += PositionOnCanvas(
+                    right: LadderCanvas.ActualWidth - textX,
+                    top: 2);
+                feederText.Loaded += PositionOnCanvas(
+                    right: LadderCanvas.ActualWidth - textX,
+                    top: 17);
+            }
+            else
+            {
+                runwayText.Loaded += PositionOnCanvas(
+                    right: LadderCanvas.ActualWidth - textX,
+                    bottom: 17);
+                feederText.Loaded += PositionOnCanvas(
+                    right: LadderCanvas.ActualWidth - textX,
+                    bottom: 2);
+            }
+
+            LadderCanvas.Children.Add(runwayText);
+            LadderCanvas.Children.Add(feederText);
+        }
+        else
+        {
+            // Odd-indexed ladder: Filter text on RIGHT of ref box, left-aligned
+            double textX = refBoxCenter + (refBoxWidth / 2) + 10;
+
+            var runwayText = new TextBlock
+            {
+                Text = runways,
+                TextAlignment = TextAlignment.Left,
+                Foreground = Theme.GenericTextColor
+            };
+
+            var feederText = new TextBlock
+            {
+                Text = feeders,
+                TextAlignment = TextAlignment.Left,
+                Foreground = Theme.GenericTextColor
+            };
+
+            if (direction == TimelineDirection.Up)
+            {
+                runwayText.Loaded += PositionOnCanvas(
+                    left: textX,
+                    top: 2);
+                feederText.Loaded += PositionOnCanvas(
+                    left: textX,
+                    top: 17);
+            }
+            else
+            {
+                runwayText.Loaded += PositionOnCanvas(
+                    left: textX,
+                    bottom: 17);
+                feederText.Loaded += PositionOnCanvas(
+                    left: textX,
+                    bottom: 2);
+            }
+
+            LadderCanvas.Children.Add(runwayText);
+            LadderCanvas.Children.Add(feederText);
+        }
+    }
+
+    void DrawSlots(DateTimeOffset currentTime, ViewConfiguration view, LayoutInfo layout, double ladderHeight, double ladderYOffset)
+    {
+        // Slots are only drawn when the view uses LandingTimes
+        if (view.Reference != LadderReference.LandingTime)
+            return;
 
         foreach (var slot in ViewModel.Slots)
         {
             // Calculate slot position
-            var startYOffset = GetYOffsetForTime(currentTime, slot.StartTime);
-            var endYOffset = GetYOffsetForTime(currentTime, slot.EndTime);
+            var startYOffset = GetYOffsetForTime(currentTime, slot.StartTime, view.TimeWindowMinutes);
+            var endYOffset = GetYOffsetForTime(currentTime, slot.EndTime, view.TimeWindowMinutes);
 
             // Only draw slots that are visible on the timeline
-            if (endYOffset < 0 || startYOffset > canvasHeight)
+            if (endYOffset < 0 || startYOffset > ladderHeight)
                 continue;
 
-            var startYPosition = canvasHeight - startYOffset;
-            var endYPosition = canvasHeight - endYOffset;
+            var startYPosition = GetYPositionForOffset(startYOffset, ladderHeight, view.Direction) + ladderYOffset;
+            var endYPosition = GetYPositionForOffset(endYOffset, ladderHeight, view.Direction) + ladderYOffset;
             var slotHeight = Math.Abs(startYPosition - endYPosition);
-
-            // Determine which side(s) of the ladder to draw the slot on
-            var drawOnLeft = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedView.LeftLadder);
-            var drawOnRight = ShouldDrawSlotOnSide(slot.RunwayIdentifiers, ViewModel.SelectedView.RightLadder);
-
-            var slotWidth = TickWidth;
             var topY = Math.Min(startYPosition, endYPosition);
-            var rectXPosition = drawOnLeft
-                ? ladderLeftPosition - LineThickness - slotWidth / 2
-                : ladderRightPosition + LineThickness + slotWidth / 2;
 
-            var rectangle = new System.Windows.Shapes.Rectangle
+            // Find which ladders this slot should be drawn on
+            for (int i = 0; i < view.Ladders.Length; i++)
             {
-                Width = slotWidth,
-                Height = slotHeight,
-                Fill = Theme.UnstableColor,
-                Opacity = 1,
-                Cursor = Cursors.Hand
-            };
+                var ladder = view.Ladders[i];
 
-            rectangle.MouseLeftButtonDown += (_, args) =>
-            {
-                ViewModel.ShowSlotWindow(slot);
-                args.Handled = true;
-            };
+                // Check if slot's runways match this ladder's filter
+                // Draw if ladder has no filter OR if any of the slot's runways are in the ladder's filter
+                bool shouldDraw = ladder.Runways.Length == 0 ||
+                    slot.RunwayIdentifiers.Any(slotRunway => ladder.Runways.Contains(slotRunway));
 
-            rectangle.Loaded += PositionOnCanvas(
-                x: rectXPosition,
-                top: topY);
+                if (!shouldDraw)
+                    continue;
 
-            LadderCanvas.Children.Add(rectangle);
-        }
+                // Find the TicksElement for this ladder
+                var ticksElement = layout.VisualElements
+                    .OfType<TicksElement>()
+                    .FirstOrDefault(t => t.LadderIndex == i);
 
-        return;
+                if (ticksElement == null)
+                    continue;
 
-        bool ShouldDrawSlotOnSide(string[] slotRunways, string[] sideRunways)
-        {
-            // Check if all slot's runways are on this side of the ladder
-            return slotRunways.All(sideRunways.Contains);
+                var rectangle = new System.Windows.Shapes.Rectangle
+                {
+                    Width = ticksElement.Width,
+                    Height = slotHeight,
+                    Fill = Theme.UnstableColor,
+                    Opacity = 1,
+                    Cursor = Cursors.Hand
+                };
+
+                rectangle.MouseLeftButtonDown += (_, args) =>
+                {
+                    ViewModel.ShowSlotWindow(slot);
+                    args.Handled = true;
+                };
+
+                rectangle.Loaded += PositionOnCanvas(
+                    x: ticksElement.X + ticksElement.Width / 2,
+                    top: topY);
+
+                LadderCanvas.Children.Add(rectangle);
+            }
         }
     }
 
@@ -341,9 +702,19 @@ public partial class MaestroView
         };
     }
 
-    double GetYOffsetForTime(DateTimeOffset currentTime, DateTimeOffset nextTime)
+    double GetYOffsetForTime(DateTimeOffset currentTime, DateTimeOffset nextTime, int timeWindowMinutes)
     {
-        return (nextTime - currentTime).TotalMinutes * MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes);
+        return (nextTime - currentTime).TotalMinutes * MinuteHeight(timeWindowMinutes);
+    }
+
+    double GetYPositionForOffset(double yOffset, double canvasHeight, TimelineDirection direction)
+    {
+        return direction switch
+        {
+            TimelineDirection.Up => yOffset,
+            TimelineDirection.Down => canvasHeight - yOffset,
+            _ => yOffset
+        };
     }
 
     DateTimeOffset GetNearest5Minutes(DateTimeOffset currentTime)
@@ -378,9 +749,26 @@ public partial class MaestroView
     DateTimeOffset GetTimeForYOffset(DateTimeOffset referenceTime, double yOffset)
     {
         // Convert the Y offset back to a time
-        var minutes = yOffset / MinuteHeight(ViewModel.SelectedView.TimeHorizonMinutes);
+        var minutes = yOffset / MinuteHeight(ViewModel.SelectedView.TimeWindowMinutes);
         var newTime = referenceTime.AddMinutes(minutes);
         return newTime;
+    }
+
+    DateTimeOffset GetTimeForClickPosition(double clickY)
+    {
+        var canvasHeight = LadderCanvas.ActualHeight;
+        var view = ViewModel.SelectedView;
+
+        const double footerHeight = 32;
+        var ladderHeight = canvasHeight - footerHeight;
+        var ladderYOffset = view.Direction == TimelineDirection.Up ? footerHeight : 0;
+
+        var adjustedY = clickY - ladderYOffset;
+        var yOffset = view.Direction == TimelineDirection.Up
+            ? adjustedY
+            : ladderHeight - adjustedY;
+
+        return GetTimeForYOffset(ReferenceTime, yOffset);
     }
 
     void OnCanvasLeftClick(object sender, MouseButtonEventArgs e)
@@ -389,16 +777,18 @@ public partial class MaestroView
         if (ViewModel.SelectedFlight != null)
         {
             var clickPosition = e.GetPosition(LadderCanvas);
-            var canvasHeight = LadderCanvas.ActualHeight;
             var canvasWidth = LadderCanvas.ActualWidth;
-            var yOffset = canvasHeight - clickPosition.Y;
-            var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
+            var clickTime = GetTimeForClickPosition(clickPosition.Y);
 
-            // Determine which side of the ladder was clicked to get the correct runways
-            var middlePoint = canvasWidth / 2;
-            var filterItems = clickPosition.X < middlePoint
-                ? ViewModel.SelectedView.LeftLadder
-                : ViewModel.SelectedView.RightLadder;
+            // Get the clicked ladder's runway filters
+            var view = ViewModel.SelectedView;
+            var labelLayout = ViewModel.GetLabelLayout(view);
+            var layout = CalculateLadderLayout(view, labelLayout!, canvasWidth);
+
+            var clickedLadder = GetClickedLadder(clickPosition.X, layout);
+            var filterItems = clickedLadder != null && clickedLadder.Index < view.Ladders.Length
+                ? view.Ladders[clickedLadder.Index].Runways
+                : Array.Empty<string>();
 
             // Move the selected flight to the clicked position
             ViewModel.MoveFlightWithoutConfirmationCommand.Execute(new MoveFlightRequest(
@@ -433,7 +823,7 @@ public partial class MaestroView
         }
 
         // No context menu in Enroute mode
-        if (ViewModel.SelectedView.ViewMode == ViewMode.Enroute)
+        if (ViewModel.SelectedView.Reference == LadderReference.FeederFixTime)
         {
             _suppressContextMenu = true;
         }
@@ -452,7 +842,7 @@ public partial class MaestroView
         if (clickData is null)
             return;
 
-        if (clickData.ViewMode == ViewMode.Enroute)
+        if (clickData.Reference == LadderReference.FeederFixTime)
             return;
 
         ViewModel.ShowSlotWindow(
@@ -472,7 +862,7 @@ public partial class MaestroView
         if (clickData is null)
             return;
 
-        if (clickData.ViewMode == ViewMode.Enroute)
+        if (clickData.Reference == LadderReference.FeederFixTime)
             return;
 
         var options = new ExactInsertionOptions(clickData.ClickTime, clickData.FilterItems);
@@ -491,29 +881,32 @@ public partial class MaestroView
 
         // Use the stored right-click position to determine the time
         var mousePosition = _contextMenuPosition.Value;
-        var canvasHeight = canvas.ActualHeight;
-        var yOffset = canvasHeight - mousePosition.Y;
-        var clickTime = GetTimeForYOffset(ReferenceTime, yOffset);
+        var clickTime = GetTimeForClickPosition(mousePosition.Y);
 
-        // Determine which side of the ladder was clicked to get the correct runways
+        // Get the clicked ladder's runway filters
+        var view = ViewModel.SelectedView;
+        var labelLayout = ViewModel.GetLabelLayout(view);
+
+        if (labelLayout == null)
+            return null;
+
         var canvasWidth = canvas.ActualWidth;
-        var middlePoint = canvasWidth / 2;
+        var layout = CalculateLadderLayout(view, labelLayout, canvasWidth);
 
-        // If the user right-clicked on the left side, we insert a flight for the left ladder
-        // If the user right-clicked on the right side, we insert a flight for the right ladder
-        var filterItems = mousePosition.X < middlePoint
-            ? ViewModel.SelectedView.LeftLadder
-            : ViewModel.SelectedView.RightLadder;
+        var clickedLadder = GetClickedLadder(mousePosition.X, layout);
+        var filterItems = clickedLadder != null && clickedLadder.Index < view.Ladders.Length
+            ? view.Ladders[clickedLadder.Index].Runways
+            : Array.Empty<string>();
 
         return new ClickData(
             clickTime,
-            ViewModel.SelectedView.ViewMode,
+            view.Reference,
             filterItems);
     }
 
     record ClickData(
         DateTimeOffset ClickTime,
-        ViewMode ViewMode,
+        LadderReference Reference,
         string[] FilterItems);
 
     void OnFlightLabelMouseDown(object sender, MouseButtonEventArgs e, FlightMessage flight)
@@ -521,8 +914,8 @@ public partial class MaestroView
         if (sender is not FlightLabelView flightLabel)
             return;
 
-        // Only handle mouse down in Approach mode
-        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
+        // Only handle mouse up when view is referenced by STA
+        if (ViewModel.SelectedView.Reference != LadderReference.LandingTime)
             return;
 
         if (_isDragging)
@@ -552,8 +945,8 @@ public partial class MaestroView
         if (sender is not FlightLabelView flightLabel)
             return;
 
-        // Only handle mouse move in Approach mode
-        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
+        // Only handle mouse up when view is referenced by STA
+        if (ViewModel.SelectedView.Reference != LadderReference.LandingTime)
             return;
 
         if (_draggingFlightLabel != flightLabel || e.LeftButton != MouseButtonState.Pressed)
@@ -581,8 +974,8 @@ public partial class MaestroView
         if (sender is not FlightLabelView flightLabel)
             return;
 
-        // Only handle mouse up in Approach mode
-        if (ViewModel.SelectedView.ViewMode != ViewMode.Approach)
+        // Only handle mouse up when view is referenced by STA
+        if (ViewModel.SelectedView.Reference != LadderReference.LandingTime)
             return;
 
         if (_draggingFlightLabel != flightLabel)
@@ -594,26 +987,40 @@ public partial class MaestroView
         {
             // This was a drag operation - move the flight
             var finalTop = Canvas.GetTop(flightLabel);
-            var canvasHeight = LadderCanvas.ActualHeight;
-            var newYOffset = canvasHeight - finalTop - (flightLabel.ActualHeight/2);
-            var newTime = GetTimeForYOffset(ReferenceTime, newYOffset);
+            var centerY = finalTop + (flightLabel.ActualHeight / 2);
+            var newTime = GetTimeForClickPosition(centerY);
 
             // Get the flight from the flight label's data context
             if (flightLabel.DataContext is FlightLabelViewModel flightLabelViewModel)
             {
                 var flight = flightLabelViewModel.FlightViewModel;
-                var ladderPos = GetLadderPositionFor(flight);
-                var filterItems = ladderPos switch
+                var view = ViewModel.SelectedView;
+
+                // Find which ladder this flight label belongs to by looking up in the dictionary
+                var ladderIndex = -1;
+                foreach (var kvp in _flightLabels)
                 {
-                    LadderPosition.Left => ViewModel.SelectedView.LeftLadder,
-                    LadderPosition.Right => ViewModel.SelectedView.RightLadder,
-                    _ => []
-                };
+                    if (kvp.Value == flightLabel)
+                    {
+                        // Key format is "{callsign}_{ladderIndex}"
+                        var parts = kvp.Key.Split('_');
+                        if (parts.Length == 2 && int.TryParse(parts[1], out var index))
+                        {
+                            ladderIndex = index;
+                            break;
+                        }
+                    }
+                }
+
+                // Get runway filters from the ladder configuration
+                var runwayFilters = ladderIndex >= 0 && ladderIndex < view.Ladders.Length
+                    ? view.Ladders[ladderIndex].Runways
+                    : Array.Empty<string>();
 
                 ViewModel.MoveFlightWithConfirmationCommand.Execute(new MoveFlightRequest(
                     ViewModel.AirportIdentifier,
                     flight.Callsign,
-                    filterItems,
+                    runwayFilters,
                     newTime
                 ));
 
@@ -712,183 +1119,179 @@ public partial class MaestroView
 
     void UpdateLabels(DateTimeOffset referenceTime)
     {
-        var canvasHeight = LadderCanvas.ActualHeight;
         var canvasWidth = LadderCanvas.ActualWidth;
+        var canvasHeight = LadderCanvas.ActualHeight;
+
+        // Reserve space at bottom for footer
+        const double footerHeight = 32;
+        var ladderHeight = canvasHeight - footerHeight;
 
         // Prevent rendering when canvas is too small
         const double minCanvasSize = 10.0;
-        if (canvasHeight < minCanvasSize || canvasWidth < minCanvasSize)
+        if (ladderHeight < minCanvasSize || canvasWidth < minCanvasSize)
         {
             return;
         }
 
-        var middlePoint = canvasWidth / 2;
+        var view = ViewModel.SelectedView;
+        var labelLayout = ViewModel.GetLabelLayout(view);
+
+        if (labelLayout == null)
+        {
+            // Fall back to V1 if no label layout
+            return;
+        }
+
+        var layout = CalculateLadderLayout(view, labelLayout, canvasWidth);
+
+        // Calculate ladder offset based on direction
+        double ladderYOffset = view.Direction == TimelineDirection.Up ? footerHeight : 0;
 
         var currentFlights = ViewModel.Flights
             .Where(f => f.State is State.Unstable or State.Stable or State.SuperStable or State.Frozen or State.Landed)
             .ToList();
 
-        var currentCallsigns = new HashSet<string>(currentFlights.Select(f => f.Callsign));
-
-        // Remove flight labels for flights that no longer exist
-        var callsignsToRemove = _flightLabels.Keys.Except(currentCallsigns).ToList();
-        foreach (var callsign in callsignsToRemove)
-        {
-            var flightLabel = _flightLabels[callsign];
-            LadderCanvas.Children.Remove(flightLabel);
-            _flightLabels.Remove(callsign);
-        }
+        // Build a set of expected keys (callsign + ladder index) for visible flights only
+        var expectedKeys = new HashSet<string>();
 
         // Update or create flight labels for current flights
         foreach (var flight in currentFlights)
         {
-            double yOffset;
-            switch (ViewModel.SelectedView.ViewMode)
+            // Determine reference time based on view configuration
+            DateTimeOffset? referenceFlightTime = view.Reference switch
             {
-                case ViewMode.Enroute when flight.FeederFixTime.HasValue:
-                    yOffset = GetYOffsetForTime(referenceTime, flight.FeederFixTime.Value);
-                    break;
+                LadderReference.LandingTime => flight.LandingTime,
+                LadderReference.FeederFixTime => flight.FeederFixTime,
+                _ => null
+            };
 
-                case ViewMode.Approach:
-                    yOffset = GetYOffsetForTime(referenceTime, flight.LandingTime);
-                    break;
+            if (!referenceFlightTime.HasValue)
+            {
+                // Can't display without reference time
+                continue;
+            }
 
-                // Aircraft without a feeder fix are not displayed on ladders in ENR mode (FF reference time)
-                default:
-                    // Hide the flight label if it exists
-                    if (_flightLabels.TryGetValue(flight.Callsign, out var hiddenLabel))
-                    {
-                        hiddenLabel.Visibility = Visibility.Collapsed;
-                    }
+            double yOffset = GetYOffsetForTime(referenceTime, referenceFlightTime.Value, view.TimeWindowMinutes);
+            var yPosition = GetYPositionForOffset(yOffset, ladderHeight, view.Direction) + ladderYOffset;
+
+            // Check if flight is visible
+            var isVisible = yOffset >= 0 && yOffset < ladderHeight;
+
+            var matchingLadders = GetMatchingLadders(flight);
+            if (matchingLadders.Count == 0)
+            {
+                // Flight doesn't match any ladder
+                continue;
+            }
+
+            var canMove = view.Reference == LadderReference.LandingTime;
+
+            // Create/update label for each matching ladder
+            foreach (var ladderIndex in matchingLadders)
+            {
+                var key = $"{flight.Callsign}_{ladderIndex}";
+
+                // Skip creating/updating label if not visible in time window
+                if (!isVisible)
+                {
                     continue;
-            }
-
-            var yPosition = canvasHeight - yOffset;
-
-            if (yOffset < 0 || yOffset >= canvasHeight)
-            {
-                // Flight is off-screen, hide if it exists
-                if (_flightLabels.TryGetValue(flight.Callsign, out var offScreenLabel))
-                {
-                    offScreenLabel.Visibility = Visibility.Collapsed;
-                }
-                continue;
-            }
-
-            const int distanceFromMiddle = (LadderWidth / 2) + LineThickness + TickWidth;
-            var width = middlePoint - distanceFromMiddle - LineThickness;
-
-            var ladderPosition = GetLadderPositionFor(flight);
-            if (ladderPosition is null)
-            {
-                // Flight can't be positioned, hide if it exists
-                if (_flightLabels.TryGetValue(flight.Callsign, out var unpositionedLabel))
-                {
-                    unpositionedLabel.Visibility = Visibility.Collapsed;
-                }
-                continue;
-            }
-
-            var canMove = ViewModel.SelectedView.ViewMode == ViewMode.Approach;
-
-            // Reuse existing flight label or create new one
-            if (!_flightLabels.TryGetValue(flight.Callsign, out var flightLabel))
-            {
-                var approachTypeLookups = GetApproachTypeLookups(flight);
-
-                // Create new flight label
-                var flightLabelViewModel = new FlightLabelViewModel(
-                    Ioc.Default.GetRequiredService<IMediator>(),
-                    Ioc.Default.GetRequiredService<IErrorReporter>(),
-                    ViewModel,
-                    flight,
-                    ViewModel.Runways,
-                    approachTypeLookups);
-
-                flightLabel = new FlightLabelView
-                {
-                    DataContext = flightLabelViewModel,
-                    Margin = new Thickness(2, 0, 2, 0),
-                    IsDraggable = canMove
-                };
-
-                // Set up event handlers - always subscribe to all events
-                // Conditional logic will be handled within the event handlers themselves
-                flightLabel.MouseDoubleClick += (s, e) => OnFlightLabelDoubleClick(s, e, flight);
-                flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
-                flightLabel.MouseMove += OnFlightLabelMouseMove;
-                flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
-                flightLabel.MouseRightButtonDown += (s, e) => OnFlightLabelRightClick(s, e, flight);
-                flightLabel.ContextMenuOpening += SuppressContextMenuIfRequired;
-
-                _flightLabels[flight.Callsign] = flightLabel;
-                LadderCanvas.Children.Add(flightLabel);
-
-                // Force layout update for new labels so ActualHeight is available for positioning
-                flightLabel.UpdateLayout();
-            }
-            else
-            {
-                // Update existing flight label properties
-                if (flightLabel.DataContext is FlightLabelViewModel existingViewModel)
-                {
-                    existingViewModel.FlightViewModel = flight;
-                    existingViewModel.IsSelected = ViewModel.SelectedFlight?.Callsign == flight.Callsign;
                 }
 
-                flightLabel.IsDraggable = canMove;
-                flightLabel.Visibility = Visibility.Visible;
+                // Find the ladder element for this index
+                var ladderElement = layout.VisualElements
+                    .OfType<LadderElement>()
+                    .FirstOrDefault(l => l.Index == ladderIndex);
+
+                // Skip if ladder is scrolled out of view (no ladder element exists)
+                if (ladderElement == null)
+                    continue;
+
+                // Only track labels that are both time-visible AND on visible ladders
+                expectedKeys.Add(key);
+
+                // Reuse existing flight label or create new one
+                if (!_flightLabels.TryGetValue(key, out var flightLabel))
+                {
+                    var approachTypeLookups = GetApproachTypeLookups(flight);
+                    // TODO: Grab the config from the View constructor or something
+                    var labelConfiguration = Ioc.Default.GetRequiredService<LabelsConfiguration>();
+
+                    // Create new flight label
+                    var flightLabelViewModel = new FlightLabelViewModel(
+                        Ioc.Default.GetRequiredService<IMediator>(),
+                        Ioc.Default.GetRequiredService<IErrorReporter>(),
+                        ViewModel,
+                        labelConfiguration.GlobalColours,
+                        flight,
+                        ViewModel.Runways,
+                        approachTypeLookups);
+
+                    flightLabelViewModel.UpdateLabelItems(labelLayout, flight, ladderIndex);
+
+                    flightLabel = new FlightLabelView
+                    {
+                        DataContext = flightLabelViewModel,
+                        Margin = new Thickness(2, 0, 2, 0),
+                        IsDraggable = canMove
+                    };
+
+                    // Set up event handlers
+                    flightLabel.MouseDoubleClick += (s, e) => OnFlightLabelDoubleClick(s, e, flight);
+                    flightLabel.MouseLeftButtonDown += (s, e) => OnFlightLabelMouseDown(s, e, flight);
+                    flightLabel.MouseMove += OnFlightLabelMouseMove;
+                    flightLabel.MouseLeftButtonUp += OnFlightLabelMouseUp;
+                    flightLabel.MouseRightButtonDown += (s, e) => OnFlightLabelRightClick(s, e, flight);
+                    flightLabel.ContextMenuOpening += SuppressContextMenuIfRequired;
+
+                    _flightLabels[key] = flightLabel;
+                    LadderCanvas.Children.Add(flightLabel);
+
+                    // Force layout update
+                    flightLabel.UpdateLayout();
+                }
+                else
+                {
+                    // Update existing flight label
+                    if (flightLabel.DataContext is FlightLabelViewModel existingViewModel)
+                    {
+                        existingViewModel.FlightViewModel = flight;
+                        existingViewModel.IsSelected = ViewModel.SelectedFlight?.Callsign == flight.Callsign;
+                        existingViewModel.UpdateLabelItems(labelLayout, flight, ladderIndex);
+                    }
+
+                    flightLabel.IsDraggable = canMove;
+                    flightLabel.Visibility = Visibility.Visible;
+                }
+
+                // Position the flight label on the ladder
+                // The ladder IS the area where labels are displayed
+                Canvas.SetLeft(flightLabel, ladderElement.X);
+                Canvas.SetTop(flightLabel, yPosition - flightLabel.ActualHeight / 2);
+                flightLabel.Width = ladderElement.Width;
             }
+        }
 
-            // Always update width for proper alignment on resize
-            flightLabel.Width = width;
-
-            // Update positioning properties
-            flightLabel.LadderPosition = ladderPosition.Value;
-            flightLabel.ViewMode = ViewModel.SelectedView.ViewMode;
-
-            // Position the flight label on canvas
-            switch (ladderPosition)
-            {
-                case LadderPosition.Left:
-                    // Align right edge of flight label to left-side ladder ticks
-                    var leftTickPosition = middlePoint - distanceFromMiddle - LineThickness;
-                    Canvas.SetLeft(flightLabel, leftTickPosition - width);
-                    Canvas.SetTop(flightLabel, yPosition - flightLabel.ActualHeight / 2);
-                    flightLabel.ClearValue(Canvas.RightProperty);
-                    break;
-
-                case LadderPosition.Right:
-                    Canvas.SetLeft(flightLabel, middlePoint + LadderWidth / 2 + LineThickness + TickWidth);
-                    Canvas.SetTop(flightLabel, yPosition - flightLabel.ActualHeight / 2);
-                    flightLabel.ClearValue(Canvas.RightProperty);
-                    break;
-            }
+        // Remove flight labels that are no longer visible
+        var keysToRemove = _flightLabels.Keys.Except(expectedKeys).ToList();
+        foreach (var key in keysToRemove)
+        {
+            var flightLabel = _flightLabels[key];
+            LadderCanvas.Children.Remove(flightLabel);
+            _flightLabels.Remove(key);
         }
     }
 
     static ApproachTypeLookup[] GetApproachTypeLookups(FlightMessage flight)
     {
-        ApproachTypeLookup[] approachTypeLookups = [];
         var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfigurations()
-            .Single(a => a.Identifier == flight.DestinationIdentifier);
-        if (airportConfiguration is not null)
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(flight.DestinationIdentifier);
+        var results = new HashSet<ApproachTypeLookup>();
+        foreach (var arrivalConfiguration in airportConfiguration.Trajectories)
         {
-            var results = new HashSet<ApproachTypeLookup>();
-            foreach (var arrivalConfiguration in airportConfiguration.Arrivals)
-            {
-                foreach (var kvp in arrivalConfiguration.RunwayIntervals)
-                {
-                    var runwayIdentifier = kvp.Key;
-                    results.Add(new ApproachTypeLookup(arrivalConfiguration.FeederFix, runwayIdentifier, arrivalConfiguration.ApproachType));
-                }
-            }
-
-            approachTypeLookups = results.ToArray();
+            results.Add(new ApproachTypeLookup(arrivalConfiguration.FeederFix, arrivalConfiguration.RunwayIdentifier, arrivalConfiguration.ApproachType));
         }
 
-        return approachTypeLookups;
+        return results.ToArray();
     }
 
     void ClearLabels()
@@ -899,5 +1302,36 @@ public partial class MaestroView
         }
 
         _flightLabels.Clear();
+    }
+
+    // Layout Helper Classes
+    private abstract class VisualElement { }
+
+    private class LadderElement : VisualElement
+    {
+        public required int Index { get; init; }
+        public required double X { get; init; }
+        public required double Width { get; init; }
+        public required LadderConfiguration Config { get; init; }
+    }
+
+    private class TicksElement : VisualElement
+    {
+        public required double X { get; init; }
+        public required double Width { get; init; }
+        public required int LadderIndex { get; init; }
+    }
+
+    private class TimelineElement : VisualElement
+    {
+        public required double X { get; init; }
+        public required double Width { get; init; }
+        public required int LeftLadderIndex { get; init; }
+        public required int RightLadderIndex { get; init; }
+    }
+
+    private class LayoutInfo
+    {
+        public required List<VisualElement> VisualElements { get; init; }
     }
 }

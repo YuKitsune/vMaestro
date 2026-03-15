@@ -129,7 +129,7 @@ public class Plugin : IPlugin
 
     PluginConfiguration ConfigureConfiguration()
     {
-        const string configFileName = "Maestro.json";
+        const string configFileName = "Maestro.yaml";
 
         var searchDirectories = new List<string>();
 
@@ -162,8 +162,8 @@ public class Plugin : IPlugin
         if (string.IsNullOrEmpty(configFilePath))
             throw new MaestroException($"Unable to locate {configFileName}");
 
-        var configurationJson = File.ReadAllText(configFilePath);
-        var configuration = JsonConvert.DeserializeObject<PluginConfiguration>(configurationJson)!;
+        var configurationYaml = File.ReadAllText(configFilePath);
+        var configuration = YamlConfigurationLoader.LoadFromYaml(configurationYaml);
 
         return configuration;
     }

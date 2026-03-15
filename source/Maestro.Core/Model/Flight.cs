@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
@@ -211,7 +212,7 @@ public class Flight : IEquatable<Flight>
     public TimeSpan TotalDelay => LandingTime - InitialLandingEstimate;
     public TimeSpan RemainingDelay => LandingTime - LandingEstimate;
 
-    public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
+    public FlowControls FlowControls { get; private set; } = FlowControls.HighSpeed;
 
     public string ApproachType { get; private set; }
     public FixEstimate[] Fixes { get; set; } = [];
@@ -379,7 +380,7 @@ public class Flight : IEquatable<Flight>
     {
         LandingTime = LandingEstimate;
         FeederFixTime = FeederFixEstimate;
-        FlowControls = FlowControls.ProfileSpeed;
+        FlowControls = FlowControls.HighSpeed;
     }
 
     public void Reset()
@@ -391,7 +392,7 @@ public class Flight : IEquatable<Flight>
         ActivatedTime = null;
 
         // Reset sequence data
-        FlowControls = FlowControls.ProfileSpeed;
+        FlowControls = FlowControls.HighSpeed;
 
         // Reset delay controls
         MaximumDelay = null;
@@ -409,7 +410,8 @@ public class Flight : IEquatable<Flight>
         FlowControls = flowControls;
     }
 
-    public void UpdateStateBasedOnTime(IClock clock)
+    // TODO: Move this into Flight Updated handler
+    public void UpdateStateBasedOnTime(IClock clock, AirportConfiguration airportConfiguration)
     {
         // Manually-inserted flights don't auto-update their state
         if (IsManuallyInserted)
@@ -423,10 +425,9 @@ public class Flight : IEquatable<Flight>
         if (State is State.Landed)
             return;
 
-        // TODO: Make configurable
-        var stableThreshold = TimeSpan.FromMinutes(25);
-        var frozenThreshold = TimeSpan.FromMinutes(15);
-        var minUnstableTime = TimeSpan.FromSeconds(180);
+        var stableThreshold = TimeSpan.FromMinutes(airportConfiguration.StabilityThresholdMinutes);
+        var frozenThreshold = TimeSpan.FromMinutes(airportConfiguration.FrozenThresholdMinutes);
+        var minUnstableTime = TimeSpan.FromSeconds(airportConfiguration.MinimumUnstableMinutes);
 
         // Keep the flight unstable until it's passed the minimum unstable time
         var timeActive = clock.UtcNow() - ActivatedTime;
@@ -476,6 +477,6 @@ public class Flight : IEquatable<Flight>
 
 public enum FlowControls
 {
-    ProfileSpeed,
+    HighSpeed,
     ReduceSpeed
 }

@@ -23,9 +23,7 @@ public class CleanUpFlightsRequestHandler(
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
             var sequence = instance.Session.Sequence;
-            var airportConfiguration = airportConfigurationProvider
-                .GetAirportConfigurations()
-                .First(c => c.Identifier == sequence.AirportIdentifier);
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
             var landedFlights = sequence.Flights
                 .Where(f => f.State == State.Landed)
@@ -45,6 +43,8 @@ public class CleanUpFlightsRequestHandler(
                     landedFlight.Callsign,
                     sequence.AirportIdentifier);
             }
+
+            // TODO: Lost flights
         }
     }
 }

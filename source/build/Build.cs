@@ -76,6 +76,9 @@ class Build : NukeBuild
     [Parameter("Path to vatSys installation")]
     AbsolutePath VatSysPath { get; }
 
+    [Parameter("Path to configuration file to install")]
+    AbsolutePath Config { get; }
+
     AbsolutePath VatSysSetupDirectory => TemporaryDirectory / "vatsys-setup";
     AbsolutePath VatSysExePath => VatSysPath ?? VatSysSetupDirectory / "bin" / "vatSys.exe";
 
@@ -261,7 +264,7 @@ class Build : NukeBuild
                 Log.Information("Plugin uninstalled from {Directory}", pluginDirectory);
             }
 
-            var configFilePath = pluginsDirectory / "Configs" / "Maestro" / "Maestro.json";
+            var configFilePath = pluginsDirectory / "Configs" / "Maestro" / "Maestro.yaml";
             if (configFilePath.FileExists())
             {
                 configFilePath.DeleteFile();
@@ -290,12 +293,22 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
-            // Copy config
-            var configFile = RootDirectory / "Maestro.json";
-            var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
-            configDestinationDirectory.CreateOrCleanDirectory();
+            // Copy config if provided
+            if (Config != null)
+            {
+                if (!Config.FileExists())
+                    throw new Exception($"Config file not found: {Config}");
 
-            configFile.CopyToDirectory(configDestinationDirectory, ExistsPolicy.MergeAndOverwrite);
+                var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
+                configDestinationDirectory.CreateOrCleanDirectory();
+
+                Config.CopyToDirectory(configDestinationDirectory, ExistsPolicy.MergeAndOverwrite);
+                Log.Information("Config file installed from {ConfigFile}", Config);
+            }
+            else
+            {
+                Log.Information("No config file specified, skipping config installation");
+            }
 
             Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
         });
@@ -308,7 +321,6 @@ class Build : NukeBuild
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
             var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
-            var configFile = RootDirectory / "Maestro.json";
 
             PackageDirectory.CreateOrCleanDirectory();
 
@@ -318,8 +330,19 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(PackageDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
-            // Temporary for testing - include the config with the package
-            configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            // Copy config if provided
+            if (Config != null)
+            {
+                if (!Config.FileExists())
+                    throw new Exception($"Config file not found: {Config}");
+
+                Config.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+                Log.Information("Config file included in package from {ConfigFile}", Config);
+            }
+            else
+            {
+                Log.Information("No config file specified, skipping config in package");
+            }
 
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);

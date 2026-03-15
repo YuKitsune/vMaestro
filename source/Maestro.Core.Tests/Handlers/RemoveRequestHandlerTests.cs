@@ -1,3 +1,4 @@
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Messages;
@@ -12,8 +13,24 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfigurationFixture, ClockFixture clockFixture)
+public class RemoveRequestHandlerTests(ClockFixture clockFixture)
 {
+    const string DefaultRunway = "34L";
+    const int DefaultLandingRateSeconds = 180;
+
+    static AirportConfiguration CreateAirportConfiguration()
+    {
+        return new AirportConfigurationBuilder("YSSY")
+            .WithRunways(DefaultRunway)
+            .WithRunwayMode("DEFAULT", new RunwayConfiguration
+            {
+                Identifier = DefaultRunway,
+                LandingRateSeconds = DefaultLandingRateSeconds,
+                FeederFixes = []
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task WhenAnActiveFlightIsRemoved_ItIsPlacedInThePendingList()
     {
@@ -35,7 +52,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -75,7 +92,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -111,7 +128,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         // Set some additional properties that should be reset
         flight.SetSequenceData(clockFixture.Instance.UtcNow().AddMinutes(30), FlowControls.ReduceSpeed);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
@@ -124,7 +141,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
         // Assert - verify Reset() behavior: state, activation, and flow controls are reset
         // Note: Trajectory and estimates are kept - they will be recalculated when re-inserted
         flight.ActivatedTime.ShouldBeNull("ActivatedTime should be reset to null");
-        flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
+        flight.FlowControls.ShouldBe(FlowControls.HighSpeed, "FlowControls should be reset to HighSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
         flight.MaximumDelay.ShouldBeNull("MaximumDelay should be reset to null");
         flight.TargetLandingTime.ShouldBeNull("TargetLandingTime should be reset to null");
@@ -156,7 +173,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -181,7 +198,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
     public async Task WhenRemovingAFlightThatDoesNotExist_AnExceptionIsThrown()
     {
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -204,7 +221,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithLandingEstimate(now.AddMinutes(8))
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
@@ -233,7 +250,7 @@ public class RemoveRequestHandlerTests(AirportConfigurationFixture airportConfig
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfigurationFixture.Instance)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 

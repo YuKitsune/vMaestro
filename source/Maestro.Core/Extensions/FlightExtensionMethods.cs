@@ -1,4 +1,5 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Core.Integration;
+using Maestro.Core.Messages;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Extensions;
@@ -44,5 +45,10 @@ public static class FlightExtensionMethods
             IsManuallyInserted = flight.IsManuallyInserted,
             TimeToGo = flight.Trajectory.TimeToGo,
         };
+    }
+
+    public static AircraftPerformanceData GetPerformanceData(this Flight flight)
+    {
+        return new AircraftPerformanceData(flight.AircraftType, flight.AircraftCategory, flight.WakeCategory);
     }
 }
