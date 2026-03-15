@@ -1,3 +1,7 @@
+# Set to false if the AIS team needs to maintain control over which version of the plugin is installed
+# (for compatibility with the server and provided configuration file)
+CheckForUpdates: false
+
 Logging:
   LogLevel: Information
   MaxFileAgeDays: 7
