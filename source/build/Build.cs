@@ -76,6 +76,9 @@ class Build : NukeBuild
     [Parameter("Path to vatSys installation")]
     AbsolutePath VatSysPath { get; }
 
+    [Parameter("Path to configuration file to install")]
+    AbsolutePath Config { get; }
+
     AbsolutePath VatSysSetupDirectory => TemporaryDirectory / "vatsys-setup";
     AbsolutePath VatSysExePath => VatSysPath ?? VatSysSetupDirectory / "bin" / "vatSys.exe";
 
@@ -290,12 +293,22 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(maestroPluginDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
-            // Copy config
-            var configFile = RootDirectory / "Maestro.yaml";
-            var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
-            configDestinationDirectory.CreateOrCleanDirectory();
+            // Copy config if provided
+            if (Config != null)
+            {
+                if (!Config.FileExists())
+                    throw new Exception($"Config file not found: {Config}");
 
-            configFile.CopyToDirectory(configDestinationDirectory, ExistsPolicy.MergeAndOverwrite);
+                var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
+                configDestinationDirectory.CreateOrCleanDirectory();
+
+                Config.CopyToDirectory(configDestinationDirectory, ExistsPolicy.MergeAndOverwrite);
+                Log.Information("Config file installed from {ConfigFile}", Config);
+            }
+            else
+            {
+                Log.Information("No config file specified, skipping config installation");
+            }
 
             Log.Information("Plugin installed to {PluginsDirectory}", maestroPluginDirectory);
         });
