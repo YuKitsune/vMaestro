@@ -321,7 +321,6 @@ class Build : NukeBuild
         {
             var dpiAwareFixScript = RootDirectory / "dpiawarefix.bat";
             var unblockDllsScript = RootDirectory / "unblock-dlls.bat";
-            var configFile = RootDirectory / "Maestro.yaml";
 
             PackageDirectory.CreateOrCleanDirectory();
 
@@ -331,8 +330,19 @@ class Build : NukeBuild
                 absolutePath.CopyToDirectory(PackageDirectory, ExistsPolicy.MergeAndOverwrite);
             }
 
-            // Temporary for testing - include the config with the package
-            configFile.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+            // Copy config if provided
+            if (Config != null)
+            {
+                if (!Config.FileExists())
+                    throw new Exception($"Config file not found: {Config}");
+
+                Config.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
+                Log.Information("Config file included in package from {ConfigFile}", Config);
+            }
+            else
+            {
+                Log.Information("No config file specified, skipping config in package");
+            }
 
             dpiAwareFixScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
             unblockDllsScript.CopyToDirectory(PackageDirectory, ExistsPolicy.FileOverwrite);
