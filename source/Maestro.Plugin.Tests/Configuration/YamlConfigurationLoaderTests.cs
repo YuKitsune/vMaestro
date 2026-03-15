@@ -190,7 +190,7 @@ Labels:
                     - {Type: "Callsign", Width: 10, Padding: 1, ColourSources: ["State"]}
                     - {Type: "Runway", Width: 3, Padding: 1, ColourSources: ["Runway", "State"]}
                     - {Type: "ManualDelay", Width: 1, Padding: 0, ZeroDelaySymbol: "#", ManualDelaySymbol: "%", ColourSources: ["State"]}
-                    - {Type: "ProfileSpeed", Width: 1, Padding: 0, Symbol: "+", ColourSources: ["State"]}
+                    - {Type: "HighSpeed", Width: 1, Padding: 0, Symbol: "+", ColourSources: ["State"]}
             """;
 
         var config = YamlConfigurationLoader.LoadFromYaml(yaml);
@@ -210,7 +210,7 @@ Labels:
         manualDelay.ZeroDelaySymbol.ShouldBe("#");
         manualDelay.ManualDelaySymbol.ShouldBe("%");
 
-        var profileSpeed = layout.Items[3].ShouldBeOfType<ProfileSpeedItemConfiguration>();
-        profileSpeed.Symbol.ShouldBe("+");
+        var highSpeed = layout.Items[3].ShouldBeOfType<HighSpeedItemConfiguration>();
+        highSpeed.Symbol.ShouldBe("+");
     }
 }

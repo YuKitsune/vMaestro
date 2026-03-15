@@ -110,9 +110,9 @@ Labels:
   #   - Additional Properties:
   #     - ZeroDelaySymbol: Character to display when a manual delay of zero is assigned (required)
   #     - ManualDelaySymbol: Character to display when a manual delay other than zero is assigned (required)
-  # ProfileSpeed: Profile speed indicator symbol when active
+  # HighSpeed: High speed indicator symbol when active
   #   - Additional Properties:
-  #     - Symbol: Character to display when profile speed is assigned (required)
+  #     - Symbol: Character to display when high speed descent is assigned (required)
   # CouplingStatus: Displayed when the flight is not coupled to a radar track.
   #   - Additional Properties:
   #     - UncoupledSymbol: Character to display when flight is uncoupled from radar track (required)
@@ -132,7 +132,7 @@ Labels:
       - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
       - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
       - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
-      - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+      - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
       - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
       - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
       - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [ControlAction]}
@@ -144,7 +144,7 @@ Labels:
       - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
       - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
       - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
-      - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+      - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
       - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
       - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
       - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}

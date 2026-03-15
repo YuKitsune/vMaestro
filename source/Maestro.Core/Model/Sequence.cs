@@ -518,7 +518,7 @@ public class Sequence
                     currentFlight.AircraftCategory == AircraftCategory.Jet &&
                     landingTime.IsAfter(currentFlight.LandingEstimate)
                         ? FlowControls.ReduceSpeed
-                        : FlowControls.ProfileSpeed;
+                        : FlowControls.HighSpeed;
 
                 Schedule(currentFlight, landingTime, result.Option.RunwayIdentifier, result.Option.ApproachType, flowControls);
             }

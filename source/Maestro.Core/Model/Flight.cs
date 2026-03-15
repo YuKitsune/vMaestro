@@ -212,7 +212,7 @@ public class Flight : IEquatable<Flight>
     public TimeSpan TotalDelay => LandingTime - InitialLandingEstimate;
     public TimeSpan RemainingDelay => LandingTime - LandingEstimate;
 
-    public FlowControls FlowControls { get; private set; } = FlowControls.ProfileSpeed;
+    public FlowControls FlowControls { get; private set; } = FlowControls.HighSpeed;
 
     public string ApproachType { get; private set; }
     public FixEstimate[] Fixes { get; set; } = [];
@@ -380,7 +380,7 @@ public class Flight : IEquatable<Flight>
     {
         LandingTime = LandingEstimate;
         FeederFixTime = FeederFixEstimate;
-        FlowControls = FlowControls.ProfileSpeed;
+        FlowControls = FlowControls.HighSpeed;
     }
 
     public void Reset()
@@ -392,7 +392,7 @@ public class Flight : IEquatable<Flight>
         ActivatedTime = null;
 
         // Reset sequence data
-        FlowControls = FlowControls.ProfileSpeed;
+        FlowControls = FlowControls.HighSpeed;
 
         // Reset delay controls
         MaximumDelay = null;
@@ -477,6 +477,6 @@ public class Flight : IEquatable<Flight>
 
 public enum FlowControls
 {
-    ProfileSpeed,
+    HighSpeed,
     ReduceSpeed
 }

@@ -76,9 +76,9 @@ public class ManualDelayItemConfiguration : LabelItemConfiguration
     public required string ManualDelaySymbol { get; init; }
 }
 
-public class ProfileSpeedItemConfiguration : LabelItemConfiguration
+public class HighSpeedItemConfiguration : LabelItemConfiguration
 {
-    public override LabelItemType Type => LabelItemType.ProfileSpeed;
+    public override LabelItemType Type => LabelItemType.HighSpeed;
     public required string Symbol { get; init; }
 }
 
@@ -100,7 +100,7 @@ public enum LabelItemType
     RequiredDelay,
     RemainingDelay,
     ManualDelay,
-    ProfileSpeed,
+    HighSpeed,
     CouplingStatus,
 }
 

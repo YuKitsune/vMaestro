@@ -238,7 +238,7 @@ public class LabelItemTypeConverter : IYamlTypeConverter
             "RequiredDelay" => typeof(RequiredDelayItemConfiguration),
             "RemainingDelay" => typeof(RemainingDelayItemConfiguration),
             "ManualDelay" => typeof(ManualDelayItemConfiguration),
-            "ProfileSpeed" => typeof(ProfileSpeedItemConfiguration),
+            "HighSpeed" => typeof(HighSpeedItemConfiguration),
             "CouplingStatus" => typeof(CouplingStatusItemConfiguration),
             _ => null
         };
@@ -316,7 +316,7 @@ public class LabelItemTypeConverter : IYamlTypeConverter
                 ZeroDelaySymbol = (string)properties["ZeroDelaySymbol"],
                 ManualDelaySymbol = (string)properties["ManualDelaySymbol"]
             },
-            nameof(ProfileSpeedItemConfiguration) => new ProfileSpeedItemConfiguration
+            nameof(HighSpeedItemConfiguration) => new HighSpeedItemConfiguration
             {
                 Width = width,
                 Padding = padding,

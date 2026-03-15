@@ -175,7 +175,7 @@ Labels:
         - {Type: Runway, Width: 3, Padding: 1, ColourSources: [RunwayMode, Runway]}
         - {Type: Callsign, Width: 10, Padding: 1, ColourSources: [State]}
         - {Type: ApproachType, Width: 1, Padding: 1, ColourSources: [ApproachType]}
-        - {Type: ProfileSpeed, Width: 1, Padding: 0, Symbol: '+'}
+        - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
         - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
         - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
         - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [ControlAction]}
@@ -196,7 +196,7 @@ Labels:
 | `RequiredDelay` | Total delay required | |
 | `RemainingDelay` | Remaining delay to absorb | |
 | `ManualDelay` | Manual delay indicator | `ZeroDelaySymbol`, `ManualDelaySymbol` |
-| `ProfileSpeed` | Profile speed indicator | `Symbol` |
+| `HighSpeed` | High speed indicator | `Symbol` |
 | `CouplingStatus` | Coupling status indicator | `UncoupledSymbol` |
 
 #### Label Item Properties

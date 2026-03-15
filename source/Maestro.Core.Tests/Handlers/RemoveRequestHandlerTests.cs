@@ -141,7 +141,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         // Assert - verify Reset() behavior: state, activation, and flow controls are reset
         // Note: Trajectory and estimates are kept - they will be recalculated when re-inserted
         flight.ActivatedTime.ShouldBeNull("ActivatedTime should be reset to null");
-        flight.FlowControls.ShouldBe(FlowControls.ProfileSpeed, "FlowControls should be reset to ProfileSpeed");
+        flight.FlowControls.ShouldBe(FlowControls.HighSpeed, "FlowControls should be reset to HighSpeed");
         flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
         flight.MaximumDelay.ShouldBeNull("MaximumDelay should be reset to null");
         flight.TargetLandingTime.ShouldBeNull("TargetLandingTime should be reset to null");
