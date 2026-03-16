@@ -427,7 +427,7 @@ public class Flight : IEquatable<Flight>
 
         var stableThreshold = TimeSpan.FromMinutes(airportConfiguration.StabilityThresholdMinutes);
         var frozenThreshold = TimeSpan.FromMinutes(airportConfiguration.FrozenThresholdMinutes);
-        var minUnstableTime = TimeSpan.FromSeconds(airportConfiguration.MinimumUnstableMinutes);
+        var minUnstableTime = TimeSpan.FromMinutes(airportConfiguration.MinimumUnstableMinutes);
 
         // Keep the flight unstable until it's passed the minimum unstable time
         var timeActive = clock.UtcNow() - ActivatedTime;
