@@ -39,8 +39,10 @@ public class MakePendingRequestHandler(
                 return;
             }
 
-            if (!flight.IsFromDepartureAirport)
-                throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
+            // Only uncoupled flights can be returned to the pending list
+            var isCoupled = flight.Position is not null;
+            if (isCoupled)
+                throw new MaestroException($"{flight.Callsign} is coupled to a radar track and cannot be made pending.");
 
             sequence.Remove(flight);
             flight.Reset();

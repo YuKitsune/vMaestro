@@ -152,41 +152,7 @@ Right-clicking on a flight label will open a context menu with the following opt
 | Remove | Remove the flight from the sequence. |
 | Recompute | Re-compute the flight's position and landing time as if it were a new flight. |
 | Desequence | Move the flight to the De-sequenced list, removing it from the sequence. |
-| Make Pending | If this flight is departing from a departure airport, and has not yet departed, places them back into the pending list and removes them from the sequence. |
-
-<!-- #### View Configuration
-
-Each view can be configured as follows:
-
-- Time horizon: The duration of the sequence displayed on the screen.
-- Number of timelines: Up to 4 timelines can be displayed.
-- Timeline direction: Timelines may move up or down the screen.
-- Timeline reference: Flights can be displayed based on their `STA` (Runway view) or their `STA_FF` (Feeder view).
-- Runway and Feeder Fix filters: Each timeline can be filtered to display flights depending on their assigned runway or Feeder Fix.
-
-The content of flight labels can also be configured to display the following information:
-
-- Callsign
-- Aircraft type
-- Aircraft weight class
-- Allocated runway
-- Approach type
-- `STA`
-- `STA_FF`
-- Total delay (The total amount of delay the flight needs to absorb to land at the calculated `STA`)
-- Current delay (The delay yet to be absorbed)
-- Coupling status indicator
-- Manual delay indicator
-- Control action indicator
-
-Each of the flight label fields can be color coded depending on:
-
-- Destination
-- Allocated runway
-- Approach type
-- Feeder Fix
-- Maestro State
-- Runway configuration (i.e. whether the flight has been processed with the current or future runway configuration) -->
+| Make Pending | If this flight is uncoupled (not tracked by radar), places it back into the pending list and removes it from the sequence. |
 
 ## Modifying the TMA Configuration
 
@@ -420,13 +386,21 @@ The flight will be placed into the De-sequenced list, and the rest of the sequen
 
 #### Make Pending
 
-Flights from departure airports can be removed from the sequence using the `Make Pending` function.
-This can only be done before the flight departs.
+Uncoupled flights can be removed from the sequence using the `Make Pending` function.
 
-To remove a departure, right-click the flight, then select `Make Pending`.
+A flight is considered uncoupled when it is not tracked by radar (no radar track coupled to the FDR).
+This typically applies to:
+- Flights that have not yet departed
+- Flights that have lost radar coupling
+
+To make a flight pending, right-click the flight, then select `Make Pending`.
 The flight will be removed from the sequence and placed into the Pending list. The rest of the sequence will be re-calculated.
 
 The flight can be inserted again using the [Insert a Flight](#inserting-a-flight-from-a-departure-airport) function.
+
+:::info
+Coupled flights (those with active radar tracks) cannot be made pending. Use the [Desequence](#de-sequence) function instead to temporarily remove coupled flights from the sequence.
+:::
 
 #### Remove
 

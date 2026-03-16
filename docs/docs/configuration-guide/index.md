@@ -259,6 +259,7 @@ Airports:
     # State transition times
     FlightCreationThresholdMinutes: 120
     MinimumUnstableMinutes: 5
+    MinimumUnstableCloseMinutes: 10
     StabilityThresholdMinutes: 25
     FrozenThresholdMinutes: 15
 
@@ -282,6 +283,7 @@ Airports:
 | `ManualInteractionState` | string | No | `Stable` | State to transition flights to after any manual intervention by a controller |
 | `FlightCreationThresholdMinutes` | integer | No | 120 | How far from landing (in minutes) flights must be before Maestro starts tracking them |
 | `MinimumUnstableMinutes` | integer | No | 5 | Prevents flights from transitioning from Unstable too quickly, allowing time for ETA stabilization |
+| `MinimumUnstableCloseMinutes` | integer | No | 10 | Minimum unstable time for flights from close airports (used when the close airport configuration doesn't specify a custom value) |
 | `StabilityThresholdMinutes` | integer | No | 25 | Flights become Stable this many minutes before their feeder fix time (STA_FF) |
 | `FrozenThresholdMinutes` | integer | No | 15 | Flights become Frozen this many minutes before landing (STA), preventing further changes |
 | `MaxLandedFlights` | integer | No | 5 | Maximum number of landed flights to keep visible in the sequence in case of an overshoot |
@@ -402,9 +404,17 @@ If a trajectory is not defined for a particular flight, all trajectories matchin
 
 Define flight times from departure airports to the sequenced airport.
 
+Flights from departure airports must be manually inserted into the sequence, allowing ground delay management.
+This can be done before the flight is activated in vatSys.
+
 ```yaml
 DepartureAirports:
-  - {Identifier: YPMQ, Aircraft: [JET], Distance: 209, EstimatedFlightTimeMinutes: 44}
+  - Identifier: YPMQ
+    Aircraft: [JET]
+    Distance: 209
+    EstimatedFlightTimeMinutes: 44
+    MinimumUnstableMinutes: 15  # Optional: per-airport override
+
   - {Identifier: YPMQ, Aircraft: [NONJET], Distance: 209, EstimatedFlightTimeMinutes: 41}
 ```
 
@@ -416,6 +426,35 @@ DepartureAirports:
 | `Aircraft` | array | Yes | - | Aircraft types or categories this entry applies to (see Aircraft Descriptors above) |
 | `Distance` | number | Yes | - | Distance in nautical miles (reserved for future use) |
 | `EstimatedFlightTimeMinutes` | integer | Yes | - | Expected flight time from this departure airport to the sequenced airport, used to calculate ETAs for departures |
+| `MinimumUnstableMinutes` | integer | No | (uses global `MinimumUnstableMinutes`) | Per-airport override for minimum Unstable time. If not specified, uses the global `MinimumUnstableMinutes` value |
+
+### Close Airports
+
+Define airports within a 25-minute flight time where departures may still be climbing when they would normally become Stable.
+
+Flights from close airports:
+
+- May require a longer Unstable period, as ETAs can be inaccurate during climb
+- Are added to the pending list even before activation
+- May have per-airport minimum Unstable time overrides
+
+An airport can be both a departure airport and a close airport.
+
+```yaml
+CloseAirports:
+  # Shellharbour, using a custom unstable time
+  - {Identifier: YSHL, MinimumUnstableMinutes: 8}
+
+  # Richmond, using global MinimumUnstableCloseMinutes
+  - {Identifier: YSRI}
+```
+
+#### Close Airport Properties
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `Identifier` | string | Yes | - | ICAO code of close airport |
+| `MinimumUnstableMinutes` | integer | No | (uses global `MinimumUnstableCloseMinutes`) | Per-airport override for minimum unstable time. If not specified, uses the global `MinimumUnstableCloseMinutes` value (default: 10 minutes) |
 
 ### Views
 

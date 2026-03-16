@@ -40,14 +40,13 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
         var airportConfiguration = CreateAirportConfiguration();
 
         var flight1 = new FlightBuilder("QFA123")
-            .FromDepartureAirport()
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(10))
             .WithLandingEstimate(now.AddMinutes(8))
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
             .WithRunway(DefaultRunway)
-            .Build();
+            .Build(); // Uncoupled flight (no position)
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Stable)
@@ -106,7 +105,7 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenFlightIsNotFromDepartureAirport_ExceptionIsThrown()
+    public async Task WhenFlightIsCoupled_ExceptionIsThrown()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -120,10 +119,13 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
             .WithRunway(DefaultRunway)
+            .WithPosition(new FlightPosition(
+                new Coordinate(0, 0),
+                10000,
+                VerticalTrack.Climbing,
+                250,
+                false))
             .Build();
-
-        // Mark flight as NOT from departure airport
-        flight.IsFromDepartureAirport = false;
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
@@ -136,7 +138,41 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
         var exception = await Should.ThrowAsync<MaestroException>(async () =>
             await handler.Handle(request, CancellationToken.None));
 
-        exception.Message.ShouldContain("departure airport", Case.Insensitive);
+        exception.Message.ShouldContain("coupled", Case.Insensitive);
+    }
+
+    [Fact]
+    public async Task WhenFlightIsUncoupled_ItCanBeMadePending()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = CreateAirportConfiguration();
+
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(10))
+            .WithLandingEstimate(now.AddMinutes(8))
+            .WithFeederFixTime(now.AddMinutes(5))
+            .WithFeederFixEstimate(now.AddMinutes(3))
+            .WithRunway(DefaultRunway)
+            .Build(); // Flight is uncoupled (no position)
+
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, sequence);
+        var request = new MakePendingRequest("YSSY", "QFA123");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
+        var sessionMessage = instance.Session.Snapshot();
+        sessionMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "uncoupled flight should be moved to pending");
+        sessionMessage.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should be removed from sequence");
     }
 
     [Fact]
@@ -158,7 +194,7 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
 
         // Set some additional properties that should be reset
         flight.SetSequenceData(flight.LandingTime, FlowControls.ReduceSpeed);
-        flight.IsFromDepartureAirport = true;
+        // Flight has no position, so it's uncoupled and can be made pending
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))

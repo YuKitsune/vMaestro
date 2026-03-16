@@ -55,9 +55,16 @@ public class AirportConfiguration
     public int FlightCreationThresholdMinutes { get; init; } = 120;
 
     /// <summary>
-    ///     The minimum amount of time a flight must be considered <see cref="State.Unstable"/> before it may progress to <see cref="State.Stable"/>.
+    ///     The minimum amount of time a flight must be considered <see cref="State.Unstable"/> before it may progress
+    ///     to <see cref="State.Stable"/>.
     /// </summary>
     public int MinimumUnstableMinutes { get; init; } = 5;
+
+    /// <summary>
+    ///     The minimum amount of time a flight from a designated departure, or close airport must remain in the
+    ///     <see cref="State.Unstable"/> state before it may progress to <see cref="State.Stable"/>.
+    /// </summary>
+    public int MinimumUnstableCloseMinutes { get; init; } = 10;
 
     /// <summary>
     ///     The amount of time before the STA_FF that a flight will transition to the <see cref="State.Stable"/> state.
@@ -92,7 +99,13 @@ public class AirportConfiguration
     public required TrajectoryConfiguration[] Trajectories { get; init; }
     public required DepartureConfiguration[] DepartureAirports { get; init; }
 
-    // TODO: Close airports
+    /// <summary>
+    ///     Airports where traffic en-route to the Managed airport are likely to still be on climb by the time they
+    ///     become stable. Usually within 25 minutes flight time of the Managed airport.
+    ///     The minimum unstable duration for flights from close airports is longer to cater for inaccurate ETAs on climb.
+    /// </summary>
+    public required CloseConfiguration[] CloseAirports { get; init; } = [];
+
     // TODO: Average taxi times and terminal assignments
 
     // Everything beyond this point is purely for presentation, and not used within Maestro.Core

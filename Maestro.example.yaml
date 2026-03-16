@@ -207,6 +207,11 @@ Airports:
   # Default: 5
   MinimumUnstableMinutes: 5
 
+  # Minimum time flights from close airports remain in Unstable state (minutes)
+  # Used when CloseAirport configuration doesn't specify MinimumUnstableMinutes
+  # Default: 10
+  MinimumUnstableCloseMinutes: 10
+
   # Time before feeder fix when flights become Stable (minutes)
   # Default: 25
   StabilityThresholdMinutes: 25
@@ -387,6 +392,26 @@ Airports:
     # Continue for all relevant departure airports...
 
   # ---------------------------------------------------------------------------
+  # Close Airports
+  # ---------------------------------------------------------------------------
+  # Define airports where departing traffic may still be climbing when they
+  # would normally become stable. These flights need to remain unstable for
+  # longer, as their estimates could be inaccurate on climb.
+  #
+  # Note: An airport can be both a DepartureAirport and CloseAirport
+
+  CloseAirports:
+
+    # Example: Shellharbour
+    - Identifier: YSHL
+      MinimumUnstableMinutes: 12  # Optional: Override global MinimumUnstableCloseMinutes
+
+    # Example: Richmond (uses global MinimumUnstableCloseMinutes)
+    - Identifier: YSRI
+
+    # Continue for all relevant close airports...
+
+  # ---------------------------------------------------------------------------
   # Views
   # ---------------------------------------------------------------------------
   # Define display configurations for different controller positions
@@ -503,6 +528,12 @@ Airports:
   DepartureAirports:
     - {Identifier: YSCB, Aircraft: [JET], Distance: 161, EstimatedFlightTimeMinutes: 37}
     # ... continue for all departure airports
+
+  # Define close airports (abbreviated example)
+  CloseAirports:
+    - {Identifier: YSBK, MinimumUnstableMinutes: 12}
+    - {Identifier: YSCB}  # Uses global MinimumUnstableCloseMinutes
+    # ... continue for all close airports
 
   # Define views
   Views:

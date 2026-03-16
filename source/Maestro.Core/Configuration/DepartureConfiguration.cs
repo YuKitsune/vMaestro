@@ -15,4 +15,10 @@ public class DepartureConfiguration
     ///     to the sequenced airport.
     /// </summary>
     public required int EstimatedFlightTimeMinutes { get; init; }
+
+    /// <summary>
+    ///     Per-airport minimum unstable time in minutes.
+    ///     If null, uses AirportConfiguration.MinimumUnstableMinutes.
+    /// </summary>
+    public int? MinimumUnstableMinutes { get; init; }
 }

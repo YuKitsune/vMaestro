@@ -89,8 +89,18 @@ public class FlightUpdatedHandler(
                     // vatSys uses MaxValue when the fix has been overflown, but the time is not known (i.e. controller connecting after the event)
                     var feederFixTimeIsNotKnown = feederFix is not null && feederFix.ActualTimeOver == DateTimeOffset.MaxValue;
 
-                    // Flights are added to the pending list if they are departing from a configured departure airport
-                    if (feederFixTimeIsNotKnown || (airportConfiguration.DepartureAirports.Any(d => d.Identifier == notification.Origin) && !hasDeparted))
+                    // Check if from close or departure airport
+                    var closeConfig = airportConfiguration.CloseAirports
+                        .FirstOrDefault(c => c.Identifier == notification.Origin);
+                    var departureConfig = airportConfiguration.DepartureAirports
+                        .FirstOrDefault(d => d.Identifier == notification.Origin);
+
+                    var isFromCloseAirport = closeConfig != null;
+                    var isFromDepartureAirport = departureConfig != null;
+                    var isFromSpecialAirport = isFromCloseAirport || isFromDepartureAirport;
+
+                    // Flights are added to the pending list if they are departing from a configured departure or close airport
+                    if (feederFixTimeIsNotKnown || (isFromSpecialAirport && !hasDeparted))
                     {
                         // For pending flights, use the default runway to calculate trajectory
                         var runwayMode = instance.Session.Sequence.GetRunwayModeAt(approximateLandingEstimate);
@@ -110,7 +120,8 @@ public class FlightUpdatedHandler(
                             wakeCategory: notification.WakeCategory,
                             destinationIdentifier: notification.Destination,
                             originIdentifier: notification.Origin,
-                            isFromDepartureAirport: true,
+                            isFromDepartureAirport: isFromDepartureAirport,
+                            isFromCloseAirport: isFromCloseAirport,
                             estimatedDepartureTime: notification.EstimatedDepartureTime,
                             assignedRunwayIdentifier: runway.Identifier,
                             runway.ApproachType,
@@ -172,7 +183,8 @@ public class FlightUpdatedHandler(
                             wakeCategory: notification.WakeCategory,
                             destinationIdentifier: notification.Destination,
                             originIdentifier: notification.Origin,
-                            isFromDepartureAirport: false,
+                            isFromDepartureAirport: isFromDepartureAirport,
+                            isFromCloseAirport: isFromCloseAirport,
                             estimatedDepartureTime: notification.EstimatedDepartureTime,
                             assignedRunwayIdentifier: runway.Identifier,
                             approachType: runway.ApproachType,
@@ -208,7 +220,8 @@ public class FlightUpdatedHandler(
                             wakeCategory: notification.WakeCategory,
                             destinationIdentifier: notification.Destination,
                             originIdentifier: notification.Origin,
-                            isFromDepartureAirport: false,
+                            isFromDepartureAirport: isFromDepartureAirport,
+                            isFromCloseAirport: isFromCloseAirport,
                             estimatedDepartureTime: notification.EstimatedDepartureTime,
                             assignedRunwayIdentifier: runway.Identifier,
                             approachType: runway.ApproachType,

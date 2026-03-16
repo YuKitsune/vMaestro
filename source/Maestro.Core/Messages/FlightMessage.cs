@@ -11,6 +11,7 @@ public class FlightMessage
     public required string? OriginIdentifier { get; init; }
     public required string DestinationIdentifier { get; init; }
     public required bool IsFromDepartureAirport { get; init; }
+    public required bool IsFromCloseAirport { get; init; }
     public required State State { get; init; } // TODO: DTO
     public required DateTimeOffset? ActivatedTime { get; init; }
     public required bool HighPriority { get; init; }

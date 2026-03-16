@@ -203,4 +203,117 @@ public class FlightTests(ClockFixture clockFixture)
         // Assert
         flight.State.ShouldBe(State.Landed);
     }
+
+    [Fact]
+    public void WhenAFlightIsFromCloseAirport_WithCustomMinimumUnstableTime_ItUsesCustomTime()
+    {
+        // Arrange - Close airport with 12 minute custom unstable time
+        var config = new AirportConfigurationBuilder("YSSY")
+            .WithCloseAirport("YSBK", minimumUnstableMinutes: 12)
+            .Build();
+
+        var flight = new FlightBuilder("QFA1")
+            .FromCloseAirport()
+            .WithActivationTime(clockFixture.Instance.UtcNow().AddMinutes(-10)) // 10 minutes active
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(20)) // Within stable threshold
+            .WithState(State.Unstable)
+            .Build();
+
+        // Act
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, config);
+
+        // Assert - Should remain unstable because 10 minutes < 12 minutes custom minimum
+        flight.State.ShouldBe(State.Unstable);
+
+        // Act again after 13 minutes active
+        var olderClock = new FixedClock(clockFixture.Instance.UtcNow().AddMinutes(3));
+        flight.UpdateStateBasedOnTime(olderClock, config);
+
+        // Assert - Should now be stable
+        flight.State.ShouldBe(State.Stable);
+    }
+
+    [Fact]
+    public void WhenAFlightIsFromCloseAirport_WithoutCustomMinimumUnstableTime_ItUsesGlobalCloseTime()
+    {
+        // Arrange - Close airport without custom unstable time (uses MinimumUnstableCloseMinutes = 10)
+        var config = new AirportConfigurationBuilder("YSSY")
+            .WithCloseAirport("YSBK")
+            .Build();
+
+        var flight = new FlightBuilder("QFA1")
+            .FromCloseAirport()
+            .WithActivationTime(clockFixture.Instance.UtcNow().AddMinutes(-8)) // 8 minutes active
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(20)) // Within stable threshold
+            .WithState(State.Unstable)
+            .Build();
+
+        // Act
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, config);
+
+        // Assert - Should remain unstable because 8 minutes < 10 minutes default close time
+        flight.State.ShouldBe(State.Unstable);
+
+        // Act again after 11 minutes active
+        var olderClock = new FixedClock(clockFixture.Instance.UtcNow().AddMinutes(3));
+        flight.UpdateStateBasedOnTime(olderClock, config);
+
+        // Assert - Should now be stable
+        flight.State.ShouldBe(State.Stable);
+    }
+
+    [Fact]
+    public void WhenAFlightIsFromDepartureAirport_WithCustomMinimumUnstableTime_ItUsesCustomTime()
+    {
+        // Arrange - Departure airport with 15 minute custom unstable time
+        var config = new AirportConfigurationBuilder("YSSY")
+            .WithDepartureAirport("YSCB", [new AllAircraftTypesDescriptor()], 10, minimumUnstableMinutes: 15)
+            .Build();
+
+        var flight = new FlightBuilder("QFA1")
+            .FromDepartureAirport()
+            .WithActivationTime(clockFixture.Instance.UtcNow().AddMinutes(-12)) // 12 minutes active
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(20)) // Within stable threshold
+            .WithState(State.Unstable)
+            .Build();
+
+        // Act
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, config);
+
+        // Assert - Should remain unstable because 12 minutes < 15 minutes custom minimum
+        flight.State.ShouldBe(State.Unstable);
+
+        // Act again after 16 minutes active
+        var olderClock = new FixedClock(clockFixture.Instance.UtcNow().AddMinutes(4));
+        flight.UpdateStateBasedOnTime(olderClock, config);
+
+        // Assert - Should now be stable
+        flight.State.ShouldBe(State.Stable);
+    }
+
+    [Fact]
+    public void WhenAFlightIsFromRegularAirport_ItUsesGlobalMinimumUnstableTime()
+    {
+        // Arrange - Regular airport (uses MinimumUnstableMinutes = 5)
+        var config = new AirportConfigurationBuilder("YSSY").Build();
+
+        var flight = new FlightBuilder("QFA1")
+            .WithActivationTime(clockFixture.Instance.UtcNow().AddMinutes(-3)) // 3 minutes active
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(20)) // Within stable threshold
+            .WithState(State.Unstable)
+            .Build();
+
+        // Act
+        flight.UpdateStateBasedOnTime(clockFixture.Instance, config);
+
+        // Assert - Should remain unstable because 3 minutes < 5 minutes default time
+        flight.State.ShouldBe(State.Unstable);
+
+        // Act again after 6 minutes active
+        var olderClock = new FixedClock(clockFixture.Instance.UtcNow().AddMinutes(3));
+        flight.UpdateStateBasedOnTime(olderClock, config);
+
+        // Assert - Should now be stable
+        flight.State.ShouldBe(State.Stable);
+    }
 }

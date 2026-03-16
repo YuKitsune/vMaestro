@@ -9,6 +9,7 @@ public class AirportConfigurationBuilder(string identifier)
     List<RunwayModeConfiguration> _runwayModes = [];
     List<TrajectoryConfiguration> _trajectories = [];
     List<DepartureConfiguration> _departures = [];
+    List<CloseConfiguration> _closeAirports = [];
 
     public AirportConfigurationBuilder WithRunways(params string[] runways)
     {
@@ -123,14 +124,29 @@ public class AirportConfigurationBuilder(string identifier)
     public AirportConfigurationBuilder WithDepartureAirport(
         string identifier,
         IAircraftDescriptor[] aircraft,
-        int flightTimeMinutes)
+        int flightTimeMinutes,
+        int? minimumUnstableMinutes = null)
     {
         _departures.Add(new DepartureConfiguration
         {
             Identifier = identifier,
             Distance = 0.0,
             Aircraft = aircraft,
-            EstimatedFlightTimeMinutes = flightTimeMinutes
+            EstimatedFlightTimeMinutes = flightTimeMinutes,
+            MinimumUnstableMinutes = minimumUnstableMinutes
+        });
+
+        return this;
+    }
+
+    public AirportConfigurationBuilder WithCloseAirport(
+        string identifier,
+        int? minimumUnstableMinutes = null)
+    {
+        _closeAirports.Add(new CloseConfiguration
+        {
+            Identifier = identifier,
+            MinimumUnstableMinutes = minimumUnstableMinutes
         });
 
         return this;
@@ -146,6 +162,7 @@ public class AirportConfigurationBuilder(string identifier)
             RunwayModes = _runwayModes.ToArray(),
             Trajectories = _trajectories.ToArray(),
             DepartureAirports = _departures.ToArray(),
+            CloseAirports = _closeAirports.ToArray(),
             Views = [],
             GlobalCoordinationMessages = [],
             FlightCoordinationMessages = []

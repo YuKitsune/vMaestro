@@ -12,8 +12,8 @@ This section explains the core concepts and functionality of Maestro, including 
 | `ETA_FF` | Estimated time of arrival at the **feeder fix**. |
 | `STA_FF` | **Scheduled** time of arrival at the feeder fix calculated by Maestro. |
 | Managed Airport | The airport Maestro is sequencing arrivals for. |
-| Departure Airport | An airport typically within 30-minute flight time of the managed airport. |
-| Close Airport | An airport within close proximity to the managed airport. |
+| Departure Airport | An airport typically within 30-minute flight time of the managed airport where flights can be manually inserted before activation for ground delay management. |
+| Close Airport | An airport where departing traffic may still be climbing by the time they would normally become stable, requiring longer unstable duration for accurate ETA calculations. |
 
 ## Flight Lifecycle
 
@@ -92,7 +92,13 @@ Maestro uses various "States" for flights that affect how they are processed.
 
 ### Unstable
 
-**When**: All new flights start in this state and remain unstable for at least 5 minutes.
+**When**: All new flights start in this state and remain unstable for a minimum duration:
+
+- Regular flights: at least 5 minutes
+- Flights from close airports: at least 10 minutes (configurable per airport)
+- Flights from departure airports: configurable per airport
+
+The longer unstable time for close airports accommodates inaccurate ETAs during climb.
 
 **Behavior**: After each update from vatSys, unstable flights are re-positioned in the sequence based on their calculated `ETA`, and their `STA_FF` and `STA` times are re-calculated.
 
@@ -136,17 +142,22 @@ Super stable flights can be moved manually by controller interaction.
 
 The Pending list contains flights that cannot be automatically inserted into the sequence and must be inserted manually.
 
-Flights from departure airports or flights not tracking via a feeder fix are automatically inserted into the pending list when their FDR is activated.
+Flights are automatically added to the pending list when:
 
-Flights from a departure airport can be inserted prior to departure to allow them to absorb any required delay on the ground if possible.
+- They are from departure airports (before activation)
+- They are from close airports (before activation)
+- They are not tracking via a feeder fix
 
-<!-- Flights from airports within the TMA must be manually inserted into the sequence. -->
+Flights from departure airports can be inserted prior to departure to allow them to absorb any required delay on the ground if possible.
+
+Flights form close airports can be manually inserted into the sequence.
 
 ## Slots
 
 Slots are periods of time where no flights can be scheduled to land on a specific runway. They are primarily used to reserve runway capacity for special operations or configuration changes.
 
 **Behavior**:
+
 - Maestro will not schedule flights to land within a slot, but may schedule them to land at the beginning or end of a slot.
 - `Frozen` flights are the only flights allowed to land during a slot.
 - Non-frozen flights within a slot will be automatically delayed until after the slot has ended.

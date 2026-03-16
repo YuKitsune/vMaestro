@@ -21,6 +21,7 @@ public class Flight : IEquatable<Flight>
         // Origin info
         string? originIdentifier,
         bool isFromDepartureAirport,
+        bool isFromCloseAirport,
         DateTimeOffset? estimatedDepartureTime,
 
         // Runway and trajectory
@@ -51,6 +52,7 @@ public class Flight : IEquatable<Flight>
 
         OriginIdentifier = originIdentifier;
         IsFromDepartureAirport = isFromDepartureAirport;
+        IsFromCloseAirport = isFromCloseAirport;
         EstimatedDepartureTime = estimatedDepartureTime;
 
         AssignedRunwayIdentifier = assignedRunwayIdentifier;
@@ -107,6 +109,7 @@ public class Flight : IEquatable<Flight>
 
         OriginIdentifier = null;
         IsFromDepartureAirport = false;
+        IsFromCloseAirport = false;
         EstimatedDepartureTime = null;
 
         AssignedRunwayIdentifier = assignedRunwayIdentifier;
@@ -144,6 +147,7 @@ public class Flight : IEquatable<Flight>
         IsManuallyInserted = message.IsManuallyInserted;
         EstimatedDepartureTime = message.EstimatedDepartureTime;
         IsFromDepartureAirport = message.IsFromDepartureAirport;
+        IsFromCloseAirport = message.IsFromCloseAirport;
 
         AssignedRunwayIdentifier = message.AssignedRunwayIdentifier
             ?? throw new ArgumentException("AssignedRunwayIdentifier required", nameof(message));
@@ -188,6 +192,7 @@ public class Flight : IEquatable<Flight>
     public DateTimeOffset? EstimatedDepartureTime { get; set; }
 
     public bool IsFromDepartureAirport { get; set; }
+    public bool IsFromCloseAirport { get; set; }
 
     public string AssignedRunwayIdentifier { get; private set; }
 
@@ -410,6 +415,33 @@ public class Flight : IEquatable<Flight>
         FlowControls = flowControls;
     }
 
+    private TimeSpan GetMinimumUnstableTime(AirportConfiguration config)
+    {
+        if (OriginIdentifier != null)
+        {
+            // Check if from close airport first (priority over departure)
+            var closeConfig = config.CloseAirports
+                .FirstOrDefault(c => c.Identifier == OriginIdentifier);
+
+            if (closeConfig != null)
+            {
+                if (closeConfig.MinimumUnstableMinutes.HasValue)
+                    return TimeSpan.FromMinutes(closeConfig.MinimumUnstableMinutes.Value);
+
+                return TimeSpan.FromMinutes(config.MinimumUnstableCloseMinutes);
+            }
+
+            // Check if from departure airport
+            var departureConfig = config.DepartureAirports
+                .FirstOrDefault(d => d.Identifier == OriginIdentifier);
+
+            if (departureConfig?.MinimumUnstableMinutes.HasValue == true)
+                return TimeSpan.FromMinutes(departureConfig.MinimumUnstableMinutes.Value);
+        }
+
+        return TimeSpan.FromMinutes(config.MinimumUnstableMinutes);
+    }
+
     // TODO: Move this into Flight Updated handler
     public void UpdateStateBasedOnTime(IClock clock, AirportConfiguration airportConfiguration)
     {
@@ -427,7 +459,7 @@ public class Flight : IEquatable<Flight>
 
         var stableThreshold = TimeSpan.FromMinutes(airportConfiguration.StabilityThresholdMinutes);
         var frozenThreshold = TimeSpan.FromMinutes(airportConfiguration.FrozenThresholdMinutes);
-        var minUnstableTime = TimeSpan.FromSeconds(airportConfiguration.MinimumUnstableMinutes);
+        var minUnstableTime = GetMinimumUnstableTime(airportConfiguration);
 
         // Keep the flight unstable until it's passed the minimum unstable time
         var timeActive = clock.UtcNow() - ActivatedTime;

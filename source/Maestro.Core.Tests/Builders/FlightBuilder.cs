@@ -31,6 +31,7 @@ public class FlightBuilder(string callsign)
 
     DateTimeOffset _lastSeen = default;
     bool _isFromDepartureAirport = false;
+    bool _isFromCloseAirport = false;
     FlightPosition? _position = null;
     Trajectory _trajectory = new(TimeSpan.FromMinutes(20));
     bool _isManuallyInserted = false;
@@ -153,6 +154,13 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder FromCloseAirport(bool value = true)
+    {
+        _origin = "YSBK";
+        _isFromCloseAirport = value;
+        return this;
+    }
+
     public FlightBuilder WithPosition(FlightPosition position)
     {
         _position = position;
@@ -200,6 +208,7 @@ public class FlightBuilder(string callsign)
                 destinationIdentifier: _destination,
                 originIdentifier: _origin,
                 isFromDepartureAirport: _isFromDepartureAirport,
+                isFromCloseAirport: _isFromCloseAirport,
                 estimatedDepartureTime: null,
                 assignedRunwayIdentifier: _assignedRunway,
                 approachType: _approachType,

@@ -286,7 +286,8 @@ public class Plugin : IPlugin
             return;
 
         var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
-        if (!isActivated)
+        var isFromSpecialAirport = IsFromDepartureOrCloseAirport(updated.DepAirport, updated.DesAirport);
+        if (!isActivated && !isFromSpecialAirport)
             return;
 
         // Estimates have not been calculated yet
@@ -348,6 +349,15 @@ public class Plugin : IPlugin
             estimates);
 
         _mediator?.Publish(notification, CancellationToken.None);
+    }
+
+    bool IsFromDepartureOrCloseAirport(string origin, string destination)
+    {
+        var config = _airportConfigurationProvider?.GetAirportConfiguration(destination);
+        if (config == null) return false;
+
+        return config.DepartureAirports.Any(d => d.Identifier == origin) ||
+               config.CloseAirports.Any(c => c.Identifier == origin);
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
