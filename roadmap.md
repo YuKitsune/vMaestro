@@ -7,23 +7,11 @@
 - [ ] Delete redundant or inaccurate test cases
 - [ ] Compare remaining test cases with reference material
 
-### Configuration Overhaul
+### Documentation
 
-Introduce support for transitions and approach types.
-Configuration will be split into multiple files, one per airport.
-Configuration files will likely require a new format to support tabular data such as arrivals.
-
-- [X] Re-design configuration types
-    - [X] Introduce transition fixes
-    - [X] Introduce approach types
-- [X] Introduce "Change Approach Type" request and handler
-- [X] Assign runway based on arrivals matching the runway mode, feeder, and transition fixes
-- [X] Remove runway requirements and preferences
-- [X] Store the processed arrival and runway mode on the Flight
-    - [X] Set landing estimate based on ETA_FF + arrival TTG
-    - [X] Set STA_FF using STA - arrival TTG
-    - [X] If ATO_FF is set, ETA should be ATO_FF + arrival TTG (this value won't change after passing FF, this is accurate)
-- [X] Consider new config file format
+- [ ] Write documentation for ATC usage
+- [ ] Write documentation for configuration and server setup
+- [ ] Document limitations and differences compared to the real system
 
 ### Refactoring
 
@@ -36,22 +24,6 @@ Configuration files will likely require a new format to support tabular data suc
     - [ ] Test scheduling separately
     - [ ] Clean up Flight builder so that you can't build an invalid flight (make ETA and ETA_FF mutually exclusive? Or calculate a TTG based on ETA - ETA_FF if no trajectory is set?)
     - [ ] Clean up the handler tests to remove all the unnecessary setup (i.e. trajectories)
-
-### Model "Close" airports
-
-- [ ] Flights within 25 mins flight time of the FF are from "Close" airports (e.g: Inside the TMA)
-- [ ] Flights from "Close" airports will be added to the pending list
-
-### Ladder and Timeline enhancements
-
-- [X] Add support for multiple ladders and timelines
-- [X] Implement configuration for custom label layout and colors
-
-### Documentation
-
-- [ ] Write documentation for ATC usage
-- [ ] Write documentation for configuration and server setup
-- [ ] Document limitations and differences compared to the real system
 
 ## Future Enhancements
 
