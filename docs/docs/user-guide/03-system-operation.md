@@ -154,40 +154,6 @@ Right-clicking on a flight label will open a context menu with the following opt
 | Desequence | Move the flight to the De-sequenced list, removing it from the sequence. |
 | Make Pending | If this flight is departing from a departure airport, and has not yet departed, places them back into the pending list and removes them from the sequence. |
 
-<!-- #### View Configuration
-
-Each view can be configured as follows:
-
-- Time horizon: The duration of the sequence displayed on the screen.
-- Number of timelines: Up to 4 timelines can be displayed.
-- Timeline direction: Timelines may move up or down the screen.
-- Timeline reference: Flights can be displayed based on their `STA` (Runway view) or their `STA_FF` (Feeder view).
-- Runway and Feeder Fix filters: Each timeline can be filtered to display flights depending on their assigned runway or Feeder Fix.
-
-The content of flight labels can also be configured to display the following information:
-
-- Callsign
-- Aircraft type
-- Aircraft weight class
-- Allocated runway
-- Approach type
-- `STA`
-- `STA_FF`
-- Total delay (The total amount of delay the flight needs to absorb to land at the calculated `STA`)
-- Current delay (The delay yet to be absorbed)
-- Coupling status indicator
-- Manual delay indicator
-- Control action indicator
-
-Each of the flight label fields can be color coded depending on:
-
-- Destination
-- Allocated runway
-- Approach type
-- Feeder Fix
-- Maestro State
-- Runway configuration (i.e. whether the flight has been processed with the current or future runway configuration) -->
-
 ## Modifying the TMA Configuration
 
 To change the TMA Configuration, click the TMA Configuration button in the Configuration Zone. This will open the `TMA Configuration` window.

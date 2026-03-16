@@ -140,7 +140,7 @@ Flights from departure airports or flights not tracking via a feeder fix are aut
 
 Flights from a departure airport can be inserted prior to departure to allow them to absorb any required delay on the ground if possible.
 
-<!-- Flights from airports within the TMA must be manually inserted into the sequence. -->
+Flights from airports within the TMA must be manually inserted into the sequence.
 
 ## Slots
 
