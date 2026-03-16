@@ -199,11 +199,11 @@
 
             tbody.innerHTML = connections.map(conn => {
                 let badgeClass = 'badge';
-                if (conn.IsMaster) {
+                if (conn.isMaster) {
                     badgeClass += ' bg-warning text-dark';
-                } else if (conn.Role.toLowerCase() === 'flow') {
+                } else if (conn.role.toLowerCase() === 'flow') {
                     badgeClass += ' bg-primary';
-                } else if (conn.Role.toLowerCase() === 'pseudo') {
+                } else if (conn.role.toLowerCase() === 'pseudo') {
                     badgeClass += ' bg-info';
                 } else {
                     badgeClass += ' bg-secondary';
@@ -211,16 +211,16 @@
 
                 return `
                     <tr>
-                        <td>${escapeHtml(conn.Callsign)}</td>
-                        <td>${escapeHtml(conn.Partition)}</td>
-                        <td>${escapeHtml(conn.AirportIdentifier)}</td>
+                        <td>${escapeHtml(conn.callsign)}</td>
+                        <td>${escapeHtml(conn.partition)}</td>
+                        <td>${escapeHtml(conn.airportIdentifier)}</td>
                         <td>
                             <span class="${badgeClass}">
-                                ${conn.Role}${conn.IsMaster ? ' (Master)' : ''}
+                                ${conn.role}${conn.isMaster ? ' (Master)' : ''}
                             </span>
                         </td>
-                        <td><small class="text-muted">${escapeHtml(conn.Id)}</small></td>
-                        <td><small class="text-muted">${escapeHtml(conn.Version)}</small></td>
+                        <td><small class="text-muted">${escapeHtml(conn.id)}</small></td>
+                        <td><small class="text-muted">${escapeHtml(conn.version)}</small></td>
                     </tr>
                 `;
             }).join('');
@@ -247,15 +247,15 @@
             let clientInfo = '';
             let argsInfo = '';
 
-            if (data && data.Client) {
-                const client = data.Client;
-                const roleBadge = client.IsMaster
+            if (data && data.client) {
+                const client = data.client;
+                const roleBadge = client.isMaster
                     ? '<span class="badge bg-warning text-dark ms-1">Master</span>'
                     : '';
-                clientInfo = `<span class="text-info ms-2">${escapeHtml(client.Callsign)}</span> <span class="text-muted small">(${escapeHtml(client.Partition)}/${escapeHtml(client.AirportIdentifier)} - ${escapeHtml(client.Role)})</span>${roleBadge}`;
+                clientInfo = `<span class="text-info ms-2">${escapeHtml(client.callsign)}</span> <span class="text-muted small">(${escapeHtml(client.partition)}/${escapeHtml(client.airportIdentifier)} - ${escapeHtml(client.role)})</span>${roleBadge}`;
 
-                if (data.Arguments) {
-                    argsInfo = '<br><small class="text-muted">' + escapeHtml(JSON.stringify(data.Arguments, null, 2)) + '</small>';
+                if (data.arguments) {
+                    argsInfo = '<br><small class="text-muted">' + escapeHtml(JSON.stringify(data.arguments, null, 2)) + '</small>';
                 }
             } else if (data) {
                 argsInfo = '<br><small class="text-muted">' + escapeHtml(JSON.stringify(data, null, 2)) + '</small>';
