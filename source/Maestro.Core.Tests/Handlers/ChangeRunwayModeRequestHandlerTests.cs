@@ -14,6 +14,9 @@ namespace Maestro.Core.Tests.Handlers;
 
 public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
 {
+    const int DefaultDependencyRateSeconds = 30;
+    const int DefaultOffModeSeconds = 300;
+
     [Fact]
     public async Task WhenStartTimeIsNowOrEarlier_CurrentRunwayModeIsChanged()
     {
@@ -66,7 +69,9 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
             [
                 new RunwayDto("16L", string.Empty, 180, []),
                 new RunwayDto("16R", string.Empty, 180, [])
-            ]);
+            ],
+            DefaultDependencyRateSeconds,
+            DefaultOffModeSeconds);
 
         var request = new ChangeRunwayModeRequest(
             "YSSY",
@@ -136,7 +141,9 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
             [
                 new RunwayDto("16L", string.Empty, 180, []),
                 new RunwayDto("16R", string.Empty, 180, [])
-            ]);
+            ],
+            DefaultDependencyRateSeconds,
+            DefaultOffModeSeconds);
 
         var lastLandingTimeForOldMode = now.AddMinutes(20);
         var firstLandingTimeForNewMode = now.AddMinutes(25);
@@ -223,7 +230,9 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
             [
                 new RunwayDto("16L", string.Empty, 180, []),
                 new RunwayDto("16R", string.Empty, 180, [])
-            ]);
+            ],
+            DefaultDependencyRateSeconds,
+            DefaultOffModeSeconds);
 
         var lastLandingTimeForOldMode = now.AddMinutes(20);
         var firstLandingTimeForNewMode = now.AddMinutes(25);
@@ -310,7 +319,9 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
             [
                 new RunwayDto("16L", string.Empty, 240, []),
                 new RunwayDto("16R", string.Empty, 240, [])
-            ]);
+            ],
+            DefaultDependencyRateSeconds,
+            DefaultOffModeSeconds);
 
         var lastLandingTimeForOldMode = now.AddMinutes(20);
         var firstLandingTimeForNewMode = now.AddMinutes(25);
@@ -409,7 +420,9 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
             [
                 new RunwayDto("16L", string.Empty, 180, []),
                 new RunwayDto("16R", string.Empty, 180, [])
-            ]);
+            ],
+            DefaultDependencyRateSeconds,
+            DefaultOffModeSeconds);
 
         var request = new ChangeRunwayModeRequest(
             "YSSY",
@@ -478,7 +491,9 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
             [
                 new RunwayDto("16L", string.Empty, 180, []),
                 new RunwayDto("16R", string.Empty, 180, [])
-            ]);
+            ],
+            DefaultDependencyRateSeconds,
+            DefaultOffModeSeconds);
 
         var request = new ChangeRunwayModeRequest(
             "YSSY",

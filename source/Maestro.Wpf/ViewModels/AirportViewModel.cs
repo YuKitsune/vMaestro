@@ -10,27 +10,43 @@ public partial class RunwayModeViewModel : ObservableObject
     RunwayViewModel[] _runways = [];
 
     public RunwayModeViewModel(RunwayModeConfiguration runwayModeConfiguration)
-        : this(runwayModeConfiguration.Identifier, runwayModeConfiguration.Runways.Select(r => new RunwayViewModel(r.Identifier, r.ApproachType, r.LandingRateSeconds, r.FeederFixes)).ToArray())
+        : this(
+            runwayModeConfiguration.Identifier,
+            runwayModeConfiguration.Runways.Select(r => new RunwayViewModel(r.Identifier, r.ApproachType, r.LandingRateSeconds, r.FeederFixes)).ToArray(),
+            runwayModeConfiguration.DependencyRateSeconds,
+            runwayModeConfiguration.OffModeSeparationSeconds)
     {
     }
 
     public RunwayModeViewModel(RunwayModeDto runwayModeDto)
-        : this(runwayModeDto.Identifier, runwayModeDto.Runways.Select(r => new RunwayViewModel(r.Identifier, r.ApproachType, r.AcceptanceRateSeconds, r.FeederFixes)).ToArray())
+        : this(
+            runwayModeDto.Identifier,
+            runwayModeDto.Runways.Select(r => new RunwayViewModel(r.Identifier, r.ApproachType, r.AcceptanceRateSeconds, r.FeederFixes)).ToArray(),
+            runwayModeDto.DependencyRateSeconds,
+            runwayModeDto.OffModeSeparationSeconds)
     {
     }
 
     public RunwayModeViewModel(RunwayModeViewModel runwayModeViewModel)
-        : this(runwayModeViewModel.Identifier, runwayModeViewModel.Runways.Select(r => new RunwayViewModel(r.Identifier, r.ApproachType, r.LandingRateSeconds, r.FeederFixes)).ToArray())
+        : this(
+            runwayModeViewModel.Identifier,
+            runwayModeViewModel.Runways.Select(r => new RunwayViewModel(r.Identifier, r.ApproachType, r.LandingRateSeconds, r.FeederFixes)).ToArray(),
+            runwayModeViewModel.DependencyRateSeconds,
+            runwayModeViewModel.OffModeSeparationSeconds)
     {
     }
 
-    public RunwayModeViewModel(string identifier, RunwayViewModel[] runways)
+    public RunwayModeViewModel(string identifier, RunwayViewModel[] runways, int dependencyRateSeconds, int offModeSeparationSeconds)
     {
         Identifier = identifier;
         Runways = runways;
+        DependencyRateSeconds = dependencyRateSeconds;
+        OffModeSeparationSeconds = offModeSeparationSeconds;
     }
 
     public string Identifier { get; }
+    public int DependencyRateSeconds { get; }
+    public int OffModeSeparationSeconds { get; }
 }
 
 public partial class RunwayViewModel : ObservableObject

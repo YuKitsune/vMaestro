@@ -1,7 +1,11 @@
 using System.Reflection;
+using System.Text.Json.Serialization;
 using Maestro.Core;
+using Maestro.Core.Messages;
+using Maestro.Core.Sessions;
 using Maestro.Server;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using AssemblyMarker = Maestro.Server.AssemblyMarker;
 
@@ -55,11 +59,34 @@ try
     });
 
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Title = "Maestro API",
+            Version = "v1",
+            Description = "API for accessing Maestro session data"
+        });
+
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+        {
+            c.IncludeXmlComments(xmlPath);
+        }
+
+        c.UseAllOfToExtendReferenceSchemas();
+        c.SchemaFilter<EnumSchemaFilter>();
+    });
     builder.Services.AddSingleton<SessionCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();
     builder.Services.AddHostedService<SystemMetricsService>();
+
+    builder.Services.ConfigureHttpJsonOptions(options =>
+    {
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
     var app = builder.Build();
 
@@ -82,7 +109,11 @@ try
             .ToArray();
 
         return Results.Ok(keys);
-    });
+    })
+    .WithName("GetSessions")
+    .WithDescription("Returns all active session keys")
+    .WithTags("Sessions")
+    .Produces<SessionKey[]>();
 
     api.MapGet("/sessions/{partition}/{airportIdentifier}",
         (string partition, string airportIdentifier, SessionCache cache) =>
@@ -91,7 +122,12 @@ try
         return session is null
             ? Results.NotFound()
             : Results.Ok(session);
-    });
+    })
+    .WithName("GetSession")
+    .WithDescription("Returns the full session data for a specific airport")
+    .WithTags("Sessions")
+    .Produces<SessionMessage>()
+    .Produces(404);
 
     app.MapFallbackToFile("index.html");
     app.Run();

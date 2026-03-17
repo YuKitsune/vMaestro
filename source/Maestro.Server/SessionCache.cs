@@ -1,7 +1,13 @@
+using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 
 namespace Maestro.Server;
 
+/// <summary>
+/// Identifies a unique session by partition and airport.
+/// </summary>
+/// <param name="Partition">The network partition (e.g., VATSIM).</param>
+/// <param name="AirportIdentifier">The ICAO airport code (e.g., YSSY).</param>
 public record SessionKey(string Partition, string AirportIdentifier);
 
 public class SessionCache

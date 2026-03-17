@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
         <Version>0.0.0</Version>
         <Metadata Condition="'$(BuildMetadata)' != ''">+$(BuildMetadata)</Metadata>

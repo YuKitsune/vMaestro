@@ -6,6 +6,7 @@
   <Project Path="build/_build.csproj">
     <Build Project="false" />
   </Project>
+  <Project Path="Maestro.Contracts/Maestro.Contracts.csproj" />
   <Project Path="Maestro.Core.Tests/Maestro.Core.Tests.csproj" />
   <Project Path="Maestro.Core/Maestro.Core.csproj" />
   <Project Path="Maestro.Plugin.Tests/Maestro.Plugin.Tests.csproj" />
