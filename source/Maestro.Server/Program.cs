@@ -88,6 +88,8 @@ try
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
+    builder.Services.AddRazorPages();
+
     var app = builder.Build();
 
     app.UseStaticFiles();
@@ -129,7 +131,8 @@ try
     .Produces<SessionMessage>()
     .Produces(404);
 
-    app.MapFallbackToFile("index.html");
+    app.MapRazorPages();
+
     app.Run();
 }
 catch (Exception ex)
