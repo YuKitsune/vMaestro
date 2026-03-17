@@ -1,8 +1,6 @@
 using System.Reflection;
 using Maestro.Core;
 using Maestro.Server;
-using Maestro.Server.Handlers;
-using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using Serilog;
 using AssemblyMarker = Maestro.Server.AssemblyMarker;
@@ -56,6 +54,8 @@ try
         c.RegisterServicesFromAssemblies(typeof(AssemblyMarker).Assembly);
     });
 
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
     builder.Services.AddSingleton<SessionCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();
@@ -65,9 +65,34 @@ try
 
     app.UseStaticFiles();
 
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
     app.MapHub<MaestroHub>("/hub");
     app.MapHub<DashboardHub>("/dashboard-hub");
     app.MapGet("/health", () => Results.Ok());
+
+    // Session API
+    var api = app.MapGroup("/api");
+
+    api.MapGet("/sessions", (SessionCache cache) =>
+    {
+        var keys = cache.GetAll()
+            .Select(s => s.Key)
+            .ToArray();
+
+        return Results.Ok(keys);
+    });
+
+    api.MapGet("/sessions/{partition}/{airportIdentifier}",
+        (string partition, string airportIdentifier, SessionCache cache) =>
+    {
+        var session = cache.Get(partition, airportIdentifier);
+        return session is null
+            ? Results.NotFound()
+            : Results.Ok(session);
+    });
+
     app.MapFallbackToFile("index.html");
     app.Run();
 }
