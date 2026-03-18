@@ -25,7 +25,7 @@ public class SessionUpdatedNotificationHandler(IConnectionManager connectionMana
             throw new InvalidOperationException("Only the master can update the sequence");
         }
 
-        logger.Information("{Connection} updating session", connection);
+        logger.Verbose("{Connection} updating session", connection);
 
         sessionCache.Set(connection.Partition, notification.AirportIdentifier, notification.Session);
 

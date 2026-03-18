@@ -21,16 +21,10 @@ public class SessionModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string Airport { get; set; } = "";
 
-    [BindProperty(SupportsGet = true)]
-    public int Page { get; set; } = 1;
-
     public SessionMessage? Session { get; private set; }
     public Connection[] Connections { get; private set; } = [];
-    public FlightMessage[] PagedFlights { get; private set; } = [];
-    public int TotalPages { get; private set; }
+    public FlightMessage[] Flights { get; private set; } = [];
     public int TotalFlights { get; private set; }
-
-    public const int PageSize = 10;
 
     public IActionResult OnGet()
     {
@@ -40,18 +34,11 @@ public class SessionModel : PageModel
 
         Connections = _connectionManager.GetConnections(Partition, Airport);
 
-        var allFlights = Session.Sequence.Flights
+        Flights = Session.Sequence.Flights
             .OrderBy(f => f.LandingTime)
             .ToArray();
 
-        TotalFlights = allFlights.Length;
-        TotalPages = (int)Math.Ceiling(TotalFlights / (double)PageSize);
-        Page = Math.Clamp(Page, 1, Math.Max(1, TotalPages));
-
-        PagedFlights = allFlights
-            .Skip((Page - 1) * PageSize)
-            .Take(PageSize)
-            .ToArray();
+        TotalFlights = Flights.Length;
 
         return Page();
     }

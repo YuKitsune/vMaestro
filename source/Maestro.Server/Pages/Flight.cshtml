@@ -6,7 +6,7 @@
 }
 
 @section Breadcrumb {
-    <nav aria-label="breadcrumb" class="bg-dark border-bottom px-3 py-2">
+    <nav aria-label="breadcrumb" class="border-bottom px-3 py-2">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a asp-page="/Index">Sessions</a></li>
             <li class="breadcrumb-item">
@@ -25,7 +25,7 @@
 
 <div class="row mt-4">
     <div class="col-md-6">
-        <div class="card bg-dark border-secondary mb-4">
+        <div class="card mb-4">
             <div class="card-header">Flight Information</div>
             <div class="card-body">
                 <dl class="row mb-0">
@@ -47,103 +47,6 @@
                     <dt class="col-sm-5">Destination</dt>
                     <dd class="col-sm-7">@flight.DestinationIdentifier</dd>
 
-                    <dt class="col-sm-5">From Departure Airport</dt>
-                    <dd class="col-sm-7">@(flight.IsFromDepartureAirport ? "Yes" : "No")</dd>
-
-                    <dt class="col-sm-5">High Priority</dt>
-                    <dd class="col-sm-7">@(flight.HighPriority ? "Yes" : "No")</dd>
-
-                    <dt class="col-sm-5">Manually Inserted</dt>
-                    <dd class="col-sm-7">@(flight.IsManuallyInserted ? "Yes" : "No")</dd>
-                </dl>
-            </div>
-        </div>
-
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-header">Sequence Information</div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">State</dt>
-                    <dd class="col-sm-7">
-                        <span class="badge @FormatHelpers.GetStateBadgeClass(flight.State)">@flight.State</span>
-                    </dd>
-
-                    <dt class="col-sm-5">Number in Sequence</dt>
-                    <dd class="col-sm-7">@flight.NumberInSequence</dd>
-
-                    <dt class="col-sm-5">Assigned Runway</dt>
-                    <dd class="col-sm-7">@flight.AssignedRunwayIdentifier</dd>
-
-                    <dt class="col-sm-5">Number to Land on Runway</dt>
-                    <dd class="col-sm-7">@flight.NumberToLandOnRunway</dd>
-
-                    <dt class="col-sm-5">Approach Type</dt>
-                    <dd class="col-sm-7">@(string.IsNullOrEmpty(flight.ApproachType) ? "-" : flight.ApproachType)</dd>
-
-                    <dt class="col-sm-5">Feeder Fix</dt>
-                    <dd class="col-sm-7">@(flight.FeederFixIdentifier ?? "-")</dd>
-                </dl>
-            </div>
-        </div>
-
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-header">Delays</div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Initial Delay</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.InitialDelay)</dd>
-
-                    <dt class="col-sm-5">Remaining Delay</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.RemainingDelay)</dd>
-
-                    <dt class="col-sm-5">Maximum Delay</dt>
-                    <dd class="col-sm-7">@(flight.MaximumDelay.HasValue ? FormatTimeSpan(flight.MaximumDelay.Value) : "-")</dd>
-
-                    <dt class="col-sm-5">Flow Controls</dt>
-                    <dd class="col-sm-7">@flight.FlowControls</dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-header">Times</div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Activated Time</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.ActivatedTime)</dd>
-
-                    <dt class="col-sm-5">Estimated Departure</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.EstimatedDepartureTime)</dd>
-
-                    <dt class="col-sm-5">Initial Feeder Fix Estimate</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.InitialFeederFixEstimate)</dd>
-
-                    <dt class="col-sm-5">Feeder Fix Estimate</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.FeederFixEstimate) @(flight.ManualFeederFixEstimate ? "(Manual)" : "")</dd>
-
-                    <dt class="col-sm-5">Feeder Fix Time (STA)</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.FeederFixTime)</dd>
-
-                    <dt class="col-sm-5">Actual Feeder Fix Time</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.ActualFeederFixTime)</dd>
-
-                    <dt class="col-sm-5">Initial Landing Estimate</dt>
-                    <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.InitialLandingEstimate)</dd>
-
-                    <dt class="col-sm-5">Landing Estimate</dt>
-                    <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.LandingEstimate)</dd>
-
-                    <dt class="col-sm-5">Target Landing Time</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.TargetLandingTime)</dd>
-
-                    <dt class="col-sm-5">Landing Time (STA)</dt>
-                    <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.LandingTime)</dd>
-
-                    <dt class="col-sm-5">Time to Go</dt>
-                    <dd class="col-sm-7">@(flight.TimeToGo.HasValue ? FormatTimeSpan(flight.TimeToGo.Value) : "-")</dd>
-
                     <dt class="col-sm-5">Last Seen</dt>
                     <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.LastSeen)</dd>
                 </dl>
@@ -152,7 +55,7 @@
 
         @if (flight.Position is not null)
         {
-            <div class="card bg-dark border-secondary mb-4">
+            <div class="card mb-4">
                 <div class="card-header">Position</div>
                 <div class="card-body">
                     <dl class="row mb-0">
@@ -174,14 +77,15 @@
 
         @if (flight.Fixes.Length > 0)
         {
-            <div class="card bg-dark border-secondary mb-4">
+            <div class="card mb-4">
                 <div class="card-header">Route Fixes</div>
                 <div class="card-body">
-                    <table class="table table-dark table-sm mb-0">
+                    <table class="table table-sm mb-0">
                         <thead>
                             <tr>
                                 <th>Fix</th>
                                 <th>Estimate</th>
+                                <th>Actual</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -190,6 +94,7 @@
                                 <tr>
                                     <td>@fix.FixIdentifier</td>
                                     <td>@FormatHelpers.ToDDHHMM(fix.Estimate)</td>
+                                    <td>@(fix.ActualTimeOver.HasValue ? FormatHelpers.ToDDHHMM(fix.ActualTimeOver.Value) : "-")</td>
                                 </tr>
                             }
                         </tbody>
@@ -197,6 +102,88 @@
                 </div>
             </div>
         }
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Feeder Fix</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Identifier</dt>
+                    <dd class="col-sm-7">@(flight.FeederFixIdentifier ?? "-")</dd>
+
+                    <dt class="col-sm-5">Initial Estimate</dt>
+                    <dd class="col-sm-7">@FormatTime(flight.InitialFeederFixEstimate)</dd>
+
+                    <dt class="col-sm-5">Current Estimate (ETA_FF)</dt>
+                    <dd class="col-sm-7">@FormatTime(flight.FeederFixEstimate) @(flight.ManualFeederFixEstimate ? "(Manual)" : "")</dd>
+
+                    <dt class="col-sm-5">Scheduled Time (STA_FF)</dt>
+                    <dd class="col-sm-7">@FormatTime(flight.FeederFixTime)</dd>
+
+                    <dt class="col-sm-5">Actual Time (ATO_FF)</dt>
+                    <dd class="col-sm-7">@FormatTime(flight.ActualFeederFixTime)</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Trajectory</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Approach Type</dt>
+                    <dd class="col-sm-7">@(string.IsNullOrEmpty(flight.ApproachType) ? "-" : flight.ApproachType)</dd>
+
+                    <dt class="col-sm-5">Runway</dt>
+                    <dd class="col-sm-7">@flight.AssignedRunwayIdentifier</dd>
+
+                    <dt class="col-sm-5">Time to Go</dt>
+                    <dd class="col-sm-7">@(flight.TimeToGo.HasValue ? FormatTimeSpan(flight.TimeToGo.Value) : "-")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Scheduling Data</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">State</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge @FormatHelpers.GetStateBadgeClass(flight.State)">@flight.State</span>
+                    </dd>
+
+                    <dt class="col-sm-5">Number in Sequence</dt>
+                    <dd class="col-sm-7">@flight.NumberInSequence</dd>
+
+                    <dt class="col-sm-5">Number to Land on Runway</dt>
+                    <dd class="col-sm-7">@flight.NumberToLandOnRunway</dd>
+
+                    <dt class="col-sm-5">Initial Landing Estimate</dt>
+                    <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.InitialLandingEstimate)</dd>
+
+                    <dt class="col-sm-5">Current Landing Estimate (ETA)</dt>
+                    <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.LandingEstimate)</dd>
+
+                    <dt class="col-sm-5">Target Landing Time</dt>
+                    <dd class="col-sm-7">@FormatTime(flight.TargetLandingTime)</dd>
+
+                    <dt class="col-sm-5">Scheduled Landing Time (STA)</dt>
+                    <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.LandingTime)</dd>
+
+                    <dt class="col-sm-5">Initial Delay</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.InitialDelay)</dd>
+
+                    <dt class="col-sm-5">Remaining Delay</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.RemainingDelay)</dd>
+
+                    <dt class="col-sm-5">Maximum Delay</dt>
+                    <dd class="col-sm-7">@(flight.MaximumDelay.HasValue ? FormatTimeSpan(flight.MaximumDelay.Value) : "-")</dd>
+
+                    <dt class="col-sm-5">Flow Controls</dt>
+                    <dd class="col-sm-7">@flight.FlowControls</dd>
+                </dl>
+            </div>
+        </div>
     </div>
 </div>
 

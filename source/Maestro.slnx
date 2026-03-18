@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path="../docker-compose.yaml" />
-    <File Path="../Maestro.json" />
+    <File Path="../Maestro.yaml" />
   </Folder>
   <Project Path="build/_build.csproj">
     <Build Project="false" />

@@ -7,7 +7,7 @@ public static class FormatHelpers
 {
     public static string ToDDHHMM(DateTimeOffset time)
     {
-        return time.ToString("ddHHmm");
+        return time.ToString("dd/HHmm");
     }
 
     public static string GetStateBadgeClass(State state) => state switch

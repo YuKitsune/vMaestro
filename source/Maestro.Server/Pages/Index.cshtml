@@ -15,26 +15,22 @@
 else
 {
     <div class="table-responsive">
-        <table class="table table-dark table-striped table-hover">
+        <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>Partition</th>
                     <th>Airport</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var session in Model.Sessions)
                 {
                     <tr>
-                        <td>@session.Partition</td>
-                        <td>@session.AirportIdentifier</td>
                         <td>
                             <a asp-page="/Session"
                                asp-route-partition="@session.Partition"
-                               asp-route-airport="@session.AirportIdentifier"
-                               class="btn btn-sm btn-outline-light">
-                                View
+                               asp-route-airport="@session.AirportIdentifier">
+                                @session.Partition/@session.AirportIdentifier
                             </a>
                         </td>
                     </tr>
