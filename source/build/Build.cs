@@ -66,7 +66,7 @@ class Build : NukeBuild
     AbsolutePath CoreTestsProjectPath => RootDirectory / "source" / "Maestro.Core.Tests" / "Maestro.Core.Tests.csproj";
     AbsolutePath ServerTestsProjectPath => RootDirectory / "source" / "Maestro.Server.Tests" / "Maestro.Server.Tests.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
-    AbsolutePath ServerPublishDirectory => RootDirectory / "source" / "Maestro.Server" / "bin" / Configuration / "net9.0" / "publish";
+    AbsolutePath ServerPublishDirectory => RootDirectory / "source" / "Maestro.Server" / "bin" / Configuration / "net10.0" / "publish";
     AbsolutePath ZipPath => TemporaryDirectory / $"Maestro.{GetSemanticVersion()}.zip";
     AbsolutePath PackageDirectory => TemporaryDirectory / "package";
 
