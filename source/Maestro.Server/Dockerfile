@@ -34,5 +34,5 @@ FROM base AS final
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /app
 COPY --from=build /repo/source/Maestro.Server/bin/${BUILD_CONFIGURATION}/net9.0/publish .
-COPY --from=docs-build /docs/build ./wwwroot
+COPY --from=docs-build /docs/build ./wwwroot/docs
 ENTRYPOINT ["dotnet", "Maestro.Server.dll"]

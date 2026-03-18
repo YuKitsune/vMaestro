@@ -107,6 +107,30 @@ try
     app.MapHub<MaestroHub>("/hub");
     app.MapHub<DashboardHub>("/dashboard-hub");
 
+    // SPA fallback for Docusaurus documentation
+    app.MapFallback("/docs/{**path}", async context =>
+    {
+        var path = context.Request.Path.Value ?? "";
+
+        // Don't handle API requests
+        if (path.StartsWith("/api/") || path.StartsWith("/hub"))
+        {
+            context.Response.StatusCode = 404;
+            return;
+        }
+
+        var docsIndexPath = Path.Combine(app.Environment.WebRootPath, "docs", "index.html");
+        if (File.Exists(docsIndexPath))
+        {
+            context.Response.ContentType = "text/html";
+            await context.Response.SendFileAsync(docsIndexPath);
+        }
+        else
+        {
+            context.Response.StatusCode = 404;
+        }
+    });
+
     // Session API
     var api = app.MapGroup("/api");
 
