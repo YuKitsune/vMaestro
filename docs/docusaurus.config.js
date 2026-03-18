@@ -88,6 +88,12 @@ const config = {
             label: 'Developer Guide',
           },
           {
+            href: '/swagger',
+            target: '_blank',
+            label: 'API',
+            position: 'right',
+          },
+          {
             href: '/dashboard',
             target: '_blank',
             label: 'Dashboard',
