@@ -138,6 +138,8 @@ try
 
     app.MapRazorPages();
 
+    app.MapFallbackToFile("index.html");
+
     app.Run();
 }
 catch (Exception ex)
