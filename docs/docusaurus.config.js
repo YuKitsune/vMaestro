@@ -12,7 +12,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 const config = {
   title: 'vMaestro',
   tagline: 'A vatSys plugin emulating the Maestro Traffic Flow Management System',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -64,6 +64,10 @@ const config = {
     ({
       navbar: {
         title: 'vMaestro',
+        logo: {
+          alt: 'vMaestro Logo',
+          src: 'img/favicon.svg',
+        },
         items: [
           {
             type: 'docSidebar',
