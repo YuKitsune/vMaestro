@@ -94,15 +94,27 @@ try
 
     app.UseStaticFiles();
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger(c =>
+    {
+        c.RouteTemplate = "api/swagger/{documentName}/swagger.json";
+    });
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "Maestro API v1");
+        c.RoutePrefix = "api/swagger";
+    });
 
     app.MapHub<MaestroHub>("/hub");
     app.MapHub<DashboardHub>("/dashboard-hub");
-    app.MapGet("/health", () => Results.Ok());
 
     // Session API
     var api = app.MapGroup("/api");
+
+    api.MapGet("/health", () => Results.Ok())
+        .WithName("GetHealth")
+        .WithDescription("Health check endpoint")
+        .WithTags("Health")
+        .Produces(200);
 
     api.MapGet("/sessions", (SessionCache cache) =>
     {
