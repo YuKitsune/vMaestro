@@ -8,11 +8,9 @@
 @section Breadcrumb {
     <nav aria-label="breadcrumb" class="border-bottom px-3 py-2">
         <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a asp-page="/Index">Sessions</a></li>
+            <li class="breadcrumb-item"><a href="/dashboard">Sessions</a></li>
             <li class="breadcrumb-item">
-                <a asp-page="/Session"
-                   asp-route-partition="@Model.Partition"
-                   asp-route-airport="@Model.Airport">
+                <a href="/dashboard/session?partition=@Model.Partition&airport=@Model.Airport">
                     @Model.Partition / @Model.Airport
                 </a>
             </li>

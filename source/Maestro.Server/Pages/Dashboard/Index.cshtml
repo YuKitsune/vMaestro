@@ -27,10 +27,13 @@ else
                 {
                     <tr>
                         <td>
-                            <a asp-page="/Session"
-                               asp-route-partition="@session.Partition"
-                               asp-route-airport="@session.AirportIdentifier">
-                                @session.Partition/@session.AirportIdentifier
+                            <a href="/dashboard/session?partition=@session.Partition&airport=@session.AirportIdentifier">
+                                @session.Partition
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/dashboard/session?partition=@session.Partition&airport=@session.AirportIdentifier">
+                                @session.AirportIdentifier
                             </a>
                         </td>
                     </tr>

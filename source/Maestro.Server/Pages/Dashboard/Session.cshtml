@@ -7,7 +7,7 @@
 @section Breadcrumb {
     <nav aria-label="breadcrumb" class="border-bottom px-3 py-2">
         <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a asp-page="/Index">Sessions</a></li>
+            <li class="breadcrumb-item"><a href="/dashboard">Sessions</a></li>
             <li class="breadcrumb-item active" aria-current="page">@Model.Partition / @Model.Airport</li>
         </ol>
     </nav>
@@ -143,10 +143,7 @@
                                 {
                                     <tr>
                                         <td>
-                                            <a asp-page="/Flight"
-                                               asp-route-partition="@Model.Partition"
-                                               asp-route-airport="@Model.Airport"
-                                               asp-route-callsign="@flight.Callsign">
+                                            <a href="/dashboard/flight?partition=@Model.Partition&airport=@Model.Airport&callsign=@flight.Callsign">
                                                 @flight.Callsign
                                             </a>
                                         </td>

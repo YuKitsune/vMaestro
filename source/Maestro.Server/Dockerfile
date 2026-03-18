@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
@@ -11,7 +11,7 @@ RUN npm ci
 COPY docs .
 RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /repo
 
@@ -33,6 +33,6 @@ RUN chmod +x build.sh && \
 FROM base AS final
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /app
-COPY --from=build /repo/source/Maestro.Server/bin/${BUILD_CONFIGURATION}/net9.0/publish .
-COPY --from=docs-build /docs/build ./wwwroot/docs
+COPY --from=build /repo/source/Maestro.Server/bin/${BUILD_CONFIGURATION}/net10.0/publish .
+COPY --from=docs-build /docs/build ./wwwroot
 ENTRYPOINT ["dotnet", "Maestro.Server.dll"]
