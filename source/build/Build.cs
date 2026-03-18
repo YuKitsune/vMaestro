@@ -290,7 +290,7 @@ class Build : NukeBuild
             }
 
             // Copy config
-            var configFile = RootDirectory / "Maestro.json";
+            var configFile = RootDirectory / "Maestro.yaml";
             var configDestinationDirectory = pluginsDirectory / "Configs" / "Maestro";
             configDestinationDirectory.CreateOrCleanDirectory();
 
