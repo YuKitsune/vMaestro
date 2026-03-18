@@ -12,6 +12,8 @@ public static class RunwayModeExtensionMethods
             runwayMode.Runways
                 .Select(r =>
                     new RunwayDto(r.Identifier, r.ApproachType, (int)r.AcceptanceRate.TotalSeconds, r.FeederFixes))
-                .ToArray());
+                .ToArray(),
+            (int)runwayMode.DependencyRate.TotalSeconds,
+            (int)runwayMode.OffModeSeparation.TotalSeconds);
     }
 }

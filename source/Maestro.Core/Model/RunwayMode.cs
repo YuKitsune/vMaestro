@@ -23,6 +23,8 @@ public class RunwayMode
         Identifier = runwayModeDto.Identifier;
         Runways = runwayModeDto.Runways.Select(r => new Runway(r.Identifier, r.ApproachType, TimeSpan.FromSeconds(r.AcceptanceRateSeconds), r.FeederFixes))
             .ToArray();
+        DependencyRate = TimeSpan.FromSeconds(runwayModeDto.DependencyRateSeconds);
+        OffModeSeparation = TimeSpan.FromSeconds(runwayModeDto.OffModeSeparationSeconds);
     }
 
     public string Identifier { get; }

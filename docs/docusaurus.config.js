@@ -12,7 +12,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 const config = {
   title: 'vMaestro',
   tagline: 'A vatSys plugin emulating the Maestro Traffic Flow Management System',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -21,7 +21,7 @@ const config = {
 
   // Set the production url of your site here
   url: 'https://maestro.eoinmotherway.dev',
-  
+
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -48,7 +48,7 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          routeBasePath: '/', // Docs at the root
+          routeBasePath: '/', // Docs at the root of /docs/
           sidebarPath: './sidebars.js',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
@@ -64,6 +64,10 @@ const config = {
     ({
       navbar: {
         title: 'vMaestro',
+        logo: {
+          alt: 'vMaestro Logo',
+          src: 'img/favicon.svg',
+        },
         items: [
           {
             type: 'docSidebar',
@@ -82,6 +86,18 @@ const config = {
             sidebarId: 'developerGuideSidebar',
             position: 'left',
             label: 'Developer Guide',
+          },
+          {
+            href: '/swagger',
+            target: '_blank',
+            label: 'API',
+            position: 'right',
+          },
+          {
+            href: '/dashboard',
+            target: '_blank',
+            label: 'Dashboard',
+            position: 'right',
           },
           {
             href: 'https://github.com/yukitsune/vMaestro',

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewData["Title"] - Maestro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="@ViewData["BodyClass"]">
+    <nav class="navbar navbar-dark bg-dark border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-page="/Index">Maestro</a>
+            <ul class="navbar-nav flex-row gap-3">
+                <li class="nav-item"><a class="nav-link" href="https://maestro.eoinmotherway.dev" target="_blank">Docs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/api/swagger">API</a></li>
+            </ul>
+        </div>
+    </nav>
+    @RenderSection("Breadcrumb", required: false)
+    <div class="container-fluid mt-4">
+        @RenderBody()
+    </div>
+</body>
+</html>

@@ -1,3 +1,4 @@
+using Maestro.Core.Messages;
 using Maestro.Core.Sessions;
 
 namespace Maestro.Core.Connectivity.Contracts;

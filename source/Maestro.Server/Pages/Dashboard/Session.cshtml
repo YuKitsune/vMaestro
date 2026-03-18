@@ -1,0 +1,167 @@
+@page
+@model SessionModel
+@{
+    ViewData["Title"] = $"{Model.Airport} - {Model.Partition}";
+}
+
+@section Breadcrumb {
+    <nav aria-label="breadcrumb" class="border-bottom px-3 py-2">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/dashboard">Sessions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Partition / @Model.Airport</li>
+        </ol>
+    </nav>
+}
+
+<h1>@Model.Airport <small class="text-muted">@Model.Partition</small></h1>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">Current Runway Mode</div>
+            <div class="card-body">
+                <h5 class="card-title">@Model.Session!.Sequence.CurrentRunwayMode.Identifier</h5>
+                @if (Model.Session.Sequence.NextRunwayMode is not null)
+                {
+                    <dl class="row mb-3">
+                        <dt class="col-sm-8">Last Landing Time</dt>
+                        <dd class="col-sm-4 text-end">@FormatHelpers.ToDDHHMM(Model.Session.Sequence.LastLandingTimeForCurrentMode)</dd>
+                    </dl>
+                }
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Runway</th>
+                            <th>Rate (sec)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var runway in Model.Session.Sequence.CurrentRunwayMode.Runways)
+                        {
+                            <tr>
+                                <td>@runway.Identifier</td>
+                                <td>@runway.AcceptanceRateSeconds</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (Model.Session.Sequence.NextRunwayMode is not null)
+        {
+            <div class="card mb-4">
+                <div class="card-header">Next Runway Mode</div>
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Session.Sequence.NextRunwayMode.Identifier</h5>
+                    <dl class="row mb-3">
+                        <dt class="col-sm-8">First Landing Time</dt>
+                        <dd class="col-sm-4 text-end">@FormatHelpers.ToDDHHMM(Model.Session.Sequence.FirstLandingTimeForNextMode)</dd>
+                    </dl>
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Runway</th>
+                                <th>Rate (sec)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var runway in Model.Session.Sequence.NextRunwayMode.Runways)
+                            {
+                                <tr>
+                                    <td>@runway.Identifier</td>
+                                    <td>@runway.AcceptanceRateSeconds</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-header">Connected Controllers</div>
+            <div class="card-body">
+                @if (Model.Connections.Length == 0)
+                {
+                    <p class="text-muted mb-0">No controllers connected.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Callsign</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var connection in Model.Connections)
+                            {
+                                <tr>
+                                    <td>@connection.Callsign</td>
+                                    <td>
+                                        <span class="badge @FormatHelpers.GetRoleBadgeClass(connection.Role)">
+                                            @connection.Role
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Flights</span>
+                <span class="text-muted">@Model.TotalFlights total</span>
+            </div>
+            <div class="card-body">
+                @if (Model.Flights.Length == 0)
+                {
+                    <p class="text-muted mb-0">No flights in sequence.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Callsign</th>
+                                    <th>Runway</th>
+                                    <th>State</th>
+                                    <th>STA_FF</th>
+                                    <th>STA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var flight in Model.Flights)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a href="/dashboard/flight?partition=@Model.Partition&airport=@Model.Airport&callsign=@flight.Callsign">
+                                                @flight.Callsign
+                                            </a>
+                                        </td>
+                                        <td>@flight.AssignedRunwayIdentifier</td>
+                                        <td>
+                                            <span class="badge @FormatHelpers.GetStateBadgeClass(flight.State)">
+                                                @flight.State
+                                            </span>
+                                        </td>
+                                        <td>@(flight.FeederFixTime.HasValue ? FormatHelpers.ToDDHHMM(flight.FeederFixTime.Value) : "-")</td>
+                                        <td>@FormatHelpers.ToDDHHMM(flight.LandingTime)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

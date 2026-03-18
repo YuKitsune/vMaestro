@@ -3,7 +3,6 @@ using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Messages;
 using Maestro.Core.Model;
-using SequenceMessage = Maestro.Core.Messages.SequenceMessage;
 
 namespace Maestro.Core.Sessions;
 
@@ -51,13 +50,4 @@ public class Session
 
         Sequence.Restore(message.Sequence);
     }
-}
-
-public class SessionMessage
-{
-    public required string AirportIdentifier { get; init; }
-    public required FlightMessage[] PendingFlights { get; init; }
-    public required FlightMessage[] DeSequencedFlights { get; init; }
-    public required SequenceMessage Sequence { get; init; }
-    public required int DummyCounter { get; init; }
 }
