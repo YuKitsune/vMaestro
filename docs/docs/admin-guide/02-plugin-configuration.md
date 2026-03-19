@@ -4,11 +4,12 @@ sidebar_position: 2
 
 # Plugin Configuration
 
-This guide covers the configuration of the vMaestro plugin. The configuration file (`Maestro.yaml`) defines all settings including airport configuration, runway modes, trajectories, and display preferences.
+The `Maestro.yaml` configuration file defines all settings for the Maestro Plugin, including airport configuration, runway modes, trajectories, and display preferences.
 
 ## Configuration File Location
 
-The `Maestro.yaml` file should be placed in your vatSys profile directory. vMaestro searches the following locations in order:
+The configuration file should be placed in the vatSys profile directory.
+vMaestro searches the following locations in order:
 
 1. `{ProfileDirectory}/Plugins/Configs/Maestro/Maestro.yaml`
 2. `{ProfileDirectory}/Plugins/Configs/Maestro.yaml`
@@ -22,15 +23,15 @@ For most installations, `{ProfileDirectory}/Maestro.yaml` is recommended.
 
 The configuration file contains the following sections:
 
-1. **CheckForUpdates** - Plugin update behaviour
-2. **Logging** - Log file settings
-3. **Server** - Server connection and permissions
-4. **Labels** - Colour schemes and label layouts
-5. **Airports** - Airport-specific configuration
+1. **CheckForUpdates**: Plugin update behaviour
+2. **Logging**: Log file settings
+3. **Server**: Server connection and permissions
+4. **Labels**: Colour schemes and label layouts
+5. **Airports**: Airport-specific configuration
 
 ## Plugin Settings
 
-### Update Checking
+### Update Checks
 
 ```yaml
 CheckForUpdates: false
@@ -39,6 +40,8 @@ CheckForUpdates: false
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `CheckForUpdates` | boolean | `true` | Whether to check for updates on startup. Set to `false` to maintain control over plugin versions. |
+
+<!-- TODO: Suggest disabling if you need to maintain control over which version of MAESTRO is used for compatibility with a self-hosted server -->
 
 ## Logging
 
@@ -94,6 +97,7 @@ Server:
 ### Partitions
 
 Partitions allow multiple independent sequences for the same airport. Use cases include:
+
 - Separating live operations from training
 - Running concurrent training sessions
 

@@ -4,15 +4,12 @@ sidebar_position: 4
 
 # API Access
 
-The vMaestro server provides a REST API for integration with external applications. API documentation is provided via Swagger.
+The vMaestro server provides a REST API for integration with external applications.
+API documentation is provided via Swagger.
 
 ## Accessing the API Documentation
 
-Each vMaestro server instance hosts its own API documentation. Access it at:
-
-```
-https://your-server.example.com/swagger
-```
+Each vMaestro server instance hosts its own API documentation at `https://your-server.example.com/swagger`.
 
 Replace `your-server.example.com` with your server's address.
 

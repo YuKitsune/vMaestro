@@ -22,6 +22,8 @@ The recommended approach is to use Docker Compose.
 - Docker and Docker Compose installed
 - Access to the vMaestro container image
 
+<!-- TODO: Docker is under construction, download server binary from github release -->
+
 ### Running with Docker Compose
 
 1. Create a `docker-compose.yaml` file:
