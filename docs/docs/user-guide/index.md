@@ -8,12 +8,11 @@ This guide is intended for air traffic controllers using vMaestro to manage arri
 
 ## System Overview
 
-Learn how vMaestro works, including core concepts, flight states, and sequencing behaviour.
+Learn how vMaestro works, including core concepts, flight processing, and scheduling behaviour.
 
-- [Concepts](./system-overview/01-concepts.md) - Terminology and abbreviations
-- [Flight Lifecycle](./system-overview/02-flight-lifecycle.md) - How flights are tracked and processed
-- [Sequencing](./system-overview/03-sequencing.md) - Runway assignment and scheduling
-- [Online Mode](./system-overview/04-online-mode.md) - Multi-user operation and roles
+- [Concepts](./system-overview/01-concepts.md) - Terminology and definitions
+- [How Flights are Processed](./system-overview/02-flight-processing.md) - The processing cycle, flight states, and scheduling
+- [Online Mode](./system-overview/03-online-mode.md) - Multi-user operation and roles
 
 ## System Operation
 

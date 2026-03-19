@@ -34,9 +34,8 @@ const sidebars = {
           },
           items: [
             'user-guide/system-overview/01-concepts',
-            'user-guide/system-overview/02-flight-lifecycle',
-            'user-guide/system-overview/03-sequencing',
-            'user-guide/system-overview/04-online-mode',
+            'user-guide/system-overview/02-flight-processing',
+            'user-guide/system-overview/03-online-mode',
           ],
         },
         {

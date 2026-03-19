@@ -4,9 +4,7 @@ sidebar_position: 4
 
 # Slots
 
-Slots reserve runway capacity by preventing flights from being scheduled during a specific time period. They are used for special operations, configuration changes, or other reasons requiring a gap in arrivals.
-
-For how slots affect sequencing, see [Sequencing - Slots](../system-overview/03-sequencing.md#slots).
+This page covers how to create and manage slots. For what slots are and how they affect scheduling, see [Concepts - Slots](../system-overview/01-concepts.md#slots).
 
 ## Creating a Slot
 
