@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Coordination
 
-vMaestro supports sending predefined coordination messages to other controllers connected to the same server.
+Maestro supports sending predefined coordination messages to other controllers connected to the same server.
 
 ## General Coordination
 
@@ -15,7 +15,7 @@ vMaestro supports sending predefined coordination messages to other controllers 
 
 ![General Coordination window](../../../static/img/general_coord.png)
 
-## Flight-Specific Coordination
+## Flight Coordination
 
 1. Right-click on a flight label
 2. Select `Coordination`
@@ -24,7 +24,7 @@ vMaestro supports sending predefined coordination messages to other controllers 
 
 ![Flight Coordination window](../../../static/img/flight_coord.png)
 
-Flight-specific messages are sent to all relevant units and include the flight's callsign.
+Flight coordination messages include the flight's callsign and are sent to all relevant units.
 
 ## Receiving Messages
 
@@ -32,4 +32,4 @@ Incoming coordination messages appear in the Information window.
 
 ![Coordination messages window](../../../static/img/coord_messages.png)
 
-Click `ACK` to acknowledge and clear the messages. Once acknowledged, messages cannot be restored.
+Click `ACK` to acknowledge and clear the messages.

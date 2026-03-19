@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Configuration
+# TMA Configuration
 
 This page covers how to view and modify the TMA configuration during operation.
 
@@ -13,8 +13,9 @@ The TMA Configuration button in the Configuration Zone displays the current runw
 ![Image of the TMA Configuration button](../../../static/img/tma_config_button.png)
 
 When a configuration change is scheduled for the future, the button text turns white and shows:
-`[Current Configuration] → [New Configuration]`
+`[Current Configuration] → [New Configuration] at [Change Time]`
 
+<!-- TODO: Update screenshot with change time -->
 ![Image of the TMA Configuration button with a future configuration](../../../static/img/tma_config_change_button.png)
 
 ## Changing the Configuration
@@ -37,6 +38,7 @@ The validity period is controlled by two times:
 - **First STA in configuration** - The first landing time using the new configuration
 
 Use the arrow buttons to adjust these times:
+
 - Single arrows change by 1 minute
 - Double arrows change by 5 minutes
 
@@ -45,7 +47,8 @@ Flights scheduled to land after the "First STA in configuration" time will be pr
 :::
 
 :::info
-When a gap exists between the two times, no flights may land during that period. Any flight with an estimate within this gap will be delayed until after the new configuration begins.
+When a gap exists between the two times, no flights may land during that period.
+Any flight with an estimate within this gap will be delayed until after the new configuration begins.
 :::
 
 ## Runway Acceptance Rates
@@ -55,7 +58,3 @@ The Runway Acceptance Rates button displays each active runway with its current 
 ![Image of the Runway Acceptance Rates button](../../../static/img/rates_button.png)
 
 The acceptance rate is the minimum time separation between successive landings on that runway.
-
-## Online Setup
-
-The `SETUP` button opens the Online Setup window for configuring server connection details. See [Online Mode](../system-overview/04-online-mode.md) for information about online operation.

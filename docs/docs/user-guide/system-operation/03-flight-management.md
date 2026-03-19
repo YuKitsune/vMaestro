@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Flight Management
 
-This page covers how to insert, modify, move, and remove flights from the sequence.
+This page covers how to manage flights in the sequence, including inserting, modifying, moving, and removing flights.
 
 ## Inserting Flights
 
@@ -19,28 +19,26 @@ Flights from departure airports must be manually inserted into the sequence.
 
 ![Insert a Flight window with a pending departure](../../../static/img/insert_departure_window.png)
 
-The `ETA` is calculated from the take-off time plus the flight plan `EET`. The flight becomes Stable immediately. The `*` symbol may appear to indicate the flight is not yet coupled to a radar track.
+The landing estimate is calculated from the take-off time plus a predefined flight time. The coupling status indicator may appear until the flight departs and couples to a radar track.
 
 ![Uncoupled departure on ladder](../../../static/img/insert_departure_ladder_uncoupled.png)
 
 :::tip
-If vMaestro calculates delay before departure, this can be absorbed on the ground.
+If Maestro calculates delay before departure, this can be absorbed on the ground.
 :::
-
-Once departed and coupled, the `ETA_FF` and delay values update automatically.
 
 ### Overshoot Flights
 
 To resequence a flight that has conducted a missed approach:
 
-1. Right-click on another flight (or the timeline in a runway view)
-2. Select `Insert Flight > Before` or `Insert Flight > After`
-3. Select the flight from the list
+1. Right-click on another flight (or the ladder in a runway view)
+2. Select `Insert Flight`, then `Before` or `After`
+3. Select the overshoot flight from the list
 4. Click `OK`
 
 ![Insert a Flight window with an overshoot](../../../static/img/insert_overshoot_window.png)
 
-The flight becomes Frozen immediately.
+**Before** inserts the flight ahead of the target, delaying the target flight. **After** inserts behind the target without affecting it.
 
 :::info
 Flights cannot be inserted between two Frozen flights when the gap is less than twice the acceptance rate.
@@ -50,17 +48,29 @@ Flights cannot be inserted between two Frozen flights when the gap is less than 
 
 Dummy flights are placeholders for flights not tracked by vatSys (airwork, practice approaches, etc.).
 
-1. Right-click on another flight (or the timeline in a runway view)
-2. Select `Insert Flight > Before` or `Insert Flight > After`
-3. Enter the flight details (or leave blank for auto-generated callsign)
+1. Right-click on another flight (or the ladder in a runway view)
+2. Select `Insert Flight`, then `Before` or `After`
+3. Enter the flight details (or leave blank for an auto-generated callsign)
 4. Click `OK`
 
-The dummy flight becomes Frozen immediately.
+## Moving Flights
 
-### Relative Insertion
+Flights can be moved within the sequence from a runway view.
 
-- **Before** - The inserted flight takes the position of the target flight, delaying the target. Not available for Frozen flights.
-- **After** - The inserted flight is placed behind the target flight without affecting it.
+1. Left-click a flight label to select it (a frame appears)
+2. Left-click the destination position on the ladder
+
+Alternatively, drag the flight label up or down the ladder.
+
+![Flight with selection frame](../../../static/img/flight_selected.png)
+
+To deselect without moving, left-click the flight again or right-click anywhere.
+
+To swap two flights, select one flight then click another. The two flights exchange positions.
+
+:::info
+Flights cannot be moved between two Frozen flights when the gap is less than twice the acceptance rate.
+:::
 
 ## Modifying Flights
 
@@ -72,10 +82,7 @@ The dummy flight becomes Frozen immediately.
 
 ![Change Runway context menu](../../../static/img/change_runway.png)
 
-When changed:
-- The flight is reinserted based on its `ETA`
-- Unstable flights become Stable
-- The sequence is recalculated
+The flight is reinserted into the sequence based on its estimate for the new runway.
 
 ### Change Approach Type
 
@@ -85,7 +92,7 @@ When changed:
 
 ![Change Approach Type context menu](../../../static/img/change_approach.png)
 
-Only the `ETA` is recalculated. The sequence position remains unchanged.
+The landing estimate is recalculated. The sequence position remains unchanged.
 
 ### Change ETA_FF
 
@@ -98,27 +105,11 @@ If the vatSys estimate is inaccurate, it can be manually overridden.
 
 ![Change ETA_FF window](../../../static/img/change_eta_ff.png)
 
-When changed:
-- The `ETA` is recalculated
-- The flight is reinserted based on the new `ETA`
-- Unstable flights become Stable
-- The sequence is recalculated
-- Future vatSys updates to `ETA_FF` are ignored
+The flight is reinserted based on the new estimate. Future updates from vatSys are ignored until the override is cleared.
 
-Use [Recompute](#recompute) to cancel the manual override.
+### Manual Delay
 
-### View Flight Information
-
-1. Right-click the flight
-2. Click `Information`
-
-![Information Window](../../../static/img/information_window.png)
-
-Up to 4 Information windows can be displayed simultaneously.
-
-### Manual Delay (Increase Priority)
-
-To ensure a flight receives no more than a specified delay:
+To limit the maximum delay a flight can receive:
 
 1. Right-click the flight
 2. Select `Manual Delay`
@@ -126,80 +117,39 @@ To ensure a flight receives no more than a specified delay:
 
 ![Manual Delay dropdown](../../../static/img/manual_delay.png)
 
-When set:
-- The flight is positioned to not exceed the specified delay
-- The sequence is recalculated
-- New flights will not cause delay to exceed the limit
-
-Use [Recompute](#recompute) to cancel the manual delay.
+The flight is repositioned to not exceed the specified delay. New flights entering the sequence will not push this flight beyond its delay limit.
 
 :::info
 A delay of `00` still allows delay up to the runway's acceptance rate.
 :::
 
-## Moving Flights
-
-Flights can be moved within the sequence from a runway view.
-
-### Click to Move
-
-1. Left-click a flight label to select it (a frame appears)
-2. Left-click the destination position on the timeline
-
-![Flight with selection frame](../../../static/img/flight_selected.png)
-
-The flight moves immediately. To deselect without moving, left-click the flight again or right-click anywhere.
-
-When moved:
-- The flight is repositioned in the sequence
-- The `STA` is recalculated based on the new position
-- If clicked on a different timeline, the runway is changed
-- Unstable flights become Stable
-- The sequence is recalculated
-
-### Click to Swap
-
-If you click another flight while one is selected, the two flights swap their `STA` and runway assignments.
-
-### Drag to Move
-
-1. Left-click and hold a flight label
-2. Drag to the new position
-3. Release the mouse button
-4. Click `Confirm` in the confirmation window
-
-:::note
-Flights are moved by position in the sequence, not by setting a specific landing time. The `STA` is automatically calculated based on the new position and acceptance rates.
-:::
-
-:::info
-Flights cannot be moved between two Frozen flights when the gap is less than twice the acceptance rate.
-:::
-
 ### Recompute
 
-Recomputing recalculates a flight's parameters as if it were new.
+Recomputing resets a flight to its original state, clearing any manual overrides.
 
 1. Right-click the flight
 2. Select `Recompute`
 
-This will:
-- Remove the flight from the sequence
-- Cancel any manual delay and manual `ETA_FF`
-- Recalculate the feeder fix, `ETA_FF`, and `ETA`
-- Reinsert the flight based on the new estimates
-- Recalculate the sequence
+This clears any manual delay or ETA_FF override, recalculates the estimates, and reinserts the flight as if it were new.
 
 ## Removing Flights
 
 ### Desequence
 
-Desequencing temporarily removes a flight from the sequence (for holding, technical issues, etc.). The flight can be quickly resequenced later.
+Desequencing temporarily removes a flight from the sequence for holding, technical issues, or other reasons. The flight can be quickly resequenced later.
 
 1. Right-click the flight
 2. Select `Desequence`
 
-The flight moves to the Desequenced list and the sequence is recalculated.
+The flight moves to the Desequenced list.
+
+To resequence:
+
+1. Click the `DESQ` button
+2. Select the flight
+3. Click `RESEQUENCE`
+
+![Desequenced Window](../../../static/img/desequenced_window.png)
 
 ### Make Pending
 
@@ -212,24 +162,21 @@ The flight returns to the Pending list and can be reinserted later.
 
 ### Remove
 
-Removing permanently deletes a flight from the sequence (for diversions, etc.).
+Removing deletes a flight from the sequence (for diversions, cancellations, etc.).
 
 1. Right-click the flight
 2. Select `Remove`
 3. Click `Confirm`
 
-The flight moves to the Pending list and the sequence is recalculated.
+The flight moves to the Pending list and can be reinserted if needed.
 
-:::tip
-Flights can also be removed from the Desequenced list by clicking `DESQ`, selecting the flight, and clicking `REMOVE`.
-:::
+## Viewing Flight Information
 
-## Resequencing Desequenced Flights
+To view detailed information about a flight:
 
-1. Click the `DESQ` button
-2. Select the flight
-3. Click `RESEQUENCE`
+1. Right-click the flight
+2. Click `Information`
 
-![Desequenced Window](../../../static/img/desequenced_window.png)
+![Information Window](../../../static/img/information_window.png)
 
-The flight is placed in the sequence based on its last `ETA_FF`, becomes Stable immediately, and the sequence is recalculated.
+Up to 4 Information windows can be displayed simultaneously.

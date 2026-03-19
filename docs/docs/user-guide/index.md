@@ -20,7 +20,7 @@ Learn how vMaestro works, including core concepts, flight states, and sequencing
 Learn how to operate vMaestro day-to-day.
 
 - [Interface](./system-operation/01-interface.md) - Window layout and navigation
-- [Configuration](./system-operation/02-configuration.md) - TMA configuration and runway modes
+- [TMA Configuration](./system-operation/02-tma-configuration.md) - TMA configuration and runway modes
 - [Flight Management](./system-operation/03-flight-management.md) - Inserting, modifying, and removing flights
 - [Slots](./system-operation/04-slots.md) - Managing runway slots
 - [Coordination](./system-operation/05-coordination.md) - Sending coordination messages

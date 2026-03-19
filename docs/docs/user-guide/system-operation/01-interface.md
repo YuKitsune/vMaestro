@@ -4,14 +4,12 @@ sidebar_position: 1
 
 # Interface
 
-This page describes the vMaestro user interface and how to navigate it.
+This page describes the Maestro user interface.
 
-## Starting vMaestro
+## Starting Maestro
 
 1. Click the `TFMS` button on the vatSys menu bar
 2. Select an airport from the menu
-
-This opens a blank vMaestro window.
 
 ![Screenshot of a blank Maestro window](../../../static/img/maestro_blank.png)
 
@@ -21,104 +19,85 @@ If the `TFMS` menu item does not appear, refer to the [installation instructions
 
 ## Window Layout
 
-The vMaestro window is divided into two main sections:
+The Maestro window is divided into two sections:
 
+<!-- TODO: Combine screenshots, and remove references to "zones" -->
 ![Diagram of the Maestro window](../../../static/img/window_diagram.png)
 
-### Configuration Zone
+The **upper section** displays:
 
-The upper section provides access to:
+- Online status indicator
+- TMA configuration button
+- Runway acceptance rates
+- Online setup button
 
-- **Online Status** - Connection state indicator (see [Online Mode](../system-overview/04-online-mode.md))
-- **TMA Configuration** - Current runway mode selection
-- **Runway Acceptance Rates** - Active runways and their landing rates
-- **Online Setup** - Server connection settings
+The **lower section** contains:
 
-### Sequence Display Zone
-
-The lower section provides access to:
-
-- **Action Buttons** - Controls for sequence operations
-- **View Selectors** - Buttons to switch between different views
-- **Timelines** - Visual display of the sequence
+- Action buttons (`DEPS`, `COORD`, `DESQ`)
+- View selector buttons
+- Sequence ladders
 
 ![Diagram of the Sequence Display Zone](../../../static/img/sequence_display_zone_diagram.png)
+
+## TMA Configuration
+
+The upper section displays the current TMA configuration and runway acceptance rates. Click the TMA configuration button to change runway modes or adjust acceptance rates.
+
+The online status indicator shows the connection state when operating in online mode.
+
+See [TMA Configuration](./02-tma-configuration.md) for details on changing the configuration.
 
 ## Action Buttons
 
 | Button | Purpose |
 | ------ | ------- |
-| `DEPS` | Opens the Insert a Flight window for pending departures |
-| `COORD` | Opens the Coordination window for sending messages |
-| `DESQ` | Opens the Desequenced window (turns white when flights exist) |
+| `DEPS` | Open the pending departures list |
+| `COORD` | Open the coordination window |
+| `DESQ` | Open the desequenced flights list (turns white when flights exist) |
 
-## View Selectors
+## Views
 
-The remaining buttons in the Sequence Display Zone correspond to predefined views. Each view displays the sequence with different filters and time references:
+The view buttons switch between different displays of the sequence. Each view defines:
 
-- **Feeder Fix Views** - Show flights by feeder fix, positioned by `STA_FF`
-- **Runway Views** - Show flights by runway, positioned by `STA`
+- One or more **ladders** with filters for specific runways or feeder fixes
+- A **time reference** — either landing time (`STA`) or feeder fix time (`STA_FF`)
+- A **label layout** and **colour scheme** for flight labels
 
-## Timelines
+Views using `STA` are often called **Runway views**, while views using `STA_FF` are called **Feeder views**.
 
-Each view contains two timelines displayed side by side. Each tick on the timeline represents one minute.
+### Ladders
 
-### Scrolling
+Ladders are vertical timelines displaying flights in the sequence. Each tick represents one minute. Flights are positioned on the ladder based on the view's time reference.
 
-Three buttons to the left of the timelines control scrolling:
+Buttons to the left of the ladders control scrolling:
 
-- **Up Arrow** - Scroll up 15 minutes
+- **Up/Down Arrows** - Scroll 15 minutes
 - **Center Button** - Reset to current time
-- **Down Arrow** - Scroll down 15 minutes
 
-When scrolled away from current time, the axis reference time at the bottom turns blue.
+When scrolled, the time reference at the bottom turns blue.
 
-## Flight Labels
+When more than two ladders are present, additional buttons become available for horizontal scrolling.
 
-Flights are displayed on the timeline at their scheduled time (`STA` for runway views, `STA_FF` for feeder views).
+### Flight Labels
 
-![Image of an unstable flight label](../../../static/img/flight_label.png)
+Flight labels are mirrored on each side of the ladder.
 
-Flight labels are mirrored on each side of the timeline.
+<!-- TODO: Include screenshot with mirrored labels -->
+![Image of a flight label](../../../static/img/flight_label.png)
 
-### Label Elements
+Labels may include:
 
-Reading from **innermost** to **outermost**:
+- Aircraft callsign
+- Aircraft type code
+- Wake turbulence category
+- Assigned runway
+- Assigned approach type
+- Landing Time (STA)
+- Feeder Fix Time (STA_FF)
+- Total delay assigned
+- Remaining delay to be absorbed
+- Manual Delay Indicator
+- High Speed Indicator
+- Coupling Status Indicator
 
-| Position | Content |
-| -------- | ------- |
-| 1 | `STA` (runway view) or `STA_FF` (feeder view) |
-| 2 | Assigned runway |
-| 3 | Callsign |
-| 4 | Approach type (if applicable) |
-| 5 | `#` if zero delay assigned |
-| 6 | `%` if manual delay (non-zero) assigned |
-| 7 | `+` if the flight must cross the feeder fix at published speed |
-| 8 | `*` if the FDR is not coupled to a radar track |
-| 9 | Required delay (total) |
-| 10 | Remaining delay |
-
-### Delay Display
-
-![Flight label with delay](../../../static/img/flight_label_delay.png)
-
-In this example, QFA501 has been assigned a 2-minute delay. They have absorbed one minute and need to lose one more.
-
-### Context Menu
-
-Right-clicking a flight label opens a context menu:
-
-| Menu Item | Description |
-| --------- | ----------- |
-| Change Runway | Change the assigned runway |
-| Change Approach Type | Change the assigned approach type |
-| Insert Slot | Insert a slot before or after this flight |
-| Insert Flight | Insert a flight before or after this flight |
-| Coordination | Send a coordination message relating to this flight |
-| Change ETA_FF | Manually adjust the feeder fix estimate (ETA_FF) |
-| Information | Display detailed sequencing information |
-| Manual Delay | Assign a maximum delay limit |
-| Remove | Remove the flight from the sequence |
-| Recompute | Recalculate the flight as if new |
-| Desequence | Move the flight to the desequenced list |
-| Make Pending | Return a departure to the pending list |
+Right-click a flight label to access actions like changing runway, adjusting delay, or removing the flight. See [Flight Management](./03-flight-management.md) for details on each action.

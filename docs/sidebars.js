@@ -48,7 +48,7 @@ const sidebars = {
           },
           items: [
             'user-guide/system-operation/01-interface',
-            'user-guide/system-operation/02-configuration',
+            'user-guide/system-operation/02-tma-configuration',
             'user-guide/system-operation/03-flight-management',
             'user-guide/system-operation/04-slots',
             'user-guide/system-operation/05-coordination',
