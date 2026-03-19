@@ -1,5 +1,7 @@
 ---
-sidebar_position: 1
+slug: /
+sidebar_class_name: hidden
+hide_table_of_contents: true
 ---
 
 # vMaestro
@@ -10,25 +12,24 @@ This software is intended for **flight simulation use only** on networks such as
 
 vMaestro is a [vatSys](https://virtualairtrafficsystem.com) plugin that emulates the Maestro Traffic Flow Management System (TFMS), designed to assist air traffic controllers in sequencing arrival traffic.
 
-## Quick Start
+## Documentation
 
-Ready to get started? Follow the [Installation Guide](./user-guide/01-installation.md) to install and configure the vMaestro plugin.
+### For Controllers
 
-## Key Features
+The **[User Guide](./user-guide/system-overview)** covers vMaestro concepts and operation:
 
-Using real-time data from vatSys, vMaestro provides comprehensive traffic flow management:
+- [System Overview](./user-guide/system-overview): How vMaestro works, flight states, and sequencing behaviour
+- [System Operation](./user-guide/system-operation): Interface navigation and day-to-day operation
 
-- **Automatic Runway Assignment** - Intelligently allocates incoming flights to appropriate runways based on feeder fixes and aircraft performance
-- **Optimised Scheduling** - Calculates the optimum landing time and feeder fix time to minimise delay while maintaining safe separation
-- **Visual Timeline** - Displays the sequence in a vertically scrolling timeline for easy monitoring and management
-- **Speed Control Suggestions** - Provides suggested speed adjustments to absorb delays efficiently
-- **Manual Control** - Allows controllers to interact with the sequence to reflect their own strategy and operational requirements
-- **Multi-User Support** - Supports online collaboration through the optional server component
+### For Administrators
 
-## Documentation Sections
+The **[Admin Guide](./admin-guide/plugin-installation)** covers installation, configuration, and deployment:
 
-This documentation is organized into three main sections:
+- [Plugin Installation](./admin-guide/plugin-installation): Installing vMaestro into vatSys
+- [Plugin Configuration](./admin-guide/plugin-configuration): Configuring airports and runway modes
+- [Server Deployment](./admin-guide/server-deployment): Running the server for multi-user operation
+- [API Access](./admin-guide/api-access): Accessing the API documentation
 
-- **[User Guide](./user-guide/01-installation.md)** - How to install, configure, and use vMaestro
-- **[Configuration Guide](./configuration-guide)** - Detailed configuration options and airport setup
-- **[Developer Guide](./developer-guide)** - Technical documentation for developers and contributors
+### For Contributors
+
+See [CONTRIBUTING.md](https://github.com/YuKitsune/vMaestro/blob/main/CONTRIBUTING.md) in the repository for development setup, architecture, and contribution guidelines.

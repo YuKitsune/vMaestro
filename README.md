@@ -19,10 +19,3 @@ vMaestro is a [vatSys](https://virtualairtrafficsystem.com) plugin that emulates
 For installation instructions, configuration guides, and usage documentation, visit:
 
 **[https://maestro.eoinmotherway.dev/](https://maestro.eoinmotherway.dev/)**
-
-## Quick Start
-
-1. Download the latest release from [GitHub Releases](https://github.com/YuKitsune/vMaestro/releases)
-2. Extract to your vatSys plugins directory
-
-For detailed setup and configuration, see the [official documentation](https://maestro.eoinmotherway.dev/).
