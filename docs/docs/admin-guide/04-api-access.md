@@ -22,7 +22,6 @@ The API allows external applications to:
 
 - Query the current sequence state
 - Retrieve flight information
-- Subscribe to real-time updates
 
 ## Authentication
 

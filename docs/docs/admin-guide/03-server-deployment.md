@@ -44,30 +44,6 @@ docker-compose up -d
 
 The server will be available at `http://localhost:5000`.
 
-### With Seq Logging
-
-For production deployments, Seq provides log aggregation:
-
-```yaml
-services:
-  maestro-server:
-    image: ghcr.io/yukitsune/vmaestro-server:latest
-    ports:
-      - "5000:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - Serilog__WriteTo__1__Args__serverUrl=http://seq:5341
-
-  seq:
-    image: datalust/seq:latest
-    ports:
-      - "5341:80"
-    environment:
-      - ACCEPT_EULA=Y
-```
-
-Access Seq at `http://localhost:5341`.
-
 ## Standalone Deployment
 
 ### Prerequisites

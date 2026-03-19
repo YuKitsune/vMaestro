@@ -55,8 +55,6 @@ Or with Docker:
 docker-compose up
 ```
 
-Seq logging is available at http://localhost:5341 when using Docker Compose.
-
 ## Architecture
 
 ### Projects
