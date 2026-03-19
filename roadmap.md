@@ -26,6 +26,12 @@
     - [ ] Clean up Flight builder so that you can't build an invalid flight (make ETA and ETA_FF mutually exclusive? Or calculate a TTG based on ETA - ETA_FF if no trajectory is set?)
     - [ ] Clean up the handler tests to remove all the unnecessary setup (i.e. trajectories)
 
+### Server Deployment
+
+- [ ] Package server binary
+- [ ] Build and publish server container
+- [ ] Separate docs and server
+
 ## Future Enhancements
 
 ### Achieved Rates
