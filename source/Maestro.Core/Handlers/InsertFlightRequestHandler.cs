@@ -380,11 +380,10 @@ public class InsertFlightRequestHandler(
             f.State is not State.Unstable and not State.Stable &&
             f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
-        // TODO: test case - When inserting a flight, from a departure airport, the inserted flight is positioned based on their FeederFixEstimate (not their landing estimate)
-        // Determine the insertion point by feeder fix estimate (ETA_FF)
+        // Determine the insertion point by landing estimate (ETA)
         var insertionIndex = session.Sequence.FindIndex(
             earliestInsertionIndex,
-            f => f.FeederFixEstimate.IsAfter(flight.FeederFixEstimate));
+            f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
         if (insertionIndex == -1)
             insertionIndex = Math.Min(earliestInsertionIndex, session.Sequence.Flights.Count);
 

@@ -161,7 +161,7 @@ public class FlightUpdatedHandler(
 
                         var insertionIndex = instance.Session.Sequence.FindIndex(
                             earliestInsertionIndex,
-                            f => f.FeederFixEstimate.IsAfter(feederFix.Estimate));
+                            f => f.LandingEstimate.IsAfter(approximateLandingEstimate));
                         if (insertionIndex == -1)
                             insertionIndex = Math.Min(earliestInsertionIndex, instance.Session.Sequence.Flights.Count);
 
@@ -285,7 +285,7 @@ public class FlightUpdatedHandler(
                                  f.State != State.Unstable) + 1;
 
                         var desiredIndex = instance.Session.Sequence.FindIndex(f =>
-                            f.FeederFixEstimate.IsAfter(sequencedFlight.FeederFixEstimate));
+                            f.LandingEstimate.IsAfter(sequencedFlight.LandingEstimate));
 
                         var newIndex = desiredIndex == -1
                             ? instance.Session.Sequence.Flights.Count // No flight has a later estimate - move to end of sequence
