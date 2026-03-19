@@ -48,41 +48,29 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         });
 
     [Fact]
-    public async Task TheFlightIsMovedBasedOnItsFeederFixEstimate()
+    public async Task TheFlightIsMovedBasedOnItsLandingEstimate()
     {
-        // Use different TTG values to prove positioning is based on FeederFixEstimate, not LandingEstimate
-        // flight1: FF=+10, TTG=5, Landing=+15
-        // flight2: FF=+20, TTG=25, Landing=+45 initially
-        // After recompute with new FF=+5: flight2 has FF=+5, Landing=+30
-        // If positioned by FF: flight2 (+5), flight1 (+10) - flight2 moves to front
-        // If positioned by Landing: flight1 (+15), flight2 (+30) - flight2 stays behind
-        // This proves it uses FF for positioning
-
         var now = clockFixture.Instance.UtcNow();
+        var ttg = TimeSpan.FromMinutes(10);
 
         // Arrange
-        var flight1Ttg = TimeSpan.FromMinutes(5);
-        var flight2Ttg = TimeSpan.FromMinutes(25);
-
         var flight1 = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(now.AddMinutes(10))
-            .WithTrajectory(new Trajectory(flight1Ttg))
+            .WithLandingEstimate(now.AddMinutes(20))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .WithState(State.Stable)
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(now.AddMinutes(20))
-            .WithTrajectory(new Trajectory(flight2Ttg))
+            .WithLandingEstimate(now.AddMinutes(30))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .WithState(State.Stable)
             .Build();
 
-        var trajectoryService = new MockTrajectoryService()
-            .WithTrajectoryForFlight(flight1, new Trajectory(flight1Ttg))
-            .WithTrajectoryForFlight(flight2, new Trajectory(flight2Ttg));
+        var trajectoryService = new MockTrajectoryService(ttg);
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
@@ -91,18 +79,15 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
                 .WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        // Verify initial state
-        flight1.LandingEstimate.ShouldBe(now.AddMinutes(15), "flight1 landing estimate = FF + TTG = 10 + 5");
-        flight2.LandingEstimate.ShouldBe(now.AddMinutes(45), "flight2 landing estimate = FF + TTG = 20 + 25");
+        sequence.Flights[0].Callsign.ShouldBe("QFA1");
+        sequence.Flights[1].Callsign.ShouldBe("QFA2");
 
         var handler = GetRequestHandler(instanceManager, sequence, trajectoryService);
 
-        // Change flight2's feeder fix estimate to be earlier than flight1
-        // This makes flight2's FF earlier (+5 < +10) but landing later (+30 > +15)
-        // Update the Fixes array to simulate the estimate update (this is what RecomputeRequestHandler reads)
+        // Update flight2's estimates so its landing estimate is earlier than flight1
         flight2.Fixes = [
             new FixEstimate("RIVET", now.AddMinutes(5)),
-            new FixEstimate("YSSY", now.AddMinutes(30))
+            new FixEstimate("YSSY", now.AddMinutes(15))
         ];
 
         var request = new RecomputeRequest("YSSY", "QFA2");
@@ -111,13 +96,8 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        // Verify flight2's new landing estimate is still later than flight1
-        flight2.LandingEstimate.ShouldBe(now.AddMinutes(30), "flight2 landing estimate = new FF + TTG = 5 + 25");
-        flight2.LandingEstimate.ShouldBeGreaterThan(flight1.LandingEstimate, "flight2 lands later than flight1");
-
-        // Despite landing later, flight2 should be positioned first because its FF estimate is earlier
-        sequence.Flights[0].Callsign.ShouldBe("QFA2", "flight2 should be first (positioned by FF estimate +5)");
-        sequence.Flights[1].Callsign.ShouldBe("QFA1", "flight1 should be second (positioned by FF estimate +10)");
+        sequence.Flights[0].Callsign.ShouldBe("QFA2", "flight2 should be first (earlier landing estimate)");
+        sequence.Flights[1].Callsign.ShouldBe("QFA1", "flight1 should be second (later landing estimate)");
     }
 
     [Fact]
