@@ -31,9 +31,9 @@ Each cycle performs the following steps for each flight.
 
 ### 1. Estimate Calculation
 
-The `ETA_FF` is sourced from vatSys route estimates. The landing estimate (`ETA`) is then calculated by adding the time-to-go from the allocated trajectory (`TTG`).
+The `ETA_FF` is sourced from vatSys route estimates. The landing estimate (`ETA`) is then calculated by adding the time-to-go (`TTG`) from the allocated trajectory.
 
-For flights not tracking via a feeder fix, an average trajectory is allocated. The `ETA` is sourced from the estimate of the last waypoint in the vatSys route, and the `ETA_FF` is derived by subtracting the average trajectory time.
+For flights not tracking via a feeder fix, an average `TTG` will be calculated, and the `ETA_FF` is derived by subtracting the average `TTG` from the last estimate in the flight plan route.
 
 ![Diagram of ETA_FF calculation](../../../static/img/eta_ff.png)
 
@@ -53,9 +53,9 @@ Runways are assigned based on the active runway mode. If the runway mode specifi
 
 The `STA` is assigned based on the flight's sequence position and is never earlier than the `ETA` unless manually adjusted. The `STA_FF` is then derived by subtracting the trajectory time.
 
-Flights with manual delay limits are prioritised. If their calculated delay exceeds the limit, they are moved forward by swapping with preceding flights until their total delay is within the allocated maximum.
+Flights allocated a maximum delay are prioritised. If their calculated delay exceeds the maximum, they are moved forward by swapping with preceding flights until their total delay is within the allocated maximum.
 
-Slots reserve runway capacity by preventing flights from being scheduled during specific periods. See [Slots](../system-operation/04-slots.md) for how to manage slots.
+Flights will not be scheduled to land during a Slot, or during a Runway Mode transition period.
 
 :::info
 Multiple flights tracking via the same feeder fix may share the same `STA_FF` if they have different trajectory times (e.g., different aircraft categories). Labels may overlap on feeder fix views but will separate on runway views.
