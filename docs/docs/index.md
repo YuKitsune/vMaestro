@@ -12,34 +12,23 @@ This software is intended for **flight simulation use only** on networks such as
 
 vMaestro is a [vatSys](https://virtualairtrafficsystem.com) plugin that emulates the Maestro Traffic Flow Management System (TFMS), designed to assist air traffic controllers in sequencing arrival traffic.
 
-## Key Features
-
-Using real-time data from vatSys, vMaestro provides:
-
-- **Automatic Runway Assignment** - Allocates incoming flights to runways based on feeder fixes and aircraft performance
-- **Optimised Scheduling** - Calculates landing times to minimise delay while maintaining safe separation
-- **Visual Timeline** - Displays the sequence in a vertically scrolling timeline
-- **Speed Control Suggestions** - Provides suggested speed adjustments to absorb delays
-- **Manual Control** - Allows controllers to modify the sequence to reflect operational requirements
-- **Multi-User Support** - Supports online collaboration through the optional server component
-
 ## Documentation
 
 ### For Controllers
 
-The **[User Guide](./user-guide/system-overview/concepts)** covers vMaestro concepts and operation:
+The **[User Guide](./user-guide/system-overview)** covers vMaestro concepts and operation:
 
-- [System Overview](./user-guide/system-overview/concepts) - How vMaestro works, flight states, and sequencing behaviour
-- [System Operation](./user-guide/system-operation/interface) - Interface navigation and day-to-day operation
+- [System Overview](./user-guide/system-overview): How vMaestro works, flight states, and sequencing behaviour
+- [System Operation](./user-guide/system-operation): Interface navigation and day-to-day operation
 
 ### For Administrators
 
 The **[Admin Guide](./admin-guide/plugin-installation)** covers installation, configuration, and deployment:
 
-- [Plugin Installation](./admin-guide/plugin-installation) - Installing vMaestro into vatSys
-- [Plugin Configuration](./admin-guide/plugin-configuration) - Configuring airports and runway modes
-- [Server Deployment](./admin-guide/server-deployment) - Running the server for multi-user operation
-- [API Access](./admin-guide/api-access) - Accessing the API documentation
+- [Plugin Installation](./admin-guide/plugin-installation): Installing vMaestro into vatSys
+- [Plugin Configuration](./admin-guide/plugin-configuration): Configuring airports and runway modes
+- [Server Deployment](./admin-guide/server-deployment): Running the server for multi-user operation
+- [API Access](./admin-guide/api-access): Accessing the API documentation
 
 ### For Contributors
 
