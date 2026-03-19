@@ -16,6 +16,7 @@
 ### Refactoring
 
 - [X] Refactor flight insertion handlers (Consider combining or separating them)
+- [ ] Make delaying action times configurable (lightweight enroute trajectory config?)
 - [ ] Improve separation between domain models, DTOs, and view models
 - [ ] Remove (or trim down) SequenceMessage and introduce smaller DTOs or notifications (consider CRDTs) to reduce the size of the sequence when serialised
 - [ ] Consider moving some of the sequence logic into the individual handlers so they can be tested more easily.
@@ -27,22 +28,26 @@
 
 ## Future Enhancements
 
-### Algorithm Overhaul
+### Achieved Rates
 
-> **Note**
-> Consult VATPAC before making a move on this. Keeping things realistic could significantly increase the workload for the AIS team.
-> It may be easier to use vatSys performance data along with the track-miles of each arrival, rather than using time.
+Blocked due to vatSys API limitations.
+
+- [ ] 10,000 ft and 6,000 ft winds (with configuration view)
+- [ ] Achieved rates
+- [ ] Units selector (NM, aircraft/hr, seconds)
+- [ ] UTC time
+
+### Algorithm Overhaul
 
 Revisit the sequencing and scheduling algorithms.
 
-- [ ] ETA_FF = ETA - average TTG when no FF is set.
-- [ ] Insert by ETA_FF rather than ETA.
-- [ ] Calculate delaying actions in the scheduling algorithm.
+- [X] ETA_FF = ETA - average TTG when no FF is set.
+- [X] Calculate delaying actions in the scheduling algorithm.
 - [ ] Model enroute trajectories.
 - [ ] Model TMA pressure
 - [ ] Model runway allocation strategies (geo, preferred, mixed)
-- [ ] Model runway dependencies (dependent, semi-dependent, and independent)
-- [ ] Account for GRIB winds
+- [X] Model runway dependencies (dependent, semi-dependent, and independent)
+- [ ] Apply GRIB winds
 
 ### Refactor Sequence Aggregate
 
@@ -95,17 +100,3 @@ repository.UpdateSequence(sequence);
 - [ ] Allow flow to declare their offline sequence as the source of truth before connecting, so they don't inherit a dirty sequence
 - [ ] Show red background when in offline mode
 - [ ] Show amber background when reconnecting
-
-### Realtime TTG Calculations
-
-Real MAESTRO _seems_ to use Aircraft Class (TAS) + Trajectory (track miles + heading) + wind to calculate the TTG, P, and Pmax.
-Investigate using this method rather than pre-programmed TTG values.
-
-### Configuration Area enhancements
-
-Blocked by realtime TTG calculations.
-
-- [ ] 10,000 ft and 6,000 ft winds (with configuration view)
-- [ ] Achieved rates
-- [ ] Units selector (NM, aircraft/hr, seconds)
-- [ ] UTC time
