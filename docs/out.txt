@@ -1,0 +1,56 @@
+
+> docs@0.0.0 start
+> docusaurus start
+
+
+ ------------------------------------------------------------------------------                                                                                                          Update available 3.8.1 → 3.9.2                                                                                                                 To upgrade Docusaurus packages with the latest version, run the                                       following command:                                        `npm i @docusaurus/core@latest @docusaurus/preset-classic@latest                @docusaurus/module-type-aliases@latest @docusaurus/types@latest`                                                                                         ------------------------------------------------------------------------------ 
+
+[INFO] Starting the development server...
+[ERROR] Loading of version failed for version current
+
+[ERROR] Error: Invalid sidebar file at "sidebars.js".
+These sidebar document ids do not exist:
+- admin-guide/01-plugin-installation
+- admin-guide/02-plugin-configuration
+- admin-guide/03-server-deployment
+- admin-guide/04-api-access
+- user-guide/system-operation/01-interface
+- user-guide/system-operation/02-tma-configuration
+- user-guide/system-operation/03-flight-management
+- user-guide/system-operation/04-slots
+- user-guide/system-operation/05-coordination
+- user-guide/system-overview/01-concepts
+- user-guide/system-overview/02-flight-processing
+- user-guide/system-overview/03-online-mode
+
+Available document ids are:
+- admin-guide/api-access
+- admin-guide/index
+- admin-guide/plugin-configuration
+- admin-guide/plugin-installation
+- admin-guide/server-deployment
+- index
+- user-guide/index
+- user-guide/system-operation/coordination
+- user-guide/system-operation/flight-management
+- user-guide/system-operation/index
+- user-guide/system-operation/interface
+- user-guide/system-operation/slots
+- user-guide/system-operation/tma-configuration
+- user-guide/system-overview/concepts
+- user-guide/system-overview/flight-processing
+- user-guide/system-overview/index
+- user-guide/system-overview/online-mode
+
+    at Object.checkSidebarsDocIds (/Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/plugin-content-docs/lib/sidebars/utils.js:245:19)
+    at doLoadVersion (/Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/plugin-content-docs/lib/versions/loadVersion.js:67:23)
+    at async loadVersion (/Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/plugin-content-docs/lib/versions/loadVersion.js:83:16)
+    at async Promise.all (index 0)
+    at async Object.loadContent (/Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/plugin-content-docs/lib/index.js:152:33)
+    at async /Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/core/lib/server/plugins/plugins.js:39:23
+    at async Promise.all (index 1)
+    at async /Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/core/lib/server/plugins/plugins.js:140:25
+    at async loadSite (/Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/core/lib/server/site.js:144:45)
+    at async createReloadableSite (/Users/eoinmotherway/Code/github.com/YuKitsune/vMaestro/docs/node_modules/@docusaurus/core/lib/commands/start/utils.js:63:16)
+[INFO] Docusaurus version: 3.8.1
+Node version: v25.2.1

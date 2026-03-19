@@ -77,15 +77,9 @@ const config = {
           },
           {
             type: 'docSidebar',
-            sidebarId: 'configurationGuideSidebar',
+            sidebarId: 'adminGuideSidebar',
             position: 'left',
-            label: 'Configuration Guide',
-          },
-          {
-            type: 'docSidebar',
-            sidebarId: 'developerGuideSidebar',
-            position: 'left',
-            label: 'Developer Guide',
+            label: 'Admin Guide',
           },
           {
             href: '/swagger',

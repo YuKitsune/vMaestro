@@ -1,5 +1,7 @@
 ---
-sidebar_position: 1
+slug: /
+sidebar_class_name: hidden
+hide_table_of_contents: true
 ---
 
 # vMaestro
@@ -25,19 +27,19 @@ Using real-time data from vatSys, vMaestro provides:
 
 ### For Controllers
 
-The **[User Guide](./user-guide)** covers vMaestro concepts and operation:
+The **[User Guide](./user-guide/system-overview/concepts)** covers vMaestro concepts and operation:
 
-- [System Overview](./user-guide/system-overview) - How vMaestro works, flight states, and sequencing behaviour
-- [System Operation](./user-guide/system-operation) - Interface navigation and day-to-day operation
+- [System Overview](./user-guide/system-overview/concepts) - How vMaestro works, flight states, and sequencing behaviour
+- [System Operation](./user-guide/system-operation/interface) - Interface navigation and day-to-day operation
 
 ### For Administrators
 
-The **[Admin Guide](./admin-guide)** covers installation, configuration, and deployment:
+The **[Admin Guide](./admin-guide/plugin-installation)** covers installation, configuration, and deployment:
 
-- [Plugin Installation](./admin-guide/01-plugin-installation.md) - Installing vMaestro into vatSys
-- [Plugin Configuration](./admin-guide/02-plugin-configuration.md) - Configuring airports and runway modes
-- [Server Deployment](./admin-guide/03-server-deployment.md) - Running the server for multi-user operation
-- [API Access](./admin-guide/04-api-access.md) - Accessing the API documentation
+- [Plugin Installation](./admin-guide/plugin-installation) - Installing vMaestro into vatSys
+- [Plugin Configuration](./admin-guide/plugin-configuration) - Configuring airports and runway modes
+- [Server Deployment](./admin-guide/server-deployment) - Running the server for multi-user operation
+- [API Access](./admin-guide/api-access) - Accessing the API documentation
 
 ### For Contributors
 
