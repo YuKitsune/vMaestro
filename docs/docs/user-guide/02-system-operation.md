@@ -17,7 +17,6 @@ If the `TFMS` menu item does not appear, refer to the [installation instructions
 
 ## Window Layout
 
-<!-- TODO: new Screenshot -->
 ![Diagram of the Maestro window](../../static/img/window_diagram.png)
 
 The **upper section** displays the online status indicator, TMA configuration, runway acceptance rates, and online setup button.
@@ -54,7 +53,6 @@ When scrolled, the time reference at the bottom turns blue. When more than two l
 
 Flight labels are mirrored on each side of the ladder.
 
-<!-- TODO: Include screenshot with mirrored labels -->
 ![Image of a flight label](../../static/img/flight_label.png)
 
 Labels may include:
@@ -100,7 +98,6 @@ The TMA Configuration button displays the current runway mode.
 When a configuration change is scheduled for the future, the button text turns white and shows:
 `[Current Configuration] → [New Configuration] at [Change Time]`
 
-<!-- TODO: Update screenshot with change time -->
 ![Image of the TMA Configuration button with a future configuration](../../static/img/tma_config_change_button.png)
 
 ### Changing the Configuration
@@ -152,7 +149,7 @@ The acceptance rate is the minimum time separation between successive landings o
 
 Flights from departure airports must be manually inserted into the sequence.
 
-1. Click the `DEPS` button in the Sequence Display Zone
+1. Click the `DEPS` button
 2. Select the flight from the Pending list
 3. Set the expected take-off time
 4. Click `OK`
@@ -336,7 +333,6 @@ Slots reserve runway capacity by preventing flights from being scheduled during 
 
 The slot appears on the ladder. Any non-frozen flights within the slot are delayed until after the slot ends.
 
-<!-- TODO: Add a better screenshot with an actual delay -->
 ![Slot displayed on the ladder](../../static/img/timeline_slot.png)
 
 ### Modifying a Slot
@@ -356,7 +352,7 @@ Maestro supports sending predefined coordination messages to other controllers c
 
 ### General Coordination
 
-1. Click the `COORD` button in the Sequence Display Zone
+1. Click the `COORD` button
 2. Select a message from the list
 3. Click `DESTINATION`
 4. Select the recipient from the dropdown

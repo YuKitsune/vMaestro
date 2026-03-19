@@ -9,9 +9,9 @@
 
 ### Documentation
 
-- [ ] Write documentation for ATC usage
-- [ ] Write documentation for configuration and server setup
-- [ ] Document limitations and differences compared to the real system
+- [X] Write documentation for ATC usage
+- [X] Write documentation for configuration and server setup
+- [-] Document limitations and differences compared to the real system
 
 ### Refactoring
 
@@ -101,7 +101,7 @@ repository.UpdateSequence(sequence);
 Real MAESTRO _seems_ to use Aircraft Class (TAS) + Trajectory (track miles + heading) + wind to calculate the TTG, P, and Pmax.
 Investigate using this method rather than pre-programmed TTG values.
 
-### Configuration Zone enhancements
+### Configuration Area enhancements
 
 Blocked by realtime TTG calculations.
 
