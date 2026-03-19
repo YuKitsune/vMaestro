@@ -6,7 +6,7 @@ Thank you for your interest in contributing to vMaestro.
 
 ### Prerequisites
 
-- .NET SDK 9.0
+- .NET SDK 10.0
 - .NET Framework 4.7.2 Developer Pack (for plugin compilation)
 - An IDE (Visual Studio, Rider, or VS Code with C# extension)
 
@@ -63,12 +63,12 @@ Seq logging is available at http://localhost:5341 when using Docker Compose.
 
 | Project | Target | Purpose |
 |---------|--------|---------|
-| `Maestro.Core` | net472, net9.0 | Domain logic, scheduling algorithms, flight management |
+| `Maestro.Core` | net472, net10.0 | Domain logic, scheduling algorithms, flight management |
 | `Maestro.Wpf` | net472 | WPF UI components |
 | `Maestro.Plugin` | net472 | vatSys plugin integration |
-| `Maestro.Server` | net9.0 | SignalR server for multi-user operation |
-| `Maestro.Core.Tests` | net9.0 | Unit tests for core logic |
-| `Maestro.Server.Tests` | net9.0 | Unit tests for server |
+| `Maestro.Server` | net10.0 | SignalR server for multi-user operation |
+| `Maestro.Core.Tests` | net10.0 | Unit tests for core logic |
+| `Maestro.Server.Tests` | net10.0 | Unit tests for server |
 
 ### Patterns
 

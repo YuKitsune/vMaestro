@@ -72,7 +72,7 @@ Access Seq at `http://localhost:5341`.
 
 ### Prerequisites
 
-- .NET 9.0 Runtime
+- .NET 10.0 Runtime
 
 ### Running
 

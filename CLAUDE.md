@@ -27,7 +27,7 @@ The build system automatically handles .NET SDK installation if needed and uses 
 The solution consists of six main projects:
 
 1. **Maestro.Core** - Domain logic and business rules
-   - Multi-target: `net472` and `net9.0`
+   - Multi-target: `net472` and `109.0`
    - Contains scheduling algorithms, flight management, and configuration
    - Uses MediatR for message handling pattern
    - Key models: `Flight`, `Sequence`, `Scheduler`
