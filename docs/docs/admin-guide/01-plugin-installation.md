@@ -20,6 +20,8 @@ This page covers how to install the vMaestro plugin into vatSys.
    ```
 3. Run `unblock-dlls.bat` (included in the zip) to unblock the DLL files
 
+The zip includes a minimal example configuration (`Maestro.yaml`). This will need to be customised for your airport(s) before operational use.
+
 ## Verification
 
 1. Open vatSys
@@ -62,4 +64,4 @@ See [Plugin Configuration](./02-plugin-configuration.md) for configuration detai
 
 ## Next Steps
 
-After installation, proceed to [Plugin Configuration](./02-plugin-configuration.md) to set up airports and runway modes.
+Once installation is verified, proceed to [Plugin Configuration](./02-plugin-configuration.md) to customise vMaestro for your airport(s).
