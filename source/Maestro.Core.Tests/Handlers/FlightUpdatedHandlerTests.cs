@@ -643,43 +643,36 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
 
-        // Use different TTG values to prove positioning is based on FeederFixEstimate, not LandingEstimate
-        // flight1: FF=+20, TTG=10, Landing=+30
-        // flight2: FF=+10, TTG=22, Landing=+32
-        // If positioned by FF: flight2 first (10 < 20)
-        // If positioned by Landing: flight1 first (30 < 32)
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(22)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .Build();
 
-        var trajectoryService = new MockTrajectoryService()
-            .WithTrajectoryForFlight(flight1, new Trajectory(TimeSpan.FromMinutes(10)))
-            .WithTrajectoryForFlight(flight2, new Trajectory(TimeSpan.FromMinutes(22)));
+        var trajectoryService = new MockTrajectoryService(ttg);
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight2, flight1)) // QFA456 first (earlier FF estimate)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight2, flight1))
             .Build();
 
-        // Verify initial order, should be positioned by FeederFixEstimate (not LandingEstimate)
-        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first (earlier FF estimate)");
-        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second (later FF estimate)");
-        flight1.LandingEstimate.ShouldBeLessThan(flight2.LandingEstimate, "QFA123 lands earlier, but is positioned later due to FF estimate");
+        sequence.NumberInSequence(flight2).ShouldBe(1);
+        sequence.NumberInSequence(flight1).ShouldBe(2);
 
-        // Update QFA123 with an earlier FeederFixEstimate
-        var newFeederFixTime = clock.UtcNow().AddMinutes(5);
+        // Update QFA123 with an earlier LandingEstimate
+        var newFeederFixTime = clock.UtcNow().AddMinutes(2);
+        var newLandingEstimate = clock.UtcNow().AddMinutes(12);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
@@ -693,7 +686,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             _position,
             [
                 new FixEstimate("RIVET", newFeederFixTime),
-                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(20))
+                new FixEstimate("YSSY", newLandingEstimate)
             ]);
 
         var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
@@ -702,11 +695,9 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        // QFA123 should now be first due to earlier FeederFixEstimate
-        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first after update (earlier FF estimate)");
-        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second (later FF estimate)");
-        flight1.FeederFixEstimate.ShouldBe(newFeederFixTime);
-        flight1.LandingEstimate.ShouldBe(newFeederFixTime.Add(TimeSpan.FromMinutes(10)));
+        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first after update (earlier landing estimate)");
+        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second (later landing estimate)");
+        flight1.LandingEstimate.ShouldBe(newLandingEstimate);
     }
 
     [Theory]
@@ -882,32 +873,27 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenNewFlightFeederFixEstimateIsEarlierThanStableFlight_FlightIsInsertedBefore()
+    public async Task WhenNewFlightLandingEstimateIsEarlierThanStableFlight_FlightIsInsertedBefore()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
 
-        // Use different TTG values to prove positioning is based on FeederFixEstimate, not LandingEstimate
-        // stableFlight: FF=+20, TTG=10, Landing=+30
-        // newFlight: FF=+15, TTG=18, Landing=+33
-        // If positioned by FF: newFlight first (15 < 20)
-        // If positioned by Landing: stableFlight first (30 < 33)
         var stableFlight = new FlightBuilder("QFA456")
             .WithState(State.Stable)
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .Build();
 
-        var trajectoryService = new MockTrajectoryService(TimeSpan.FromMinutes(18))
-            .WithTrajectoryForFlight(stableFlight, new Trajectory(TimeSpan.FromMinutes(10)));
+        var trajectoryService = new MockTrajectoryService(ttg);
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(stableFlight))
             .Build();
 
-        // New flight with earlier FeederFixEstimate (but later LandingEstimate due to longer TTG)
+        // New flight with earlier LandingEstimate
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
@@ -918,7 +904,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             clock.UtcNow().AddHours(-1),
             TimeSpan.FromHours(1.5),
             _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(10))]);
 
         var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
 
@@ -928,36 +914,32 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Assert
         sequence.Flights.Count.ShouldBe(2);
         var newFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
-        sequence.NumberInSequence(newFlight).ShouldBe(1, "new flight should be inserted before stable flight (earlier FF estimate)");
-        sequence.NumberInSequence(stableFlight).ShouldBe(2, "stable flight should now be second (later FF estimate)");
-        newFlight.LandingEstimate.ShouldBeGreaterThan(stableFlight.LandingEstimate, "new flight lands later, but is positioned earlier due to FF estimate");
+        sequence.NumberInSequence(newFlight).ShouldBe(1, "new flight should be inserted before stable flight (earlier landing estimate)");
+        sequence.NumberInSequence(stableFlight).ShouldBe(2, "stable flight should now be second (later landing estimate)");
     }
 
     [Fact]
-    public async Task WhenNewFlightFeederFixEstimateIsEarlierThanSuperStableFlight_FlightIsInsertedAfter()
+    public async Task WhenNewFlightLandingEstimateIsEarlierThanSuperStableFlight_FlightIsInsertedAfter()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
 
-        // Use different TTG values to prove positioning respects SuperStable flight precedence
-        // superStableFlight: FF=+10, TTG=10, Landing=+20
-        // newFlight: FF=+5, TTG=18, Landing=+23
-        // If positioned by FF alone: newFlight would be first (5 < 10) - but this doesn't happen!
-        // Actual: newFlight inserted AFTER because SuperStable flights cannot be overtaken
         var superStableFlight = new FlightBuilder("QFA456")
             .WithState(State.SuperStable)
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
             .WithLandingTime(clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
             .Build();
 
+        var trajectoryService = new MockTrajectoryService(ttg);
+
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s.WithFlight(superStableFlight))
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(superStableFlight))
             .Build();
 
-        // New flight with earlier FeederFixEstimate but later LandingEstimate
+        // New flight with earlier LandingEstimate
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
@@ -970,7 +952,6 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(5))]);
 
-        var trajectoryService = new MockTrajectoryService(TimeSpan.FromMinutes(18));
         var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
 
         // Act
@@ -980,52 +961,40 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         sequence.Flights.Count.ShouldBe(2);
         var newFlight = sequence.Flights.Single(f => f.Callsign == "QFA123");
         sequence.NumberInSequence(superStableFlight).ShouldBe(1, "superstable flight should remain first (cannot be overtaken)");
-        sequence.NumberInSequence(newFlight).ShouldBe(2, "new flight inserted after superstable flight despite earlier FF estimate");
-        newFlight.FeederFixEstimate.ShouldBeLessThan(superStableFlight.FeederFixEstimate, "new flight has earlier FF estimate but still positioned after");
+        sequence.NumberInSequence(newFlight).ShouldBe(2, "new flight inserted after superstable flight despite earlier landing estimate");
     }
 
     [Fact]
-    public async Task WhenUnstableFeederFixEstimateIsAheadOfStableFlight_ItDoesNotOvertakeStableFlight()
+    public async Task WhenUnstableLandingEstimateIsAheadOfStableFlight_ItDoesNotOvertakeStableFlight()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
 
-        // Use different TTG values to prove positioning respects stable flight precedence
-        // stableFlight: FF=+20, TTG=10, Landing=+30
-        // unstableFlight initial: FF=+25, TTG=18, Landing=+43
-        // unstableFlight after update: FF=+10, TTG=10, Landing=+20
-        // If positioned by FF: unstableFlight would be first after update (10 < 20)
-        // If positioned by Landing: unstableFlight would be first after update (20 < 30)
-        // Actual: stableFlight remains first (unstable cannot overtake stable)
         var stableFlight = new FlightBuilder("QFA456")
             .WithState(State.Stable)
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(30))
             .WithRunway("34L")
             .Build();
 
         var unstableFlight = new FlightBuilder("QFA123")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(25))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(18)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(43))
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s.WithFlightsInOrder(stableFlight, unstableFlight))
-            .Build();
-
-        // Verify initial order
-        sequence.NumberInSequence(stableFlight).ShouldBe(1, "stable flight should be first initially");
-        sequence.NumberInSequence(unstableFlight).ShouldBe(2, "unstable flight should be second initially");
-
-        // Update unstable flight with earlier FeederFixEstimate (would move it ahead if both were unstable)
-        var newFeederFixTime = clock.UtcNow().AddMinutes(10);
-        var ttg = TimeSpan.FromMinutes(10);
         var trajectoryService = new MockTrajectoryService(ttg);
 
+        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(stableFlight, unstableFlight))
+            .Build();
+
+        sequence.NumberInSequence(stableFlight).ShouldBe(1);
+        sequence.NumberInSequence(unstableFlight).ShouldBe(2);
+
+        // Update unstable flight with earlier LandingEstimate (would move it ahead if both were unstable)
         var notification = new FlightUpdatedNotification(
             "QFA123",
             "B738",
@@ -1037,8 +1006,8 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             TimeSpan.FromHours(1),
             _position,
             [
-                new FixEstimate("RIVET", newFeederFixTime),
-                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(25))
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(10)),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(20))
             ]);
 
         var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
@@ -1049,8 +1018,6 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Assert - Unstable should NOT overtake stable flight
         sequence.NumberInSequence(stableFlight).ShouldBe(1, "stable flight should remain first (unstable cannot overtake)");
         sequence.NumberInSequence(unstableFlight).ShouldBe(2, "unstable flight should remain second (cannot overtake stable)");
-        unstableFlight.FeederFixEstimate.ShouldBeLessThan(stableFlight.FeederFixEstimate, "unstable has earlier FF estimate but cannot overtake");
-        unstableFlight.LandingEstimate.ShouldBeLessThan(stableFlight.LandingEstimate, "unstable would land earlier but cannot overtake");
     }
 
     [Fact]
@@ -1271,55 +1238,44 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
 
-        // Use different TTG values to prove positioning is based on FeederFixEstimate, not LandingEstimate
-        // flight1: FF=+5, TTG=10, Landing=+15
-        // flight2: FF=+10, TTG=18, Landing=+28
-        // flight3: FF=+15, TTG=12, Landing=+27
-        // Initial order by FF: flight1, flight2, flight3
-        // If ordered by Landing: flight1, flight3, flight2 (different!)
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(5))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(18)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .Build();
 
         var flight3 = new FlightBuilder("QFA789")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(15))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
+            .WithTrajectory(new Trajectory(ttg))
             .WithRunway("34L")
             .Build();
 
-        var ttg = TimeSpan.FromMinutes(10);
-        var trajectoryService = new MockTrajectoryService(ttg)
-            .WithTrajectoryForFlight(flight1, new Trajectory(TimeSpan.FromMinutes(10)))
-            .WithTrajectoryForFlight(flight2, new Trajectory(TimeSpan.FromMinutes(18)))
-            .WithTrajectoryForFlight(flight3, new Trajectory(TimeSpan.FromMinutes(12)));
+        var trajectoryService = new MockTrajectoryService(ttg);
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        // Verify initial order (positioned by FeederFixEstimate)
-        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially (earliest FF)");
-        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
-        sequence.NumberInSequence(flight3).ShouldBe(3, "QFA789 should be third initially (latest FF)");
-        flight3.LandingEstimate.ShouldBeLessThan(flight2.LandingEstimate, "flight3 lands earlier than flight2, but positioned later due to FF");
+        sequence.NumberInSequence(flight1).ShouldBe(1);
+        sequence.NumberInSequence(flight2).ShouldBe(2);
+        sequence.NumberInSequence(flight3).ShouldBe(3);
 
-        // Update QFA123 with a later FeederFixEstimate, moving it between QFA456 and QFA789
-        var newFeederFixTime = clock.UtcNow().AddMinutes(12);
+        // Update QFA123 with a later LandingEstimate, moving it between QFA456 and QFA789
+        var newFeederFixEstimate = clock.UtcNow().AddMinutes(12);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
@@ -1332,8 +1288,8 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             TimeSpan.FromHours(1),
             _position,
             [
-                new FixEstimate("RIVET", newFeederFixTime),
-                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(25))
+                new FixEstimate("RIVET", newFeederFixEstimate),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(22))
             ]);
 
         var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
@@ -1341,12 +1297,11 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
-        // Assert - QFA123 should move to position 2 (between QFA456 and QFA789 based on FF estimate)
-        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first after update (FF=+10)");
-        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second after moving back (FF=+12)");
-        sequence.NumberInSequence(flight3).ShouldBe(3, "QFA789 should be third after update (FF=+15)");
-        flight1.FeederFixEstimate.ShouldBe(newFeederFixTime);
-        flight1.LandingEstimate.ShouldBe(newFeederFixTime.Add(ttg));
+        // Assert
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first after update");
+        sequence.NumberInSequence(flight1).ShouldBe(2, "QFA123 should be second after moving back");
+        sequence.NumberInSequence(flight3).ShouldBe(3, "QFA789 should be third after update");
+        flight1.LandingEstimate.ShouldBe(newFeederFixEstimate.Add(ttg));
     }
 
     [Fact]
@@ -1355,55 +1310,41 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
 
-        // Use different TTG values to prove positioning is based on FeederFixEstimate, not LandingEstimate
-        // flight1: FF=+5, TTG=10, Landing=+15
-        // flight2: FF=+10, TTG=18, Landing=+28
-        // flight3: FF=+15, TTG=12, Landing=+27
-        // Initial order by FF: flight1, flight2, flight3
-        // If ordered by Landing: flight1, flight3, flight2 (different!)
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(5))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(18)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
             .WithRunway("34L")
             .Build();
 
         var flight3 = new FlightBuilder("QFA789")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(15))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
             .WithRunway("34L")
             .Build();
 
-        var ttg = TimeSpan.FromMinutes(10);
-        var trajectoryService = new MockTrajectoryService(ttg)
-            .WithTrajectoryForFlight(flight1, new Trajectory(TimeSpan.FromMinutes(10)))
-            .WithTrajectoryForFlight(flight2, new Trajectory(TimeSpan.FromMinutes(18)))
-            .WithTrajectoryForFlight(flight3, new Trajectory(TimeSpan.FromMinutes(12)));
+        var trajectoryService = new MockTrajectoryService(ttg);
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        // Verify initial order (positioned by FeederFixEstimate)
-        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially (earliest FF)");
-        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
-        sequence.NumberInSequence(flight3).ShouldBe(3, "QFA789 should be third initially (latest FF)");
-        flight3.LandingEstimate.ShouldBeLessThan(flight2.LandingEstimate, "flight3 lands earlier than flight2, but positioned later due to FF");
+        sequence.NumberInSequence(flight1).ShouldBe(1);
+        sequence.NumberInSequence(flight2).ShouldBe(2);
+        sequence.NumberInSequence(flight3).ShouldBe(3);
 
-        // Update QFA123 with a later FeederFixEstimate than all other flights
-        var newFeederFixTime = clock.UtcNow().AddMinutes(20);
+        // Update QFA123 with a later LandingEstimate than all other flights
+        var newLandingEstimate = clock.UtcNow().AddMinutes(30);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
@@ -1416,8 +1357,8 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             TimeSpan.FromHours(1),
             _position,
             [
-                new FixEstimate("RIVET", newFeederFixTime),
-                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(35))
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20)),
+                new FixEstimate("YSSY", newLandingEstimate)
             ]);
 
         var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
@@ -1425,12 +1366,11 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
-        // Assert - QFA123 should move to end of sequence (based on FF estimate)
-        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first after update (FF=+10)");
-        sequence.NumberInSequence(flight3).ShouldBe(2, "QFA789 should be second after update (FF=+15)");
-        sequence.NumberInSequence(flight1).ShouldBe(3, "QFA123 should be last after update (FF=+20, latest)");
-        flight1.FeederFixEstimate.ShouldBe(newFeederFixTime);
-        flight1.LandingEstimate.ShouldBe(newFeederFixTime.Add(ttg));
+        // Assert
+        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should be first after update");
+        sequence.NumberInSequence(flight3).ShouldBe(2, "QFA789 should be second after update");
+        sequence.NumberInSequence(flight1).ShouldBe(3, "QFA123 should be last after update");
+        flight1.LandingEstimate.ShouldBe(newLandingEstimate);
     }
 
     FlightUpdatedHandler GetHandler(
