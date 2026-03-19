@@ -97,7 +97,18 @@ Labels may include:
 - Total delay assigned
 - Remaining delay to be absorbed
 - Manual Delay Indicator
-- High Speed Indicator
-- Coupling Status Indicator
+- High Speed Indicator (displayed when no delay is required)
+- Coupling Status Indicator (displayed when flight plan is not yet linked to a radar track)
+
+The colour of each label item can change based on a configurable colour source:
+
+- Assigned runway
+- Assigned approach type
+- Feeder Fix
+- State
+- Runway Mode
+- Controller Action
+
+See [Plugin Configuration](../../admin-guide/02-plugin-configuration.md#colour-sources) for configuration details.
 
 Right-click a flight label to access actions like changing runway, adjusting delay, or removing the flight. See [Flight Management](./03-flight-management.md) for details on each action.
