@@ -8,6 +8,7 @@ Thank you for your interest in contributing to vMaestro.
 
 - .NET SDK 10.0
 - .NET Framework 4.7.2 Developer Pack (for plugin compilation)
+- vatSys (required for plugin compilation - the `Maestro.Plugin` project automatically locates vatSys binaries)
 - An IDE (Visual Studio, Rider, or VS Code with C# extension)
 
 ### Building
@@ -30,17 +31,12 @@ Or build directly with the .NET CLI:
 dotnet build source/Maestro.sln
 ```
 
-### Running Tests
+### Installing the Plugin
+
+To compile and install the plugin into a vatSys profile:
 
 ```bash
-# All tests
-dotnet test source/Maestro.sln
-
-# Core tests only
-dotnet test source/Maestro.Core.Tests/Maestro.Core.Tests.csproj
-
-# Server tests only
-dotnet test source/Maestro.Server.Tests/Maestro.Server.Tests.csproj
+nuke install --profile-name <vatSys Profile Name>
 ```
 
 ### Running the Server
@@ -52,12 +48,10 @@ dotnet run --project source/Maestro.Server/Maestro.Server.csproj
 Or with Docker:
 
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 
-## Architecture
-
-### Projects
+## Projects
 
 | Project | Target | Purpose |
 |---------|--------|---------|
@@ -68,59 +62,7 @@ docker-compose up
 | `Maestro.Core.Tests` | net10.0 | Unit tests for core logic |
 | `Maestro.Server.Tests` | net10.0 | Unit tests for server |
 
-### Patterns
-
-- **MediatR** - Request/response and notification patterns
-- **MVVM** - WPF ViewModels in `Maestro.Wpf/ViewModels/`
-- **Dependency Injection** - Microsoft.Extensions.DependencyInjection
-
-### Key Components
-
-- **Flight** (`Maestro.Core/Models/Flight.cs`) - Domain model for tracked flights
-- **Sequence** (`Maestro.Core/Models/Sequence.cs`) - Contains the `Schedule()` method implementing the core scheduling algorithm
-- **Scheduler** - Orchestrates sequence updates
-
-### Flight States
-
-Flights progress through states: Unstable → Stable → SuperStable → Frozen → Landed
-
-The scheduling algorithm in `Sequence.Schedule()`:
-- Respects flight states (Frozen/Landed flights are not modified)
-- Assigns runways based on feeder fix preferences
-- Enforces separation using acceptance rates
-- Handles conflicts via reordering or delay application
-
-## Testing
-
-- **Framework**: xUnit v3
-- **Mocking**: NSubstitute
-- **Assertions**: Shouldly
-- **Test Builders**: Available in `Builders/` directories for `Flight` and `Sequence`
-- **Fixed Clock**: Use for deterministic time-based testing
-
-Example:
-
-```csharp
-[Fact]
-public void Should_assign_runway_based_on_feeder_fix()
-{
-    // Arrange
-    var sequence = new SequenceBuilder()
-        .WithRunwayMode("34IVA")
-        .Build();
-
-    var flight = new FlightBuilder()
-        .ViaFeederFix("RIVET")
-        .Build();
-
-    // Act
-    sequence.Add(flight);
-    sequence.Schedule();
-
-    // Assert
-    flight.AssignedRunway.ShouldBe("34L");
-}
-```
+`Maestro.Core` is independent of vatSys and can be developed and tested separately.
 
 ## Pull Requests
 
@@ -150,11 +92,12 @@ public void Should_assign_runway_based_on_feeder_fix()
 Report issues at https://github.com/YuKitsune/vMaestro/issues
 
 Include:
+
 - Steps to reproduce
 - Expected behaviour
 - Actual behaviour
-- vMaestro version
-- vatSys version (if plugin-related)
+- vatSys and Maestro Plugin version)
+- maestro_log.txt files
 
 ## License
 

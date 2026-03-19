@@ -8,49 +8,18 @@ The vMaestro server enables multi-user operation, allowing multiple controllers 
 
 ## Overview
 
-The server is an ASP.NET Core application that uses SignalR for real-time communication. It can be deployed:
+The server is an ASP.NET Core application that uses SignalR for real-time communication.
 
-- Using Docker (recommended)
-- As a standalone application
-
-## Docker Deployment
-
-The recommended approach is to use Docker Compose.
-
-### Prerequisites
-
-- Docker and Docker Compose installed
-- Access to the vMaestro container image
-
-<!-- TODO: Docker is under construction, download server binary from github release -->
-
-### Running with Docker Compose
-
-1. Create a `docker-compose.yaml` file:
-
-```yaml
-services:
-  maestro-server:
-    image: ghcr.io/yukitsune/vmaestro-server:latest
-    ports:
-      - "5000:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-```
-
-2. Start the server:
-
-```bash
-docker-compose up -d
-```
-
-The server will be available at `http://localhost:5000`.
+:::note
+Docker images will be available in a future release.
+:::
 
 ## Standalone Deployment
 
 ### Prerequisites
 
 - .NET 10.0 Runtime
+- Server binary from the [GitHub releases](https://github.com/YuKitsune/vMaestro/releases)
 
 ### Running
 
