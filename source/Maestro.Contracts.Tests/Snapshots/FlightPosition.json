@@ -1,0 +1,10 @@
+{
+  "coordinate": {
+    "latitude": -33.9461,
+    "longitude": 151.1772
+  },
+  "altitude": 15000,
+  "verticalTrack": "Descending",
+  "groundSpeed": 250.5,
+  "isOnGround": false
+}

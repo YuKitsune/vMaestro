@@ -1,0 +1,25 @@
+{
+  "identifier": "SODPROPS",
+  "runways": [
+    {
+      "identifier": "34L",
+      "approachType": "ILS",
+      "acceptanceRateSeconds": 90,
+      "feederFixes": [
+        "RIVET",
+        "BOREE"
+      ]
+    },
+    {
+      "identifier": "34R",
+      "approachType": "VISUAL",
+      "acceptanceRateSeconds": 90,
+      "feederFixes": [
+        "MARUB",
+        "SOSIJ"
+      ]
+    }
+  ],
+  "dependencyRateSeconds": 120,
+  "offModeSeparationSeconds": 180
+}
