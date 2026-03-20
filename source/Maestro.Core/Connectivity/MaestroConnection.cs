@@ -63,7 +63,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
-            .AddJsonProtocol()
+            .AddMessagePackProtocol()
             .Build();
 
         SubscribeToNotifications(_hubConnection);
