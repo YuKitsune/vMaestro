@@ -1,9 +1,8 @@
 using System.Reflection;
-using System.Text.Json.Serialization;
 using Maestro.Contracts.Sessions;
 using Maestro.Server;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using AssemblyMarker = Maestro.Server.AssemblyMarker;
 
@@ -74,17 +73,12 @@ try
         }
 
         c.UseAllOfToExtendReferenceSchemas();
-        c.SchemaFilter<EnumSchemaFilter>();
     });
+
     builder.Services.AddSingleton<SessionCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();
     builder.Services.AddHostedService<SystemMetricsService>();
-
-    builder.Services.ConfigureHttpJsonOptions(options =>
-    {
-        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
 
     builder.Services.AddRazorPages();
 

@@ -8,6 +8,7 @@ namespace Maestro.Contracts.Flights;
 [JsonDerivedType(typeof(DepartureInsertionOptions), "Departure")]
 public interface IInsertFlightOptions;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum RelativePosition
 {
     Before,
