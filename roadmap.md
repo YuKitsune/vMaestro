@@ -17,7 +17,7 @@
 
 - [X] Refactor flight insertion handlers (Consider combining or separating them)
 - [ ] Improve separation between domain models, DTOs, and view models
-- [ ] Remove (or trim down) SequenceMessage and introduce smaller DTOs or notifications (consider CRDTs) to reduce the size of the sequence when serialised
+- [X] Remove (or trim down) SequenceMessage and introduce smaller DTOs or notifications (consider CRDTs) to reduce the size of the sequence when serialised
 - [ ] Make delaying action times configurable (lightweight enroute trajectory config?)
 - [ ] Consider moving some of the sequence logic into the individual handlers so they can be tested more easily.
 - [ ] Clean up tests
