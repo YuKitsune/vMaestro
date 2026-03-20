@@ -1,5 +1,4 @@
-﻿using Maestro.Wpf.Handlers;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Maestro.Wpf;
 

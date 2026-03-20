@@ -1,5 +1,5 @@
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
+using Maestro.Contracts.Connectivity;
+using Maestro.Contracts.Sessions;
 
 namespace Maestro.Core.Connectivity.Contracts;
 
@@ -8,5 +8,5 @@ public record InitializeConnectionResponse(
     string Partition,
     string AirportIdentifier,
     bool IsMaster,
-    SessionMessage? Session,
+    SessionDto? Session,
     PeerInfo[] ConnectedPeers);

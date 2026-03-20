@@ -1,5 +1,4 @@
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
+using Maestro.Contracts.Sessions;
 
 namespace Maestro.Server;
 
@@ -12,18 +11,18 @@ public record SessionKey(string Partition, string AirportIdentifier);
 
 public class SessionCache
 {
-    readonly Dictionary<SessionKey, SessionMessage> _sessions = new();
+    readonly Dictionary<SessionKey, SessionDto> _sessions = new();
 
-    public SessionMessage? Get(string partition, string airportIdentifier)
+    public SessionDto? Get(string partition, string airportIdentifier)
     {
         var key = new SessionKey(partition, airportIdentifier);
         return _sessions.GetValueOrDefault(key);
     }
 
-    public void Set(string partition, string airportIdentifier, SessionMessage sessionMessage)
+    public void Set(string partition, string airportIdentifier, SessionDto sessionDto)
     {
         var key = new SessionKey(partition, airportIdentifier);
-        _sessions[key] = sessionMessage;
+        _sessions[key] = sessionDto;
     }
 
     // BUG: Need to remove old entries after the last client disconnects
@@ -33,7 +32,7 @@ public class SessionCache
         _sessions.Remove(key);
     }
 
-    public IEnumerable<(SessionKey Key, SessionMessage Session)> GetAll()
+    public IEnumerable<(SessionKey Key, SessionDto Session)> GetAll()
     {
         foreach (var (key, session) in _sessions)
         {

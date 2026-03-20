@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
-using Maestro.Core.Model;
+using Maestro.Contracts.Shared;
 
 namespace Maestro.Wpf.Converters;
 

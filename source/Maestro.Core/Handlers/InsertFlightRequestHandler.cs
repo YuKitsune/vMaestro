@@ -1,10 +1,12 @@
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -39,7 +41,7 @@ public class InsertFlightRequestHandler(
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
-        SessionMessage sessionMessage;
+        SessionDto sessionDto;
 
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
@@ -88,13 +90,13 @@ public class InsertFlightRequestHandler(
 
             logger.Information("Inserted flight {Callsign} with landing time {LandingTime:HHmm} (target time {TargetTime:HHmm}", callsign, flight.LandingTime, flight.TargetLandingTime);
 
-            sessionMessage = instance.Session.Snapshot();
+            sessionDto = instance.Session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
                 instance.AirportIdentifier,
-                sessionMessage),
+                sessionDto),
             cancellationToken);
     }
 

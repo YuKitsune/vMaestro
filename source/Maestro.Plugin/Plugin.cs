@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.Windows.Media;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Maestro.Contracts.Shared;
 using Maestro.Core;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
@@ -19,10 +20,7 @@ using Maestro.Wpf;
 using Maestro.Wpf.Integrations;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using Serilog;
-using vatsys;
-using vatsys.Plugin;
 using Coordinate = Maestro.Core.Model.Coordinate;
 
 namespace Maestro.Plugin;

@@ -1,6 +1,5 @@
-﻿using Maestro.Core.Integration;
-using Maestro.Core.Model;
-using vatsys;
+﻿using Maestro.Contracts.Shared;
+using Maestro.Core.Integration;
 
 namespace Maestro.Plugin;
 

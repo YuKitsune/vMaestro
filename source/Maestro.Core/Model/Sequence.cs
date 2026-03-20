@@ -1,7 +1,8 @@
-﻿using Maestro.Core.Configuration;
+﻿using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Shared;
+using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
 
@@ -901,50 +902,48 @@ public class Sequence
         return index + 1;
     }
 
-    // TODO: Rename to snapshot
-    public SequenceMessage ToMessage()
+    public SequenceDto ToDto()
     {
-        return new SequenceMessage
+        return new SequenceDto
         {
-            // AirportIdentifier = AirportIdentifier,
             Flights = _flights
-                .Select(f => f.ToMessage(this))
+                .Select(f => f.ToDto(this))
                 .ToArray(),
-            CurrentRunwayMode = CurrentRunwayMode.ToMessage(),
-            NextRunwayMode = NextRunwayMode?.ToMessage(),
+            CurrentRunwayMode = CurrentRunwayMode.ToDto(),
+            NextRunwayMode = NextRunwayMode?.ToDto(),
             LastLandingTimeForCurrentMode = LastLandingTimeForCurrentMode ?? default,
             FirstLandingTimeForNextMode = FirstLandingTimeForNewMode ?? default,
             Slots = _slots
-                .Select(s => s.ToMessage())
+                .Select(s => s.ToDto())
                 .ToArray()
         };
     }
 
-    public void Restore(SequenceMessage message)
+    public void Restore(SequenceDto dto)
     {
         // Clear existing state
         _flights.Clear();
         _slots.Clear();
 
-        CurrentRunwayMode = new RunwayMode(message.CurrentRunwayMode);
-        if (message.NextRunwayMode is not null)
+        CurrentRunwayMode = new RunwayMode(dto.CurrentRunwayMode);
+        if (dto.NextRunwayMode is not null)
         {
-            NextRunwayMode = new RunwayMode(message.NextRunwayMode);
-            LastLandingTimeForCurrentMode = message.LastLandingTimeForCurrentMode;
-            FirstLandingTimeForNewMode = message.FirstLandingTimeForNextMode;
+            NextRunwayMode = new RunwayMode(dto.NextRunwayMode);
+            LastLandingTimeForCurrentMode = dto.LastLandingTimeForCurrentMode;
+            FirstLandingTimeForNewMode = dto.FirstLandingTimeForNextMode;
         }
 
         // Restore slots
-        foreach (var slotMessage in message.Slots)
+        foreach (var slotDto in dto.Slots)
         {
-            var slot = new Slot(slotMessage.Id, slotMessage.StartTime, slotMessage.EndTime, slotMessage.RunwayIdentifiers);
+            var slot = new Slot(slotDto.Id, slotDto.StartTime, slotDto.EndTime, slotDto.RunwayIdentifiers);
             _slots.Add(slot);
         }
 
         // Restore sequenced flights (both real and manually-inserted)
-        foreach (var flightMessage in message.Flights)
+        foreach (var flightDto in dto.Flights)
         {
-            var flight = new Flight(flightMessage);
+            var flight = new Flight(flightDto);
             _flights.Add(flight);
         }
     }

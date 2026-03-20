@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Model;
-using vatsys;
 using Coordinate = Maestro.Core.Model.Coordinate;
 
 namespace Maestro.Plugin;

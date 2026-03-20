@@ -1,6 +1,6 @@
-using Maestro.Core.Connectivity.Contracts;
+using Maestro.Contracts.Connectivity;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Handlers;
-using Maestro.Core.Model;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;

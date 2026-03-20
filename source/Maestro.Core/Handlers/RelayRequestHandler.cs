@@ -1,6 +1,6 @@
-﻿using Maestro.Core.Configuration;
+﻿using Maestro.Contracts.Connectivity;
+using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
-using Maestro.Core.Connectivity.Contracts;
 using MediatR;
 using Serilog;
 

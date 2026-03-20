@@ -1,12 +1,12 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Contracts.Slots;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Extensions;
 
 public static class SlotExtensionMethods
 {
-    public static SlotMessage ToMessage(this Slot slot)
+    public static SlotDto ToDto(this Slot slot)
     {
-        return new SlotMessage(slot.Id, slot.StartTime, slot.EndTime, slot.RunwayIdentifiers);
+        return new SlotDto(slot.Id, slot.StartTime, slot.EndTime, slot.RunwayIdentifiers);
     }
 }

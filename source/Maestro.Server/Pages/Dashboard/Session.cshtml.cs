@@ -1,8 +1,9 @@
-using Maestro.Core.Messages;
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Sessions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Maestro.Server.Pages;
+namespace Maestro.Server.Pages.Dashboard;
 
 public class SessionModel : PageModel
 {
@@ -21,9 +22,9 @@ public class SessionModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string Airport { get; set; } = "";
 
-    public SessionMessage? Session { get; private set; }
+    public SessionDto? Session { get; private set; }
     public Connection[] Connections { get; private set; } = [];
-    public FlightMessage[] Flights { get; private set; } = [];
+    public FlightDto[] Flights { get; private set; } = [];
     public int TotalFlights { get; private set; }
 
     public IActionResult OnGet()

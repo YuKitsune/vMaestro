@@ -1,3 +1,4 @@
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Handlers;

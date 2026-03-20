@@ -1,7 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
+using Maestro.Contracts.Connectivity;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Connectivity.Contracts;
-using Maestro.Wpf.Messages;
+using Maestro.Wpf.Contracts;
 using MediatR;
 
 namespace Maestro.Wpf.Handlers;
@@ -18,7 +19,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
 {
     public Task Handle(ConnectionCreatedNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "READY"));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "READY"));
         return Task.CompletedTask;
     }
 
@@ -27,13 +28,13 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
         if (!connectionManager.TryGetConnection(notification.AirportIdentifier, out var connection))
             return Task.CompletedTask;
 
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, GetStatus(connection)));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection)));
         return Task.CompletedTask;
     }
 
     public Task Handle(ReconnectingNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "RECONN"));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "RECONN"));
         return Task.CompletedTask;
     }
 
@@ -42,19 +43,19 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
         if (!connectionManager.TryGetConnection(notification.AirportIdentifier, out var connection))
             return Task.CompletedTask;
 
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, GetStatus(connection)));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection)));
         return Task.CompletedTask;
     }
 
     public Task Handle(ConnectionStoppedNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "READY"));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "READY"));
         return Task.CompletedTask;
     }
 
     public Task Handle(ConnectionDestroyedNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, "OFFLINE"));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "OFFLINE"));
         return Task.CompletedTask;
     }
 
@@ -63,7 +64,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
         if (!connectionManager.TryGetConnection(notification.AirportIdentifier, out var connection))
             return Task.CompletedTask;
 
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, GetStatus(connection!)));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection!)));
         return Task.CompletedTask;
     }
 
@@ -72,7 +73,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
         if (!connectionManager.TryGetConnection(notification.AirportIdentifier, out var connection))
             return Task.CompletedTask;
 
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChanged(notification.AirportIdentifier, GetStatus(connection!)));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection!)));
         return Task.CompletedTask;
     }
 

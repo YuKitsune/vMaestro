@@ -1,7 +1,8 @@
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 
 namespace Maestro.Core.Model;
 
@@ -131,51 +132,51 @@ public class Flight : IEquatable<Flight>
     }
 
     /// <summary>
-    /// Constructor for deserialization from FlightMessage.
+    /// Constructor for deserialization from FlightDto.
     /// </summary>
-    public Flight(FlightMessage message)
+    public Flight(FlightDto dto)
     {
-        Callsign = message.Callsign;
-        AircraftType = message.AircraftType;
-        AircraftCategory = message.AircraftCategory;
-        WakeCategory = message.WakeCategory;
-        OriginIdentifier = message.OriginIdentifier;
-        DestinationIdentifier = message.DestinationIdentifier;
-        IsManuallyInserted = message.IsManuallyInserted;
-        EstimatedDepartureTime = message.EstimatedDepartureTime;
-        IsFromDepartureAirport = message.IsFromDepartureAirport;
+        Callsign = dto.Callsign;
+        AircraftType = dto.AircraftType;
+        AircraftCategory = dto.AircraftCategory;
+        WakeCategory = dto.WakeCategory;
+        OriginIdentifier = dto.OriginIdentifier;
+        DestinationIdentifier = dto.DestinationIdentifier;
+        IsManuallyInserted = dto.IsManuallyInserted;
+        EstimatedDepartureTime = dto.EstimatedDepartureTime;
+        IsFromDepartureAirport = dto.IsFromDepartureAirport;
 
-        AssignedRunwayIdentifier = message.AssignedRunwayIdentifier
-            ?? throw new ArgumentException("AssignedRunwayIdentifier required", nameof(message));
-        ApproachType = message.ApproachType
-            ?? throw new ArgumentException("ApproachType required", nameof(message));
-        Trajectory = message.TimeToGo.HasValue
-            ? new Trajectory(message.TimeToGo.Value)
-            : throw new ArgumentException("TimeToGo required", nameof(message));
+        AssignedRunwayIdentifier = dto.AssignedRunwayIdentifier
+            ?? throw new ArgumentException("AssignedRunwayIdentifier required", nameof(dto));
+        ApproachType = dto.ApproachType
+            ?? throw new ArgumentException("ApproachType required", nameof(dto));
+        Trajectory = dto.TimeToGo.HasValue
+            ? new Trajectory(dto.TimeToGo.Value)
+            : throw new ArgumentException("TimeToGo required", nameof(dto));
 
-        FeederFixIdentifier = message.FeederFixIdentifier;
-        FeederFixEstimate = message.FeederFixEstimate
-            ?? throw new ArgumentException("FeederFixEstimate required", nameof(message));
-        InitialFeederFixEstimate = message.InitialFeederFixEstimate
-            ?? throw new ArgumentException("InitialFeederFixEstimate required", nameof(message));
-        ManualFeederFixEstimate = message.ManualFeederFixEstimate;
-        FeederFixTime = message.FeederFixTime
-            ?? throw new ArgumentException("FeederFixTime required", nameof(message));
-        ActualFeederFixTime = message.ActualFeederFixTime;
+        FeederFixIdentifier = dto.FeederFixIdentifier;
+        FeederFixEstimate = dto.FeederFixEstimate
+            ?? throw new ArgumentException("FeederFixEstimate required", nameof(dto));
+        InitialFeederFixEstimate = dto.InitialFeederFixEstimate
+            ?? throw new ArgumentException("InitialFeederFixEstimate required", nameof(dto));
+        ManualFeederFixEstimate = dto.ManualFeederFixEstimate;
+        FeederFixTime = dto.FeederFixTime
+            ?? throw new ArgumentException("FeederFixTime required", nameof(dto));
+        ActualFeederFixTime = dto.ActualFeederFixTime;
 
-        InitialLandingEstimate = message.InitialLandingEstimate;
-        LandingEstimate = message.LandingEstimate;
-        TargetLandingTime = message.TargetLandingTime;
-        LandingTime = message.LandingTime;
+        InitialLandingEstimate = dto.InitialLandingEstimate;
+        LandingEstimate = dto.LandingEstimate;
+        TargetLandingTime = dto.TargetLandingTime;
+        LandingTime = dto.LandingTime;
 
-        State = message.State;
-        HighPriority = message.HighPriority;
-        MaximumDelay = message.MaximumDelay;
-        ActivatedTime = message.ActivatedTime;
-        FlowControls = message.FlowControls;
-        Fixes = message.Fixes?.ToArray() ?? [];
-        LastSeen = message.LastSeen;
-        Position = message.Position;
+        State = dto.State;
+        HighPriority = dto.HighPriority;
+        MaximumDelay = dto.MaximumDelay;
+        ActivatedTime = dto.ActivatedTime;
+        FlowControls = dto.FlowControls;
+        Fixes = dto.Fixes?.ToArray() ?? [];
+        LastSeen = dto.LastSeen;
+        Position = dto.Position;
     }
 
     public string Callsign { get; }
@@ -475,8 +476,3 @@ public class Flight : IEquatable<Flight>
     }
 }
 
-public enum FlowControls
-{
-    HighSpeed,
-    ReduceSpeed
-}

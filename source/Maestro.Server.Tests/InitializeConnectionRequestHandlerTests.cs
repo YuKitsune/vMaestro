@@ -1,7 +1,8 @@
+using Maestro.Contracts.Connectivity;
+using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
 using Maestro.Server.Handlers;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using Moq;
 using Shouldly;
 using ILogger = Serilog.ILogger;
@@ -81,13 +82,13 @@ public class InitializeConnectionRequestHandlerTests
         const string airportIdentifier = "YSSY";
 
         var connection = new Connection(connectionId, Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
-        var cachedSession = new SessionMessage
+        var cachedSession = new SessionDto
         {
             AirportIdentifier = airportIdentifier,
             PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
-            Sequence = new SequenceMessage
+            Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
                 NextRunwayMode = null,

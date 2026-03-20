@@ -1,11 +1,12 @@
-﻿using Maestro.Core.Configuration;
+﻿using Maestro.Contracts.Coordination;
+using Maestro.Contracts.Runway;
+using Maestro.Contracts.Sessions;
+using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
-using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
@@ -32,7 +33,7 @@ public class ChangeRunwayModeRequestHandler(
         }
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
-        SessionMessage sessionMessage;
+        SessionDto sessionDto;
 
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
@@ -101,13 +102,13 @@ public class ChangeRunwayModeRequestHandler(
                     cancellationToken);
             }
 
-            sessionMessage = instance.Session.Snapshot();
+            sessionDto = instance.Session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
                 instance.AirportIdentifier,
-                sessionMessage),
+                sessionDto),
             cancellationToken);
     }
 }

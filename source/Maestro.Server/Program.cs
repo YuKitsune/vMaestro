@@ -1,8 +1,7 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Maestro.Contracts.Sessions;
 using Maestro.Core;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
 using Maestro.Server;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi.Models;
@@ -133,7 +132,7 @@ try
     .WithName("GetSession")
     .WithDescription("Returns the full session data for a specific airport")
     .WithTags("Sessions")
-    .Produces<SessionMessage>()
+    .Produces<SessionDto>()
     .Produces(404);
 
     app.MapRazorPages();

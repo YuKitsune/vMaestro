@@ -1,9 +1,8 @@
-﻿using Maestro.Core.Connectivity;
+﻿using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Slots;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
@@ -28,7 +27,7 @@ public class ModifySlotRequestHandler(
         }
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
-        SessionMessage sessionMessage;
+        SessionDto sessionDto;
 
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
@@ -37,13 +36,13 @@ public class ModifySlotRequestHandler(
 
             logger.Information("Slot {SlotId} modified for {AirportIdentifier} from {StartTime} to {EndTime}", request.SlotId, request.AirportIdentifier, request.StartTime, request.EndTime);
 
-            sessionMessage = instance.Session.Snapshot();
+            sessionDto = instance.Session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
                 instance.AirportIdentifier,
-                sessionMessage),
+                sessionDto),
             cancellationToken);
     }
 }

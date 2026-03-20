@@ -1,5 +1,4 @@
-using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Handlers;
+using Maestro.Contracts.Connectivity;
 using Maestro.Server.Handlers;
 using MediatR;
 using Moq;

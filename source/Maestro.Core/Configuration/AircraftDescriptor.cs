@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using Maestro.Core.Model;
+using Maestro.Contracts.Shared;
 using Newtonsoft.Json;
 
 namespace Maestro.Core.Configuration;

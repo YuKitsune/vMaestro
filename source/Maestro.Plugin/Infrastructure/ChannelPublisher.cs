@@ -1,7 +1,6 @@
 ﻿using System.Threading.Channels;
 using MediatR;
 using Serilog;
-using vatsys;
 
 namespace Maestro.Plugin.Infrastructure;
 

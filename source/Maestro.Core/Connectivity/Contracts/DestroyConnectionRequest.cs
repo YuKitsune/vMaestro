@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 
 namespace Maestro.Core.Connectivity.Contracts;
 

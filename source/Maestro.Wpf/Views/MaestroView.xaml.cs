@@ -3,9 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
 using Maestro.Wpf.Controls;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.ViewModels;
@@ -103,7 +103,7 @@ public partial class MaestroView
         DrawTimeline();
     }
 
-    List<int> GetMatchingLadders(FlightMessage flight)
+    List<int> GetMatchingLadders(FlightDto flight)
     {
         var view = (ViewConfiguration)ViewModel.SelectedView;
         var matching = new List<int>();
@@ -909,7 +909,7 @@ public partial class MaestroView
         LadderReference Reference,
         string[] FilterItems);
 
-    void OnFlightLabelMouseDown(object sender, MouseButtonEventArgs e, FlightMessage flight)
+    void OnFlightLabelMouseDown(object sender, MouseButtonEventArgs e, FlightDto flight)
     {
         if (sender is not FlightLabelView flightLabel)
             return;
@@ -1076,7 +1076,7 @@ public partial class MaestroView
         e.Handled = true;
     }
 
-    void OnFlightLabelDoubleClick(object sender, MouseButtonEventArgs e, FlightMessage flight)
+    void OnFlightLabelDoubleClick(object sender, MouseButtonEventArgs e, FlightDto flight)
     {
         if (sender is not FlightLabelView flightLabel)
             return;
@@ -1090,7 +1090,7 @@ public partial class MaestroView
         e.Handled = true;
     }
 
-    void OnFlightLabelRightClick(object sender, MouseButtonEventArgs e, FlightMessage flight)
+    void OnFlightLabelRightClick(object sender, MouseButtonEventArgs e, FlightDto flight)
     {
         if (sender is not FlightLabelView flightLabel)
             return;
@@ -1281,7 +1281,7 @@ public partial class MaestroView
         }
     }
 
-    static ApproachTypeLookup[] GetApproachTypeLookups(FlightMessage flight)
+    static ApproachTypeLookup[] GetApproachTypeLookups(FlightDto flight)
     {
         var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(flight.DestinationIdentifier);

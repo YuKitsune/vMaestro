@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Messages;
+using Maestro.Contracts.Flights;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
@@ -20,13 +20,13 @@ public partial class InsertFlightViewModel : ObservableObject
     bool _isUpdatingFromSelection = false;
 
     [ObservableProperty]
-    FlightMessage[] _landedFlights = [];
+    FlightDto[] _landedFlights = [];
 
     [ObservableProperty]
-    FlightMessage[] _pendingFlights = [];
+    FlightDto[] _pendingFlights = [];
 
     [ObservableProperty]
-    FlightMessage? _selectedFlight;
+    FlightDto? _selectedFlight;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
@@ -39,8 +39,8 @@ public partial class InsertFlightViewModel : ObservableObject
     public InsertFlightViewModel(
         string airportIdentifier,
         IInsertFlightOptions options,
-        FlightMessage[] landedFlights,
-        FlightMessage[] pendingFlights,
+        FlightDto[] landedFlights,
+        FlightDto[] pendingFlights,
         IWindowHandle windowHandle,
         IMediator mediator,
         IErrorReporter errorReporter)
@@ -56,7 +56,7 @@ public partial class InsertFlightViewModel : ObservableObject
         _errorReporter = errorReporter;
     }
 
-    partial void OnSelectedFlightChanged(FlightMessage? value)
+    partial void OnSelectedFlightChanged(FlightDto? value)
     {
         _isUpdatingFromSelection = true;
         Callsign = value?.Callsign ?? "";

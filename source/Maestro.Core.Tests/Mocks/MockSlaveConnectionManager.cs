@@ -1,5 +1,5 @@
+using Maestro.Contracts.Connectivity;
 using Maestro.Core.Connectivity;
-using Maestro.Core.Connectivity.Contracts;
 using MediatR;
 
 namespace Maestro.Core.Tests.Mocks;

@@ -1,7 +1,8 @@
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -75,10 +76,10 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
 
         // Verify flight is moved to pending list and removed from main sequence
         var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
-        var sessionMessage = instance.Session.Snapshot();
-        sessionMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sessionMessage.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
-        sessionMessage.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
+        var sessionDto = instance.Session.Snapshot();
+        sessionDto.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
+        sessionDto.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
+        sessionDto.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
 
         // Verify remaining flight moved up in sequence
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");

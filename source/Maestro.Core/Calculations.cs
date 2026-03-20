@@ -1,4 +1,4 @@
-﻿using Maestro.Core.Model;
+﻿using Maestro.Contracts.Shared;
 
 namespace Maestro.Core;
 

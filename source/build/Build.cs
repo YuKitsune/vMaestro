@@ -155,6 +155,7 @@ class Build : NukeBuild
             var mainAssembly = BuildOutputDirectory / PluginAssemblyFileName;
             var assembliesToMerge = new[]
             {
+                BuildOutputDirectory / "Maestro.Contracts.dll",
                 BuildOutputDirectory / "Maestro.Core.dll",
                 BuildOutputDirectory / "Maestro.Wpf.dll",
                 BuildOutputDirectory / "Serilog.dll",

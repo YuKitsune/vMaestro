@@ -1,5 +1,5 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
+﻿using Maestro.Contracts.Runway;
+using Maestro.Core.Configuration;
 
 namespace Maestro.Core.Model;
 

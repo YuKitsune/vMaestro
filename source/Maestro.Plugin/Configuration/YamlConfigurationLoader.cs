@@ -1,5 +1,5 @@
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
-using Maestro.Core.Model;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;

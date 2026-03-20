@@ -2,7 +2,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
 using Serilog;
-using vatsys;
 
 namespace Maestro.Plugin;
 

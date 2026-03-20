@@ -1,5 +1,6 @@
 ﻿using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
+using Maestro.Wpf.Contracts;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;

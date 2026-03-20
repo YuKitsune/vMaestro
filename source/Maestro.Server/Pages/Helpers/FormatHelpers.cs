@@ -1,5 +1,5 @@
-using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Model;
+using Maestro.Contracts.Connectivity;
+using Maestro.Contracts.Shared;
 
 namespace Maestro.Server.Pages.Helpers;
 

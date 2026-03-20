@@ -1,5 +1,5 @@
-﻿using Maestro.Core.Integration;
-using Maestro.Core.Model;
+﻿using Maestro.Contracts.Shared;
+using Maestro.Core.Integration;
 using Maestro.Core.Tests.Fixtures;
 using NSubstitute;
 

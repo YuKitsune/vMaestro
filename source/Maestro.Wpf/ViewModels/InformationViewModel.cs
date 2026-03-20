@@ -1,9 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Maestro.Core.Handlers;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
+using Maestro.Contracts.Coordination;
 using Maestro.Wpf.Integrations;
 
 namespace Maestro.Wpf.ViewModels;

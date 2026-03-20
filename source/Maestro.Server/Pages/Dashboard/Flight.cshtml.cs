@@ -1,8 +1,8 @@
-using Maestro.Core.Messages;
+using Maestro.Contracts.Flights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Maestro.Server.Pages;
+namespace Maestro.Server.Pages.Dashboard;
 
 public class FlightModel : PageModel
 {
@@ -22,7 +22,7 @@ public class FlightModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string Callsign { get; set; } = "";
 
-    public FlightMessage? Flight { get; private set; }
+    public FlightDto? Flight { get; private set; }
 
     public IActionResult OnGet()
     {

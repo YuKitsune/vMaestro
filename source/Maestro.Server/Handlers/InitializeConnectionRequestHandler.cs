@@ -1,3 +1,4 @@
+using Maestro.Contracts.Connectivity;
 using Maestro.Core.Connectivity.Contracts;
 using MediatR;
 using ILogger = Serilog.ILogger;

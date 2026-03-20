@@ -1,4 +1,4 @@
-﻿using Maestro.Core.Messages;
+﻿using Maestro.Core.Contracts;
 using Maestro.Wpf.Integrations;
 using MediatR;
 using Serilog;

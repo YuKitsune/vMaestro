@@ -1,4 +1,4 @@
-﻿using Maestro.Core.Model;
+﻿using Maestro.Contracts.Shared;
 using Shouldly;
 
 namespace Maestro.Core.Tests;
