@@ -64,6 +64,7 @@ class Build : NukeBuild
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
     AbsolutePath ServerProjectPath => RootDirectory / "source" / "Maestro.Server" / "Maestro.Server.csproj";
     AbsolutePath CoreTestsProjectPath => RootDirectory / "source" / "Maestro.Core.Tests" / "Maestro.Core.Tests.csproj";
+    AbsolutePath ContractTestsProjectPath => RootDirectory / "source" / "Maestro.Contracts.Tests" / "Maestro.Contracts.Tests.csproj";
     AbsolutePath ServerTestsProjectPath => RootDirectory / "source" / "Maestro.Server.Tests" / "Maestro.Server.Tests.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
     AbsolutePath ServerPublishDirectory => RootDirectory / "source" / "Maestro.Server" / "bin" / Configuration / "net10.0" / "publish";
@@ -201,6 +202,15 @@ class Build : NukeBuild
             Log.Information("Repack complete");
         });
 
+    Target TestContracts => _ => _
+        .Executes(() =>
+        {
+            Log.Information("Running Contract tests");
+            DotNetTasks.DotNetTest(s => s
+                .SetProjectFile(ContractTestsProjectPath)
+                .SetConfiguration(Configuration));
+        });
+
     Target TestCore => _ => _
         .Executes(() =>
         {
@@ -220,8 +230,7 @@ class Build : NukeBuild
         });
 
     Target Test => _ => _
-        .DependsOn(TestCore)
-        .DependsOn(TestServer);
+        .DependsOn(TestContracts, TestCore, TestServer);
 
     Target PublishServer => _ => _
         .Executes(() =>
