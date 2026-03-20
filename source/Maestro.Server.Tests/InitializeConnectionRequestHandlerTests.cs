@@ -1,6 +1,6 @@
 using Maestro.Contracts.Connectivity;
 using Maestro.Contracts.Sessions;
-using Maestro.Core.Connectivity.Contracts;
+using Maestro.Server.Contracts;
 using Maestro.Server.Handlers;
 using Microsoft.AspNetCore.SignalR.Protocol;
 using Moq;

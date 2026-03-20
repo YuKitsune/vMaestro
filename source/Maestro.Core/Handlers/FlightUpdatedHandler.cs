@@ -1,4 +1,5 @@
 using Maestro.Contracts.Coordination;
+using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
@@ -12,19 +13,6 @@ using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
-
-public record FlightUpdatedNotification(
-    string Callsign,
-    string AircraftType,
-    AircraftCategory AircraftCategory,
-    WakeCategory WakeCategory,
-    string Origin,
-    string Destination,
-    DateTimeOffset EstimatedDepartureTime,
-    TimeSpan EstimatedFlightTime,
-    FlightPosition? Position,
-    FixEstimate[] Estimates)
-    : INotification;
 
 public class FlightUpdatedHandler(
     IMaestroInstanceManager instanceManager,

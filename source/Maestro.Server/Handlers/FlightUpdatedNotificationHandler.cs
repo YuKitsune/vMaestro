@@ -1,4 +1,4 @@
-using Maestro.Core.Handlers;
+using Maestro.Contracts.Flights;
 using MediatR;
 using ILogger = Serilog.ILogger;
 

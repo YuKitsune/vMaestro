@@ -30,7 +30,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Maestro.Contracts\Maestro.Contracts.csproj" />
-      <ProjectReference Include="..\Maestro.Core\Maestro.Core.csproj" />
     </ItemGroup>
 
 </Project>

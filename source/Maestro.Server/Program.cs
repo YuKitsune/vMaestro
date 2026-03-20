@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 using Maestro.Contracts.Sessions;
-using Maestro.Core;
 using Maestro.Server;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi.Models;

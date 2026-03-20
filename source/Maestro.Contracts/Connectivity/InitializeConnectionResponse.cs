@@ -1,7 +1,6 @@
-using Maestro.Contracts.Connectivity;
 using Maestro.Contracts.Sessions;
 
-namespace Maestro.Core.Connectivity.Contracts;
+namespace Maestro.Contracts.Connectivity;
 
 public record InitializeConnectionResponse(
     string ConnectionId,

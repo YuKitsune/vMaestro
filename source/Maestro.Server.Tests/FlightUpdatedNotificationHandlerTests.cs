@@ -1,6 +1,6 @@
 using Maestro.Contracts.Connectivity;
+using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
-using Maestro.Core.Handlers;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;
