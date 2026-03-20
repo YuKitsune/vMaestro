@@ -2,9 +2,11 @@ using System.Text.Json.Serialization;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Runway;
 using Maestro.Contracts.Slots;
+using MessagePack;
 
 namespace Maestro.Contracts.Connectivity;
 
+// JSON attributes
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "RequestType")]
 [JsonDerivedType(typeof(InsertFlightRequest), "InsertFlight")]
 [JsonDerivedType(typeof(MoveFlightRequest), "MoveFlight")]
@@ -23,6 +25,26 @@ namespace Maestro.Contracts.Connectivity;
 [JsonDerivedType(typeof(ModifySlotRequest), "ModifySlot")]
 [JsonDerivedType(typeof(DeleteSlotRequest), "DeleteSlot")]
 [JsonDerivedType(typeof(ChangeRunwayModeRequest), "ChangeRunwayMode")]
+
+// Message Pack attributes
+[Union(0, typeof(InsertFlightRequest))]
+[Union(1, typeof(MoveFlightRequest))]
+[Union(2, typeof(SwapFlightsRequest))]
+[Union(3, typeof(RemoveRequest))]
+[Union(4, typeof(DesequenceRequest))]
+[Union(5, typeof(MakePendingRequest))]
+[Union(6, typeof(MakeStableRequest))]
+[Union(7, typeof(RecomputeRequest))]
+[Union(8, typeof(ResumeSequencingRequest))]
+[Union(9, typeof(ManualDelayRequest))]
+[Union(10, typeof(ChangeRunwayRequest))]
+[Union(11, typeof(ChangeFeederFixEstimateRequest))]
+[Union(12, typeof(ChangeApproachTypeRequest))]
+[Union(13, typeof(CreateSlotRequest))]
+[Union(14, typeof(ModifySlotRequest))]
+[Union(15, typeof(DeleteSlotRequest))]
+[Union(16, typeof(ChangeRunwayModeRequest))]
+
 public interface IRelayableRequest
 {
     string AirportIdentifier { get; }

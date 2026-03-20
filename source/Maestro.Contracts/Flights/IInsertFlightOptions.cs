@@ -1,11 +1,15 @@
 using System.Text.Json.Serialization;
+using MessagePack;
 
 namespace Maestro.Contracts.Flights;
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "OptionsType")]
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "optionsType")]
 [JsonDerivedType(typeof(RelativeInsertionOptions), "Relative")]
 [JsonDerivedType(typeof(ExactInsertionOptions), "Exact")]
 [JsonDerivedType(typeof(DepartureInsertionOptions), "Departure")]
+[Union(0, typeof(RelativeInsertionOptions))]
+[Union(1, typeof(ExactInsertionOptions))]
+[Union(2, typeof(DepartureInsertionOptions))]
 public interface IInsertFlightOptions;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
