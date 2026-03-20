@@ -3,7 +3,7 @@
   "callsign": "QFA123",
   "aircraftType": "B738",
   "options": {
-    "OptionsType": "Relative",
+    "optionsType": "Relative",
     "referenceCallsign": "QFA456",
     "position": "Before"
   }
