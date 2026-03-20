@@ -22,12 +22,6 @@ var assembly = Assembly.GetExecutingAssembly();
 var version = AssemblyVersionHelper.GetVersion(assembly);
 Log.Information("Starting Maestro.Server version {Version}", version);
 
-// TODO: Basic web UI with supervisor functions
-//  - View connected users
-//  - Re-assign sequence owner
-//  - Administrative messages
-//  - Kick user
-
 // TODO: Error handling
 // - Don't throw exceptions, return results
 // - Write exceptions to logs
