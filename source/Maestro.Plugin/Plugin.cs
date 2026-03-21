@@ -295,13 +295,14 @@ public class Plugin : IPlugin
 
         var estimates = updated.ParsedRoute
             .ToArray() // Materialize to avoid mutation during enumeration
-            .Where(s => s.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
-            .Select((s, i) => new FixEstimate(
+            .Select((s, i) => (Segment: s, Index: i, Dto: new FixEstimate(
                 s.Intersection.Name,
                 ToDateTimeOffset(s.ETO),
                 i <= updated.ParsedRoute.OverflownIndex // If this fix has been overflown, then use the ATO
                     ? ToDateTimeOffset(s.ATO) // BUG: If a flight has passed FF before we connect to the network, this will be MaxValue. ATO is unknown.
-                    : null))
+                    : null)))
+            .Where(x => x.Segment.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
+            .Select(x => x.Dto)
             .ToArray();
 
         FlightPosition? position = null;
