@@ -44,7 +44,6 @@ namespace Maestro.Contracts.Connectivity;
 [Union(14, typeof(ModifySlotRequest))]
 [Union(15, typeof(DeleteSlotRequest))]
 [Union(16, typeof(ChangeRunwayModeRequest))]
-
 public interface IRelayableRequest
 {
     string AirportIdentifier { get; }

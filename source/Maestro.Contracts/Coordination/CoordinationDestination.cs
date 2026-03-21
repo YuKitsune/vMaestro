@@ -12,7 +12,11 @@ public abstract record CoordinationDestination
 {
     private CoordinationDestination() { }
 
+    [MessagePackObject]
     public sealed record Broadcast : CoordinationDestination;
 
-    public sealed record Controller(string Callsign) : CoordinationDestination;
+    [MessagePackObject]
+    public sealed record Controller(
+        [property: Key(0)] string Callsign)
+        : CoordinationDestination;
 }

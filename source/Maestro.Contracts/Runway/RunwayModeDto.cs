@@ -1,3 +1,5 @@
+using MessagePack;
+
 namespace Maestro.Contracts.Runway;
 
 /// <summary>
@@ -7,8 +9,9 @@ namespace Maestro.Contracts.Runway;
 /// <param name="Runways">The runways available in this mode.</param>
 /// <param name="DependencyRateSeconds">The minimum amount of separation to apply between flights landing on different runways in this mode, in seconds.</param>
 /// <param name="OffModeSeparationSeconds">The minimum amount of separation to apply to flights landing on a runway not defined in this mode, in seconds.</param>
+[MessagePackObject]
 public record RunwayModeDto(
-    string Identifier,
-    RunwayDto[] Runways,
-    int DependencyRateSeconds,
-    int OffModeSeparationSeconds);
+    [property: Key(0)] string Identifier,
+    [property: Key(1)] RunwayDto[] Runways,
+    [property: Key(2)] int DependencyRateSeconds,
+    [property: Key(3)] int OffModeSeparationSeconds);

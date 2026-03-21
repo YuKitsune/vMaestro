@@ -19,8 +19,20 @@ public enum RelativePosition
     After
 }
 
-public record RelativeInsertionOptions(string ReferenceCallsign, RelativePosition Position) : IInsertFlightOptions;
+[MessagePackObject]
+public record RelativeInsertionOptions(
+    [property: Key(0)] string ReferenceCallsign,
+    [property: Key(1)] RelativePosition Position)
+    : IInsertFlightOptions;
 
-public record ExactInsertionOptions(DateTimeOffset TargetLandingTime, string[] RunwayIdentifiers) : IInsertFlightOptions;
+[MessagePackObject]
+public record ExactInsertionOptions(
+    [property: Key(0)] DateTimeOffset TargetLandingTime,
+    [property: Key(1)] string[] RunwayIdentifiers)
+    : IInsertFlightOptions;
 
-public record DepartureInsertionOptions(string OriginIdentifier, DateTimeOffset TakeoffTime) : IInsertFlightOptions;
+[MessagePackObject]
+public record DepartureInsertionOptions(
+    [property: Key(0)] string OriginIdentifier,
+    [property: Key(1)] DateTimeOffset TakeoffTime)
+    : IInsertFlightOptions;

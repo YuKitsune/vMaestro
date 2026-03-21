@@ -1,6 +1,11 @@
 ﻿using Maestro.Contracts.Connectivity;
 using MediatR;
+using MessagePack;
 
 namespace Maestro.Contracts.Flights;
 
-public record RemoveRequest(string AirportIdentifier, string Callsign) : IRequest, IRelayableRequest;
+[MessagePackObject]
+public record RemoveRequest(
+    [property: Key(0)] string AirportIdentifier,
+    [property: Key(1)] string Callsign)
+    : IRequest, IRelayableRequest;
