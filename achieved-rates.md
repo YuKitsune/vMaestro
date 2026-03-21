@@ -17,7 +17,7 @@
 
 - [X] Add permission for wind changes
 - [ ] Add averating period to configuration
-- [ ] Fix server tests
+- [X] Fix server tests
 - [ ] Test FlightLandedNotificationHandler
 - [ ] Test LandingStatistics
 - [ ] Test UpdateWindRequestHandler
