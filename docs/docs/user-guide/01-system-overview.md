@@ -56,14 +56,14 @@ A runway mode defines which runways are active for arrivals. Each runway mode sp
 - Feeder fix preferences for runway assignment
 
 vMaestro uses the active runway mode to determine how flights are assigned to runways and scheduled.
-See [TMA Configuration](../system-operation/02-tma-configuration.md) for how to change runway modes during operation.
+See [TMA Configuration](02-system-operation.md#tma-configuration) for how to change runway modes during operation.
 
 ## Slots
 
 Slots reserve runway capacity by preventing flights from being scheduled during a specific time period.
 They are used for special operations, configuration changes, or other reasons requiring a gap in arrivals.
 
-See [Slots](../system-operation/04-slots.md) for how to manage slots during operation.
+See [Slots](02-system-operation.md#slots) for how to manage slots during operation.
 
 ## Flight Creation
 
