@@ -154,24 +154,6 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var mainAssembly = BuildOutputDirectory / PluginAssemblyFileName;
-            // var assembliesToMerge = new[]
-            // {
-            //     BuildOutputDirectory / "Maestro.Contracts.dll",
-            //     BuildOutputDirectory / "Maestro.Core.dll",
-            //     BuildOutputDirectory / "Maestro.Wpf.dll",
-            //     BuildOutputDirectory / "Serilog.dll",
-            //     BuildOutputDirectory / "Serilog.Sinks.File.dll",
-            //     BuildOutputDirectory / "MediatR.dll",
-            //     BuildOutputDirectory / "MediatR.Contracts.dll",
-            //     BuildOutputDirectory / "CommunityToolkit.Mvvm.dll",
-            //     BuildOutputDirectory / "MessagePack.dll",
-            //     BuildOutputDirectory / "MessagePack.Annotations.dll",
-            //     BuildOutputDirectory / "Microsoft.AspNetCore.SignalR.Protocols.MessagePack.dll",
-            //     BuildOutputDirectory / "System.Collections.Immutable.dll",
-            //     BuildOutputDirectory / "Microsoft.Bcl.AsyncInterfaces.dll",
-            //     BuildOutputDirectory / "Microsoft.NET.StringTools.dll",
-            // };
-
             var assembliesToMerge = BuildOutputDirectory
                 .GlobFiles("*.dll")
                 .Except([mainAssembly])
