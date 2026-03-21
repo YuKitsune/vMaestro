@@ -409,6 +409,15 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeApproachType);
         });
+
+        hubConnection.On<RequestEnvelope, ServerResponse>("ModifyWind", async envelope =>
+        {
+            var request = (ModifyWindRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
+                return ServerResponse.CreateFailure("Airport identifier mismatch");
+
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.ModifyWind);
+        });
     }
 
     void SubscribeToConnectionEvents(HubConnection hubConnection)

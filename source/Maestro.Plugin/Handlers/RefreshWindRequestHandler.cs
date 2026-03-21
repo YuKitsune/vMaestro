@@ -37,7 +37,7 @@ public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConf
         }
 
         await mediator.Send(
-            new UpdateWindRequest(
+            new ModifyWindRequest(
                 request.AirportIdentifier,
                 surfaceWind,
                 upperWind,

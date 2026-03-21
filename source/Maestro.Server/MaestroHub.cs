@@ -129,9 +129,9 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         return await RelayToMaster("ChangeApproachType", request);
     }
 
-    public async Task<ServerResponse> UpdateWind(UpdateWindRequest request)
+    public async Task<ServerResponse> ModifyWind(ModifyWindRequest request)
     {
-        return await RelayToMaster("UpdateWind", request);
+        return await RelayToMaster("ModifyWind", request);
     }
 
     async Task<ServerResponse> RelayToMaster(string methodName, IRelayableRequest request)

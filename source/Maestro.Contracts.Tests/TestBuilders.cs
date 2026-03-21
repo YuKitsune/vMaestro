@@ -289,6 +289,6 @@ public static class TestBuilders
     public static SessionUpdatedNotification CreateSessionUpdatedNotification() =>
         new("YSSY", CreateSessionDto());
 
-    public static UpdateWindRequest CreateUpdateWindRequest() =>
+    public static ModifyWindRequest CreateModifyWindRequest() =>
         new("YSSY", CreateWindDto(), new WindDto(280, 25), ManualWind: true);
 }

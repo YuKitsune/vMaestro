@@ -9,20 +9,20 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class UpdateWindRequestHandler(
+public class ModifyWindRequestHandler(
     IMaestroInstanceManager instanceManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
-    : IRequestHandler<UpdateWindRequest>
+    : IRequestHandler<ModifyWindRequest>
 {
-    public async Task Handle(UpdateWindRequest request, CancellationToken cancellationToken)
+    public async Task Handle(ModifyWindRequest request, CancellationToken cancellationToken)
     {
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying UpdateWindRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ModifyWindRequest for {AirportIdentifier}", request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
@@ -37,7 +37,7 @@ public class UpdateWindRequestHandler(
             instance.Session.ManualWind = request.ManualWind;
 
             logger.Information(
-                "Wind updated for {AirportIdentifier}: Surface {SurfaceWind}, Upper {UpperWind}, Manual={ManualWind}",
+                "Wind modified for {AirportIdentifier}: Surface {SurfaceWind}, Upper {UpperWind}, Manual={ManualWind}",
                 request.AirportIdentifier,
                 $"{request.SurfaceWind.Direction:000}/{request.SurfaceWind.Speed:000}",
                 $"{request.UpperWind.Direction:000}/{request.UpperWind.Speed:000}",

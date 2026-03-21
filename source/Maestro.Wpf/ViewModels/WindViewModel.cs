@@ -56,7 +56,7 @@ public partial class WindViewModel : ObservableObject
         try
         {
             await _mediator.Send(
-                new UpdateWindRequest(
+                new ModifyWindRequest(
                     _airportIdentifier,
                     new WindDto(SurfaceWindDirection, SurfaceWindSpeed),
                     new WindDto(UpperWindDirection, UpperWindSpeed),

@@ -15,7 +15,7 @@
     - [x] Update upper and Lower winds automatically
     - [X] Use winds to calculate separation distance
 
-- [ ] Add permission for wind changes
+- [X] Add permission for wind changes
 - [ ] Add averating period to configuration
 - [ ] Fix server tests
 - [ ] Test FlightLandedNotificationHandler
@@ -28,5 +28,8 @@
 - [ ] Add option to enable/disable menu sections in the Setup window
 
 - [ ] Document new configuration options
+    - [ ] Modify Wind perm
+    - [ ] Average landing TAS
+    - [ ] Upper wind altitude
 - [ ] Document wind, achieved rates, and units selector
 - [ ] Update docs for Setup window
