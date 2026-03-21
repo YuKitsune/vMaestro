@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
-using Maestro.Core.Messages;
+using Maestro.Contracts.Coordination;
 using MediatR;
 
 namespace Maestro.Wpf.Handlers;

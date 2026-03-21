@@ -2,8 +2,8 @@
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Plugin.Infrastructure;
+using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
-using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;
@@ -24,7 +24,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
-        var sequenceMessage = instance.Session.Sequence.ToMessage();
+        var sequenceMessage = instance.Session.Sequence.ToDto();
 
         var runwayModes = airportConfiguration.RunwayModes
             .Select(r => new RunwayModeViewModel(r))

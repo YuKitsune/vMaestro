@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Maestro.Contracts.Runway;
 using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
 
 namespace Maestro.Wpf.ViewModels;
 

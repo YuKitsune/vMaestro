@@ -1,5 +1,5 @@
-﻿using Maestro.Core.Messages;
-using Maestro.Core.Model;
+﻿using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 
 namespace Maestro.Wpf.ViewModels;
 
@@ -9,7 +9,7 @@ public class FlightViewModel
     {
         Callsign = "QFA1234";
         AircraftType = "B744";
-        WakeCategory = Core.Model.WakeCategory.Heavy;
+        WakeCategory = Maestro.Contracts.Shared.WakeCategory.Heavy;
         OriginIdentifier = "YMML";
         DestinationIdentifier = "YSSY";
         State = State.Unstable;
@@ -28,7 +28,7 @@ public class FlightViewModel
         FlowControls = FlowControls.ReduceSpeed;
     }
 
-    public FlightViewModel(FlightMessage flight)
+    public FlightViewModel(FlightDto flight)
     {
         Callsign = flight.Callsign;
         AircraftType = flight.AircraftType;

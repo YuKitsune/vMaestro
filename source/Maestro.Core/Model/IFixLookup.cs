@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Maestro.Contracts.Shared;
 
 namespace Maestro.Core.Model;
 

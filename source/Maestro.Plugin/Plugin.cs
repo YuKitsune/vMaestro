@@ -5,9 +5,10 @@ using System.Windows.Forms;
 using System.Windows.Media;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 using Maestro.Core;
 using Maestro.Core.Configuration;
-using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
 using Maestro.Core.Hosting.Contracts;
 using Maestro.Core.Integration;
@@ -19,11 +20,9 @@ using Maestro.Wpf;
 using Maestro.Wpf.Integrations;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using Serilog;
 using vatsys;
 using vatsys.Plugin;
-using Coordinate = Maestro.Core.Model.Coordinate;
 
 namespace Maestro.Plugin;
 
@@ -316,7 +315,7 @@ public class Plugin : IPlugin
                     : VerticalTrack.Maintaining;
 
             position = new FlightPosition(
-                new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
+                new Maestro.Contracts.Shared.Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
                 track.CorrectedAltitude,
                 verticalTrack,
                 track.GroundSpeed,

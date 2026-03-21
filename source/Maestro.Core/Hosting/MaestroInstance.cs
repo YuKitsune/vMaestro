@@ -1,5 +1,5 @@
-﻿using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
+﻿using Maestro.Contracts.Flights;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Sessions;
 using MediatR;
 

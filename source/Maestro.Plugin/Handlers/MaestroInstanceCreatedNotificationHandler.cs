@@ -1,8 +1,6 @@
 ﻿using System.Windows;
 using Maestro.Core.Configuration;
-using Maestro.Core.Hosting;
 using Maestro.Core.Hosting.Contracts;
-using Maestro.Core.Messages;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.ViewModels;

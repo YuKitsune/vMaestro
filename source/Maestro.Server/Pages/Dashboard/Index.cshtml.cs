@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Maestro.Server.Pages;
+namespace Maestro.Server.Pages.Dashboard;
 
 public class IndexModel : PageModel
 {

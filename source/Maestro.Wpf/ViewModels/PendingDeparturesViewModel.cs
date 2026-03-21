@@ -1,8 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Contracts.Flights;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
@@ -20,10 +20,10 @@ public partial class PendingDeparturesViewModel : ObservableObject
     bool _isUpdatingFromSelection = false;
 
     [ObservableProperty]
-    FlightMessage[] _pendingFlights = [];
+    FlightDto[] _pendingFlights = [];
 
     [ObservableProperty]
-    FlightMessage? _selectedFlight;
+    FlightDto? _selectedFlight;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
@@ -43,7 +43,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
 
     public PendingDeparturesViewModel(
         string airportIdentifier,
-        FlightMessage[] pendingFlights,
+        FlightDto[] pendingFlights,
         IWindowHandle windowHandle,
         IMediator mediator,
         IClock clock,
@@ -58,7 +58,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
         TakeoffTime = clock.UtcNow().AddMinutes(5).Rounded();
     }
 
-    partial void OnSelectedFlightChanged(FlightMessage? value)
+    partial void OnSelectedFlightChanged(FlightDto? value)
     {
         _isUpdatingFromSelection = true;
         Callsign = value?.Callsign ?? "";

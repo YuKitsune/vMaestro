@@ -1,9 +1,9 @@
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
 using MediatR;
 using Serilog;
 

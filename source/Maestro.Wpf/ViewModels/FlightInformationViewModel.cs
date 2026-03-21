@@ -1,7 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Shared;
 
 namespace Maestro.Wpf.ViewModels;
 
@@ -26,9 +27,9 @@ public partial class FlightInformationViewModel : ObservableObject
     [ObservableProperty] TimeSpan _initialDelay;
     [ObservableProperty] TimeSpan _remainingDelay;
 
-    public FlightInformationViewModel(FlightMessage flightMessage)
+    public FlightInformationViewModel(FlightDto flightDto)
     {
-        Update(flightMessage);
+        Update(flightDto);
 
         // TODO: Use flight updates instead
         WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (s, m) =>
@@ -44,25 +45,25 @@ public partial class FlightInformationViewModel : ObservableObject
         });
     }
 
-    void Update(FlightMessage flightMessage)
+    void Update(FlightDto flightDto)
     {
-        NumberInSequence = flightMessage.NumberInSequence;
-        Callsign = flightMessage.Callsign;
-        AircraftType = flightMessage.AircraftType;
-        WakeCategory = flightMessage.WakeCategory;
-        OriginIdentifier = flightMessage.OriginIdentifier;
-        DestinationIdentifier = flightMessage.DestinationIdentifier;
-        FeederFixIdentifier = flightMessage.FeederFixIdentifier;
-        InitialFeederFixEstimate = flightMessage.InitialFeederFixEstimate;
-        FeederFixEstimate = flightMessage.FeederFixEstimate;
-        FeederFixTime = flightMessage.FeederFixTime;
-        AssignedRunwayIdentifier = flightMessage.AssignedRunwayIdentifier;
-        ApproachType = flightMessage.ApproachType;
-        NumberToLandOnRunway = flightMessage.NumberToLandOnRunway;
-        InitialLandingEstimate = flightMessage.InitialLandingEstimate;
-        LandingEstimate = flightMessage.LandingEstimate;
-        LandingTime = flightMessage.LandingTime;
-        InitialDelay = flightMessage.InitialDelay;
-        RemainingDelay = flightMessage.RemainingDelay;
+        NumberInSequence = flightDto.NumberInSequence;
+        Callsign = flightDto.Callsign;
+        AircraftType = flightDto.AircraftType;
+        WakeCategory = flightDto.WakeCategory;
+        OriginIdentifier = flightDto.OriginIdentifier;
+        DestinationIdentifier = flightDto.DestinationIdentifier;
+        FeederFixIdentifier = flightDto.FeederFixIdentifier;
+        InitialFeederFixEstimate = flightDto.InitialFeederFixEstimate;
+        FeederFixEstimate = flightDto.FeederFixEstimate;
+        FeederFixTime = flightDto.FeederFixTime;
+        AssignedRunwayIdentifier = flightDto.AssignedRunwayIdentifier;
+        ApproachType = flightDto.ApproachType;
+        NumberToLandOnRunway = flightDto.NumberToLandOnRunway;
+        InitialLandingEstimate = flightDto.InitialLandingEstimate;
+        LandingEstimate = flightDto.LandingEstimate;
+        LandingTime = flightDto.LandingTime;
+        InitialDelay = flightDto.InitialDelay;
+        RemainingDelay = flightDto.RemainingDelay;
     }
 }

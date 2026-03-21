@@ -1,7 +1,7 @@
-using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
+using Maestro.Contracts.Connectivity;
+using Maestro.Contracts.Sessions;
 using Maestro.Server.Handlers;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using Moq;
 using Shouldly;
 using ILogger = Serilog.ILogger;
@@ -261,13 +261,13 @@ public class ClientDisconnectedNotificationHandlerTests
         connectionManager.Setup(x => x.GetPeers(lastConnection)).Returns([]);
 
         var sessionCache = new SessionCache();
-        sessionCache.Set(partition, airportIdentifier, new SessionMessage
+        sessionCache.Set(partition, airportIdentifier, new SessionDto
         {
             AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
-            Sequence = new SequenceMessage
+            Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
                 NextRunwayMode = null,
@@ -314,13 +314,13 @@ public class ClientDisconnectedNotificationHandlerTests
         connectionManager.Setup(x => x.GetPeers(lastAtcConnection)).Returns([observer1, observer2]);
 
         var sessionCache = new SessionCache();
-        sessionCache.Set(partition, airportIdentifier, new SessionMessage
+        sessionCache.Set(partition, airportIdentifier, new SessionDto
         {
             AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
-            Sequence = new SequenceMessage
+            Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
                 NextRunwayMode = null,

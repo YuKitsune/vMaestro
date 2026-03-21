@@ -1,6 +1,7 @@
-﻿using Maestro.Core.Configuration;
+﻿using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
+using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;

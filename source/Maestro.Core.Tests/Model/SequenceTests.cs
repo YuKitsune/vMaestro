@@ -1,5 +1,5 @@
-﻿using Maestro.Core.Configuration;
-using Maestro.Core.Model;
+﻿using Maestro.Contracts.Shared;
+using Maestro.Core.Configuration;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Shouldly;

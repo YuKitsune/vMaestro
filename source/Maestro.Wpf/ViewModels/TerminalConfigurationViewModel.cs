@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Contracts.Runway;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 using Maestro.Wpf.Integrations;
 using MediatR;
 

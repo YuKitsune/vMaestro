@@ -1,11 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Shared;
+using Maestro.Contracts.Slots;
 using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
-using Maestro.Core.Model;
+using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
-using Maestro.Wpf.Messages;
 using MediatR;
 
 namespace Maestro.Wpf.ViewModels;
@@ -40,16 +42,16 @@ public partial class MaestroViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasDesequencedFlight))]
-    List<FlightMessage> _deSequencedFlights = [];
+    List<FlightDto> _deSequencedFlights = [];
 
     [ObservableProperty]
-    List<FlightMessage> _pendingFlights = [];
+    List<FlightDto> _pendingFlights = [];
 
     [ObservableProperty]
-    List<FlightMessage> _flights = [];
+    List<FlightDto> _flights = [];
 
     [ObservableProperty]
-    List<SlotMessage> _slots = [];
+    List<SlotDto> _slots = [];
 
     [ObservableProperty]
     DateTimeOffset? _firstSlotTime;
@@ -58,7 +60,7 @@ public partial class MaestroViewModel : ObservableObject
     DateTimeOffset? _secondSlotTime;
 
     [ObservableProperty]
-    FlightMessage? _selectedFlight;
+    FlightDto? _selectedFlight;
 
     [ObservableProperty]
     bool _isConfirmationDialogOpen;
@@ -128,7 +130,7 @@ public partial class MaestroViewModel : ObservableObject
         Views = views;
         SelectedView = views.First();
 
-        WeakReferenceMessenger.Default.Register<ConnectionStatusChanged>(this, (r, m) =>
+        WeakReferenceMessenger.Default.Register<ConnectionStatusChangedNotification>(this, (r, m) =>
         {
             if (m.AirportIdentifier == AirportIdentifier)
             {
@@ -291,7 +293,7 @@ public partial class MaestroViewModel : ObservableObject
         }
     }
 
-    public async void ShowSlotWindow(SlotMessage slotMessage)
+    public async void ShowSlotWindow(SlotDto slotDto)
     {
         try
         {
@@ -301,10 +303,10 @@ public partial class MaestroViewModel : ObservableObject
             await _mediator.Send(
                 new OpenSlotWindowRequest(
                     AirportIdentifier,
-                    slotMessage.Id,
-                    slotMessage.StartTime,
-                    slotMessage.EndTime,
-                    slotMessage.RunwayIdentifiers));
+                    slotDto.Id,
+                    slotDto.StartTime,
+                    slotDto.EndTime,
+                    slotDto.RunwayIdentifiers));
         }
         catch (Exception ex)
         {
@@ -332,7 +334,7 @@ public partial class MaestroViewModel : ObservableObject
         }
     }
 
-    public void SelectFlight(FlightMessage flight)
+    public void SelectFlight(FlightDto flight)
     {
         SelectedFlight = flight;
     }

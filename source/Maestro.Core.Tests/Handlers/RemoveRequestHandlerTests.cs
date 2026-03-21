@@ -1,7 +1,8 @@
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -68,11 +69,11 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
-        var sessionMessage = instance.Session.Snapshot();
+        var sessionDto = instance.Session.Snapshot();
 
-        sessionMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sessionMessage.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
-        sessionMessage.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
+        sessionDto.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
+        sessionDto.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
+        sessionDto.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
 
         // Verify remaining flight moved up in sequence
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
@@ -105,10 +106,10 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var sessionMessage = instance.Session.Snapshot();
-        sessionMessage.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sessionMessage.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in desequenced list");
-        sessionMessage.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
+        var sessionDto = instance.Session.Snapshot();
+        sessionDto.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
+        sessionDto.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in desequenced list");
+        sessionDto.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
     }
 
     [Fact]

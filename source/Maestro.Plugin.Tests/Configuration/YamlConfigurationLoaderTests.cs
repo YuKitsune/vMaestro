@@ -1,5 +1,4 @@
 using Maestro.Core.Configuration;
-using Maestro.Core.Model;
 using Maestro.Plugin.Configuration;
 using Shouldly;
 

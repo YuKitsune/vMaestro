@@ -1,6 +1,5 @@
-using Maestro.Core.Handlers;
+using Maestro.Contracts.Flights;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;

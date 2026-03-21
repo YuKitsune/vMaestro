@@ -1,5 +1,5 @@
+using Maestro.Contracts.Coordination;
 using Maestro.Core.Connectivity;
-using Maestro.Core.Messages;
 using MediatR;
 using Serilog;
 

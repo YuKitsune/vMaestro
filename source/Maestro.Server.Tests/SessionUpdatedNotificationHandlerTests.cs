@@ -1,7 +1,7 @@
-using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
+using Maestro.Contracts.Connectivity;
+using Maestro.Contracts.Sessions;
 using Maestro.Server.Handlers;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using Moq;
 using Shouldly;
 using ILogger = Serilog.ILogger;
@@ -19,13 +19,13 @@ public class SessionUpdatedNotificationHandlerTests
         const string connectionId = "unknown-connection";
         const string airportIdentifier = "YSSY";
 
-        var sessionMessage = new SessionMessage
+        var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
-            Sequence = new SequenceMessage
+            Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
                 NextRunwayMode = null,
@@ -36,7 +36,7 @@ public class SessionUpdatedNotificationHandlerTests
             }
         };
 
-        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionMessage);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionDto);
         var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -64,13 +64,13 @@ public class SessionUpdatedNotificationHandlerTests
 
         var masterConnection = new Connection(connectionId, Version, partition, connectionAirport, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
-        var sessionMessage = new SessionMessage
+        var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
-            Sequence = new SequenceMessage
+            Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
                 NextRunwayMode = null,
@@ -81,7 +81,7 @@ public class SessionUpdatedNotificationHandlerTests
             }
         };
 
-        var sessionUpdatedNotification = new SessionUpdatedNotification(notificationAirport, sessionMessage);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(notificationAirport, sessionDto);
         var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -113,13 +113,13 @@ public class SessionUpdatedNotificationHandlerTests
 
         var slaveConnection = new Connection(connectionId, Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
 
-        var sessionMessage = new SessionMessage
+        var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
-            Sequence = new SequenceMessage
+            Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
                 NextRunwayMode = null,
@@ -130,7 +130,7 @@ public class SessionUpdatedNotificationHandlerTests
             }
         };
 
-        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionMessage);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionDto);
         var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -165,13 +165,13 @@ public class SessionUpdatedNotificationHandlerTests
         var peer2 = new Connection("peer-2", Version, partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
         var peers = new[] { peer1, peer2 };
 
-        var sessionMessage = new SessionMessage
+        var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
             PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 42,
-            Sequence = new SequenceMessage
+            Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
                 NextRunwayMode = null,
@@ -182,7 +182,7 @@ public class SessionUpdatedNotificationHandlerTests
             }
         };
 
-        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionMessage);
+        var sessionUpdatedNotification = new SessionUpdatedNotification(airportIdentifier, sessionDto);
         var wrappedNotification = new NotificationContextWrapper<SessionUpdatedNotification>(connectionId, sessionUpdatedNotification);
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -204,7 +204,7 @@ public class SessionUpdatedNotificationHandlerTests
         // Assert
         var cachedSequence = sessionCache.Get(partition, airportIdentifier);
         cachedSequence.ShouldNotBeNull();
-        cachedSequence.ShouldBe(sessionMessage);
+        cachedSequence.ShouldBe(sessionDto);
 
         hubProxy.Verify(x => x.Send(
             peer1.Id,

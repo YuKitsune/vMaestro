@@ -1,5 +1,4 @@
-using Maestro.Core.Handlers;
-using Maestro.Core.Messages;
+using Maestro.Contracts.Coordination;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;

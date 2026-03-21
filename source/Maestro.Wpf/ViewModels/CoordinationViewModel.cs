@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maestro.Core.Messages;
+using Maestro.Contracts.Coordination;
 using Maestro.Wpf.Integrations;
 using MediatR;
 

@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Maestro.Core.Connectivity.Contracts;
+using Maestro.Contracts.Connectivity;
 
 namespace Maestro.Server;
 

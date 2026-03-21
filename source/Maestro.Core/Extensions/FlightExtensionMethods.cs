@@ -1,14 +1,14 @@
-﻿using Maestro.Core.Integration;
-using Maestro.Core.Messages;
+﻿using Maestro.Contracts.Flights;
+using Maestro.Core.Integration;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Extensions;
 
 public static class FlightExtensionMethods
 {
-    public static FlightMessage ToMessage(this Flight flight, Sequence sequence)
+    public static FlightDto ToDto(this Flight flight, Sequence sequence)
     {
-        return new FlightMessage
+        return new FlightDto
         {
             Callsign = flight.Callsign,
             AircraftType = flight.AircraftType,

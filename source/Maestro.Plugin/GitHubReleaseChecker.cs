@@ -1,6 +1,6 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using Serilog;
 using vatsys;
 
@@ -21,9 +21,11 @@ public static class GitHubReleaseChecker
             httpClient.Timeout = TimeSpan.FromSeconds(10);
 
             var response = await httpClient.GetStringAsync(GitHubApiUrl);
-            var release = JObject.Parse(response);
+            using var release = JsonDocument.Parse(response);
 
-            var tagName = release["tag_name"]?.ToString();
+            var tagName = release.RootElement.TryGetProperty("tag_name", out var tagNameElement)
+                ? tagNameElement.GetString()
+                : null;
             if (string.IsNullOrEmpty(tagName))
             {
                 logger.Warning("GitHub release response did not contain a tag_name");

@@ -1,6 +1,5 @@
-using Maestro.Core.Connectivity.Contracts;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
+using Maestro.Contracts.Connectivity;
+using Maestro.Server.Contracts;
 using Maestro.Server.Handlers;
 using Moq;
 using Shouldly;

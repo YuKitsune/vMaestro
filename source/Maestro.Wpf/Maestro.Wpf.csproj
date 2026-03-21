@@ -9,14 +9,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
 	  <PackageReference Include="MediatR" Version="12.4.1" />
 	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
-	  <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+	  <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Maestro.Contracts\Maestro.Contracts.csproj" />
 	  <ProjectReference Include="..\Maestro.Core\Maestro.Core.csproj" />
 	</ItemGroup>
 

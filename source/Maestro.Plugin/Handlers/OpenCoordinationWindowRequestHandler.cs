@@ -1,8 +1,8 @@
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Plugin.Infrastructure;
+using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
-using Maestro.Wpf.Messages;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;

@@ -4,11 +4,12 @@ using System.Text;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
+using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
-using Maestro.Wpf.Messages;
 using MediatR;
 using Color = Maestro.Core.Configuration.Color;
 
@@ -21,7 +22,7 @@ public partial class FlightLabelViewModel(
     IErrorReporter errorReporter,
     MaestroViewModel maestroViewModel,
     GlobalColourConfiguration globalColorConfiguration,
-    FlightMessage flightViewModel,
+    FlightDto flightViewModel,
     string[] availableRunways,
     ApproachTypeLookup[] availableApproachTypes)
     : ObservableObject
@@ -34,7 +35,7 @@ public partial class FlightLabelViewModel(
     [NotifyPropertyChangedFor(nameof(CanChangeApproachType))]
     [NotifyPropertyChangedFor(nameof(Indicators))]
     [NotifyCanExecuteChangedFor(nameof(ShowInformationWindowCommand))]
-    FlightMessage _flightViewModel = flightViewModel;
+    FlightDto _flightViewModel = flightViewModel;
 
     [ObservableProperty]
     bool _isSelected = false;
@@ -360,7 +361,7 @@ public partial class FlightLabelViewModel(
     [ObservableProperty]
     ObservableCollection<LabelItemViewModel> _labelItems = [];
 
-    public void UpdateLabelItems(LabelLayoutConfiguration labelLayout, FlightMessage flight, int ladderIndex)
+    public void UpdateLabelItems(LabelLayoutConfiguration labelLayout, FlightDto flight, int ladderIndex)
     {
         LabelItems.Clear();
 
@@ -397,7 +398,7 @@ public partial class FlightLabelViewModel(
         }
     }
 
-    string GetItemContent(LabelItemConfiguration itemConfig, FlightMessage flight)
+    string GetItemContent(LabelItemConfiguration itemConfig, FlightDto flight)
     {
         return itemConfig switch
         {
@@ -424,7 +425,7 @@ public partial class FlightLabelViewModel(
         };
     }
 
-    string FormatManualDelay(FlightMessage flight, string zeroDelaySymbol, string manualDelaySymbol)
+    string FormatManualDelay(FlightDto flight, string zeroDelaySymbol, string manualDelaySymbol)
     {
         if (flight.MaximumDelay == null)
             return "";
@@ -436,7 +437,7 @@ public partial class FlightLabelViewModel(
 
     // TODO: Reconsider allowing users to customise what colours each label item.
     //  Hard code what colours which item. Allow users to customise the specific colours.
-    System.Windows.Media.Color GetItemColor(LabelItemConfiguration itemConfig, FlightMessage flight)
+    System.Windows.Media.Color GetItemColor(LabelItemConfiguration itemConfig, FlightDto flight)
     {
         foreach (var itemConfigColourSource in itemConfig.ColourSources)
         {
@@ -461,7 +462,7 @@ public partial class FlightLabelViewModel(
         return Theme.InteractiveTextColor.Color;
     }
 
-    System.Windows.Media.Color? GetColorByRunway(AirportColourConfiguration airportColourConfiguration, FlightMessage flight)
+    System.Windows.Media.Color? GetColorByRunway(AirportColourConfiguration airportColourConfiguration, FlightDto flight)
     {
         if (airportColourConfiguration.Runways.TryGetValue(flight.AssignedRunwayIdentifier, out var runwayColour))
         {
@@ -471,7 +472,7 @@ public partial class FlightLabelViewModel(
         return null;
     }
 
-    System.Windows.Media.Color? GetColorByApproachType(AirportColourConfiguration airportColourConfiguration, FlightMessage flight)
+    System.Windows.Media.Color? GetColorByApproachType(AirportColourConfiguration airportColourConfiguration, FlightDto flight)
     {
         if (airportColourConfiguration.ApproachTypes.TryGetValue(flight.ApproachType, out var approachColor))
         {
@@ -481,7 +482,7 @@ public partial class FlightLabelViewModel(
         return null;
     }
 
-    System.Windows.Media.Color? GetColorByFeederFix(AirportColourConfiguration airportColourConfiguration, FlightMessage flight)
+    System.Windows.Media.Color? GetColorByFeederFix(AirportColourConfiguration airportColourConfiguration, FlightDto flight)
     {
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) &&
             airportColourConfiguration.FeederFixes.TryGetValue(flight.FeederFixIdentifier, out var feederFixColor))
@@ -492,7 +493,7 @@ public partial class FlightLabelViewModel(
         return null;
     }
 
-    System.Windows.Media.Color? GetColorByState(GlobalColourConfiguration globalColourConfiguration, FlightMessage flight)
+    System.Windows.Media.Color? GetColorByState(GlobalColourConfiguration globalColourConfiguration, FlightDto flight)
     {
         if (globalColourConfiguration.States.TryGetValue(flight.State, out var stateColor))
         {
@@ -502,7 +503,7 @@ public partial class FlightLabelViewModel(
         return null;
     }
 
-    System.Windows.Media.Color? GetColorByControlAction(LabelItemConfiguration labelItemConfiguration, GlobalColourConfiguration globalColourConfiguration, FlightMessage flight)
+    System.Windows.Media.Color? GetColorByControlAction(LabelItemConfiguration labelItemConfiguration, GlobalColourConfiguration globalColourConfiguration, FlightDto flight)
     {
         // TODO: Move this calculation into Core
         //  Re-calculate it every 30 seconds along with the flight state
@@ -535,7 +536,7 @@ public partial class FlightLabelViewModel(
         return null;
     }
 
-    System.Windows.Media.Color? GetColorByRunwayMode(GlobalColourConfiguration globalColourConfiguration, FlightMessage flight)
+    System.Windows.Media.Color? GetColorByRunwayMode(GlobalColourConfiguration globalColourConfiguration, FlightDto flight)
     {
         // TODO: Need to know what the current runway mode is, and whether the flight has been processed in the current one
         //  or the next one.

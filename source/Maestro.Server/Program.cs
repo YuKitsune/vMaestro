@@ -1,11 +1,8 @@
 using System.Reflection;
-using System.Text.Json.Serialization;
-using Maestro.Core;
-using Maestro.Core.Messages;
-using Maestro.Core.Sessions;
+using Maestro.Contracts.Sessions;
 using Maestro.Server;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 using AssemblyMarker = Maestro.Server.AssemblyMarker;
 
@@ -24,12 +21,6 @@ Log.Logger = loggerConfig.CreateLogger();
 var assembly = Assembly.GetExecutingAssembly();
 var version = AssemblyVersionHelper.GetVersion(assembly);
 Log.Information("Starting Maestro.Server version {Version}", version);
-
-// TODO: Basic web UI with supervisor functions
-//  - View connected users
-//  - Re-assign sequence owner
-//  - Administrative messages
-//  - Kick user
 
 // TODO: Error handling
 // - Don't throw exceptions, return results
@@ -76,17 +67,12 @@ try
         }
 
         c.UseAllOfToExtendReferenceSchemas();
-        c.SchemaFilter<EnumSchemaFilter>();
     });
+
     builder.Services.AddSingleton<SessionCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();
     builder.Services.AddHostedService<SystemMetricsService>();
-
-    builder.Services.ConfigureHttpJsonOptions(options =>
-    {
-        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
 
     builder.Services.AddRazorPages();
 
@@ -133,7 +119,7 @@ try
     .WithName("GetSession")
     .WithDescription("Returns the full session data for a specific airport")
     .WithTags("Sessions")
-    .Produces<SessionMessage>()
+    .Produces<SessionDto>()
     .Produces(404);
 
     app.MapRazorPages();

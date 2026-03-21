@@ -1,7 +1,5 @@
-using Maestro.Core.Configuration;
+using Maestro.Contracts.Sessions;
 using Maestro.Core.Extensions;
-using Maestro.Core.Infrastructure;
-using Maestro.Core.Messages;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Sessions;
@@ -26,28 +24,28 @@ public class Session
         return $"****{_dummyCounter++:00}*";
     }
 
-    public SessionMessage Snapshot()
+    public SessionDto Snapshot()
     {
-        return new SessionMessage
+        return new SessionDto
         {
             AirportIdentifier = AirportIdentifier,
-            PendingFlights = PendingFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
-            DeSequencedFlights = DeSequencedFlights.Select(f => f.ToMessage(Sequence)).ToArray(),
-            Sequence = Sequence.ToMessage(),
+            PendingFlights = PendingFlights.Select(f => f.ToDto(Sequence)).ToArray(),
+            DeSequencedFlights = DeSequencedFlights.Select(f => f.ToDto(Sequence)).ToArray(),
+            Sequence = Sequence.ToDto(),
             DummyCounter = _dummyCounter
         };
     }
 
-    public void Restore(SessionMessage message)
+    public void Restore(SessionDto dto)
     {
-        _dummyCounter = message.DummyCounter;
+        _dummyCounter = dto.DummyCounter;
 
         PendingFlights.Clear();
-        PendingFlights.AddRange(message.PendingFlights.Select(f => new Flight(f)));
+        PendingFlights.AddRange(dto.PendingFlights.Select(f => new Flight(f)));
 
         DeSequencedFlights.Clear();
-        DeSequencedFlights.AddRange(message.DeSequencedFlights.Select(f => new Flight(f)));
+        DeSequencedFlights.AddRange(dto.DeSequencedFlights.Select(f => new Flight(f)));
 
-        Sequence.Restore(message.Sequence);
+        Sequence.Restore(dto.Sequence);
     }
 }

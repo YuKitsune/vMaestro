@@ -1,4 +1,4 @@
-using Maestro.Core.Messages;
+using Maestro.Contracts.Sessions;
 using MediatR;
 using ILogger = Serilog.ILogger;
 

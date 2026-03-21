@@ -1,6 +1,4 @@
 ﻿using Maestro.Core.Hosting;
-using Maestro.Core.Model;
-using Maestro.Core.Sessions;
 
 namespace Maestro.Core.Tests.Mocks;
 
