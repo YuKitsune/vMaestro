@@ -24,7 +24,8 @@ public class OpenTerminalConfigurationWindowRequestHandler(
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
-        var sequenceMessage = instance.Session.Sequence.ToDto();
+
+        var sessionDto = instance.Session.Snapshot();
 
         var runwayModes = airportConfiguration.RunwayModes
             .Select(r => new RunwayModeViewModel(r))
@@ -35,21 +36,23 @@ public class OpenTerminalConfigurationWindowRequestHandler(
             "TMA Configuration",
             windowHandle =>
             {
-                var lastLandingTime = sequenceMessage.LastLandingTimeForCurrentMode == default
+                var lastLandingTime = sessionDto.Sequence.LastLandingTimeForCurrentMode == default
                     ? clock.UtcNow()
-                    : sequenceMessage.LastLandingTimeForCurrentMode;
+                    : sessionDto.Sequence.LastLandingTimeForCurrentMode;
 
-                var firstLandingTime = sequenceMessage.FirstLandingTimeForNextMode == default
+                var firstLandingTime = sessionDto.Sequence.FirstLandingTimeForNextMode == default
                     ? clock.UtcNow()
                     : lastLandingTime.AddMinutes(5);
 
                 var viewModel = new TerminalConfigurationViewModel(
                     request.AirportIdentifier,
                     runwayModes,
-                    new RunwayModeViewModel(sequenceMessage.CurrentRunwayMode),
-                    sequenceMessage.NextRunwayMode is not null ? new RunwayModeViewModel(sequenceMessage.NextRunwayMode) : null,
+                    new RunwayModeViewModel(sessionDto.Sequence.CurrentRunwayMode),
+                    sessionDto.Sequence.NextRunwayMode is not null ? new RunwayModeViewModel(sessionDto.Sequence.NextRunwayMode) : null,
                     lastLandingTime,
                     firstLandingTime,
+                    airportConfiguration,
+                    sessionDto.SurfaceWind,
                     mediator,
                     windowHandle,
                     clock,

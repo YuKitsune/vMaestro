@@ -36,6 +36,7 @@
         "Test",
         "TestContracts",
         "TestCore",
+        "TestPlugin",
         "TestServer",
         "Uninstall"
       ]

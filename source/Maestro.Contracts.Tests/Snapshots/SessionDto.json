@@ -158,5 +158,40 @@
       }
     ]
   },
-  "dummyCounter": 42
+  "dummyCounter": 42,
+  "landingStatistics": {
+    "runwayLandingTimes": {
+      "34L": {
+        "runwayIdentifier": "34L",
+        "actualLandingTimes": [
+          "2024-06-15T12:20:00+00:00",
+          "2024-06-15T12:22:00+00:00",
+          "2024-06-15T12:24:00+00:00"
+        ],
+        "achievedRate": {
+          "type": "AchievedRate",
+          "averageLandingInterval": "00:01:30",
+          "landingIntervalDeviation": "-00:00:05"
+        }
+      },
+      "34R": {
+        "runwayIdentifier": "34R",
+        "actualLandingTimes": [
+          "2024-06-15T12:25:00+00:00"
+        ],
+        "achievedRate": {
+          "type": "NoDeviation"
+        }
+      }
+    }
+  },
+  "surfaceWind": {
+    "direction": 270,
+    "speed": 15
+  },
+  "upperWind": {
+    "direction": 280,
+    "speed": 25
+  },
+  "manualWind": false
 }

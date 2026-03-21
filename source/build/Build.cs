@@ -66,6 +66,7 @@ class Build : NukeBuild
 
     // Test projects
     AbsolutePath CoreTestsProjectPath => RootDirectory / "source" / "Maestro.Core.Tests" / "Maestro.Core.Tests.csproj";
+    AbsolutePath PluginTestsProjectPath => RootDirectory / "source" / "Maestro.Plugin.Tests" / "Maestro.Plugin.Tests.csproj";
     AbsolutePath ContractTestsProjectPath => RootDirectory / "source" / "Maestro.Contracts.Tests" / "Maestro.Contracts.Tests.csproj";
     AbsolutePath ServerTestsProjectPath => RootDirectory / "source" / "Maestro.Server.Tests" / "Maestro.Server.Tests.csproj";
 
@@ -216,6 +217,15 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration));
         });
 
+    Target TestPlugin => _ => _
+        .Executes(() =>
+        {
+            Log.Information("Running Plugin tests");
+            DotNetTasks.DotNetTest(s => s
+                .SetProjectFile(PluginTestsProjectPath)
+                .SetConfiguration(Configuration));
+        });
+
     Target TestCore => _ => _
         .Executes(() =>
         {
@@ -235,7 +245,7 @@ class Build : NukeBuild
         });
 
     Target Test => _ => _
-        .DependsOn(TestContracts, TestCore, TestServer);
+        .DependsOn(TestContracts, TestCore, TestPlugin, TestServer);
 
     Target Uninstall => _ => _
         .Requires(() => ProfileName)
@@ -298,7 +308,7 @@ class Build : NukeBuild
         .Description("Bundles the plugin along with supplementary files into a zip archive.")
         .DependsOn(CompilePlugin)
         .DependsOn(RepackPlugin)
-        .DependsOn(TestContracts, TestCore)
+        .DependsOn(TestContracts, TestCore, TestPlugin)
         .Requires(() => Configuration == Configuration.Release)
         .Executes(() =>
         {

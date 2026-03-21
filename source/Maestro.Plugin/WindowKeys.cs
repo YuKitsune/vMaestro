@@ -14,4 +14,5 @@ public static class WindowKeys
     public static string Information2(string callsign) => $"information2-{callsign}";
     public static string Connection(string callsign) => $"connection-{callsign}";
     public static string Coordination(string airportIdentifier) => $"coordination-{airportIdentifier}";
+    public static string Wind(string airportIdentifier) => $"wind-{airportIdentifier}";
 }

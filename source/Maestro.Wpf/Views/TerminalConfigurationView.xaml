@@ -47,7 +47,7 @@
         <Border Padding="0,2,0,0" />
         <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
             <Border Padding="2">
-                <ItemsControl ItemsSource="{Binding Path=SelectedRunwayMode.Runways}" Margin="2">
+                <ItemsControl ItemsSource="{Binding Path=RunwayConfigurationItems}" Margin="2">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel Orientation="Vertical" />
@@ -70,8 +70,11 @@
                                     <TextBlock Text=": "/>
                                     <TextBlock Text="{Binding LandingRateSeconds}" Padding="4,0,2,0"/>
                                     <TextBlock Text="s"/>
-                                    <!-- TODO: Nautical miles -->
-                                    <!-- TODO: Hourly rate -->
+                                    <TextBlock Text="/"/>
+                                    <TextBlock Text="{Binding NauticalMiles, StringFormat='{}{0:0.0}'}" Padding="4,0,2,0"/>
+                                    <TextBlock Text="NM"/>
+                                    <TextBlock Text="/"/>
+                                    <TextBlock Text="{Binding AircraftPerHour}" Padding="4,0,2,0"/>
                                 </StackPanel>
                             </StackPanel>
 
