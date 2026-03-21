@@ -66,3 +66,29 @@ public partial class RunwayViewModel : ObservableObject
     public string ApproachType { get; }
     public string[] FeederFixes { get; }
 }
+
+public class RunwayIntervalViewModel
+{
+    public string Identifier { get; }
+    public string LandingRateDisplay { get; }
+
+    public RunwayIntervalViewModel(string identifier, string landingRateDisplay)
+    {
+        Identifier = identifier;
+        LandingRateDisplay = landingRateDisplay;
+    }
+}
+
+public class RunwayAchievedRateViewModel
+{
+    public string Identifier { get; }
+    public string AchievedRateDisplay { get; }
+    public string DeviationDisplay { get; }
+
+    public RunwayAchievedRateViewModel(string identifier, string achievedRateDisplay, string deviationDisplay)
+    {
+        Identifier = identifier;
+        AchievedRateDisplay = achievedRateDisplay;
+        DeviationDisplay = deviationDisplay;
+    }
+}

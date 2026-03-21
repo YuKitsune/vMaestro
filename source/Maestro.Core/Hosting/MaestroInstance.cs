@@ -9,6 +9,7 @@ public class MaestroInstance : IAsyncDisposable
 {
     readonly IMediator _mediator;
     readonly BackgroundTask _sequenceCleanerTask;
+    readonly BackgroundTask _windCheckTask;
 
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
 
@@ -33,6 +34,26 @@ public class MaestroInstance : IAsyncDisposable
             {
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
                 await _mediator.Send(new CleanUpFlightsRequest(AirportIdentifier), cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Ignored, task is cancelling
+        }
+        catch (Exception exception)
+        {
+            // TODO: Log error
+        }
+    }
+
+    async Task WindCheckTask(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await _mediator.Send(new CleanUpFlightsRequest(AirportIdentifier), cancellationToken);
+                await Task.Delay(TimeSpan.FromMinutes(30), cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

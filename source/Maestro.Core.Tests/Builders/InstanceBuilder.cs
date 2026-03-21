@@ -24,7 +24,7 @@ public class InstanceBuilder(AirportConfiguration airportConfiguration)
     public (IMaestroInstanceManager, MaestroInstance, Session, Sequence) Build()
     {
         var sequence = _sequenceBuilder.Build();
-        var session = new Session(sequence);
+        var session = new Session(airportConfiguration, sequence);
 
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddSingleton<IAirportConfigurationProvider>(new AirportConfigurationProvider([airportConfiguration]));

@@ -13,7 +13,7 @@
              MinHeight="480"
              d:DataContext="{d:DesignInstance Type=viewModels:MaestroViewModel}"
              d:DesignHeight="800"
-             d:DesignWidth="560">
+             d:DesignWidth="1000">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -23,6 +23,7 @@
             <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
             <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
             <converters:EqualityConverter x:Key="EqualityConverter" />
+            <converters:LandingRateUnitSymbolConverter x:Key="LandingRateUnitSymbolConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
@@ -93,7 +94,13 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition MinWidth="72" Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="24" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="72" />
                 </Grid.ColumnDefinitions>
@@ -131,7 +138,7 @@
 
                 <!-- Runway Intervals -->
                 <controls:BeveledBorder Grid.Column="4" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Raised">
-                    <ItemsControl ItemsSource="{Binding Path=CurrentRunwayMode.Runways}" VerticalAlignment="Center" Margin="2">
+                    <ItemsControl ItemsSource="{Binding Path=RunwayIntervals}" VerticalAlignment="Center" Margin="2">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel />
@@ -147,7 +154,7 @@
                                     <TextBlock x:Name="Separator" Text=" - " />
                                     <TextBlock Text="{Binding Identifier}"/>
                                     <TextBlock>:</TextBlock>
-                                    <TextBlock Text="{Binding LandingRateSeconds}"/>
+                                    <TextBlock Text="{Binding LandingRateDisplay}"/>
                                 </StackPanel>
 
                                 <DataTemplate.Triggers>
@@ -168,8 +175,118 @@
                     Width="{x:Static local:Theme.BeveledLineWidth}"
                     Orientation="Vertical" />
 
+                <!-- Wind Configuration -->
+                <Button Grid.Column="6" Command="{Binding OpenWindCommand}">
+                    <Grid Margin="4,0,4,0">
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ManualWind}" Value="True">
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Resources>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Right">
+                            <Run Text="{Binding UpperWindAltitude, StringFormat='{}{0} feet:'}" />
+                        </TextBlock>
+                        <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" Margin="4,0,0,0">
+                            <Run Text="{Binding UpperWind.Direction, StringFormat='{}{0:000}/'}" /><Run Text="{Binding UpperWind.Speed, StringFormat='{}{0:000}'}" />
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Text="Surface:"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="4,0,0,0">
+                            <Run Text="{Binding SurfaceWind.Direction, StringFormat='{}{0:000}/'}" /><Run Text="{Binding SurfaceWind.Speed, StringFormat='{}{0:000}'}" />
+                        </TextBlock>
+                    </Grid>
+                </Button>
+
+                <controls:BeveledLine
+                    Grid.Column="7"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical" />
+
+                <!-- Achieved Rates -->
+                <Grid Grid.Column="8" VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Real Rates" Margin="0,0,4,0"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Deviation" Margin="0,0,4,0"/>
+
+                    <ItemsControl Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" ItemsSource="{Binding RunwayAchievedRates}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <!-- 3-char padding -->
+                                    <TextBlock x:Name="Separator" Text="___" Visibility="Hidden"/>
+
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                        </Grid.RowDefinitions>
+
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Identifier}" Style="{StaticResource GenericTextStyle}"/>
+                                            <TextBlock Text=": " Style="{StaticResource GenericTextStyle}"/>
+                                            <TextBlock Text="{Binding AchievedRateDisplay}" Style="{StaticResource GenericTextStyle}"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Identifier}" Style="{StaticResource GenericTextStyle}"/>
+                                            <TextBlock Text=": " Style="{StaticResource GenericTextStyle}"/>
+                                            <TextBlock Text="{Binding DeviationDisplay}" Style="{StaticResource GenericTextStyle}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                                <DataTemplate.Triggers>
+                                    <!-- Hide the separator on the first iteration -->
+                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                        <Setter Property="Visibility" TargetName="Separator" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+
+                <controls:BeveledLine
+                    Grid.Column="9"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical" />
+
+                <!-- Units Selector -->
+                <Button Grid.Column="10" Content="{Binding SelectedUnit, Converter={StaticResource LandingRateUnitSymbolConverter}}" Command="{Binding CycleUnitsCommand}"/>
+
+                <controls:BeveledLine
+                    Grid.Column="11"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical" />
+
                 <!-- Setup Button -->
-                <Button Grid.Column="6" Content="SETUP" Command="{Binding OpenConnectionWindowCommand}" />
+                <Button Grid.Column="12" Content="SETUP" Command="{Binding OpenConnectionWindowCommand}" />
             </Grid>
 
         </controls:BeveledBorder>

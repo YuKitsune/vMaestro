@@ -92,12 +92,21 @@ public class AirportConfiguration
     public required TrajectoryConfiguration[] Trajectories { get; init; }
     public required DepartureConfiguration[] DepartureAirports { get; init; }
 
-    // TODO: Close airports
     // TODO: Average taxi times and terminal assignments
 
     // Everything beyond this point is purely for presentation, and not used within Maestro.Core
 
     // Presentation
+
+    /// <summary>
+    /// The average speed (TAS) of aircraft on final
+    /// </summary>
+    public int AverageLandingSpeed { get; init; } = 150;
+
+    /// <summary>
+    /// The altitude in feet of the upper winds to load from GRIB
+    /// </summary>
+    public int UpperWindAltitude { get; init; } = 6000;
 
     public AirportColourConfiguration? Colours { get; init; }
     public required ViewConfiguration[] Views { get; init; }

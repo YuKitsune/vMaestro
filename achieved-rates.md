@@ -1,0 +1,32 @@
+- [X] UI
+    - [X] Achieved Rates
+    - [X] Units selector
+    - [X] Wind Selector
+    - [X] Multiple units on TMA Configuration window
+- [X] Achieved Rates
+    - [X] Calculate achieved rates when aircraft land
+    - [X] Add achieved rates to Session
+    - [X] Add achieved rates to SessionDTO
+    - [X] Add landing notification and server handler
+- [X] Wind Selection
+    - [X] Model Upper and Lower winds on the Session
+    - [X] Add wind DTOs
+    - [X] Allow upper and Lower winds to be updated manually
+    - [x] Update upper and Lower winds automatically
+    - [X] Use winds to calculate separation distance
+
+- [ ] Add permission for wind changes
+- [ ] Add averating period to configuration
+- [ ] Fix server tests
+- [ ] Test FlightLandedNotificationHandler
+- [ ] Test LandingStatistics
+- [ ] Test UpdateWindRequestHandler
+- [ ] Test METAR wind parser
+- [ ] Ensure wind changes are server compatible
+- [ ] Clean up message handler usages
+- [ ] Seek feedback regarding WindService
+- [ ] Add option to enable/disable menu sections in the Setup window
+
+- [ ] Document new configuration options
+- [ ] Document wind, achieved rates, and units selector
+- [ ] Update docs for Setup window

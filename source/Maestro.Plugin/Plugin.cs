@@ -9,10 +9,12 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core;
 using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Hosting.Contracts;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Handlers;
 using Maestro.Plugin.Infrastructure;
@@ -40,6 +42,8 @@ public class Plugin : IPlugin
     readonly IMediator? _mediator;
     readonly IMaestroInstanceManager? _instanceManager;
     readonly ILogger? _logger;
+
+    readonly AircraftLandingCircuitBoard _aircraftLandingCircuitBoard = new();
 
     public Plugin()
     {
@@ -123,6 +127,7 @@ public class Plugin : IPlugin
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(new ErrorReporter(Name, logger))
                 .AddSingleton<WindowManager>()
+                .AddSingleton<WindService>()
                 .BuildServiceProvider());
     }
 
@@ -263,6 +268,16 @@ public class Plugin : IPlugin
     {
         try
         {
+            // Check if the aircraft has landed
+            if (updated.CoupledFDR is null || updated.OnGround)
+            {
+                var fdr = FDP2.GetFDRs.FirstOrDefault(f => f.Callsign == updated.ActualAircraft.Callsign);
+                if (fdr is not null && HasLanded(fdr))
+                {
+                    TryNotifyLanded(fdr);
+                }
+            }
+
             if (updated.CoupledFDR is null)
                 return;
 
@@ -275,6 +290,34 @@ public class Plugin : IPlugin
         {
             _logger?.Error(ex, "Failed to handle OnRadarTrackUpdate for {Callsign}.", updated.CoupledFDR?.Callsign);
         }
+    }
+
+    bool HasLanded(FDP2.FDR updated)
+    {
+        var lastWaypointIndex = updated.ParsedRoute.FindLastIndex(s => s.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT);
+        var didPassLastWaypoint = updated.ParsedRoute.OverflownIndex >= lastWaypointIndex;
+
+        var isOnGround = updated.CoupledTrack is null || updated.CoupledTrack.OnGround;
+
+        return didPassLastWaypoint && isOnGround;
+    }
+
+    void TryNotifyLanded(FDP2.FDR fdr)
+    {
+        // Already notified, nothing to do
+        if (!_aircraftLandingCircuitBoard.TrySetBreaker(fdr.Callsign))
+            return;
+
+        var lastWaypoint = fdr.ParsedRoute.Last(s => s.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT);
+        var landingTime = lastWaypoint.ATO;
+
+        if (lastWaypoint.ATO == default || lastWaypoint.ATO == DateTime.MaxValue)
+        {
+            landingTime = lastWaypoint.ETO;
+            _logger?.Warning("{Callsign} actual landing time was {ActualLandingTime}, using ETA of last waypoint {LastWaypointEstimate}", fdr.Callsign, lastWaypoint.ATO, lastWaypoint.ETO);
+        }
+
+        _mediator?.Publish(new FlightLandedNotification(fdr.DesAirport, fdr.Callsign, landingTime));
     }
 
     void PublishFlightUpdatedEvent(FDP2.FDR updated)
@@ -291,6 +334,11 @@ public class Plugin : IPlugin
         // Estimates have not been calculated yet
         if (!updated.ESTed)
             return;
+
+        if (HasLanded(updated))
+        {
+            TryNotifyLanded(updated);
+        }
 
         var estimates = updated.ParsedRoute
             .ToArray() // Materialize to avoid mutation during enumeration
