@@ -6,6 +6,8 @@ namespace Maestro.Contracts.Coordination;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "Type")]
 [JsonDerivedType(typeof(Broadcast), "Broadcast")]
 [JsonDerivedType(typeof(Controller), "Controller")]
+
+[MessagePackObject]
 [Union(0, typeof(Broadcast))]
 [Union(1, typeof(Controller))]
 public abstract record CoordinationDestination
