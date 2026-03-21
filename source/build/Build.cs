@@ -154,18 +154,28 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var mainAssembly = BuildOutputDirectory / PluginAssemblyFileName;
-            var assembliesToMerge = new[]
-            {
-                BuildOutputDirectory / "Maestro.Contracts.dll",
-                BuildOutputDirectory / "Maestro.Core.dll",
-                BuildOutputDirectory / "Maestro.Wpf.dll",
-                BuildOutputDirectory / "Serilog.dll",
-                BuildOutputDirectory / "Serilog.Sinks.File.dll",
-                BuildOutputDirectory / "MediatR.dll",
-                BuildOutputDirectory / "MediatR.Contracts.dll",
-                BuildOutputDirectory / "CommunityToolkit.Mvvm.dll",
-                BuildOutputDirectory / "MessagePack.Annotations.dll"
-            };
+            // var assembliesToMerge = new[]
+            // {
+            //     BuildOutputDirectory / "Maestro.Contracts.dll",
+            //     BuildOutputDirectory / "Maestro.Core.dll",
+            //     BuildOutputDirectory / "Maestro.Wpf.dll",
+            //     BuildOutputDirectory / "Serilog.dll",
+            //     BuildOutputDirectory / "Serilog.Sinks.File.dll",
+            //     BuildOutputDirectory / "MediatR.dll",
+            //     BuildOutputDirectory / "MediatR.Contracts.dll",
+            //     BuildOutputDirectory / "CommunityToolkit.Mvvm.dll",
+            //     BuildOutputDirectory / "MessagePack.dll",
+            //     BuildOutputDirectory / "MessagePack.Annotations.dll",
+            //     BuildOutputDirectory / "Microsoft.AspNetCore.SignalR.Protocols.MessagePack.dll",
+            //     BuildOutputDirectory / "System.Collections.Immutable.dll",
+            //     BuildOutputDirectory / "Microsoft.Bcl.AsyncInterfaces.dll",
+            //     BuildOutputDirectory / "Microsoft.NET.StringTools.dll",
+            // };
+
+            var assembliesToMerge = BuildOutputDirectory
+                .GlobFiles("*.dll")
+                .Except([mainAssembly])
+                .ToArray();
 
             if (!mainAssembly.FileExists())
                 throw new Exception($"Main assembly not found: {mainAssembly}");
@@ -182,7 +192,7 @@ class Build : NukeBuild
 
             var settings = new ILRepackSettings()
                 .SetAssemblies([mainAssembly.ToString(), ..existingAssemblies.Select(a => a.ToString())])
-                .SetInternalize(true)
+                .SetInternalize(false)
                 .SetParallel(true)
                 .SetOutput(mainAssembly.ToString())
                 .SetLib(BuildOutputDirectory.ToString());  // Tell ILRepack where to find referenced assemblies
