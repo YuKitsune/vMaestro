@@ -2,6 +2,7 @@
 using System.Windows.Forms.Integration;
 using System.Windows.Forms;
 using Maestro.Wpf.Integrations;
+using vatsys;
 
 namespace Maestro.Plugin;
 

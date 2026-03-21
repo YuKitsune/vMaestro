@@ -6,6 +6,7 @@ using Maestro.Wpf.Integrations;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;
+using vatsys;
 
 namespace Maestro.Plugin.Handlers;
 

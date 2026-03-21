@@ -21,7 +21,8 @@ using Maestro.Wpf.Integrations;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Coordinate = Maestro.Core.Model.Coordinate;
+using vatsys;
+using vatsys.Plugin;
 
 namespace Maestro.Plugin;
 
@@ -314,7 +315,7 @@ public class Plugin : IPlugin
                     : VerticalTrack.Maintaining;
 
             position = new FlightPosition(
-                new Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
+                new Maestro.Contracts.Shared.Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
                 track.CorrectedAltitude,
                 verticalTrack,
                 track.GroundSpeed,

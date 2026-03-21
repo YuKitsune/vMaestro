@@ -1,5 +1,6 @@
 ﻿using Maestro.Wpf.Integrations;
 using Serilog;
+using vatsys;
 
 namespace Maestro.Plugin;
 

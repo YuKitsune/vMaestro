@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Integration;
 using MediatR;
+using vatsys;
 
 namespace Maestro.Plugin.Handlers;
 
