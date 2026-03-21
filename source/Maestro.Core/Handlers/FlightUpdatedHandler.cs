@@ -73,13 +73,15 @@ public class FlightUpdatedHandler(
 
                     var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
                     var approximateLandingEstimate = notification.Estimates.Last().Estimate;
-                    var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
 
                     // vatSys uses MaxValue when the fix has been overflown, but the time is not known (i.e. controller connecting after the event)
                     var feederFixTimeIsNotKnown = feederFix is not null && feederFix.ActualTimeOver == DateTimeOffset.MaxValue;
 
+                    var isFromDepartureAirport = airportConfiguration.DepartureAirports.Any(d => d.Identifier == notification.Origin);
+                    var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
+
                     // Flights are added to the pending list if they are departing from a configured departure airport
-                    if (feederFixTimeIsNotKnown || (airportConfiguration.DepartureAirports.Any(d => d.Identifier == notification.Origin) && !hasDeparted))
+                    if (feederFixTimeIsNotKnown || (isFromDepartureAirport && !hasDeparted))
                     {
                         // For pending flights, use the default runway to calculate trajectory
                         var runwayMode = instance.Session.Sequence.GetRunwayModeAt(approximateLandingEstimate);
