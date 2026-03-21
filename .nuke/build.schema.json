@@ -24,13 +24,15 @@
     "ExecutableTarget": {
       "type": "string",
       "enum": [
-        "Compile",
+        "CompilePlugin",
+        "CompileServer",
         "DownloadVatSys",
         "Install",
-        "Package",
-        "PublishServer",
+        "PackagePlugin",
+        "PackageServer",
+        "PublishDockerImage",
         "Release",
-        "Repack",
+        "RepackPlugin",
         "Test",
         "TestContracts",
         "TestCore",
@@ -111,7 +113,7 @@
       "properties": {
         "Configuration": {
           "type": "string",
-          "description": "Configuration to build - Default is 'Debug' (local) or 'Release' (server)",
+          "description": "Configuration to build - Default is 'Debug' for local development, 'Release' will be used in CI",
           "enum": [
             "Debug",
             "Release"
@@ -119,15 +121,16 @@
         },
         "GitHubToken": {
           "type": "string",
-          "description": "GitHub token for creating releases",
+          "description": "The GitHub token to use when creating releases",
           "default": "Secrets must be entered via 'nuke :secrets [profile]'"
         },
         "ProfileName": {
-          "type": "string"
+          "type": "string",
+          "description": "The name of the vatSys profile where the plugin should be (un)installed"
         },
         "VatSysPath": {
           "type": "string",
-          "description": "Path to vatSys installation"
+          "description": "Path to the vatSys installation"
         }
       }
     },
