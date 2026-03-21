@@ -9,6 +9,8 @@ using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Contracts;
 using Maestro.Core.Handlers;
 using MediatR;
+using MessagePack;
+using MessagePack.Resolvers;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using ILogger = Serilog.ILogger;
@@ -63,7 +65,11 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
-            .AddJsonProtocol()
+            .AddMessagePackProtocol(options =>
+            {
+                options.SerializerOptions = MessagePackSerializerOptions.Standard
+                    .WithResolver(ContractlessStandardResolver.Instance);
+            })
             .Build();
 
         SubscribeToNotifications(_hubConnection);

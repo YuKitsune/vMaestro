@@ -1,11 +1,28 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
+using MessagePack;
 
 namespace Maestro.Contracts.Shared;
 
 [DebuggerDisplay("{FixIdentifier} ETA {Estimate} (ATO {ActualTimeOver})")]
-public class FixEstimate(string fixIdentifier, DateTimeOffset estimate, DateTimeOffset? actualTimeOver = null)
+[MessagePackObject]
+public class FixEstimate
 {
-    public string FixIdentifier { get; } = fixIdentifier;
-    public DateTimeOffset Estimate { get; } = estimate;
-    public DateTimeOffset? ActualTimeOver { get; } = actualTimeOver;
+    [Key(0)]
+    public string FixIdentifier { get; }
+
+    [Key(1)]
+    public DateTimeOffset Estimate { get; }
+
+    [Key(2)]
+    public DateTimeOffset? ActualTimeOver { get; }
+
+    [JsonConstructor]
+    [SerializationConstructor]
+    public FixEstimate(string fixIdentifier, DateTimeOffset estimate, DateTimeOffset? actualTimeOver = null)
+    {
+        FixIdentifier = fixIdentifier;
+        Estimate = estimate;
+        ActualTimeOver = actualTimeOver;
+    }
 }

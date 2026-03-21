@@ -32,6 +32,7 @@
         "Release",
         "Repack",
         "Test",
+        "TestContracts",
         "TestCore",
         "TestServer",
         "Uninstall"

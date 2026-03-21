@@ -1,6 +1,11 @@
 ﻿using Maestro.Contracts.Connectivity;
 using MediatR;
+using MessagePack;
 
 namespace Maestro.Contracts.Flights;
 
-public record DesequenceRequest(string AirportIdentifier, string Callsign) : IRequest, IRelayableRequest;
+[MessagePackObject]
+public record DesequenceRequest(
+    [property: Key(0)] string AirportIdentifier,
+    [property: Key(1)] string Callsign)
+    : IRequest, IRelayableRequest;

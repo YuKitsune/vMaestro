@@ -1,0 +1,27 @@
+{
+  "callsign": "QFA123",
+  "aircraftType": "B738",
+  "aircraftCategory": "Jet",
+  "wakeCategory": "Medium",
+  "origin": "YMML",
+  "destination": "YSSY",
+  "estimatedDepartureTime": "2024-06-15T10:30:00+00:00",
+  "estimatedFlightTime": "01:00:00",
+  "position": {
+    "coordinate": {
+      "latitude": -33.9461,
+      "longitude": 151.1772
+    },
+    "altitude": 15000,
+    "verticalTrack": "Descending",
+    "groundSpeed": 250.5,
+    "isOnGround": false
+  },
+  "estimates": [
+    {
+      "fixIdentifier": "RIVET",
+      "estimate": "2024-06-15T12:30:00+00:00",
+      "actualTimeOver": "2024-06-15T12:25:00+00:00"
+    }
+  ]
+}

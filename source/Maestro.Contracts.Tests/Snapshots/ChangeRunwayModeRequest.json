@@ -1,0 +1,30 @@
+{
+  "airportIdentifier": "YSSY",
+  "runwayMode": {
+    "identifier": "SODPROPS",
+    "runways": [
+      {
+        "identifier": "34L",
+        "approachType": "ILS",
+        "acceptanceRateSeconds": 90,
+        "feederFixes": [
+          "RIVET",
+          "BOREE"
+        ]
+      },
+      {
+        "identifier": "34R",
+        "approachType": "VISUAL",
+        "acceptanceRateSeconds": 90,
+        "feederFixes": [
+          "MARUB",
+          "SOSIJ"
+        ]
+      }
+    ],
+    "dependencyRateSeconds": 120,
+    "offModeSeparationSeconds": 180
+  },
+  "lastLandingTimeForOldMode": "2024-06-15T13:30:00+00:00",
+  "firstLandingTimeForNewMode": "2024-06-15T13:35:00+00:00"
+}

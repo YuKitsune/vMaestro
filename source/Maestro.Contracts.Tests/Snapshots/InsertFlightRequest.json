@@ -1,0 +1,10 @@
+{
+  "airportIdentifier": "YSSY",
+  "callsign": "QFA123",
+  "aircraftType": "B738",
+  "options": {
+    "optionsType": "Relative",
+    "referenceCallsign": "QFA456",
+    "position": "Before"
+  }
+}

@@ -1,3 +1,8 @@
+using MessagePack;
+
 namespace Maestro.Contracts.Connectivity;
 
-public record PeerInfo(string Callsign, Role Role);
+[MessagePackObject]
+public record PeerInfo(
+    [property: Key(0)] string Callsign,
+    [property: Key(1)] Role Role);

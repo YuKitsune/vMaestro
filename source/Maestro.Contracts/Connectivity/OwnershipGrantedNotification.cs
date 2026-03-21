@@ -1,5 +1,9 @@
 using MediatR;
+using MessagePack;
 
 namespace Maestro.Contracts.Connectivity;
 
-public record OwnershipGrantedNotification(string AirportIdentifier) : INotification;
+[MessagePackObject]
+public record OwnershipGrantedNotification(
+    [property: Key(0)] string AirportIdentifier)
+    : INotification;

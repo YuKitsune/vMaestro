@@ -1,0 +1,9 @@
+{
+  "airportIdentifier": "YSSY",
+  "time": "2024-06-15T12:30:00+00:00",
+  "sender": "SY_APP",
+  "message": "Delay approved",
+  "destination": {
+    "Type": "Broadcast"
+  }
+}

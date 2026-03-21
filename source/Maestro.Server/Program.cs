@@ -1,6 +1,8 @@
 using System.Reflection;
 using Maestro.Contracts.Sessions;
 using Maestro.Server;
+using MessagePack;
+using MessagePack.Resolvers;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi;
 using Serilog;
@@ -36,10 +38,13 @@ try
         })
         .AddHubOptions<MaestroHub>(x =>
         {
-            x.MaximumReceiveMessageSize = 32_000_000; // TODO: Just send smaller messages!!!
             x.EnableDetailedErrors = true;
         })
-        .AddJsonProtocol();
+        .AddMessagePackProtocol(options =>
+        {
+            options.SerializerOptions = MessagePackSerializerOptions.Standard
+                .WithResolver(ContractlessStandardResolver.Instance);
+        });
 
     builder.Services.AddSerilog();
     builder.Services.AddSingleton(Log.Logger);

@@ -1,0 +1,14 @@
+{
+  "envelope": {
+    "originatingCallsign": "SY_APP",
+    "originatingConnectionId": "conn-123",
+    "originatingRole": "Approach",
+    "request": {
+      "RequestType": "ChangeRunway",
+      "airportIdentifier": "YSSY",
+      "callsign": "QFA123",
+      "runwayIdentifier": "34R"
+    }
+  },
+  "actionKey": "ChangeRunway"
+}

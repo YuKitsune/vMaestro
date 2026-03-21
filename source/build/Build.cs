@@ -64,6 +64,7 @@ class Build : NukeBuild
     AbsolutePath PluginProjectPath => RootDirectory / "source" / "Maestro.Plugin" / "Maestro.Plugin.csproj";
     AbsolutePath ServerProjectPath => RootDirectory / "source" / "Maestro.Server" / "Maestro.Server.csproj";
     AbsolutePath CoreTestsProjectPath => RootDirectory / "source" / "Maestro.Core.Tests" / "Maestro.Core.Tests.csproj";
+    AbsolutePath ContractTestsProjectPath => RootDirectory / "source" / "Maestro.Contracts.Tests" / "Maestro.Contracts.Tests.csproj";
     AbsolutePath ServerTestsProjectPath => RootDirectory / "source" / "Maestro.Server.Tests" / "Maestro.Server.Tests.csproj";
     AbsolutePath BuildOutputDirectory => TemporaryDirectory / "build";
     AbsolutePath ServerPublishDirectory => RootDirectory / "source" / "Maestro.Server" / "bin" / Configuration / "net10.0" / "publish";
@@ -153,17 +154,10 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var mainAssembly = BuildOutputDirectory / PluginAssemblyFileName;
-            var assembliesToMerge = new[]
-            {
-                BuildOutputDirectory / "Maestro.Contracts.dll",
-                BuildOutputDirectory / "Maestro.Core.dll",
-                BuildOutputDirectory / "Maestro.Wpf.dll",
-                BuildOutputDirectory / "Serilog.dll",
-                BuildOutputDirectory / "Serilog.Sinks.File.dll",
-                BuildOutputDirectory / "MediatR.dll",
-                BuildOutputDirectory / "MediatR.Contracts.dll",
-                BuildOutputDirectory / "CommunityToolkit.Mvvm.dll"
-            };
+            var assembliesToMerge = BuildOutputDirectory
+                .GlobFiles("*.dll")
+                .Except([mainAssembly])
+                .ToArray();
 
             if (!mainAssembly.FileExists())
                 throw new Exception($"Main assembly not found: {mainAssembly}");
@@ -180,7 +174,7 @@ class Build : NukeBuild
 
             var settings = new ILRepackSettings()
                 .SetAssemblies([mainAssembly.ToString(), ..existingAssemblies.Select(a => a.ToString())])
-                .SetInternalize(true)
+                .SetInternalize(false)
                 .SetParallel(true)
                 .SetOutput(mainAssembly.ToString())
                 .SetLib(BuildOutputDirectory.ToString());  // Tell ILRepack where to find referenced assemblies
@@ -199,6 +193,15 @@ class Build : NukeBuild
             }
 
             Log.Information("Repack complete");
+        });
+
+    Target TestContracts => _ => _
+        .Executes(() =>
+        {
+            Log.Information("Running Contract tests");
+            DotNetTasks.DotNetTest(s => s
+                .SetProjectFile(ContractTestsProjectPath)
+                .SetConfiguration(Configuration));
         });
 
     Target TestCore => _ => _
@@ -220,8 +223,7 @@ class Build : NukeBuild
         });
 
     Target Test => _ => _
-        .DependsOn(TestCore)
-        .DependsOn(TestServer);
+        .DependsOn(TestContracts, TestCore, TestServer);
 
     Target PublishServer => _ => _
         .Executes(() =>

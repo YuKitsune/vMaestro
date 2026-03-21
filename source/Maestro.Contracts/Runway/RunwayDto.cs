@@ -1,3 +1,5 @@
+using MessagePack;
+
 namespace Maestro.Contracts.Runway;
 
 /// <summary>
@@ -7,8 +9,9 @@ namespace Maestro.Contracts.Runway;
 /// <param name="ApproachType">The approach type to use for this runway, if any.</param>
 /// <param name="AcceptanceRateSeconds">The minimum amount of separation to apply between flights landing on this runway, in seconds.</param>
 /// <param name="FeederFixes">The feeder fixes which must be tracked via for flights to be assigned to this runway.</param>
+[MessagePackObject]
 public record RunwayDto(
-    string Identifier,
-    string ApproachType,
-    int AcceptanceRateSeconds,
-    string[] FeederFixes);
+    [property: Key(0)] string Identifier,
+    [property: Key(1)] string ApproachType,
+    [property: Key(2)] int AcceptanceRateSeconds,
+    [property: Key(3)] string[] FeederFixes);

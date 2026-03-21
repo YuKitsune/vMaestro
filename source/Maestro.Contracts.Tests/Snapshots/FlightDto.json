@@ -1,0 +1,56 @@
+{
+  "callsign": "QFA123",
+  "aircraftType": "B738",
+  "wakeCategory": "Medium",
+  "aircraftCategory": "Jet",
+  "originIdentifier": "YMML",
+  "destinationIdentifier": "YSSY",
+  "isFromDepartureAirport": false,
+  "state": "Stable",
+  "activatedTime": "2024-06-15T11:30:00+00:00",
+  "highPriority": false,
+  "maximumDelay": "00:10:00",
+  "numberInSequence": 5,
+  "feederFixIdentifier": "RIVET",
+  "estimatedDepartureTime": "2024-06-15T10:30:00+00:00",
+  "initialFeederFixEstimate": "2024-06-15T12:15:00+00:00",
+  "feederFixEstimate": "2024-06-15T12:20:00+00:00",
+  "manualFeederFixEstimate": false,
+  "feederFixTime": "2024-06-15T12:22:00+00:00",
+  "actualFeederFixTime": null,
+  "assignedRunwayIdentifier": "34L",
+  "numberToLandOnRunway": 3,
+  "approachType": "ILS",
+  "initialLandingEstimate": "2024-06-15T12:35:00+00:00",
+  "landingEstimate": "2024-06-15T12:37:00+00:00",
+  "targetLandingTime": "2024-06-15T12:38:00+00:00",
+  "landingTime": "2024-06-15T12:38:00+00:00",
+  "initialDelay": "00:02:00",
+  "remainingDelay": "00:01:00",
+  "flowControls": "ReduceSpeed",
+  "lastSeen": "2024-06-15T12:30:00+00:00",
+  "fixes": [
+    {
+      "fixIdentifier": "RIVET",
+      "estimate": "2024-06-15T12:20:00+00:00",
+      "actualTimeOver": null
+    },
+    {
+      "fixIdentifier": "SOSIJ",
+      "estimate": "2024-06-15T12:25:00+00:00",
+      "actualTimeOver": null
+    }
+  ],
+  "position": {
+    "coordinate": {
+      "latitude": -33.9461,
+      "longitude": 151.1772
+    },
+    "altitude": 15000,
+    "verticalTrack": "Descending",
+    "groundSpeed": 250.5,
+    "isOnGround": false
+  },
+  "isManuallyInserted": false,
+  "timeToGo": "00:18:00"
+}

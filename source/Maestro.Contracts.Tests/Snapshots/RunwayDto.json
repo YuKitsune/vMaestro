@@ -1,0 +1,9 @@
+{
+  "identifier": "34L",
+  "approachType": "ILS",
+  "acceptanceRateSeconds": 90,
+  "feederFixes": [
+    "RIVET",
+    "BOREE"
+  ]
+}

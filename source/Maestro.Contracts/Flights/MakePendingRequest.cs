@@ -1,6 +1,11 @@
 ﻿using Maestro.Contracts.Connectivity;
 using MediatR;
+using MessagePack;
 
 namespace Maestro.Contracts.Flights;
 
-public record MakePendingRequest(string AirportIdentifier, string Callsign) : IRequest, IRelayableRequest;
+[MessagePackObject]
+public record MakePendingRequest(
+    [property: Key(0)] string AirportIdentifier,
+    [property: Key(1)] string Callsign)
+    : IRequest, IRelayableRequest;

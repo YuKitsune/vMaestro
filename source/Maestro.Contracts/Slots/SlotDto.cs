@@ -1,3 +1,5 @@
+using MessagePack;
+
 namespace Maestro.Contracts.Slots;
 
 /// <summary>
@@ -7,8 +9,9 @@ namespace Maestro.Contracts.Slots;
 /// <param name="StartTime">When the slot begins.</param>
 /// <param name="EndTime">When the slot ends.</param>
 /// <param name="RunwayIdentifiers">The runways affected by this slot.</param>
+[MessagePackObject]
 public record SlotDto(
-    Guid Id,
-    DateTimeOffset StartTime,
-    DateTimeOffset EndTime,
-    string[] RunwayIdentifiers);
+    [property: Key(0)] Guid Id,
+    [property: Key(1)] DateTimeOffset StartTime,
+    [property: Key(2)] DateTimeOffset EndTime,
+    [property: Key(3)] string[] RunwayIdentifiers);
