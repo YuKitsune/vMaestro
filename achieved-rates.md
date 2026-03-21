@@ -19,7 +19,7 @@
 - [ ] Add averating period to configuration
 - [X] Fix server tests
 - [X] Test FlightLandedNotificationHandler
-- [ ] Test LandingStatistics
+- [X] Test LandingStatistics
 - [ ] Test UpdateWindRequestHandler
 - [ ] Test METAR wind parser
 - [ ] Ensure wind changes are server compatible
