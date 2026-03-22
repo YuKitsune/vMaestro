@@ -22,7 +22,7 @@
 - [X] Test LandingStatistics
 - [X] Test UpdateWindRequestHandler
 - [X] Test METAR wind parser
-- [ ] Ensure wind changes are server compatible
+- [X] Ensure wind changes are server compatible
 - [ ] Clean up message handler usages
 - [ ] Seek feedback regarding WindService
 - [ ] Add option to enable/disable menu sections in the Setup window
