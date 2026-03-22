@@ -22,17 +22,35 @@ public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConf
         await Task.CompletedTask;
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
-        var surfaceWind = TryGetSurfaceWind(request.AirportIdentifier, cancellationToken);
-        if (surfaceWind is null)
+        WindDto? surfaceWind;
+        try
         {
-            logger.Warning($"Could not find surface wind for {request.AirportIdentifier}");
+            surfaceWind = await TryGetSurfaceWind(request.AirportIdentifier, cancellationToken);
+            if (surfaceWind is null)
+            {
+                logger.Warning($"Could not find surface wind for {request.AirportIdentifier}");
+                surfaceWind = new WindDto(0, 0);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "Failed to get surface wind for {AirportIdentifier}", request.AirportIdentifier);
             surfaceWind = new WindDto(0, 0);
         }
 
-        var upperWind = TryGetUpperWind(request.AirportIdentifier, airportConfiguration.UpperWindAltitude);
-        if (upperWind is null)
+        WindDto? upperWind;
+        try
         {
-            logger.Warning($"Could not find upper wind for {request.AirportIdentifier}");
+            upperWind = TryGetUpperWind(request.AirportIdentifier, airportConfiguration.UpperWindAltitude);
+            if (upperWind is null)
+            {
+                logger.Warning($"Could not find upper wind for {request.AirportIdentifier}");
+                upperWind = new WindDto(0, 0);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "Failed to get upper wind for {AirportIdentifier}", request.AirportIdentifier);
             upperWind = new WindDto(0, 0);
         }
 
@@ -45,7 +63,7 @@ public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConf
             cancellationToken);
     }
 
-    WindDto? TryGetSurfaceWind(string airportIdentifier, CancellationToken cancellationToken)
+    async Task<WindDto?> TryGetSurfaceWind(string airportIdentifier, CancellationToken cancellationToken)
     {
         var request = new MET.ProductRequest(MET.ProductType.VATSIM_METAR, airportIdentifier, subscribe: false);
         MET.Instance.RequestProduct(request);
@@ -53,18 +71,14 @@ public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConf
         var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
 
-        List<MET.Product>? responses = null;
-        while (!linkedSource.IsCancellationRequested)
+        List<MET.Product>? responses;
+        while (true)
         {
             responses = MET.Instance.GetProducts(request);
             if (responses is not null)
                 break;
-        }
 
-        // Timeout expired
-        if (linkedSource.IsCancellationRequested || responses is null)
-        {
-            return null;
+            await Task.Delay(TimeSpan.FromSeconds(1), linkedSource.Token);
         }
 
         var products = responses
@@ -72,11 +86,9 @@ public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConf
             .ToArray();
 
         if (!products.Any())
-        {
             return null;
-        }
 
-        var latestMetar = products.OrderByDescending(p => p.ProductTimestamp).Last();
+        var latestMetar = products.First();
         var wind = MetarWindParser.Parse(latestMetar.Text);
         if (wind is null)
         {
