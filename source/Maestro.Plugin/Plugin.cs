@@ -42,7 +42,7 @@ public class Plugin : IPlugin
     readonly IMaestroInstanceManager? _instanceManager;
     readonly ILogger? _logger;
 
-    readonly AircraftLandingCircuitBoard _aircraftLandingCircuitBoard = new();
+    readonly AircraftLandingCircuitBreaker _aircraftLandingCircuitBreaker = new();
     readonly WorkQueue _workQueue = new(AddError);
 
     static readonly Dictionary<string, DateTimeOffset> ErrorMessages = new();
@@ -436,7 +436,7 @@ public class Plugin : IPlugin
             return;
 
         // Already notified, nothing to do
-        if (!_aircraftLandingCircuitBoard.TrySetBreaker(fdr.Callsign))
+        if (!_aircraftLandingCircuitBreaker.TrySetBreaker(fdr.Callsign))
             return;
 
         var lastWaypoint = fdr.ParsedRoute.Last(s => s.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT);

@@ -2,12 +2,12 @@ using Shouldly;
 
 namespace Maestro.Plugin.Tests;
 
-public class AircraftLandingCircuitBoardTests
+public class AircraftLandingCircuitBreakerTests
 {
     [Fact]
     public void TrySetBreaker_FirstCall_ShouldReturnTrue()
     {
-        var circuitBoard = new AircraftLandingCircuitBoard();
+        var circuitBoard = new AircraftLandingCircuitBreaker();
 
         var result = circuitBoard.TrySetBreaker("QFA123");
 
@@ -17,7 +17,7 @@ public class AircraftLandingCircuitBoardTests
     [Fact]
     public void TrySetBreaker_SecondCall_ShouldReturnFalse()
     {
-        var circuitBoard = new AircraftLandingCircuitBoard();
+        var circuitBoard = new AircraftLandingCircuitBreaker();
 
         circuitBoard.TrySetBreaker("QFA123");
         var result = circuitBoard.TrySetBreaker("QFA123");
@@ -28,7 +28,7 @@ public class AircraftLandingCircuitBoardTests
     [Fact]
     public void TrySetBreaker_MultipleCallsSameCallsign_ShouldReturnFalse()
     {
-        var circuitBoard = new AircraftLandingCircuitBoard();
+        var circuitBoard = new AircraftLandingCircuitBreaker();
 
         circuitBoard.TrySetBreaker("QFA123");
         circuitBoard.TrySetBreaker("QFA123");
@@ -40,7 +40,7 @@ public class AircraftLandingCircuitBoardTests
     [Fact]
     public void TrySetBreaker_DifferentCallsigns_ShouldHaveIndependentBreakers()
     {
-        var circuitBoard = new AircraftLandingCircuitBoard();
+        var circuitBoard = new AircraftLandingCircuitBreaker();
 
         var result1 = circuitBoard.TrySetBreaker("QFA123");
         var result2 = circuitBoard.TrySetBreaker("VOZ456");
@@ -56,7 +56,7 @@ public class AircraftLandingCircuitBoardTests
     [Fact]
     public void TrySetBreaker_ConcurrentCalls_ShouldBeThreadSafe()
     {
-        var circuitBoard = new AircraftLandingCircuitBoard();
+        var circuitBoard = new AircraftLandingCircuitBreaker();
         var callsign = "QFA123";
         var results = new List<bool>();
         var tasks = new List<Task>();
@@ -82,7 +82,7 @@ public class AircraftLandingCircuitBoardTests
     [Fact]
     public void TrySetBreaker_MultipleConcurrentCallsigns_ShouldMaintainIndependence()
     {
-        var circuitBoard = new AircraftLandingCircuitBoard();
+        var circuitBoard = new AircraftLandingCircuitBreaker();
         var callsigns = new[] { "QFA123", "VOZ456", "JQ789" };
         var results = new Dictionary<string, List<bool>>
         {

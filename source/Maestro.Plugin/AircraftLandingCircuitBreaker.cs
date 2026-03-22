@@ -1,6 +1,6 @@
 ﻿namespace Maestro.Plugin;
 
-public class AircraftLandingCircuitBoard
+public class AircraftLandingCircuitBreaker
 {
     readonly object _gate = new();
     readonly Dictionary<string, CircuitBreaker> _breakers = new();
