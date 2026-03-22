@@ -186,6 +186,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             DeleteSlotRequest => "DeleteSlot",
             ChangeApproachTypeRequest => "ChangeApproachType",
             SendCoordinationMessageRequest => "SendCoordinationMessage",
+            ModifyWindRequest => "ModifyWind",
             _ => throw new ArgumentOutOfRangeException(nameof(request), "Unsupported request type: " + request.GetType().Name)
         };
     }
