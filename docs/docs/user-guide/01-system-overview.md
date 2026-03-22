@@ -187,20 +187,6 @@ Flights become Landed at the `STA`. Processing stops entirely. The last 5 landed
 vMaestro supports multi-user operation through an optional server component.
 This allows multiple controllers to collaborate on a single sequence in real-time.
 
-### Connection States
-
-The online status indicator shows the current connection state:
-
-| Status | Meaning |
-| ------ | ------- |
-| `OFFLINE` | Not connected to a server. All processing is local and all functions are available. |
-| `READY` | Connected to the server but not synchronised. Appears when connected before joining the VATSIM network. |
-| `FMP` | Connected with the Flow role. Processing is done locally and the sequence is shared to all other clients. |
-| `APP` | Connected with the Approach role. Some functions may be restricted. |
-| `ENR` | Connected with the Enroute role. Some functions may be restricted. |
-| `ENR/FMP` or `APP/FMP` | Connected with Enroute or Approach role, but no dedicated FMP is online. All functions are available. |
-| `OBS` | Connected with the Observer role. The sequence is read-only. |
-
 ### Roles
 
 #### Flow (FMP)

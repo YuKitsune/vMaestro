@@ -53,6 +53,7 @@ Server:
     Resequence: [Flow]
     RemoveFlight: [Enroute, Approach, Flow]
     ChangeApproachType: [Enroute, Approach, Flow]
+    ModifyWind: [Approach, Flow]
 
 # ==============================================================================
 # LABELS CONFIGURATION
@@ -230,6 +231,19 @@ Airports:
   # Time before removing lost/stale flights (minutes)
   # Default: 10
   LostFlightTimeoutMinutes: 10
+
+  # ---------------------------------------------------------------------------
+  # Wind Configuration (optional)
+  # ---------------------------------------------------------------------------
+
+  # Average landing speed (TAS) of aircraft on final approach in knots
+  # Used to calculate the distance between arrivals on the runway
+  # Default: 150
+  AverageLandingSpeed: 150
+
+  # Altitude in feet for upper winds to load from GRIB data
+  # Default: 6000
+  UpperWindAltitude: 6000
 
   # ---------------------------------------------------------------------------
   # Airport-Specific Colors (optional)

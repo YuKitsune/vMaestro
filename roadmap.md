@@ -16,8 +16,9 @@
 ### Refactoring
 
 - [X] Refactor flight insertion handlers (Consider combining or separating them)
-- [ ] Improve separation between domain models, DTOs, and view models
 - [X] Remove (or trim down) SequenceMessage and introduce smaller DTOs or notifications (consider CRDTs) to reduce the size of the sequence when serialised
+- [ ] Improve separation between domain models, DTOs, and view models
+- [ ] Explore calculating TTG at runtime based on STAR track and upper winds
 - [ ] Make delaying action times configurable (lightweight enroute trajectory config?)
 - [ ] Consider moving some of the sequence logic into the individual handlers so they can be tested more easily.
 - [ ] Clean up tests
@@ -28,7 +29,7 @@
 
 ### Server Deployment
 
-- [ ] Package server binary
+- [X] Package server binary
 - [ ] Build and publish server container
 - [ ] Separate docs and server
 
@@ -36,12 +37,10 @@
 
 ### Achieved Rates
 
-Blocked due to vatSys API limitations.
-
-- [ ] 10,000 ft and 6,000 ft winds (with configuration view)
-- [ ] Achieved rates
-- [ ] Units selector (NM, aircraft/hr, seconds)
-- [ ] UTC time
+- [X] 10,000 ft and 6,000 ft winds (with configuration view)
+- [X] Achieved rates
+- [X] Units selector (NM, aircraft/hr, seconds)
+- [X] UTC time
 
 ### Algorithm Overhaul
 

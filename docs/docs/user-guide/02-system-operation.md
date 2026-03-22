@@ -19,7 +19,7 @@ If the `TFMS` menu item does not appear, refer to the [installation instructions
 
 ![Diagram of the Maestro window](../../static/img/window_diagram.png)
 
-The **upper section** displays the online status indicator, TMA configuration, runway acceptance rates, and online setup button.
+The **upper section** displays the connection status, TMA configuration, runway acceptance rates, upper and lower winds, achieved rates, units, and UTC time.
 
 The **lower section** contains function buttons, view selector buttons, and sequence ladders.
 
@@ -83,13 +83,23 @@ See [Plugin Configuration](../admin-guide/02-plugin-configuration.md#colour-sour
 
 Right-click a flight label to access actions like changing runway, adjusting delay, or removing the flight. See [Flight Management](#flight-management) for details on each action.
 
+## Connection Status
+
+The Connection Status button (top-left) displays the current connection status.
+
+| Status | Meaning |
+| ------ | ------- |
+| `OFFLINE` | Not connected to a server. All processing is local and all functions are available. |
+| `READY` | Connected to the server but not synchronised. Appears when connected before joining the VATSIM network. |
+| `FLOW` | Connected with the Flow role. Processing is done locally and the sequence is shared to all other clients. |
+| `APP` | Connected with the Approach role. Some functions may be restricted. |
+| `ENR` | Connected with the Enroute role. Some functions may be restricted. |
+| `ENR/FLOW` or `APP/FLOW` | Connected with Enroute or Approach role, but no dedicated Flow controller is online. All functions are available. |
+| `OBS` | Connected with the Observer role. The sequence is read-only. |
+
+Click the button to open the connection settings and start or stop the connection to the vMaestro server.
+
 ## TMA Configuration
-
-The upper section displays the current TMA configuration and runway acceptance rates. Click the TMA configuration button to change runway modes or adjust acceptance rates.
-
-The online status indicator shows the connection state when operating in online mode.
-
-### TMA Configuration Button
 
 The TMA Configuration button displays the current runway mode.
 
@@ -140,6 +150,65 @@ The Runway Acceptance Rates button displays each active runway with its current 
 ![Image of the Runway Acceptance Rates button](../../static/img/rates_button.png)
 
 The acceptance rate is the minimum time separation between successive landings on that runway.
+
+## Wind Configuration
+
+The Winds button displays the current surface and upper winds.
+
+Surface winds are sourced from METAR, while upper winds are sourced from GRIB. Winds are automatically updated every 30 minutes.
+
+Surface winds are used to calculate the average distance between arrivals on the runway. Upper winds are used to augment TMA trajectory calculations.
+
+When manually overridden, the button text turns white.
+
+:::info
+The Winds button is only visible to Flow and Approach controllers, and to Enroute controllers when acting as pseudo-flow (when no Flow controller is online).
+:::
+
+### Changing the Winds
+
+Click the Winds button to open the Wind Configuration window.
+
+![Wind Configuration window](../../static/img/wind_config.png)
+
+From this window you can:
+
+- View and modify the upper wind speed and direction
+- View and modify the surface wind speed and direction
+
+Manual wind overrides will be used until the next automatic update, which will overwrite any manual changes.
+
+## Achieved Rates
+
+The Achieved Rates section displays the actual landing rate for each active runway compared to the desired acceptance rate. The rate is shown in the currently selected unit (see [Units Selector](#units-selector)).
+
+For each runway, the section shows:
+- The achieved landing rate
+- The deviation from the desired rate
+
+If the deviation is not significant, `NS` (Not Significant) is displayed.
+
+When a numeric deviation is shown:
+- **Positive numbers** indicate the runway is handling more landings than desired (higher throughput)
+- **Negative numbers** indicate the runway is handling fewer landings than desired (lower throughput)
+
+:::info
+The Achieved Rates section is only visible to Flow and Approach controllers, and to Enroute controllers when acting as pseudo-flow (when no Flow controller is online).
+:::
+
+## Units Selector
+
+The Units Selector button cycles through different units for displaying landing rates. Click the button to switch between available units:
+
+- `S`: Seconds between arrivals
+- `NM`: Distance between arrivals in nautical miles
+- `Ac`: Aircraft per hour
+
+The selected unit affects how runway acceptance rates and achieved rates are displayed throughout the interface.
+
+:::info
+The Units Selector is only visible to Flow and Approach controllers, and to Enroute controllers when acting as pseudo-flow (when no Flow controller is online).
+:::
 
 ## Flight Management
 
