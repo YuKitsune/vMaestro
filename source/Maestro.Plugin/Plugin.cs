@@ -268,11 +268,12 @@ public class Plugin : IPlugin
 
     void StopWindCheck()
     {
-        if (_windCheckTask is null)
+        if (_windCheckTask is null || !_windCheckTask.IsRunning)
             return;
 
-        _windCheckTask.Stop(CancellationToken.None).Wait();
-        _logger?.Information("Wind check stopped");
+        // Fire and forget - don't block the event handler waiting for the task to complete
+        _ = _windCheckTask.Stop(CancellationToken.None);
+        _logger?.Information("Wind check stopping");
     }
 
     async Task WindCheckWorker(CancellationToken cancellationToken)
