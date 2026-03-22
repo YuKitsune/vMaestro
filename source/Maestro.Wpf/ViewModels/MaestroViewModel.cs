@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Maestro.Contracts.Connectivity;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
@@ -30,6 +31,8 @@ public partial class MaestroViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TerminalConfiguration))]
+    [NotifyPropertyChangedFor(nameof(RunwayAchievedRates))]
+    [NotifyPropertyChangedFor(nameof(RunwayIntervals))]
     RunwayModeViewModel _currentRunwayMode;
 
     [ObservableProperty]
@@ -60,6 +63,30 @@ public partial class MaestroViewModel : ObservableObject
     DateTimeOffset? _secondSlotTime;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RunwayAchievedRates))]
+    LandingStatisticsDto _landingStatistics = new() { RunwayLandingTimes = new Dictionary<string, RunwayLandingTimesDto>() };
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RunwayAchievedRates))]
+    [NotifyPropertyChangedFor(nameof(RunwayIntervals))]
+    [NotifyCanExecuteChangedFor(nameof(CycleUnitsCommand))]
+    LandingRateUnit _selectedUnit = LandingRateUnit.Seconds;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RunwayAchievedRates))]
+    [NotifyPropertyChangedFor(nameof(RunwayIntervals))]
+    WindDto _surfaceWind = new(0,0);
+
+    [ObservableProperty]
+    WindDto _upperWind = new(0,0);
+
+    [ObservableProperty]
+    int _upperWindAltitude;
+
+    [ObservableProperty]
+    bool _manualWind;
+
+    [ObservableProperty]
     FlightDto? _selectedFlight;
 
     [ObservableProperty]
@@ -70,16 +97,80 @@ public partial class MaestroViewModel : ObservableObject
 
     public string TerminalConfiguration =>
         NextRunwayMode is not null && RunwayModeChangeTime is not null
-            ? $"{CurrentRunwayMode.Identifier} → {NextRunwayMode.Identifier} at {RunwayModeChangeTime.Value:HH:mm}"
+            ? $"{CurrentRunwayMode.Identifier} -> {NextRunwayMode.Identifier} at {RunwayModeChangeTime.Value:HH:mm}"
             : CurrentRunwayMode.Identifier;
 
     public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
 
     public bool HasDesequencedFlight => DeSequencedFlights.Any();
 
-    [ObservableProperty] string _status = "OFFLINE";
+    public RunwayIntervalViewModel[] RunwayIntervals
+    {
+        get
+        {
+            if (CurrentRunwayMode == null)
+                return [];
 
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
+            return CurrentRunwayMode.Runways
+                .Select(runway => new RunwayIntervalViewModel(
+                    runway.Identifier,
+                    ConvertLandingRate(runway.Identifier, TimeSpan.FromSeconds(runway.LandingRateSeconds), SelectedUnit)))
+                .ToArray();
+        }
+    }
+
+    public RunwayAchievedRateViewModel[] RunwayAchievedRates
+    {
+        get
+        {
+            if (CurrentRunwayMode == null || LandingStatistics == null)
+                return [];
+
+            return CurrentRunwayMode.Runways
+                .Select(runway =>
+                {
+                    var noDeviation = new RunwayAchievedRateViewModel(runway.Identifier, "NS", "NS");
+                    if (!LandingStatistics.RunwayLandingTimes.TryGetValue(runway.Identifier, out var landingTimes))
+                    {
+                        return noDeviation;
+                    }
+
+                    if (landingTimes.AchievedRate is AchievedRateDto achievedRateDto)
+                    {
+                        var achievedRateDisplay = ConvertLandingRate(runway.Identifier, achievedRateDto.AverageLandingInterval, SelectedUnit);
+                        var deviationDisplay = ConvertLandingRate(runway.Identifier, achievedRateDto.LandingIntervalDeviation, SelectedUnit);
+
+                        return new RunwayAchievedRateViewModel(
+                            runway.Identifier,
+                            achievedRateDisplay,
+                            deviationDisplay);
+                    }
+
+                    return noDeviation;
+                })
+                .ToArray();
+        }
+    }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShouldShowFlowControls))]
+    string _status = "OFFLINE";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShouldShowFlowControls))]
+    Role _role = Role.Observer;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShouldShowFlowControls))]
+    bool _flowIsOnline = false;
+
+    public bool ShouldShowFlowControls =>
+        Status is "OFFLINE" or "READY" ||
+        Role is Role.Flow or Role.Approach ||
+        (Role == Role.Enroute && !FlowIsOnline);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
     TimeSpan _scrollOffset = TimeSpan.Zero;
     public bool IsScrolling => ScrollOffset != TimeSpan.Zero;
     public bool IsScrollingUp => SelectedView.Direction == TimelineDirection.Up
@@ -130,12 +221,16 @@ public partial class MaestroViewModel : ObservableObject
         Views = views;
         SelectedView = views.First();
 
+        UpperWindAltitude = airportConfiguration.UpperWindAltitude;
+
         WeakReferenceMessenger.Default.Register<ConnectionStatusChangedNotification>(this, (r, m) =>
         {
-            if (m.AirportIdentifier == AirportIdentifier)
-            {
-                Status = m.Status;
-            }
+            if (m.AirportIdentifier != AirportIdentifier)
+                return;
+
+            Status = m.Status;
+            Role = m.Role;
+            FlowIsOnline = m.FlowIsOnline;
         });
 
         WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (r, notification) =>
@@ -153,6 +248,10 @@ public partial class MaestroViewModel : ObservableObject
             PendingFlights = notification.Session.PendingFlights.ToList();
             Flights = notification.Session.Sequence.Flights.ToList();
             Slots = notification.Session.Sequence.Slots.ToList();
+            LandingStatistics = notification.Session.LandingStatistics;
+            SurfaceWind = notification.Session.SurfaceWind;
+            UpperWind = notification.Session.UpperWind;
+            ManualWind = notification.Session.ManualWind;
         });
     }
 
@@ -420,6 +519,62 @@ public partial class MaestroViewModel : ObservableObject
         catch (Exception ex)
         {
             _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void OpenWind()
+    {
+        try
+        {
+            _mediator.Send(
+                new OpenWindWindowRequest(
+                    AirportIdentifier,
+                    SurfaceWind,
+                    UpperWind,
+                    UpperWindAltitude));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void CycleUnits()
+    {
+        SelectedUnit = SelectedUnit switch
+        {
+            LandingRateUnit.Seconds => LandingRateUnit.NauticalMiles,
+            LandingRateUnit.NauticalMiles => LandingRateUnit.AircraftPerHour,
+            LandingRateUnit.AircraftPerHour => LandingRateUnit.Seconds,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    string ConvertLandingRate(string runwayIdentifier, TimeSpan interval, LandingRateUnit unit)
+    {
+        switch (unit)
+        {
+            case LandingRateUnit.Seconds:
+                return  $"{(int)interval.TotalSeconds}";
+
+            case LandingRateUnit.NauticalMiles:
+            {
+                var runwayDirection = int.Parse(runwayIdentifier.Substring(0, 2)) * 10; // Checky hack to get the runway direction
+                var angle = Math.Abs(SurfaceWind.Direction - runwayDirection);
+                var headwindComponent = SurfaceWind.Speed * Math.Cos(angle);
+
+                var groundSpeed = AirportConfiguration.AverageLandingSpeed - headwindComponent;
+                var distance = groundSpeed * interval.TotalHours;
+                return distance.ToString("0.0");
+            }
+
+            case LandingRateUnit.AircraftPerHour:
+                return ((int)(1 / interval.TotalHours)).ToString();
+
+            default:
+                return "?";
         }
     }
 }

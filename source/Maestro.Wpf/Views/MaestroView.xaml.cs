@@ -61,7 +61,7 @@ public partial class MaestroView
                 args.PropertyName == nameof(MaestroViewModel.SelectedView) ||
                 args.PropertyName == nameof(MaestroViewModel.HorizontalScrollOffset))
             {
-                DrawTimeline();
+                DrawSequence();
             }
         };
     }
@@ -70,37 +70,40 @@ public partial class MaestroView
 
     void TimerTick(object sender, EventArgs args)
     {
-        DrawTimelineIfAllowed();
+        // Update UTC time display
+        UtcTimeText?.Text = DateTime.UtcNow.ToString("HH:mm:ss");
+
+        TryDrawSequence();
     }
 
     void ControlLoaded(object sender, RoutedEventArgs e)
     {
-        DrawTimeline();
+        DrawSequence();
     }
 
     void OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        DrawTimeline();
+        DrawSequence();
     }
 
-    void DrawTimeline()
-    {
-        if (_isDragging) return;
-        Dispatcher.Invoke(() =>
-        {
-            RedrawLadder(ReferenceTime);
-            UpdateLabels(ReferenceTime);
-            InvalidateVisual();
-        });
-    }
-
-    void DrawTimelineIfAllowed()
+    void TryDrawSequence()
     {
         // Don't redraw during confirmation dialogs
         if (ViewModel.IsConfirmationDialogOpen)
             return;
 
-        DrawTimeline();
+        DrawSequence();
+    }
+
+    void DrawSequence()
+    {
+        if (_isDragging) return;
+        Dispatcher.Invoke(() =>
+        {
+            RedrawSequence(ReferenceTime);
+            UpdateLabels(ReferenceTime);
+            InvalidateVisual();
+        });
     }
 
     List<int> GetMatchingLadders(FlightDto flight)
@@ -259,7 +262,7 @@ public partial class MaestroView
         return new LayoutInfo { VisualElements = elements };
     }
 
-    void RedrawLadder(DateTimeOffset referenceTime)
+    void RedrawSequence(DateTimeOffset referenceTime)
     {
         // Remove all elements that are NOT flight labels
         for (int i = LadderCanvas.Children.Count - 1; i >= 0; i--)
@@ -389,7 +392,13 @@ public partial class MaestroView
         }
     }
 
-    void DrawTimeline(TimelineElement timeline, double canvasHeight, DateTimeOffset referenceTime, int timeWindowMinutes, TimelineDirection direction, double ladderYOffset)
+    void DrawTimeline(
+        TimelineElement timeline,
+        double canvasHeight,
+        DateTimeOffset referenceTime,
+        int timeWindowMinutes,
+        TimelineDirection direction,
+        double ladderYOffset)
     {
         // Draw left border
         var leftBorder = new BeveledLine
@@ -817,7 +826,7 @@ public partial class MaestroView
         {
             ViewModel.DeselectFlight();
             _suppressContextMenu = true; // Flag to suppress context menu
-            DrawTimelineIfAllowed(); // Immediately update UI to reflect deselection
+            TryDrawSequence(); // Immediately update UI to reflect deselection
             e.Handled = true;
             return;
         }
@@ -926,7 +935,7 @@ public partial class MaestroView
         {
             // If not draggable, select immediately
             ViewModel.SelectFlight(flight);
-            DrawTimelineIfAllowed(); // Immediately update UI to reflect selection
+            TryDrawSequence(); // Immediately update UI to reflect selection
             return;
         }
 
@@ -1024,7 +1033,7 @@ public partial class MaestroView
                     newTime
                 ));
 
-                DrawTimeline();
+                DrawSequence();
             }
         }
         else
@@ -1060,7 +1069,7 @@ public partial class MaestroView
                     ViewModel.SelectFlight(clickedFlight);
                 }
 
-                DrawTimelineIfAllowed(); // Immediately update UI to reflect selection
+                TryDrawSequence(); // Immediately update UI to reflect selection
             }
         }
 
@@ -1100,7 +1109,7 @@ public partial class MaestroView
         {
             ViewModel.DeselectFlight();
             _suppressContextMenu = true; // Flag to suppress context menu
-            DrawTimelineIfAllowed(); // Immediately update UI to reflect deselection
+            TryDrawSequence(); // Immediately update UI to reflect deselection
         }
 
         // Always handle the event to prevent it from bubbling to the canvas

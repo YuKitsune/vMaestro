@@ -221,6 +221,43 @@ public static class TestBuilders
             [CreateFixEstimate()]);
 
     // Sessions
+    public static WindDto CreateWindDto() =>
+        new(270, 15);
+
+    public static NoDeviationDto CreateNoDeviationDto() => new();
+
+    public static AchievedRateDto CreateAchievedRateDto() =>
+        new(TimeSpan.FromSeconds(90), TimeSpan.FromSeconds(-5));
+
+    public static RunwayLandingTimesDto CreateRunwayLandingTimesDto() =>
+        new(
+            "34L",
+            [
+                FixedTime.AddMinutes(-10),
+                FixedTime.AddMinutes(-8),
+                FixedTime.AddMinutes(-6)
+            ],
+            CreateAchievedRateDto());
+
+    public static LandingStatisticsDto CreateLandingStatisticsDto() =>
+        new()
+        {
+            RunwayLandingTimes = new Dictionary<string, RunwayLandingTimesDto>
+            {
+                {
+                    "34L",
+                    CreateRunwayLandingTimesDto()
+                },
+                {
+                    "34R",
+                    new RunwayLandingTimesDto(
+                        "34R",
+                        [FixedTime.AddMinutes(-5)],
+                        CreateNoDeviationDto())
+                }
+            }
+        };
+
     public static SequenceDto CreateSequenceDto() =>
         new()
         {
@@ -239,7 +276,11 @@ public static class TestBuilders
             PendingFlights = [CreateFlightDto()],
             DeSequencedFlights = [],
             Sequence = CreateSequenceDto(),
-            DummyCounter = 42
+            DummyCounter = 42,
+            LandingStatistics = CreateLandingStatisticsDto(),
+            SurfaceWind = CreateWindDto(),
+            UpperWind = new WindDto(280, 25),
+            ManualWind = false
         };
 
     public static RestoreSessionRequest CreateRestoreSessionRequest() =>
@@ -247,4 +288,7 @@ public static class TestBuilders
 
     public static SessionUpdatedNotification CreateSessionUpdatedNotification() =>
         new("YSSY", CreateSessionDto());
+
+    public static ModifyWindRequest CreateModifyWindRequest() =>
+        new("YSSY", CreateWindDto(), new WindDto(280, 25), ManualWind: true);
 }

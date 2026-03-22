@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Runway;
+using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Slots;
 using MessagePack;
 
@@ -25,6 +26,7 @@ namespace Maestro.Contracts.Connectivity;
 [JsonDerivedType(typeof(ModifySlotRequest), "ModifySlot")]
 [JsonDerivedType(typeof(DeleteSlotRequest), "DeleteSlot")]
 [JsonDerivedType(typeof(ChangeRunwayModeRequest), "ChangeRunwayMode")]
+[JsonDerivedType(typeof(ModifyWindRequest), "ModifyWind")]
 
 // Message Pack attributes
 [Union(0, typeof(InsertFlightRequest))]
@@ -44,6 +46,7 @@ namespace Maestro.Contracts.Connectivity;
 [Union(14, typeof(ModifySlotRequest))]
 [Union(15, typeof(DeleteSlotRequest))]
 [Union(16, typeof(ChangeRunwayModeRequest))]
+[Union(17, typeof(ModifyWindRequest))]
 public interface IRelayableRequest
 {
     string AirportIdentifier { get; }

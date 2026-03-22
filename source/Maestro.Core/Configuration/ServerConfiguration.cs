@@ -27,4 +27,5 @@ public static class ActionKeys
     public const string Desequence = nameof(Desequence);
     public const string Resequence = nameof(Resequence);
     public const string RemoveFlight = nameof(RemoveFlight);
+    public const string ModifyWind = nameof(ModifyWind);
 }

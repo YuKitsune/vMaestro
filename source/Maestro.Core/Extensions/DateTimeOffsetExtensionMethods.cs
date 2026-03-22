@@ -6,6 +6,7 @@ public static class DateTimeOffsetExtensionMethods
     {
         return left < right;
     }
+    
     public static bool IsSameOrBefore(this DateTimeOffset left, DateTimeOffset right)
     {
         return left <= right;

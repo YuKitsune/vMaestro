@@ -34,6 +34,11 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         await mediator.Publish(new NotificationContextWrapper<FlightUpdatedNotification>(Context.ConnectionId, flightUpdatedNotification));
     }
 
+    public async Task FlightLanded(FlightLandedNotification flightLandedNotification)
+    {
+        await mediator.Publish(new NotificationContextWrapper<FlightLandedNotification>(Context.ConnectionId, flightLandedNotification));
+    }
+
     public async Task<ServerResponse> SendCoordinationMessage(SendCoordinationMessageRequest coordinationRequest)
     {
         return await mediator.Send(new RequestContextWrapper<SendCoordinationMessageRequest, ServerResponse>(Context.ConnectionId, coordinationRequest));
@@ -122,6 +127,11 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
     public async Task<ServerResponse> ChangeApproachType(ChangeApproachTypeRequest request)
     {
         return await RelayToMaster("ChangeApproachType", request);
+    }
+
+    public async Task<ServerResponse> ModifyWind(ModifyWindRequest request)
+    {
+        return await RelayToMaster("ModifyWind", request);
     }
 
     async Task<ServerResponse> RelayToMaster(string methodName, IRelayableRequest request)

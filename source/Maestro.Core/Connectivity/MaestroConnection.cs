@@ -7,7 +7,6 @@ using Maestro.Contracts.Slots;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Contracts;
-using Maestro.Core.Handlers;
 using MediatR;
 using MessagePack;
 using MessagePack.Resolvers;
@@ -186,6 +185,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             DeleteSlotRequest => "DeleteSlot",
             ChangeApproachTypeRequest => "ChangeApproachType",
             SendCoordinationMessageRequest => "SendCoordinationMessage",
+            ModifyWindRequest => "ModifyWind",
             _ => throw new ArgumentOutOfRangeException(nameof(request), "Unsupported request type: " + request.GetType().Name)
         };
     }
@@ -408,6 +408,15 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeApproachType);
+        });
+
+        hubConnection.On<RequestEnvelope, ServerResponse>("ModifyWind", async envelope =>
+        {
+            var request = (ModifyWindRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
+                return ServerResponse.CreateFailure("Airport identifier mismatch");
+
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.ModifyWind);
         });
     }
 

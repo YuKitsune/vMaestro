@@ -8,7 +8,7 @@ The vMaestro server enables multi-user operation, allowing multiple controllers 
 
 ## Overview
 
-The server is an ASP.NET Core application that uses SignalR for real-time communication.
+The server is an ASP.NET Core application that uses SignalR for real-time communication. It includes a web dashboard for monitoring active sessions.
 
 :::note
 Docker images will be available in a future release.
@@ -58,6 +58,20 @@ Server:
 ```
 
 The URI must point to the `/hub` endpoint.
+
+## Dashboard
+
+The server provides a web dashboard for monitoring active sessions.
+Access the dashboard at the server's root URL (e.g., `https://maestro.example.com/`).
+
+The dashboard displays:
+
+- **Sessions List**: All active sessions with their partition and airport
+- **Session Details**: For each session:
+  - Current runway mode and acceptance rates
+  - Next runway mode (if a configuration change is scheduled)
+  - Connected controllers with their callsigns and roles
+  - All flights in the sequence with their callsign, runway, state, and scheduled times
 
 ## Reverse Proxy
 

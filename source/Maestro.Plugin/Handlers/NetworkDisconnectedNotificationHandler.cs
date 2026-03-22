@@ -1,5 +1,6 @@
 ﻿using Maestro.Core.Connectivity;
 using Maestro.Core.Hosting;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 

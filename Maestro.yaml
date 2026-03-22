@@ -29,6 +29,7 @@ Server:
     Resequence: [Flow]
     RemoveFlight: [Enroute, Approach, Flow]
     ChangeApproachType: [Enroute, Approach, Flow]
+    ModifyWind: [Approach, Flow]
 
 Labels:
 

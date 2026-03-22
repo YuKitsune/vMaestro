@@ -85,6 +85,7 @@ Server:
     Resequence: [Flow]
     RemoveFlight: [Enroute, Approach, Flow]
     ChangeApproachType: [Enroute, Approach, Flow]
+    ModifyWinds: [Approach, Flow]
 ```
 
 | Property | Type | Required | Default | Description |
@@ -124,6 +125,7 @@ Available actions:
 | `Resequence` | Return flights from desequenced list |
 | `RemoveFlight` | Delete flights from sequence |
 | `ChangeApproachType` | Change approach type |
+| `ModifyWinds` | Manually adjust wind directions and speeds |
 
 ## Labels Configuration
 
@@ -233,6 +235,9 @@ Airports:
     MaxLandedFlights: 5
     LandedFlightTimeoutMinutes: 10
     LostFlightTimeoutMinutes: 10
+
+    AverageLandingSpeed: 150
+    UpperWindAltitude: 6000
 ```
 
 | Property | Type | Default | Description |
@@ -252,6 +257,8 @@ Airports:
 | `MaxLandedFlights` | integer | 5 | Landed flights to retain |
 | `LandedFlightTimeoutMinutes` | integer | 10 | Landed flight retention time |
 | `LostFlightTimeoutMinutes` | integer | 10 | Timeout for lost flights |
+| `AverageLandingSpeed` | integer | 150 | Average landing speed (TAS) in knots for distance calculations |
+| `UpperWindAltitude` | integer | 6000 | Altitude in feet for upper winds from GRIB data |
 
 Flight states: `Unstable`, `Stable`, `SuperStable`, `Frozen`
 

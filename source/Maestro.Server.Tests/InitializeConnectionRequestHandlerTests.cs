@@ -96,7 +96,14 @@ public class InitializeConnectionRequestHandlerTests
                 FirstLandingTimeForNextMode = default,
                 Flights = [],
                 Slots = [],
-            }
+            },
+            LandingStatistics = new LandingStatisticsDto
+            {
+                RunwayLandingTimes = new Dictionary<string, RunwayLandingTimesDto>(),
+            },
+            UpperWind = new WindDto(0, 0),
+            SurfaceWind = new WindDto(0, 0),
+            ManualWind = false
         };
 
         var connectionManager = new Mock<IConnectionManager>();

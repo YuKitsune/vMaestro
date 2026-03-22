@@ -1,0 +1,12 @@
+{
+  "airportIdentifier": "YSSY",
+  "surfaceWind": {
+    "direction": 270,
+    "speed": 15
+  },
+  "upperWind": {
+    "direction": 280,
+    "speed": 25
+  },
+  "manualWind": true
+}

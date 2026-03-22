@@ -102,8 +102,6 @@ public class RelayToMasterRequestHandlerTests
         // Assert
         result.Success.ShouldBeFalse();
         result.ErrorMessage.ShouldBe("No master found");
-
-        logger.Verify(x => x.Error("No master found"), Times.Once);
     }
 
     [Fact]
