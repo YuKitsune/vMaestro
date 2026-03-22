@@ -35,6 +35,7 @@ public static class MetarWindParser
 
             int direction;
             int speed;
+            bool isMps = windString.EndsWith("MPS", StringComparison.OrdinalIgnoreCase);
 
             // Check for variable direction (VRB)
             if (windString.StartsWith("VRB", StringComparison.OrdinalIgnoreCase))
@@ -54,6 +55,14 @@ public static class MetarWindParser
                     {
                         speedPart = speedPart.Substring(0, ktIndex);
                     }
+                    else
+                    {
+                        var mpsIndex = speedPart.IndexOf("MPS", StringComparison.OrdinalIgnoreCase);
+                        if (mpsIndex > 0)
+                        {
+                            speedPart = speedPart.Substring(0, mpsIndex);
+                        }
+                    }
                 }
 
                 if (!int.TryParse(speedPart, out speed))
@@ -63,7 +72,7 @@ public static class MetarWindParser
             {
                 // Check for variable wind direction (e.g., 340V250)
                 var vIndex = windString.IndexOf('V');
-                if (vIndex > 3 && vIndex < 7) // V should be after first direction (3 digits) and before second
+                if (vIndex >= 3 && vIndex < 7) // V should be after first direction (3 digits) and before second
                 {
                     // Variable direction: calculate midpoint
                     var dir1Str = windString.Substring(0, 3);
@@ -71,6 +80,10 @@ public static class MetarWindParser
                     var dir2Str = remainingAfterV.Substring(0, 3);
 
                     if (!int.TryParse(dir1Str, out var dir1) || !int.TryParse(dir2Str, out var dir2))
+                        return null;
+
+                    // Validate directions are within valid range (0-360)
+                    if (dir1 < 0 || dir1 > 360 || dir2 < 0 || dir2 > 360)
                         return null;
 
                     // Calculate midpoint handling wraparound (e.g., 350V010 should be 000, not 180)
@@ -99,6 +112,14 @@ public static class MetarWindParser
                         {
                             speedPart = speedPart.Substring(0, ktIndex);
                         }
+                        else
+                        {
+                            var mpsIndex = speedPart.IndexOf("MPS", StringComparison.OrdinalIgnoreCase);
+                            if (mpsIndex > 0)
+                            {
+                                speedPart = speedPart.Substring(0, mpsIndex);
+                            }
+                        }
                     }
 
                     if (!int.TryParse(speedPart, out speed))
@@ -112,6 +133,10 @@ public static class MetarWindParser
 
                     var dirStr = windString.Substring(0, 3);
                     if (!int.TryParse(dirStr, out direction))
+                        return null;
+
+                    // Validate direction is within valid range (0-360)
+                    if (direction < 0 || direction > 360)
                         return null;
 
                     // Extract speed: everything after direction until G or KT
@@ -128,11 +153,25 @@ public static class MetarWindParser
                         {
                             speedPart = speedPart.Substring(0, ktIndex);
                         }
+                        else
+                        {
+                            var mpsIndex = speedPart.IndexOf("MPS", StringComparison.OrdinalIgnoreCase);
+                            if (mpsIndex > 0)
+                            {
+                                speedPart = speedPart.Substring(0, mpsIndex);
+                            }
+                        }
                     }
 
                     if (!int.TryParse(speedPart, out speed))
                         return null;
                 }
+            }
+
+            // Convert MPS to knots (1 m/s = 1.94384 knots)
+            if (isMps)
+            {
+                speed = (int)Math.Round(speed * 1.94384);
             }
 
             return new WindDto(direction, speed);

@@ -21,7 +21,7 @@
 - [X] Test FlightLandedNotificationHandler
 - [X] Test LandingStatistics
 - [X] Test UpdateWindRequestHandler
-- [ ] Test METAR wind parser
+- [X] Test METAR wind parser
 - [ ] Ensure wind changes are server compatible
 - [ ] Clean up message handler usages
 - [ ] Seek feedback regarding WindService
