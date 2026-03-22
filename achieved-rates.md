@@ -20,7 +20,7 @@
 - [X] Fix server tests
 - [X] Test FlightLandedNotificationHandler
 - [X] Test LandingStatistics
-- [ ] Test UpdateWindRequestHandler
+- [X] Test UpdateWindRequestHandler
 - [ ] Test METAR wind parser
 - [ ] Ensure wind changes are server compatible
 - [ ] Clean up message handler usages
