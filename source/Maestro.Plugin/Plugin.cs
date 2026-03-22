@@ -9,13 +9,11 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core;
 using Maestro.Core.Configuration;
-using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Hosting.Contracts;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
-using Maestro.Core.Sessions;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Handlers;
 using Maestro.Plugin.Infrastructure;
@@ -45,6 +43,9 @@ public class Plugin : IPlugin
     readonly ILogger? _logger;
 
     readonly AircraftLandingCircuitBoard _aircraftLandingCircuitBoard = new();
+    readonly WorkQueue _workQueue = new(AddError);
+
+    static readonly Dictionary<string, DateTimeOffset> ErrorMessages = new();
 
     BackgroundTask? _windCheckTask;
 
@@ -193,6 +194,32 @@ public class Plugin : IPlugin
         return logger;
     }
 
+    static void AddError(Exception exception)
+    {
+        Log.Error(exception, "An error has occurred");
+        TryAddErrorInternal(exception);
+    }
+
+    public static void AddError(Exception exception, string message)
+    {
+        Log.Error(exception, message);
+        TryAddErrorInternal(exception);
+    }
+
+    static void TryAddErrorInternal(Exception exception)
+    {
+        lock (ErrorMessages)
+        {
+            // Don't flood the error window with the same message over and over again
+            if (ErrorMessages.TryGetValue(exception.Message, out var lastShown) &&
+                DateTimeOffset.Now - lastShown <= TimeSpan.FromMinutes(1))
+                return;
+
+            Errors.Add(exception, Name);
+            ErrorMessages[exception.Message] = DateTimeOffset.Now;
+        }
+    }
+
     void AddToolbarItems(PluginConfiguration pluginConfiguration)
     {
         const string MenuItemCategory = "TFMS";
@@ -224,7 +251,13 @@ public class Plugin : IPlugin
         }
         else
         {
-            _mediator.Send(new CreateMaestroInstanceRequest(airportIdentifier), CancellationToken.None);
+            _workQueue.Enqueue(async () =>
+            {
+                if (_mediator is null)
+                    return;
+
+                await _mediator.Send(new CreateMaestroInstanceRequest(airportIdentifier), CancellationToken.None);
+            });
         }
     }
 
@@ -232,8 +265,15 @@ public class Plugin : IPlugin
     {
         try
         {
-            _mediator.Publish(new NetworkConnectedNotification(Network.Callsign), CancellationToken.None);
-            StartWindCheck();
+            _workQueue.Enqueue(async () =>
+            {
+                if (_mediator is null)
+                    return;
+
+                await _mediator.Publish(new NetworkConnectedNotification(Network.Callsign), CancellationToken.None);
+            });
+
+            _workQueue.Enqueue(StartWindCheck);
         }
         catch (Exception ex)
         {
@@ -246,8 +286,15 @@ public class Plugin : IPlugin
     {
         try
         {
-            _mediator.Publish(new NetworkDisconnectedNotification(), CancellationToken.None);
-            StopWindCheck();
+            _workQueue.Enqueue(async () =>
+            {
+                if (_mediator is null)
+                    return;
+
+                await _mediator.Publish(new NetworkDisconnectedNotification(), CancellationToken.None);
+            });
+
+            _workQueue.Enqueue(StopWindCheck);
         }
         catch (Exception ex)
         {
@@ -256,24 +303,28 @@ public class Plugin : IPlugin
         }
     }
 
-    void StartWindCheck()
+    Task StartWindCheck()
     {
         if (_windCheckTask is not null && _windCheckTask.IsRunning)
-            return;
+            return Task.CompletedTask;
 
+        _logger?.Information("Wind check starting");
         _windCheckTask = new BackgroundTask(WindCheckWorker);
         _windCheckTask.Start();
-        _logger?.Information("Wind check started");
+        _logger?.Verbose("Wind check started");
+
+        return Task.CompletedTask;
     }
 
-    void StopWindCheck()
+    async Task StopWindCheck()
     {
         if (_windCheckTask is null || !_windCheckTask.IsRunning)
             return;
 
         // Fire and forget - don't block the event handler waiting for the task to complete
-        _ = _windCheckTask.Stop(CancellationToken.None);
         _logger?.Information("Wind check stopping");
+        await _windCheckTask.Stop(CancellationToken.None);
+        _logger?.Verbose("Wind check stopped");
     }
 
     async Task WindCheckWorker(CancellationToken cancellationToken)
@@ -326,7 +377,13 @@ public class Plugin : IPlugin
     {
         try
         {
-            PublishFlightUpdatedEvent(updated);
+            // Check if the flight has landed
+            if (HasLanded(updated))
+            {
+                _workQueue.Enqueue(async () => await TryNotifyLanded(updated, CancellationToken.None));
+            }
+
+            _workQueue.Enqueue(async () => await PublishFlightUpdatedEvent(updated));
         }
         catch (Exception ex)
         {
@@ -344,7 +401,7 @@ public class Plugin : IPlugin
                 var fdr = FDP2.GetFDRs.FirstOrDefault(f => f.Callsign == updated.ActualAircraft.Callsign);
                 if (fdr is not null && HasLanded(fdr))
                 {
-                    TryNotifyLanded(fdr);
+                    _workQueue.Enqueue(async () => await TryNotifyLanded(fdr, CancellationToken.None));
                 }
             }
 
@@ -354,7 +411,8 @@ public class Plugin : IPlugin
             // We publish the FlightUpdatedEvent here because OnFDRUpdate and Network_Connected aren't guaranteed to
             // fire for all flights when initially connecting to the network.
             // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
-            PublishFlightUpdatedEvent(updated.CoupledFDR);
+
+            _workQueue.Enqueue(async () => await PublishFlightUpdatedEvent(updated.CoupledFDR));
         }
         catch (Exception ex)
         {
@@ -372,8 +430,11 @@ public class Plugin : IPlugin
         return didPassLastWaypoint && isOnGround;
     }
 
-    void TryNotifyLanded(FDP2.FDR fdr)
+    async Task TryNotifyLanded(FDP2.FDR fdr, CancellationToken cancellationToken)
     {
+        if (_mediator is null)
+            return;
+
         // Already notified, nothing to do
         if (!_aircraftLandingCircuitBoard.TrySetBreaker(fdr.Callsign))
             return;
@@ -387,14 +448,14 @@ public class Plugin : IPlugin
             _logger?.Warning("{Callsign} actual landing time was {ActualLandingTime}, using ETA of last waypoint {LastWaypointEstimate}", fdr.Callsign, lastWaypoint.ATO, lastWaypoint.ETO);
         }
 
-        _mediator?.Publish(new FlightLandedNotification(fdr.DesAirport, fdr.Callsign, landingTime));
+        await _mediator.Publish(new FlightLandedNotification(fdr.DesAirport, fdr.Callsign, landingTime), cancellationToken);
     }
 
-    void PublishFlightUpdatedEvent(FDP2.FDR updated)
+    async Task PublishFlightUpdatedEvent(FDP2.FDR updated)
     {
         // BUG: FDR updates can be sent before the instance manager has been created, in which case we miss updates
         //  When an instance is created, scan the active FDRs to ensure it's populated.
-        if (_instanceManager is null || !_instanceManager.InstanceExists(updated.DesAirport))
+        if (_mediator is null || _instanceManager is null || !_instanceManager.InstanceExists(updated.DesAirport))
             return;
 
         var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
@@ -404,11 +465,6 @@ public class Plugin : IPlugin
         // Estimates have not been calculated yet
         if (!updated.ESTed)
             return;
-
-        if (HasLanded(updated))
-        {
-            TryNotifyLanded(updated);
-        }
 
         var estimates = updated.ParsedRoute
             .ToArray() // Materialize to avoid mutation during enumeration
@@ -466,7 +522,7 @@ public class Plugin : IPlugin
             position,
             estimates);
 
-        _mediator?.Publish(notification, CancellationToken.None);
+        await _mediator.Publish(notification, CancellationToken.None);
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
