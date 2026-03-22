@@ -7,7 +7,6 @@ using Maestro.Contracts.Slots;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Contracts;
-using Maestro.Core.Handlers;
 using MediatR;
 using MessagePack;
 using MessagePack.Resolvers;

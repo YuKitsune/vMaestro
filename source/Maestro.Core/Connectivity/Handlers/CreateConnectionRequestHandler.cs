@@ -25,7 +25,7 @@ public class CreateConnectionRequestHandler(
 
             logger.Information("Connection for {AirportIdentifier} created", request.AirportIdentifier);
 
-            // If connected to thet network, start the connection immediately
+            // If connected to VATSIM, start the connection immediately
             var networkStatus = await TryGetNetworkStatusResponse(cancellationToken);
             if (networkStatus is not null && networkStatus.IsConnected)
             {
@@ -45,7 +45,7 @@ public class CreateConnectionRequestHandler(
     {
         try
         {
-            return await mediator.Send(new GetNetworkStatusRequest(),cancellationToken);
+            return await mediator.Send(new GetNetworkStatusRequest(), cancellationToken);
         }
         catch (Exception e)
         {
