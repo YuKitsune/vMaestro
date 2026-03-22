@@ -24,6 +24,7 @@
             <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
             <converters:EqualityConverter x:Key="EqualityConverter" />
             <converters:LandingRateUnitSymbolConverter x:Key="LandingRateUnitSymbolConverter" />
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
@@ -90,31 +91,26 @@
 
             <Grid Margin="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="72" />
+                    <ColumnDefinition Width="72" /> <!-- Online indicator (Position ID IRL) -->
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition MinWidth="72" Width="Auto" />
+                    <ColumnDefinition MinWidth="72" Width="Auto" /> <!-- TMA Configuration -->
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition MinWidth="160" Width="*" /> <!-- Desired Rates -->
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" /> <!-- Winds -->
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" /> <!-- Achieved Rates -->
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" /> <!-- Units Selector -->
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="24" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="64" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="72" />
+                    <ColumnDefinition Width="Auto" /> <!-- UTC Time -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Sector ID -->
-                <TextBlock
+                <!-- Setup Button (Online Indicator) -->
+                <Button
                     Grid.Column="0"
-                    VerticalAlignment="Center"
-                    TextWrapping="Wrap"
-                    HorizontalAlignment="Center"
-                    Style="{StaticResource GenericTextStyle}"
-                    Text="{Binding Status}"/>
+                    Command="{Binding OpenConnectionWindowCommand}"
+                    Content="{Binding Status}"/>
 
                 <controls:BeveledLine Grid.Column="1" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
 
@@ -178,7 +174,7 @@
                     Orientation="Vertical" />
 
                 <!-- Wind Configuration -->
-                <Button Grid.Column="6" Command="{Binding OpenWindCommand}">
+                <Button Grid.Column="6" Command="{Binding OpenWindCommand}" Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid Margin="4,0,4,0">
                         <Grid.Resources>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
@@ -215,10 +211,11 @@
                 <controls:BeveledLine
                     Grid.Column="7"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
-                    Orientation="Vertical" />
+                    Orientation="Vertical"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <!-- Achieved Rates -->
-                <Grid Grid.Column="8" VerticalAlignment="Center">
+                <Grid Grid.Column="8" VerticalAlignment="Center" Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid.RowDefinitions>
                         <RowDefinition/>
                         <RowDefinition/>
@@ -277,15 +274,17 @@
                 <controls:BeveledLine
                     Grid.Column="9"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
-                    Orientation="Vertical" />
+                    Orientation="Vertical"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <!-- Units Selector -->
-                <Button Grid.Column="10" Content="{Binding SelectedUnit, Converter={StaticResource LandingRateUnitSymbolConverter}}" Command="{Binding CycleUnitsCommand}"/>
+                <Button Grid.Column="10" Width="24" Content="{Binding SelectedUnit, Converter={StaticResource LandingRateUnitSymbolConverter}}" Command="{Binding CycleUnitsCommand}" Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                 <controls:BeveledLine
                     Grid.Column="11"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
-                    Orientation="Vertical" />
+                    Orientation="Vertical"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <!-- UTC Time -->
                 <TextBlock
@@ -293,15 +292,8 @@
                     Grid.Column="12"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Style="{StaticResource GenericTextStyle}"/>
-
-                <controls:BeveledLine
-                    Grid.Column="13"
-                    Width="{x:Static local:Theme.BeveledLineWidth}"
-                    Orientation="Vertical" />
-
-                <!-- Setup Button -->
-                <Button Grid.Column="14" Content="SETUP" Command="{Binding OpenConnectionWindowCommand}" />
+                    Style="{StaticResource GenericTextStyle}"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </Grid>
 
         </controls:BeveledBorder>

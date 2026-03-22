@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Maestro.Contracts.Connectivity;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
@@ -151,9 +152,25 @@ public partial class MaestroViewModel : ObservableObject
         }
     }
 
-    [ObservableProperty] string _status = "OFFLINE";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShouldShowFlowControls))]
+    string _status = "OFFLINE";
 
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShouldShowFlowControls))]
+    Role _role = Role.Observer;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShouldShowFlowControls))]
+    bool _flowIsOnline = false;
+
+    public bool ShouldShowFlowControls =>
+        Status is "OFFLINE" or "READY" ||
+        Role is Role.Flow or Role.Approach ||
+        (Role == Role.Enroute && !FlowIsOnline);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
     TimeSpan _scrollOffset = TimeSpan.Zero;
     public bool IsScrolling => ScrollOffset != TimeSpan.Zero;
     public bool IsScrollingUp => SelectedView.Direction == TimelineDirection.Up
@@ -208,10 +225,12 @@ public partial class MaestroViewModel : ObservableObject
 
         WeakReferenceMessenger.Default.Register<ConnectionStatusChangedNotification>(this, (r, m) =>
         {
-            if (m.AirportIdentifier == AirportIdentifier)
-            {
-                Status = m.Status;
-            }
+            if (m.AirportIdentifier != AirportIdentifier)
+                return;
+
+            Status = m.Status;
+            Role = m.Role;
+            FlowIsOnline = m.FlowIsOnline;
         });
 
         WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (r, notification) =>
