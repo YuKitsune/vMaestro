@@ -53,20 +53,21 @@ public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConf
         var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
 
+        List<MET.Product>? responses = null;
         while (!linkedSource.IsCancellationRequested)
         {
-            var responses = MET.Instance.GetProducts(request);
+            responses = MET.Instance.GetProducts(request);
             if (responses is not null)
                 break;
         }
 
         // Timeout expired
-        if (linkedSource.IsCancellationRequested)
+        if (linkedSource.IsCancellationRequested || responses is null)
         {
             return null;
         }
 
-        var products = MET.Instance.GetProducts(request)
+        var products = responses
             .OfType<MET.VATSIM_METAR>()
             .ToArray();
 
