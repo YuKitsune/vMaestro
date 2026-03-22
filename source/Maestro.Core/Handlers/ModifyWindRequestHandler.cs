@@ -22,7 +22,14 @@ public class ModifyWindRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ModifyWindRequest for {AirportIdentifier}", request.AirportIdentifier);
+            // Slaves may only relay manual wind updates
+            if (!request.ManualWind)
+            {
+                logger.Warning("Ignoring automatic wind update for {AirportIdentifier} - slaves may only relay manual updates", request.AirportIdentifier);
+                return;
+            }
+
+            logger.Information("Relaying manual ModifyWindRequest for {AirportIdentifier}", request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

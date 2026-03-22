@@ -232,7 +232,7 @@ public class ModifyWindRequestHandlerTests
     }
 
     [Fact]
-    public async Task WhenConnectedAsSlave_RelaysRequestToMaster()
+    public async Task WhenConnectedAsSlave_AndManualUpdate_RelaysRequestToMaster()
     {
         // Arrange
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
@@ -275,6 +275,54 @@ public class ModifyWindRequestHandlerTests
         instance.Session.ManualWind.ShouldBe(originalManualWind);
 
         // Should not publish notification when relaying
+        await mediator.DidNotReceive().Publish(
+            Arg.Any<SessionUpdatedNotification>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenConnectedAsSlave_AndAutomaticUpdate_IgnoresRequest()
+    {
+        // Arrange
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L")
+            .WithRunwayMode("34L")
+            .Build();
+
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+            .Build();
+
+        var slaveConnectionManager = new MockSlaveConnectionManager();
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ModifyWindRequestHandler(
+            instanceManager,
+            slaveConnectionManager,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ModifyWindRequest(
+            "YSSY",
+            new WindDto(Direction: 340, Speed: 25),
+            new WindDto(Direction: 320, Speed: 45),
+            ManualWind: false); // Automatic update
+
+        var originalSurfaceWind = instance.Session.SurfaceWind;
+        var originalUpperWind = instance.Session.UpperWind;
+        var originalManualWind = instance.Session.ManualWind;
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert - should not relay automatic updates
+        slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(0);
+
+        // Local session should not be modified
+        instance.Session.SurfaceWind.ShouldBe(originalSurfaceWind);
+        instance.Session.UpperWind.ShouldBe(originalUpperWind);
+        instance.Session.ManualWind.ShouldBe(originalManualWind);
+
+        // Should not publish notification
         await mediator.DidNotReceive().Publish(
             Arg.Any<SessionUpdatedNotification>(),
             Arg.Any<CancellationToken>());
