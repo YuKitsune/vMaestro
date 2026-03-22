@@ -20,12 +20,7 @@
 - [ ] Improve separation between domain models, DTOs, and view models
 - [ ] Explore calculating TTG at runtime based on STAR track and upper winds
 - [ ] Make delaying action times configurable (lightweight enroute trajectory config?)
-- [ ] Consider moving some of the sequence logic into the individual handlers so they can be tested more easily.
-- [ ] Clean up tests
-    - [ ] Use a Mock sequence, that doesn't do any scheduling
-    - [ ] Test scheduling separately
-    - [ ] Clean up Flight builder so that you can't build an invalid flight (make ETA and ETA_FF mutually exclusive? Or calculate a TTG based on ETA - ETA_FF if no trajectory is set?)
-    - [ ] Clean up the handler tests to remove all the unnecessary setup (i.e. trajectories)
+- [ ] Decompose Plugin.cs into multiple separate services (WindCheckService, vatSysEventAdapter, DpiAwarenessHelper, etc.)
 
 ### Server Deployment
 
@@ -41,6 +36,20 @@
 - [X] Achieved rates
 - [X] Units selector (NM, aircraft/hr, seconds)
 - [X] UTC time
+
+### Testing Clean-up
+
+- [ ] Consider moving some of the sequence logic into the individual handlers so they can be tested more easily.
+- [ ] Use a Mock sequence, that doesn't do any scheduling
+- [ ] Test scheduling separately
+- [ ] Clean up Flight builder so that you can't build an invalid flight (make ETA and ETA_FF mutually exclusive? Or calculate a TTG based on ETA - ETA_FF if no trajectory is set?)
+- [ ] Clean up the handler tests to remove all the unnecessary setup (i.e. trajectories)
+
+### Internal Documentation
+
+- [ ] Document instances, sessions, interactions between vatSys and Maestro.Core, etc.
+- [ ] ADR
+- [ ] Practices (i.e. don't assert on logs, etc.)
 
 ### Algorithm Overhaul
 
