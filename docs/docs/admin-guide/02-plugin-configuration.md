@@ -85,6 +85,7 @@ Server:
     Resequence: [Flow]
     RemoveFlight: [Enroute, Approach, Flow]
     ChangeApproachType: [Enroute, Approach, Flow]
+    ModifyWinds: [Approach, Flow]
 ```
 
 | Property | Type | Required | Default | Description |
@@ -124,6 +125,7 @@ Available actions:
 | `Resequence` | Return flights from desequenced list |
 | `RemoveFlight` | Delete flights from sequence |
 | `ChangeApproachType` | Change approach type |
+| `ModifyWinds` | Manually adjust wind directions and speeds |
 
 ## Labels Configuration
 

@@ -15,6 +15,8 @@ public record RefreshWindRequest(string AirportIdentifier)
 public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConfigurationProvider, IMediator mediator, ILogger logger)
     : IRequestHandler<RefreshWindRequest>
 {
+    // TODO: Extract met lookups into separate services
+
     public async Task Handle(RefreshWindRequest request, CancellationToken cancellationToken)
     {
         logger.Verbose("Refreshing winds for {AirportIdentifier}", request.AirportIdentifier);
