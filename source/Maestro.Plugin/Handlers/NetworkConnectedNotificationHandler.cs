@@ -10,7 +10,6 @@ public record NetworkConnectedNotification(string PositionIdentifier) : INotific
 public class NetworkConnectedNotificationHandler(
     IMaestroConnectionManager connectionManager,
     IMaestroInstanceManager instanceManager,
-    WindService windService,
     ILogger logger)
     : INotificationHandler<NetworkConnectedNotification>
 {
@@ -20,8 +19,6 @@ public class NetworkConnectedNotificationHandler(
         {
             if (!connectionManager.TryGetConnection(airportIdentifier, out var connection))
                 continue;
-
-            await windService.Start();
 
             try
             {

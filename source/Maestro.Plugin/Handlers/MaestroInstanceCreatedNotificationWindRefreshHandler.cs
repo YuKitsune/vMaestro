@@ -7,7 +7,7 @@ namespace Maestro.Plugin.Handlers;
 /// <summary>
 /// Updates the winds as soon as the instance is started, if already connected to VATSIM.
 /// </summary>
-public class MaestroInstanceCreatedNotificationWindCheckHandler(IMediator mediator)
+public class MaestroInstanceCreatedNotificationWindRefreshHandler(IMediator mediator)
     : INotificationHandler<MaestroInstanceCreatedNotification>
 {
     public async Task Handle(MaestroInstanceCreatedNotification notification, CancellationToken cancellationToken)

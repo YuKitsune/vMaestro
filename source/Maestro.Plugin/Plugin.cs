@@ -12,6 +12,7 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Hosting.Contracts;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
@@ -44,6 +45,8 @@ public class Plugin : IPlugin
     readonly ILogger? _logger;
 
     readonly AircraftLandingCircuitBoard _aircraftLandingCircuitBoard = new();
+
+    BackgroundTask? _windCheckTask;
 
     public Plugin()
     {
@@ -127,7 +130,6 @@ public class Plugin : IPlugin
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(new ErrorReporter(Name, logger))
                 .AddSingleton<WindowManager>()
-                .AddSingleton<WindService>()
                 .BuildServiceProvider());
     }
 
@@ -231,6 +233,7 @@ public class Plugin : IPlugin
         try
         {
             _mediator.Publish(new NetworkConnectedNotification(Network.Callsign), CancellationToken.None);
+            StartWindCheck();
         }
         catch (Exception ex)
         {
@@ -244,11 +247,77 @@ public class Plugin : IPlugin
         try
         {
             _mediator.Publish(new NetworkDisconnectedNotification(), CancellationToken.None);
+            StopWindCheck();
         }
         catch (Exception ex)
         {
             _logger?.Error(ex, "An error occurred while handling Network.Disconnected.");
             Errors.Add(ex, Name);
+        }
+    }
+
+    void StartWindCheck()
+    {
+        if (_windCheckTask is not null && _windCheckTask.IsRunning)
+            return;
+
+        _windCheckTask = new BackgroundTask(WindCheckWorker);
+        _windCheckTask.Start();
+        _logger?.Information("Wind check started");
+    }
+
+    void StopWindCheck()
+    {
+        if (_windCheckTask is null)
+            return;
+
+        _windCheckTask.Stop(CancellationToken.None).Wait();
+        _logger?.Information("Wind check stopped");
+    }
+
+    async Task WindCheckWorker(CancellationToken cancellationToken)
+    {
+        var checkInterval = TimeSpan.FromMinutes(30);
+        var errorInterval = TimeSpan.FromMinutes(5);
+        var windCheckTimeout = TimeSpan.FromMinutes(1);
+
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    if (Network.IsConnected && _instanceManager is not null && _mediator is not null)
+                    {
+                        var timeoutCancellationTokenSource = new CancellationTokenSource(windCheckTimeout);
+                        foreach (var airportIdentifier in _instanceManager.ActiveInstances)
+                        {
+                            await _mediator.Send(
+                                new RefreshWindRequest(airportIdentifier),
+                                timeoutCancellationTokenSource.Token);
+                        }
+                    }
+
+                    await Task.Delay(checkInterval, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // Ignored
+                }
+                catch (Exception ex)
+                {
+                    _logger?.Error(ex, "Error updating wind");
+                    await Task.Delay(errorInterval, cancellationToken);
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger?.Information("Wind check stopping");
+        }
+        catch (Exception ex)
+        {
+            _logger?.Fatal(ex, "Wind check failed");
         }
     }
 

@@ -11,7 +11,6 @@ public record NetworkDisconnectedNotification : INotification;
 public class NetworkDisconnectedNotificationHandler(
     IMaestroConnectionManager connectionManager,
     IMaestroInstanceManager instanceManager,
-    WindService windService,
     ILogger logger)
     : INotificationHandler<NetworkDisconnectedNotification>
 {
@@ -21,8 +20,6 @@ public class NetworkDisconnectedNotificationHandler(
         {
             if (!connectionManager.TryGetConnection(airportIdentifier, out var connection))
                 continue;
-
-            await windService.Stop();
 
             try
             {
