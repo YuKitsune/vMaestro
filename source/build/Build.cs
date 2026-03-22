@@ -218,12 +218,14 @@ class Build : NukeBuild
         });
 
     Target TestPlugin => _ => _
+        .DependsOn(DownloadVatSys)
         .Executes(() =>
         {
             Log.Information("Running Plugin tests");
             DotNetTasks.DotNetTest(s => s
                 .SetProjectFile(PluginTestsProjectPath)
-                .SetConfiguration(Configuration));
+                .SetConfiguration(Configuration)
+                .SetProperty("VatSysPath", VatSysExePath.Parent.Parent));
         });
 
     Target TestCore => _ => _
