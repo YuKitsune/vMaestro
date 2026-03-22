@@ -102,6 +102,8 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="24" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="72" />
                 </Grid.ColumnDefinitions>
 
@@ -285,8 +287,21 @@
                     Width="{x:Static local:Theme.BeveledLineWidth}"
                     Orientation="Vertical" />
 
+                <!-- UTC Time -->
+                <TextBlock
+                    x:Name="UtcTimeText"
+                    Grid.Column="12"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Style="{StaticResource GenericTextStyle}"/>
+
+                <controls:BeveledLine
+                    Grid.Column="13"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical" />
+
                 <!-- Setup Button -->
-                <Button Grid.Column="12" Content="SETUP" Command="{Binding OpenConnectionWindowCommand}" />
+                <Button Grid.Column="14" Content="SETUP" Command="{Binding OpenConnectionWindowCommand}" />
             </Grid>
 
         </controls:BeveledBorder>

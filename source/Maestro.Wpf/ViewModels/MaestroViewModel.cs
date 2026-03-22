@@ -77,7 +77,7 @@ public partial class MaestroViewModel : ObservableObject
     WindDto _surfaceWind = new(0,0);
 
     [ObservableProperty]
-    WindDto _upperWind = new WindDto(0,0);
+    WindDto _upperWind = new(0,0);
 
     [ObservableProperty]
     int _upperWindAltitude;

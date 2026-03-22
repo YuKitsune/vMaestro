@@ -23,8 +23,8 @@
 - [X] Test UpdateWindRequestHandler
 - [X] Test METAR wind parser
 - [X] Ensure wind changes are server compatible
-- [ ] Clean up message handler usages
-- [ ] Seek feedback regarding WindService
+- [X] Clean up message handler usages
+- [X] Seek feedback regarding WindService
 - [ ] Add option to enable/disable menu sections in the Setup window
 
 - [ ] Document new configuration options
