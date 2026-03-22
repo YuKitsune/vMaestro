@@ -42,10 +42,27 @@ public class AsyncNotificationPublisher : INotificationPublisher, IAsyncDisposab
         {
             try
             {
-                foreach (var notificationHandlerExecutor in workItem.Handlers)
+                // Process handlers in parallel so slow handlers don't block others
+                var tasks = workItem.Handlers.Select(async handler =>
                 {
-                    await notificationHandlerExecutor.HandlerCallback(workItem.Notification, cancellationToken).ConfigureAwait(false);
-                }
+                    try
+                    {
+                        await handler.HandlerCallback(workItem.Notification, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Ignore cancellation for individual handlers
+                    }
+                    catch (Exception exception)
+                    {
+                        // Log error but don't stop processing other handlers
+                        _logger.Error(exception, "Failed to process notification {NotificationType} in handler {HandlerType}",
+                            workItem.Notification.GetType(), handler.GetType());
+                        Errors.Add(exception, Plugin.Name);
+                    }
+                });
+
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -53,7 +70,7 @@ public class AsyncNotificationPublisher : INotificationPublisher, IAsyncDisposab
             }
             catch (Exception exception)
             {
-                // Log error but continue processing other notifications
+                // This should rarely happen since individual handler errors are caught above
                 _logger.Error(exception, "Failed to process notification {NotificationType}", workItem.Notification.GetType());
                 Errors.Add(exception, Plugin.Name);
             }
