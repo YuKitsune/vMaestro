@@ -36,9 +36,7 @@ public class LandingStatistics
         void RemoveStaleTimes(DateTimeOffset referenceTime, List<DateTimeOffset> times)
         {
             var oldestTime = referenceTime.Subtract(_averagingPeriod);
-            times.Where(t => t.IsSameOrBefore(oldestTime))
-                .ToList()
-                .ForEach(t => times.Remove(t));
+            times.RemoveAll(t => t.IsSameOrBefore(oldestTime));
         }
     }
 
