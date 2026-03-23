@@ -74,8 +74,8 @@ public class FlightUpdatedHandler(
                     var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
                     var approximateLandingEstimate = notification.Estimates.Last().Estimate;
 
-                    // vatSys uses MaxValue when the fix has been overflown, but the time is not known (i.e. controller connecting after the event)
-                    var feederFixTimeIsNotKnown = feederFix is not null && feederFix.ActualTimeOver == DateTimeOffset.MaxValue;
+                    // vatSys uses MaxValue when the fix has been overflown and the time is not known (i.e. controller connecting after the event)
+                    var feederFixTimeIsNotKnown = feederFix is null || feederFix.Estimate.HasValue;
 
                     var isFromDepartureAirport = airportConfiguration.DepartureAirports.Any(d => d.Identifier == notification.Origin);
                     var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;

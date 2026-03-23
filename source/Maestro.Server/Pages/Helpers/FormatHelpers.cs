@@ -5,9 +5,14 @@ namespace Maestro.Server.Pages.Helpers;
 
 public static class FormatHelpers
 {
-    public static string ToDDHHMM(DateTimeOffset time)
+    public static string ToDDHHMM(DateTimeOffset? time)
     {
-        return time.ToString("dd/HHmm");
+        if (time.HasValue)
+        {
+            return time.Value.ToString("dd/HHmm");
+        }
+
+        return "(unknown)";
     }
 
     public static string GetStateBadgeClass(State state) => state switch

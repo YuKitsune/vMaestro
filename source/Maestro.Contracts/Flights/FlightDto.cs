@@ -118,12 +118,6 @@ public class FlightDto
     public required DateTimeOffset? FeederFixTime { get; init; }
 
     /// <summary>
-    /// The actual time the flight crossed the feeder fix.
-    /// </summary>
-    [Key(18)]
-    public required DateTimeOffset? ActualFeederFixTime { get; init; }
-
-    /// <summary>
     /// The identifier of the runway assigned to this flight.
     /// </summary>
     [Key(19)]

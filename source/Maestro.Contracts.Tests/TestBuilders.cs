@@ -16,7 +16,7 @@ public static class TestBuilders
         new(-33.9461, 151.1772);
 
     public static FixEstimate CreateFixEstimate() =>
-        new("RIVET", FixedTime, FixedTime.AddMinutes(-5));
+        new("RIVET", FixedTime);
 
     public static FlightPosition CreateFlightPosition() =>
         new(CreateCoordinate(), 15000, VerticalTrack.Descending, 250.5, false);
@@ -135,7 +135,6 @@ public static class TestBuilders
             FeederFixEstimate = FixedTime.AddMinutes(-10),
             ManualFeederFixEstimate = false,
             FeederFixTime = FixedTime.AddMinutes(-8),
-            ActualFeederFixTime = null,
             AssignedRunwayIdentifier = "34L",
             NumberToLandOnRunway = 3,
             ApproachType = "ILS",

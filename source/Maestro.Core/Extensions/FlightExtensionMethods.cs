@@ -37,7 +37,6 @@ public static class FlightExtensionMethods
             HighPriority = flight.HighPriority,
             MaximumDelay = flight.MaximumDelay,
             ManualFeederFixEstimate = flight.ManualFeederFixEstimate,
-            ActualFeederFixTime = flight.ActualFeederFixTime,
             ApproachType = flight.ApproachType,
             LastSeen = flight.LastSeen,
             Fixes = flight.Fixes,

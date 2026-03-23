@@ -1,0 +1,7 @@
+- Remove all references to ATO_FF (Actual Feeder Fix Time)
+- Need to make ETAs optional to account for missing data
+- If ETA_FF is unknown, add to pending list
+- Prevent vatSys from sending junk data
+    - If ETA is unknown, don't bother sending it to MAESTRO
+    - How do we make route ETAs nullable without making landing ETA nullable???
+- Update docs
