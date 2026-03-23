@@ -28,11 +28,10 @@ COPY ["source/", "source/"]
 
 # Run NUKE build to publish server with proper versioning
 RUN chmod +x build.sh && \
-    ./build.sh PackageServer --configuration $BUILD_CONFIGURATION
+    ./build.sh CompileServer --configuration $BUILD_CONFIGURATION --server-output-directory /repo/output/server
 
 FROM base AS final
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /app
-COPY --from=build /repo/source/Maestro.Server/bin/${BUILD_CONFIGURATION}/net10.0/publish .
+COPY --from=build /repo/output/server .
 COPY --from=docs-build /docs/build ./wwwroot
 ENTRYPOINT ["dotnet", "Maestro.Server.dll"]

@@ -52,6 +52,9 @@ class Build : NukeBuild
     [Secret]
     readonly string GitHubToken;
 
+    [Parameter("Output directory for server build")]
+    readonly string ServerOutputDirectory;
+
     [GitRepository]
     readonly GitRepository GitRepository;
 
@@ -78,7 +81,9 @@ class Build : NukeBuild
 
     // Server paths
     AbsolutePath ServerProjectPath => RootDirectory / "source" / "Maestro.Server" / "Maestro.Server.csproj";
-    AbsolutePath ServerBuildOutputDirectory => TemporaryDirectory / "build-server";
+    AbsolutePath ServerBuildOutputDirectory => !string.IsNullOrEmpty(ServerOutputDirectory)
+        ? (AbsolutePath)ServerOutputDirectory
+        : TemporaryDirectory / "build-server";
     AbsolutePath ServerZipPath => TemporaryDirectory / $"Maestro.Server.{GetSemanticVersion()}.zip";
     AbsolutePath ServerPackageDirectory => TemporaryDirectory / "package-server";
 
