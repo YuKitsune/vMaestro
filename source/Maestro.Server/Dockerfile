@@ -28,7 +28,7 @@ COPY ["source/", "source/"]
 
 # Run NUKE build to publish server with proper versioning
 RUN chmod +x build.sh && \
-    ./build.sh PublishServer --configuration $BUILD_CONFIGURATION
+    ./build.sh PackageServer --configuration $BUILD_CONFIGURATION
 
 FROM base AS final
 ARG BUILD_CONFIGURATION=Release
