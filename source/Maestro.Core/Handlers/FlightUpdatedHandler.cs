@@ -322,7 +322,7 @@ public class FlightUpdatedHandler(
             var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
             if (feederFixSystemEstimate is not null)
             {
-                if (feederFixSystemEstimate.ActualTimeOver.HasValue && feederFixSystemEstimate.ActualTimeOver.Value != DateTimeOffset.MaxValue)
+                if (feederFixSystemEstimate.ActualTimeOver.HasValue)
                 {
                     logger.Information(
                         "{Callsign} passed {FeederFix} at {ActualTimeOver}",
