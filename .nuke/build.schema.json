@@ -129,6 +129,10 @@
           "type": "string",
           "description": "The name of the vatSys profile where the plugin should be (un)installed"
         },
+        "ServerOutputDirectory": {
+          "type": "string",
+          "description": "Output directory for server build"
+        },
         "VatSysPath": {
           "type": "string",
           "description": "Path to the vatSys installation"
