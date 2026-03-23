@@ -435,6 +435,9 @@ public class Plugin : IPlugin
         if (_mediator is null)
             return;
 
+        if (_instanceManager is null || !_instanceManager.InstanceExists(fdr.DesAirport))
+            return;
+
         // Already notified, nothing to do
         if (!_aircraftLandingCircuitBreaker.TrySetBreaker(fdr.Callsign))
             return;
