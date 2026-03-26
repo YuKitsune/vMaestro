@@ -67,7 +67,8 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             .AddMessagePackProtocol(options =>
             {
                 options.SerializerOptions = MessagePackSerializerOptions.Standard
-                    .WithResolver(ContractlessStandardResolver.Instance);
+                    .WithResolver(ContractlessStandardResolver.Instance)
+                    .WithCompression(MessagePackCompression.Lz4Block);
             })
             .Build();
 
