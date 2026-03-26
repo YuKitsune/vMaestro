@@ -44,7 +44,7 @@ public class RemoveRequestHandler(
                     instance.Session.PendingFlights.Add(new PendingFlight(
                         sequencedFlight.Callsign,
                         sequencedFlight.IsFromDepartureAirport,
-                        IsHighPriority: false));
+                        sequencedFlight.HighPriority));
             }
 
             var desequencedFlight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
@@ -57,7 +57,7 @@ public class RemoveRequestHandler(
                     instance.Session.PendingFlights.Add(new PendingFlight(
                         desequencedFlight.Callsign,
                         desequencedFlight.IsFromDepartureAirport,
-                        IsHighPriority: false));
+                        desequencedFlight.HighPriority));
             }
 
             if (sequencedFlight is null && desequencedFlight is null)

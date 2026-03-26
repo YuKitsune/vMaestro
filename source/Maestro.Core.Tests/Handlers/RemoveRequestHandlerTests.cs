@@ -32,8 +32,10 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .Build();
     }
 
-    [Fact]
-    public async Task WhenAnActiveFlightIsRemoved_ItIsPlacedInThePendingList()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task WhenAnActiveFlightIsRemoved_ItIsPlacedInThePendingList(bool highPriority)
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -44,6 +46,8 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFixTime(now.AddMinutes(5))
             .WithFeederFixEstimate(now.AddMinutes(3))
             .WithRunway("34L")
+            .FromDepartureAirport()
+            .HighPriority(highPriority)
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
@@ -53,7 +57,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -68,15 +72,13 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
-        var sessionDto = instance.Session.Snapshot();
-
-        sessionDto.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sessionDto.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
-        sessionDto.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
-
-        // Verify remaining flight moved up in sequence
+        instance.Session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
+
+        var pendingFlight = instance.Session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
+        pendingFlight.ShouldNotBeNull();
+        pendingFlight.IsFromDepartureAirport.ShouldBeTrue();
+        pendingFlight.IsHighPriority.ShouldBe(highPriority);
     }
 
     [Fact]
