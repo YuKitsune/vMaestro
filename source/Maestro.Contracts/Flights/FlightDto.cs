@@ -184,26 +184,20 @@ public class FlightDto
     public required DateTimeOffset LastSeen { get; init; }
 
     /// <summary>
-    /// Estimates for each fix along the flight's route.
-    /// </summary>
-    [Key(30)]
-    public required FixEstimate[] Fixes { get; init; } = [];
-
-    /// <summary>
     /// The current position of the flight, if known.
     /// </summary>
-    [Key(31)]
+    [Key(30)]
     public required FlightPosition? Position { get; init; }
 
     /// <summary>
     /// Whether this flight was manually inserted into the sequence.
     /// </summary>
-    [Key(32)]
+    [Key(31)]
     public required bool IsManuallyInserted { get; init; }
 
     /// <summary>
     /// The approximate time it will take for the flight to travel from the feeder fix to the runway threshold.
     /// </summary>
-    [Key(33)]
+    [Key(32)]
     public TimeSpan? TimeToGo { get; init; }
 }

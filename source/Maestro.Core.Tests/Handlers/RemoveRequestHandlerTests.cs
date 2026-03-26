@@ -113,42 +113,6 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightIsRemoved_ItsDetailsAreReset()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(10))
-            .WithLandingEstimate(now.AddMinutes(8))
-            .WithFeederFixTime(now.AddMinutes(5))
-            .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway("34L")
-            .Build();
-
-        // Set some additional properties that should be reset
-        flight.SetSequenceData(clockFixture.Instance.UtcNow().AddMinutes(30), FlowControls.ReduceSpeed);
-
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
-            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
-            .Build();
-
-        var handler = GetRequestHandler(instanceManager, sequence);
-        var request = new RemoveRequest("YSSY", "QFA123");
-
-        // Act
-        await handler.Handle(request, CancellationToken.None);
-
-        // Assert - verify Reset() behavior: state, activation, and flow controls are reset
-        // Note: Trajectory and estimates are kept - they will be recalculated when re-inserted
-        flight.ActivatedTime.ShouldBeNull("ActivatedTime should be reset to null");
-        flight.FlowControls.ShouldBe(FlowControls.HighSpeed, "FlowControls should be reset to HighSpeed");
-        flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
-        flight.MaximumDelay.ShouldBeNull("MaximumDelay should be reset to null");
-        flight.TargetLandingTime.ShouldBeNull("TargetLandingTime should be reset to null");
-    }
-
-    [Fact]
     public async Task TheSequenceIsRecalculated()
     {
         // Arrange
@@ -217,16 +181,11 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenRemovingAFlightFromThePendingList_AnExceptionIsThrown()
     {
         // Arrange
-        var now = clockFixture.Instance.UtcNow();
-        var flight = new FlightBuilder("QFA123")
-            .WithLandingEstimate(now.AddMinutes(8))
-            .Build();
-
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(flight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA123", IsFromDepartureAirport: false, IsHighPriority: false));
 
         var handler = GetRequestHandler(instanceManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
@@ -273,7 +232,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         sequence.Flights.ShouldContain(flight, "Flight should remain in sequence when relaying to master");
-        instance.Session.PendingFlights.ShouldNotContain(flight, "Flight should not be added to pending list when relaying to master");
+        instance.Session.PendingFlights.ShouldNotContain(f => f.Callsign == "QFA123", "Flight should not be added to pending list when relaying to master");
     }
 
     RemoveRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)

@@ -114,6 +114,29 @@ public static class TestBuilders
         new("YSSY", Guid.Parse("12345678-1234-1234-1234-123456789012"));
 
     // Flights
+    public static FlightDataRecord CreateFlightDataRecord() =>
+        new("QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            FixedTime.AddHours(-2),
+            CreateFlightPosition(),
+            [CreateFixEstimate()],
+            FixedTime);
+
+    public static PendingFlightDto CreatePendingFlightDto() =>
+        new()
+        {
+            Callsign = "QFA123",
+            AircraftType = "B738",
+            OriginIdentifier = "YMML",
+            DestinationIdentifier = "YSSY",
+            IsFromDepartureAirport = false,
+            IsHighPriority = false
+        };
+
     public static FlightDto CreateFlightDto() =>
         new()
         {
@@ -146,11 +169,6 @@ public static class TestBuilders
             RemainingDelay = TimeSpan.FromMinutes(1),
             FlowControls = FlowControls.ReduceSpeed,
             LastSeen = FixedTime,
-            Fixes =
-            [
-                new FixEstimate("RIVET", FixedTime.AddMinutes(-10)),
-                new FixEstimate("SOSIJ", FixedTime.AddMinutes(-5))
-            ],
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,
             TimeToGo = TimeSpan.FromMinutes(18)
@@ -272,14 +290,15 @@ public static class TestBuilders
         new()
         {
             AirportIdentifier = "YSSY",
-            PendingFlights = [CreateFlightDto()],
+            PendingFlights = [CreatePendingFlightDto()],
             DeSequencedFlights = [],
             Sequence = CreateSequenceDto(),
             DummyCounter = 42,
             LandingStatistics = CreateLandingStatisticsDto(),
             SurfaceWind = CreateWindDto(),
             UpperWind = new WindDto(280, 25),
-            ManualWind = false
+            ManualWind = false,
+            FlightDataRecords = [CreateFlightDataRecord()]
         };
 
     public static RestoreSessionRequest CreateRestoreSessionRequest() =>

@@ -3,6 +3,7 @@ using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
+using Maestro.Core.Model;
 using MediatR;
 using Serilog;
 
@@ -39,10 +40,11 @@ public class RemoveRequestHandler(
                 logger.Information("Removing sequenced flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
                 sequence.Remove(sequencedFlight);
 
-                sequencedFlight.Reset();
-
                 if (!sequencedFlight.IsManuallyInserted)
-                    instance.Session.PendingFlights.Add(sequencedFlight);
+                    instance.Session.PendingFlights.Add(new PendingFlight(
+                        sequencedFlight.Callsign,
+                        sequencedFlight.IsFromDepartureAirport,
+                        IsHighPriority: false));
             }
 
             var desequencedFlight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
@@ -51,10 +53,11 @@ public class RemoveRequestHandler(
                 logger.Information("Removing desequenced flight {Callsign} from de-sequenced flights for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
                 instance.Session.DeSequencedFlights.Remove(desequencedFlight);
 
-                desequencedFlight.Reset();
-
                 if (!desequencedFlight.IsManuallyInserted)
-                    instance.Session.PendingFlights.Add(desequencedFlight);
+                    instance.Session.PendingFlights.Add(new PendingFlight(
+                        desequencedFlight.Callsign,
+                        desequencedFlight.IsFromDepartureAirport,
+                        IsHighPriority: false));
             }
 
             if (sequencedFlight is null && desequencedFlight is null)

@@ -57,11 +57,16 @@ public class MoveFlightRequestHandler(
             // TODO: Manually set the runway for now, but we need to revisit this later
             // Re: delaying into a new runway mode
 
+            var fixNames = instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
+                ? flightDataRecord.Estimates.Select(x => x.FixIdentifier).ToArray()
+                : [];
+
             // Lookup trajectory for the new runway and approach before updating flight
             var trajectory = trajectoryService.GetTrajectory(
                 flight,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                fixNames);
 
             // Atomic update: runway + trajectory + ETA + STA_FF
             flight.SetRunway(runway.Identifier, trajectory);

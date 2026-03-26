@@ -203,16 +203,16 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithLandingEstimate(now.AddMinutes(10))
-            .WithState(State.Unstable)
-            .Build();
-
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
+        instance.Session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null,
+            [new FixEstimate("RIVET", now.AddMinutes(10))],
+            now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -226,8 +226,9 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.State.ShouldBe(State.Stable, "Pending flight should be Stable when inserted");
-        sequence.Flights.ShouldContain(pendingFlight);
+        var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
+        insertedFlight.Callsign.ShouldBe("QFA1");
+        insertedFlight.State.ShouldBe(State.Stable, "Pending flight should be Stable when inserted");
     }
 
     [Fact]
@@ -267,17 +268,11 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(10))
-            .WithState(State.Unstable)
-            .Build();
-
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -291,7 +286,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
+        var insertedFlight = sequence.Flights.Single();
+        insertedFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
     }
 
     [Fact]
@@ -357,17 +353,11 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(10))
-            .WithState(State.Unstable)
-            .Build();
-
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -382,7 +372,7 @@ public class InsertFlightRequestHandlerTests(
 
         // Assert
         instance.Session.PendingFlights.ShouldBeEmpty("Pending flight should be removed from pending list");
-        sequence.Flights.ShouldContain(pendingFlight, "Pending flight should be in the sequence");
+        sequence.Flights.ShouldContain(f => f.Callsign == "QFA1", "Pending flight should be in the sequence");
     }
 
     [Fact]
@@ -427,24 +417,18 @@ public class InsertFlightRequestHandlerTests(
         var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
         var expectedLandingEstimate = feederFixEstimate.Add(trajectory.TimeToGo);
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithFeederFixEstimate(feederFixEstimate)
-            .WithTrajectory(trajectory)
-            .WithState(State.Unstable)
-            .WithPosition(new FlightPosition(
-                new Coordinate(0, 0),
-                5000,
-                VerticalTrack.Descending,
-                250,
-                false))
-            .Build();
+        var position = new FlightPosition(new Coordinate(0, 0), 5000, VerticalTrack.Descending, 250, false);
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
+        instance.Session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, position,
+            [new FixEstimate("RIVET", feederFixEstimate), new FixEstimate("YSSY", expectedLandingEstimate)],
+            now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -458,8 +442,9 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
-        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should remain unchanged for coupled flight");
+        var insertedFlight = sequence.Flights.Single();
+        insertedFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
+        insertedFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should remain unchanged for coupled flight");
     }
 
     [Fact]
@@ -471,17 +456,11 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(12))
-            .WithState(State.Unstable)
-            .Build();
-
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -495,8 +474,9 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should match target time for uncoupled flight");
-        pendingFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
+        var insertedFlight = sequence.Flights.Single();
+        insertedFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should match target time for uncoupled flight");
+        insertedFlight.TargetLandingTime.ShouldBe(targetTime, "Target landing time should be set");
     }
 
     [Fact]
@@ -560,18 +540,16 @@ public class InsertFlightRequestHandlerTests(
         var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
         var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithFeederFix("RIVET")
-            .WithLandingEstimate(targetTime)
-            .WithState(State.Unstable)
-            .Build();
-
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
+        instance.Session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null,
+            [new FixEstimate("RIVET", now.AddMinutes(20)), new FixEstimate("YSSY", targetTime)],
+            now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -585,8 +563,9 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
-        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - arrival interval");
+        var insertedFlight = sequence.Flights.Single();
+        insertedFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
+        insertedFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - arrival interval");
     }
 
     [Fact]
@@ -1057,17 +1036,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var pendingFlight = new FlightBuilder("QFA2")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(20))
-            .WithState(State.Unstable)
-            .Build();
-
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1082,11 +1055,12 @@ public class InsertFlightRequestHandlerTests(
 
         // Assert
         instance.Session.PendingFlights.ShouldBeEmpty("Pending flight should be removed from pending list");
-        sequence.Flights.ShouldContain(pendingFlight, "Pending flight should be in the sequence");
-        pendingFlight.LandingTime.ShouldBe(
+        var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA2");
+        sequence.Flights.ShouldContain(f => f.Callsign == "QFA2", "Pending flight should be in the sequence");
+        insertedFlight.LandingTime.ShouldBe(
             stableFlight.LandingTime.Add(AcceptanceRate),
             "Pending flight should be scheduled at target time");
-        pendingFlight.State.ShouldBe(State.Stable, "Pending flight should have default state (Stable)");
+        insertedFlight.State.ShouldBe(State.Stable, "Pending flight should have default state (Stable)");
     }
 
     [Fact]
@@ -1151,24 +1125,18 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var pendingFlight = new FlightBuilder("QFA2")
-            .WithAircraftType("B738")
-            .WithFeederFixEstimate(feederFixEstimate)
-            .WithTrajectory(trajectory)
-            .WithState(State.Unstable)
-            .WithPosition(new FlightPosition(
-                new Coordinate(0, 0),
-                5000,
-                VerticalTrack.Descending,
-                250,
-                false))
-            .Build();
+        var position = new FlightPosition(new Coordinate(0, 0), 5000, VerticalTrack.Descending, 250, false);
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
+        instance.Session.FlightDataRecords["QFA2"] = new FlightDataRecord(
+            "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, position,
+            [new FixEstimate("RIVET", feederFixEstimate), new FixEstimate("YSSY", feederFixEstimate.Add(trajectory.TimeToGo))],
+            now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1182,15 +1150,14 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.TargetLandingTime.ShouldBe(
-            stableFlight.LandingTime.Add(AcceptanceRate),
+        var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA2");
+        var expectedTargetTime = stableFlight.LandingTime.Add(AcceptanceRate);
+        insertedFlight.TargetLandingTime.ShouldBe(expectedTargetTime,
             "Pending flight target time should be reference flight's landing time + acceptance rate");
-        pendingFlight.LandingTime.ShouldBe(
-            pendingFlight.TargetLandingTime!.Value,
+        insertedFlight.LandingTime.ShouldBe(insertedFlight.TargetLandingTime!.Value,
             "Pending flight landing time should match target time");
-        pendingFlight.FeederFixEstimate.ShouldBe(feederFixEstimate, "Pending flight feeder fix estimate should remain unchanged for coupled flight");
-        pendingFlight.LandingEstimate.ShouldBe(feederFixEstimate.Add(trajectory.TimeToGo), "Pending flight landing estimate should remain unchanged for coupled flight");
-
+        insertedFlight.FeederFixEstimate.ShouldBe(feederFixEstimate, "Pending flight feeder fix estimate should remain unchanged for coupled flight");
+        insertedFlight.LandingEstimate.ShouldBe(feederFixEstimate.Add(trajectory.TimeToGo), "Pending flight landing estimate should remain unchanged for coupled flight");
     }
 
     [Fact]
@@ -1208,17 +1175,11 @@ public class InsertFlightRequestHandlerTests(
             .WithRunway("34L")
             .Build();
 
-        var pendingFlight = new FlightBuilder("QFA2")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(20))
-            .WithState(State.Unstable)
-            .Build();
-
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1232,14 +1193,13 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.TargetLandingTime.ShouldBe(
-            stableFlight.LandingTime.Add(AcceptanceRate),
+        var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA2");
+        var expectedTargetTime = stableFlight.LandingTime.Add(AcceptanceRate);
+        insertedFlight.TargetLandingTime.ShouldBe(expectedTargetTime,
             "Pending flight target time should be reference flight's landing time + acceptance rate");
-        pendingFlight.LandingEstimate.ShouldBe(
-            pendingFlight.TargetLandingTime!.Value,
+        insertedFlight.LandingEstimate.ShouldBe(insertedFlight.TargetLandingTime!.Value,
             "Pending flight landing estimate should match target time for uncoupled flight");
-        pendingFlight.LandingTime.ShouldBe(
-            pendingFlight.TargetLandingTime!.Value,
+        insertedFlight.LandingTime.ShouldBe(insertedFlight.TargetLandingTime!.Value,
             "Pending flight landing time should match target time");
     }
 
@@ -1264,21 +1224,19 @@ public class InsertFlightRequestHandlerTests(
         var targetTime = stableFlight.LandingTime.Add(AcceptanceRate); // After QFA1
         var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
 
-        var pendingFlight = new FlightBuilder("QFA2")
-            .WithFeederFixEstimate(now.AddMinutes(21))
-            .WithTrajectory(trajectory)
-            .WithState(State.Unstable)
-            .WithRunway("34R")
-            .Build();
-
         var trajectoryService = new MockTrajectoryService()
-            .WithTrajectoryForFlight(pendingFlight, trajectory);
+            .WithTrajectory().ViaFeederFix("RIVET").Returns(trajectory);
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
+        instance.Session.FlightDataRecords["QFA2"] = new FlightDataRecord(
+            "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null,
+            [new FixEstimate("RIVET", now.AddMinutes(21)), new FixEstimate("YSSY", now.AddMinutes(43))],
+            now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager, trajectoryService: trajectoryService);
 
@@ -1292,8 +1250,9 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
-        pendingFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - TTG");
+        var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA2");
+        insertedFlight.LandingEstimate.ShouldBe(targetTime, "Landing estimate should be set to the target time");
+        insertedFlight.FeederFixEstimate.ShouldBe(expectedFeederFixEstimate, "Feeder fix estimate should be calculated from target time - TTG");
     }
 
     [Fact]
@@ -1305,18 +1264,11 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(40))
-            .WithState(State.Unstable)
-            .FromDepartureAirport()
-            .Build();
-
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1331,8 +1283,9 @@ public class InsertFlightRequestHandlerTests(
 
         // Assert
         instance.Session.PendingFlights.ShouldBeEmpty("Pending flight should be removed from pending list");
-        sequence.Flights.ShouldContain(pendingFlight, "Pending flight should be in the sequence");
-        pendingFlight.State.ShouldBe(State.Unstable, "Pending flight should remain Unstable when inserted");
+        var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
+        insertedFlight.Callsign.ShouldBe("QFA1", "Pending flight should be in the sequence");
+        insertedFlight.State.ShouldBe(State.Unstable, "Pending flight should remain Unstable when inserted");
     }
 
     [Fact]
@@ -1375,18 +1328,11 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(40))
-            .WithState(State.Unstable)
-            .FromDepartureAirport()
-            .Build();
-
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1400,7 +1346,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should be takeoff time + enroute time (30 mins)");
+        var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
+        insertedFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should be takeoff time + enroute time (30 mins)");
     }
 
     [Fact]
@@ -1412,18 +1359,11 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithLandingEstimate(now.AddMinutes(40))
-            .WithState(State.Unstable)
-            .FromDepartureAirport()
-            .Build();
-
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1437,7 +1377,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.TargetLandingTime.ShouldBeNull("Target time should be null for pending departure flights");
+        var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
+        insertedFlight.TargetLandingTime.ShouldBeNull("Target time should be null for pending departure flights");
     }
 
     [Fact]
@@ -1480,24 +1421,18 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithFeederFixEstimate(originalFeederFixEstimate)
-            .WithState(State.Unstable)
-            .FromDepartureAirport()
-            .WithPosition(new FlightPosition(
-                new Coordinate(0, 0),
-                5000,
-                VerticalTrack.Descending,
-                250,
-                false))
-            .Build();
+        var position = new FlightPosition(new Coordinate(0, 0), 5000, VerticalTrack.Descending, 250, false);
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
+        instance.Session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YSCB", "YSSY", null, position,
+            [new FixEstimate("RIVET", originalFeederFixEstimate), new FixEstimate("YSSY", originalFeederFixEstimate.AddMinutes(20))],
+            now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1511,7 +1446,8 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate, "Feeder fix estimate should remain unchanged for coupled flight");
+        var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
+        insertedFlight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate, "Feeder fix estimate should remain unchanged for coupled flight");
     }
 
     [Fact]
@@ -1626,21 +1562,16 @@ public class InsertFlightRequestHandlerTests(
 
         var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
 
-        var pendingFlight = new FlightBuilder("QFA1")
-            .WithAircraftType("B738")
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(now.AddMinutes(5))
-            .WithLandingEstimate(now.AddMinutes(40))
-            .WithTrajectory(trajectory)
-            .WithState(State.Unstable)
-            .FromDepartureAirport()
-            .Build();
-
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(pendingFlight);
+        instance.Session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
+        instance.Session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YSCB", "YSSY", null, null,
+            [new FixEstimate("RIVET", now.AddMinutes(5)), new FixEstimate("YSSY", now.AddMinutes(40))],
+            now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
 
@@ -1654,8 +1585,9 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        pendingFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should be calculated from takeoff time + enroute time");
-        pendingFlight.FeederFixEstimate.ShouldBe(expectedLandingEstimate.Subtract(trajectory.TimeToGo), "Feeder fix estimate should be calculated from landing estimate - TTG");
+        var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
+        insertedFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should be calculated from takeoff time + enroute time");
+        insertedFlight.FeederFixEstimate.ShouldBe(expectedLandingEstimate.Subtract(trajectory.TimeToGo), "Feeder fix estimate should be calculated from landing estimate - TTG");
     }
 
     [Fact]

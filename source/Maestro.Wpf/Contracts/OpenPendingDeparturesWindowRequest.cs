@@ -3,4 +3,4 @@ using MediatR;
 
 namespace Maestro.Wpf.Contracts;
 
-public record OpenPendingDeparturesWindowRequest(string AirportIdentifier, FlightDto[] PendingFlights) : IRequest;
+public record OpenPendingDeparturesWindowRequest(string AirportIdentifier, PendingFlightDto[] PendingFlights) : IRequest;

@@ -34,7 +34,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "");
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", []);
 
         // Assert
         trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(15));
@@ -62,7 +62,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "");
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", []);
 
         // Assert - should return average of all trajectories (15 + 20) / 2 = 17.5
         trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(17.5));
@@ -90,7 +90,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "A");
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "A", []);
 
         // Assert
         trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(18));

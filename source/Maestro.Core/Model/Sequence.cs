@@ -762,7 +762,8 @@ public class Sequence
     void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, string approachType, FlowControls flowControls)
     {
         // Lookup trajectory before setting runway/approach
-        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType);
+        // TODO: Find a different way to deal with transitions
+        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType, []);
 
         // Atomic update: runway + trajectory + ETA + STA_FF
         flight.SetRunway(runwayIdentifier, trajectory);

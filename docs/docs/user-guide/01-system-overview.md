@@ -19,7 +19,6 @@ MAESTRO is a sequencing aid only. It does not provide separation advice. Control
 | `STA_FF` | Scheduled time at the feeder fix (calculated by vMaestro) |
 | `STA` | Scheduled landing time (calculated by vMaestro) |
 | `TTG` | Time-to-Go from feeder fix to runway threshold |
-| `ATO` | Actual Time Over the feeder fix |
 
 ## Managed Airport
 
@@ -95,10 +94,6 @@ The `ETA_FF` is sourced from vatSys route estimates. The landing estimate (`ETA`
 For flights not tracking via a feeder fix, an average `TTG` will be calculated, and the `ETA_FF` is derived by subtracting the average `TTG` from the last estimate in the flight plan route.
 
 ![Diagram of ETA_FF calculation](../../static/img/eta_ff.png)
-
-:::info
-Once a flight passes the feeder fix, the `ATO` (Actual Time Over) is used instead of `ETA_FF`. Since the `ATO` is fixed, the `ETA` and remaining delay will not change after passing the feeder fix.
-:::
 
 #### Current vs Initial Estimates
 

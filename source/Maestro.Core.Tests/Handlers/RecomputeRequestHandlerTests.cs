@@ -74,7 +74,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
 
         var trajectoryService = new MockTrajectoryService(ttg);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithRunwayMode(_runwayMode)
@@ -87,10 +87,11 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         var handler = GetRequestHandler(instanceManager, sequence, trajectoryService);
 
         // Update flight2's estimates so its landing estimate is earlier than flight1
-        flight2.Fixes = [
-            new FixEstimate("RIVET", now.AddMinutes(5)),
-            new FixEstimate("YSSY", now.AddMinutes(15))
-        ];
+        instance.Session.FlightDataRecords["QFA2"] = new FlightDataRecord(
+            "QFA2", flight2.AircraftType, flight2.AircraftCategory, flight2.WakeCategory,
+            flight2.OriginIdentifier, flight2.DestinationIdentifier, null, null,
+            [new FixEstimate("RIVET", now.AddMinutes(5)), new FixEstimate("YSSY", now.AddMinutes(15))],
+            now);
 
         var request = new RecomputeRequest("YSSY", "QFA2");
 
@@ -134,7 +135,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithSingleRunway("34L", TimeSpan.FromSeconds(180))
@@ -146,12 +147,12 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         var originalFlight1LandingTime = flight1.LandingTime;
 
         // Change the landing estimate of the last flight to be earlier than the second flight
-        // Update the Fixes array (this is what RecomputeRequestHandler reads)
         var newFeederFixEstimate = now.AddMinutes(-8);
-        flight3.Fixes = [
-            new FixEstimate("RIVET", newFeederFixEstimate),
-            new FixEstimate("YSSY", newFeederFixEstimate.Add(_defaultTtg))
-        ];
+        instance.Session.FlightDataRecords["QFA3"] = new FlightDataRecord(
+            "QFA3", flight3.AircraftType, flight3.AircraftCategory, flight3.WakeCategory,
+            flight3.OriginIdentifier, flight3.DestinationIdentifier, null, null,
+            [new FixEstimate("RIVET", newFeederFixEstimate), new FixEstimate("YSSY", newFeederFixEstimate.Add(_defaultTtg))],
+            now);
 
         var request = new RecomputeRequest("YSSY", "QFA3");
 
@@ -214,7 +215,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(landingTime)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -225,7 +226,11 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
 
         // Re-route the flight to a new feeder fix
         var newFeederFixEstimate = now.AddMinutes(3);
-        flight.Fixes = [new FixEstimate("WELSH", newFeederFixEstimate), new FixEstimate("TESAT", landingTime)];
+        instance.Session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", flight.AircraftType, flight.AircraftCategory, flight.WakeCategory,
+            flight.OriginIdentifier, flight.DestinationIdentifier, null, null,
+            [new FixEstimate("WELSH", newFeederFixEstimate), new FixEstimate("TESAT", landingTime)],
+            now);
 
         await handler.Handle(request, CancellationToken.None);
 
