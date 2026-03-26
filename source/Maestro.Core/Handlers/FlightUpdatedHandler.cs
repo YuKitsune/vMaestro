@@ -126,6 +126,9 @@ public class FlightUpdatedHandler(
 
                     // Only insert into the sequence once the feeder fix estimate is within the creation threshold
                     var flightCreationThreshold = TimeSpan.FromMinutes(airportConfiguration.FlightCreationThresholdMinutes);
+
+                    // Safe to unwrap as we exit early when adding flights to the Pending list
+                    // If the feederFix is null, the flight should be added to the Pending list
                     if (feederFix!.Estimate - clock.UtcNow() > flightCreationThreshold)
                         return;
 
