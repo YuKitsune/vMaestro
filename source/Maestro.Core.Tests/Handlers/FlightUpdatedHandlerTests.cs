@@ -141,7 +141,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeToThePendingList()
+    public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeAddedToThePendingList()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
