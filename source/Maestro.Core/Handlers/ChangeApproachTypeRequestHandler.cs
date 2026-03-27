@@ -56,7 +56,8 @@ public class ChangeApproachTypeRequestHandler(
                 flight,
                 flight.AssignedRunwayIdentifier,
                 request.ApproachType,
-                fixNames);
+                fixNames,
+                instance.Session.Sequence.UpperWind);
 
             flight.SetApproachType(request.ApproachType, trajectory);
 

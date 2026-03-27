@@ -52,7 +52,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                     lastLandingTime,
                     firstLandingTime,
                     airportConfiguration,
-                    sessionDto.SurfaceWind,
+                    sessionDto.Sequence.SurfaceWind,
                     mediator,
                     windowHandle,
                     clock,

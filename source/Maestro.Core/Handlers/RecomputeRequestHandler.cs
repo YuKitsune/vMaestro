@@ -66,7 +66,8 @@ public class RecomputeRequestHandler(
                 flight.DestinationIdentifier,
                 feederFix?.FixIdentifier,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                instance.Session.Sequence.UpperWind);
 
             // Update feeder fix (may have changed due to re-routing)
             flight.SetFeederFix(

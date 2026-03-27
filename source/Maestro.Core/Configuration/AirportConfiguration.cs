@@ -90,6 +90,11 @@ public class AirportConfiguration
 
     // Look-up tables
     public required TrajectoryConfiguration[] Trajectories { get; init; }
+
+    /// <summary>
+    ///     The default TTG in minutes used when no matching trajectory is found.
+    /// </summary>
+    public int DefaultTTGMinutes { get; init; } = 20;
     public required DepartureConfiguration[] DepartureAirports { get; init; }
 
     // TODO: Average taxi times and terminal assignments

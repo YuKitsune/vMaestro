@@ -3,6 +3,7 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Sessions;
 
 namespace Maestro.Core.Model;
 
@@ -29,6 +30,11 @@ public class Sequence
     public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
     public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
 
+    public Wind SurfaceWind { get; set; } = new(0, 0);
+    public Wind UpperWind { get; set; } = new(0, 0);
+    public int UpperWindAltitude { get; }
+    public bool ManualWind { get; set; }
+
     public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock)
     {
         _airportConfiguration = airportConfiguration;
@@ -37,6 +43,8 @@ public class Sequence
 
         AirportIdentifier = airportConfiguration.Identifier;
         CurrentRunwayMode = new RunwayMode(airportConfiguration.RunwayModes.First());
+
+        UpperWindAltitude = airportConfiguration.UpperWindAltitude;
     }
 
     /// <summary>
@@ -763,7 +771,7 @@ public class Sequence
     {
         // Lookup trajectory before setting runway/approach
         // TODO: Find a different way to deal with transitions
-        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType, []);
+        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType, [], UpperWind);
 
         // Atomic update: runway + trajectory + ETA + STA_FF
         flight.SetRunway(runwayIdentifier, trajectory);
@@ -916,7 +924,10 @@ public class Sequence
             FirstLandingTimeForNextMode = FirstLandingTimeForNewMode ?? default,
             Slots = _slots
                 .Select(s => s.ToDto())
-                .ToArray()
+                .ToArray(),
+            SurfaceWind = new WindDto(SurfaceWind.Direction, SurfaceWind.Speed),
+            UpperWind = new WindDto(UpperWind.Direction, UpperWind.Speed),
+            ManualWind = ManualWind
         };
     }
 
@@ -947,6 +958,10 @@ public class Sequence
             var flight = new Flight(flightDto);
             _flights.Add(flight);
         }
+
+        SurfaceWind = new Wind(dto.SurfaceWind.Direction, dto.SurfaceWind.Speed);
+        UpperWind = new Wind(dto.UpperWind.Direction, dto.UpperWind.Speed);
+        ManualWind = dto.ManualWind;
     }
 
     interface ISequenceItem

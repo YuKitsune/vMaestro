@@ -9,4 +9,5 @@ public class PluginConfiguration
     public required LoggingConfiguration Logging { get; init; }
     public required AirportConfiguration[] Airports { get; init; }
     public required LabelsConfiguration Labels { get; init; }
+    public AircraftPerformanceConfiguration[] AircraftPerformance { get; init; } = [];
 }

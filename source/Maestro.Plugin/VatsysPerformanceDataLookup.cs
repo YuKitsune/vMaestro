@@ -32,4 +32,6 @@ public class VatsysPerformanceDataLookup : IPerformanceLookup
                 : AircraftCategory.NonJet,
             wakeCategory);
     }
+
+    public int? GetApproachSpeed(string aircraftType) => null;
 }

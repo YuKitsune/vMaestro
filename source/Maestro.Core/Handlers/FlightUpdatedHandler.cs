@@ -141,7 +141,8 @@ public class FlightUpdatedHandler(
                         notification.Destination,
                         feederFix.FixIdentifier,
                         runway.Identifier,
-                        runway.ApproachType);
+                        runway.ApproachType,
+                        instance.Session.Sequence.UpperWind);
 
                     // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
                     var earliestInsertionIndex = instance.Session.Sequence.FindLastIndex(f =>
@@ -198,7 +199,23 @@ public class FlightUpdatedHandler(
                 {
                     sequencedFlight.UpdateLastSeen(clock);
                     UpdateFlightData(notification, sequencedFlight);
+
+                    // Recompute trajectory for unstable flights so wind changes propagate to TTG before estimates are calculated
+                    if (sequencedFlight.State is State.Unstable && !string.IsNullOrEmpty(sequencedFlight.AssignedRunwayIdentifier))
+                    {
+                        var updatedTrajectory = trajectoryService.GetTrajectory(
+                            sequencedFlight,
+                            sequencedFlight.AssignedRunwayIdentifier,
+                            sequencedFlight.ApproachType,
+                            instance.Session.Sequence.UpperWind);
+                        sequencedFlight.SetTrajectory(updatedTrajectory);
+                    }
+
                     CalculateEstimates(sequencedFlight, notification);
+
+                    // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
+                    if (notification.Position is not null && !notification.Position.IsOnGround)
+                        CalculateEstimates(sequencedFlight, notification);
 
                     // Unstable flights are repositioned in the sequence on every update
                     if (sequencedFlight.State is State.Unstable)

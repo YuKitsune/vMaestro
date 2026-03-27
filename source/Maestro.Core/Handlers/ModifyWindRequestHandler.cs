@@ -39,9 +39,9 @@ public class ModifyWindRequestHandler(
 
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
-            instance.Session.SurfaceWind = new Wind(request.SurfaceWind.Direction, request.SurfaceWind.Speed);
-            instance.Session.UpperWind = new Wind(request.UpperWind.Direction, request.UpperWind.Speed);
-            instance.Session.ManualWind = request.ManualWind;
+            instance.Session.Sequence.SurfaceWind = new Wind(request.SurfaceWind.Direction, request.SurfaceWind.Speed);
+            instance.Session.Sequence.UpperWind = new Wind(request.UpperWind.Direction, request.UpperWind.Speed);
+            instance.Session.Sequence.ManualWind = request.ManualWind;
 
             logger.Information(
                 "Wind modified for {AirportIdentifier}: Surface {SurfaceWind}, Upper {UpperWind}, Manual={ManualWind}",

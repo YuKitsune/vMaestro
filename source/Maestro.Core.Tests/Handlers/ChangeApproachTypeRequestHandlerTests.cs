@@ -2,6 +2,7 @@
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -47,6 +48,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
 
         var trajectoryService = new TrajectoryService(
             new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<IPerformanceLookup>(),
             Substitute.For<ILogger>());
 
         var mediator = Substitute.For<IMediator>();
@@ -91,6 +93,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         // Set up trajectory service to return different TTG for each approach type
         var trajectoryService = new TrajectoryService(
             new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<IPerformanceLookup>(),
             Substitute.For<ILogger>());
 
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
@@ -143,6 +146,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         // Set up trajectory service to return different TTG for each approach type
         var trajectoryService = new TrajectoryService(
             new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<IPerformanceLookup>(),
             Substitute.For<ILogger>());
 
         var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)

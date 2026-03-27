@@ -1,5 +1,6 @@
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Runway;
+using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Slots;
 using MessagePack;
 
@@ -46,4 +47,22 @@ public class SequenceDto
     /// </summary>
     [Key(5)]
     public required SlotDto[] Slots { get; init; }
+
+    /// <summary>
+    /// Surface wind direction and speed.
+    /// </summary>
+    [Key(6)]
+    public required WindDto SurfaceWind { get; init; }
+
+    /// <summary>
+    /// Upper wind direction and speed.
+    /// </summary>
+    [Key(7)]
+    public required WindDto UpperWind { get; init; }
+
+    /// <summary>
+    /// Whether the wind values were manually provided by the user or automatically calculated.
+    /// </summary>
+    [Key(8)]
+    public required bool ManualWind { get; init; }
 }

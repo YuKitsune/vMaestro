@@ -200,4 +200,16 @@ public class FlightDto
     /// </summary>
     [Key(32)]
     public TimeSpan? TimeToGo { get; init; }
+
+    /// <summary>
+    /// TTG plus the additional time available through path stretching in the pressure zone.
+    /// </summary>
+    [Key(34)]
+    public TimeSpan? Pressure { get; init; }
+
+    /// <summary>
+    /// Pressure plus the additional time available through maximum vectoring in the max pressure zone.
+    /// </summary>
+    [Key(35)]
+    public TimeSpan? MaxPressure { get; init; }
 }

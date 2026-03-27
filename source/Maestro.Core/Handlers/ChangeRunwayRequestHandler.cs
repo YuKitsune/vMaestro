@@ -70,7 +70,8 @@ public class ChangeRunwayRequestHandler(
                 flight,
                 request.RunwayIdentifier,
                 approachType,
-                fixNames);
+                fixNames,
+                instance.Session.Sequence.UpperWind);
 
             flight.SetRunway(request.RunwayIdentifier, trajectory);
 

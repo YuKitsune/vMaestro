@@ -56,6 +56,27 @@ Server:
     ModifyWind: [Approach, Flow]
 
 # ==============================================================================
+# AIRCRAFT PERFORMANCE
+# ==============================================================================
+# Global table of aircraft approach speeds used for trajectory time calculations.
+# One entry per ICAO type code. Extracted from vatSys Performance.xml using the
+# Maestro.Tools CLI: maestro extract-performance --performance <Performance.xml>
+#
+# DescentSpeedKnots: TAS at TMA entry altitude (e.g. FL100) from Performance.xml
+# IsJet:             true for jet-powered aircraft, false for turboprop/piston
+# WakeCategory:      ICAO wake turbulence category (Light, Medium, Heavy, Super)
+
+AircraftPerformance:
+  - {TypeCode: B738, DescentSpeedKnots: 220, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: A320, DescentSpeedKnots: 210, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: B77W, DescentSpeedKnots: 250, IsJet: true,  WakeCategory: Heavy}
+  - {TypeCode: A388, DescentSpeedKnots: 260, IsJet: true,  WakeCategory: Super}
+  - {TypeCode: DH8D, DescentSpeedKnots: 160, IsJet: false, WakeCategory: Medium}
+  - {TypeCode: PC12, DescentSpeedKnots: 120, IsJet: false, WakeCategory: Light}
+  # Add entries for all aircraft types expected at your airports.
+  # Run: maestro extract-performance --performance <path/to/Performance.xml>
+
+# ==============================================================================
 # LABELS CONFIGURATION
 # ==============================================================================
 # Defines global colors and reusable label layouts for flight display
@@ -332,39 +353,71 @@ Airports:
   # ---------------------------------------------------------------------------
   # Trajectories
   # ---------------------------------------------------------------------------
-  # Define flight times from feeder fixes to runways for different aircraft
+  # Segment-based route geometry from feeder fix to runway threshold.
+  # Each entry covers one (FeederFix, ApproachType, Runway) combination.
+  # Aircraft type no longer appears here — speed comes from AircraftPerformance above.
   #
-  # Aircraft types: JET, NONJET, LIGHT, MEDIUM, HEAVY, SUPER, or specific ICAO type code
+  # Fields:
+  #   FeederFix:      Feeder fix identifier (required)
+  #   RunwayIdentifier: Destination runway (required)
+  #   ApproachType:   Approach type code — leave empty to match any (optional)
+  #   TransitionFix:  Common merge fix that distinguishes routes converging at the
+  #                   same feeder fix (optional)
   #
-  # If a trajectory is not defined for a specific combination, Maestro will calculate
-  # an average from all matching trajectories for that aircraft type. However, it's
-  # recommended to define trajectories for all combinations to ensure accuracy.
+  # Segments: ordered from feeder fix toward the runway threshold.
+  #   Identifier:  Fix name — informational only, never resolved at runtime
+  #   Track:       True bearing in degrees for this segment
+  #   DistanceNM:  Distance of this segment in nautical miles
+  #   Pressure:    true if this segment contributes to the Pressure window (P)
+  #   MaxPressure: true if this segment contributes to the Max Pressure window (Pmax)
   #
-  # Compact single-line format (recommended):
-  # - {FeederFix: BOREE, Aircraft: [JET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
+  # Generate segment geometry automatically with the Maestro.Tools CLI:
+  #   maestro extract-stars --airspace <Airspace.xml> --airport YSSY --output trajectories.yaml
+  # Then manually mark pressure zones (Pressure/MaxPressure) as required.
   #
-  # Optional fields:
-  #   ApproachType: Specific approach type
-  #   ApproachFix: Specific approach fix/transition
+  # DefaultTTGMinutes (below) is used when no trajectory matches a flight.
+
+  # Fallback TTG used when no trajectory matches (minutes, default: 20)
+  DefaultTTGMinutes: 18
 
   Trajectories:
-    # BOREE trajectories
-    - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
-    - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 17}
-    - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
-    - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
 
-    # RIVET trajectories
-    - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 15}
-    - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
-    - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
-    - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+    # BOREE → 34L
+    - FeederFix: BOREE
+      RunwayIdentifier: 34L
+      Segments:
+        - {Identifier: BOREE, Track: 195.3, DistanceNM: 12.4}
+        - {Identifier: YAKKA, Track: 220.1, DistanceNM: 8.7}
+        - {Identifier: TESAT, Track: 180.0, DistanceNM: 5.2, Pressure: true}
+        - {Identifier: FAF,   Track: 160.0, DistanceNM: 3.1, MaxPressure: true}
 
-    # Continue defining trajectories for all feeder fixes and runways
-    # Recommended to define for all combinations:
-    #   - Each feeder fix (RIVET, WELSH, BOREE, YAKKA, MARLN)
-    #   - To each runway (34L, 34R, 16L, 16R, 07, 25)
-    #   - For at minimum JET and NONJET categories
+    # BOREE → 34R
+    - FeederFix: BOREE
+      RunwayIdentifier: 34R
+      Segments:
+        - {Identifier: BOREE, Track: 185.0, DistanceNM: 11.8}
+        - {Identifier: YAKKA, Track: 210.0, DistanceNM:  9.2}
+        - {Identifier: TESAT, Track: 175.0, DistanceNM:  5.5, Pressure: true}
+        - {Identifier: FAF,   Track: 155.0, DistanceNM:  3.2, MaxPressure: true}
+
+    # RIVET → 34L
+    - FeederFix: RIVET
+      RunwayIdentifier: 34L
+      Segments:
+        - {Identifier: RIVET, Track: 210.0, DistanceNM: 10.5}
+        - {Identifier: TESAT, Track: 180.0, DistanceNM:  5.2, Pressure: true}
+        - {Identifier: FAF,   Track: 160.0, DistanceNM:  3.1, MaxPressure: true}
+
+    # RIVET → 34R
+    - FeederFix: RIVET
+      RunwayIdentifier: 34R
+      Segments:
+        - {Identifier: RIVET, Track: 218.0, DistanceNM: 13.0}
+        - {Identifier: TESAT, Track: 175.0, DistanceNM:  5.5, Pressure: true}
+        - {Identifier: FAF,   Track: 155.0, DistanceNM:  3.2, MaxPressure: true}
+
+    # Add trajectories for WELSH, YAKKA, MARLN and remaining runways.
+    # Pressure/MaxPressure zones above are illustrative — review against actual STARs.
 
   # ---------------------------------------------------------------------------
   # Departure Airports
@@ -507,11 +560,16 @@ Airports:
           ApproachType: A
           LandingRateSeconds: 180
 
-  # Define trajectories (abbreviated example)
+  DefaultTTGMinutes: 18
+
+  # Define trajectories (abbreviated example — run extract-stars for full geometry)
   Trajectories:
-    - {FeederFix: ARBEY, Aircraft: [JET], RunwayIdentifier: "09", TimeToGoMinutes: 15}
-    - {FeederFix: ARBEY, Aircraft: [NONJET], RunwayIdentifier: "09", TimeToGoMinutes: 17}
-    # ... continue for all combinations
+    - FeederFix: ARBEY
+      RunwayIdentifier: "09"
+      Segments:
+        - {Identifier: ARBEY, Track: 270.0, DistanceNM: 18.0}
+        - {Identifier: FAF,   Track: 270.0, DistanceNM:  4.5, Pressure: true}
+    # ... continue for all feeder fix / runway combinations
 
   # Define departure airports (abbreviated example)
   DepartureAirports:

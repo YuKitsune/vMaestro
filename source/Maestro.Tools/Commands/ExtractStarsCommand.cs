@@ -1,0 +1,292 @@
+using System.CommandLine;
+using System.Globalization;
+using System.Xml.Linq;
+using YamlDotNet.Core;
+using YamlDotNet.Core.Events;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.EventEmitters;
+using YamlDotNet.Serialization.NamingConventions;
+
+namespace Maestro.Tools.Commands;
+
+public static class ExtractStarsCommand
+{
+    public static Command Build()
+    {
+        var airspaceOption = new Option<FileInfo>("--airspace", "Path to vatSys Airspace.xml") { IsRequired = true };
+        var airportOption = new Option<string>("--airport", "ICAO airport identifier (e.g. YSSY)") { IsRequired = true };
+        var outputOption = new Option<FileInfo>("--output", "Output YAML file path") { IsRequired = true };
+        var skipOption = new Option<string[]>("--skip-point", "Waypoint name to exclude from all routes (repeatable)") { AllowMultipleArgumentsPerToken = false };
+
+        var command = new Command("extract-stars", "Extract STAR segment geometry from a vatSys Airspace.xml file.");
+        command.AddOption(airspaceOption);
+        command.AddOption(airportOption);
+        command.AddOption(outputOption);
+        command.AddOption(skipOption);
+
+        command.SetHandler((airspace, airport, output, skipWaypoints) =>
+        {
+            var skipped = new HashSet<string>(skipWaypoints ?? [], StringComparer.OrdinalIgnoreCase);
+            var doc = XDocument.Load(airspace.FullName);
+            var trajectories = ExtractTrajectories(doc, airport, skipped);
+
+            var serializer = new SerializerBuilder()
+                .WithNamingConvention(PascalCaseNamingConvention.Instance)
+                .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
+                .WithTypeConverter(new FlowSegmentConverter())
+                .WithEventEmitter(next => new QuoteNumericStringsEmitter(next))
+                .Build();
+
+            var yaml = serializer.Serialize(trajectories);
+            File.WriteAllText(output.FullName, yaml);
+
+            Console.WriteLine($"Wrote {trajectories.Count} trajectories to {output.FullName}");
+        }, airspaceOption, airportOption, outputOption, skipOption);
+
+        return command;
+    }
+
+    static List<TrajectoryOutput> ExtractTrajectories(XDocument doc, string airport, HashSet<string> skipWaypoints)
+    {
+        var fixes = BuildFixLookup(doc);
+        var runways = BuildRunwayLookup(doc, airport);
+        var results = new List<TrajectoryOutput>();
+
+        var stars = doc.Descendants("STAR")
+            .Where(s => s.Attribute("Airport")?.Value == airport);
+
+        foreach (var star in stars)
+        {
+            var starName = star.Attribute("Name")!.Value;
+            var approachType = GetApproachType(starName);
+
+            // Only process Route elements — Transition elements are ignored
+            foreach (var route in star.Elements("Route"))
+            {
+                var runway = route.Attribute("Runway")!.Value;
+                var routeText = route.Value.Trim();
+
+                if (string.IsNullOrEmpty(routeText))
+                    continue;
+
+                var fixNames = routeText.Split('/')
+                    .Where(f => !skipWaypoints.Contains(f))
+                    .ToArray();
+                if (fixNames.Length < 2)
+                    continue;
+
+                var segments = BuildSegments(starName, fixNames, runway, fixes, runways);
+                if (segments is null)
+                    continue;
+
+                results.Add(new TrajectoryOutput
+                {
+                    FeederFix = fixNames[0],
+                    RunwayIdentifier = runway,
+                    ApproachType = approachType,
+                    Segments = segments
+                });
+            }
+        }
+
+        return results;
+    }
+
+    static List<SegmentOutput>? BuildSegments(
+        string starName,
+        string[] fixNames,
+        string runway,
+        Dictionary<string, (double Lat, double Lon)> fixes,
+        Dictionary<string, (double Lat, double Lon)> runways)
+    {
+        var segments = new List<SegmentOutput>();
+
+        // Segments between consecutive fixes in the route
+        for (var i = 0; i < fixNames.Length - 1; i++)
+        {
+            if (!TryGetCoord(fixes, fixNames[i], starName, out var from) ||
+                !TryGetCoord(fixes, fixNames[i + 1], starName, out var to))
+                return null;
+
+            segments.Add(new SegmentOutput
+            {
+                Identifier = fixNames[i + 1],
+                Track = Math.Round(Calculations.CalculateTrack(from.Lat, from.Lon, to.Lat, to.Lon), 1),
+                DistanceNM = Math.Round(Calculations.CalculateDistanceNauticalMiles(from.Lat, from.Lon, to.Lat, to.Lon), 1)
+            });
+        }
+
+        // Final segment: last STAR fix → runway threshold (IAF → runway)
+        if (!TryGetCoord(fixes, fixNames[^1], starName, out var iaf))
+            return null;
+
+        if (!runways.TryGetValue(runway, out var rwyCoord))
+        {
+            Console.Error.WriteLine($"Warning: runway '{runway}' not found in airport positions for STAR {starName}, skipping");
+            return null;
+        }
+
+        segments.Add(new SegmentOutput
+        {
+            Identifier = runway,
+            Track = Math.Round(Calculations.CalculateTrack(iaf.Lat, iaf.Lon, rwyCoord.Lat, rwyCoord.Lon), 1),
+            DistanceNM = Math.Round(Calculations.CalculateDistanceNauticalMiles(iaf.Lat, iaf.Lon, rwyCoord.Lat, rwyCoord.Lon), 1)
+        });
+
+        return segments;
+    }
+
+    static bool TryGetCoord(
+        Dictionary<string, (double Lat, double Lon)> lookup,
+        string name,
+        string starName,
+        out (double Lat, double Lon) coord)
+    {
+        if (lookup.TryGetValue(name, out coord))
+            return true;
+
+        Console.Error.WriteLine($"Warning: fix '{name}' not found in intersections (STAR {starName}), skipping route");
+        return false;
+    }
+
+    static Dictionary<string, (double Lat, double Lon)> BuildFixLookup(XDocument doc)
+    {
+        var lookup = new Dictionary<string, (double Lat, double Lon)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var point in doc.Descendants("Point").Where(p => !string.IsNullOrWhiteSpace(p.Value)))
+            lookup.TryAdd(point.Attribute("Name")!.Value, ParseCoordinate(point.Value.Trim()));
+        return lookup;
+    }
+
+    static Dictionary<string, (double Lat, double Lon)> BuildRunwayLookup(XDocument doc, string airport)
+    {
+        return doc.Descendants("Airport")
+            .Where(a => a.Attribute("ICAO")?.Value == airport)
+            .SelectMany(a => a.Elements("Runway"))
+            .Where(r => r.Attribute("Position") is not null)
+            .ToDictionary(
+                r => r.Attribute("Name")!.Value,
+                r => ParseCoordinate(r.Attribute("Position")!.Value.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+    }
+
+    // Last character of STAR name is the approach type if alphabetical (e.g. BORE4A → "A")
+    static string? GetApproachType(string starName) =>
+        char.IsLetter(starName[^1]) ? starName[^1].ToString().ToUpperInvariant() : null;
+
+    // Parses a vatSys coordinate string: ±DDMMSS.sss±DDDMMSS.sss
+    // Latitude always has a 6-digit integer part (DDMMSS); longitude has 7 (DDDMMSS).
+    static (double Lat, double Lon) ParseCoordinate(string text)
+    {
+        var lonStart = text.IndexOfAny(['+', '-'], 1);
+        return (ParseDmsPart(text[..lonStart]), ParseDmsPart(text[lonStart..]));
+    }
+
+    static double ParseDmsPart(string part)
+    {
+        var negative = part[0] == '-';
+        var digits = part[1..];
+
+        var dotIndex = digits.IndexOf('.');
+        string intPart;
+        double fracSeconds;
+
+        if (dotIndex >= 0)
+        {
+            intPart = digits[..dotIndex];
+            fracSeconds = double.Parse("0" + digits[dotIndex..], CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            intPart = digits;
+            fracSeconds = 0;
+        }
+
+        int deg, min;
+        double sec;
+
+        if (intPart.Length <= 6)
+        {
+            // Latitude: DDMMSS (zero-padded to 6 digits)
+            intPart = intPart.PadLeft(6, '0');
+            deg = int.Parse(intPart[..2]);
+            min = int.Parse(intPart[2..4]);
+            sec = int.Parse(intPart[4..6]) + fracSeconds;
+        }
+        else
+        {
+            // Longitude: DDDMMSS (zero-padded to 7 digits)
+            intPart = intPart.PadLeft(7, '0');
+            deg = int.Parse(intPart[..3]);
+            min = int.Parse(intPart[3..5]);
+            sec = int.Parse(intPart[5..7]) + fracSeconds;
+        }
+
+        var dd = deg + min / 60.0 + sec / 3600.0;
+        return negative ? -dd : dd;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Serialization
+// ---------------------------------------------------------------------------
+
+class FlowSegmentConverter : IYamlTypeConverter
+{
+    public bool Accepts(Type type) => type == typeof(SegmentOutput);
+
+    public object ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer) =>
+        throw new NotSupportedException();
+
+    public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
+    {
+        var seg = (SegmentOutput)value!;
+        emitter.Emit(new MappingStart(null, null, true, MappingStyle.Flow));
+        emitter.Emit(new Scalar("Identifier")); emitter.Emit(QuotedIfNumeric(seg.Identifier));
+        emitter.Emit(new Scalar("Track")); emitter.Emit(new Scalar(seg.Track.ToString(CultureInfo.InvariantCulture)));
+        emitter.Emit(new Scalar("DistanceNM")); emitter.Emit(new Scalar(seg.DistanceNM.ToString(CultureInfo.InvariantCulture)));
+        if (seg.Pressure) { emitter.Emit(new Scalar("Pressure")); emitter.Emit(new Scalar("true")); }
+        if (seg.MaxPressure) { emitter.Emit(new Scalar("MaxPressure")); emitter.Emit(new Scalar("true")); }
+        emitter.Emit(new MappingEnd());
+    }
+
+    static Scalar QuotedIfNumeric(string value) =>
+        value.Length > 0 && value.All(char.IsDigit)
+            ? new Scalar(null, null, value, ScalarStyle.SingleQuoted, false, true)
+            : new Scalar(value);
+}
+
+class QuoteNumericStringsEmitter(IEventEmitter nextEmitter) : ChainedEventEmitter(nextEmitter)
+{
+    public override void Emit(ScalarEventInfo eventInfo, IEmitter emitter)
+    {
+        if (eventInfo.Source.Type == typeof(string) &&
+            eventInfo.Source.Value is string { Length: > 0 } s &&
+            s.All(char.IsDigit))
+        {
+            eventInfo.Style = ScalarStyle.SingleQuoted;
+        }
+        base.Emit(eventInfo, emitter);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Output models
+// ---------------------------------------------------------------------------
+
+class TrajectoryOutput
+{
+    public required string FeederFix { get; init; }
+    public required string RunwayIdentifier { get; init; }
+    public string? ApproachType { get; init; }
+    public string? TransitionFix { get; init; }
+    public required List<SegmentOutput> Segments { get; init; }
+}
+
+class SegmentOutput
+{
+    public required string Identifier { get; init; }
+    public required double Track { get; init; }
+    public required double DistanceNM { get; init; }
+    public bool Pressure { get; init; }
+    public bool MaxPressure { get; init; }
+}

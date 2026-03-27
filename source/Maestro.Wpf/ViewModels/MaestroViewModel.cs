@@ -249,9 +249,9 @@ public partial class MaestroViewModel : ObservableObject
             Flights = notification.Session.Sequence.Flights.ToList();
             Slots = notification.Session.Sequence.Slots.ToList();
             LandingStatistics = notification.Session.LandingStatistics;
-            SurfaceWind = notification.Session.SurfaceWind;
-            UpperWind = notification.Session.UpperWind;
-            ManualWind = notification.Session.ManualWind;
+            SurfaceWind = notification.Session.Sequence.SurfaceWind;
+            UpperWind = notification.Session.Sequence.UpperWind;
+            ManualWind = notification.Session.Sequence.ManualWind;
         });
     }
 

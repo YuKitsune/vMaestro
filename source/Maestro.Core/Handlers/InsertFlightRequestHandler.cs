@@ -135,7 +135,8 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 null,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, at an exact time, FeederFixEstimate is TargetTime - Trajectory.TimeToGo
             flight = new Flight(
@@ -322,7 +323,8 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 null,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, from a departure airport, the FeederFixEstimate is TakeOffTime + DepartureETI - Trajectory.TimeToGo
             flight = new Flight(
@@ -399,7 +401,8 @@ public class InsertFlightRequestHandler(
             airportIdentifier,
             feederFix?.FixIdentifier,
             runway.Identifier,
-            runway.ApproachType);
+            runway.ApproachType,
+            session.Sequence.UpperWind);
 
         // Use the live feeder fix estimate only when coupled to a radar track.
         // For uncoupled flights, estimates can be inaccurate, so we'll use the calculated landingEstimate
