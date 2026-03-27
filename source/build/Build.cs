@@ -87,6 +87,13 @@ class Build : NukeBuild
     AbsolutePath ServerZipPath => TemporaryDirectory / $"Maestro.Server.{GetSemanticVersion()}.zip";
     AbsolutePath ServerPackageDirectory => TemporaryDirectory / "package-server";
 
+    // Tools paths
+    static readonly string[] ToolsRuntimeIdentifiers = ["win-x64", "linux-x64", "osx-arm64"];
+    AbsolutePath ToolsProjectPath => RootDirectory / "source" / "Maestro.Tools" / "Maestro.Tools.csproj";
+    AbsolutePath ToolsBuildOutputDirectory => TemporaryDirectory / "build-tools";
+    AbsolutePath ToolsPackageDirectory(string rid) => TemporaryDirectory / "package-tools" / rid;
+    AbsolutePath ToolsZipPath(string rid) => TemporaryDirectory / $"Maestro.Tools.{GetSemanticVersion()}.{rid}.zip";
+
     // vatSys paths
     [Parameter("Path to the vatSys installation")]
     AbsolutePath VatSysPath { get; }
@@ -326,7 +333,7 @@ class Build : NukeBuild
             PluginPackageDirectory.CreateOrCleanDirectory();
 
             // Copy plugin assemblies
-            foreach (var absolutePath in PluginBuildOutputDirectory.GetFiles())
+            foreach (var absolutePath in PluginBuildOutputDirectory.GetFiles().Where(f => f.Extension != ".pdb"))
             {
                 absolutePath.CopyToDirectory(PluginPackageDirectory, ExistsPolicy.MergeAndOverwrite);
             }
@@ -376,7 +383,7 @@ class Build : NukeBuild
             ServerPackageDirectory.CreateOrCleanDirectory();
 
             // Copy all published server files
-            foreach (var absolutePath in ServerBuildOutputDirectory.GetFiles())
+            foreach (var absolutePath in ServerBuildOutputDirectory.GetFiles().Where(f => f.Extension != ".pdb"))
             {
                 absolutePath.CopyToDirectory(ServerPackageDirectory, ExistsPolicy.MergeAndOverwrite);
             }
@@ -388,9 +395,61 @@ class Build : NukeBuild
             ServerPackageDirectory.ZipTo(ServerZipPath);
         });
 
+    Target CompileTools => _ => _
+        .Description("Publishes the CLI tool as self-contained single-file executables for each supported platform.")
+        .Executes(() =>
+        {
+            var version = GetSemanticVersion();
+            foreach (var rid in ToolsRuntimeIdentifiers)
+            {
+                var outputDir = ToolsBuildOutputDirectory / rid;
+                Log.Information("Publishing Maestro.Tools {Version} for {RID}", version, rid);
+
+                DotNetTasks.DotNetPublish(s => s
+                    .SetProject(ToolsProjectPath)
+                    .SetConfiguration(Configuration)
+                    .SetOutput(outputDir)
+                    .SetRuntime(rid)
+                    .SetSelfContained(true)
+                    .SetVersion(version)
+                    .SetAssemblyVersion(GitVersion.MajorMinorPatch)
+                    .SetFileVersion(GitVersion.MajorMinorPatch)
+                    .SetInformationalVersion(version)
+                    .SetProperty("PublishSingleFile", "true")
+                    .SetProperty("IncludeNativeLibrariesForSelfExtract", "true"));
+            }
+        });
+
+    Target PackageTools => _ => _
+        .Description("Bundles each platform build of the CLI tool into its own zip archive.")
+        .DependsOn(CompileTools)
+        .Requires(() => Configuration == Configuration.Release)
+        .Executes(() =>
+        {
+            foreach (var rid in ToolsRuntimeIdentifiers)
+            {
+                var packageDir = ToolsPackageDirectory(rid);
+                packageDir.CreateOrCleanDirectory();
+
+                var files = (ToolsBuildOutputDirectory / rid)
+                    .GetFiles()
+                    .Where(f => f.Extension != ".pdb");
+
+                foreach (var file in files)
+                    file.CopyToDirectory(packageDir, ExistsPolicy.MergeAndOverwrite);
+
+                var zipPath = ToolsZipPath(rid);
+                if (zipPath.FileExists())
+                    zipPath.DeleteFile();
+
+                Log.Information("Packaging {OutputDirectory} to {ZipPath}", packageDir, zipPath);
+                packageDir.ZipTo(zipPath);
+            }
+        });
+
     Target Release => _ => _
         .Description("Creates a GitHub release with the plugin and server binaries attached.")
-        .DependsOn(PackagePlugin, PackageServer)
+        .DependsOn(PackagePlugin, PackageServer, PackageTools)
         .Requires(() => GitHubToken)
         .Requires(() => GitRepository)
         .Requires(() => Configuration == Configuration.Release)
@@ -444,6 +503,22 @@ class Build : NukeBuild
 
             var serverAsset = await githubClient.Repository.Release.UploadAsset(release, serverAssetUpload);
             Log.Information("Server asset uploaded: {AssetUrl}", serverAsset.BrowserDownloadUrl);
+
+            // Upload a tools zip per platform
+            foreach (var rid in ToolsRuntimeIdentifiers)
+            {
+                var toolsZipPath = ToolsZipPath(rid);
+                using var toolsZipStream = File.OpenRead(toolsZipPath);
+                var toolsAssetUpload = new ReleaseAssetUpload
+                {
+                    FileName = toolsZipPath.Name,
+                    ContentType = "application/zip",
+                    RawData = toolsZipStream
+                };
+
+                var toolsAsset = await githubClient.Repository.Release.UploadAsset(release, toolsAssetUpload);
+                Log.Information("Tools asset uploaded ({RID}): {AssetUrl}", rid, toolsAsset.BrowserDownloadUrl);
+            }
         });
 
     /// <summary>

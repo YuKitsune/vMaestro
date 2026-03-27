@@ -26,10 +26,12 @@
       "enum": [
         "CompilePlugin",
         "CompileServer",
+        "CompileTools",
         "DownloadVatSys",
         "Install",
         "PackagePlugin",
         "PackageServer",
+        "PackageTools",
         "PublishDockerImage",
         "Release",
         "RepackPlugin",

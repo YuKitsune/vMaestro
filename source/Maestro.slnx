@@ -14,5 +14,6 @@
   <Project Path="Maestro.Plugin/Maestro.Plugin.csproj" />
   <Project Path="Maestro.Server.Tests/Maestro.Server.Tests.csproj" />
   <Project Path="Maestro.Server/Maestro.Server.csproj" />
+  <Project Path="Maestro.Tools/Maestro.Tools.csproj" />
   <Project Path="Maestro.Wpf/Maestro.Wpf.csproj" />
 </Solution>

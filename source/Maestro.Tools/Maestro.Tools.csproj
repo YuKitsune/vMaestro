@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <AssemblyName>maestro</AssemblyName>
+    <AssemblyName>maestro-tools</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

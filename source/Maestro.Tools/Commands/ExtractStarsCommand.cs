@@ -17,18 +17,21 @@ public static class ExtractStarsCommand
         var airportOption = new Option<string>("--airport", "ICAO airport identifier (e.g. YSSY)") { IsRequired = true };
         var outputOption = new Option<FileInfo>("--output", "Output YAML file path") { IsRequired = true };
         var skipOption = new Option<string[]>("--skip-point", "Waypoint name to exclude from all routes (repeatable)") { AllowMultipleArgumentsPerToken = false };
+        var feederFixOption = new Option<string[]>("--feeder-fix", "Feeder fix to include; if omitted all are included (repeatable)") { AllowMultipleArgumentsPerToken = false };
 
         var command = new Command("extract-stars", "Extract STAR segment geometry from a vatSys Airspace.xml file.");
         command.AddOption(airspaceOption);
         command.AddOption(airportOption);
         command.AddOption(outputOption);
         command.AddOption(skipOption);
+        command.AddOption(feederFixOption);
 
-        command.SetHandler((airspace, airport, output, skipWaypoints) =>
+        command.SetHandler((airspace, airport, output, skipWaypoints, feederFixes) =>
         {
             var skipped = new HashSet<string>(skipWaypoints ?? [], StringComparer.OrdinalIgnoreCase);
+            var feederFixSet = new HashSet<string>(feederFixes ?? [], StringComparer.OrdinalIgnoreCase);
             var doc = XDocument.Load(airspace.FullName);
-            var trajectories = ExtractTrajectories(doc, airport, skipped);
+            var trajectories = ExtractTrajectories(doc, airport, skipped, feederFixSet);
 
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(PascalCaseNamingConvention.Instance)
@@ -41,12 +44,12 @@ public static class ExtractStarsCommand
             File.WriteAllText(output.FullName, yaml);
 
             Console.WriteLine($"Wrote {trajectories.Count} trajectories to {output.FullName}");
-        }, airspaceOption, airportOption, outputOption, skipOption);
+        }, airspaceOption, airportOption, outputOption, skipOption, feederFixOption);
 
         return command;
     }
 
-    static List<TrajectoryOutput> ExtractTrajectories(XDocument doc, string airport, HashSet<string> skipWaypoints)
+    static List<TrajectoryOutput> ExtractTrajectories(XDocument doc, string airport, HashSet<string> skipWaypoints, HashSet<string> feederFixes)
     {
         var fixes = BuildFixLookup(doc);
         var runways = BuildRunwayLookup(doc, airport);
@@ -59,8 +62,8 @@ public static class ExtractStarsCommand
         {
             var starName = star.Attribute("Name")!.Value;
             var approachType = GetApproachType(starName);
+            var transitions = star.Elements("Transition").ToList();
 
-            // Only process Route elements — Transition elements are ignored
             foreach (var route in star.Elements("Route"))
             {
                 var runway = route.Attribute("Runway")!.Value;
@@ -69,23 +72,69 @@ public static class ExtractStarsCommand
                 if (string.IsNullOrEmpty(routeText))
                     continue;
 
-                var fixNames = routeText.Split('/')
+                var routeWaypoints = routeText.Split('/')
                     .Where(f => !skipWaypoints.Contains(f))
                     .ToArray();
-                if (fixNames.Length < 2)
-                    continue;
 
-                var segments = BuildSegments(starName, fixNames, runway, fixes, runways);
-                if (segments is null)
-                    continue;
-
-                results.Add(new TrajectoryOutput
+                if (transitions.Count > 0)
                 {
-                    FeederFix = fixNames[0],
-                    RunwayIdentifier = runway,
-                    ApproachType = approachType,
-                    Segments = segments
-                });
+                    // One trajectory per transition × route combination.
+                    // The transition name is the feeder fix; the first route waypoint is the transition fix.
+                    foreach (var transition in transitions)
+                    {
+                        var transitionWaypoints = transition.Value.Trim().Split('/')
+                            .Where(f => !skipWaypoints.Contains(f))
+                            .ToArray();
+
+                        if (transitionWaypoints.Length == 0)
+                            continue;
+
+                        var feederFix = transitionWaypoints[0];
+                        if (feederFixes.Count > 0 && !feederFixes.Contains(feederFix))
+                            continue;
+
+                        if (routeWaypoints.Length == 0)
+                            continue;
+
+                        var transitionFix = routeWaypoints[0];
+                        var fullSequence = transitionWaypoints.Concat(routeWaypoints).ToArray();
+
+                        var segments = BuildSegments(starName, fullSequence, runway, fixes, runways);
+                        if (segments is null)
+                            continue;
+
+                        results.Add(new TrajectoryOutput
+                        {
+                            FeederFix = feederFix,
+                            TransitionFix = transitionFix,
+                            RunwayIdentifier = runway,
+                            ApproachType = approachType,
+                            Segments = segments
+                        });
+                    }
+                }
+                else
+                {
+                    // No transitions — first route waypoint is the feeder fix.
+                    if (routeWaypoints.Length < 2)
+                        continue;
+
+                    var feederFix = routeWaypoints[0];
+                    if (feederFixes.Count > 0 && !feederFixes.Contains(feederFix))
+                        continue;
+
+                    var segments = BuildSegments(starName, routeWaypoints, runway, fixes, runways);
+                    if (segments is null)
+                        continue;
+
+                    results.Add(new TrajectoryOutput
+                    {
+                        FeederFix = feederFix,
+                        RunwayIdentifier = runway,
+                        ApproachType = approachType,
+                        Segments = segments
+                    });
+                }
             }
         }
 
@@ -153,7 +202,12 @@ public static class ExtractStarsCommand
     {
         var lookup = new Dictionary<string, (double Lat, double Lon)>(StringComparer.OrdinalIgnoreCase);
         foreach (var point in doc.Descendants("Point").Where(p => !string.IsNullOrWhiteSpace(p.Value)))
-            lookup.TryAdd(point.Attribute("Name")!.Value, ParseCoordinate(point.Value.Trim()));
+        {
+            var name = point.Attribute("Name")!.Value;
+            var navaidType = point.Attribute("NavaidType")?.Value;
+            var key = navaidType is "NDB" or "VOR" or "TAC" ? $"{name} {navaidType}" : name;
+            lookup.TryAdd(key, ParseCoordinate(point.Value.Trim()));
+        }
         return lookup;
     }
 
