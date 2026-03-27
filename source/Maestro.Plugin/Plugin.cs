@@ -472,7 +472,7 @@ public class Plugin : IPlugin
         var estimates = updated.ParsedRoute
             .ToArray() // Materialize to avoid mutation during enumeration
             .Select((s, i) => (Segment: s, Index: i, Dto: new FixEstimate(s.Intersection.Name, ToDateTimeOffsetOrNull(s.ETO))))
-            .Where(x => x.Segment.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
+            .Where(x => x.Index > updated.ParsedRoute.OverflownIndex && x.Segment.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
             .Select(x => x.Dto)
             .ToArray();
 

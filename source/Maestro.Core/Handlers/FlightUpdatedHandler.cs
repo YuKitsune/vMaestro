@@ -270,8 +270,10 @@ public class FlightUpdatedHandler(
 
                 flight.UpdateFeederFixEstimate(feederFixSystemEstimate.Estimate.Value);
                 // Landing estimate automatically calculated using TTG
-                return;
             }
+
+            // If they have a feeder fix set but no estimate, they've probably passed it, so leave the estimates as-is
+            return;
         }
 
         // No feeder fix estimate available
