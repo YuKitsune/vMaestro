@@ -17,7 +17,6 @@
   "feederFixEstimate": "2024-06-15T12:20:00+00:00",
   "manualFeederFixEstimate": false,
   "feederFixTime": "2024-06-15T12:22:00+00:00",
-  "actualFeederFixTime": null,
   "assignedRunwayIdentifier": "34L",
   "numberToLandOnRunway": 3,
   "approachType": "ILS",
@@ -29,18 +28,6 @@
   "remainingDelay": "00:01:00",
   "flowControls": "ReduceSpeed",
   "lastSeen": "2024-06-15T12:30:00+00:00",
-  "fixes": [
-    {
-      "fixIdentifier": "RIVET",
-      "estimate": "2024-06-15T12:20:00+00:00",
-      "actualTimeOver": null
-    },
-    {
-      "fixIdentifier": "SOSIJ",
-      "estimate": "2024-06-15T12:25:00+00:00",
-      "actualTimeOver": null
-    }
-  ],
   "position": {
     "coordinate": {
       "latitude": -33.9461,

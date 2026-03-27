@@ -57,15 +57,20 @@ public class ChangeRunwayRequestHandler(
             var runwayMode = sequence.GetRunwayModeAt(flight.LandingTime);
             var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier);
 
+            var fixNames = instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
+                ? flightDataRecord.Estimates.Select(x => x.FixIdentifier).ToArray()
+                : [];
+
             // Use the approach type defined in the current runway mode if this runway is in mode
             // Otherwise, use the first available approach type for that runway
-            var approachType = runway?.ApproachType ?? GetApproachType(flight, runwayIdentifier);
+            var approachType = runway?.ApproachType ?? GetApproachType(flight, runwayIdentifier, fixNames);
 
             // Lookup trajectory for the new runway and approach before updating flight
             var trajectory = trajectoryService.GetTrajectory(
                 flight,
                 request.RunwayIdentifier,
-                approachType);
+                approachType,
+                fixNames);
 
             flight.SetRunway(request.RunwayIdentifier, trajectory);
 
@@ -89,12 +94,12 @@ public class ChangeRunwayRequestHandler(
             cancellationToken);
     }
 
-    string GetApproachType(Flight flight, string runwayIdentifier)
+    string GetApproachType(Flight flight, string runwayIdentifier, string[] fixNames)
     {
         var approachTypes = trajectoryService.GetApproachTypes(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
-            flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
+            fixNames,
             runwayIdentifier,
             flight.GetPerformanceData());
 

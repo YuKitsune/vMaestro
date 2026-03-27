@@ -1,0 +1,8 @@
+{
+  "callsign": "QFA123",
+  "aircraftType": "B738",
+  "originIdentifier": "YMML",
+  "destinationIdentifier": "YSSY",
+  "isFromDepartureAirport": false,
+  "isHighPriority": false
+}

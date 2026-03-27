@@ -48,7 +48,7 @@ public partial class MaestroViewModel : ObservableObject
     List<FlightDto> _deSequencedFlights = [];
 
     [ObservableProperty]
-    List<FlightDto> _pendingFlights = [];
+    List<PendingFlightDto> _pendingFlights = [];
 
     [ObservableProperty]
     List<FlightDto> _flights = [];

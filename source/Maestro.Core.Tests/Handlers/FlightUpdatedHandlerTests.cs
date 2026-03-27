@@ -141,7 +141,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeToThePendingList()
+    public async Task WhenAFlightIsUncoupledAtDepartureAirport_ItShouldBeAddedToThePendingList()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
@@ -312,164 +312,6 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAnExistingFlightIsUpdated_AndItPassesTheFeederFix_PassedFeederFixTimeIsSet()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var ttg = TimeSpan.FromMinutes(10);
-
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Unstable)
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(ttg))
-            .Build();
-
-        var trajectoryService = new MockTrajectoryService(ttg);
-
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
-            .Build();
-
-        // Update the route estimate to include an ActualTime in the feeder fix
-        var actualFeederFixTime = clock.UtcNow().AddMinutes(12);
-        var estimatedFeederFixTime = clock.UtcNow().AddMinutes(13); // 1 minute off from actual
-
-        var notification = new FlightUpdatedNotification(
-            "QFA123",
-            "B738",
-            AircraftCategory.Jet,
-            WakeCategory.Medium,
-            "YMML",
-            "YSSY",
-            clock.UtcNow().AddHours(-1),
-            TimeSpan.FromHours(1),
-            _position,
-            [
-                new FixEstimate("RIVET", estimatedFeederFixTime, actualFeederFixTime),
-                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(30))
-            ]);
-
-        var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        flight.ActualFeederFixTime.ShouldBe(actualFeederFixTime);
-        flight.LandingEstimate.ShouldBe(actualFeederFixTime.Add(ttg));
-        flight.LandingEstimate.ShouldNotBe(estimatedFeederFixTime.Add(ttg));
-    }
-
-    [Fact]
-    public async Task WhenAnExistingFlightIsUpdated_AndItIsNotTrackingViaAFeederFix_AndItPassesTheFeederFixPoint_PassedFeederFixTimeIsSet()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var ttg = TimeSpan.FromMinutes(10);
-        var trajectoryService = new MockTrajectoryService(ttg);
-
-        // Create a flight not tracking via any feeder fix
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Unstable)
-            .WithFeederFix(null)
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(ttg))
-            .Build();
-
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s
-                .WithTrajectoryService(trajectoryService)
-                .WithFlight(flight))
-            .Build();
-
-        // Update the landing estimate to be now + Trajectory.TTG
-        // This means the calculated feeder fix time is "now" (flight has passed the feeder fix point)
-        var newLandingEstimate = clock.UtcNow().Add(ttg);
-
-        var notification = new FlightUpdatedNotification(
-            "QFA123",
-            "B738",
-            AircraftCategory.Jet,
-            WakeCategory.Medium,
-            "YMML",
-            "YSSY",
-            clock.UtcNow().AddHours(-1),
-            TimeSpan.FromHours(1),
-            _position,
-            [new FixEstimate("YSSY", newLandingEstimate)]);
-
-        var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        flight.ActualFeederFixTime.ShouldBe(newLandingEstimate.Subtract(ttg));
-    }
-
-    [Fact]
-    public async Task WhenAnExistingFlightIsUpdated_AndItHasPassedTheFeederFix_EstimatesAreNoLongerUpdated()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var ttg = TimeSpan.FromMinutes(10);
-        var trajectoryService = new MockTrajectoryService(ttg);
-
-        // Create a flight with an ATO_FF set (has already passed the feeder fix)
-        var actualFeederFixTime = clock.UtcNow().AddMinutes(-5);
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Unstable)
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(-5))
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(5))
-            .WithTrajectory(new Trajectory(ttg))
-            .PassedFeederFixAt(actualFeederFixTime)
-            .Build();
-
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
-            .Build();
-
-        var originalFeederFixEstimate = flight.FeederFixEstimate;
-        var originalLandingEstimate = flight.LandingEstimate;
-
-        // Update the ETA_FF and landing estimate (last ETA in route)
-        var newFeederFixEstimate = clock.UtcNow().AddMinutes(10);
-        var newLandingEstimate = clock.UtcNow().AddMinutes(20);
-
-        var notification = new FlightUpdatedNotification(
-            "QFA123",
-            "B738",
-            AircraftCategory.Jet,
-            WakeCategory.Medium,
-            "YMML",
-            "YSSY",
-            clock.UtcNow().AddHours(-1),
-            TimeSpan.FromHours(1),
-            _position,
-            [
-                new FixEstimate("RIVET", newFeederFixEstimate, actualFeederFixTime),
-                new FixEstimate("YSSY", newLandingEstimate)
-            ]);
-
-        var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        flight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate);
-        flight.LandingEstimate.ShouldBe(originalLandingEstimate);
-        flight.FeederFixEstimate.ShouldNotBe(newFeederFixEstimate);
-        flight.LandingEstimate.ShouldNotBe(newLandingEstimate);
-    }
-
-    [Fact]
     public async Task WhenAnExistingFlightIsUpdated_ButNoPositionIsAvailable_EstimatesAreNotRecalculated()
     {
         // Arrange
@@ -560,7 +402,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -589,7 +431,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         flight.Position.Coordinate.Longitude.ShouldBe(notification.Position.Coordinate.Longitude);
         flight.Position.Altitude.ShouldBe(notification.Position.Altitude);
         flight.Position.GroundSpeed.ShouldBe(notification.Position.GroundSpeed);
-        flight.Fixes.ShouldHaveSingleItem().ShouldBe(notification.Estimates.Single());
+        instance.Session.FlightDataRecords["QFA123"].Estimates.ShouldHaveSingleItem().ShouldBe(notification.Estimates.Single());
         flight.LastSeen.ShouldBe(clock.UtcNow());
     }
 
@@ -840,7 +682,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Assert
         var flight = instance.Session.PendingFlights.ShouldHaveSingleItem();
         flight.Callsign.ShouldBe("QFA123");
-        flight.HighPriority.ShouldBeTrue("flights without feeder fix should be high priority");
+        flight.IsHighPriority.ShouldBeTrue("flights without feeder fix should be high priority");
     }
 
     [Fact]
@@ -1034,9 +876,16 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(originalEstimate)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
+
+        // Pre-populate the flight data store so the rate limiter has a LastSeen to check
+        instance.Session.FlightDataRecords["QFA123"] = new FlightDataRecord(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, _position,
+            [new FixEstimate("RIVET", originalEstimate)],
+            clock.UtcNow());
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
@@ -1054,7 +903,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             ]);
 
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-        rateLimiter.ShouldUpdateFlight(flight).Returns(false); // Rate limit triggered
+        rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(false); // Rate limit triggered
 
         var handler = GetHandler(airportConfiguration, instanceManager, clock, rateLimiter: rateLimiter);
 
@@ -1104,15 +953,10 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Unstable)
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
-            .Build();
+        var pendingFlight = new PendingFlight("QFA123", IsFromDepartureAirport: false, IsHighPriority: false);
 
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
-        instance.Session.PendingFlights.Add(flight);
+        instance.Session.PendingFlights.Add(pendingFlight);
 
         var notification = new FlightUpdatedNotification(
             "QFA123",
@@ -1135,27 +979,21 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert - Flight should remain in pending list only
-        instance.Session.PendingFlights.ShouldContain(flight, "flight should remain in pending list");
+        instance.Session.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should remain in pending list");
         sequence.Flights.ShouldBeEmpty("pending flight should NOT be added to the sequence");
-        flight.LastSeen.ShouldBe(clock.UtcNow(), "flight last seen should be updated");
+        instance.Session.FlightDataRecords["QFA123"].LastSeen.ShouldBe(clock.UtcNow(), "flight data store should be updated");
     }
 
     [Fact]
-    public async Task WhenAPendingUnstableFlightIsUpdated_EstimatesAreNotCalculated()
+    public async Task WhenAPendingFlightIsUpdated_ItRemainsInThePendingList()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
-        var originalFeederFixEstimate = clock.UtcNow().AddMinutes(10);
-
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Unstable)
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(originalFeederFixEstimate)
-            .Build();
+        var pendingFlight = new PendingFlight("QFA123", IsFromDepartureAirport: false, IsHighPriority: false);
 
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
-        instance.Session.PendingFlights.Add(flight);
+        instance.Session.PendingFlights.Add(pendingFlight);
 
         var newFeederFixTime = clock.UtcNow().AddMinutes(15);
         var newLandingTime = clock.UtcNow().AddMinutes(25);
@@ -1180,11 +1018,11 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
-        // Assert
-        // Estimates should NOT be updated for pending flights
-        flight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate, "pending flight estimates should not be updated");
-        instance.Session.PendingFlights.ShouldContain(flight, "flight should remain in pending list");
+        // Assert - pending flight stays in list and is not promoted to sequence
+        instance.Session.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should remain in pending list");
         sequence.Flights.ShouldBeEmpty("pending flight should not be in the sequence");
+        // Flight data store is updated with the latest vatSys data
+        instance.Session.FlightDataRecords["QFA123"].Estimates.ShouldContain(e => e.FixIdentifier == "RIVET", "flight data store should have new estimates");
     }
 
     [Fact]
@@ -1375,6 +1213,115 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         flight1.LandingEstimate.ShouldBe(newLandingEstimate);
     }
 
+    [Fact]
+    public async Task WhenAFlightIsUpdated_TheFlightDataRecordIsStored()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration).Build();
+
+        var feederFixEstimate = clock.UtcNow().AddMinutes(30);
+        var landingEstimate = clock.UtcNow().AddMinutes(50);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1.5),
+            _position,
+            [
+                new FixEstimate("RIVET", feederFixEstimate),
+                new FixEstimate("YSSY", landingEstimate)
+            ]);
+
+        var handler = GetHandler(airportConfiguration, instanceManager, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        instance.Session.FlightDataRecords.TryGetValue("QFA123", out var record).ShouldBeTrue("FlightDataRecord should be stored on update");
+        record!.Callsign.ShouldBe("QFA123");
+        record.AircraftType.ShouldBe("B738");
+        record.WakeCategory.ShouldBe(WakeCategory.Medium);
+        record.Origin.ShouldBe("YMML");
+        record.Destination.ShouldBe("YSSY");
+        record.LastSeen.ShouldBe(clock.UtcNow());
+        record.Estimates.ShouldContain(e => e.FixIdentifier == "RIVET" && e.Estimate == feederFixEstimate);
+        record.Estimates.ShouldContain(e => e.FixIdentifier == "YSSY" && e.Estimate == landingEstimate);
+    }
+
+    [Fact]
+    public async Task WhenAFlightIsUpdated_AndNoEstimatesAreAvailable_ItIsAddedToThePendingList()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1.5),
+            _position,
+            []); // No estimates at all
+
+        var handler = GetHandler(airportConfiguration, instanceManager, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        instance.Session.PendingFlights.ShouldHaveSingleItem().Callsign.ShouldBe("QFA123");
+        sequence.Flights.ShouldBeEmpty("flight with no estimates should not be in the sequence");
+    }
+
+    [Fact]
+    public async Task WhenAFlightIsUpdated_AndFeederFixEstimateIsNull_ItIsAddedToThePendingList()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
+
+        // Feeder fix is present in the route but has no estimate (vatSys uses null when the estimate is not yet known)
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1.5),
+            _position,
+            [
+                new FixEstimate("RIVET", null), // Feeder fix with no estimate
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(50))
+            ]);
+
+        var handler = GetHandler(airportConfiguration, instanceManager, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        var pendingFlight = instance.Session.PendingFlights.ShouldHaveSingleItem();
+        pendingFlight.Callsign.ShouldBe("QFA123");
+        pendingFlight.IsHighPriority.ShouldBeFalse("flight has a feeder fix, estimate is just not yet known");
+        sequence.Flights.ShouldBeEmpty("flight with no feeder fix estimate should not be in the sequence");
+    }
+
     FlightUpdatedHandler GetHandler(
         AirportConfiguration airportConfiguration,
         IMaestroInstanceManager instanceManager,
@@ -1386,7 +1333,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         if (rateLimiter is null)
         {
             rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-            rateLimiter.ShouldUpdateFlight(Arg.Any<Flight>()).Returns(true);
+            rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(true);
         }
 
         var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);

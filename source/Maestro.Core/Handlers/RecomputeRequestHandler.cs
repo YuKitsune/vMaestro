@@ -49,8 +49,9 @@ public class RecomputeRequestHandler(
             }
 
             // Recalculate the feeder fix in case of a re-route
-            var feederFix = flight.Fixes.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-            var landingEstimate = flight.Fixes.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
+            instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord);
+            var feederFix = flightDataRecord?.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+            var landingEstimate = flightDataRecord?.Estimates.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
 
             flight.HighPriority = feederFix is null;
             flight.SetMaximumDelay(null);
@@ -72,7 +73,6 @@ public class RecomputeRequestHandler(
                 feederFix?.FixIdentifier,
                 trajectory,
                 feederFix?.Estimate,
-                feederFix?.ActualTimeOver,
                 landingEstimate);
 
             flight.SetRunway(runway.Identifier, trajectory);

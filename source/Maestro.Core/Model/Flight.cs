@@ -40,7 +40,6 @@ public class Flight : IEquatable<Flight>
         DateTimeOffset activatedTime,
 
         // Optional vatSys data
-        FixEstimate[]? fixes = null,
         FlightPosition? position = null)
     {
         Callsign = callsign;
@@ -79,8 +78,6 @@ public class Flight : IEquatable<Flight>
 
         ActivatedTime = activatedTime;
         State = State.Unstable;
-
-        Fixes = fixes ?? [];
         Position = position;
     }
 
@@ -127,7 +124,6 @@ public class Flight : IEquatable<Flight>
 
         State = state;
 
-        Fixes = [];
         Position = null;
     }
 
@@ -162,7 +158,6 @@ public class Flight : IEquatable<Flight>
         ManualFeederFixEstimate = dto.ManualFeederFixEstimate;
         FeederFixTime = dto.FeederFixTime
             ?? throw new ArgumentException("FeederFixTime required", nameof(dto));
-        ActualFeederFixTime = dto.ActualFeederFixTime;
 
         InitialLandingEstimate = dto.InitialLandingEstimate;
         LandingEstimate = dto.LandingEstimate;
@@ -174,7 +169,6 @@ public class Flight : IEquatable<Flight>
         MaximumDelay = dto.MaximumDelay;
         ActivatedTime = dto.ActivatedTime;
         FlowControls = dto.FlowControls;
-        Fixes = dto.Fixes?.ToArray() ?? [];
         LastSeen = dto.LastSeen;
         Position = dto.Position;
     }
@@ -202,8 +196,6 @@ public class Flight : IEquatable<Flight>
     public DateTimeOffset FeederFixEstimate { get; private set; } // ETA_FF
     public bool ManualFeederFixEstimate { get; private set; }
     public DateTimeOffset FeederFixTime { get; private set; } // STA_FF
-    public DateTimeOffset? ActualFeederFixTime { get; private set; } // ATO_FF
-    public bool HasPassedFeederFix => ActualFeederFixTime is not null;
 
     public DateTimeOffset InitialLandingEstimate { get; private set; }
     public DateTimeOffset LandingEstimate { get; private set; } // ETA
@@ -216,7 +208,6 @@ public class Flight : IEquatable<Flight>
     public FlowControls FlowControls { get; private set; } = FlowControls.HighSpeed;
 
     public string ApproachType { get; private set; }
-    public FixEstimate[] Fixes { get; set; } = [];
     public DateTimeOffset LastSeen { get; private set; }
     public FlightPosition? Position { get; private set; }
     public Trajectory Trajectory { get; private set; }
@@ -253,11 +244,8 @@ public class Flight : IEquatable<Flight>
 
     public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
     {
-        if (ManualFeederFixEstimate || HasPassedFeederFix)
-            throw new MaestroException("Cannot update LandingEstimate when FeederFixEstimate is fixed");
-
         LandingEstimate = landingEstimate;
-        FeederFixEstimate = LandingEstimate.Subtract(Trajectory.TimeToGo);
+        FeederFixEstimate = landingEstimate.Subtract(Trajectory.TimeToGo);
 
         if (State is State.Unstable)
         {
@@ -266,26 +254,15 @@ public class Flight : IEquatable<Flight>
         }
     }
 
-    public void PassedFeederFix(DateTimeOffset feederFixTime)
-    {
-        if (HasPassedFeederFix)
-            throw new MaestroException("Flight has already passed the feeder fix");
-
-        ActualFeederFixTime = feederFixTime;
-        LandingEstimate = ActualFeederFixTime.Value.Add(Trajectory.TimeToGo);
-    }
-
     public void SetFeederFix(
         string? feederFixIdentifier,
         Trajectory trajectory,
         DateTimeOffset? feederFixEstimate,
-        DateTimeOffset? actualFeederFixTime,
         DateTimeOffset landingEstimate)
     {
         ManualFeederFixEstimate = false;
         FeederFixIdentifier = feederFixIdentifier;
         Trajectory = trajectory;
-        ActualFeederFixTime = actualFeederFixTime;
 
         // Calculate estimates based on whether flight tracks via feeder fix
         if (!string.IsNullOrEmpty(feederFixIdentifier) && feederFixEstimate.HasValue)
@@ -335,15 +312,7 @@ public class Flight : IEquatable<Flight>
     {
         Trajectory = trajectory;
 
-        if (ActualFeederFixTime.HasValue)
-        {
-            // Calculate ETA using ATO_FF + TTG
-            LandingEstimate = ActualFeederFixTime.Value.Add(trajectory.TimeToGo);
-
-            if (State is State.Unstable)
-                InitialLandingEstimate = LandingEstimate;
-        }
-        else if (!string.IsNullOrEmpty(FeederFixIdentifier))
+        if (!string.IsNullOrEmpty(FeederFixIdentifier))
         {
             // Calculate ETA using ETA_FF + TTG
             LandingEstimate = FeederFixEstimate.Add(Trajectory.TimeToGo);
@@ -353,15 +322,11 @@ public class Flight : IEquatable<Flight>
         }
         else
         {
-            // If no feeder fix, calculate ETA_FF from last fix estimate - TTG
-            if (Fixes.Length > 0)
-            {
-                var lastEstimate = Fixes.Last().Estimate;
-                FeederFixEstimate = lastEstimate.Subtract(Trajectory.TimeToGo);
+            // Calculate ETA_FF from ETA - TTG
+            FeederFixEstimate = LandingEstimate.Subtract(Trajectory.TimeToGo);
 
-                if (State is State.Unstable)
-                    InitialFeederFixEstimate = FeederFixEstimate;
-            }
+            if (State is State.Unstable)
+                InitialFeederFixEstimate = FeederFixEstimate;
         }
 
         // Calculate STA_FF using STA - TTG
@@ -382,24 +347,6 @@ public class Flight : IEquatable<Flight>
         LandingTime = LandingEstimate;
         FeederFixTime = FeederFixEstimate;
         FlowControls = FlowControls.HighSpeed;
-    }
-
-    public void Reset()
-    {
-        // Reset state
-        State = State.Unstable;
-
-        // Reset activation
-        ActivatedTime = null;
-
-        // Reset sequence data
-        FlowControls = FlowControls.HighSpeed;
-
-        // Reset delay controls
-        MaximumDelay = null;
-        TargetLandingTime = null;
-
-        // Note: Trajectory is kept as-is and will be recalculated when re-inserted into the sequence
     }
 
     public void SetSequenceData(

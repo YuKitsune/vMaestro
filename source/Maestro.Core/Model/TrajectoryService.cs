@@ -8,12 +8,12 @@ namespace Maestro.Core.Model;
 public class TrajectoryService(IAirportConfigurationProvider airportConfigurationProvider, ILogger logger)
     : ITrajectoryService
 {
-    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType)
+    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames)
     {
         var trajectory = GetTrajectoryInternal(
             flight.DestinationIdentifier,
             flight.FeederFixIdentifier,
-            flight.Fixes.Select(x => x.FixIdentifier).ToArray(),
+            fixNames,
             approachType,
             runwayIdentifier,
             flight.GetPerformanceData());

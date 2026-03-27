@@ -15,7 +15,6 @@ public class FlightBuilder(string callsign)
     DateTimeOffset _feederFixEstimate = default;
     bool _manualFeederFixEstimate = false;
     DateTimeOffset _feederFixTime = default;
-    DateTimeOffset? _passedFeederFix = null;
 
     DateTimeOffset _landingEstimate = default;
     DateTimeOffset? _targetLandingTime = null;
@@ -84,12 +83,6 @@ public class FlightBuilder(string callsign)
     public FlightBuilder WithFeederFixTime(DateTimeOffset time)
     {
         _feederFixTime = time;
-        return this;
-    }
-
-    public FlightBuilder PassedFeederFixAt(DateTimeOffset time)
-    {
-        _passedFeederFix = time;
         return this;
     }
 
@@ -209,10 +202,6 @@ public class FlightBuilder(string callsign)
                 feederFixEstimate: _feederFixEstimate != default ? _feederFixEstimate : null,
                 landingEstimate: _landingEstimate,
                 activatedTime: _activationTime,
-                fixes: [
-                    new FixEstimate(_feederFixIdentifier ?? _destination, _feederFixEstimate != default ? _feederFixEstimate : (_landingEstimate != default ? _landingEstimate.Subtract(_trajectory.TimeToGo) : default), _passedFeederFix),
-                    new FixEstimate(_destination, _landingEstimate)
-                ],
                 position: _position);
         }
 
@@ -223,12 +212,6 @@ public class FlightBuilder(string callsign)
         if (_feederFixEstimate != default && !string.IsNullOrEmpty(_feederFixIdentifier))
         {
             flight.UpdateFeederFixEstimate(_feederFixEstimate, _manualFeederFixEstimate);
-        }
-
-        // Mark as passed feeder fix
-        if (_passedFeederFix.HasValue && !flight.HasPassedFeederFix)
-        {
-            flight.PassedFeederFix(_passedFeederFix.Value);
         }
 
         // Set sequence data

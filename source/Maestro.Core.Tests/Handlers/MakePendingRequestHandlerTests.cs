@@ -32,38 +32,28 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
             .Build();
     }
 
-    [Fact]
-    public async Task WhenMakingFlightPending_ItIsRemovedFromTheSequence()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task WhenMakingFlightPending_ItIsRemovedFromTheSequenceAndAddedToPendingList(bool highPriority)
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
 
         var airportConfiguration = CreateAirportConfiguration();
 
-        var flight1 = new FlightBuilder("QFA123")
+        var flight = new FlightBuilder("QFA123")
             .FromDepartureAirport()
             .WithState(State.Stable)
             .WithLandingTime(now.AddMinutes(10))
             .WithLandingEstimate(now.AddMinutes(8))
-            .WithFeederFixTime(now.AddMinutes(5))
-            .WithFeederFixEstimate(now.AddMinutes(3))
             .WithRunway(DefaultRunway)
-            .Build();
-
-        var flight2 = new FlightBuilder("QFA456")
-            .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(15))
-            .WithLandingEstimate(now.AddMinutes(13))
-            .WithRunway(DefaultRunway)
+            .HighPriority(highPriority)
             .Build();
 
         var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
+            .WithSequence(s => s.WithFlight(flight))
             .Build();
-
-        // Verify initial state
-        sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
-        sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
 
         var handler = GetRequestHandler(instanceManager, sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
@@ -72,18 +62,13 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight1.State.ShouldBe(State.Unstable, "flight should be marked as unstable when made pending");
-
-        // Verify flight is moved to pending list and removed from main sequence
         var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
-        var sessionDto = instance.Session.Snapshot();
-        sessionDto.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
-        sessionDto.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
-        sessionDto.Sequence.Flights.ShouldContain(f => f.Callsign == "QFA456", "other flight should remain in sequence");
+        instance.Session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
 
-        // Verify remaining flight moved up in sequence
-        sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
-        flight2.LandingTime.ShouldBe(flight2.LandingEstimate, "remaining flight should return to its estimate");
+        var pendingFlight = instance.Session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
+        pendingFlight.ShouldNotBeNull();
+        pendingFlight.IsFromDepartureAirport.ShouldBeTrue();
+        pendingFlight.IsHighPriority.ShouldBe(highPriority);
     }
 
     // TODO: Throw an error
@@ -138,46 +123,6 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
             await handler.Handle(request, CancellationToken.None));
 
         exception.Message.ShouldContain("departure airport", Case.Insensitive);
-    }
-
-    [Fact]
-    public async Task WhenFlightIsMadePending_ItsDetailsAreReset()
-    {
-        // Arrange
-        var now = clockFixture.Instance.UtcNow();
-
-        var airportConfiguration = CreateAirportConfiguration();
-
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Stable)
-            .WithLandingTime(now.AddMinutes(10))
-            .WithLandingEstimate(now.AddMinutes(8))
-            .WithFeederFixTime(now.AddMinutes(5))
-            .WithFeederFixEstimate(now.AddMinutes(3))
-            .WithRunway(DefaultRunway)
-            .Build();
-
-        // Set some additional properties that should be reset
-        flight.SetSequenceData(flight.LandingTime, FlowControls.ReduceSpeed);
-        flight.IsFromDepartureAirport = true;
-
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
-            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
-            .Build();
-
-        var handler = GetRequestHandler(instanceManager, sequence);
-        var request = new MakePendingRequest("YSSY", "QFA123");
-
-        // Act
-        await handler.Handle(request, CancellationToken.None);
-
-        // Assert - verify Reset() behavior: state, activation, and flow controls are reset
-        // Note: Trajectory and estimates are kept - they will be recalculated when re-inserted
-        flight.ActivatedTime.ShouldBeNull("ActivatedTime should be reset to null");
-        flight.FlowControls.ShouldBe(FlowControls.HighSpeed, "FlowControls should be reset to HighSpeed");
-        flight.State.ShouldBe(State.Unstable, "State should be reset to Unstable");
-        flight.MaximumDelay.ShouldBeNull("MaximumDelay should be reset to null");
-        flight.TargetLandingTime.ShouldBeNull("TargetLandingTime should be reset to null");
     }
 
     MakePendingRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, ILogger? logger = null)

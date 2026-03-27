@@ -31,7 +31,6 @@ public class FlightModel : PageModel
             return NotFound();
 
         Flight = session.Sequence.Flights.FirstOrDefault(f => f.Callsign == Callsign)
-            ?? session.PendingFlights.FirstOrDefault(f => f.Callsign == Callsign)
             ?? session.DeSequencedFlights.FirstOrDefault(f => f.Callsign == Callsign);
 
         if (Flight is null)

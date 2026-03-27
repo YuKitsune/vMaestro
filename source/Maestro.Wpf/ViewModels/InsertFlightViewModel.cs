@@ -23,10 +23,10 @@ public partial class InsertFlightViewModel : ObservableObject
     FlightDto[] _landedFlights = [];
 
     [ObservableProperty]
-    FlightDto[] _pendingFlights = [];
+    PendingFlightDto[] _pendingFlights = [];
 
     [ObservableProperty]
-    FlightDto? _selectedFlight;
+    PendingFlightDto? _selectedFlight;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
@@ -40,7 +40,7 @@ public partial class InsertFlightViewModel : ObservableObject
         string airportIdentifier,
         IInsertFlightOptions options,
         FlightDto[] landedFlights,
-        FlightDto[] pendingFlights,
+        PendingFlightDto[] pendingFlights,
         IWindowHandle windowHandle,
         IMediator mediator,
         IErrorReporter errorReporter)
@@ -56,7 +56,7 @@ public partial class InsertFlightViewModel : ObservableObject
         _errorReporter = errorReporter;
     }
 
-    partial void OnSelectedFlightChanged(FlightDto? value)
+    partial void OnSelectedFlightChanged(PendingFlightDto? value)
     {
         _isUpdatingFromSelection = true;
         Callsign = value?.Callsign ?? "";

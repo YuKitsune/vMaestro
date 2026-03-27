@@ -1,20 +1,18 @@
-﻿using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
+using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core;
 
 public interface IFlightUpdateRateLimiter
 {
-    bool ShouldUpdateFlight(Flight flight);
+    bool ShouldUpdate(DateTimeOffset lastSeen);
 }
 
 public class FlightUpdateRateLimiter(IClock clock)
     : IFlightUpdateRateLimiter
 {
-    public bool ShouldUpdateFlight(Flight flight)
+    public bool ShouldUpdate(DateTimeOffset lastSeen)
     {
         var updateRate = TimeSpan.FromSeconds(30);
-        var shouldUpdate = clock.UtcNow() - flight.LastSeen >= updateRate;
-        return shouldUpdate;
+        return clock.UtcNow() - lastSeen >= updateRate;
     }
 }

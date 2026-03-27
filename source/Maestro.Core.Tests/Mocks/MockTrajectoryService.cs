@@ -36,12 +36,18 @@ public class MockTrajectoryService : ITrajectoryService
         return new TrajectoryConfigurationBuilder(this);
     }
 
-    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType)
+    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames)
     {
         if (_flightTrajectories.TryGetValue(flight.Callsign, out var trajectory))
             return trajectory;
 
-        var match = FindBestMatch(flight.AircraftType, null, null, runwayIdentifier, approachType);
+        var match = FindBestMatch(
+            flight.AircraftType,
+            flight.DestinationIdentifier,
+            flight.FeederFixIdentifier,
+            runwayIdentifier,
+            approachType);
+
         return match ?? _defaultTrajectory;
     }
 

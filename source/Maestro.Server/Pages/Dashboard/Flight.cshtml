@@ -73,33 +73,7 @@
             </div>
         }
 
-        @if (flight.Fixes.Length > 0)
-        {
-            <div class="card mb-4">
-                <div class="card-header">Route Fixes</div>
-                <div class="card-body">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>Fix</th>
-                                <th>Estimate</th>
-                                <th>Actual</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var fix in flight.Fixes)
-                            {
-                                <tr>
-                                    <td>@fix.FixIdentifier</td>
-                                    <td>@FormatHelpers.ToDDHHMM(fix.Estimate)</td>
-                                    <td>@(fix.ActualTimeOver.HasValue ? FormatHelpers.ToDDHHMM(fix.ActualTimeOver.Value) : "-")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
+
     </div>
 
     <div class="col-md-6">
@@ -118,9 +92,6 @@
 
                     <dt class="col-sm-5">Scheduled Time (STA_FF)</dt>
                     <dd class="col-sm-7">@FormatTime(flight.FeederFixTime)</dd>
-
-                    <dt class="col-sm-5">Actual Time (ATO_FF)</dt>
-                    <dd class="col-sm-7">@FormatTime(flight.ActualFeederFixTime)</dd>
                 </dl>
             </div>
         </div>

@@ -124,9 +124,7 @@ public class InsertFlightRequestHandler(
 
         CheckAndRemoveExistingFlight(session.Sequence, callsign);
 
-        var existingPendingFlight = session.PendingFlights.SingleOrDefault(f =>
-            f.Callsign == callsign &&
-            f.AircraftType == performanceData.TypeCode);
+        var existingPendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == callsign);
 
         Flight flight;
         if (existingPendingFlight is null)
@@ -156,22 +154,17 @@ public class InsertFlightRequestHandler(
         {
             session.PendingFlights.Remove(existingPendingFlight);
 
-            var trajectory = trajectoryService.GetTrajectory(
+            flight = CreateFlightFromPending(
                 existingPendingFlight,
-                runway.Identifier,
-                runway.ApproachType);
+                session,
+                airportConfiguration,
+                airportIdentifier,
+                performanceData,
+                runway,
+                landingEstimate: targetLandingTime);
 
-            existingPendingFlight.SetRunway(runway.Identifier, trajectory);
-            existingPendingFlight.SetApproachType(runway.ApproachType, trajectory);
-            existingPendingFlight.SetTargetLandingTime(targetLandingTime);
-
-            // Don't change ETA_FF if the flight is coupled to a radar track
-            if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
-                existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo));
-
-            existingPendingFlight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
-
-            flight = existingPendingFlight;
+            flight.SetTargetLandingTime(targetLandingTime);
+            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
 
         // Calculate the insertion index based on the landing time.
@@ -230,15 +223,12 @@ public class InsertFlightRequestHandler(
         // Check if flight already exists in sequence
         CheckAndRemoveExistingFlight(session.Sequence, callsign);
 
-        var existingPendingFlight = session.PendingFlights.SingleOrDefault(f =>
-            f.Callsign == callsign &&
-            f.AircraftType == performanceData.TypeCode);
+        var existingPendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == callsign);
 
         Flight flight;
         if (existingPendingFlight is null)
         {
             // Create a dummy flight if a pending flight couldn't be found
-
             var trajectory = trajectoryService.GetTrajectory(
                 performanceData,
                 airportIdentifier,
@@ -263,22 +253,17 @@ public class InsertFlightRequestHandler(
         {
             session.PendingFlights.Remove(existingPendingFlight);
 
-            var trajectory = trajectoryService.GetTrajectory(
+            flight = CreateFlightFromPending(
                 existingPendingFlight,
-                runway.Identifier,
-                runway.ApproachType);
+                session,
+                airportConfiguration,
+                airportIdentifier,
+                performanceData,
+                runway,
+                landingEstimate: targetLandingTime);
 
-            existingPendingFlight.SetRunway(runway.Identifier, trajectory);
-            existingPendingFlight.SetApproachType(runway.ApproachType, trajectory);
-            existingPendingFlight.SetTargetLandingTime(targetLandingTime);
-
-            // Don't change ETA_FF if the flight is coupled to a radar track
-            if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
-                existingPendingFlight.UpdateFeederFixEstimate(targetLandingTime.Subtract(trajectory.TimeToGo));
-
-            existingPendingFlight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
-
-            flight = existingPendingFlight;
+            flight.SetTargetLandingTime(targetLandingTime);
+            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
 
         // Calculate the insertion index based on the landing time.
@@ -326,15 +311,12 @@ public class InsertFlightRequestHandler(
 
         var existingPendingFlight = session.PendingFlights.SingleOrDefault(f =>
             f.Callsign == callsign &&
-            f.AircraftType == performanceData.TypeCode &&
-            f.OriginIdentifier == originIdentifier &&
             f.IsFromDepartureAirport);
 
         Flight flight;
         if (existingPendingFlight is null)
         {
             // Create a dummy flight if a pending flight couldn't be found
-
             var trajectory = trajectoryService.GetTrajectory(
                 performanceData,
                 airportIdentifier,
@@ -359,22 +341,17 @@ public class InsertFlightRequestHandler(
         {
             session.PendingFlights.Remove(existingPendingFlight);
 
-            var trajectory = trajectoryService.GetTrajectory(
+            flight = CreateFlightFromPending(
                 existingPendingFlight,
-                runway.Identifier,
-                runway.ApproachType);
-
-            existingPendingFlight.SetRunway(runway.Identifier, trajectory);
-            existingPendingFlight.SetApproachType(runway.ApproachType, trajectory);
-
-            // Don't change ETA_FF if the flight is coupled to a radar track
-            if (existingPendingFlight.Position is null || existingPendingFlight.Position.IsOnGround)
-                existingPendingFlight.UpdateFeederFixEstimate(landingEstimate.Subtract(trajectory.TimeToGo));
+                session,
+                airportConfiguration,
+                airportIdentifier,
+                performanceData,
+                runway,
+                landingEstimate);
 
             // Departures remain unstable as their landing estimate will become more accurate as they depart, couple, and climb
-            existingPendingFlight.SetState(airportConfiguration.DefaultDepartureFlightState, clock);
-
-            flight = existingPendingFlight;
+            flight.SetState(airportConfiguration.DefaultDepartureFlightState, clock);
         }
 
         // Departures can't overtake SuperStable flights, but they can overtake Unstable and Stable flights
@@ -396,6 +373,58 @@ public class InsertFlightRequestHandler(
         {
             flight.SetState(airportConfiguration.DefaultDummyFlightState, clock);
         }
+
+        return flight;
+    }
+
+    /// <summary>
+    /// Creates a full <see cref="Flight"/> from a <see cref="PendingFlight"/> record by looking up
+    /// the latest <see cref="FlightDataRecord"/>..
+    /// </summary>
+    Flight CreateFlightFromPending(
+        PendingFlight pendingFlight,
+        Session session,
+        AirportConfiguration airportConfiguration,
+        string airportIdentifier,
+        AircraftPerformanceData performanceData,
+        Runway runway,
+        DateTimeOffset landingEstimate)
+    {
+        session.FlightDataRecords.TryGetValue(pendingFlight.Callsign, out var flightDataRecord);
+
+        var feederFix = flightDataRecord?.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+
+        var trajectory = trajectoryService.GetTrajectory(
+            performanceData,
+            airportIdentifier,
+            feederFix?.FixIdentifier,
+            runway.Identifier,
+            runway.ApproachType);
+
+        // Use the live feeder fix estimate only when coupled to a radar track.
+        // For uncoupled flights, estimates can be inaccurate, so we'll use the calculated landingEstimate
+        // for exact/relative insertions, or takeoff time + ETI for departures, and derive FeederFixEstimate
+        // from landingEstimate - TTG.
+        // Live updates via FlightUpdatedHandler will refine both estimates once the flight couples.
+        var feederFixEstimate = flightDataRecord?.Position is not null ? feederFix?.Estimate : null;
+
+        var flight = new Flight(
+            callsign: pendingFlight.Callsign,
+            aircraftType: performanceData.TypeCode,
+            aircraftCategory: performanceData.AircraftCategory,
+            wakeCategory: performanceData.WakeCategory,
+            destinationIdentifier: airportIdentifier,
+            originIdentifier: flightDataRecord?.Origin,
+            isFromDepartureAirport: pendingFlight.IsFromDepartureAirport,
+            estimatedDepartureTime: flightDataRecord?.EstimatedDepartureTime,
+            assignedRunwayIdentifier: runway.Identifier,
+            approachType: runway.ApproachType,
+            trajectory: trajectory,
+            feederFixIdentifier: feederFix?.FixIdentifier,
+            feederFixEstimate: feederFixEstimate,
+            landingEstimate: landingEstimate,
+            activatedTime: clock.UtcNow(),
+            position: flightDataRecord?.Position);
 
         return flight;
     }

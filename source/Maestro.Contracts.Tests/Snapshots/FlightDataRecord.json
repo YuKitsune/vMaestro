@@ -6,7 +6,6 @@
   "origin": "YMML",
   "destination": "YSSY",
   "estimatedDepartureTime": "2024-06-15T10:30:00+00:00",
-  "estimatedFlightTime": "01:00:00",
   "position": {
     "coordinate": {
       "latitude": -33.9461,
@@ -22,5 +21,6 @@
       "fixIdentifier": "RIVET",
       "estimate": "2024-06-15T12:30:00+00:00"
     }
-  ]
+  ],
+  "lastSeen": "2024-06-15T12:30:00+00:00"
 }

@@ -35,8 +35,7 @@ public partial class FlightInformationViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (s, m) =>
         {
             var flight = m.Session.Sequence.Flights.FirstOrDefault(f => f.Callsign == Callsign) ??
-                         m.Session.DeSequencedFlights.FirstOrDefault(f => f.Callsign == Callsign) ??
-                         m.Session.PendingFlights.FirstOrDefault(f => f.Callsign == Callsign);
+                         m.Session.DeSequencedFlights.FirstOrDefault(f => f.Callsign == Callsign);
 
             if (flight == null)
                 return;

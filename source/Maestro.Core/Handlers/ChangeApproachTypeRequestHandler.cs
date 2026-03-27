@@ -47,11 +47,16 @@ public class ChangeApproachTypeRequestHandler(
             // TODO: Track who initiated the change
             logger.Information("Changing approach type for {Callsign} to {NewApproachType}.", request.Callsign, request.ApproachType);
 
+            var fixNames = instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
+                ? flightDataRecord.Estimates.Select(x => x.FixIdentifier).ToArray()
+                : [];
+
             // Lookup trajectory for the new approach type
             var trajectory = trajectoryService.GetTrajectory(
                 flight,
                 flight.AssignedRunwayIdentifier,
-                request.ApproachType);
+                request.ApproachType,
+                fixNames);
 
             flight.SetApproachType(request.ApproachType, trajectory);
 

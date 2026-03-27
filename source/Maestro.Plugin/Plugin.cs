@@ -471,13 +471,8 @@ public class Plugin : IPlugin
 
         var estimates = updated.ParsedRoute
             .ToArray() // Materialize to avoid mutation during enumeration
-            .Select((s, i) => (Segment: s, Index: i, Dto: new FixEstimate(
-                s.Intersection.Name,
-                ToDateTimeOffset(s.ETO),
-                i <= updated.ParsedRoute.OverflownIndex && s.ATO != DateTime.MaxValue // If this fix has been overflown, then use the ATO. If a flight has passed FF before we connect to the network, this will be MaxValue. ATO is unknown.
-                    ? ToDateTimeOffset(s.ATO)
-                    : null)))
-            .Where(x => x.Segment.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
+            .Select((s, i) => (Segment: s, Index: i, Dto: new FixEstimate(s.Intersection.Name, ToDateTimeOffsetOrNull(s.ETO))))
+            .Where(x => x.Index > updated.ParsedRoute.OverflownIndex && x.Segment.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
             .Select(x => x.Dto)
             .ToArray();
 
@@ -492,7 +487,7 @@ public class Plugin : IPlugin
                     : VerticalTrack.Maintaining;
 
             position = new FlightPosition(
-                new Maestro.Contracts.Shared.Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
+                new Contracts.Shared.Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
                 track.CorrectedAltitude,
                 verticalTrack,
                 track.GroundSpeed,
@@ -526,6 +521,15 @@ public class Plugin : IPlugin
             estimates);
 
         await _mediator.Publish(notification, CancellationToken.None);
+    }
+
+    internal static DateTimeOffset? ToDateTimeOffsetOrNull(DateTime dateTime)
+    {
+        var value = ToDateTimeOffset(dateTime);
+        if (value == DateTimeOffset.MaxValue)
+            return null;
+
+        return value;
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)

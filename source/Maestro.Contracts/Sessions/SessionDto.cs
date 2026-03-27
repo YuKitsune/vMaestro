@@ -19,7 +19,7 @@ public class SessionDto
     /// Flights that are pending insertion into the sequence.
     /// </summary>
     [Key(1)]
-    public required FlightDto[] PendingFlights { get; init; }
+    public required PendingFlightDto[] PendingFlights { get; init; }
 
     /// <summary>
     /// Flights that have been temporarily removed from the sequence.
@@ -62,4 +62,11 @@ public class SessionDto
     /// </summary>
     [Key(8)]
     public required bool ManualWind { get; init; }
+
+    /// <summary>
+    /// The latest flight data received from the air traffic management system, keyed by callsign.
+    /// Used to look up flight data when inserting pending flights into the sequence.
+    /// </summary>
+    [Key(9)]
+    public FlightDataRecord[] FlightDataRecords { get; init; } = [];
 }
