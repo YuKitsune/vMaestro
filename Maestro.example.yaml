@@ -559,15 +559,18 @@ Airports:
 
   DefaultTTGMinutes: 18
 
-  # Define trajectories (abbreviated example — run extract-stars for full geometry)
+  # Define trajectories
   Trajectories:
     - FeederFix: ARBEY
-      RunwayIdentifier: "09"
+      RunwayIdentifier: '09'
+      ApproachType: A
       Segments:
-        - {Identifier: ARBEY, Track: 270.0, DistanceNM: 18.0}
-        - {Identifier: FAF,   Track: 270.0, DistanceNM:  4.5}
-        - {Identifier: "09",  Track: 090.0, DistanceNM:  3.0}
-    # ... continue for all feeder fix / runway combinations
+      - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+      - {Identifier: DABUX, Track: 199.6, DistanceNM: 7.7}
+      - {Identifier: OPAVA, Track: 213.5, DistanceNM: 6.7}
+      - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+      - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+      - {Identifier: '09', Track: 94.4, DistanceNM: 11}
 
   # Define departure airports (abbreviated example)
   DepartureAirports:
