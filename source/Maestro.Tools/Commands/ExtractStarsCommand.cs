@@ -105,8 +105,7 @@ public static class ExtractStarsCommand
                         var transitionFix = routeWaypoints[0];
                         var fullSequence = transitionWaypoints.Concat(routeWaypoints).ToArray();
 
-                        var additionalSegments = FindOverrideSegments(airportConfig.AdditionalSegments, feederFix, transitionFix, runway, approachType);
-                        var segments = BuildSegments(starName, fullSequence, runway, fixes, runways, additionalSegments);
+                        var segments = BuildSegments(starName, fullSequence, runway, fixes, runways);
                         if (segments is null)
                             continue;
 
@@ -132,8 +131,7 @@ public static class ExtractStarsCommand
                     if (feederFixes.Count > 0 && !feederFixes.Contains(feederFix))
                         continue;
 
-                    var additionalSegments = FindOverrideSegments(airportConfig.AdditionalSegments, feederFix, null, runway, approachType);
-                    var segments = BuildSegments(starName, routeWaypoints, runway, fixes, runways, additionalSegments);
+                    var segments = BuildSegments(starName, routeWaypoints, runway, fixes, runways);
                     if (segments is null)
                         continue;
 
@@ -187,8 +185,7 @@ public static class ExtractStarsCommand
         string[] fixNames,
         string runway,
         Dictionary<string, (double Lat, double Lon)> fixes,
-        Dictionary<string, (double Lat, double Lon)> runways,
-        List<SegmentOutput> additionalSegments)
+        Dictionary<string, (double Lat, double Lon)> runways)
     {
         var segments = new List<SegmentOutput>();
 
@@ -207,30 +204,22 @@ public static class ExtractStarsCommand
             });
         }
 
-        if (additionalSegments.Count > 0)
-        {
-            // User-defined segments replace the auto-computed runway leg.
-            segments.AddRange(additionalSegments);
-        }
-        else
-        {
-            // Default: compute a direct segment from the last STAR fix to the runway threshold.
-            if (!TryGetCoord(fixes, fixNames[^1], starName, out var lastFix))
-                return null;
+        // Compute a direct segment from the last STAR fix to the runway threshold.
+        if (!TryGetCoord(fixes, fixNames[^1], starName, out var lastFix))
+            return null;
 
-            if (!runways.TryGetValue(runway, out var rwyCoord))
-            {
-                Console.Error.WriteLine($"Warning: runway '{runway}' not found in airport positions for STAR {starName}, skipping");
-                return null;
-            }
-
-            segments.Add(new SegmentOutput
-            {
-                Identifier = runway,
-                Track = Math.Round(Calculations.CalculateTrack(lastFix.Lat, lastFix.Lon, rwyCoord.Lat, rwyCoord.Lon), 1),
-                DistanceNM = Math.Round(Calculations.CalculateDistanceNauticalMiles(lastFix.Lat, lastFix.Lon, rwyCoord.Lat, rwyCoord.Lon), 1)
-            });
+        if (!runways.TryGetValue(runway, out var rwyCoord))
+        {
+            Console.Error.WriteLine($"Warning: runway '{runway}' not found in airport positions for STAR {starName}, skipping");
+            return null;
         }
+
+        segments.Add(new SegmentOutput
+        {
+            Identifier = runway,
+            Track = Math.Round(Calculations.CalculateTrack(lastFix.Lat, lastFix.Lon, rwyCoord.Lat, rwyCoord.Lon), 1),
+            DistanceNM = Math.Round(Calculations.CalculateDistanceNauticalMiles(lastFix.Lat, lastFix.Lon, rwyCoord.Lat, rwyCoord.Lon), 1)
+        });
 
         return segments;
     }

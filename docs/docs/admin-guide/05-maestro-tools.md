@@ -30,13 +30,13 @@ For each airport in the config, the command:
 1. Reads all STARs for that airport from `Airspace.xml`
 2. Resolves fix coordinates from the intersections section
 3. Computes the true bearing and distance for each consecutive fix pair
-4. Appends any user-defined segments from the config (additional, pressure, max-pressure)
+4. Computes a final segment from the last STAR fix to the runway threshold
 5. Writes a trajectory YAML file to the configured output path
 
 The output file contains one trajectory entry per (FeederFix, RunwayIdentifier, ApproachType, TransitionFix) combination found in the STARs, filtered to the configured feeder fixes.
 
 :::info
-Output files contain only `Segments` computed from the STAR geometry. `PressureSegments` and `MaxPressureSegments` must be defined manually in the `maestro-tools.yaml` config, or added directly to the output file after generation.
+The tool extracts geometry as defined in vatSys. For airports where operational routing differs from published STARs (vectoring areas, early transitions, etc.), AIS teams should manually edit the output YAML files. `PressureSegments` and `MaxPressureSegments` can be defined in `maestro-tools.yaml` or added directly to output files.
 :::
 
 ## Configuration File
@@ -48,18 +48,9 @@ Airports:
   - ICAO: YSSY
     FeederFixes: [RIVET, WELSH, BOREE, YAKKA, MARLN]
     Output: trajectories/yssy.yaml
-    AdditionalSegments:
-
-      # These segments are appended to the RIVET/34L trajectory to model the base and final legs
-      - FeederFix: RIVET
-        RunwayIdentifier: 34L
-        Segments:
-          - {Identifier: BASE, Track: 065, DistanceNM: 4}
-          - {Identifier: FINAL,  Track: 335.0, DistanceNM: 12}
-
     PressureSegments:
 
-      # Add a 3nm downdind extension for Pressure
+      # Add a 3nm downwind extension for Pressure
       - FeederFix: RIVET
         RunwayIdentifier: 34L
         Segments:
@@ -86,13 +77,12 @@ Airports:
 | `ICAO` | string | Yes | Airport ICAO code |
 | `FeederFixes` | array | No | Only emit trajectories for these feeder fixes. If empty, all feeder fixes found in the STARs are included. |
 | `Output` | string | Yes | Output file path for the generated YAML |
-| `AdditionalSegments` | array | No | User-defined segments that replace the auto-computed runway segment for matching trajectories |
 | `PressureSegments` | array | No | Pressure segments to attach to matching trajectories |
 | `MaxPressureSegments` | array | No | Max-pressure segments to attach to matching trajectories |
 
 ### Segment Override Matching
 
-`AdditionalSegments`, `PressureSegments`, and `MaxPressureSegments` each contain a list of overrides. An override matches a trajectory when all specified fields match:
+`PressureSegments` and `MaxPressureSegments` each contain a list of overrides. An override matches a trajectory when all specified fields match:
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -103,20 +93,18 @@ Airports:
 
 Omitting `TransitionFix` or `ApproachType` matches all trajectories for the given feeder fix and runway regardless of those values.
 
-### Additional Segments
-
-When an `AdditionalSegments` override matches a trajectory, its segments replace the auto-computed segment from the last STAR fix to the runway threshold. This is used for airports where STARs terminate before the initial approach fix and ATC provides radar vectoring for the remainder (for example, at Sydney where STARs terminate before the IAF and the downwind, base, and final legs are not encoded in vatSys).
-
-The additional segments should describe the complete path from the STAR terminus to the runway threshold.
-
 ## Workflow
 
 A typical workflow for preparing trajectory data:
 
 1. Obtain the vatSys `Airspace.xml` for the relevant dataset.
-2. Create a `maestro-tools.yaml` with the airports, feeder fixes, and any known additional segments.
+2. Create a `maestro-tools.yaml` with the airports and feeder fixes.
 3. Run `extract-stars` to generate the trajectory YAML files.
-4. Review the output and manually add `PressureSegments` and `MaxPressureSegments` as required, either in the config or directly in the output files.
-5. Copy the output into the `Trajectories` section of `Maestro.yaml`.
+4. Review and edit the output files:
+   - Modify segments where operational routing differs from published STARs
+   - Remove unnecessary segments (e.g., where vectoring begins early)
+   - Add custom segments for vectoring areas not in vatSys
+   - Define `PressureSegments` and `MaxPressureSegments` (in config or output files)
+5. Copy the edited trajectories into the `Trajectories` section of `Maestro.yaml`.
 
-When STARs are updated in the vatSys dataset, re-running `extract-stars` regenerates the segment geometry automatically. Any pressure or max-pressure overrides defined in `maestro-tools.yaml` are preserved across regenerations.
+When STARs are updated in the vatSys dataset, re-running `extract-stars` regenerates the segment geometry automatically. Pressure and max-pressure overrides defined in `maestro-tools.yaml` are preserved across regenerations, but manual trajectory edits in output files will be overwritten.

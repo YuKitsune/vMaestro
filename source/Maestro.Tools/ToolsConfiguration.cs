@@ -10,7 +10,6 @@ public class AirportToolsConfiguration
     public required string ICAO { get; init; }
     public string[] FeederFixes { get; init; } = [];
     public required string Output { get; init; }
-    public TrajectorySegmentOverride[] AdditionalSegments { get; init; } = [];
     public TrajectorySegmentOverride[] PressureSegments { get; init; } = [];
     public TrajectorySegmentOverride[] MaxPressureSegments { get; init; } = [];
 }
