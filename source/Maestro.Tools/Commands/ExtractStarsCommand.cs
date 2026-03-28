@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Globalization;
 using System.Xml.Linq;
+using Maestro.Tools;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
@@ -14,24 +15,20 @@ public static class ExtractStarsCommand
     public static Command Build()
     {
         var airspaceOption = new Option<FileInfo>("--airspace", "Path to vatSys Airspace.xml") { IsRequired = true };
-        var airportOption = new Option<string>("--airport", "ICAO airport identifier (e.g. YSSY)") { IsRequired = true };
-        var outputOption = new Option<FileInfo>("--output", "Output YAML file path") { IsRequired = true };
-        var skipOption = new Option<string[]>("--skip-point", "Waypoint name to exclude from all routes (repeatable)") { AllowMultipleArgumentsPerToken = false };
-        var feederFixOption = new Option<string[]>("--feeder-fix", "Feeder fix to include; if omitted all are included (repeatable)") { AllowMultipleArgumentsPerToken = false };
+        var configOption = new Option<FileInfo>("--config", "Path to maestro-tools.yaml config file") { IsRequired = true };
 
         var command = new Command("extract-stars", "Extract STAR segment geometry from a vatSys Airspace.xml file.");
         command.AddOption(airspaceOption);
-        command.AddOption(airportOption);
-        command.AddOption(outputOption);
-        command.AddOption(skipOption);
-        command.AddOption(feederFixOption);
+        command.AddOption(configOption);
 
-        command.SetHandler((airspace, airport, output, skipWaypoints, feederFixes) =>
+        command.SetHandler((airspace, configFile) =>
         {
-            var skipped = new HashSet<string>(skipWaypoints ?? [], StringComparer.OrdinalIgnoreCase);
-            var feederFixSet = new HashSet<string>(feederFixes ?? [], StringComparer.OrdinalIgnoreCase);
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(PascalCaseNamingConvention.Instance)
+                .Build();
+            var toolsConfig = deserializer.Deserialize<ToolsConfiguration>(File.ReadAllText(configFile.FullName));
+
             var doc = XDocument.Load(airspace.FullName);
-            var trajectories = ExtractTrajectories(doc, airport, skipped, feederFixSet);
 
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(PascalCaseNamingConvention.Instance)
@@ -40,16 +37,31 @@ public static class ExtractStarsCommand
                 .WithEventEmitter(next => new QuoteNumericStringsEmitter(next))
                 .Build();
 
-            var yaml = serializer.Serialize(trajectories);
-            File.WriteAllText(output.FullName, yaml);
+            foreach (var airportConfig in toolsConfig.Airports)
+            {
+                var feederFixSet = new HashSet<string>(airportConfig.FeederFixes, StringComparer.OrdinalIgnoreCase);
+                var trajectories = ExtractTrajectories(doc, airportConfig.ICAO, feederFixSet, airportConfig);
 
-            Console.WriteLine($"Wrote {trajectories.Count} trajectories to {output.FullName}");
-        }, airspaceOption, airportOption, outputOption, skipOption, feederFixOption);
+                var outputPath = airportConfig.Output;
+                var outputDir = Path.GetDirectoryName(outputPath);
+                if (!string.IsNullOrEmpty(outputDir))
+                    Directory.CreateDirectory(outputDir);
+
+                var yaml = serializer.Serialize(trajectories);
+                File.WriteAllText(outputPath, yaml);
+
+                Console.WriteLine($"Wrote {trajectories.Count} trajectories for {airportConfig.ICAO} to {outputPath}");
+            }
+        }, airspaceOption, configOption);
 
         return command;
     }
 
-    static List<TrajectoryOutput> ExtractTrajectories(XDocument doc, string airport, HashSet<string> skipWaypoints, HashSet<string> feederFixes)
+    static List<TrajectoryOutput> ExtractTrajectories(
+        XDocument doc,
+        string airport,
+        HashSet<string> feederFixes,
+        AirportToolsConfiguration airportConfig)
     {
         var fixes = BuildFixLookup(doc);
         var runways = BuildRunwayLookup(doc, airport);
@@ -72,20 +84,14 @@ public static class ExtractStarsCommand
                 if (string.IsNullOrEmpty(routeText))
                     continue;
 
-                var routeWaypoints = routeText.Split('/')
-                    .Where(f => !skipWaypoints.Contains(f))
-                    .ToArray();
-
+                var routeWaypoints = routeText.Split('/');
                 if (transitions.Count > 0)
                 {
                     // One trajectory per transition × route combination.
                     // The transition name is the feeder fix; the first route waypoint is the transition fix.
                     foreach (var transition in transitions)
                     {
-                        var transitionWaypoints = transition.Value.Trim().Split('/')
-                            .Where(f => !skipWaypoints.Contains(f))
-                            .ToArray();
-
+                        var transitionWaypoints = transition.Value.Trim().Split('/');
                         if (transitionWaypoints.Length == 0)
                             continue;
 
@@ -99,7 +105,8 @@ public static class ExtractStarsCommand
                         var transitionFix = routeWaypoints[0];
                         var fullSequence = transitionWaypoints.Concat(routeWaypoints).ToArray();
 
-                        var segments = BuildSegments(starName, fullSequence, runway, fixes, runways);
+                        var additionalSegments = FindOverrideSegments(airportConfig.AdditionalSegments, feederFix, transitionFix, runway, approachType);
+                        var segments = BuildSegments(starName, fullSequence, runway, fixes, runways, additionalSegments);
                         if (segments is null)
                             continue;
 
@@ -109,7 +116,9 @@ public static class ExtractStarsCommand
                             TransitionFix = transitionFix,
                             RunwayIdentifier = runway,
                             ApproachType = approachType,
-                            Segments = segments
+                            Segments = segments,
+                            PressureSegments = FindOverrideSegments(airportConfig.PressureSegments, feederFix, transitionFix, runway, approachType),
+                            MaxPressureSegments = FindOverrideSegments(airportConfig.MaxPressureSegments, feederFix, transitionFix, runway, approachType)
                         });
                     }
                 }
@@ -123,7 +132,8 @@ public static class ExtractStarsCommand
                     if (feederFixes.Count > 0 && !feederFixes.Contains(feederFix))
                         continue;
 
-                    var segments = BuildSegments(starName, routeWaypoints, runway, fixes, runways);
+                    var additionalSegments = FindOverrideSegments(airportConfig.AdditionalSegments, feederFix, null, runway, approachType);
+                    var segments = BuildSegments(starName, routeWaypoints, runway, fixes, runways, additionalSegments);
                     if (segments is null)
                         continue;
 
@@ -132,7 +142,9 @@ public static class ExtractStarsCommand
                         FeederFix = feederFix,
                         RunwayIdentifier = runway,
                         ApproachType = approachType,
-                        Segments = segments
+                        Segments = segments,
+                        PressureSegments = FindOverrideSegments(airportConfig.PressureSegments, feederFix, null, runway, approachType),
+                        MaxPressureSegments = FindOverrideSegments(airportConfig.MaxPressureSegments, feederFix, null, runway, approachType)
                     });
                 }
             }
@@ -141,12 +153,42 @@ public static class ExtractStarsCommand
         return results;
     }
 
+    static List<SegmentOutput> FindOverrideSegments(
+        TrajectorySegmentOverride[] overrides,
+        string feederFix,
+        string? transitionFix,
+        string runway,
+        string? approachType)
+    {
+        foreach (var o in overrides)
+        {
+            if (!o.FeederFix.Equals(feederFix, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (!o.RunwayIdentifier.Equals(runway, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (o.TransitionFix is not null && !o.TransitionFix.Equals(transitionFix, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (o.ApproachType is not null && !o.ApproachType.Equals(approachType, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            return o.Segments.Select(s => new SegmentOutput
+            {
+                Identifier = s.Identifier,
+                Track = s.Track,
+                DistanceNM = s.DistanceNM
+            }).ToList();
+        }
+
+        return [];
+    }
+
     static List<SegmentOutput>? BuildSegments(
         string starName,
         string[] fixNames,
         string runway,
         Dictionary<string, (double Lat, double Lon)> fixes,
-        Dictionary<string, (double Lat, double Lon)> runways)
+        Dictionary<string, (double Lat, double Lon)> runways,
+        List<SegmentOutput> additionalSegments)
     {
         var segments = new List<SegmentOutput>();
 
@@ -165,22 +207,30 @@ public static class ExtractStarsCommand
             });
         }
 
-        // Final segment: last STAR fix → runway threshold (IAF → runway)
-        if (!TryGetCoord(fixes, fixNames[^1], starName, out var iaf))
-            return null;
-
-        if (!runways.TryGetValue(runway, out var rwyCoord))
+        if (additionalSegments.Count > 0)
         {
-            Console.Error.WriteLine($"Warning: runway '{runway}' not found in airport positions for STAR {starName}, skipping");
-            return null;
+            // User-defined segments replace the auto-computed runway leg.
+            segments.AddRange(additionalSegments);
         }
-
-        segments.Add(new SegmentOutput
+        else
         {
-            Identifier = runway,
-            Track = Math.Round(Calculations.CalculateTrack(iaf.Lat, iaf.Lon, rwyCoord.Lat, rwyCoord.Lon), 1),
-            DistanceNM = Math.Round(Calculations.CalculateDistanceNauticalMiles(iaf.Lat, iaf.Lon, rwyCoord.Lat, rwyCoord.Lon), 1)
-        });
+            // Default: compute a direct segment from the last STAR fix to the runway threshold.
+            if (!TryGetCoord(fixes, fixNames[^1], starName, out var lastFix))
+                return null;
+
+            if (!runways.TryGetValue(runway, out var rwyCoord))
+            {
+                Console.Error.WriteLine($"Warning: runway '{runway}' not found in airport positions for STAR {starName}, skipping");
+                return null;
+            }
+
+            segments.Add(new SegmentOutput
+            {
+                Identifier = runway,
+                Track = Math.Round(Calculations.CalculateTrack(lastFix.Lat, lastFix.Lon, rwyCoord.Lat, rwyCoord.Lon), 1),
+                DistanceNM = Math.Round(Calculations.CalculateDistanceNauticalMiles(lastFix.Lat, lastFix.Lon, rwyCoord.Lat, rwyCoord.Lon), 1)
+            });
+        }
 
         return segments;
     }
@@ -298,8 +348,6 @@ class FlowSegmentConverter : IYamlTypeConverter
         emitter.Emit(new Scalar("Identifier")); emitter.Emit(QuotedIfNumeric(seg.Identifier));
         emitter.Emit(new Scalar("Track")); emitter.Emit(new Scalar(seg.Track.ToString(CultureInfo.InvariantCulture)));
         emitter.Emit(new Scalar("DistanceNM")); emitter.Emit(new Scalar(seg.DistanceNM.ToString(CultureInfo.InvariantCulture)));
-        if (seg.Pressure) { emitter.Emit(new Scalar("Pressure")); emitter.Emit(new Scalar("true")); }
-        if (seg.MaxPressure) { emitter.Emit(new Scalar("MaxPressure")); emitter.Emit(new Scalar("true")); }
         emitter.Emit(new MappingEnd());
     }
 
@@ -334,6 +382,8 @@ class TrajectoryOutput
     public string? ApproachType { get; init; }
     public string? TransitionFix { get; init; }
     public required List<SegmentOutput> Segments { get; init; }
+    public List<SegmentOutput> PressureSegments { get; init; } = [];
+    public List<SegmentOutput> MaxPressureSegments { get; init; } = [];
 }
 
 class SegmentOutput
@@ -341,6 +391,4 @@ class SegmentOutput
     public required string Identifier { get; init; }
     public required double Track { get; init; }
     public required double DistanceNM { get; init; }
-    public bool Pressure { get; init; }
-    public bool MaxPressure { get; init; }
 }

@@ -154,29 +154,27 @@ public class TrajectoryService(
 
     static Trajectory ComputeTrajectory(TrajectoryConfiguration config, int approachSpeedKnots, Wind wind)
     {
-        double ttgHours = 0;
-        double pressureHours = 0;
-        double maxPressureHours = 0;
-
-        foreach (var segment in config.Segments)
-        {
-            var headwind = wind.Speed * Math.Cos(ToRadians(segment.Track - wind.Direction));
-            var groundSpeed = Math.Max(approachSpeedKnots - headwind, 1.0);
-            var eti = segment.DistanceNM / groundSpeed;
-
-            if (segment.MaxPressure)
-                maxPressureHours += eti;
-            else if (segment.Pressure)
-                pressureHours += eti;
-            else
-                ttgHours += eti;
-        }
+        var ttgHours = SumEti(config.Segments, approachSpeedKnots, wind);
+        var pressureHours = SumEti(config.PressureSegments, approachSpeedKnots, wind);
+        var maxPressureHours = SumEti(config.MaxPressureSegments, approachSpeedKnots, wind);
 
         var ttg = TimeSpan.FromHours(ttgHours);
         var pressure = TimeSpan.FromHours(ttgHours + pressureHours);
         var maxPressure = TimeSpan.FromHours(ttgHours + pressureHours + maxPressureHours);
 
         return new Trajectory(ttg, pressure, maxPressure);
+    }
+
+    static double SumEti(TrajectorySegmentConfiguration[] segments, int approachSpeedKnots, Wind wind)
+    {
+        double total = 0;
+        foreach (var segment in segments)
+        {
+            var headwind = wind.Speed * Math.Cos(ToRadians(segment.Track - wind.Direction));
+            var groundSpeed = Math.Max(approachSpeedKnots - headwind, 1.0);
+            total += segment.DistanceNM / groundSpeed;
+        }
+        return total;
     }
 
     static double ToRadians(double degrees) => degrees * Math.PI / 180.0;

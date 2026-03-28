@@ -16,14 +16,4 @@ public class TrajectorySegmentConfiguration
     ///     The distance of this segment in nautical miles.
     /// </summary>
     public required double DistanceNM { get; init; }
-
-    /// <summary>
-    ///     When true, the ETI for this segment contributes to the Pressure window (P).
-    /// </summary>
-    public bool Pressure { get; init; } = false;
-
-    /// <summary>
-    ///     When true, the ETI for this segment contributes to the Maximum Pressure window (Pmax).
-    /// </summary>
-    public bool MaxPressure { get; init; } = false;
 }
