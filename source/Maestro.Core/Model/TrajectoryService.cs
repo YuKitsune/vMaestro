@@ -152,17 +152,81 @@ public class TrajectoryService(
         return matches[0];
     }
 
-    static Trajectory ComputeTrajectory(TrajectoryConfiguration config, int approachSpeedKnots, Wind wind)
+    Trajectory ComputeTrajectory(TrajectoryConfiguration config, int approachSpeedKnots, Wind wind)
     {
         var ttgHours = SumEti(config.Segments, approachSpeedKnots, wind);
-        var pressureHours = SumEti(config.PressureSegments, approachSpeedKnots, wind);
-        var maxPressureHours = SumEti(config.MaxPressureSegments, approachSpeedKnots, wind);
-
         var ttg = TimeSpan.FromHours(ttgHours);
-        var pressure = TimeSpan.FromHours(ttgHours + pressureHours);
-        var maxPressure = TimeSpan.FromHours(ttgHours + pressureHours + maxPressureHours);
+
+        // Pressure: branch from base trajectory, fly alternative path
+        var pressureHours = ComputeBranchingTrajectory(
+            config.Segments,
+            config.Pressure?.After,
+            config.Pressure?.Segments ?? [],
+            approachSpeedKnots,
+            wind,
+            ttgHours,
+            "Pressure");
+
+        // MaxPressure: branch from base trajectory, fly alternative path
+        var maxPressureHours = ComputeBranchingTrajectory(
+            config.Segments,
+            config.MaxPressure?.After,
+            config.MaxPressure?.Segments ?? [],
+            approachSpeedKnots,
+            wind,
+            ttgHours,
+            "MaxPressure");
+
+        var pressure = TimeSpan.FromHours(pressureHours);
+        var maxPressure = TimeSpan.FromHours(maxPressureHours);
 
         return new Trajectory(ttg, pressure, maxPressure);
+    }
+
+    double ComputeBranchingTrajectory(
+        TrajectorySegmentConfiguration[] baseSegments,
+        string? after,
+        TrajectorySegmentConfiguration[] alternativeSegments,
+        int approachSpeedKnots,
+        Wind wind,
+        double ttgHours,
+        string trajectoryType)
+    {
+        // No after segment or no alternative segments: fallback to TTG
+        if (string.IsNullOrEmpty(after) || alternativeSegments.Length == 0)
+            return ttgHours;
+
+        // Find after segment in base trajectory
+        var afterIdx = FindSegmentIndex(baseSegments, after);
+        if (afterIdx is null)
+        {
+            logger.Error(
+                "{TrajectoryType} After segment '{After}' not found in base trajectory, using TTG",
+                trajectoryType,
+                after);
+            return ttgHours;
+        }
+
+        // Sum ETI from feeder fix through after segment, then along alternative path
+        var segmentsThroughAfter = baseSegments.Take(afterIdx.Value + 1).ToArray();
+        var baseThroughAfter = SumEti(segmentsThroughAfter, approachSpeedKnots, wind);
+        var alternativeFromAfter = SumEti(alternativeSegments, approachSpeedKnots, wind);
+
+        return baseThroughAfter + alternativeFromAfter;
+    }
+
+    static int? FindSegmentIndex(TrajectorySegmentConfiguration[] segments, string? identifier)
+    {
+        if (string.IsNullOrEmpty(identifier))
+            return null;
+
+        for (var i = 0; i < segments.Length; i++)
+        {
+            if (segments[i].Identifier.Equals(identifier, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+
+        return null;
     }
 
     static double SumEti(TrajectorySegmentConfiguration[] segments, int approachSpeedKnots, Wind wind)

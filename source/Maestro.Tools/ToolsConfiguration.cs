@@ -10,17 +10,23 @@ public class AirportToolsConfiguration
     public required string ICAO { get; init; }
     public string[] FeederFixes { get; init; } = [];
     public required string Output { get; init; }
-    public TrajectorySegmentOverride[] PressureSegments { get; init; } = [];
-    public TrajectorySegmentOverride[] MaxPressureSegments { get; init; } = [];
+    public PressureConfigurationOverride[] PressureConfiguration { get; init; } = [];
 }
 
-public class TrajectorySegmentOverride
+public class PressureConfigurationOverride
 {
-    public required string FeederFix { get; init; }
+    public required string[] FeederFixes { get; init; }
     public string? TransitionFix { get; init; }
     public required string RunwayIdentifier { get; init; }
     public string? ApproachType { get; init; }
-    public SegmentDefinition[] Segments { get; init; } = [];
+    public BranchingTrajectory? Pressure { get; init; }
+    public BranchingTrajectory? MaxPressure { get; init; }
+}
+
+public class BranchingTrajectory
+{
+    public required string After { get; init; }
+    public required SegmentDefinition[] Segments { get; init; }
 }
 
 public class SegmentDefinition

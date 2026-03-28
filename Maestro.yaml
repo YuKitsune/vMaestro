@@ -147,67 +147,189 @@ Airports:
     - {Identifier: 34L, LandingRateSeconds: 300}
 
   Trajectories:
-  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
-  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 17}
-  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 11}
-  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 11}
-  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 15}
-  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 14}
-  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
-  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
-  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 12}
-  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 12}
-  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 17}
-  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 16}
-  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 18}
-  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
-  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 12}
-  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 11}
-  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 15}
-  - {FeederFix: YAKKA, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 15}
-  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
-  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
-  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 13}
-  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 13}
-  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 17}
-  - {FeederFix: YAKKA, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 16}
-  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 18}
-  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 15}
-  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 17}
-  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 17}
-  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 16}
-  - {FeederFix: MARLN, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 12}
-  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
-  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 17}
-  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 19}
-  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 20}
-  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 18}
-  - {FeederFix: MARLN, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 13}
-  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 15}
-  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
-  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 18}
-  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 15}
-  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 11}
-  - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 16}
-  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
-  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
-  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 20}
-  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 17}
-  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 12}
-  - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 18}
-  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 16}
-  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
-  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 16L, TimeToGoMinutes: 18}
-  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: 16R, TimeToGoMinutes: 16}
-  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: "07", TimeToGoMinutes: 11}
-  - {FeederFix: WELSH, Aircraft: [JET, DH8D], RunwayIdentifier: "25", TimeToGoMinutes: 17}
-  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 18}
-  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
-  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 16L, TimeToGoMinutes: 21}
-  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: 16R, TimeToGoMinutes: 18}
-  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: "07", TimeToGoMinutes: 13}
-  - {FeederFix: WELSH, Aircraft: [NONJET], RunwayIdentifier: "25", TimeToGoMinutes: 19}
-  
+  - FeederFix: BOREE
+    RunwayIdentifier: '07'
+    ApproachType: A
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+    - {Identifier: '07', Track: 174.1, DistanceNM: 14.6}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: 16L
+    ApproachType: A
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+    - {Identifier: 16L, Track: 169.6, DistanceNM: 15.3}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: 16R
+    ApproachType: A
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+    - {Identifier: 16R, Track: 172.1, DistanceNM: 13.8}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: '25'
+    ApproachType: A
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+    - {Identifier: '25', Track: 169, DistanceNM: 14.4}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: 34L
+    ApproachType: A
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+    - {Identifier: JENTL, Track: 170.8, DistanceNM: 6.7}
+    - {Identifier: ZONKA, Track: 193.4, DistanceNM: 9.1}
+    - {Identifier: DUDOK, Track: 193.5, DistanceNM: 7.5}
+    - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+    - {Identifier: 34L, Track: 14.8, DistanceNM: 14.3}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: 34R
+    ApproachType: A
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+    - {Identifier: MAJAR, Track: 134.1, DistanceNM: 10.8}
+    - {Identifier: DIPPA, Track: 167.8, DistanceNM: 8}
+    - {Identifier: JAKLN, Track: 167.8, DistanceNM: 11.6}
+    - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: 16R
+    ApproachType: P
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: DALAR, Track: 179.6, DistanceNM: 10.2}
+    - {Identifier: DUMOP, Track: 167.9, DistanceNM: 7}
+    - {Identifier: URDEN, Track: 167.9, DistanceNM: 5.9}
+    - {Identifier: 16R, Track: 167.9, DistanceNM: 11.3}
+
+  - FeederFix: MARLN
+    RunwayIdentifier: '07'
+    Segments:
+    - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+    - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+    - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+    - {Identifier: '07', Track: 270.2, DistanceNM: 0.9}
+
+  - FeederFix: MARLN
+    RunwayIdentifier: 16L
+    Segments:
+    - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+    - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+    - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+    - {Identifier: 16L, Track: 146.4, DistanceNM: 0.6}
+
+  - FeederFix: MARLN
+    RunwayIdentifier: 16R
+    Segments:
+    - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+    - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+    - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+    - {Identifier: 16R, Track: 326.8, DistanceNM: 1}
+
+  - FeederFix: MARLN
+    RunwayIdentifier: '25'
+    Segments:
+    - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+    - {Identifier: VENUL, Track: 296.3, DistanceNM: 10.9}
+    - {Identifier: UXAMA, Track: 296.4, DistanceNM: 6.9}
+    - {Identifier: JELLI, Track: 253.2, DistanceNM: 4.2}
+    - {Identifier: '25', Track: 254.3, DistanceNM: 9.8}
+
+  - FeederFix: MARLN
+    RunwayIdentifier: 34L
+    Segments:
+    - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+    - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+    - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+    - {Identifier: 34L, Track: 184.5, DistanceNM: 1.2}
+
+  - FeederFix: MARLN
+    RunwayIdentifier: 34R
+    Segments:
+    - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+    - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+    - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+    - {Identifier: MANFA, Track: 199.3, DistanceNM: 5}
+    - {Identifier: JAKLN, Track: 167.7, DistanceNM: 6.4}
+    - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
+
+  - FeederFix: RIVET
+    RunwayIdentifier: '07'
+    Segments:
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 62, DistanceNM: 10}
+    - {Identifier: '07', Track: 270.2, DistanceNM: 0.9}
+
+  - FeederFix: RIVET
+    RunwayIdentifier: 16L
+    Segments:
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 62, DistanceNM: 10}
+    - {Identifier: 16L, Track: 146.4, DistanceNM: 0.6}
+
+  - FeederFix: RIVET
+    RunwayIdentifier: 16R
+    Segments:
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 62, DistanceNM: 10}
+    - {Identifier: 16R, Track: 326.8, DistanceNM: 1}
+
+  - FeederFix: RIVET
+    RunwayIdentifier: '25'
+    Segments:
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TESAT, Track: 62, DistanceNM: 10}
+    - {Identifier: '25', Track: 41, DistanceNM: 0.5}
+
+  - FeederFix: RIVET
+    RunwayIdentifier: 34L
+    Segments:
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
+    - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+    - {Identifier: 34L, Track: 14.8, DistanceNM: 14.3}
+
+  - FeederFix: RIVET
+    RunwayIdentifier: 34R
+    Segments:
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
+    - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+    - {Identifier: 34R, Track: 17.8, DistanceNM: 14.1}
+
+
   DepartureAirports:
   - {Identifier: YPMQ, Aircraft: [JET], Distance: 209, EstimatedFlightTimeMinutes: 44}
   - {Identifier: YPMQ, Aircraft: [NONJET], Distance: 209, EstimatedFlightTimeMinutes: 41}
@@ -378,73 +500,295 @@ Airports:
     - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
 
   Trajectories:
-  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 11}
-  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 9}
-  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 12}
-  - {FeederFix: ARBEY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 13}
-  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 12}
-  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 10}
-  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 14}
-  - {FeederFix: ARBEY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 15}
-  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 15}
-  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 12}
-  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 10}
-  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 13}
-  - {FeederFix: BOOIN, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 12}
-  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 17}
-  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 14}
-  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 11}
-  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 15}
-  - {FeederFix: BOOIN, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 14}
-  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 18}
-  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 15}
-  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 13}
-  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 16}
-  - {FeederFix: BOYSE, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 15}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 16}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 13}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 9}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 10}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 18}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 15}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 10}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 11}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "09", TimeToGoMinutes: 16}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "16", TimeToGoMinutes: 13}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "27", TimeToGoMinutes: 9}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 10}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "09", TimeToGoMinutes: 18}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "16", TimeToGoMinutes: 15}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "27", TimeToGoMinutes: 10}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "34", TimeToGoMinutes: 11}
-  - {FeederFix: RAZZI, Aircraft: [JET, DH8D], ApproachType: M, RunwayIdentifier: "16", TimeToGoMinutes: 11}
-  - {FeederFix: RAZZI, Aircraft: [NONJET], ApproachType: M, RunwayIdentifier: "16", TimeToGoMinutes: 13}
-  - {FeederFix: EKKAS, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 14}
-  - {FeederFix: EKKAS, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 9}
-  - {FeederFix: EKKAS, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 16}
-  - {FeederFix: EKKAS, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 11}
-  - {FeederFix: LATTA, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 13}
-  - {FeederFix: LATTA, Aircraft: [JET, DH8D], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 9}
-  - {FeederFix: LATTA, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "09", TimeToGoMinutes: 15}
-  - {FeederFix: LATTA, Aircraft: [NONJET], ApproachType: A, ApproachFix: PORTS, RunwayIdentifier: "34", TimeToGoMinutes: 10}
-  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 11}
-  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 17}
-  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 15}
-  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 12}
-  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 12}
-  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 19}
-  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 17}
-  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 14}
-  - {FeederFix: ALAXO, Aircraft: [JET, DH8D], ApproachType: P, RunwayIdentifier: "16", TimeToGoMinutes: 15}
-  - {FeederFix: ALAXO, Aircraft: [NONJET], ApproachType: P, RunwayIdentifier: "16", TimeToGoMinutes: 17}
-  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 10}
-  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 15}
-  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 11}
-  - {FeederFix: MENOG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 8}
-  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "09", TimeToGoMinutes: 12}
-  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "16", TimeToGoMinutes: 17}
-  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "27", TimeToGoMinutes: 12}
-  - {FeederFix: MENOG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "34", TimeToGoMinutes: 9}
+  - FeederFix: ALAXO
+    RunwayIdentifier: '09'
+    ApproachType: A
+    Segments:
+    - {Identifier: NIXEN, Track: 81.7, DistanceNM: 12.6}
+    - {Identifier: IKUNA, Track: 81.6, DistanceNM: 10}
+    - {Identifier: RIPMO, Track: 23.8, DistanceNM: 5.3}
+    - {Identifier: AVPIX, Track: 23.7, DistanceNM: 4}
+    - {Identifier: GUPUG, Track: 94.4, DistanceNM: 3}
+    - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+
+  - FeederFix: ALAXO
+    RunwayIdentifier: '16'
+    ApproachType: A
+    Segments:
+    - {Identifier: IKUNA, Track: 81.7, DistanceNM: 22.6}
+    - {Identifier: KEELA, Track: 80.9, DistanceNM: 16.3}
+    - {Identifier: PASCO, Track: 81.2, DistanceNM: 8.4}
+    - {Identifier: JADEL, Track: 356.6, DistanceNM: 9.4}
+    - {Identifier: KIKEX, Track: 356.9, DistanceNM: 4.3}
+    - {Identifier: NEFER, Track: 356.9, DistanceNM: 3}
+    - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+    - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+
+  - FeederFix: ALAXO
+    RunwayIdentifier: '27'
+    ApproachType: A
+    Segments:
+    - {Identifier: IKUNA, Track: 81.7, DistanceNM: 22.6}
+    - {Identifier: KEELA, Track: 80.9, DistanceNM: 16.3}
+    - {Identifier: NOMID, Track: 94.2, DistanceNM: 4}
+    - {Identifier: ROCEL, Track: 94.1, DistanceNM: 7}
+    - {Identifier: VISAS, Track: 3.9, DistanceNM: 5}
+    - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+
+  - FeederFix: ALAXO
+    RunwayIdentifier: '34'
+    ApproachType: A
+    Segments:
+    - {Identifier: NIXEN, Track: 81.7, DistanceNM: 12.6}
+    - {Identifier: IKUNA, Track: 81.6, DistanceNM: 10}
+    - {Identifier: MEMEG, Track: 99.1, DistanceNM: 9.4}
+    - {Identifier: DUDAB, Track: 99, DistanceNM: 4}
+    - {Identifier: OBGAL, Track: 118.2, DistanceNM: 3.1}
+    - {Identifier: AKDEL, Track: 81.5, DistanceNM: 4}
+    - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+
+  - FeederFix: ALAXO
+    RunwayIdentifier: '16'
+    ApproachType: P
+    Segments:
+    - {Identifier: IKUNA, Track: 81.7, DistanceNM: 22.6}
+    - {Identifier: KEELA, Track: 80.9, DistanceNM: 16.3}
+    - {Identifier: PASCO, Track: 81.2, DistanceNM: 8.4}
+    - {Identifier: EMSEK, Track: 356.6, DistanceNM: 4.6}
+    - {Identifier: '16', Track: 264.7, DistanceNM: 5.9}
+
+  - FeederFix: ARBEY
+    RunwayIdentifier: '09'
+    ApproachType: A
+    Segments:
+    - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+    - {Identifier: DABUX, Track: 199.6, DistanceNM: 7.7}
+    - {Identifier: OPAVA, Track: 213.5, DistanceNM: 6.7}
+    - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+    - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+    - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+
+  - FeederFix: ARBEY
+    RunwayIdentifier: '16'
+    ApproachType: A
+    Segments:
+    - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+    - {Identifier: LASOL, Track: 172, DistanceNM: 4.9}
+    - {Identifier: BELTA, Track: 172, DistanceNM: 3}
+    - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+
+  - FeederFix: ARBEY
+    RunwayIdentifier: '27'
+    ApproachType: A
+    Segments:
+    - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+    - {Identifier: BELTA, Track: 172, DistanceNM: 7.9}
+    - {Identifier: LAKEP, Track: 170.2, DistanceNM: 6.1}
+    - {Identifier: BOBEL, Track: 94, DistanceNM: 4.5}
+    - {Identifier: DOKNO, Track: 93.9, DistanceNM: 5.7}
+    - {Identifier: VISAS, Track: 183.9, DistanceNM: 5.9}
+    - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+
+  - FeederFix: ARBEY
+    RunwayIdentifier: '34'
+    ApproachType: A
+    Segments:
+    - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+    - {Identifier: BELTA, Track: 172, DistanceNM: 7.9}
+    - {Identifier: OVNER, Track: 200.6, DistanceNM: 8.1}
+    - {Identifier: RENER, Track: 183.2, DistanceNM: 7}
+    - {Identifier: GOSKO, Track: 180.7, DistanceNM: 2.9}
+    - {Identifier: DUDAB, Track: 180.6, DistanceNM: 4}
+    - {Identifier: OBGAL, Track: 118.2, DistanceNM: 3.1}
+    - {Identifier: AKDEL, Track: 81.5, DistanceNM: 4}
+    - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+
+  - FeederFix: BOOIN
+    RunwayIdentifier: '09'
+    ApproachType: A
+    Segments:
+    - {Identifier: MAXAL, Track: 270.7, DistanceNM: 10.5}
+    - {Identifier: SEKNU, Track: 270.9, DistanceNM: 12.1}
+    - {Identifier: ENSEG, Track: 271, DistanceNM: 7.5}
+    - {Identifier: NEFER, Track: 271.1, DistanceNM: 3}
+    - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+    - {Identifier: OPAVA, Track: 235.5, DistanceNM: 8.9}
+    - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+    - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+    - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+
+  - FeederFix: BOOIN
+    RunwayIdentifier: '16'
+    ApproachType: A
+    Segments:
+    - {Identifier: MAXAL, Track: 270.7, DistanceNM: 10.5}
+    - {Identifier: SEKNU, Track: 270.9, DistanceNM: 12.1}
+    - {Identifier: ENSEG, Track: 271, DistanceNM: 7.5}
+    - {Identifier: NEFER, Track: 271.1, DistanceNM: 3}
+    - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+    - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+
+  - FeederFix: BOOIN
+    RunwayIdentifier: '27'
+    ApproachType: A
+    Segments:
+    - {Identifier: ATPER, Track: 236.5, DistanceNM: 10.5}
+    - {Identifier: MAITE, Track: 236.6, DistanceNM: 11}
+    - {Identifier: ENDUM, Track: 262.5, DistanceNM: 5}
+    - {Identifier: VISAS, Track: 262.6, DistanceNM: 6.3}
+    - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+
+  - FeederFix: BOOIN
+    RunwayIdentifier: '34'
+    ApproachType: A
+    Segments:
+    - {Identifier: IBARU, Track: 233.7, DistanceNM: 10.7}
+    - {Identifier: VEPUD, Track: 233.8, DistanceNM: 14.4}
+    - {Identifier: AKSID, Track: 234, DistanceNM: 6.9}
+    - {Identifier: GOOLA, Track: 234.1, DistanceNM: 5}
+    - {Identifier: BOLTY, Track: 257.4, DistanceNM: 3.2}
+    - {Identifier: AKDEL, Track: 261.1, DistanceNM: 3.6}
+    - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+
+  - FeederFix: BOOIN
+    RunwayIdentifier: '34'
+    ApproachType: V
+    Segments:
+    - {Identifier: ATPER, Track: 236.5, DistanceNM: 10.5}
+    - {Identifier: MAITE, Track: 236.6, DistanceNM: 11}
+    - {Identifier: IGPON, Track: 236.6, DistanceNM: 2.5}
+    - {Identifier: MOSVO, Track: 236.7, DistanceNM: 6}
+    - {Identifier: EGEKA, Track: 267.9, DistanceNM: 4.4}
+    - {Identifier: SHEED, Track: 268, DistanceNM: 5}
+    - {Identifier: '34', Track: 307.7, DistanceNM: 4.4}
+
+  - FeederFix: BOYSE
+    RunwayIdentifier: '09'
+    ApproachType: A
+    Segments:
+    - {Identifier: VALES, Track: 256.2, DistanceNM: 15.7}
+    - {Identifier: LUSTU, Track: 256.4, DistanceNM: 5.4}
+    - {Identifier: ANBEL, Track: 256.5, DistanceNM: 5.9}
+    - {Identifier: BUVIV, Track: 256.5, DistanceNM: 5.5}
+    - {Identifier: NEFER, Track: 256.6, DistanceNM: 3}
+    - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+    - {Identifier: OPAVA, Track: 235.5, DistanceNM: 8.9}
+    - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+    - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+    - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+
+  - FeederFix: BOYSE
+    RunwayIdentifier: '16'
+    ApproachType: A
+    Segments:
+    - {Identifier: VALES, Track: 256.2, DistanceNM: 15.7}
+    - {Identifier: ANBEL, Track: 256.4, DistanceNM: 11.4}
+    - {Identifier: BUVIV, Track: 256.5, DistanceNM: 5.5}
+    - {Identifier: NEFER, Track: 256.6, DistanceNM: 3}
+    - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+    - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+
+  - FeederFix: BOYSE
+    RunwayIdentifier: '27'
+    ApproachType: A
+    Segments:
+    - {Identifier: MAXAL, Track: 233.9, DistanceNM: 14.9}
+    - {Identifier: ADKUK, Track: 234.1, DistanceNM: 10.6}
+    - {Identifier: VEXOP, Track: 234.2, DistanceNM: 6}
+    - {Identifier: VISAS, Track: 234.2, DistanceNM: 6.3}
+    - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+
+  - FeederFix: BOYSE
+    RunwayIdentifier: '34'
+    ApproachType: A
+    Segments:
+    - {Identifier: MAXAL, Track: 233.9, DistanceNM: 14.9}
+    - {Identifier: OLTUR, Track: 221.3, DistanceNM: 18.5}
+    - {Identifier: VENVO, Track: 221.5, DistanceNM: 5.8}
+    - {Identifier: GOOLA, Track: 221.6, DistanceNM: 5}
+    - {Identifier: BOLTY, Track: 257.4, DistanceNM: 3.2}
+    - {Identifier: AKDEL, Track: 261.1, DistanceNM: 3.6}
+    - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+
+  - FeederFix: BOYSE
+    RunwayIdentifier: '34'
+    ApproachType: V
+    Segments:
+    - {Identifier: MAXAL, Track: 233.9, DistanceNM: 14.9}
+    - {Identifier: APIGA, Track: 221.2, DistanceNM: 11.9}
+    - {Identifier: EMRIG, Track: 221, DistanceNM: 4.2}
+    - {Identifier: MOSVO, Track: 221, DistanceNM: 6}
+    - {Identifier: EGEKA, Track: 267.9, DistanceNM: 4.4}
+    - {Identifier: SHEED, Track: 268, DistanceNM: 5}
+    - {Identifier: '34', Track: 307.7, DistanceNM: 4.4}
+
+  - FeederFix: RAZZI
+    RunwayIdentifier: '09'
+    ApproachType: A
+    Segments:
+    - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+    - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+    - {Identifier: OMBAT, Track: 335, DistanceNM: 11.5}
+    - {Identifier: AGTEV, Track: 298, DistanceNM: 2.7}
+    - {Identifier: BELTA, Track: 298, DistanceNM: 8.7}
+    - {Identifier: OPAVA, Track: 235.5, DistanceNM: 8.9}
+    - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+    - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+    - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+
+  - FeederFix: RAZZI
+    RunwayIdentifier: '16'
+    ApproachType: A
+    Segments:
+    - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+    - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+    - {Identifier: OMBAT, Track: 335, DistanceNM: 11.5}
+    - {Identifier: LAGUG, Track: 334.3, DistanceNM: 4.3}
+    - {Identifier: NEFER, Track: 334.3, DistanceNM: 3}
+    - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+    - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+
+  - FeederFix: RAZZI
+    RunwayIdentifier: '27'
+    ApproachType: A
+    Segments:
+    - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+    - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+    - {Identifier: VISAS, Track: 308.5, DistanceNM: 5.2}
+    - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+
+  - FeederFix: RAZZI
+    RunwayIdentifier: '34'
+    ApproachType: A
+    Segments:
+    - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+    - {Identifier: UPKID, Track: 282.3, DistanceNM: 3.9}
+    - {Identifier: GOOLA, Track: 282.3, DistanceNM: 5}
+    - {Identifier: BOLTY, Track: 257.4, DistanceNM: 3.2}
+    - {Identifier: AKDEL, Track: 261.1, DistanceNM: 3.6}
+    - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+
+  - FeederFix: RAZZI
+    RunwayIdentifier: '16'
+    ApproachType: M
+    Segments:
+    - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+    - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+    - {Identifier: DUGOT, Track: 334.7, DistanceNM: 7.1}
+    - {Identifier: VENPU, Track: 334.8, DistanceNM: 4}
+    - {Identifier: LUVKA, Track: 318.6, DistanceNM: 3.7}
+    - {Identifier: '16', Track: 215, DistanceNM: 10.4}
+
+  - FeederFix: RAZZI
+    RunwayIdentifier: '34'
+    ApproachType: V
+    Segments:
+    - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+    - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+    - {Identifier: EGEKA, Track: 267.9, DistanceNM: 4.4}
+    - {Identifier: SHEED, Track: 268, DistanceNM: 5}
+    - {Identifier: '34', Track: 307.7, DistanceNM: 4.4}
+
   
   DepartureAirports:
   - {Identifier: YHAY, Aircraft: [JET], Distance: 214, EstimatedFlightTimeMinutes: 45}
@@ -601,114 +945,678 @@ Airports:
     - {Identifier: 19R, ApproachType: A, LandingRateSeconds: 300}
 
   Trajectories:
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 19}
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 21}
-  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 15}
-  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
-  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 22}
-  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 24}
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 12}
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 16}
-  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
-  - {FeederFix: BLAKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 18}
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 19}
-  - {FeederFix: BLAKA, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 22}
-  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 11}
-  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 11}
-  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 20}
-  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 18}
-  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
-  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
-  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 23}
-  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 20}
-  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 16}
-  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 16}
-  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 19}
-  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 18}
-  - {FeederFix: ENLIP, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 20}
-  - {FeederFix: ENLIP, Aircraft: [NONJET], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 23}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 18}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 20}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 16}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 21}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 23}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 19L, TimeToGoMinutes: 17}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 12}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 16}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 18}
-  - {FeederFix: GOMOL, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 19}
-  - {FeederFix: GOMOL, Aircraft: [NONJET], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 21}
-  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 16}
-  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
-  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
-  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 12}
-  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 18}
-  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 17}
-  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 14}
-  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
-  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
-  - {FeederFix: MORBI, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 11}
-  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
-  - {FeederFix: MORBI, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 12}
-  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 15}
-  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
-  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
-  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 13}
-  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 17}
-  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 16}
-  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
-  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 15}
-  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: M, RunwayIdentifier: 01R, TimeToGoMinutes: 12}
-  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: M, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
-  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
-  - {FeederFix: SMOKA, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 11}
-  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
-  - {FeederFix: SMOKA, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19R, TimeToGoMinutes: 13}
-  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 18}
-  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 18}
-  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 11}
-  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 11}
-  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 20}
-  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 21}
-  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 12}
-  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 13}
-  - {FeederFix: TEBOT, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
-  - {FeederFix: TEBOT, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 17}
-  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 15}
-  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
-  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
-  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
-  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 17}
-  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 17}
-  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
-  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 16}
-  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
-  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 12}
-  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 01R, TimeToGoMinutes: 14}
-  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: 19L, TimeToGoMinutes: 13}
-  - {FeederFix: UGTUG, Aircraft: [JET, DH8D], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
-  - {FeederFix: UGTUG, Aircraft: [NONJET], ApproachFix: ISPON, RunwayIdentifier: 19R, TimeToGoMinutes: 15}
-  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 14}
-  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 13}
-  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 15}
-  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 15}
-  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01L, TimeToGoMinutes: 16}
-  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 01R, TimeToGoMinutes: 15}
-  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19L, TimeToGoMinutes: 17}
-  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: 19R, TimeToGoMinutes: 16}
-  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 11}
-  - {FeederFix: WOODY, Aircraft: [JET, DH8D], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 12}
-  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 01L, TimeToGoMinutes: 13}
-  - {FeederFix: WOODY, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: 19R, TimeToGoMinutes: 14}
+  - FeederFix: BLAKA
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: VELKA, Track: 3.4, DistanceNM: 21}
+    - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
+    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
+    - {Identifier: BISEK, Track: 311.6, DistanceNM: 7}
+    - {Identifier: VANTI, Track: 311.6, DistanceNM: 3.3}
+    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: BLAKA
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: VELKA, Track: 3.4, DistanceNM: 21}
+    - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
+    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
+    - {Identifier: ENTOX, Track: 308, DistanceNM: 7.5}
+    - {Identifier: VATRO, Track: 302.1, DistanceNM: 2.1}
+    - {Identifier: PULEX, Track: 349.3, DistanceNM: 1.9}
+    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: BLAKA
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: PEGRI, Track: 8.7, DistanceNM: 11.2}
+    - {Identifier: DOGMU, Track: 8.7, DistanceNM: 10}
+    - {Identifier: LAGEV, Track: 8.7, DistanceNM: 12.7}
+    - {Identifier: PUBIV, Track: 2.4, DistanceNM: 17.1}
+    - {Identifier: ISPON, Track: 24.5, DistanceNM: 10.7}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: BETSO, Track: 244.5, DistanceNM: 5.3}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: BLAKA
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: ELKIK, Track: 12.8, DistanceNM: 12}
+    - {Identifier: SUNUB, Track: 12.8, DistanceNM: 10}
+    - {Identifier: LAGOB, Track: 12.8, DistanceNM: 5}
+    - {Identifier: OVNEB, Track: 24.7, DistanceNM: 8.5}
+    - {Identifier: AMITY, Track: 24.7, DistanceNM: 13.5}
+    - {Identifier: ESLUB, Track: 358.1, DistanceNM: 8.9}
+    - {Identifier: OSEGU, Track: 357.7, DistanceNM: 7.5}
+    - {Identifier: PILIG, Track: 302.2, DistanceNM: 10}
+    - {Identifier: LAVIN, Track: 230, DistanceNM: 6.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: BLAKA
+    RunwayIdentifier: 01R
+    ApproachType: X
+    Segments:
+    - {Identifier: VELKA, Track: 3.4, DistanceNM: 21}
+    - {Identifier: ARONU, Track: 5.3, DistanceNM: 10.6}
+    - {Identifier: COTON, Track: 323.5, DistanceNM: 4.2}
+    - {Identifier: KASBA, Track: 324.8, DistanceNM: 3.4}
+    - {Identifier: SORVA, Track: 322.4, DistanceNM: 2.3}
+    - {Identifier: 01R, Track: 347.5, DistanceNM: 8.5}
+
+  - FeederFix: BLAKA
+    RunwayIdentifier: 19L
+    ApproachType: X
+    Segments:
+    - {Identifier: PEGRI, Track: 8.7, DistanceNM: 11.2}
+    - {Identifier: DOGMU, Track: 8.7, DistanceNM: 10}
+    - {Identifier: LAGEV, Track: 8.7, DistanceNM: 12.7}
+    - {Identifier: RINKI, Track: 2.4, DistanceNM: 10.4}
+    - {Identifier: PUBIV, Track: 2.4, DistanceNM: 6.7}
+    - {Identifier: ATSEP, Track: 350.4, DistanceNM: 5}
+    - {Identifier: 19L, Track: 238.1, DistanceNM: 11.4}
+
+  - FeederFix: ENLIP
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: ODUTO, Track: 62.9, DistanceNM: 11.5}
+    - {Identifier: ANSOR, Track: 54, DistanceNM: 6.1}
+    - {Identifier: GORSO, Track: 27, DistanceNM: 5.5}
+    - {Identifier: TANIK, Track: 27, DistanceNM: 8.5}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: ENLIP
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: ODUTO, Track: 62.9, DistanceNM: 11.5}
+    - {Identifier: OPITU, Track: 62.8, DistanceNM: 6.6}
+    - {Identifier: MULNI, Track: 26.5, DistanceNM: 5.5}
+    - {Identifier: PULEX, Track: 26.9, DistanceNM: 7.1}
+    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: ENLIP
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: ODUTO, Track: 62.9, DistanceNM: 11.5}
+    - {Identifier: ANSOR, Track: 54, DistanceNM: 6.1}
+    - {Identifier: PULEX, Track: 31.8, DistanceNM: 12.7}
+    - {Identifier: SORVA, Track: 60, DistanceNM: 10}
+    - {Identifier: RUTAT, Track: 40.7, DistanceNM: 8}
+    - {Identifier: PUBIV, Track: 40.7, DistanceNM: 6.6}
+    - {Identifier: ISPON, Track: 24.5, DistanceNM: 10.7}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: BETSO, Track: 244.5, DistanceNM: 5.3}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: ENLIP
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: DULIN, Track: 22.7, DistanceNM: 19.6}
+    - {Identifier: ALBUB, Track: 33.9, DistanceNM: 16.9}
+    - {Identifier: RITVU, Track: 32.2, DistanceNM: 8.1}
+    - {Identifier: APUKU, Track: 31.8, DistanceNM: 7.1}
+    - {Identifier: DRAIN, Track: 39.8, DistanceNM: 2.7}
+    - {Identifier: PAMBU, Track: 53.2, DistanceNM: 6.7}
+    - {Identifier: ATRAX, Track: 95.3, DistanceNM: 2.1}
+    - {Identifier: LAVIN, Track: 142.4, DistanceNM: 2.3}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: ENLIP
+    RunwayIdentifier: 19L
+    ApproachType: X
+    Segments:
+    - {Identifier: ODUTO, Track: 62.9, DistanceNM: 11.5}
+    - {Identifier: ANSOR, Track: 54, DistanceNM: 6.1}
+    - {Identifier: PULEX, Track: 31.8, DistanceNM: 12.7}
+    - {Identifier: SORVA, Track: 60, DistanceNM: 10}
+    - {Identifier: RUTAT, Track: 40.7, DistanceNM: 8}
+    - {Identifier: PUBIV, Track: 40.7, DistanceNM: 6.6}
+    - {Identifier: ATSEP, Track: 350.4, DistanceNM: 5}
+    - {Identifier: 19L, Track: 238.1, DistanceNM: 11.4}
+
+  - FeederFix: ENLIP
+    RunwayIdentifier: 19R
+    ApproachType: X
+    Segments:
+    - {Identifier: DULIN, Track: 22.7, DistanceNM: 19.6}
+    - {Identifier: ALBUB, Track: 33.9, DistanceNM: 16.9}
+    - {Identifier: RITVU, Track: 32.2, DistanceNM: 8.1}
+    - {Identifier: APUKU, Track: 31.8, DistanceNM: 7.1}
+    - {Identifier: DRAIN, Track: 39.8, DistanceNM: 2.7}
+    - {Identifier: LUVNA, Track: 103.6, DistanceNM: 3.5}
+    - {Identifier: 19R, Track: 187.4, DistanceNM: 10.8}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: SURSI, Track: 326.4, DistanceNM: 14.8}
+    - {Identifier: VELKA, Track: 320.7, DistanceNM: 8.8}
+    - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
+    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
+    - {Identifier: BISEK, Track: 311.6, DistanceNM: 7}
+    - {Identifier: VANTI, Track: 311.6, DistanceNM: 3.3}
+    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: SURSI, Track: 326.4, DistanceNM: 14.8}
+    - {Identifier: VELKA, Track: 320.7, DistanceNM: 8.8}
+    - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
+    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
+    - {Identifier: ENTOX, Track: 308, DistanceNM: 7.5}
+    - {Identifier: VATRO, Track: 302.1, DistanceNM: 2.1}
+    - {Identifier: PULEX, Track: 349.3, DistanceNM: 1.9}
+    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: MEKUG, Track: 349.6, DistanceNM: 21.9}
+    - {Identifier: SALEL, Track: 349.7, DistanceNM: 10.5}
+    - {Identifier: SALGA, Track: 2.3, DistanceNM: 16.2}
+    - {Identifier: ISPON, Track: 2.3, DistanceNM: 10.5}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: BETSO, Track: 244.5, DistanceNM: 5.3}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: IRMEL, Track: 0.2, DistanceNM: 22.7}
+    - {Identifier: AMITY, Track: 0.2, DistanceNM: 21.7}
+    - {Identifier: ESLUB, Track: 358.1, DistanceNM: 8.9}
+    - {Identifier: OSEGU, Track: 357.7, DistanceNM: 7.5}
+    - {Identifier: PILIG, Track: 302.2, DistanceNM: 10}
+    - {Identifier: LAVIN, Track: 230, DistanceNM: 6.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 01R
+    ApproachType: V
+    Segments:
+    - {Identifier: VERIK, Track: 339.8, DistanceNM: 21.7}
+    - {Identifier: LAGOB, Track: 339.9, DistanceNM: 4.3}
+    - {Identifier: ARONU, Track: 323.9, DistanceNM: 6.4}
+    - {Identifier: 01R, Track: 334.6, DistanceNM: 18.1}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 19L
+    ApproachType: V
+    Segments:
+    - {Identifier: MEKUG, Track: 349.6, DistanceNM: 21.9}
+    - {Identifier: SALEL, Track: 349.7, DistanceNM: 10.5}
+    - {Identifier: OLVUN, Track: 356.1, DistanceNM: 18.1}
+    - {Identifier: 19L, Track: 260.2, DistanceNM: 12.8}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 01R
+    ApproachType: X
+    Segments:
+    - {Identifier: VERIK, Track: 339.8, DistanceNM: 21.7}
+    - {Identifier: LAGOB, Track: 339.9, DistanceNM: 4.3}
+    - {Identifier: ARONU, Track: 323.9, DistanceNM: 6.4}
+    - {Identifier: COTON, Track: 323.5, DistanceNM: 4.2}
+    - {Identifier: KASBA, Track: 324.8, DistanceNM: 3.4}
+    - {Identifier: SORVA, Track: 322.4, DistanceNM: 2.3}
+    - {Identifier: 01R, Track: 347.5, DistanceNM: 8.5}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 19L
+    ApproachType: X
+    Segments:
+    - {Identifier: MEKUG, Track: 349.6, DistanceNM: 21.9}
+    - {Identifier: SALEL, Track: 349.7, DistanceNM: 10.5}
+    - {Identifier: VALVO, Track: 348.8, DistanceNM: 10.6}
+    - {Identifier: PUBIV, Track: 348.9, DistanceNM: 6.6}
+    - {Identifier: ATSEP, Track: 350.4, DistanceNM: 5}
+    - {Identifier: 19L, Track: 238.1, DistanceNM: 11.4}
+
+  - FeederFix: BLAKA
+    RunwayIdentifier: 19R
+    TransitionFix: ISPON
+    Segments:
+    - {Identifier: DOGMU, Track: 8.7, DistanceNM: 21.2}
+    - {Identifier: LAGEV, Track: 8.7, DistanceNM: 12.7}
+    - {Identifier: PUBIV, Track: 2.4, DistanceNM: 17.1}
+    - {Identifier: ISPON, Track: 24.5, DistanceNM: 10.7}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: LAVIN, Track: 263.9, DistanceNM: 5.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: ENLIP
+    RunwayIdentifier: 19R
+    TransitionFix: ISPON
+    Segments:
+    - {Identifier: ODUTO, Track: 62.9, DistanceNM: 11.5}
+    - {Identifier: ANSOR, Track: 54, DistanceNM: 6.1}
+    - {Identifier: PULEX, Track: 31.8, DistanceNM: 12.7}
+    - {Identifier: SORVA, Track: 60, DistanceNM: 10}
+    - {Identifier: RUTAT, Track: 40.7, DistanceNM: 8}
+    - {Identifier: PUBIV, Track: 40.7, DistanceNM: 6.6}
+    - {Identifier: ISPON, Track: 24.5, DistanceNM: 10.7}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: LAVIN, Track: 263.9, DistanceNM: 5.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: GOMOL
+    RunwayIdentifier: 19R
+    TransitionFix: ISPON
+    Segments:
+    - {Identifier: MEKUG, Track: 349.6, DistanceNM: 21.9}
+    - {Identifier: SALEL, Track: 349.7, DistanceNM: 10.5}
+    - {Identifier: SALGA, Track: 2.3, DistanceNM: 16.2}
+    - {Identifier: ISPON, Track: 2.3, DistanceNM: 10.5}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: LAVIN, Track: 263.9, DistanceNM: 5.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: UGTUG
+    RunwayIdentifier: 19R
+    TransitionFix: ISPON
+    Segments:
+    - {Identifier: IPGAV, Track: 313.5, DistanceNM: 13.8}
+    - {Identifier: ISPON, Track: 299.1, DistanceNM: 16.7}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: LAVIN, Track: 263.9, DistanceNM: 5.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: MORBI
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: REMOR, Track: 146.6, DistanceNM: 7.5}
+    - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
+    - {Identifier: DAYBO, Track: 176.1, DistanceNM: 11.6}
+    - {Identifier: ONIPA, Track: 165.8, DistanceNM: 19.1}
+    - {Identifier: TAPUL, Track: 209.9, DistanceNM: 8.5}
+    - {Identifier: SULDO, Track: 162.8, DistanceNM: 2.3}
+    - {Identifier: DABKO, Track: 126.9, DistanceNM: 2.5}
+    - {Identifier: TANIK, Track: 65, DistanceNM: 2.5}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: MORBI
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: REMOR, Track: 146.6, DistanceNM: 7.5}
+    - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
+    - {Identifier: DAYBO, Track: 176.1, DistanceNM: 11.6}
+    - {Identifier: ENPUK, Track: 165.8, DistanceNM: 10.8}
+    - {Identifier: BETNI, Track: 183.9, DistanceNM: 13.3}
+    - {Identifier: MATBO, Track: 158.8, DistanceNM: 3.9}
+    - {Identifier: GLENN, Track: 88.3, DistanceNM: 4.1}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: MORBI
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: REMOR, Track: 146.6, DistanceNM: 7.5}
+    - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
+    - {Identifier: LUTKO, Track: 131, DistanceNM: 8.6}
+    - {Identifier: IGBON, Track: 126.7, DistanceNM: 8.5}
+    - {Identifier: EMSIT, Track: 91.9, DistanceNM: 3.9}
+    - {Identifier: IRVUL, Track: 105.6, DistanceNM: 2.8}
+    - {Identifier: BETSO, Track: 161.3, DistanceNM: 2.5}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: MORBI
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: REMOR, Track: 146.6, DistanceNM: 7.5}
+    - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
+    - {Identifier: LUTKO, Track: 131, DistanceNM: 8.6}
+    - {Identifier: IGBON, Track: 126.7, DistanceNM: 8.5}
+    - {Identifier: PAMBU, Track: 82.4, DistanceNM: 3.6}
+    - {Identifier: ATRAX, Track: 95.3, DistanceNM: 2.1}
+    - {Identifier: LAVIN, Track: 142.4, DistanceNM: 2.3}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: MORBI
+    RunwayIdentifier: 01L
+    ApproachType: V
+    Segments:
+    - {Identifier: REMOR, Track: 146.6, DistanceNM: 7.5}
+    - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
+    - {Identifier: DAYBO, Track: 176.1, DistanceNM: 11.6}
+    - {Identifier: 01L, Track: 143.1, DistanceNM: 19.7}
+
+  - FeederFix: MORBI
+    RunwayIdentifier: 19R
+    ApproachType: V
+    Segments:
+    - {Identifier: REMOR, Track: 146.6, DistanceNM: 7.5}
+    - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
+    - {Identifier: TOLAX, Track: 141.6, DistanceNM: 8.6}
+    - {Identifier: 19R, Track: 157, DistanceNM: 20.7}
+
+  - FeederFix: SMOKA
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: OTGAT, Track: 137.4, DistanceNM: 7.5}
+    - {Identifier: GARTH, Track: 137.8, DistanceNM: 2.5}
+    - {Identifier: ESNAV, Track: 173, DistanceNM: 8.4}
+    - {Identifier: DAPTU, Track: 164.8, DistanceNM: 5.6}
+    - {Identifier: RUKNO, Track: 165.1, DistanceNM: 5.6}
+    - {Identifier: TAPUL, Track: 167.1, DistanceNM: 14.6}
+    - {Identifier: SULDO, Track: 162.8, DistanceNM: 2.3}
+    - {Identifier: DABKO, Track: 126.9, DistanceNM: 2.5}
+    - {Identifier: TANIK, Track: 65, DistanceNM: 2.5}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: SMOKA
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: OTGAT, Track: 137.4, DistanceNM: 7.5}
+    - {Identifier: GARTH, Track: 137.8, DistanceNM: 2.5}
+    - {Identifier: ESNAV, Track: 173, DistanceNM: 8.4}
+    - {Identifier: DAPTU, Track: 164.8, DistanceNM: 5.6}
+    - {Identifier: RUKNO, Track: 165.1, DistanceNM: 5.6}
+    - {Identifier: BETNI, Track: 159.2, DistanceNM: 12.8}
+    - {Identifier: MATBO, Track: 158.8, DistanceNM: 3.9}
+    - {Identifier: GLENN, Track: 88.3, DistanceNM: 4.1}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: SMOKA
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: OTGAT, Track: 137.4, DistanceNM: 7.5}
+    - {Identifier: GARTH, Track: 137.8, DistanceNM: 2.5}
+    - {Identifier: BURPA, Track: 112.7, DistanceNM: 11.6}
+    - {Identifier: IGBON, Track: 103.1, DistanceNM: 8.8}
+    - {Identifier: EMSIT, Track: 91.9, DistanceNM: 3.9}
+    - {Identifier: IRVUL, Track: 105.6, DistanceNM: 2.8}
+    - {Identifier: BETSO, Track: 161.3, DistanceNM: 2.5}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: SMOKA
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: OTGAT, Track: 137.4, DistanceNM: 7.5}
+    - {Identifier: GARTH, Track: 137.8, DistanceNM: 2.5}
+    - {Identifier: BURPA, Track: 112.7, DistanceNM: 11.6}
+    - {Identifier: IGBON, Track: 103.1, DistanceNM: 8.8}
+    - {Identifier: PAMBU, Track: 82.4, DistanceNM: 3.6}
+    - {Identifier: ATRAX, Track: 95.3, DistanceNM: 2.1}
+    - {Identifier: LAVIN, Track: 142.4, DistanceNM: 2.3}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: SMOKA
+    RunwayIdentifier: 01R
+    ApproachType: M
+    Segments:
+    - {Identifier: OTGAT, Track: 137.4, DistanceNM: 7.5}
+    - {Identifier: GARTH, Track: 137.8, DistanceNM: 2.5}
+    - {Identifier: ESNAV, Track: 173, DistanceNM: 8.4}
+    - {Identifier: DAPTU, Track: 164.8, DistanceNM: 5.6}
+    - {Identifier: REPUX, Track: 120.3, DistanceNM: 4.2}
+    - {Identifier: SAGTA, Track: 120.3, DistanceNM: 6.7}
+    - {Identifier: BIPUD, Track: 156.6, DistanceNM: 4}
+    - {Identifier: 01R, Track: 103.8, DistanceNM: 5.9}
+
+  - FeederFix: SMOKA
+    RunwayIdentifier: 01L
+    ApproachType: X
+    Segments:
+    - {Identifier: OTGAT, Track: 137.4, DistanceNM: 7.5}
+    - {Identifier: GARTH, Track: 137.8, DistanceNM: 2.5}
+    - {Identifier: ESNAV, Track: 173, DistanceNM: 8.4}
+    - {Identifier: DAPTU, Track: 164.8, DistanceNM: 5.6}
+    - {Identifier: RUKNO, Track: 165.1, DistanceNM: 5.6}
+    - {Identifier: RUSVA, Track: 152.6, DistanceNM: 7.6}
+    - {Identifier: 01L, Track: 76.5, DistanceNM: 11.5}
+
+  - FeederFix: SMOKA
+    RunwayIdentifier: 19R
+    ApproachType: X
+    Segments:
+    - {Identifier: OTGAT, Track: 137.4, DistanceNM: 7.5}
+    - {Identifier: GARTH, Track: 137.8, DistanceNM: 2.5}
+    - {Identifier: DAYBO, Track: 137.4, DistanceNM: 10}
+    - {Identifier: PAMGO, Track: 104.7, DistanceNM: 3.8}
+    - {Identifier: RUTAX, Track: 103.6, DistanceNM: 3.8}
+    - {Identifier: DRAIN, Track: 103.6, DistanceNM: 3.4}
+    - {Identifier: LUVNA, Track: 103.6, DistanceNM: 3.5}
+    - {Identifier: 19R, Track: 187.4, DistanceNM: 10.8}
+
+  - FeederFix: TEBOT
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: URBIN, Track: 244.6, DistanceNM: 7.7}
+    - {Identifier: ANIRI, Track: 190.4, DistanceNM: 14.8}
+    - {Identifier: DOMBO, Track: 206.3, DistanceNM: 15.8}
+    - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
+    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
+    - {Identifier: NIXEL, Track: 253.8, DistanceNM: 9.1}
+    - {Identifier: VANTI, Track: 296.8, DistanceNM: 3.3}
+    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: TEBOT
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: URBIN, Track: 244.6, DistanceNM: 7.7}
+    - {Identifier: ANIRI, Track: 190.4, DistanceNM: 14.8}
+    - {Identifier: DOMBO, Track: 206.3, DistanceNM: 15.8}
+    - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
+    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
+    - {Identifier: NUNDI, Track: 245.9, DistanceNM: 8}
+    - {Identifier: ENTOX, Track: 269, DistanceNM: 2.6}
+    - {Identifier: VATRO, Track: 302.1, DistanceNM: 2.1}
+    - {Identifier: PULEX, Track: 349.3, DistanceNM: 1.9}
+    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: TEBOT
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: URBIN, Track: 244.6, DistanceNM: 7.7}
+    - {Identifier: KALTO, Track: 255.3, DistanceNM: 2.6}
+    - {Identifier: OMGUV, Track: 255.3, DistanceNM: 13.4}
+    - {Identifier: BETSO, Track: 244.5, DistanceNM: 5.3}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: TEBOT
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: URBIN, Track: 244.6, DistanceNM: 7.7}
+    - {Identifier: DOLSU, Track: 267.6, DistanceNM: 2.9}
+    - {Identifier: PILIG, Track: 267.7, DistanceNM: 13}
+    - {Identifier: LAVIN, Track: 230, DistanceNM: 6.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: TEBOT
+    RunwayIdentifier: 01R
+    ApproachType: X
+    Segments:
+    - {Identifier: URBIN, Track: 244.6, DistanceNM: 7.7}
+    - {Identifier: ANIRI, Track: 190.4, DistanceNM: 14.8}
+    - {Identifier: DOMBO, Track: 206.3, DistanceNM: 15.8}
+    - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
+    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
+    - {Identifier: KASBA, Track: 324.8, DistanceNM: 3.4}
+    - {Identifier: SORVA, Track: 322.4, DistanceNM: 2.3}
+    - {Identifier: 01R, Track: 347.5, DistanceNM: 8.5}
+
+  - FeederFix: UGTUG
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: IRTED, Track: 280.5, DistanceNM: 7.5}
+    - {Identifier: DOMBO, Track: 255.2, DistanceNM: 15.6}
+    - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
+    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
+    - {Identifier: NIXEL, Track: 253.8, DistanceNM: 9.1}
+    - {Identifier: VANTI, Track: 296.8, DistanceNM: 3.3}
+    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: UGTUG
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: IRTED, Track: 280.5, DistanceNM: 7.5}
+    - {Identifier: DOMBO, Track: 255.2, DistanceNM: 15.6}
+    - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
+    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
+    - {Identifier: NUNDI, Track: 245.9, DistanceNM: 8}
+    - {Identifier: ENTOX, Track: 269, DistanceNM: 2.6}
+    - {Identifier: VATRO, Track: 302.1, DistanceNM: 2.1}
+    - {Identifier: PULEX, Track: 349.3, DistanceNM: 1.9}
+    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: UGTUG
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: IPGAV, Track: 313.5, DistanceNM: 13.8}
+    - {Identifier: ISPON, Track: 299.1, DistanceNM: 16.7}
+    - {Identifier: OMGUV, Track: 320.2, DistanceNM: 5.7}
+    - {Identifier: BETSO, Track: 244.5, DistanceNM: 5.3}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: UGTUG
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: ENAID, Track: 295.7, DistanceNM: 14.8}
+    - {Identifier: DUBOM, Track: 333.2, DistanceNM: 7.8}
+    - {Identifier: OSEGU, Track: 333.2, DistanceNM: 7.5}
+    - {Identifier: PILIG, Track: 302.2, DistanceNM: 10}
+    - {Identifier: LAVIN, Track: 230, DistanceNM: 6.2}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: UGTUG
+    RunwayIdentifier: 01R
+    ApproachType: X
+    Segments:
+    - {Identifier: IRTED, Track: 280.5, DistanceNM: 7.5}
+    - {Identifier: DOMBO, Track: 255.2, DistanceNM: 15.6}
+    - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
+    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
+    - {Identifier: KASBA, Track: 324.8, DistanceNM: 3.4}
+    - {Identifier: SORVA, Track: 322.4, DistanceNM: 2.3}
+    - {Identifier: 01R, Track: 347.5, DistanceNM: 8.5}
+
+  - FeederFix: UGTUG
+    RunwayIdentifier: 19L
+    ApproachType: X
+    Segments:
+    - {Identifier: IPGAV, Track: 313.5, DistanceNM: 13.8}
+    - {Identifier: TEMUL, Track: 279.7, DistanceNM: 11.5}
+    - {Identifier: BUGSO, Track: 279.8, DistanceNM: 5.5}
+    - {Identifier: ATSEP, Track: 279.8, DistanceNM: 3.2}
+    - {Identifier: 19L, Track: 238.1, DistanceNM: 11.4}
+
+  - FeederFix: WOODY
+    RunwayIdentifier: 01L
+    ApproachType: A
+    Segments:
+    - {Identifier: NUSBU, Track: 95.4, DistanceNM: 10.1}
+    - {Identifier: NODUG, Track: 95.4, DistanceNM: 5.9}
+    - {Identifier: RUKNO, Track: 115, DistanceNM: 7.6}
+    - {Identifier: TAPUL, Track: 167.1, DistanceNM: 14.6}
+    - {Identifier: SULDO, Track: 162.8, DistanceNM: 2.3}
+    - {Identifier: DABKO, Track: 126.9, DistanceNM: 2.5}
+    - {Identifier: TANIK, Track: 65, DistanceNM: 2.5}
+    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
+
+  - FeederFix: WOODY
+    RunwayIdentifier: 01R
+    ApproachType: A
+    Segments:
+    - {Identifier: NUSBU, Track: 95.4, DistanceNM: 10.1}
+    - {Identifier: NODUG, Track: 95.4, DistanceNM: 5.9}
+    - {Identifier: RUKNO, Track: 115, DistanceNM: 7.6}
+    - {Identifier: BETNI, Track: 159.2, DistanceNM: 12.8}
+    - {Identifier: MATBO, Track: 158.8, DistanceNM: 3.9}
+    - {Identifier: GLENN, Track: 88.3, DistanceNM: 4.1}
+    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+
+  - FeederFix: WOODY
+    RunwayIdentifier: 19L
+    ApproachType: A
+    Segments:
+    - {Identifier: ATVON, Track: 78.5, DistanceNM: 11.6}
+    - {Identifier: TEGIL, Track: 78.3, DistanceNM: 7.3}
+    - {Identifier: PAMGO, Track: 78.3, DistanceNM: 11.1}
+    - {Identifier: IGBON, Track: 78.1, DistanceNM: 9}
+    - {Identifier: EMSIT, Track: 91.9, DistanceNM: 3.9}
+    - {Identifier: IRVUL, Track: 105.6, DistanceNM: 2.8}
+    - {Identifier: BETSO, Track: 161.3, DistanceNM: 2.5}
+    - {Identifier: 19L, Track: 206.9, DistanceNM: 14.4}
+
+  - FeederFix: WOODY
+    RunwayIdentifier: 19R
+    ApproachType: A
+    Segments:
+    - {Identifier: ATVON, Track: 78.5, DistanceNM: 11.6}
+    - {Identifier: TEGIL, Track: 78.3, DistanceNM: 7.3}
+    - {Identifier: PAMGO, Track: 78.3, DistanceNM: 11.1}
+    - {Identifier: IGBON, Track: 78.1, DistanceNM: 9}
+    - {Identifier: PAMBU, Track: 82.4, DistanceNM: 3.6}
+    - {Identifier: ATRAX, Track: 95.3, DistanceNM: 2.1}
+    - {Identifier: LAVIN, Track: 142.4, DistanceNM: 2.3}
+    - {Identifier: OSOKO, Track: 206.9, DistanceNM: 3.9}
+    - {Identifier: 19R, Track: 206.9, DistanceNM: 11.3}
+
+  - FeederFix: WOODY
+    RunwayIdentifier: 01L
+    ApproachType: V
+    Segments:
+    - {Identifier: NUSBU, Track: 95.4, DistanceNM: 10.1}
+    - {Identifier: NODUG, Track: 95.4, DistanceNM: 5.9}
+    - {Identifier: RUKNO, Track: 115, DistanceNM: 7.6}
+    - {Identifier: 01L, Track: 105.3, DistanceNM: 15.2}
+
+  - FeederFix: WOODY
+    RunwayIdentifier: 19R
+    ApproachType: V
+    Segments:
+    - {Identifier: ATVON, Track: 78.5, DistanceNM: 11.6}
+    - {Identifier: TEGIL, Track: 78.3, DistanceNM: 7.3}
+    - {Identifier: PAMGO, Track: 78.3, DistanceNM: 11.1}
+    - {Identifier: 19R, Track: 145.8, DistanceNM: 15.9}
+
+
 
   DepartureAirports:
   - {Identifier: YCFS, Aircraft: [JET], Distance: 189, EstimatedFlightTimeMinutes: 41}
@@ -866,87 +1774,455 @@ Airports:
     - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
 
   Trajectories:
-  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 17}
-  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 14}
-  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 15}
-  - {FeederFix: KAGMI, Aircraft: [JET, DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 17}
-  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 19}
-  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 16}
-  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 17}
-  - {FeederFix: KAGMI, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 20}
-  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 17}
-  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 19}
-  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 10}
-  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 10}
-  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 15}
-  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 16}
-  - {FeederFix: JULIM, Aircraft: [JET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 15}
-  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 15}
-  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 16}
-  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 15}
-  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 15}
-  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 13}
-  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 14}
-  - {FeederFix: KABLI, Aircraft: [JET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 13}
-  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 11}
-  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 12}
-  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 14}
-  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 12}
-  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 10}
-  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 11}
-  - {FeederFix: SOLUS, Aircraft: [JET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 10}
-  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 12}
-  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 13}
-  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 10}
-  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 11}
-  - {FeederFix: DAYLR, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 10}
-  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 16}
-  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 17}
-  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 14}
-  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 13}
-  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 14}
-  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 14}
-  - {FeederFix: LAVEX, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 13}
-  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 18}
-  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 19}
-  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 10}
-  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 10}
-  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 15}
-  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 16}
-  - {FeederFix: SAPKO, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 15}
-  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 11}
-  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 12}
-  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 14}
-  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 12}
-  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 10}
-  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 11}
-  - {FeederFix: SOLUS, Aircraft: [DH8D], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 10}
-  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 13}
-  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 15}
-  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 12}
-  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 13}
-  - {FeederFix: DAYLR, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 11}
-  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 18}
-  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 20}
-  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 16}
-  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 15}
-  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 15}
-  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 16}
-  - {FeederFix: LAVEX, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 15}
-  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 20}
-  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 22}
-  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 11}
-  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 11}
-  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 17}
-  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 18}
-  - {FeederFix: SAPKO, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 17}
-  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "03", TimeToGoMinutes: 12}
-  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "06", TimeToGoMinutes: 14}
-  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "21", TimeToGoMinutes: 16}
-  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: A, RunwayIdentifier: "24", TimeToGoMinutes: 14}
-  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "03", TimeToGoMinutes: 12}
-  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: V, RunwayIdentifier: "06", TimeToGoMinutes: 13}
-  - {FeederFix: SOLUS, Aircraft: [NONJET], ApproachType: X, RunwayIdentifier: "03", TimeToGoMinutes: 11}
+  - FeederFix: KAGMI
+    RunwayIdentifier: '03'
+    ApproachType: A
+    TransitionFix: IPMOR
+    Segments:
+    - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+    - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+    - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+    - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+    - {Identifier: HAYCO, Track: 151.4, DistanceNM: 18.4}
+    - {Identifier: SADOL, Track: 100.3, DistanceNM: 3.2}
+    - {Identifier: HARMN, Track: 100.2, DistanceNM: 7}
+    - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+    - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+
+  - FeederFix: KAGMI
+    RunwayIdentifier: '06'
+    ApproachType: A
+    TransitionFix: IPMOR
+    Segments:
+    - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+    - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+    - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+    - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+    - {Identifier: VANRU, Track: 120.9, DistanceNM: 3}
+    - {Identifier: ORIDO, Track: 120.9, DistanceNM: 2}
+    - {Identifier: LENNY, Track: 120.9, DistanceNM: 10.9}
+    - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+
+  - FeederFix: KAGMI
+    RunwayIdentifier: '21'
+    ApproachType: A
+    TransitionFix: IPMOR
+    Segments:
+    - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+    - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+    - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+    - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+    - {Identifier: GORMA, Track: 87.1, DistanceNM: 8.6}
+    - {Identifier: WOOFY, Track: 87, DistanceNM: 6}
+    - {Identifier: '21', Track: 118.4, DistanceNM: 8.9}
+
+  - FeederFix: KAGMI
+    RunwayIdentifier: '24'
+    ApproachType: A
+    TransitionFix: IPMOR
+    Segments:
+    - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+    - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+    - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+    - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+    - {Identifier: GORMA, Track: 87.1, DistanceNM: 8.6}
+    - {Identifier: WOOFY, Track: 87, DistanceNM: 6}
+    - {Identifier: '24', Track: 117.6, DistanceNM: 9.4}
+
+  - FeederFix: JULIM
+    RunwayIdentifier: '03'
+    ApproachType: A
+    Segments:
+    - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+    - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+    - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+    - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+    - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+    - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+
+  - FeederFix: JULIM
+    RunwayIdentifier: '06'
+    ApproachType: A
+    Segments:
+    - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+    - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+    - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+    - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+    - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+    - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+    - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+
+  - FeederFix: JULIM
+    RunwayIdentifier: '21'
+    ApproachType: A
+    Segments:
+    - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+    - {Identifier: ENRIP, Track: 208.7, DistanceNM: 4}
+    - {Identifier: WOORA, Track: 208.7, DistanceNM: 3.5}
+    - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+    - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+
+  - FeederFix: JULIM
+    RunwayIdentifier: '24'
+    ApproachType: A
+    Segments:
+    - {Identifier: ISRUP, Track: 192.6, DistanceNM: 17.1}
+    - {Identifier: ANSEP, Track: 192.6, DistanceNM: 4}
+    - {Identifier: SPUDO, Track: 192.6, DistanceNM: 4}
+    - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+
+  - FeederFix: JULIM
+    RunwayIdentifier: '03'
+    ApproachType: V
+    Segments:
+    - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+    - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+    - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+    - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+    - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: JULIM
+    RunwayIdentifier: '06'
+    ApproachType: V
+    Segments:
+    - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+    - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+    - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+    - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+    - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+    - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+    - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+
+  - FeederFix: JULIM
+    RunwayIdentifier: '03'
+    ApproachType: X
+    Segments:
+    - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+    - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+    - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+    - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+    - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: KABLI
+    RunwayIdentifier: '03'
+    ApproachType: A
+    Segments:
+    - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+    - {Identifier: MESAM, Track: 262.6, DistanceNM: 24.6}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+    - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+
+  - FeederFix: KABLI
+    RunwayIdentifier: '06'
+    ApproachType: A
+    Segments:
+    - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+    - {Identifier: MESAM, Track: 262.6, DistanceNM: 24.6}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+    - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+    - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+
+  - FeederFix: KABLI
+    RunwayIdentifier: '21'
+    ApproachType: A
+    Segments:
+    - {Identifier: BOOKA, Track: 308, DistanceNM: 15.6}
+    - {Identifier: DUDIN, Track: 308.1, DistanceNM: 7.3}
+    - {Identifier: VEPAN, Track: 301, DistanceNM: 9.9}
+    - {Identifier: MUMOS, Track: 301.1, DistanceNM: 3.4}
+    - {Identifier: ROLOB, Track: 301.2, DistanceNM: 4.5}
+    - {Identifier: WOORA, Track: 285.3, DistanceNM: 9}
+    - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+    - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+
+  - FeederFix: KABLI
+    RunwayIdentifier: '24'
+    ApproachType: A
+    Segments:
+    - {Identifier: BOOKA, Track: 308, DistanceNM: 15.6}
+    - {Identifier: DUDIN, Track: 308.1, DistanceNM: 7.3}
+    - {Identifier: VEPAN, Track: 301, DistanceNM: 9.9}
+    - {Identifier: MUMOS, Track: 301.1, DistanceNM: 3.4}
+    - {Identifier: ROLOB, Track: 301.2, DistanceNM: 4.5}
+    - {Identifier: SPUDO, Track: 238.9, DistanceNM: 3.7}
+    - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+
+  - FeederFix: KABLI
+    RunwayIdentifier: '03'
+    ApproachType: V
+    Segments:
+    - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+    - {Identifier: VAVGA, Track: 278.9, DistanceNM: 19.8}
+    - {Identifier: KARGO, Track: 281.5, DistanceNM: 7.3}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: KABLI
+    RunwayIdentifier: '06'
+    ApproachType: V
+    Segments:
+    - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+    - {Identifier: VAVGA, Track: 278.9, DistanceNM: 19.8}
+    - {Identifier: KARGO, Track: 281.5, DistanceNM: 7.3}
+    - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+    - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+
+  - FeederFix: KABLI
+    RunwayIdentifier: '03'
+    ApproachType: X
+    Segments:
+    - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+    - {Identifier: VAVGA, Track: 278.9, DistanceNM: 19.8}
+    - {Identifier: KARGO, Track: 281.5, DistanceNM: 7.3}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: LAVEX
+    RunwayIdentifier: '03'
+    ApproachType: A
+    Segments:
+    - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+    - {Identifier: MESAM, Track: 247.9, DistanceNM: 28.2}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+    - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+
+  - FeederFix: LAVEX
+    RunwayIdentifier: '06'
+    ApproachType: A
+    Segments:
+    - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+    - {Identifier: MESAM, Track: 247.9, DistanceNM: 28.2}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+    - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+    - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+
+  - FeederFix: LAVEX
+    RunwayIdentifier: '21'
+    ApproachType: A
+    Segments:
+    - {Identifier: BUVOT, Track: 266.8, DistanceNM: 11.3}
+    - {Identifier: RONAN, Track: 285.1, DistanceNM: 6.9}
+    - {Identifier: UNDOW, Track: 285.2, DistanceNM: 9.6}
+    - {Identifier: BAHBA, Track: 285.3, DistanceNM: 3.7}
+    - {Identifier: ROLOB, Track: 285.3, DistanceNM: 4.5}
+    - {Identifier: WOORA, Track: 285.3, DistanceNM: 9}
+    - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+    - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+
+  - FeederFix: LAVEX
+    RunwayIdentifier: '24'
+    ApproachType: A
+    Segments:
+    - {Identifier: BUVOT, Track: 266.8, DistanceNM: 11.3}
+    - {Identifier: RONAN, Track: 285.1, DistanceNM: 6.9}
+    - {Identifier: UNDOW, Track: 285.2, DistanceNM: 9.6}
+    - {Identifier: BAHBA, Track: 285.3, DistanceNM: 3.7}
+    - {Identifier: ROLOB, Track: 285.3, DistanceNM: 4.5}
+    - {Identifier: SPUDO, Track: 238.9, DistanceNM: 3.7}
+    - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+
+  - FeederFix: LAVEX
+    RunwayIdentifier: '03'
+    ApproachType: V
+    Segments:
+    - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+    - {Identifier: MATJI, Track: 263.8, DistanceNM: 21.3}
+    - {Identifier: KARGO, Track: 264.9, DistanceNM: 7.2}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: LAVEX
+    RunwayIdentifier: '06'
+    ApproachType: V
+    Segments:
+    - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+    - {Identifier: MATJI, Track: 263.8, DistanceNM: 21.3}
+    - {Identifier: KARGO, Track: 264.9, DistanceNM: 7.2}
+    - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+    - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+
+  - FeederFix: LAVEX
+    RunwayIdentifier: '03'
+    ApproachType: X
+    Segments:
+    - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+    - {Identifier: MATJI, Track: 263.8, DistanceNM: 21.3}
+    - {Identifier: KARGO, Track: 264.9, DistanceNM: 7.2}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: SAPKO
+    RunwayIdentifier: '03'
+    ApproachType: A
+    Segments:
+    - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+    - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+    - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+    - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+    - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+    - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+
+  - FeederFix: SAPKO
+    RunwayIdentifier: '06'
+    ApproachType: A
+    Segments:
+    - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+    - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+    - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+    - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+    - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+    - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+    - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+    - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+    - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+
+  - FeederFix: SAPKO
+    RunwayIdentifier: '21'
+    ApproachType: A
+    Segments:
+    - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+    - {Identifier: EGIXU, Track: 226.6, DistanceNM: 3.8}
+    - {Identifier: WOORA, Track: 226.6, DistanceNM: 3.7}
+    - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+    - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+
+  - FeederFix: SAPKO
+    RunwayIdentifier: '24'
+    ApproachType: A
+    Segments:
+    - {Identifier: PATMU, Track: 209.2, DistanceNM: 15.9}
+    - {Identifier: UPNIS, Track: 209.3, DistanceNM: 3.6}
+    - {Identifier: SPUDO, Track: 209.4, DistanceNM: 3.9}
+    - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+
+  - FeederFix: SAPKO
+    RunwayIdentifier: '03'
+    ApproachType: V
+    Segments:
+    - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+    - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+    - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+    - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+    - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: SAPKO
+    RunwayIdentifier: '06'
+    ApproachType: V
+    Segments:
+    - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+    - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+    - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+    - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+    - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+    - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+    - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+
+  - FeederFix: SAPKO
+    RunwayIdentifier: '03'
+    ApproachType: X
+    Segments:
+    - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+    - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+    - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+    - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+    - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+    - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+    - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: SOLUS
+    RunwayIdentifier: '03'
+    ApproachType: A
+    Segments:
+    - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 11.7}
+    - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+    - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+
+  - FeederFix: SOLUS
+    RunwayIdentifier: '06'
+    ApproachType: A
+    Segments:
+    - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+    - {Identifier: HARMN, Track: 284.4, DistanceNM: 11.7}
+    - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+    - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+    - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+
+  - FeederFix: SOLUS
+    RunwayIdentifier: '21'
+    ApproachType: A
+    Segments:
+    - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+    - {Identifier: '21', Track: 335.9, DistanceNM: 19.1}
+
+  - FeederFix: SOLUS
+    RunwayIdentifier: '24'
+    ApproachType: A
+    Segments:
+    - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+    - {Identifier: '24', Track: 337.2, DistanceNM: 18.7}
+
+  - FeederFix: SOLUS
+    RunwayIdentifier: '03'
+    ApproachType: V
+    Segments:
+    - {Identifier: MESAM, Track: 338.3, DistanceNM: 18.4}
+    - {Identifier: KARGO, Track: 344, DistanceNM: 8}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
+  - FeederFix: SOLUS
+    RunwayIdentifier: '06'
+    ApproachType: V
+    Segments:
+    - {Identifier: MESAM, Track: 338.3, DistanceNM: 18.4}
+    - {Identifier: KARGO, Track: 344, DistanceNM: 8}
+    - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+    - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+
+  - FeederFix: SOLUS
+    RunwayIdentifier: '03'
+    ApproachType: X
+    Segments:
+    - {Identifier: MESAM, Track: 338.3, DistanceNM: 18.4}
+    - {Identifier: KARGO, Track: 344, DistanceNM: 8}
+    - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+
 
   DepartureAirports:
   - {Identifier: YABA, Aircraft: [JET], Distance: 230, EstimatedFlightTimeMinutes: 48}

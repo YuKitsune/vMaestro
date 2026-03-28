@@ -12,10 +12,19 @@ public class TrajectoryConfiguration
     // Track and distance are pre-computed offline (e.g. via the Maestro.Tools CLI).
     public required TrajectorySegmentConfiguration[] Segments { get; init; }
 
-    // Pressure segments describe an extended flight path ATC may use to absorb delay.
-    // ETI for these segments contributes to P (Pressure window).
-    public TrajectorySegmentConfiguration[] PressureSegments { get; init; } = [];
+    // Pressure trajectory: alternative path ATC may use to absorb delay.
+    // Diverges after the specified segment.
+    // P (Pressure window) = ETI from feeder fix through After segment + ETI along alternative segments.
+    public TrajectoryBranch? Pressure { get; init; }
 
-    // Max pressure segments contribute to Pmax (Maximum Pressure window).
-    public TrajectorySegmentConfiguration[] MaxPressureSegments { get; init; } = [];
+    // Max pressure trajectory: extended alternative path for maximum delay absorption.
+    // Diverges after the specified segment.
+    // Pmax (Maximum Pressure window) = ETI from feeder fix through After segment + ETI along alternative segments.
+    public TrajectoryBranch? MaxPressure { get; init; }
+}
+
+public class TrajectoryBranch
+{
+    public required string After { get; init; }
+    public TrajectorySegmentConfiguration[] Segments { get; init; } = [];
 }

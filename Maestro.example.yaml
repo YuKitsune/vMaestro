@@ -372,7 +372,7 @@ Airports:
   #   MaxPressure: true if this segment contributes to the Max Pressure window (Pmax)
   #
   # Generate segment geometry automatically with the Maestro.Tools CLI:
-  #   maestro extract-stars --airspace <Airspace.xml> --airport YSSY --output trajectories.yaml
+  #   maestro extract-stars --airspace <Airspace.xml> --config maestro-tool.yaml
   # Then manually mark pressure zones (Pressure/MaxPressure) as required.
   #
   # DefaultTTGMinutes (below) is used when no trajectory matches a flight.
@@ -382,42 +382,39 @@ Airports:
 
   Trajectories:
 
-    # BOREE → 34L
-    - FeederFix: BOREE
-      RunwayIdentifier: 34L
-      Segments:
-        - {Identifier: BOREE, Track: 195.3, DistanceNM: 12.4}
-        - {Identifier: YAKKA, Track: 220.1, DistanceNM: 8.7}
-        - {Identifier: TESAT, Track: 180.0, DistanceNM: 5.2, Pressure: true}
-        - {Identifier: FAF,   Track: 160.0, DistanceNM: 3.1, MaxPressure: true}
-
-    # BOREE → 34R
-    - FeederFix: BOREE
-      RunwayIdentifier: 34R
-      Segments:
-        - {Identifier: BOREE, Track: 185.0, DistanceNM: 11.8}
-        - {Identifier: YAKKA, Track: 210.0, DistanceNM:  9.2}
-        - {Identifier: TESAT, Track: 175.0, DistanceNM:  5.5, Pressure: true}
-        - {Identifier: FAF,   Track: 155.0, DistanceNM:  3.2, MaxPressure: true}
-
-    # RIVET → 34L
+    # RIVET -> 34L
+    # Illustrates branching pressure trajectories
     - FeederFix: RIVET
       RunwayIdentifier: 34L
       Segments:
-        - {Identifier: RIVET, Track: 210.0, DistanceNM: 10.5}
-        - {Identifier: TESAT, Track: 180.0, DistanceNM:  5.2, Pressure: true}
-        - {Identifier: FAF,   Track: 160.0, DistanceNM:  3.1, MaxPressure: true}
+      - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+      - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+      - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+      - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
+      - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+      - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+      - {Identifier: FINAL, Track: 335.2, DistanceNM: 12.8}
 
-    # RIVET → 34R
-    - FeederFix: RIVET
-      RunwayIdentifier: 34R
-      Segments:
-        - {Identifier: RIVET, Track: 218.0, DistanceNM: 13.0}
-        - {Identifier: TESAT, Track: 175.0, DistanceNM:  5.5, Pressure: true}
-        - {Identifier: FAF,   Track: 155.0, DistanceNM:  3.2, MaxPressure: true}
+      # Pressure/MaxPressure specify alternative paths that diverge after the specified segment.
+      # The pressure segments describe the complete path from after that waypoint to runway threshold.
+      
+      # Pressure trajectory: extends downwind after the NASHO segment from the normal trajectory
+      Pressure:
+        After: NASHO
+        Segments: 
+        - {Identifier: DOWNWIND, Track: 167.9, DistanceNM: 3.0}
+        - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+        - {Identifier: FINAL, Track: 335.2, DistanceNM: 15.8}
+        
+      # Max pressure trajectory: further extends downwind after NASHO
+      MaxPressure:
+        After: NASHO
+        Segments:
+        - {Identifier: DOWNWIND, Track: 167.9, DistanceNM: 6.0}
+        - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+        - {Identifier: FINAL, Track: 335.2, DistanceNM: 18.8}
 
-    # Add trajectories for WELSH, YAKKA, MARLN and remaining runways.
-    # Pressure/MaxPressure zones above are illustrative — review against actual STARs.
+    # Add trajectories for WELSH, YAKKA, MARLN and remaining combinations of feeder fix, runway, and approach type.
 
   # ---------------------------------------------------------------------------
   # Departure Airports
@@ -568,7 +565,8 @@ Airports:
       RunwayIdentifier: "09"
       Segments:
         - {Identifier: ARBEY, Track: 270.0, DistanceNM: 18.0}
-        - {Identifier: FAF,   Track: 270.0, DistanceNM:  4.5, Pressure: true}
+        - {Identifier: FAF,   Track: 270.0, DistanceNM:  4.5}
+        - {Identifier: "09",  Track: 090.0, DistanceNM:  3.0}
     # ... continue for all feeder fix / runway combinations
 
   # Define departure airports (abbreviated example)

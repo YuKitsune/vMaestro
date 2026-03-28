@@ -1,0 +1,16 @@
+Airports:
+  - ICAO: YSSY
+    FeederFixes: [RIVET, WELSH, BOREE, YAKKA, MARLN]
+    Output: trajectories/yssy.yaml
+
+  - ICAO: YMML
+    FeederFixes: [ARBEY, BOYSE, BOOIN, RAZZI, LATTA, EKKAS, ALAXO ,MENOG]
+    Output: trajectories/ymml.yaml
+
+  - ICAO: YBBN
+    FeederFixes: [BLAKA,  GOMOL,  ENLIP,  MORBI,  SMOKA,  TEBOT,  UGTUG,  WOODY]
+    Output: trajectories/ybbn.yaml
+
+  - ICAO: YPPH
+    FeederFixes: [KAGMI, JULIM, KABLI, SOLUS, DAYLR, LAVEX, SAPKO]
+    Output: trajectories/ypph.yaml

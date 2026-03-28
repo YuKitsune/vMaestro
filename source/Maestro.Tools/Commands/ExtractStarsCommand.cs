@@ -109,6 +109,13 @@ public static class ExtractStarsCommand
                         if (segments is null)
                             continue;
 
+                        var pressureConfig = FindPressureConfiguration(
+                            airportConfig.PressureConfiguration,
+                            feederFix,
+                            transitionFix,
+                            runway,
+                            approachType);
+
                         results.Add(new TrajectoryOutput
                         {
                             FeederFix = feederFix,
@@ -116,8 +123,10 @@ public static class ExtractStarsCommand
                             RunwayIdentifier = runway,
                             ApproachType = approachType,
                             Segments = segments,
-                            PressureSegments = FindOverrideSegments(airportConfig.PressureSegments, feederFix, transitionFix, runway, approachType),
-                            MaxPressureSegments = FindOverrideSegments(airportConfig.MaxPressureSegments, feederFix, transitionFix, runway, approachType)
+                            PressureAfter = pressureConfig?.Pressure?.After,
+                            PressureSegments = ConvertSegments(pressureConfig?.Pressure?.Segments),
+                            MaxPressureAfter = pressureConfig?.MaxPressure?.After,
+                            MaxPressureSegments = ConvertSegments(pressureConfig?.MaxPressure?.Segments)
                         });
                     }
                 }
@@ -135,14 +144,23 @@ public static class ExtractStarsCommand
                     if (segments is null)
                         continue;
 
+                    var pressureConfig = FindPressureConfiguration(
+                        airportConfig.PressureConfiguration,
+                        feederFix,
+                        null,
+                        runway,
+                        approachType);
+
                     results.Add(new TrajectoryOutput
                     {
                         FeederFix = feederFix,
                         RunwayIdentifier = runway,
                         ApproachType = approachType,
                         Segments = segments,
-                        PressureSegments = FindOverrideSegments(airportConfig.PressureSegments, feederFix, null, runway, approachType),
-                        MaxPressureSegments = FindOverrideSegments(airportConfig.MaxPressureSegments, feederFix, null, runway, approachType)
+                        PressureAfter = pressureConfig?.Pressure?.After,
+                        PressureSegments = ConvertSegments(pressureConfig?.Pressure?.Segments),
+                        MaxPressureAfter = pressureConfig?.MaxPressure?.After,
+                        MaxPressureSegments = ConvertSegments(pressureConfig?.MaxPressure?.Segments)
                     });
                 }
             }
@@ -151,33 +169,48 @@ public static class ExtractStarsCommand
         return results;
     }
 
-    static List<SegmentOutput> FindOverrideSegments(
-        TrajectorySegmentOverride[] overrides,
+    static PressureConfigurationOverride? FindPressureConfiguration(
+        PressureConfigurationOverride[] configs,
         string feederFix,
         string? transitionFix,
         string runway,
         string? approachType)
     {
-        foreach (var o in overrides)
+        foreach (var config in configs)
         {
-            if (!o.FeederFix.Equals(feederFix, StringComparison.OrdinalIgnoreCase))
-                continue;
-            if (!o.RunwayIdentifier.Equals(runway, StringComparison.OrdinalIgnoreCase))
-                continue;
-            if (o.TransitionFix is not null && !o.TransitionFix.Equals(transitionFix, StringComparison.OrdinalIgnoreCase))
-                continue;
-            if (o.ApproachType is not null && !o.ApproachType.Equals(approachType, StringComparison.OrdinalIgnoreCase))
+            // Check if feeder fix is in array (multi-fix support)
+            if (!config.FeederFixes.Contains(feederFix))
                 continue;
 
-            return o.Segments.Select(s => new SegmentOutput
-            {
-                Identifier = s.Identifier,
-                Track = s.Track,
-                DistanceNM = s.DistanceNM
-            }).ToList();
+            // Match runway, transition, approach type
+            if (!string.Equals(config.RunwayIdentifier, runway))
+                continue;
+
+            if (config.TransitionFix is not null &&
+                !config.TransitionFix.Equals(transitionFix))
+                continue;
+
+            if (config.ApproachType is not null &&
+                !config.ApproachType.Equals(approachType))
+                continue;
+
+            return config;
         }
 
-        return [];
+        return null;
+    }
+
+    static List<SegmentOutput> ConvertSegments(SegmentDefinition[]? segments)
+    {
+        if (segments is null)
+            return [];
+
+        return segments.Select(s => new SegmentOutput
+        {
+            Identifier = s.Identifier,
+            Track = s.Track,
+            DistanceNM = s.DistanceNM
+        }).ToList();
     }
 
     static List<SegmentOutput>? BuildSegments(
@@ -371,7 +404,9 @@ class TrajectoryOutput
     public string? ApproachType { get; init; }
     public string? TransitionFix { get; init; }
     public required List<SegmentOutput> Segments { get; init; }
+    public string? PressureAfter { get; init; }
     public List<SegmentOutput> PressureSegments { get; init; } = [];
+    public string? MaxPressureAfter { get; init; }
     public List<SegmentOutput> MaxPressureSegments { get; init; } = [];
 }
 
