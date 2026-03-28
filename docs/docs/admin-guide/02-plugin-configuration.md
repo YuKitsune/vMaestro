@@ -320,35 +320,53 @@ RunwayModes:
 
 ### Trajectories
 
-Define flight times from feeder fixes to runways.
+Trajectories define the path from a feeder fix to a runway threshold as a sequence of segments. TTG is computed at runtime from segment geometry, aircraft approach speed, and upper wind.
+
+Trajectories can be generated using the `maestro-tools extract-stars` command and edited manually to add pressure and max-pressure segments. See [Maestro Tools](05-maestro-tools.md) for details.
 
 ```yaml
 Trajectories:
-  - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
-  - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
-  - {FeederFix: RIVET, Aircraft: [JET], RunwayIdentifier: 34L, TimeToGoMinutes: 15}
-  - {FeederFix: RIVET, Aircraft: [JET], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
+  - FeederFix: MARGO
+    RunwayIdentifier: '23'
+    ApproachType: A
+    TransitionFix: BUGSU
+    Segments:
+      - {Identifier: BUGSU, Track: 143.3, DistanceNM: 28.7}
+      - {Identifier: GLOBE, Track: 90, DistanceNM: 8.8}
+      - {Identifier: ANPUT, Track: 57, DistanceNM: 7.7}
+      - {Identifier: VIRAT, Track: 140.5, DistanceNM: 5}
+      - {Identifier: '23', Track: 229.9, DistanceNM: 14}
 ```
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `FeederFix` | string | Feeder fix identifier |
-| `Aircraft` | array | Aircraft types/categories |
-| `RunwayIdentifier` | string | Destination runway |
-| `ApproachType` | string | Restricts to specific approach (optional) |
-| `ApproachFix` | string | Restricts to specific fix/transition (optional) |
-| `TimeToGoMinutes` | integer | Flight time in minutes |
+#### Trajectory Properties
 
-#### Aircraft Descriptors
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `FeederFix` | string | Yes | Feeder fix identifier |
+| `RunwayIdentifier` | string | Yes | Destination runway |
+| `ApproachType` | string | No | Restricts to a specific approach type (e.g., `I`, `V`) |
+| `TransitionFix` | string | No | Restricts to routes passing through this fix (e.g. a common point on a STAR with transitions via the feeder fixes) |
+| `Segments` | array | Yes | Ordered segments from feeder fix to runway threshold |
+| `PressureSegments` | array | No | Segments representing a small delay-absorption extension |
+| `MaxPressureSegments` | array | No | Segments representing the maximum delay-absorption capacity |
 
-- `ALL` - All aircraft
-- `JET` - Jet aircraft
-- `NONJET` or `PROP` - Non-jet aircraft
-- `LIGHT` or `L` - Light wake category
-- `MEDIUM` or `M` - Medium wake category
-- `HEAVY` or `H` - Heavy wake category
-- `SUPER`, `SUPERHEAVY`, `S`, or `J` - Super heavy
-- Specific type code (e.g., `B738`, `A388`)
+#### Segment Properties
+
+Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has the following properties:
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `Identifier` | string | No | Fix name at which this segment terminates (informational only) |
+| `Track` | number | Yes | True bearing in degrees |
+| `DistanceNM` | number | Yes | Segment length in nautical miles |
+
+#### Pressure and Maximum Pressure
+
+`PressureSegments` represent a small path extension ATC can use to absorb minor delays, such as extending the downwind leg. The time to fly these segments is added to TTG to produce P.
+
+`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing, dog-legs, or similar. The time to fly these segments is added to P to produce Pmax.
+
+Both lists are optional. A trajectory with no pressure segments has P = Pmax = TTG.
 
 ### Departure Airports
 
