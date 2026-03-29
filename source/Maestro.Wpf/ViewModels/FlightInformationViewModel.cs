@@ -62,7 +62,7 @@ public partial class FlightInformationViewModel : ObservableObject
         InitialLandingEstimate = flightDto.InitialLandingEstimate;
         LandingEstimate = flightDto.LandingEstimate;
         LandingTime = flightDto.LandingTime;
-        InitialDelay = flightDto.InitialDelay;
-        RemainingDelay = flightDto.RemainingDelay;
+        InitialDelay = flightDto.LandingTime - flightDto.InitialLandingEstimate;
+        RemainingDelay = flightDto.LandingTime - flightDto.LandingEstimate;
     }
 }

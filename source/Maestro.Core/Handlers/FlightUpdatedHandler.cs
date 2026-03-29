@@ -136,7 +136,12 @@ public class FlightUpdatedHandler(
                     var runwayMode = instance.Session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
                     var runway = runwayMode.Default;
 
-                    var trajectory = trajectoryService.GetTrajectory(
+                    var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
+                        notification.Destination,
+                        notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
+                        feederFix!.FixIdentifier);
+
+                    var terminalTrajectory = trajectoryService.GetTrajectory(
                         new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                         notification.Destination,
                         feederFix.FixIdentifier,
@@ -168,7 +173,8 @@ public class FlightUpdatedHandler(
                         estimatedDepartureTime: notification.EstimatedDepartureTime,
                         assignedRunwayIdentifier: runway.Identifier,
                         approachType: runway.ApproachType,
-                        trajectory: trajectory,
+                        enrouteTrajectory: enrouteTrajectory,
+                        terminalTrajectory: terminalTrajectory,
                         feederFixIdentifier: feederFix.FixIdentifier,
                         feederFixEstimate: feederFix.Estimate,
                         landingEstimate: approximateLandingEstimate.Value,
@@ -260,6 +266,15 @@ public class FlightUpdatedHandler(
                             instance.Session.Sequence.Move(sequencedFlight, newIndex);
                         }
                     }
+
+                    // Update the control action to reflect how much delay remains
+                    var remainingDelay = sequencedFlight.LandingTime - sequencedFlight.LandingEstimate;
+                    var controlAction = DelayStrategyCalculator.GetControlAction(
+                        remainingDelay,
+                        sequencedFlight.TerminalTrajectory,
+                        sequencedFlight.EnrouteTrajectory,
+                        airportConfiguration.DelayStrategy);
+                    sequencedFlight.SetRemainingControlAction(controlAction);
 
                     sequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
 

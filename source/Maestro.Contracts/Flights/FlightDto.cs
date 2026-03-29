@@ -97,13 +97,13 @@ public class FlightDto
     /// The initial estimate for the feeder fix calculated before the flight became Stable.
     /// </summary>
     [Key(14)]
-    public required DateTimeOffset? InitialFeederFixEstimate { get; init; }
+    public required DateTimeOffset InitialFeederFixEstimate { get; init; }
 
     /// <summary>
     /// The current estimate for when the flight will cross the feeder fix.
     /// </summary>
     [Key(15)]
-    public required DateTimeOffset? FeederFixEstimate { get; init; }
+    public required DateTimeOffset FeederFixEstimate { get; init; }
 
     /// <summary>
     /// Whether the feeder fix estimate was manually entered by ATC.
@@ -115,7 +115,7 @@ public class FlightDto
     /// The scheduled time for the flight to cross the feeder fix.
     /// </summary>
     [Key(17)]
-    public required DateTimeOffset? FeederFixTime { get; init; }
+    public required DateTimeOffset FeederFixTime { get; init; }
 
     /// <summary>
     /// The identifier of the runway assigned to this flight.
@@ -160,18 +160,6 @@ public class FlightDto
     public required DateTimeOffset LandingTime { get; init; }
 
     /// <summary>
-    /// The initial delay calculated when the flight became Stable.
-    /// </summary>
-    [Key(26)]
-    public required TimeSpan InitialDelay { get; init; }
-
-    /// <summary>
-    /// The remaining delay to be absorbed by the flight.
-    /// </summary>
-    [Key(27)]
-    public required TimeSpan RemainingDelay { get; init; }
-
-    /// <summary>
     /// The flow control instructions assigned to this flight.
     /// </summary>
     [Key(28)]
@@ -195,21 +183,39 @@ public class FlightDto
     [Key(31)]
     public required bool IsManuallyInserted { get; init; }
 
-    /// <summary>
-    /// The approximate time it will take for the flight to travel from the feeder fix to the runway threshold.
-    /// </summary>
     [Key(32)]
-    public required TimeSpan TimeToGo { get; init; }
+    public TimeSpan EnrouteShortCutTimeToGain { get; init; }
+
+    [Key(33)]
+    public TimeSpan MaxEnrouteLinearDelay { get; init; }
 
     /// <summary>
-    /// TTG plus the additional time available through path stretching in the pressure zone.
+    /// The time-to-go for the normal (direct) trajectory from the feeder fix to the runway threshold.
     /// </summary>
     [Key(34)]
-    public required TimeSpan Pressure { get; init; }
+    public TimeSpan NormalTimeToGo { get; init; }
 
     /// <summary>
-    /// Pressure plus the additional time available through maximum vectoring in the max pressure zone.
+    /// The time-to-go for the pressure trajectory — normal path plus pressure-zone path stretching.
     /// </summary>
     [Key(35)]
-    public required TimeSpan MaxPressure { get; init; }
+    public TimeSpan PressureTimeToGo { get; init; }
+
+    /// <summary>
+    /// The time-to-go for the maximum-pressure trajectory — pressure path plus maximum vectoring.
+    /// </summary>
+    [Key(36)]
+    public TimeSpan MaxPressureTimeToGo { get; init; }
+
+    /// <summary>
+    /// The action the controllers must take to ensure this flight lands at their scheduled landing time.
+    /// </summary>
+    [Key(37)]
+    public ControlAction RequiredControlAction { get; init; }
+
+    /// <summary>
+    /// The remaining action required for the controllers to take ensure this flight lands at their scheduled landing time.
+    /// </summary>
+    [Key(38)]
+    public ControlAction RemainingControlAction { get; init; }
 }
