@@ -275,14 +275,14 @@ public class FlightUpdatedHandler(
                         }
                     }
 
-                    // Update the control action to reflect how much delay remains
+                    // Update the remaining delay distribution to reflect how much delay remains
                     var remainingDelay = sequencedFlight.LandingTime - sequencedFlight.LandingEstimate;
-                    var controlAction = DelayStrategyCalculator.GetControlAction(
+                    var remainingDistribution = DelayStrategyCalculator.Compute(
                         remainingDelay,
                         sequencedFlight.TerminalTrajectory,
                         sequencedFlight.EnrouteTrajectory,
                         airportConfiguration.DelayStrategy);
-                    sequencedFlight.SetRemainingControlAction(controlAction);
+                    sequencedFlight.SetRemainingDelayData(remainingDistribution);
 
                     sequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
 

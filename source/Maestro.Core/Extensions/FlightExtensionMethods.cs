@@ -45,7 +45,9 @@ public static class FlightExtensionMethods
             EnrouteShortCutTimeToGain = flight.EnrouteTrajectory.ShortCutTimeToGain,
             MaxEnrouteLinearDelay = flight.EnrouteTrajectory.MaxLinearEnrouteDelay,
             RequiredControlAction = flight.RequiredControlAction,
-            RemainingControlAction = flight.RemainingControlAction
+            RemainingControlAction = flight.RemainingControlAction,
+            RequiredEnrouteDelay = flight.RequiredEnrouteDelay,
+            RemainingEnrouteDelay = flight.RemainingEnrouteDelay
         };
     }
 

@@ -418,24 +418,18 @@ public partial class FlightLabelViewModel(
         };
     }
 
-    static TimeSpan ComputeRequiredEnrouteDelay(FlightDto flight)
-    {
-        return flight.FeederFixTime - flight.InitialFeederFixEstimate;
-    }
+    static TimeSpan ComputeRequiredEnrouteDelay(FlightDto flight) => flight.RequiredEnrouteDelay;
 
-    static TimeSpan ComputeRemainingEnrouteDelay(FlightDto flight)
-    {
-        return flight.FeederFixTime - flight.FeederFixEstimate;
-    }
+    static TimeSpan ComputeRemainingEnrouteDelay(FlightDto flight) => flight.RemainingEnrouteDelay;
 
     static TimeSpan ComputeRequiredTmaDelay(FlightDto flight)
     {
-        return flight.LandingTime - flight.InitialLandingEstimate - ComputeRequiredEnrouteDelay(flight);
+        return flight.LandingTime - flight.InitialLandingEstimate - flight.RequiredEnrouteDelay;
     }
 
     static TimeSpan ComputeRemainingTmaDelay(FlightDto flight)
     {
-        return flight.LandingTime - flight.LandingEstimate - ComputeRemainingEnrouteDelay(flight);
+        return flight.LandingTime - flight.LandingEstimate - flight.RemainingEnrouteDelay;
     }
 
     static string FormatDelay(TimeSpan enroute, TimeSpan tma, DelayComponent component)
