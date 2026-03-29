@@ -5,7 +5,12 @@ namespace Maestro.Core.Model;
 
 public interface ITrajectoryService
 {
-    Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind);
+    Trajectory GetTrajectory(
+        Flight flight,
+        string runwayIdentifier,
+        string approachType,
+        string[] fixNames,
+        Wind upperWind);
 
     Trajectory GetTrajectory(
         AircraftPerformanceData aircraftPerformanceData,
@@ -13,6 +18,7 @@ public interface ITrajectoryService
         string? feederFixIdentifier,
         string runwayIdentifier,
         string approachType,
+        string[] fixNames,
         Wind upperWind);
 
     Trajectory GetAverageTrajectory(string airportIdentifier);

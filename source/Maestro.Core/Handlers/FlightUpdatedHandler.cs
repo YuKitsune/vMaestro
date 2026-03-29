@@ -142,6 +142,7 @@ public class FlightUpdatedHandler(
                         feederFix.FixIdentifier,
                         runway.Identifier,
                         runway.ApproachType,
+                        notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
                         instance.Session.Sequence.UpperWind);
 
                     // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
@@ -207,6 +208,7 @@ public class FlightUpdatedHandler(
                             sequencedFlight,
                             sequencedFlight.AssignedRunwayIdentifier,
                             sequencedFlight.ApproachType,
+                            notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
                             instance.Session.Sequence.UpperWind);
                         sequencedFlight.SetTrajectory(updatedTrajectory);
                     }

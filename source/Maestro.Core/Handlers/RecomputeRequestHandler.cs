@@ -53,12 +53,15 @@ public class RecomputeRequestHandler(
             var feederFix = flightDataRecord?.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
             var landingEstimate = flightDataRecord?.Estimates.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
 
+
             flight.HighPriority = feederFix is null;
             flight.SetMaximumDelay(null);
 
             // Reset the runway to the default so it can be calculated in the Scheduling phase
             var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
             var runway = runwayMode.Default;
+
+            var fixNames = flightDataRecord?.Estimates.Select(e => e.FixIdentifier).ToArray() ?? [];
 
             // Lookup trajectory for the (possibly new) feeder fix + default runway + default approach type
             var trajectory = trajectoryService.GetTrajectory(
@@ -67,6 +70,7 @@ public class RecomputeRequestHandler(
                 feederFix?.FixIdentifier,
                 runway.Identifier,
                 runway.ApproachType,
+                fixNames,
                 instance.Session.Sequence.UpperWind);
 
             // Update feeder fix (may have changed due to re-routing)

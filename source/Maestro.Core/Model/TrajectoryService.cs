@@ -42,12 +42,13 @@ public class TrajectoryService(
         string? feederFixIdentifier,
         string runwayIdentifier,
         string approachType,
+        string[] fixNames,
         Wind upperWind)
     {
         var config = FindConfiguration(
             destinationIdentifier,
             feederFixIdentifier,
-            [],
+            fixNames,
             approachType,
             runwayIdentifier);
 

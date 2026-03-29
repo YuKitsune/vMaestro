@@ -52,7 +52,7 @@ public class InsertFlightRequestHandler(
 
             var aircraftType = string.IsNullOrEmpty(request.AircraftType)
                 ? airportConfiguration.DefaultAircraftType
-                : request.AircraftType;
+                : request.AircraftType!;
 
             var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
 
@@ -136,6 +136,7 @@ public class InsertFlightRequestHandler(
                 null,
                 runway.Identifier,
                 runway.ApproachType,
+                [],
                 session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, at an exact time, FeederFixEstimate is TargetTime - Trajectory.TimeToGo
@@ -233,9 +234,11 @@ public class InsertFlightRequestHandler(
             var trajectory = trajectoryService.GetTrajectory(
                 performanceData,
                 airportIdentifier,
-                null,
+                runway.ApproachType,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                [],
+                session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, relative to another, FeederFixEstimate is ReferenceFlight.LandingTime - AcceptanceRate - Trajectory.TimeToGo
             flight = new Flight(
@@ -324,6 +327,7 @@ public class InsertFlightRequestHandler(
                 null,
                 runway.Identifier,
                 runway.ApproachType,
+                [],
                 session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, from a departure airport, the FeederFixEstimate is TakeOffTime + DepartureETI - Trajectory.TimeToGo
@@ -402,6 +406,7 @@ public class InsertFlightRequestHandler(
             feederFix?.FixIdentifier,
             runway.Identifier,
             runway.ApproachType,
+            [],
             session.Sequence.UpperWind);
 
         // Use the live feeder fix estimate only when coupled to a radar track.
