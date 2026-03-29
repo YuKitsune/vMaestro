@@ -1,4 +1,5 @@
 using Maestro.Contracts.Shared;
+using Maestro.Core.Model;
 
 namespace Maestro.Core.Configuration;
 
@@ -89,14 +90,31 @@ public class AirportConfiguration
     public required RunwayModeConfiguration[] RunwayModes { get; init; }
 
     // Look-up tables
-    public required TrajectoryConfiguration[] Trajectories { get; init; }
+
+    /// <summary>
+    ///     Enroute trajectories keyed by (EntryPoint, FeederFix), used to derive SC and Cmax for delay distribution.
+    /// </summary>
+    public EnrouteTrajectoryConfiguration[] EnrouteTrajectories { get; init; } = [];
+
+    /// <summary>
+    ///     Default maximum delay absorbable in the enroute phase when no matching enroute trajectory is found.
+    /// </summary>
+    public TimeSpan DefaultMaxEnrouteLinearDelay { get; init; } = TimeSpan.FromMinutes(5);
+
+    public required TerminalTrajectoryConfiguration[] TerminalTrajectories { get; init; }
+get; init; }
 
     /// <summary>
     ///     The default TTG in minutes used when no matching trajectory is found.
     /// </summary>
-    public int DefaultTTGMinutes { get; init; } = 20;
+    public int DefaultTimeToGoMinutes { get; init; } = 20;
 
-    public required DepartureConfiguration[] DepartureAirports { get; init; } = [];
+    /// <summary>
+    ///     The delay distribution strategy used to allocate delay between the enroute and approach phases.
+    /// </summary>
+    public DelayStrategy DelayStrategy { get; init; } = DelayStrategy.EnrouteFirst;
+
+    public required DepartureConfiguration[] DepartureAirports { get; init; } = []
 
     // TODO: Average taxi times and terminal assignments
 
