@@ -70,7 +70,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         flight.ApproachType.ShouldBe(SecondApproachType, $"Approach type should be changed to {SecondApproachType}");
-        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(SecondApproachTypeTtg), "Changing approach type should update the trajectory");
+        flight.TerminalTrajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(SecondApproachTypeTtg), "Changing approach type should update the trajectory");
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFix("BOREE")
             .WithFeederFixEstimate(now.AddMinutes(10))
             .WithApproachType(FirstApproachType)
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(FirstApproachTypeTtg)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(FirstApproachTypeTtg), default, default))
             .WithRunway("34R")
             .WithState(State.Stable) // Make the flight Stable so the ApproachType doesn't get reset when scheduling
             .Build();
@@ -113,15 +113,15 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var request = new ChangeApproachTypeRequest("YSSY", "QFA1", SecondApproachType);
 
         // Record the current trajectory
-        var originalTrajectory = flight.Trajectory;
-        originalTrajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(FirstApproachTypeTtg), $"Initial trajectory should be {FirstApproachTypeTtg} minutes");
+        var originalTrajectory = flight.TerminalTrajectory;
+        originalTrajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(FirstApproachTypeTtg), $"Initial trajectory should be {FirstApproachTypeTtg} minutes");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        flight.Trajectory.ShouldNotBe(originalTrajectory, "Trajectory should be updated");
-        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(SecondApproachTypeTtg), $"Trajectory should be updated to {SecondApproachTypeTtg} minutes for approach {SecondApproachType}");
+        flight.TerminalTrajectory.ShouldNotBe(originalTrajectory, "Trajectory should be updated");
+        flight.TerminalTrajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(SecondApproachTypeTtg), $"Trajectory should be updated to {SecondApproachTypeTtg} minutes for approach {SecondApproachType}");
     }
 
     [Fact]

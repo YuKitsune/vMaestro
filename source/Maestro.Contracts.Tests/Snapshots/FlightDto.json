@@ -39,5 +39,10 @@
     "isOnGround": false
   },
   "isManuallyInserted": false,
-  "timeToGo": "00:18:00"
+  "enrouteShortCutTimeToGain": "00:00:00",
+  "maxEnrouteLinearDelay": "00:00:00",
+  "normalTimeToGo": "00:18:00",
+  "pressureTimeToGo": "00:00:00",
+  "maxPressureTimeToGo": "00:00:00",
+  "controlAction": "NoDelay"
 }

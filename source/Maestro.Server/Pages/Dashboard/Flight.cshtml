@@ -107,7 +107,7 @@
                     <dd class="col-sm-7">@flight.AssignedRunwayIdentifier</dd>
 
                     <dt class="col-sm-5">Time to Go</dt>
-                    <dd class="col-sm-7">@(flight.TimeToGo.HasValue ? FormatTimeSpan(flight.TimeToGo.Value) : "-")</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.NormalTimeToGo)</dd>
                 </dl>
             </div>
         </div>
@@ -140,7 +140,7 @@
                     <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.LandingTime)</dd>
 
                     <dt class="col-sm-5">Initial Delay</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.InitialDelay)</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.RequiredDelay)</dd>
 
                     <dt class="col-sm-5">Remaining Delay</dt>
                     <dd class="col-sm-7">@FormatTimeSpan(flight.RemainingDelay)</dd>

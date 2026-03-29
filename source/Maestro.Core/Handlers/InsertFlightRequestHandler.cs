@@ -148,7 +148,7 @@ public class InsertFlightRequestHandler(
                 destinationIdentifier: airportIdentifier,
                 assignedRunwayIdentifier: runway.Identifier,
                 approachType: runway.ApproachType,
-                trajectory: trajectory,
+                terminalTrajectory: trajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
         }
@@ -249,7 +249,7 @@ public class InsertFlightRequestHandler(
                 destinationIdentifier: airportIdentifier,
                 assignedRunwayIdentifier: runway.Identifier,
                 approachType: runway.ApproachType,
-                trajectory: trajectory,
+                terminalTrajectory: trajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
         }
@@ -339,7 +339,7 @@ public class InsertFlightRequestHandler(
                 destinationIdentifier: airportIdentifier,
                 assignedRunwayIdentifier: runway.Identifier,
                 approachType: runway.ApproachType,
-                trajectory: trajectory,
+                terminalTrajectory: trajectory,
                 targetLandingTime: landingEstimate,
                 state: State.Stable);
         }
@@ -400,14 +400,19 @@ public class InsertFlightRequestHandler(
 
         var feederFix = flightDataRecord?.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
 
-        var trajectory = trajectoryService.GetTrajectory(
+        var fixNames = flightDataRecord?.Estimates.Select(e => e.FixIdentifier).ToArray() ?? [];
+        var terminalTrajectory = trajectoryService.GetTrajectory(
             performanceData,
             airportIdentifier,
             feederFix?.FixIdentifier,
             runway.Identifier,
             runway.ApproachType,
-            [],
+            fixNames,
             session.Sequence.UpperWind);
+        var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
+            airportIdentifier,
+            fixNames,
+            feederFix?.FixIdentifier ?? string.Empty);
 
         // Use the live feeder fix estimate only when coupled to a radar track.
         // For uncoupled flights, estimates can be inaccurate, so we'll use the calculated landingEstimate
@@ -427,7 +432,8 @@ public class InsertFlightRequestHandler(
             estimatedDepartureTime: flightDataRecord?.EstimatedDepartureTime,
             assignedRunwayIdentifier: runway.Identifier,
             approachType: runway.ApproachType,
-            trajectory: trajectory,
+            terminalTrajectory: terminalTrajectory,
+            enrouteTrajectory: enrouteTrajectory,
             feederFixIdentifier: feederFix?.FixIdentifier,
             feederFixEstimate: feederFixEstimate,
             landingEstimate: landingEstimate,

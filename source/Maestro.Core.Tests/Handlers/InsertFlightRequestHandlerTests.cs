@@ -414,8 +414,8 @@ public class InsertFlightRequestHandlerTests(
         var airportConfiguration = GetDefaultAirportConfiguration();
 
         var feederFixEstimate = now.AddMinutes(20);
-        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
-        var expectedLandingEstimate = feederFixEstimate.Add(trajectory.TimeToGo);
+        var trajectory = new TerminalTrajectory(TimeSpan.FromMinutes(20), default, default);
+        var expectedLandingEstimate = feederFixEstimate.Add(trajectory.NormalTimeToGo);
 
         var position = new FlightPosition(new Coordinate(0, 0), 5000, VerticalTrack.Descending, 250, false);
 
@@ -537,8 +537,8 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
-        var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
+        var trajectory = new TerminalTrajectory(TimeSpan.FromMinutes(20), default, default);
+        var expectedFeederFixEstimate = targetTime.Subtract(trajectory.NormalTimeToGo);
 
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
@@ -1114,7 +1114,7 @@ public class InsertFlightRequestHandlerTests(
         // Arrange
         var now = clockFixture.Instance.UtcNow();
         var feederFixEstimate = now.AddMinutes(20);
-        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var trajectory = new TerminalTrajectory(TimeSpan.FromMinutes(20), default, default);
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
@@ -1135,7 +1135,7 @@ public class InsertFlightRequestHandlerTests(
         instance.Session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null, position,
-            [new FixEstimate("RIVET", feederFixEstimate), new FixEstimate("YSSY", feederFixEstimate.Add(trajectory.TimeToGo))],
+            [new FixEstimate("RIVET", feederFixEstimate), new FixEstimate("YSSY", feederFixEstimate.Add(trajectory.NormalTimeToGo))],
             now);
 
         var handler = GetRequestHandler(airportConfiguration, instanceManager);
@@ -1157,7 +1157,7 @@ public class InsertFlightRequestHandlerTests(
         insertedFlight.LandingTime.ShouldBe(insertedFlight.TargetLandingTime!.Value,
             "Pending flight landing time should match target time");
         insertedFlight.FeederFixEstimate.ShouldBe(feederFixEstimate, "Pending flight feeder fix estimate should remain unchanged for coupled flight");
-        insertedFlight.LandingEstimate.ShouldBe(feederFixEstimate.Add(trajectory.TimeToGo), "Pending flight landing estimate should remain unchanged for coupled flight");
+        insertedFlight.LandingEstimate.ShouldBe(feederFixEstimate.Add(trajectory.NormalTimeToGo), "Pending flight landing estimate should remain unchanged for coupled flight");
     }
 
     [Fact]
@@ -1211,7 +1211,7 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var trajectory = new Trajectory(TimeSpan.FromMinutes(22));
+        var trajectory = new TerminalTrajectory(TimeSpan.FromMinutes(22), default, default);
 
         var stableFlight = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(10))
@@ -1222,7 +1222,7 @@ public class InsertFlightRequestHandlerTests(
             .Build();
 
         var targetTime = stableFlight.LandingTime.Add(AcceptanceRate); // After QFA1
-        var expectedFeederFixEstimate = targetTime.Subtract(trajectory.TimeToGo);
+        var expectedFeederFixEstimate = targetTime.Subtract(trajectory.NormalTimeToGo);
 
         var trajectoryService = new MockTrajectoryService()
             .WithTrajectory().ViaFeederFix("RIVET").Returns(trajectory);
@@ -1560,7 +1560,7 @@ public class InsertFlightRequestHandlerTests(
 
         var airportConfiguration = GetDefaultAirportConfiguration();
 
-        var trajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var trajectory = new TerminalTrajectory(TimeSpan.FromMinutes(20), default, default);
 
         var (instanceManager, instance, _, sequence) = new InstanceBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
@@ -1587,7 +1587,7 @@ public class InsertFlightRequestHandlerTests(
         // Assert
         var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
         insertedFlight.LandingEstimate.ShouldBe(expectedLandingEstimate, "Landing estimate should be calculated from takeoff time + enroute time");
-        insertedFlight.FeederFixEstimate.ShouldBe(expectedLandingEstimate.Subtract(trajectory.TimeToGo), "Feeder fix estimate should be calculated from landing estimate - TTG");
+        insertedFlight.FeederFixEstimate.ShouldBe(expectedLandingEstimate.Subtract(trajectory.NormalTimeToGo), "Feeder fix estimate should be calculated from landing estimate - TTG");
     }
 
     [Fact]

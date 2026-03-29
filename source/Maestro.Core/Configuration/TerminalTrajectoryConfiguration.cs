@@ -1,6 +1,6 @@
 namespace Maestro.Core.Configuration;
 
-public class TrajectoryConfiguration
+public class TerminalTrajectoryConfiguration
 {
     // Lookup parameters
     public required string FeederFix { get; init; }

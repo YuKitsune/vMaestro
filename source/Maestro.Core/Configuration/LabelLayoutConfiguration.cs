@@ -62,11 +62,13 @@ public class FeederFixTimeItemConfiguration : LabelItemConfiguration
 public class RequiredDelayItemConfiguration : LabelItemConfiguration
 {
     public override LabelItemType Type => LabelItemType.RequiredDelay;
+    public DelayComponent Component { get; init; } = DelayComponent.Total;
 }
 
 public class RemainingDelayItemConfiguration : LabelItemConfiguration
 {
     public override LabelItemType Type => LabelItemType.RemainingDelay;
+    public DelayComponent Component { get; init; } = DelayComponent.Total;
 }
 
 public class ManualDelayItemConfiguration : LabelItemConfiguration
@@ -104,6 +106,13 @@ public enum LabelItemType
     CouplingStatus,
 }
 
+public enum DelayComponent
+{
+    Total,
+    Enroute,
+    Tma
+}
+
 public enum LabelItemColourSource
 {
     Runway,
@@ -111,5 +120,6 @@ public enum LabelItemColourSource
     FeederFix,
     State,
     RunwayMode,
-    ControlAction,
+    RequiredControlAction,
+    RemainingControlAction
 }
