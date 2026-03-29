@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using YamlDotNet.Core;
@@ -300,13 +301,19 @@ public class LabelItemTypeConverter : IYamlTypeConverter
             {
                 Width = width,
                 Padding = padding,
-                ColourSources = colourSources
+                ColourSources = colourSources,
+                Component = properties.TryGetValue("Component", out var delayComponent)
+                    ? (DelayComponent)Enum.Parse(typeof(DelayComponent), (string)delayComponent)
+                    : DelayComponent.Total,
             },
             nameof(RemainingDelayItemConfiguration) => new RemainingDelayItemConfiguration
             {
                 Width = width,
                 Padding = padding,
-                ColourSources = colourSources
+                ColourSources = colourSources,
+                Component = properties.TryGetValue("Component", out var delayComponent)
+                    ? (DelayComponent)Enum.Parse(typeof(DelayComponent), (string)delayComponent)
+                    : DelayComponent.Total,
             },
             nameof(ManualDelayItemConfiguration) => new ManualDelayItemConfiguration
             {

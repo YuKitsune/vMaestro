@@ -150,7 +150,7 @@ Airports:
     Runways:
     - {Identifier: 34L, LandingRateSeconds: 300}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: BOREE
     RunwayIdentifier: '07'
     ApproachType: A
@@ -322,6 +322,18 @@ Airports:
     - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
     - {Identifier: 34L, Track: 14.8, DistanceNM: 14.3}
+    Pressure:
+      After: NASHO
+      Segments:
+      - {Identifier: P_DOWNWIND, Track: 167.9, DistanceNM: 4}
+      - {Identifier: P_BASE, Track: 065, DistanceNM: 6}
+      - {Identifier: P_FIN, Track: 335, DistanceNM: 16}
+    MaxPressure:
+      After: NASHO
+      Segments:
+      - {Identifier: PM_DOWNWIND, Track: 167.9, DistanceNM: 6}
+      - {Identifier: PM_BASE, Track: 065, DistanceNM: 6}
+      - {Identifier: PM_FIN, Track: 335, DistanceNM: 18}
 
   - FeederFix: RIVET
     RunwayIdentifier: 34R
@@ -503,7 +515,7 @@ Airports:
     - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
     - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: ALAXO
     RunwayIdentifier: '09'
     ApproachType: A
@@ -948,7 +960,7 @@ Airports:
     Runways:
     - {Identifier: 19R, ApproachType: A, LandingRateSeconds: 300}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: BLAKA
     RunwayIdentifier: 01L
     ApproachType: A
@@ -1777,7 +1789,7 @@ Airports:
     Runways:
     - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: KAGMI
     RunwayIdentifier: '03'
     ApproachType: A
