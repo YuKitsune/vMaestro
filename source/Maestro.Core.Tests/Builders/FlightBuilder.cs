@@ -220,7 +220,7 @@ public class FlightBuilder(string callsign)
         // Set sequence data
         var landingTimeToUse = _landingTime != default ? _landingTime : flight.LandingEstimate;
         var feederFixTimeToUse = _feederFixTime != default ? _feederFixTime : flight.FeederFixEstimate;
-        flight.SetSequenceData(landingTimeToUse, feederFixTimeToUse, ControlAction.NoDelay, FlowControls.HighSpeed);
+        flight.SetSequenceData(landingTimeToUse, feederFixTimeToUse, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero);
 
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
 

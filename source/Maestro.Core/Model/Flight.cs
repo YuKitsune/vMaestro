@@ -163,6 +163,8 @@ public class Flight : IEquatable<Flight>
         State = dto.State;
         HighPriority = dto.HighPriority;
         MaximumDelay = dto.MaximumDelay;
+        RequiredEnrouteDelay = dto.RequiredEnrouteDelay;
+        RemainingEnrouteDelay = dto.RemainingEnrouteDelay;
         RequiredControlAction = dto.RequiredControlAction;
         RemainingControlAction = dto.RemainingControlAction;
         ActivatedTime = dto.ActivatedTime;
@@ -208,8 +210,8 @@ public class Flight : IEquatable<Flight>
     public EnrouteTrajectory EnrouteTrajectory { get; private set; }
     public TerminalTrajectory TerminalTrajectory { get; private set; }
 
-    public TimeSpan RequiredEnrouteDelay => FeederFixTime - InitialFeederFixEstimate;
-    public TimeSpan RemainingEnrouteDelay => FeederFixTime - FeederFixEstimate;
+    public TimeSpan RequiredEnrouteDelay { get; private set; }
+    public TimeSpan RemainingEnrouteDelay { get; private set; }
 
     public TimeSpan RequiredTmaDelay => LandingTime - InitialLandingEstimate - RequiredEnrouteDelay;
     public TimeSpan RemainingTmaDelay => LandingTime - LandingEstimate - RemainingEnrouteDelay;
@@ -360,24 +362,35 @@ public class Flight : IEquatable<Flight>
         LandingTime = LandingEstimate;
         FeederFixTime = FeederFixEstimate;
         FlowControls = FlowControls.HighSpeed;
+        RequiredEnrouteDelay = TimeSpan.Zero;
+        RemainingEnrouteDelay = TimeSpan.Zero;
     }
 
     public void SetSequenceData(
         DateTimeOffset landingTime,
         DateTimeOffset feederFixTime,
         ControlAction requiredControlAction,
-        FlowControls flowControls)
+        FlowControls flowControls,
+        TimeSpan enrouteDelay)
     {
         LandingTime = landingTime;
         FeederFixTime = feederFixTime;
         RequiredControlAction = requiredControlAction;
         RemainingControlAction = requiredControlAction;
         FlowControls = flowControls;
+        RequiredEnrouteDelay = enrouteDelay;
+        RemainingEnrouteDelay = enrouteDelay;
     }
 
     public void SetRemainingControlAction(ControlAction remainingControlAction)
     {
         RemainingControlAction = remainingControlAction;
+    }
+
+    public void SetRemainingDelayData(DelayDistribution distribution)
+    {
+        RemainingEnrouteDelay = distribution.EnrouteDelay;
+        RemainingControlAction = distribution.ControlAction;
     }
 
     // TODO: Move this into Flight Updated handler

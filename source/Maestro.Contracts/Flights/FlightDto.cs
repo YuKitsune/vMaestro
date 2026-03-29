@@ -218,4 +218,16 @@ public class FlightDto
     /// </summary>
     [Key(38)]
     public ControlAction RemainingControlAction { get; init; }
+
+    /// <summary>
+    /// The enroute delay assigned to this flight at scheduling time.
+    /// </summary>
+    [Key(39)]
+    public TimeSpan RequiredEnrouteDelay { get; init; }
+
+    /// <summary>
+    /// The remaining enroute delay, recomputed each time the flight's estimate changes.
+    /// </summary>
+    [Key(40)]
+    public TimeSpan RemainingEnrouteDelay { get; init; }
 }
