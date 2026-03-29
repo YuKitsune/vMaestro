@@ -790,7 +790,8 @@ public class Sequence
             landingTime,
             feederFixTime,
             distribution.ControlAction,
-            flowControl);
+            flowControl,
+            distribution.EnrouteDelay);
     }
 
 record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation);

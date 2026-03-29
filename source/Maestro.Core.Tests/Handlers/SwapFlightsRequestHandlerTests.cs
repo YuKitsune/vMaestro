@@ -313,7 +313,7 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         // Artificial 10-minute delay to ensure recomputation is not performed
-        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), thirdFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.ReduceSpeed);
+        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), thirdFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.ReduceSpeed, TimeSpan.Zero);
 
         var handler = GetHandler(instanceManager);
 
