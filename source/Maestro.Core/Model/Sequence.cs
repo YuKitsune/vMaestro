@@ -967,12 +967,6 @@ public class Sequence
             ? FlowControls.ReduceSpeed
             : FlowControls.HighSpeed;
 
-        flight.SetSequenceData(
-            landingTime,
-            feederFixTime,
-            distribution.ControlAction,
-            flowControl);
-
         _logger.Verbose(
             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
             flight.Callsign,
@@ -981,6 +975,13 @@ public class Sequence
             trajectory.NormalTimeToGo,
             trajectory.PressureTimeToGo,
             trajectory.MaxPressureTimeToGo);
+
+        flight.SetSequenceData(
+            landingTime,
+            feederFixTime,
+            distribution.ControlAction,
+            flowControl,
+            distribution.EnrouteDelay);
     }
 
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, TerminalTrajectory Trajectory);
