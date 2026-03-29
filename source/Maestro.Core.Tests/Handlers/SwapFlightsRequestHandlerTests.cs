@@ -108,7 +108,7 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .WithFeederFixEstimate(firstFeederFixTime)
             .WithLandingTime(firstLandingTime)
-            .WithTrajectory(new Trajectory(firstTtg))
+            .WithTrajectory(new TerminalTrajectory(firstTtg, default, default))
             .Build();
 
         var secondFlight = new FlightBuilder("QFA2")
@@ -116,13 +116,13 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34R")
             .WithFeederFixEstimate(secondFeederFixTime)
             .WithLandingTime(secondLandingTime)
-            .WithTrajectory(new Trajectory(secondTtg))
+            .WithTrajectory(new TerminalTrajectory(secondTtg, default, default))
             .Build();
 
         // TTGs here are different to demonstrate that feeder fix times are re-calculated
         var trajectoryService = new MockTrajectoryService()
-            .WithTrajectory().OnRunway("34L").Returns(new Trajectory(firstTtg))
-            .WithTrajectory().OnRunway("34R").Returns(new Trajectory(secondTtg));
+            .WithTrajectory().OnRunway("34L").Returns(new TerminalTrajectory(firstTtg, default, default))
+            .WithTrajectory().OnRunway("34R").Returns(new TerminalTrajectory(secondTtg, default, default));
 
         var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(firstFlight, secondFlight))
@@ -313,7 +313,7 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         // Artificial 10-minute delay to ensure recomputation is not performed
-        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), FlowControls.ReduceSpeed);
+        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), thirdFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.ReduceSpeed);
 
         var handler = GetHandler(sessionManager);
 

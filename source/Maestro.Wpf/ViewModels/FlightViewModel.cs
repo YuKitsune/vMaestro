@@ -23,8 +23,8 @@ public class FlightViewModel
         InitialLandingEstimate = DateTimeOffset.Now.AddMinutes(5);
         LandingEstimate = DateTimeOffset.Now.AddMinutes(6);
         LandingTime = DateTimeOffset.Now.AddMinutes(7);
-        InitialDelay = TimeSpan.FromMinutes(2);
-        RemainingDelay = TimeSpan.FromMinutes(4);
+        RequiredControlAction = ControlAction.PathStretching;
+        RemainingControlAction = ControlAction.Resume;
         FlowControls = FlowControls.ReduceSpeed;
     }
 
@@ -47,8 +47,8 @@ public class FlightViewModel
         InitialLandingEstimate = flight.InitialLandingEstimate;
         LandingEstimate = flight.LandingEstimate;
         LandingTime = flight.LandingTime;
-        InitialDelay = flight.InitialDelay;
-        RemainingDelay = flight.RemainingDelay;
+        RequiredControlAction = flight.RequiredControlAction;
+        RemainingControlAction = flight.RemainingControlAction;
         FlowControls = flight.FlowControls;
     }
     public string Callsign { get; }
@@ -68,7 +68,8 @@ public class FlightViewModel
     public DateTimeOffset InitialLandingEstimate { get; }
     public DateTimeOffset LandingEstimate { get; }
     public DateTimeOffset LandingTime { get; }
-    public TimeSpan InitialDelay { get; }
-    public TimeSpan RemainingDelay { get; }
+    public ControlAction RequiredControlAction { get; }
+    public ControlAction RemainingControlAction { get; }
+
     public FlowControls FlowControls { get; }
 }

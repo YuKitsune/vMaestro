@@ -94,9 +94,9 @@ public class SwapFlightsRequestHandler(
 
     DateTimeOffset? GetFeederFixTime(Flight flight)
     {
-        if (flight.Trajectory is null)
+        if (flight.TerminalTrajectory is null)
             return null;
 
-        return flight.LandingTime.Subtract(flight.Trajectory.TimeToGo);
+        return flight.LandingTime.Subtract(flight.TerminalTrajectory.NormalTimeToGo);
     }
 }

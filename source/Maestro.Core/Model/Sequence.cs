@@ -792,7 +792,7 @@ public class Sequence
                 else if (!string.IsNullOrEmpty(currentFlight.FeederFixIdentifier))
                 {
                     // Calculate target as FF + TTG for this runway
-                    targetLandingTime = currentFlight.FeederFixEstimate.Add(runwayOption.Trajectory.TimeToGo);
+                    targetLandingTime = currentFlight.FeederFixEstimate.Add(runwayOption.Trajectory.NormalTimeToGo);
                 }
                 else
                 {
@@ -944,26 +944,46 @@ public class Sequence
         DateTimeOffset landingTime,
         string runwayIdentifier,
         string approachType,
-        Trajectory trajectory,
+        TerminalTrajectory trajectory,
         FlowControls flowControls)
     {
         // Atomic update: runway + trajectory + ETA + STA_FF
         flight.SetRunway(runwayIdentifier, trajectory);
         flight.SetApproachType(approachType, trajectory);
 
-        _logger.Debug(
+        // Compute delay distribution and derive control action
+        var totalDelay = landingTime - flight.LandingEstimate;
+
+        var distribution = DelayStrategyCalculator.Compute(
+            totalDelay,
+            trajectory,
+            flight.EnrouteTrajectory,
+            _airportConfiguration.DelayStrategy);
+
+        var feederFixTime = flight.FeederFixEstimate.Add(distribution.EnrouteDelay);
+
+        // No enroute delay = high speed descent
+        var flowControl = distribution.EnrouteDelay >= TimeSpan.FromMinutes(1)
+            ? FlowControls.ReduceSpeed
+            : FlowControls.HighSpeed;
+
+        flight.SetSequenceData(
+            landingTime,
+            feederFixTime,
+            distribution.ControlAction,
+            flowControl);
+
+        _logger.Verbose(
             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
             flight.Callsign,
             runwayIdentifier,
             approachType,
-            trajectory.TimeToGo,
-            trajectory.Pressure,
-            trajectory.MaxPressure);
-
-        flight.SetSequenceData(landingTime, flowControls);
+            trajectory.NormalTimeToGo,
+            trajectory.PressureTimeToGo,
+            trajectory.MaxPressureTimeToGo);
     }
 
-    record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, Trajectory Trajectory);
+    record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, TerminalTrajectory Trajectory);
 
     // TODO: Extract this out into a separate service so we can test it
     RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode)
