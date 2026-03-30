@@ -13,20 +13,8 @@ public record DelayDistribution(TimeSpan EnrouteDelay, TimeSpan TmaDelay, Contro
 public static class DelayStrategyCalculator
 {
     /// <summary>
-    ///     Computes the delay distribution and control action for a flight.
+    ///     Computes the delay distribution (TMA and ENR delay) and control action for a flight.
     /// </summary>
-    /// <param name="dT">Total delay (STA - ETA). Negative values indicate the flight is early.</param>
-    /// <param name="p">Available approach pressure window (Trajectory.Pressure - Trajectory.TimeToGo).</param>
-    /// <param name="dPmax">Additional delay available via max pressure (Trajectory.MaxPressure - Trajectory.Pressure).</param>
-    /// <param name="sc">
-    ///     Time savings available via enroute short-cut.
-    ///     // TODO: Derive from enroute trajectory lookup (entry point x feeder fix). Currently always zero.
-    /// </param>
-    /// <param name="dCmax">
-    ///     Maximum delay absorbable in the enroute phase via linear techniques.
-    ///     // TODO: Derive from enroute trajectory lookup (entry point x feeder fix). Currently fixed at 5 minutes.
-    /// </param>
-    /// <param name="strategy">The delay distribution strategy configured for the airport.</param>
     public static DelayDistribution Compute(
         TimeSpan totalDelay,
         TerminalTrajectory terminalTrajectory,
@@ -52,16 +40,8 @@ public static class DelayStrategyCalculator
         DelayStrategy strategy)
         => Compute(remainingDelay, terminalTrajectory, enrouteTrajectory, strategy).ControlAction;
 
-    // Enroute Delay Strategy: absorb delay in enroute phase first, then approach.
-    //
-    // | dT                                        | dC         | dP           | Action          |
-    // |-------------------------------------------|------------|--------------|-----------------|
-    // | dT < 0                                    | 0          | dT           | Expedite        |
-    // | 0 <= dT <= P                              | 0          | dT           | NoDelay         |
-    // | P < dT <= P + SC                          | dT - P     | P            | Resume          |
-    // | P + SC < dT <= P + SC + dCmax             | dT - P     | P            | SpeedReduction  |
-    // | P + SC + dCmax < dT <= P + SC + dCmax + dPmax | dCmax  | dT - dCmax   | PathStretching  |
-    // | dT > P + SC + dCmax + dPmax               | dT-P-dPmax | P + dPmax    | Holding         |
+    // Enroute Delay Strategy: Try to absorb as much of the total delay as possible in the enroute phase first.
+    //  Only apply delay to the approach phase if absolutely necessary
     static DelayDistribution ComputeEnrouteFirst(TimeSpan totalDelay, TerminalTrajectory terminalTrajectory, EnrouteTrajectory enrouteTrajectory)
     {
         // That can be lost by slightly extending the normal trajectory
@@ -114,16 +94,7 @@ public static class DelayStrategyCalculator
             ControlAction.Holding);
     }
 
-    // Approach Delay Strategy: absorb delay in approach phase first, then enroute.
-    //
-    // | dT                                            | dC          | dP        | Action          |
-    // |-----------------------------------------------|-------------|-----------|-----------------|
-    // | dT < 0                                        | 0           | dT        | Expedite        |
-    // | 0 <= dT <= P                                  | 0           | dT        | NoDelay         |
-    // | P < dT <= P + dPmax                           | 0           | dT        | Resume          |
-    // | P + dPmax < dT <= P + dPmax + SC              | dT-P-dPmax  | P + dPmax | SpeedReduction  |
-    // | P + dPmax + SC < dT <= P + dPmax + SC + dCmax | dT-P-dPmax  | P + dPmax | PathStretching  |
-    // | dT > P + dPmax + SC + dCmax                   | dT-P-dPmax  | P + dPmax | Holding         |
+    // Approach Delay Strategy: Absorb delay in approach phase first, then use enroute delay for the rest.
     static DelayDistribution ComputeApproachFirst(TimeSpan totalDelay, TerminalTrajectory terminalTrajectory, EnrouteTrajectory enrouteTrajectory)
     {
         // That can be lost by slightly extending the normal trajectory
