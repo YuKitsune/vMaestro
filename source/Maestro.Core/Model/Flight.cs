@@ -112,6 +112,7 @@ public class Flight : IEquatable<Flight>
         AssignedRunwayIdentifier = assignedRunwayIdentifier;
         ApproachType = approachType;
         TerminalTrajectory = terminalTrajectory;
+        EnrouteTrajectory = new EnrouteTrajectory(TimeSpan.Zero, TimeSpan.Zero);
 
         FeederFixIdentifier = null;
 
