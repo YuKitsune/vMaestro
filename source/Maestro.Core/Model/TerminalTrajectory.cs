@@ -6,5 +6,5 @@ public record EnrouteTrajectory(
 
 public record TerminalTrajectory(
     TimeSpan NormalTimeToGo,
-    TimeSpan PressureTimeToGo,
-    TimeSpan MaxPressureTimeToGo);
+    TimeSpan PressureTimeToGo = default,
+    TimeSpan MaxPressureTimeToGo = default);
