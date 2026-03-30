@@ -44,18 +44,21 @@ public class FlightLandedNotificationHandler(
             return;
         }
 
+        SessionDto sessionDto;
         using (await instance.Semaphore.LockAsync(cancellationToken))
         {
             instance.Session.LandingStatistics.RecordLandingTime(
                 runway,
                 notification.ActualLandingTime,
                 clock);
+
+            sessionDto = instance.Session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
                 instance.AirportIdentifier,
-                instance.Session.Snapshot()),
+                sessionDto),
             cancellationToken);
     }
 }

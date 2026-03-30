@@ -1,6 +1,5 @@
 ﻿using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
-using Maestro.Core.Hosting;
 using MediatR;
 using Serilog;
 
@@ -8,7 +7,6 @@ namespace Maestro.Core.Handlers;
 
 public class SessionUpdatedNotificationHandler(
     IMaestroConnectionManager connectionManager,
-    IMaestroInstanceManager instanceManager,
     ILogger logger)
     : INotificationHandler<SessionUpdatedNotification>
 {
@@ -19,12 +17,8 @@ public class SessionUpdatedNotificationHandler(
             connection.IsConnected &&
             connection.IsMaster)
         {
-            var instance = await instanceManager.GetInstance(notification.AirportIdentifier, cancellationToken);
-
-            var sessionSnapshot = instance.Session.Snapshot();
-
             logger.Information("Re-publishing session update for {AirportIdentifier}", notification.AirportIdentifier);
-            await connection.Send(new SessionUpdatedNotification(sessionSnapshot.AirportIdentifier, sessionSnapshot), cancellationToken);
+            await connection.Send(notification, cancellationToken);
         }
     }
 }
