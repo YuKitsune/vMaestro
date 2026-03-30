@@ -166,6 +166,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             // Notifications
             SessionUpdatedNotification => "SessionUpdated",
             FlightUpdatedNotification => "FlightUpdated",
+            FlightLandedNotification => "FlightLanded",
 
             // Requests
             ChangeRunwayRequest => "ChangeRunway",
