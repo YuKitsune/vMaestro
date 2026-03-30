@@ -168,14 +168,14 @@ public static class TestBuilders
             LandingEstimate = FixedTime.AddMinutes(7),
             TargetLandingTime = FixedTime.AddMinutes(8),
             LandingTime = FixedTime.AddMinutes(8),
-            RequiredDelay = TimeSpan.FromMinutes(2),
-            RemainingDelay = TimeSpan.FromMinutes(1),
+            RequiredEnrouteDelay = TimeSpan.FromMinutes(2),
+            RemainingEnrouteDelay = TimeSpan.FromMinutes(1),
             FlowControls = FlowControls.ReduceSpeed,
             LastSeen = FixedTime,
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,
             NormalTimeToGo = TimeSpan.FromMinutes(18),
-            ControlAction = ControlAction.NoDelay
+            RequiredControlAction = ControlAction.NoDelay
         };
 
     public static RelativeInsertionOptions CreateRelativeInsertionOptions() =>
