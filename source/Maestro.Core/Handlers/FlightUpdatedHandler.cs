@@ -307,6 +307,10 @@ public class FlightUpdatedHandler(
 
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
         {
+            // If the feeder fix estimate is already in the past, the flight has crossed the FF; don't update further
+            if (flight.FeederFixEstimate <= clock.UtcNow())
+                return;
+
             var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
             if (feederFixSystemEstimate?.Estimate != null)
             {
