@@ -14,7 +14,7 @@ public class OpenCoordinationWindowRequestHandler(
     IMediator mediator,
     IErrorReporter errorReporter,
     IMaestroConnectionManager connectionManager,
-    AirportConfigurationProvider airportConfigurationProvider)
+    IAirportConfigurationProvider airportConfigurationProvider)
     : IRequestHandler<OpenCoordinationWindowRequest>
 {
     public Task Handle(OpenCoordinationWindowRequest request, CancellationToken cancellationToken)
