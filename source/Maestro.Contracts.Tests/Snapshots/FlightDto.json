@@ -24,8 +24,6 @@
   "landingEstimate": "2024-06-15T12:37:00+00:00",
   "targetLandingTime": "2024-06-15T12:38:00+00:00",
   "landingTime": "2024-06-15T12:38:00+00:00",
-  "initialDelay": "00:02:00",
-  "remainingDelay": "00:01:00",
   "flowControls": "ReduceSpeed",
   "lastSeen": "2024-06-15T12:30:00+00:00",
   "position": {
@@ -44,5 +42,8 @@
   "normalTimeToGo": "00:18:00",
   "pressureTimeToGo": "00:00:00",
   "maxPressureTimeToGo": "00:00:00",
-  "controlAction": "NoDelay"
+  "requiredControlAction": "NoDelay",
+  "remainingControlAction": "Expedite",
+  "requiredEnrouteDelay": "00:02:00",
+  "remainingEnrouteDelay": "00:01:00"
 }
