@@ -79,6 +79,25 @@
             </div>
         }
 
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Wind</span>
+                @if (Model.Session.Sequence.ManualWind)
+                {
+                    <span class="badge bg-warning text-dark">Manual</span>
+                }
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-6">Surface Wind</dt>
+                    <dd class="col-sm-6">@Model.Session.Sequence.SurfaceWind.Direction.ToString("D3")/@Model.Session.Sequence.SurfaceWind.Speed kt</dd>
+
+                    <dt class="col-sm-6">Upper Wind</dt>
+                    <dd class="col-sm-6">@Model.Session.Sequence.UpperWind.Direction.ToString("D3")/@Model.Session.Sequence.UpperWind.Speed kt</dd>
+                </dl>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">Connected Controllers</div>
             <div class="card-body">
@@ -153,7 +172,7 @@
                                                 @flight.State
                                             </span>
                                         </td>
-                                        <td>@(flight.FeederFixTime.HasValue ? FormatHelpers.ToDDHHMM(flight.FeederFixTime.Value) : "-")</td>
+                                        <td>@FormatHelpers.ToDDHHMM(flight.FeederFixTime)</td>
                                         <td>@FormatHelpers.ToDDHHMM(flight.LandingTime)</td>
                                     </tr>
                                 }
