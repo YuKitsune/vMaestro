@@ -1298,25 +1298,31 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
         var ttg = TimeSpan.FromMinutes(10);
+        var terminalTrajectory = new TerminalTrajectory(ttg, ttg, ttg);
 
+        // Build flights with a trajectory matching the mock service so FF estimates and landing estimates are consistent.
+        // FF estimates must be in the future so CalculateEstimates doesn't treat them as already-crossed.
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
+            .WithTrajectory(terminalTrajectory)
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(5))   // Landing = now+15m
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(terminalTrajectory)
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))  // Landing = now+20m
             .WithRunway("34L")
             .Build();
 
         var flight3 = new FlightBuilder("QFA789")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
+            .WithTrajectory(terminalTrajectory)
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(15))  // Landing = now+25m
             .WithRunway("34L")
             .Build();
 
@@ -1344,7 +1350,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             TimeSpan.FromHours(1),
             _position,
             [
-                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20)),
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20)), // Landing = now+30m
                 new FixEstimate("YSSY", newLandingEstimate)
             ]);
 

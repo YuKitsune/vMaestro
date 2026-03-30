@@ -95,49 +95,56 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenSwappingTwoFlights_TheirFeederFixTimesAreReCalculated()
     {
         // Arrange
-        var firstLandingTime = _clock.UtcNow().AddMinutes(10);
         var firstTtg = TimeSpan.FromMinutes(10);
-        var firstFeederFixTime = firstLandingTime.Subtract(firstTtg); // now + 0
-
-        var secondLandingTime = _clock.UtcNow().AddMinutes(20);
         var secondTtg = TimeSpan.FromMinutes(15);
-        var secondFeederFixTime = secondLandingTime.Subtract(secondTtg); // now + 5
+
+        // Zero pressure windows so all delay is absorbed enroute: STA_FF = ETA_FF + EnrouteDelay
+        var firstTrajectory = new TerminalTrajectory(firstTtg, firstTtg, firstTtg);
+        var secondTrajectory = new TerminalTrajectory(secondTtg, secondTtg, secondTtg);
+
+        var firstEtaFf = _clock.UtcNow();              // ETA_FF = now+0m → natural LandingEstimate = now+10m
+        var secondEtaFf = _clock.UtcNow().AddMinutes(5); // ETA_FF = now+5m → natural LandingEstimate = now+20m
 
         var firstFlight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34L")
-            .WithFeederFixEstimate(firstFeederFixTime)
-            .WithLandingTime(firstLandingTime)
-            .WithTrajectory(new TerminalTrajectory(firstTtg, default, default))
+            .WithFeederFixEstimate(firstEtaFf)
+            .WithTrajectory(firstTrajectory)
             .Build();
 
         var secondFlight = new FlightBuilder("QFA2")
             .WithFeederFix("MARLN") // TODO: Remove when Sequence no longer re-assigns the runway
             .WithRunway("34R")
-            .WithFeederFixEstimate(secondFeederFixTime)
-            .WithLandingTime(secondLandingTime)
-            .WithTrajectory(new TerminalTrajectory(secondTtg, default, default))
+            .WithFeederFixEstimate(secondEtaFf)
+            .WithTrajectory(secondTrajectory)
             .Build();
 
         // TTGs here are different to demonstrate that feeder fix times are re-calculated
         var trajectoryService = new MockTrajectoryService()
-            .WithTrajectory().OnRunway("34L").Returns(new TerminalTrajectory(firstTtg, default, default))
-            .WithTrajectory().OnRunway("34R").Returns(new TerminalTrajectory(secondTtg, default, default));
+            .WithTrajectory().OnRunway("34L").Returns(firstTrajectory)
+            .WithTrajectory().OnRunway("34R").Returns(secondTrajectory);
 
         var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(firstFlight, secondFlight))
             .Build();
 
-        var handler = GetHandler(sessionManager);
+        // Insert triggers Schedule(), which overwrites LandingTime with natural estimates.
+        // Manually apply pre-delays so both flights have positive enroute delay after the swap.
+        // firstFlight STA = now+20m; secondFlight STA = now+30m
+        firstFlight.SetSequenceData(_clock.UtcNow().AddMinutes(20), firstFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero);
+        secondFlight.SetSequenceData(_clock.UtcNow().AddMinutes(30), secondFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero);
 
+        var handler = GetHandler(instanceManager);
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
-        // Assert
-        firstFlight.FeederFixTime.ShouldBe(secondLandingTime.Subtract(secondTtg));
-        secondFlight.FeederFixTime.ShouldBe(firstLandingTime.Subtract(firstTtg));
+        // Assert: STA_FF = ETA_FF + EnrouteDelay (all delay goes enroute — zero TMA pressure windows)
+        // firstFlight: gets STA=now+30m, LandingEstimate=firstEtaFf+secondTtg=now+15m → 15m enroute delay
+        firstFlight.FeederFixTime.ShouldBe(firstEtaFf.AddMinutes(15));   // now+15m
+        // secondFlight: gets STA=now+20m, LandingEstimate=secondEtaFf+firstTtg=now+15m → 5m enroute delay
+        secondFlight.FeederFixTime.ShouldBe(secondEtaFf.AddMinutes(5)); // now+10m
     }
 
     [Fact]
