@@ -234,7 +234,7 @@ public class InsertFlightRequestHandler(
             var trajectory = trajectoryService.GetTrajectory(
                 performanceData,
                 airportIdentifier,
-                runway.ApproachType,
+                null,
                 runway.Identifier,
                 runway.ApproachType,
                 [],
