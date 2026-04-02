@@ -171,7 +171,9 @@ public static class TestBuilders
             LastSeen = FixedTime,
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,
-            TimeToGo = TimeSpan.FromMinutes(18)
+            TimeToGo = TimeSpan.FromMinutes(18),
+            Pressure = TimeSpan.FromMinutes(20),
+            MaxPressure = TimeSpan.FromMinutes(22)
         };
 
     public static RelativeInsertionOptions CreateRelativeInsertionOptions() =>

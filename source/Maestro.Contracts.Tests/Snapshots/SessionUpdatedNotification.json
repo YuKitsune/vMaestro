@@ -85,8 +85,8 @@
           },
           "isManuallyInserted": false,
           "timeToGo": "00:18:00",
-          "pressure": null,
-          "maxPressure": null
+          "pressure": "00:20:00",
+          "maxPressure": "00:22:00"
         }
       ],
       "slots": [

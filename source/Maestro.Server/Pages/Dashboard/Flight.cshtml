@@ -107,7 +107,13 @@
                     <dd class="col-sm-7">@flight.AssignedRunwayIdentifier</dd>
 
                     <dt class="col-sm-5">Time to Go</dt>
-                    <dd class="col-sm-7">@(flight.TimeToGo.HasValue ? FormatTimeSpan(flight.TimeToGo.Value) : "-")</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.TimeToGo)</dd>
+
+                    <dt class="col-sm-5">Pressure</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.Pressure)</dd>
+
+                    <dt class="col-sm-5">Maximum Pressure</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.MaxPressure)</dd>
                 </dl>
             </div>
         </div>
