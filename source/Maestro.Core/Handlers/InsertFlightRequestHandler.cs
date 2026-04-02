@@ -158,9 +158,9 @@ public class InsertFlightRequestHandler(
                 callsign,
                 runway.Identifier,
                 runway.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
         }
         else
         {
@@ -268,9 +268,9 @@ public class InsertFlightRequestHandler(
                 callsign,
                 runway.Identifier,
                 runway.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
         }
         else
         {
@@ -367,9 +367,9 @@ public class InsertFlightRequestHandler(
                 callsign,
                 runway.Identifier,
                 runway.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
         }
         else
         {
@@ -473,9 +473,9 @@ public class InsertFlightRequestHandler(
             pendingFlight.Callsign,
             runway.Identifier,
             runway.ApproachType,
-            trajectory.TimeToGo,
-            trajectory.Pressure,
-            trajectory.MaxPressure);
+            terminalTrajectory.NormalTimeToGo,
+            terminalTrajectory.PressureTimeToGo,
+            terminalTrajectory.MaxPressureTimeToGo);
 
         return flight;
     }
