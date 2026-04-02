@@ -151,6 +151,15 @@ public class InsertFlightRequestHandler(
                 trajectory: trajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
         }
         else
         {
@@ -252,6 +261,15 @@ public class InsertFlightRequestHandler(
                 trajectory: trajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
         }
         else
         {
@@ -342,6 +360,15 @@ public class InsertFlightRequestHandler(
                 trajectory: trajectory,
                 targetLandingTime: landingEstimate,
                 state: State.Stable);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
         }
         else
         {
@@ -433,6 +460,15 @@ public class InsertFlightRequestHandler(
             landingEstimate: landingEstimate,
             activatedTime: clock.UtcNow(),
             position: flightDataRecord?.Position);
+
+        logger.Verbose(
+            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+            pendingFlight.Callsign,
+            runway.Identifier,
+            runway.ApproachType,
+            trajectory.TimeToGo,
+            trajectory.Pressure,
+            trajectory.MaxPressure);
 
         return flight;
     }

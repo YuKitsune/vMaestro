@@ -79,6 +79,15 @@ public class ChangeRunwayRequestHandler(
             if (flight.ApproachType != approachType)
                 flight.SetApproachType(approachType, trajectory);
 
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                flight.Callsign,
+                request.RunwayIdentifier,
+                approachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
+
             // Unstable flights become Stable when changing runway
             if (flight.State is State.Unstable)
                 flight.SetState(airportConfiguration.ManualInteractionState, clock);

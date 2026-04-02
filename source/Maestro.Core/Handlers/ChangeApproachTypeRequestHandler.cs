@@ -61,6 +61,15 @@ public class ChangeApproachTypeRequestHandler(
 
             flight.SetApproachType(request.ApproachType, trajectory);
 
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                flight.Callsign,
+                flight.AssignedRunwayIdentifier,
+                request.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
+
             sessionDto = instance.Session.Snapshot();
         }
 

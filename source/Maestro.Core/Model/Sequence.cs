@@ -4,6 +4,7 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Sessions;
+using Serilog;
 
 namespace Maestro.Core.Model;
 
@@ -16,6 +17,7 @@ public class Sequence
     // TODO: Figure out how to get rid of these from here
     readonly ITrajectoryService _trajectoryService;
     readonly IClock _clock;
+    readonly ILogger _logger;
 
     readonly List<Slot> _slots = [];
     readonly List<Flight> _flights = [];
@@ -35,11 +37,12 @@ public class Sequence
     public int UpperWindAltitude { get; }
     public bool ManualWind { get; set; }
 
-    public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock)
+    public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock, ILogger logger)
     {
         _airportConfiguration = airportConfiguration;
         _trajectoryService = trajectoryService;
         _clock = clock;
+        _logger = logger;
 
         AirportIdentifier = airportConfiguration.Identifier;
         CurrentRunwayMode = new RunwayMode(airportConfiguration.RunwayModes.First());
@@ -776,6 +779,15 @@ public class Sequence
         // Atomic update: runway + trajectory + ETA + STA_FF
         flight.SetRunway(runwayIdentifier, trajectory);
         flight.SetApproachType(approachType, trajectory);
+
+        _logger.Verbose(
+            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+            flight.Callsign,
+            runwayIdentifier,
+            approachType,
+            trajectory.TimeToGo,
+            trajectory.Pressure,
+            trajectory.MaxPressure);
 
         flight.SetSequenceData(landingTime, flowControls);
     }

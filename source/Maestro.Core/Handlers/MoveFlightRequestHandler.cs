@@ -76,6 +76,15 @@ public class MoveFlightRequestHandler(
             if (flight.ApproachType != runway.ApproachType)
                 flight.SetApproachType(runway.ApproachType, trajectory);
 
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                flight.Callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
+
             flight.InvalidateSequenceData();
 
             // Unstable flights become stable when moved

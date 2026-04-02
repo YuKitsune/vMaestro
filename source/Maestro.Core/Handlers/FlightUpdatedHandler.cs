@@ -176,6 +176,14 @@ public class FlightUpdatedHandler(
                         position: notification.Position);
 
                     instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
+                    logger.Verbose(
+                        "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                        notification.Callsign,
+                        runway.Identifier,
+                        runway.ApproachType,
+                        trajectory.TimeToGo,
+                        trajectory.Pressure,
+                        trajectory.MaxPressure);
                     logger.Information("{Callsign} added to the sequence", notification.Callsign);
                     return;
                 }
@@ -183,7 +191,7 @@ public class FlightUpdatedHandler(
                 // Handle pending flights: data is already updated in the store, nothing else to do
                 if (pendingFlight is not null)
                 {
-                    logger.Verbose("Pending flight data updated: {Callsign}", pendingFlight.Callsign);
+                    logger.Debug("Pending flight data updated: {Callsign}", pendingFlight.Callsign);
                 }
                 // Handle desequenced flights: update flight data and calculate estimates
                 else if (desequencedFlight is not null)
@@ -193,7 +201,7 @@ public class FlightUpdatedHandler(
                     CalculateEstimates(desequencedFlight, notification);
 
                     desequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
-                    logger.Verbose("Desequenced flight updated: {Flight}", desequencedFlight);
+                    logger.Debug("Desequenced flight updated: {Flight}", desequencedFlight);
                 }
                 // Handle sequenced flights: update flight data, calculate estimates, and reposition if unstable
                 else if (sequencedFlight is not null)
@@ -211,6 +219,14 @@ public class FlightUpdatedHandler(
                             notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
                             instance.Session.Sequence.UpperWind);
                         sequencedFlight.SetTrajectory(updatedTrajectory);
+                        logger.Verbose(
+                            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                            sequencedFlight.Callsign,
+                            sequencedFlight.AssignedRunwayIdentifier,
+                            sequencedFlight.ApproachType,
+                            updatedTrajectory.TimeToGo,
+                            updatedTrajectory.Pressure,
+                            updatedTrajectory.MaxPressure);
                     }
 
                     // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
