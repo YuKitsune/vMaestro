@@ -1,6 +1,6 @@
 # Set to false if the AIS team needs to maintain control over which version of the plugin is installed
 # (for compatibility with the server and provided configuration file)
-CheckForUpdates: false
+CheckForUpdates: true
 
 Logging:
   LogLevel: Information
@@ -63,8 +63,10 @@ Labels:
     - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
     - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
-    - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [ControlAction]}
-    - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+    
+    # ENR labels only show enroute delay (delay required for FF)
+    - {Type: RequiredDelay, Width: 3, Padding: 1, Component: Enroute, ColourSources: [RequiredControlAction]}
+    - {Type: RemainingDelay, Width: 3, Padding: 0, Component: Enroute, ColourSources: [RemainingControlAction]}
     
   - Identifier: TMA
     Items:
@@ -75,7 +77,9 @@ Labels:
     - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
     - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
-    - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+    
+    # TMA labels show total delay (ENR + TMA)
+    - {Type: RemainingDelay, Width: 3, Padding: 0, Component: Total, ColourSources: [RemainingControlAction]}
     
   - Identifier: SY_FMP
     Items:
@@ -83,8 +87,8 @@ Labels:
     - {Type: AircraftWakeCategory, Width: 1, Padding: 1, ColourSources: [FeederFix, State]}
     - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
     - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
-    - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [State]}
-    - {Type: RemainingDelay, Width: 3, Padding: 1, ColourSources: [State]}
+    - {Type: RequiredDelay, Width: 3, Padding: 1, Component: Total, ColourSources: [State]}
+    - {Type: RemainingDelay, Width: 3, Padding: 1, Component: Total, ColourSources: [State]}
     - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
 
 Airports:

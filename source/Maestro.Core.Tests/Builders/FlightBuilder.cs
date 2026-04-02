@@ -1,4 +1,5 @@
 using Maestro.Contracts.Shared;
+using Maestro.Contracts.Flights;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Tests.Builders;
@@ -32,7 +33,8 @@ public class FlightBuilder(string callsign)
     DateTimeOffset _lastSeen = default;
     bool _isFromDepartureAirport = false;
     FlightPosition? _position = null;
-    Trajectory _trajectory = new(TimeSpan.FromMinutes(20));
+    TerminalTrajectory _terminalTrajectory = new(TimeSpan.FromMinutes(20), default, default);
+    EnrouteTrajectory _enrouteTrajectory = new(TimeSpan.Zero, TimeSpan.Zero);
     bool _isManuallyInserted = false;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
@@ -153,9 +155,9 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithTrajectory(Trajectory trajectory)
+    public FlightBuilder WithTrajectory(TerminalTrajectory terminalTrajectory)
     {
-        _trajectory = trajectory;
+        _terminalTrajectory = terminalTrajectory;
         return this;
     }
 
@@ -179,7 +181,7 @@ public class FlightBuilder(string callsign)
                 destinationIdentifier: _destination,
                 assignedRunwayIdentifier: _assignedRunway,
                 approachType: _approachType,
-                trajectory: _trajectory,
+                terminalTrajectory: _terminalTrajectory,
                 targetLandingTime: _targetLandingTime ?? _landingTime,
                 state: _state);
         }
@@ -197,7 +199,8 @@ public class FlightBuilder(string callsign)
                 estimatedDepartureTime: null,
                 assignedRunwayIdentifier: _assignedRunway,
                 approachType: _approachType,
-                trajectory: _trajectory,
+                terminalTrajectory: _terminalTrajectory,
+                enrouteTrajectory: _enrouteTrajectory,
                 feederFixIdentifier: _feederFixIdentifier,
                 feederFixEstimate: _feederFixEstimate != default ? _feederFixEstimate : null,
                 landingEstimate: _landingEstimate,
@@ -216,7 +219,8 @@ public class FlightBuilder(string callsign)
 
         // Set sequence data
         var landingTimeToUse = _landingTime != default ? _landingTime : flight.LandingEstimate;
-        flight.SetSequenceData(landingTimeToUse, FlowControls.HighSpeed);
+        var feederFixTimeToUse = _feederFixTime != default ? _feederFixTime : flight.FeederFixEstimate;
+        flight.SetSequenceData(landingTimeToUse, feederFixTimeToUse, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero);
 
         flight.UpdateLastSeen(new FixedClock(_lastSeen));
 

@@ -66,9 +66,9 @@ public class ChangeApproachTypeRequestHandler(
                 flight.Callsign,
                 flight.AssignedRunwayIdentifier,
                 request.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
 
             sessionDto = instance.Session.Snapshot();
         }

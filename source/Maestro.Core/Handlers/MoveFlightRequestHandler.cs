@@ -81,9 +81,9 @@ public class MoveFlightRequestHandler(
                 flight.Callsign,
                 runway.Identifier,
                 runway.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
 
             flight.InvalidateSequenceData();
 

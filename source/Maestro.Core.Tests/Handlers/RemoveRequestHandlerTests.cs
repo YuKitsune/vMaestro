@@ -129,14 +129,14 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Stable)
             .WithFeederFixEstimate(now.AddMinutes(-2))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(12), default, default))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Stable)
             .WithFeederFixEstimate(now.AddMinutes(-1))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(12)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(12), default, default))
             .WithRunway("34L")
             .Build();
 

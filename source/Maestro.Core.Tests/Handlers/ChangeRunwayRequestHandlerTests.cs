@@ -76,7 +76,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         flight1.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
 
         flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
-        flight1.TotalDelay.ShouldBe(TimeSpan.FromMinutes(2));
+        (flight1.RequiredEnrouteDelay + flight1.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(2));
 
         // Verify QFA1 is now scheduled on 34R and positioned appropriately
         sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R");
@@ -97,14 +97,14 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
                 new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
             .Build();
 
-        var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var originalTrajectory = new TerminalTrajectory(TimeSpan.FromMinutes(20), default, default);
         var flight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(now.AddMinutes(20))
             .WithRunway("34L")
             .WithTrajectory(originalTrajectory)
             .Build();
 
-        var newTrajectory = new Trajectory(TimeSpan.FromMinutes(15));
+        var newTrajectory = new TerminalTrajectory(TimeSpan.FromMinutes(15), default, default);
         var trajectoryService = new MockTrajectoryService()
             .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
             .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
@@ -115,7 +115,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
 
         // Verify initial runway assignments and ordering
         flight.AssignedRunwayIdentifier.ShouldBe("34L");
-        flight.Trajectory.ShouldBe(originalTrajectory);
+        flight.TerminalTrajectory.ShouldBe(originalTrajectory);
 
         var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
@@ -136,7 +136,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
-        flight.Trajectory.ShouldBe(newTrajectory);
+        flight.TerminalTrajectory.ShouldBe(newTrajectory);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
                 new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
             .Build();
 
-        var originalTrajectory = new Trajectory(TimeSpan.FromMinutes(20));
+        var originalTrajectory = new TerminalTrajectory(TimeSpan.FromMinutes(20), default, default);
         var flight = new FlightBuilder("QFA1")
             .WithFeederFixEstimate(now.AddMinutes(20))
             .WithRunway("34L")
@@ -162,7 +162,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
 
         var originalLandingEstimate = flight.LandingEstimate;
 
-        var newTrajectory = new Trajectory(TimeSpan.FromMinutes(15));
+        var newTrajectory = new TerminalTrajectory(TimeSpan.FromMinutes(15), default, default);
         var trajectoryService = new MockTrajectoryService()
             .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
             .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
@@ -173,7 +173,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
 
         // Verify initial runway assignments and ordering
         flight.AssignedRunwayIdentifier.ShouldBe("34L");
-        flight.Trajectory.ShouldBe(originalTrajectory);
+        flight.TerminalTrajectory.ShouldBe(originalTrajectory);
 
         var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
         var mediator = Substitute.For<IMediator>();
@@ -194,7 +194,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
-        flight.LandingEstimate.ShouldBe(flight.FeederFixEstimate.Add(newTrajectory.TimeToGo));
+        flight.LandingEstimate.ShouldBe(flight.FeederFixEstimate.Add(newTrajectory.NormalTimeToGo));
         flight.LandingEstimate.ShouldNotBe(originalLandingEstimate);
     }
 

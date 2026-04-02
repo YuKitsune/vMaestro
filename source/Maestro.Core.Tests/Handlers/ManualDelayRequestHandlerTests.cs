@@ -180,7 +180,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         flight3.MaximumDelay.ShouldBe(TimeSpan.FromMinutes(0));
-        flight3.TotalDelay.ShouldBeLessThanOrEqualTo(TimeSpan.FromMinutes(3));
+        (flight3.RequiredEnrouteDelay + flight3.RequiredTmaDelay).ShouldBeLessThanOrEqualTo(TimeSpan.FromMinutes(3));
 
         // Landing order should be updated
         sequence.NumberInSequence(flight1).ShouldBe(1);
@@ -234,7 +234,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         flight3.MaximumDelay.ShouldBe(TimeSpan.Zero);
-        flight3.TotalDelay.ShouldBeLessThan(AcceptanceRate);
+        (flight3.RequiredEnrouteDelay + flight3.RequiredTmaDelay).ShouldBeLessThan(AcceptanceRate);
 
         // Landing order should be updated
         sequence.NumberInSequence(flight1).ShouldBe(1);
