@@ -120,10 +120,10 @@ public static class ExtractPerformanceCommand
         throw new FormatException($"Unrecognised speed format: '{speed}'");
     }
 
-    // J = Jumbo/SuperHeavy, H = Heavy, M = Medium, L = Light
+    // J = SuperHeavy, H = Heavy, M = Medium, L = Light
     static string MapWakeCategory(string cat) => cat.ToUpperInvariant() switch
     {
-        "J" => "Jumbo",
+        "J" => "SuperHeavy",
         "H" => "Heavy",
         "M" => "Medium",
         "L" => "Light",
