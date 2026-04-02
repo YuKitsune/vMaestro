@@ -2,6 +2,7 @@
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Serilog;
 
 namespace Maestro.Core.Sessions;
 
@@ -12,8 +13,10 @@ public record AchievedRate(
     TimeSpan LandingIntervalDeviation)
     : IAchievedRate;
 
-public class LandingStatistics
+public class LandingStatistics(ILogger logger)
 {
+    readonly ILogger _logger = logger;
+
     readonly TimeSpan _averagingPeriod = TimeSpan.FromHours(1); // TODO: Add to configuration
 
     readonly Dictionary<string, List<DateTimeOffset>> _actualLandingTimesPerRunway = new();
@@ -22,6 +25,7 @@ public class LandingStatistics
 
     public void RecordLandingTime(Runway runway, DateTimeOffset actualLandingTime, IClock clock)
     {
+        _logger.Information($"Recording {runway.Identifier} Landing Time: {actualLandingTime}");
         if (_actualLandingTimesPerRunway.TryGetValue(runway.Identifier, out var landingTimes))
         {
             landingTimes.Add(actualLandingTime);
@@ -33,6 +37,7 @@ public class LandingStatistics
         }
 
         AchievedLandingRates[runway.Identifier] = CalculateAchievedRate(runway, landingTimes);
+
         void RemoveStaleTimes(DateTimeOffset referenceTime, List<DateTimeOffset> times)
         {
             var oldestTime = referenceTime.Subtract(_averagingPeriod);
@@ -44,6 +49,8 @@ public class LandingStatistics
     {
         if (actualLandingTimes.Count == 0)
         {
+            _logger.Debug($"No Landing Times for {runway.Identifier}, no deviation");
+
             // No samples, no deviation
             return new NoDeviation();
         }
@@ -62,12 +69,16 @@ public class LandingStatistics
         var doubleRate = TimeSpan.FromSeconds(runway.AcceptanceRate.TotalSeconds * 2);
         if (diffs.Count == 0 || diffs.Any(d => d >= doubleRate))
         {
+            _logger.Debug($"Not enough landings for {runway.Identifier} to calculate achieved rate");
             return new NoDeviation();
         }
 
         var averageSeconds = diffs.Average(t => t.TotalSeconds);
+        _logger.Debug($"{runway.Identifier} average landing rate {averageSeconds}s");
+
         var averageInterval = TimeSpan.FromSeconds(averageSeconds);
         var deviation = runway.AcceptanceRate - averageInterval;
+        _logger.Debug($"{runway.Identifier}: Average landing rate {averageSeconds}s; Desired rate {runway.AcceptanceRate.TotalSeconds}s; Deviation {deviation.TotalSeconds}s");
 
         return new AchievedRate(averageInterval, deviation);
     }
