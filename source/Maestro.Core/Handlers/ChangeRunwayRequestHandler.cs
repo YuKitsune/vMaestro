@@ -84,9 +84,9 @@ public class ChangeRunwayRequestHandler(
                 flight.Callsign,
                 request.RunwayIdentifier,
                 approachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
 
             // Unstable flights become Stable when changing runway
             if (flight.State is State.Unstable)

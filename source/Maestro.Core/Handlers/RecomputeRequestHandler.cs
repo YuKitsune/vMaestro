@@ -88,9 +88,9 @@ public class RecomputeRequestHandler(
                 flight.Callsign,
                 runway.Identifier,
                 runway.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
 
             flight.InvalidateSequenceData();
 
