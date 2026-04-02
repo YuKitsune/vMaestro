@@ -28,10 +28,12 @@ public class ChangeRunwayRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeRunwayRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ChangeRunwayRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Changing runway for {Callsign} to {NewRunway} at {AirportIdentifier}", request.Callsign, request.RunwayIdentifier, request.AirportIdentifier);
 
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
@@ -48,9 +50,6 @@ public class ChangeRunwayRequestHandler(
                 logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
                 return;
             }
-
-            // TODO: Track who initiated the change
-            logger.Information("Changing runway for {Callsign} to {NewRunway}.", request.Callsign, request.RunwayIdentifier);
 
             var runwayIdentifier = request.RunwayIdentifier;
 
@@ -93,6 +92,8 @@ public class ChangeRunwayRequestHandler(
                 flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
             sequence.RepositionByEstimate(flight);
+
+            logger.Information("{Callsign} runway changed to {Runway}", flight.Callsign, request.RunwayIdentifier);
 
             sessionDto = instance.Session.Snapshot();
         }

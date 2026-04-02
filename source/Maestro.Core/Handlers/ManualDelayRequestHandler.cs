@@ -21,10 +21,12 @@ public class ManualDelayRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ManualDelayRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ManualDelayRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Setting maximum delay for {Callsign} to {MaximumDelayMinutes}min at {AirportIdentifier}", request.Callsign, request.MaximumDelayMinutes, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

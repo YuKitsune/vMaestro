@@ -24,10 +24,12 @@ public class MakeStableRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying MakeStableRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying MakeStableRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Making {Callsign} stable for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

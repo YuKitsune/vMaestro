@@ -19,21 +19,20 @@ public class FlightLandedNotificationHandler(
 {
     public async Task Handle(FlightLandedNotification notification, CancellationToken cancellationToken)
     {
+        var instance = await instanceManager.GetInstance(notification.AirportIdentifier, cancellationToken);
+        var flight = instance.Session.Sequence.FindFlight(notification.Callsign);
+        if (flight is null)
+        {
+            logger.Debug("FlightLandedNotification received for a {Callsign} who is not in the {AirportIdentifier} sequence", notification.Callsign,  notification.AirportIdentifier);
+            return;
+        }
+
         if (connectionManager.TryGetConnection(notification.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
             !connection.IsMaster)
         {
             logger.Information("Relaying FlightLandedNotification for {AirportIdentifier}", notification.AirportIdentifier);
             await connection.Send(notification, cancellationToken);
-            return;
-        }
-
-        // TODO: Maybe move this up to avoid telling the master about irrelevant flights?
-        var instance = await instanceManager.GetInstance(notification.AirportIdentifier, cancellationToken);
-        var flight = instance.Session.Sequence.FindFlight(notification.Callsign);
-        if (flight is null)
-        {
-            logger.Debug("FlightLandedNotification received for a {Callsign} who is not in the {AirportIdentifier} sequence", notification.Callsign,  notification.AirportIdentifier);
             return;
         }
 
@@ -53,6 +52,8 @@ public class FlightLandedNotificationHandler(
                 clock);
 
             sessionDto = instance.Session.Snapshot();
+
+            logger.Information("{Callsign} landed, achieved rates updated", notification.Callsign);
         }
 
         await mediator.Publish(

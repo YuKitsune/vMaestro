@@ -27,10 +27,12 @@ public class ChangeFeederFixEstimateRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeFeederFixEstimateRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ChangeFeederFixEstimateRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Changing feeder fix estimate for {Callsign} to {NewFeederFixEstimate:HHmm} at {AirportIdentifier}", request.Callsign, request.NewFeederFixEstimate, request.AirportIdentifier);
 
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
@@ -46,14 +48,13 @@ public class ChangeFeederFixEstimateRequestHandler(
                 return;
             }
 
-            // TODO: Track who initiated the change
-            logger.Information("Changing feeder fix estimate for flight {Callsign} to {NewFeederFixEstimate}.", request.Callsign, request.NewFeederFixEstimate);
-
             flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
 
             instance.Session.Sequence.RepositionByEstimate(flight);
             if (flight.State is State.Unstable)
                 flight.SetState(airportConfiguration.ManualInteractionState, clock); // TODO: Make configurable
+
+            logger.Information("{Callsign} feeder fix estimate changed to {NewFeederFixEstimate:HHmm}", flight.Callsign, request.NewFeederFixEstimate);
 
             sessionDto = instance.Session.Snapshot();
         }

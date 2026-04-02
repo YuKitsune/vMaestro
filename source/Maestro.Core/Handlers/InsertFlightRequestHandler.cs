@@ -33,7 +33,7 @@ public class InsertFlightRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying InsertFlightRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying InsertFlightRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
@@ -49,6 +49,8 @@ public class InsertFlightRequestHandler(
             var isDummyFlight = string.IsNullOrWhiteSpace(callsign);
             if (isDummyFlight)
                 callsign = instance.Session.NewDummyCallsign();
+
+            logger.Verbose("Inserting {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
 
             var aircraftType = string.IsNullOrEmpty(request.AircraftType)
                 ? airportConfiguration.DefaultAircraftType

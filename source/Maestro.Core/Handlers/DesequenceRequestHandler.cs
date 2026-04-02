@@ -21,10 +21,12 @@ public class DesequenceRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying DesequenceRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying DesequenceRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Desequencing {Callsign} for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

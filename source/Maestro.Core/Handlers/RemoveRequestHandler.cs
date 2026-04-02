@@ -22,10 +22,12 @@ public class RemoveRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying RemoveRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying RemoveRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Removing {Callsign} for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
@@ -37,7 +39,6 @@ public class RemoveRequestHandler(
             var sequencedFlight = sequence.FindFlight(request.Callsign);
             if (sequencedFlight is not null)
             {
-                logger.Information("Removing sequenced flight {Callsign} from sequence for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
                 sequence.Remove(sequencedFlight);
 
                 if (!sequencedFlight.IsManuallyInserted)
@@ -50,7 +51,6 @@ public class RemoveRequestHandler(
             var desequencedFlight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
             if (desequencedFlight is not null)
             {
-                logger.Information("Removing desequenced flight {Callsign} from de-sequenced flights for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
                 instance.Session.DeSequencedFlights.Remove(desequencedFlight);
 
                 if (!desequencedFlight.IsManuallyInserted)
@@ -64,6 +64,8 @@ public class RemoveRequestHandler(
             {
                 throw new MaestroException($"{request.Callsign} not found");
             }
+
+            logger.Information("{Callsign} removed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
             sessionDto = instance.Session.Snapshot();
         }
