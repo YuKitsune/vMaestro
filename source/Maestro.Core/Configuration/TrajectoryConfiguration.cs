@@ -22,9 +22,3 @@ public class TrajectoryConfiguration
     // Pmax (Maximum Pressure window) = ETI from feeder fix through After segment + ETI along alternative segments.
     public TrajectoryBranch? MaxPressure { get; init; }
 }
-
-public class TrajectoryBranch
-{
-    public required string After { get; init; }
-    public TrajectorySegmentConfiguration[] Segments { get; init; } = [];
-}
