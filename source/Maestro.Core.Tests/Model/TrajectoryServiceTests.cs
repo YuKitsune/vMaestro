@@ -362,7 +362,49 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public void GetTrajectory_PressureSegments_AccumulateIntoPNotTTG()
+    public void GetTrajectory_NoPressureBranch_PressureEqualsTTG()
+    {
+        // Arrange
+        const int approachSpeedKnots = 150;
+        const double distanceNm = 25.0;
+        var expectedTtg = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithTrajectory(new TrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments = [new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm }]
+                // No Pressure or MaxPressure branch configured
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert: no pressure branch configured, so P and Pmax both fall back to TTG
+        trajectory.TimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.Pressure.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.MaxPressure.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void GetTrajectory_Pressure_IsCumulativeTimeFromFeederFixToThresholdViaPressurePath()
     {
         // Arrange: two segments — first is normal, second has Pressure: true
         const int approachSpeedKnots = 150;
@@ -378,9 +420,16 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
                 RunwayIdentifier = "34L",
                 Segments =
                 [
-                    new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm },
-                    new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm, Pressure = true }
-                ]
+                    new TrajectorySegmentConfiguration { Identifier = "LEG1", Track = 0, DistanceNM = distanceNm },
+                ],
+                Pressure = new TrajectoryBranch
+                {
+                    After = "LEG1",
+                    Segments =
+                    [
+                        new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm}
+                    ]
+                }
             })
             .Build();
 
@@ -400,14 +449,16 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         // Act
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
 
-        // Assert: TTG = first segment only; P = TTG + pressure segment; Pmax = P
+        // Assert: TTG  = cumulative FF->LEG1->threshold (base path)
+        //         P    = cumulative FF->LEG1->pressure segment->threshold
+        //         Pmax = P (no MaxPressure configured, falls back to P)
         trajectory.TimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
         trajectory.Pressure.ShouldBe(segmentTime + segmentTime, TimeSpan.FromSeconds(1));
         trajectory.MaxPressure.ShouldBe(segmentTime + segmentTime, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
-    public void GetTrajectory_MaxPressureSegments_AccumulateIntoMaxPNotPOrTTG()
+    public void GetTrajectory_MaxPressure_IsCumulativeTimeFromFeederFixToThresholdViaMaxPressurePath()
     {
         // Arrange: three segments — normal, pressure, max-pressure
         const int approachSpeedKnots = 150;
@@ -423,10 +474,25 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
                 RunwayIdentifier = "34L",
                 Segments =
                 [
-                    new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm },
-                    new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm, Pressure = true },
-                    new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm, MaxPressure = true }
-                ]
+                    new TrajectorySegmentConfiguration { Identifier = "LEG1", Track = 0, DistanceNM = distanceNm },
+                ],
+                Pressure = new TrajectoryBranch
+                {
+                    After = "LEG1",
+                    Segments =
+                    [
+                        new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm}
+                    ]
+                },
+                MaxPressure = new TrajectoryBranch
+                {
+                    After = "LEG1",
+                    Segments =
+                    [
+                        new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm},
+                        new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm}
+                    ]
+                }
             })
             .Build();
 
@@ -446,7 +512,9 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         // Act
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
 
-        // Assert: TTG = normal segment; P = TTG + pressure; Pmax = P + maxPressure
+        // Assert: TTG  = cumulative FF->LEG1->threshold (base path)
+        //         P    = cumulative FF->LEG1->pressure segment->threshold
+        //         Pmax = cumulative FF->LEG1->maxpressure seg 1->maxpressure seg 2->threshold
         trajectory.TimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
         trajectory.Pressure.ShouldBe(segmentTime * 2, TimeSpan.FromSeconds(1));
         trajectory.MaxPressure.ShouldBe(segmentTime * 3, TimeSpan.FromSeconds(1));
