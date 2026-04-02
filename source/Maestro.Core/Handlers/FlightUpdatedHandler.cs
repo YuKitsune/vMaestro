@@ -32,7 +32,7 @@ public class FlightUpdatedHandler(
             if (!instanceManager.InstanceExists(notification.Destination))
                 return;
 
-            logger.Verbose("FDR update received for {Callsign}", notification.Callsign);
+            logger.Debug("FDR update received for {Callsign}", notification.Callsign);
 
             var instance = await instanceManager.GetInstance(notification.Destination, cancellationToken);
             SessionDto sessionDto;
@@ -52,7 +52,7 @@ public class FlightUpdatedHandler(
                 {
                     if (!rateLimiter.ShouldUpdate(existingData.LastSeen))
                     {
-                        logger.Verbose("FDR update for {Callsign} rate-limited", notification.Callsign);
+                        logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
                         return;
                     }
                 }
@@ -61,7 +61,7 @@ public class FlightUpdatedHandler(
                      connection.IsConnected &&
                      !connection.IsMaster)
                 {
-                    logger.Verbose("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
+                    logger.Debug("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
                     await connection.Send(notification, cancellationToken);
                     return;
                 }
@@ -141,7 +141,9 @@ public class FlightUpdatedHandler(
                         notification.Destination,
                         feederFix.FixIdentifier,
                         runway.Identifier,
-                        runway.ApproachType);
+                        runway.ApproachType,
+                        notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
+                        instance.Session.Sequence.UpperWind);
 
                     // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
                     var earliestInsertionIndex = instance.Session.Sequence.FindLastIndex(f =>
@@ -174,6 +176,14 @@ public class FlightUpdatedHandler(
                         position: notification.Position);
 
                     instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
+                    logger.Verbose(
+                        "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                        notification.Callsign,
+                        runway.Identifier,
+                        runway.ApproachType,
+                        trajectory.TimeToGo,
+                        trajectory.Pressure,
+                        trajectory.MaxPressure);
                     logger.Information("{Callsign} added to the sequence", notification.Callsign);
                     return;
                 }
@@ -181,7 +191,7 @@ public class FlightUpdatedHandler(
                 // Handle pending flights: data is already updated in the store, nothing else to do
                 if (pendingFlight is not null)
                 {
-                    logger.Verbose("Pending flight data updated: {Callsign}", pendingFlight.Callsign);
+                    logger.Debug("Pending flight data updated: {Callsign}", pendingFlight.Callsign);
                 }
                 // Handle desequenced flights: update flight data and calculate estimates
                 else if (desequencedFlight is not null)
@@ -191,14 +201,37 @@ public class FlightUpdatedHandler(
                     CalculateEstimates(desequencedFlight, notification);
 
                     desequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
-                    logger.Verbose("Desequenced flight updated: {Flight}", desequencedFlight);
+                    logger.Debug("Desequenced flight updated: {Flight}", desequencedFlight);
                 }
                 // Handle sequenced flights: update flight data, calculate estimates, and reposition if unstable
                 else if (sequencedFlight is not null)
                 {
                     sequencedFlight.UpdateLastSeen(clock);
                     UpdateFlightData(notification, sequencedFlight);
-                    CalculateEstimates(sequencedFlight, notification);
+
+                    // Recompute trajectory for unstable flights so wind changes propagate to TTG before estimates are calculated
+                    if (sequencedFlight.State is State.Unstable && !string.IsNullOrEmpty(sequencedFlight.AssignedRunwayIdentifier))
+                    {
+                        var updatedTrajectory = trajectoryService.GetTrajectory(
+                            sequencedFlight,
+                            sequencedFlight.AssignedRunwayIdentifier,
+                            sequencedFlight.ApproachType,
+                            notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
+                            instance.Session.Sequence.UpperWind);
+                        sequencedFlight.SetTrajectory(updatedTrajectory);
+                        logger.Verbose(
+                            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                            sequencedFlight.Callsign,
+                            sequencedFlight.AssignedRunwayIdentifier,
+                            sequencedFlight.ApproachType,
+                            updatedTrajectory.TimeToGo,
+                            updatedTrajectory.Pressure,
+                            updatedTrajectory.MaxPressure);
+                    }
+
+                    // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
+                    if (notification.Position is not null && !notification.Position.IsOnGround)
+                        CalculateEstimates(sequencedFlight, notification);
 
                     // Unstable flights are repositioned in the sequence on every update
                     if (sequencedFlight.State is State.Unstable)
@@ -262,7 +295,7 @@ public class FlightUpdatedHandler(
             var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
             if (feederFixSystemEstimate?.Estimate != null)
             {
-                logger.Verbose(
+                logger.Debug(
                     "{Callsign} ETA_FF for {FeederFix} now {FeederFixEstimate}",
                     flight.Callsign,
                     flight.FeederFixIdentifier,
@@ -287,7 +320,7 @@ public class FlightUpdatedHandler(
             return;
         }
 
-        logger.Verbose(
+        logger.Debug(
             "{Callsign} (no FF) ETA now {LandingEstimate}",
             flight.Callsign,
             landingEstimate);

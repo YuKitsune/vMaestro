@@ -66,7 +66,8 @@ public class MoveFlightRequestHandler(
                 flight,
                 runway.Identifier,
                 runway.ApproachType,
-                fixNames);
+                fixNames,
+                instance.Session.Sequence.UpperWind);
 
             // Atomic update: runway + trajectory + ETA + STA_FF
             flight.SetRunway(runway.Identifier, trajectory);
@@ -74,6 +75,15 @@ public class MoveFlightRequestHandler(
             // Update approach type if it changed
             if (flight.ApproachType != runway.ApproachType)
                 flight.SetApproachType(runway.ApproachType, trajectory);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                flight.Callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
 
             flight.InvalidateSequenceData();
 

@@ -19,7 +19,7 @@ public class RefreshWindRequestHandler(IAirportConfigurationProvider airportConf
 
     public async Task Handle(RefreshWindRequest request, CancellationToken cancellationToken)
     {
-        logger.Verbose("Refreshing winds for {AirportIdentifier}", request.AirportIdentifier);
+        logger.Information("Refreshing winds for {AirportIdentifier}", request.AirportIdentifier);
 
         await Task.CompletedTask;
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);

@@ -4,6 +4,10 @@ namespace Maestro.Core.Tests.Builders;
 
 public class AirportConfigurationBuilder(string identifier)
 {
+    // Default approach speed used by TrajectoryService when no performance data is found.
+    // Segments created by helper overloads use this speed so TTG round-trips correctly at zero wind.
+    const double DefaultDescentSpeedKnots = 150.0;
+
     string[] _runways = [];
     string[] _feederFixes = [];
     List<RunwayModeConfiguration> _runwayModes = [];
@@ -41,6 +45,79 @@ public class AirportConfigurationBuilder(string identifier)
         return this;
     }
 
+    /// <summary>
+    /// Creates a trajectory with a single segment whose distance produces exactly <paramref name="timeToGoMinutes"/>
+    /// of TTG at <see cref="DefaultDescentSpeedKnots"/> knots with zero wind.
+    /// </summary>
+    public AirportConfigurationBuilder WithTrajectory(
+        string feederFix,
+        string runwayIdentifier,
+        int timeToGoMinutes)
+    {
+        _trajectories.Add(new TrajectoryConfiguration
+        {
+            FeederFix = feederFix,
+            RunwayIdentifier = runwayIdentifier,
+            Segments = [SingleSegment(timeToGoMinutes)]
+        });
+
+        return this;
+    }
+
+    /// <summary>
+    /// Creates a trajectory with a specific approach type and a single segment whose distance produces
+    /// exactly <paramref name="timeToGoMinutes"/> of TTG at <see cref="DefaultDescentSpeedKnots"/> knots
+    /// with zero wind.
+    /// </summary>
+    public AirportConfigurationBuilder WithTrajectory(
+        string feederFix,
+        string approachType,
+        string runwayIdentifier,
+        int timeToGoMinutes)
+    {
+        _trajectories.Add(new TrajectoryConfiguration
+        {
+            FeederFix = feederFix,
+            ApproachType = approachType,
+            RunwayIdentifier = runwayIdentifier,
+            Segments = [SingleSegment(timeToGoMinutes)]
+        });
+
+        return this;
+    }
+
+    /// <summary>
+    /// Overload that accepts (and ignores) an aircraft descriptor array for test compatibility.
+    /// Aircraft no longer influences trajectory lookup — use <see cref="WithTrajectory(string, string, int)"/>
+    /// or <see cref="WithTrajectory(string, string, string, int)"/> for new tests.
+    /// </summary>
+    public AirportConfigurationBuilder WithTrajectory(
+        string feederFix,
+        IAircraftDescriptor[] aircraftDescriptors,
+        string runwayIdentifier,
+        int timeToGoMinutes)
+    {
+        return WithTrajectory(feederFix, runwayIdentifier, timeToGoMinutes);
+    }
+
+    /// <summary>
+    /// Overload that accepts (and ignores) an aircraft descriptor array for test compatibility.
+    /// Aircraft no longer influences trajectory lookup.
+    /// </summary>
+    public AirportConfigurationBuilder WithTrajectory(
+        string feederFix,
+        IAircraftDescriptor[] aircraftDescriptors,
+        string approachType,
+        string runwayIdentifier,
+        int timeToGoMinutes)
+    {
+        return WithTrajectory(feederFix, approachType, runwayIdentifier, timeToGoMinutes);
+    }
+
+    /// <summary>
+    /// Overload that accepts (and ignores) an aircraft descriptor array and approach fix for test compatibility.
+    /// Aircraft and approach fix no longer influence trajectory lookup.
+    /// </summary>
     public AirportConfigurationBuilder WithTrajectory(
         string feederFix,
         IAircraftDescriptor[] aircraftDescriptors,
@@ -49,69 +126,7 @@ public class AirportConfigurationBuilder(string identifier)
         string runwayIdentifier,
         int timeToGoMinutes)
     {
-        _trajectories.Add(new TrajectoryConfiguration
-        {
-            FeederFix = feederFix,
-            Aircraft = aircraftDescriptors,
-            ApproachType = approachType,
-            ApproachFix = approachFix,
-            RunwayIdentifier = runwayIdentifier,
-            TimeToGoMinutes = timeToGoMinutes
-        });
-
-        return this;
-    }
-
-    public AirportConfigurationBuilder WithTrajectory(
-        string feederFix,
-        IAircraftDescriptor[] aircraftDescriptors,
-        string approachType,
-        string runwayIdentifier,
-        int timeToGoMinutes)
-    {
-        _trajectories.Add(new TrajectoryConfiguration
-        {
-            FeederFix = feederFix,
-            Aircraft = aircraftDescriptors,
-            ApproachType = approachType,
-            RunwayIdentifier = runwayIdentifier,
-            TimeToGoMinutes = timeToGoMinutes
-        });
-
-        return this;
-    }
-
-    public AirportConfigurationBuilder WithTrajectory(
-        string feederFix,
-        IAircraftDescriptor[] aircraftDescriptors,
-        string runwayIdentifier,
-        int timeToGoMinutes)
-    {
-        _trajectories.Add(new TrajectoryConfiguration
-        {
-            FeederFix = feederFix,
-            Aircraft = aircraftDescriptors,
-            RunwayIdentifier = runwayIdentifier,
-            TimeToGoMinutes = timeToGoMinutes
-        });
-
-        return this;
-    }
-
-    public AirportConfigurationBuilder WithTrajectory(
-        string feederFix,
-        string runwayIdentifier,
-        int timeToGoMinutes)
-    {
-        _trajectories.Add(new TrajectoryConfiguration
-        {
-            FeederFix = feederFix,
-            Aircraft = [new AllAircraftTypesDescriptor()],
-            RunwayIdentifier = runwayIdentifier,
-            TimeToGoMinutes = timeToGoMinutes
-        });
-
-        return this;
+        return WithTrajectory(feederFix, approachType, runwayIdentifier, timeToGoMinutes);
     }
 
     public AirportConfigurationBuilder WithTrajectory(TrajectoryConfiguration trajectory)
@@ -152,5 +167,15 @@ public class AirportConfigurationBuilder(string identifier)
         };
 
         return airportConfiguration;
+    }
+
+    static TrajectorySegmentConfiguration SingleSegment(int timeToGoMinutes)
+    {
+        // distance = speed * time; at DefaultDescentSpeedKnots and zero wind, ETI = distance / speed = timeToGoMinutes
+        return new TrajectorySegmentConfiguration
+        {
+            Track = 0,
+            DistanceNM = DefaultDescentSpeedKnots * timeToGoMinutes / 60.0
+        };
     }
 }

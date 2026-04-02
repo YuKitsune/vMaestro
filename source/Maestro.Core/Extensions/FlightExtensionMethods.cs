@@ -42,6 +42,8 @@ public static class FlightExtensionMethods
             Position = flight.Position,
             IsManuallyInserted = flight.IsManuallyInserted,
             TimeToGo = flight.Trajectory.TimeToGo,
+            Pressure = flight.Trajectory.Pressure,
+            MaxPressure = flight.Trajectory.MaxPressure,
         };
     }
 

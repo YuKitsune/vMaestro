@@ -199,5 +199,17 @@ public class FlightDto
     /// The approximate time it will take for the flight to travel from the feeder fix to the runway threshold.
     /// </summary>
     [Key(32)]
-    public TimeSpan? TimeToGo { get; init; }
+    public required TimeSpan TimeToGo { get; init; }
+
+    /// <summary>
+    /// TTG plus the additional time available through path stretching in the pressure zone.
+    /// </summary>
+    [Key(34)]
+    public required TimeSpan Pressure { get; init; }
+
+    /// <summary>
+    /// Pressure plus the additional time available through maximum vectoring in the max pressure zone.
+    /// </summary>
+    [Key(35)]
+    public required TimeSpan MaxPressure { get; init; }
 }

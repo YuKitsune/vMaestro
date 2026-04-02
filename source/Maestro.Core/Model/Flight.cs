@@ -146,9 +146,7 @@ public class Flight : IEquatable<Flight>
             ?? throw new ArgumentException("AssignedRunwayIdentifier required", nameof(dto));
         ApproachType = dto.ApproachType
             ?? throw new ArgumentException("ApproachType required", nameof(dto));
-        Trajectory = dto.TimeToGo.HasValue
-            ? new Trajectory(dto.TimeToGo.Value)
-            : throw new ArgumentException("TimeToGo required", nameof(dto));
+        Trajectory = new Trajectory(dto.TimeToGo, dto.Pressure, dto.MaxPressure);
 
         FeederFixIdentifier = dto.FeederFixIdentifier;
         FeederFixEstimate = dto.FeederFixEstimate
@@ -220,12 +218,17 @@ public class Flight : IEquatable<Flight>
     public void SetRunway(string runwayIdentifier, Trajectory trajectory)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
-        UpdateTrajectoryAndEstimates(trajectory);
+        SetTrajectory(trajectory);
     }
 
     public void SetApproachType(string approachType, Trajectory trajectory)
     {
         ApproachType = approachType;
+        SetTrajectory(trajectory);
+    }
+
+    public void SetTrajectory(Trajectory trajectory)
+    {
         UpdateTrajectoryAndEstimates(trajectory);
     }
 

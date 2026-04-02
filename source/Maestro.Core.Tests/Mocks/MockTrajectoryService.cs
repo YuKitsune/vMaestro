@@ -1,5 +1,6 @@
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 
 namespace Maestro.Core.Tests.Mocks;
 
@@ -12,7 +13,8 @@ public class MockTrajectoryService : ITrajectoryService
 
     public MockTrajectoryService(TimeSpan? defaultTtg = null)
     {
-        _defaultTrajectory = new Trajectory(defaultTtg ?? TimeSpan.FromMinutes(20));
+        var ttg = defaultTtg ?? TimeSpan.FromMinutes(20);
+        _defaultTrajectory = new Trajectory(ttg, ttg, ttg);
     }
 
     public MockTrajectoryService WithTrajectoryForFlight(Flight flight, Trajectory trajectory)
@@ -36,7 +38,7 @@ public class MockTrajectoryService : ITrajectoryService
         return new TrajectoryConfigurationBuilder(this);
     }
 
-    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames)
+    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)
     {
         if (_flightTrajectories.TryGetValue(flight.Callsign, out var trajectory))
             return trajectory;
@@ -56,7 +58,9 @@ public class MockTrajectoryService : ITrajectoryService
         string destinationIdentifier,
         string? feederFixIdentifier,
         string runwayIdentifier,
-        string approachType)
+        string approachType,
+        string[] fixNames,
+        Wind upperWind)
     {
         var match = FindBestMatch(aircraftPerformanceData.TypeCode, destinationIdentifier, feederFixIdentifier, runwayIdentifier, approachType);
         return match ?? _defaultTrajectory;

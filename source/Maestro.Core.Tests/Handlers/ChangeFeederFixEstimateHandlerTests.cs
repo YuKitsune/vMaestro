@@ -3,6 +3,7 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
+using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -57,6 +58,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
 
         var trajectoryService = new TrajectoryService(
             new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<IPerformanceLookup>(),
             Substitute.For<ILogger>());
 
         var flight = new FlightBuilder("QFA1")
@@ -92,6 +94,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
 
         var trajectoryService = new TrajectoryService(
             new AirportConfigurationProvider([airportConfiguration]),
+            Substitute.For<IPerformanceLookup>(),
             Substitute.For<ILogger>());
 
         var flight1 = new FlightBuilder("QFA1")

@@ -3,6 +3,8 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Sessions;
+using Serilog;
 
 namespace Maestro.Core.Model;
 
@@ -15,6 +17,7 @@ public class Sequence
     // TODO: Figure out how to get rid of these from here
     readonly ITrajectoryService _trajectoryService;
     readonly IClock _clock;
+    readonly ILogger _logger;
 
     readonly List<Slot> _slots = [];
     readonly List<Flight> _flights = [];
@@ -29,14 +32,22 @@ public class Sequence
     public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
     public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
 
-    public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock)
+    public Wind SurfaceWind { get; set; } = new(0, 0);
+    public Wind UpperWind { get; set; } = new(0, 0);
+    public int UpperWindAltitude { get; }
+    public bool ManualWind { get; set; }
+
+    public Sequence(AirportConfiguration airportConfiguration, ITrajectoryService trajectoryService, IClock clock, ILogger logger)
     {
         _airportConfiguration = airportConfiguration;
         _trajectoryService = trajectoryService;
         _clock = clock;
+        _logger = logger;
 
         AirportIdentifier = airportConfiguration.Identifier;
         CurrentRunwayMode = new RunwayMode(airportConfiguration.RunwayModes.First());
+
+        UpperWindAltitude = airportConfiguration.UpperWindAltitude;
     }
 
     /// <summary>
@@ -763,11 +774,20 @@ public class Sequence
     {
         // Lookup trajectory before setting runway/approach
         // TODO: Find a different way to deal with transitions
-        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType, []);
+        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType, [], UpperWind);
 
         // Atomic update: runway + trajectory + ETA + STA_FF
         flight.SetRunway(runwayIdentifier, trajectory);
         flight.SetApproachType(approachType, trajectory);
+
+        _logger.Verbose(
+            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+            flight.Callsign,
+            runwayIdentifier,
+            approachType,
+            trajectory.TimeToGo,
+            trajectory.Pressure,
+            trajectory.MaxPressure);
 
         flight.SetSequenceData(landingTime, flowControls);
     }
@@ -916,7 +936,10 @@ public class Sequence
             FirstLandingTimeForNextMode = FirstLandingTimeForNewMode ?? default,
             Slots = _slots
                 .Select(s => s.ToDto())
-                .ToArray()
+                .ToArray(),
+            SurfaceWind = new WindDto(SurfaceWind.Direction, SurfaceWind.Speed),
+            UpperWind = new WindDto(UpperWind.Direction, UpperWind.Speed),
+            ManualWind = ManualWind
         };
     }
 
@@ -947,6 +970,10 @@ public class Sequence
             var flight = new Flight(flightDto);
             _flights.Add(flight);
         }
+
+        SurfaceWind = new Wind(dto.SurfaceWind.Direction, dto.SurfaceWind.Speed);
+        UpperWind = new Wind(dto.UpperWind.Direction, dto.UpperWind.Speed);
+        ManualWind = dto.ManualWind;
     }
 
     interface ISequenceItem

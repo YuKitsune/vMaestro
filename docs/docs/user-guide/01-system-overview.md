@@ -44,7 +44,17 @@ A flight may have an `ETA_FF` without tracking via a specific feeder fix. In thi
 
 ## Trajectories
 
-Trajectories contain the Time-to-Go (TTG) from feeder fix to runway threshold. The TTG varies based on feeder fix, runway, aircraft type, approach type, and transition fix.
+A trajectory represents the flight path from a feeder fix to the runway threshold. vMaestro uses trajectories to calculate TTG, taking into account the aircraft's speed and upper winds.
+
+TTG is recalculated each time a flight enters the sequence, is recomputed, or has its runway or approach type changed.
+
+### Pressure and Maximum Pressure
+
+Each trajectory also defines two delay-absorption parameters used by the scheduling algorithm.
+
+**Pressure (P)** is the additional time available through a small path extension, such as extending the downwind leg before turning base. The delay that can be absorbed this way is the difference between P and TTG.
+
+**Maximum Pressure (Pmax)** is the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may involve more significant routing such as extended vectoring. The delay available beyond P is the difference between Pmax and P.
 
 ## Runway Modes
 

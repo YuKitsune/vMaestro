@@ -171,7 +171,9 @@ public static class TestBuilders
             LastSeen = FixedTime,
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,
-            TimeToGo = TimeSpan.FromMinutes(18)
+            TimeToGo = TimeSpan.FromMinutes(18),
+            Pressure = TimeSpan.FromMinutes(20),
+            MaxPressure = TimeSpan.FromMinutes(22)
         };
 
     public static RelativeInsertionOptions CreateRelativeInsertionOptions() =>
@@ -283,7 +285,10 @@ public static class TestBuilders
             LastLandingTimeForCurrentMode = FixedTime.AddHours(2),
             FirstLandingTimeForNextMode = FixedTime.AddHours(3),
             Flights = [CreateFlightDto()],
-            Slots = [CreateSlotDto()]
+            Slots = [CreateSlotDto()],
+            SurfaceWind = CreateWindDto(),
+            UpperWind = new WindDto(280, 25),
+            ManualWind = false
         };
 
     public static SessionDto CreateSessionDto() =>
@@ -295,9 +300,6 @@ public static class TestBuilders
             Sequence = CreateSequenceDto(),
             DummyCounter = 42,
             LandingStatistics = CreateLandingStatisticsDto(),
-            SurfaceWind = CreateWindDto(),
-            UpperWind = new WindDto(280, 25),
-            ManualWind = false,
             FlightDataRecords = [CreateFlightDataRecord()]
         };
 

@@ -84,7 +84,9 @@
             "isOnGround": false
           },
           "isManuallyInserted": false,
-          "timeToGo": "00:18:00"
+          "timeToGo": "00:18:00",
+          "pressure": "00:20:00",
+          "maxPressure": "00:22:00"
         }
       ],
       "slots": [
@@ -97,7 +99,16 @@
             "34R"
           ]
         }
-      ]
+      ],
+      "surfaceWind": {
+        "direction": 270,
+        "speed": 15
+      },
+      "upperWind": {
+        "direction": 280,
+        "speed": 25
+      },
+      "manualWind": false
     },
     "dummyCounter": 42,
     "landingStatistics": {
@@ -126,15 +137,6 @@
         }
       }
     },
-    "surfaceWind": {
-      "direction": 270,
-      "speed": 15
-    },
-    "upperWind": {
-      "direction": 280,
-      "speed": 25
-    },
-    "manualWind": false,
     "flightDataRecords": [
       {
         "callsign": "QFA123",

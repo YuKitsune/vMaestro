@@ -1,8 +1,6 @@
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
-using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
-using Maestro.Core.Handlers;
 using Maestro.Core.Model;
 
 namespace Maestro.Core.Sessions;
@@ -23,14 +21,8 @@ public class Session
     /// </summary>
     public Dictionary<string, FlightDataRecord> FlightDataRecords { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public int UpperWindAltitude { get; }
-    public Wind UpperWind { get; set; } = new(0, 0);
-    public Wind SurfaceWind { get; set; } = new(0, 0);
-    public bool ManualWind { get; set; }
-
-    public Session(AirportConfiguration airportConfiguration, Sequence sequence)
+    public Session(Sequence sequence)
     {
-        UpperWindAltitude = airportConfiguration.UpperWindAltitude;
         Sequence = sequence;
     }
 
@@ -50,9 +42,6 @@ public class Session
             Sequence = Sequence.ToDto(),
             DummyCounter = _dummyCounter,
             LandingStatistics = LandingStatistics.Snapshot(),
-            SurfaceWind = new WindDto(SurfaceWind.Direction, SurfaceWind.Speed),
-            UpperWind = new WindDto(UpperWind.Direction, UpperWind.Speed),
-            ManualWind = ManualWind,
             FlightDataRecords = FlightDataRecords.Values.ToArray()
         };
     }
@@ -76,10 +65,6 @@ public class Session
 
         Sequence.Restore(dto.Sequence);
         LandingStatistics.Restore(dto.LandingStatistics);
-
-        SurfaceWind = new Wind(dto.SurfaceWind.Direction, dto.SurfaceWind.Speed);
-        UpperWind = new Wind(dto.UpperWind.Direction, dto.UpperWind.Speed);
-        ManualWind = dto.ManualWind;
     }
 
     PendingFlightDto ToPendingFlightDto(PendingFlight pending)

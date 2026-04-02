@@ -46,27 +46,9 @@ public class SessionDto
     public required LandingStatisticsDto LandingStatistics { get; init; }
 
     /// <summary>
-    /// Surface wind direction and speed.
-    /// </summary>
-    [Key(6)]
-    public required WindDto SurfaceWind { get; init; }
-
-    /// <summary>
-    /// Upper wind direction and speed.
-    /// </summary>
-    [Key(7)]
-    public required WindDto UpperWind { get; init; }
-
-    /// <summary>
-    /// Whether the wind values were manually provided by the user or automatically calculated.
-    /// </summary>
-    [Key(8)]
-    public required bool ManualWind { get; init; }
-
-    /// <summary>
     /// The latest flight data received from the air traffic management system, keyed by callsign.
     /// Used to look up flight data when inserting pending flights into the sequence.
     /// </summary>
-    [Key(9)]
+    [Key(6)]
     public FlightDataRecord[] FlightDataRecords { get; init; } = [];
 }

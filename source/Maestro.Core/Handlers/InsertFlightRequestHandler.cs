@@ -52,7 +52,7 @@ public class InsertFlightRequestHandler(
 
             var aircraftType = string.IsNullOrEmpty(request.AircraftType)
                 ? airportConfiguration.DefaultAircraftType
-                : request.AircraftType;
+                : request.AircraftType!;
 
             var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
 
@@ -135,7 +135,9 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 null,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                [],
+                session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, at an exact time, FeederFixEstimate is TargetTime - Trajectory.TimeToGo
             flight = new Flight(
@@ -149,6 +151,15 @@ public class InsertFlightRequestHandler(
                 trajectory: trajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
         }
         else
         {
@@ -234,7 +245,9 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 null,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                [],
+                session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, relative to another, FeederFixEstimate is ReferenceFlight.LandingTime - AcceptanceRate - Trajectory.TimeToGo
             flight = new Flight(
@@ -248,6 +261,15 @@ public class InsertFlightRequestHandler(
                 trajectory: trajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
         }
         else
         {
@@ -322,7 +344,9 @@ public class InsertFlightRequestHandler(
                 airportIdentifier,
                 null,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                [],
+                session.Sequence.UpperWind);
 
             // TODO: test case - When inserting a dummy flight, from a departure airport, the FeederFixEstimate is TakeOffTime + DepartureETI - Trajectory.TimeToGo
             flight = new Flight(
@@ -336,6 +360,15 @@ public class InsertFlightRequestHandler(
                 trajectory: trajectory,
                 targetLandingTime: landingEstimate,
                 state: State.Stable);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
         }
         else
         {
@@ -399,7 +432,9 @@ public class InsertFlightRequestHandler(
             airportIdentifier,
             feederFix?.FixIdentifier,
             runway.Identifier,
-            runway.ApproachType);
+            runway.ApproachType,
+            [],
+            session.Sequence.UpperWind);
 
         // Use the live feeder fix estimate only when coupled to a radar track.
         // For uncoupled flights, estimates can be inaccurate, so we'll use the calculated landingEstimate
@@ -425,6 +460,15 @@ public class InsertFlightRequestHandler(
             landingEstimate: landingEstimate,
             activatedTime: clock.UtcNow(),
             position: flightDataRecord?.Position);
+
+        logger.Verbose(
+            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+            pendingFlight.Callsign,
+            runway.Identifier,
+            runway.ApproachType,
+            trajectory.TimeToGo,
+            trajectory.Pressure,
+            trajectory.MaxPressure);
 
         return flight;
     }

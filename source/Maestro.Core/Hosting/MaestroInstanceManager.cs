@@ -4,6 +4,7 @@ using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
+using Serilog;
 
 namespace Maestro.Core.Hosting;
 
@@ -20,7 +21,8 @@ public class MaestroInstanceManager(
     IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IClock clock,
-    IMediator mediator)
+    IMediator mediator,
+    ILogger logger)
     : IMaestroInstanceManager
 {
     readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -69,8 +71,7 @@ public class MaestroInstanceManager(
             throw new MaestroException($"No configuration found for {airportIdentifier}");
 
         var session = new Session(
-            airportConfiguration,
-            new Sequence(airportConfiguration, trajectoryService, clock));
+            new Sequence(airportConfiguration, trajectoryService, clock, logger));
 
         return new MaestroInstance(airportIdentifier, session, mediator);
     }

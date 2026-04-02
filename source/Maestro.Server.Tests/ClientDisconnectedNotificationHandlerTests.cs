@@ -275,14 +275,14 @@ public class ClientDisconnectedNotificationHandlerTests
                 FirstLandingTimeForNextMode = default,
                 Flights = [],
                 Slots = [],
+                UpperWind = new WindDto(0, 0),
+                SurfaceWind = new WindDto(0, 0),
+                ManualWind = false
             },
             LandingStatistics = new LandingStatisticsDto
             {
                 RunwayLandingTimes = new Dictionary<string, RunwayLandingTimesDto>(),
-            },
-            UpperWind = new WindDto(0, 0),
-            SurfaceWind = new WindDto(0, 0),
-            ManualWind = false
+            }
         });
 
         var hubProxy = new Mock<IHubProxy>();
@@ -335,14 +335,14 @@ public class ClientDisconnectedNotificationHandlerTests
                 FirstLandingTimeForNextMode = default,
                 Flights = [],
                 Slots = [],
+                UpperWind = new WindDto(0, 0),
+                SurfaceWind = new WindDto(0, 0),
+                ManualWind = false
             },
             LandingStatistics = new LandingStatisticsDto
             {
                 RunwayLandingTimes = new Dictionary<string, RunwayLandingTimesDto>(),
-            },
-            UpperWind = new WindDto(0, 0),
-            SurfaceWind = new WindDto(0, 0),
-            ManualWind = false
+            }
         });
 
         var hubProxy = new Mock<IHubProxy>();

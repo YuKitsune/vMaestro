@@ -332,39 +332,68 @@ Airports:
   # ---------------------------------------------------------------------------
   # Trajectories
   # ---------------------------------------------------------------------------
-  # Define flight times from feeder fixes to runways for different aircraft
+  # Segment-based route geometry from feeder fix to runway threshold.
+  # Each entry covers one (FeederFix, ApproachType, Runway) combination.
+  # Aircraft type no longer appears here — speed comes from AircraftPerformance above.
   #
-  # Aircraft types: JET, NONJET, LIGHT, MEDIUM, HEAVY, SUPER, or specific ICAO type code
+  # Fields:
+  #   FeederFix:      Feeder fix identifier (required)
+  #   RunwayIdentifier: Destination runway (required)
+  #   ApproachType:   Approach type code — leave empty to match any (optional)
+  #   TransitionFix:  Common merge fix that distinguishes routes converging at the
+  #                   same feeder fix (optional)
   #
-  # If a trajectory is not defined for a specific combination, Maestro will calculate
-  # an average from all matching trajectories for that aircraft type. However, it's
-  # recommended to define trajectories for all combinations to ensure accuracy.
+  # Segments: ordered from feeder fix toward the runway threshold.
+  #   Identifier:  Fix name — informational only, never resolved at runtime
+  #   Track:       True bearing in degrees for this segment
+  #   DistanceNM:  Distance of this segment in nautical miles
+  #   Pressure:    true if this segment contributes to the Pressure window (P)
+  #   MaxPressure: true if this segment contributes to the Max Pressure window (Pmax)
   #
-  # Compact single-line format (recommended):
-  # - {FeederFix: BOREE, Aircraft: [JET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
+  # Generate segment geometry automatically with the Maestro.Tools CLI:
+  #   maestro extract-stars --airspace <Airspace.xml> --config maestro-tool.yaml
+  # Then manually mark pressure zones (Pressure/MaxPressure) as required.
   #
-  # Optional fields:
-  #   ApproachType: Specific approach type
-  #   ApproachFix: Specific approach fix/transition
+  # DefaultTTGMinutes (below) is used when no trajectory matches a flight.
+
+  # Fallback TTG used when no trajectory matches (minutes, default: 20)
+  DefaultTTGMinutes: 18
 
   Trajectories:
-    # BOREE trajectories
-    - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
-    - {FeederFix: BOREE, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 17}
-    - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 20}
-    - {FeederFix: BOREE, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
 
-    # RIVET trajectories
-    - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34L, TimeToGoMinutes: 15}
-    - {FeederFix: RIVET, Aircraft: [JET, DH8D], RunwayIdentifier: 34R, TimeToGoMinutes: 18}
-    - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34L, TimeToGoMinutes: 17}
-    - {FeederFix: RIVET, Aircraft: [NONJET], RunwayIdentifier: 34R, TimeToGoMinutes: 20}
+    # RIVET -> 34L
+    # Illustrates branching pressure trajectories
+    - FeederFix: RIVET
+      RunwayIdentifier: 34L
+      Segments:
+      - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+      - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+      - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+      - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
+      - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+      - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+      - {Identifier: FINAL, Track: 335.2, DistanceNM: 12.8}
 
-    # Continue defining trajectories for all feeder fixes and runways
-    # Recommended to define for all combinations:
-    #   - Each feeder fix (RIVET, WELSH, BOREE, YAKKA, MARLN)
-    #   - To each runway (34L, 34R, 16L, 16R, 07, 25)
-    #   - For at minimum JET and NONJET categories
+      # Pressure/MaxPressure specify alternative paths that diverge after the specified segment.
+      # The pressure segments describe the complete path from after that waypoint to runway threshold.
+      
+      # Pressure trajectory: extends downwind after the NASHO segment from the normal trajectory
+      Pressure:
+        After: NASHO
+        Segments: 
+        - {Identifier: DOWNWIND, Track: 167.9, DistanceNM: 3.0}
+        - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+        - {Identifier: FINAL, Track: 335.2, DistanceNM: 15.8}
+        
+      # Max pressure trajectory: further extends downwind after NASHO
+      MaxPressure:
+        After: NASHO
+        Segments:
+        - {Identifier: DOWNWIND, Track: 167.9, DistanceNM: 6.0}
+        - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+        - {Identifier: FINAL, Track: 335.2, DistanceNM: 18.8}
+
+    # Add trajectories for WELSH, YAKKA, MARLN and remaining combinations of feeder fix, runway, and approach type.
 
   # ---------------------------------------------------------------------------
   # Departure Airports
@@ -507,11 +536,20 @@ Airports:
           ApproachType: A
           LandingRateSeconds: 180
 
-  # Define trajectories (abbreviated example)
+  DefaultTTGMinutes: 18
+
+  # Define trajectories
   Trajectories:
-    - {FeederFix: ARBEY, Aircraft: [JET], RunwayIdentifier: "09", TimeToGoMinutes: 15}
-    - {FeederFix: ARBEY, Aircraft: [NONJET], RunwayIdentifier: "09", TimeToGoMinutes: 17}
-    # ... continue for all combinations
+    - FeederFix: ARBEY
+      RunwayIdentifier: '09'
+      ApproachType: A
+      Segments:
+      - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+      - {Identifier: DABUX, Track: 199.6, DistanceNM: 7.7}
+      - {Identifier: OPAVA, Track: 213.5, DistanceNM: 6.7}
+      - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+      - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+      - {Identifier: '09', Track: 94.4, DistanceNM: 11}
 
   # Define departure airports (abbreviated example)
   DepartureAirports:
@@ -536,3 +574,24 @@ Airports:
   FlightCoordinationMessages:
     - '{Callsign} MEDEVAC'
     - '{Callsign} diverting'
+
+# ==============================================================================
+# AIRCRAFT PERFORMANCE
+# ==============================================================================
+# Global table of aircraft approach speeds used for trajectory time calculations.
+# One entry per ICAO type code. Extracted from vatSys Performance.xml using the
+# Maestro.Tools CLI: maestro extract-performance --performance <Performance.xml>
+#
+# DescentSpeedKnots: TAS at TMA entry altitude (e.g. FL100) from Performance.xml
+# IsJet:             true for jet-powered aircraft, false for turboprop/piston
+# WakeCategory:      ICAO wake turbulence category (Light, Medium, Heavy, Super)
+
+AircraftPerformance:
+  - {TypeCode: B738, DescentSpeedKnots: 220, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: A320, DescentSpeedKnots: 210, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: B77W, DescentSpeedKnots: 250, IsJet: true,  WakeCategory: Heavy}
+  - {TypeCode: A388, DescentSpeedKnots: 260, IsJet: true,  WakeCategory: Super}
+  - {TypeCode: DH8D, DescentSpeedKnots: 160, IsJet: false, WakeCategory: Medium}
+  - {TypeCode: PC12, DescentSpeedKnots: 120, IsJet: false, WakeCategory: Light}
+  # Add entries for all aircraft types expected at your airports.
+  # Run: maestro extract-performance --performance <path/to/Performance.xml>

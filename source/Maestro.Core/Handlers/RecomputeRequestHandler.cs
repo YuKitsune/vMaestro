@@ -53,6 +53,7 @@ public class RecomputeRequestHandler(
             var feederFix = flightDataRecord?.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
             var landingEstimate = flightDataRecord?.Estimates.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
 
+
             flight.HighPriority = feederFix is null;
             flight.SetMaximumDelay(null);
 
@@ -60,13 +61,17 @@ public class RecomputeRequestHandler(
             var runwayMode = sequence.GetRunwayModeAt(landingEstimate);
             var runway = runwayMode.Default;
 
+            var fixNames = flightDataRecord?.Estimates.Select(e => e.FixIdentifier).ToArray() ?? [];
+
             // Lookup trajectory for the (possibly new) feeder fix + default runway + default approach type
             var trajectory = trajectoryService.GetTrajectory(
                 flight.GetPerformanceData(),
                 flight.DestinationIdentifier,
                 feederFix?.FixIdentifier,
                 runway.Identifier,
-                runway.ApproachType);
+                runway.ApproachType,
+                fixNames,
+                instance.Session.Sequence.UpperWind);
 
             // Update feeder fix (may have changed due to re-routing)
             flight.SetFeederFix(
@@ -77,6 +82,15 @@ public class RecomputeRequestHandler(
 
             flight.SetRunway(runway.Identifier, trajectory);
             flight.SetApproachType(runway.ApproachType, trajectory);
+
+            logger.Verbose(
+                "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+                flight.Callsign,
+                runway.Identifier,
+                runway.ApproachType,
+                trajectory.TimeToGo,
+                trajectory.Pressure,
+                trajectory.MaxPressure);
 
             flight.InvalidateSequenceData();
 
