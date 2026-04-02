@@ -196,9 +196,9 @@ public class FlightUpdatedHandler(
                         notification.Callsign,
                         runway.Identifier,
                         runway.ApproachType,
-                        trajectory.TimeToGo,
-                        trajectory.Pressure,
-                        trajectory.MaxPressure);
+                        terminalTrajectory.NormalTimeToGo,
+                        terminalTrajectory.PressureTimeToGo,
+                        terminalTrajectory.MaxPressureTimeToGo);
                     return;
                 }
 
@@ -238,9 +238,9 @@ public class FlightUpdatedHandler(
                             sequencedFlight.Callsign,
                             sequencedFlight.AssignedRunwayIdentifier,
                             sequencedFlight.ApproachType,
-                            updatedTrajectory.TimeToGo,
-                            updatedTrajectory.Pressure,
-                            updatedTrajectory.MaxPressure);
+                            updatedTrajectory.NormalTimeToGo,
+                            updatedTrajectory.PressureTimeToGo,
+                            updatedTrajectory.MaxPressureTimeToGo);
                     }
 
                     // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
