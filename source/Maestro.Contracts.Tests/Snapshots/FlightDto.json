@@ -39,5 +39,7 @@
     "isOnGround": false
   },
   "isManuallyInserted": false,
-  "timeToGo": "00:18:00"
+  "timeToGo": "00:18:00",
+  "pressure": null,
+  "maxPressure": null
 }
