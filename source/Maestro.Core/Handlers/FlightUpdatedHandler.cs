@@ -213,8 +213,6 @@ public class FlightUpdatedHandler(
                         sequencedFlight.SetTrajectory(updatedTrajectory);
                     }
 
-                    CalculateEstimates(sequencedFlight, notification);
-
                     // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
                     if (notification.Position is not null && !notification.Position.IsOnGround)
                         CalculateEstimates(sequencedFlight, notification);
