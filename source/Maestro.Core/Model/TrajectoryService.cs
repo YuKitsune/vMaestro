@@ -123,10 +123,11 @@ public class TrajectoryService(
 
         var matches = airportConfiguration.Trajectories
             .Where(x => x.FeederFix == feederFixIdentifier)
-            .Where(x => x.ApproachType == approachType)
+            .Where(x => string.IsNullOrEmpty(x.ApproachType) || x.ApproachType == approachType)
             .Where(x => x.RunwayIdentifier == runwayIdentifier)
             .Where(x => string.IsNullOrEmpty(x.TransitionFix) || fixNames.Contains(x.TransitionFix))
-            .OrderByDescending(x => string.IsNullOrEmpty(x.TransitionFix) ? 0 : 1)
+            .OrderByDescending(x => string.IsNullOrEmpty(x.ApproachType) ? 0 : 1)
+            .ThenByDescending(x => string.IsNullOrEmpty(x.TransitionFix) ? 0 : 1)
             .ToArray();
 
         if (matches.Length == 0)
