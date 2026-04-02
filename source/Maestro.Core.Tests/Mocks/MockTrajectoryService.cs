@@ -59,6 +59,7 @@ public class MockTrajectoryService : ITrajectoryService
         string? feederFixIdentifier,
         string runwayIdentifier,
         string approachType,
+        string[] fixNames,
         Wind upperWind)
     {
         var match = FindBestMatch(aircraftPerformanceData.TypeCode, destinationIdentifier, feederFixIdentifier, runwayIdentifier, approachType);
