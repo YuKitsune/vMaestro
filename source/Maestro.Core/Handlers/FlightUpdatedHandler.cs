@@ -32,7 +32,7 @@ public class FlightUpdatedHandler(
             if (!instanceManager.InstanceExists(notification.Destination))
                 return;
 
-            logger.Verbose("FDR update received for {Callsign}", notification.Callsign);
+            logger.Debug("FDR update received for {Callsign}", notification.Callsign);
 
             var instance = await instanceManager.GetInstance(notification.Destination, cancellationToken);
             SessionDto sessionDto;
@@ -52,7 +52,7 @@ public class FlightUpdatedHandler(
                 {
                     if (!rateLimiter.ShouldUpdate(existingData.LastSeen))
                     {
-                        logger.Verbose("FDR update for {Callsign} rate-limited", notification.Callsign);
+                        logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
                         return;
                     }
                 }
@@ -61,7 +61,7 @@ public class FlightUpdatedHandler(
                      connection.IsConnected &&
                      !connection.IsMaster)
                 {
-                    logger.Verbose("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
+                    logger.Debug("Relaying FlightUpdatedNotification for {Callsign}", notification.Callsign);
                     await connection.Send(notification, cancellationToken);
                     return;
                 }
@@ -295,7 +295,7 @@ public class FlightUpdatedHandler(
             var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
             if (feederFixSystemEstimate?.Estimate != null)
             {
-                logger.Verbose(
+                logger.Debug(
                     "{Callsign} ETA_FF for {FeederFix} now {FeederFixEstimate}",
                     flight.Callsign,
                     flight.FeederFixIdentifier,
@@ -320,7 +320,7 @@ public class FlightUpdatedHandler(
             return;
         }
 
-        logger.Verbose(
+        logger.Debug(
             "{Callsign} (no FF) ETA now {LandingEstimate}",
             flight.Callsign,
             landingEstimate);

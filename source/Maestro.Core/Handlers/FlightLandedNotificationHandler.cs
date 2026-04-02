@@ -33,14 +33,14 @@ public class FlightLandedNotificationHandler(
         var flight = instance.Session.Sequence.FindFlight(notification.Callsign);
         if (flight is null)
         {
-            logger.Verbose("FlightLandedNotification received for a {Callsign} who is not in the {AirportIdentifier} sequence", notification.Callsign,  notification.AirportIdentifier);
+            logger.Debug("FlightLandedNotification received for a {Callsign} who is not in the {AirportIdentifier} sequence", notification.Callsign,  notification.AirportIdentifier);
             return;
         }
 
         var runway = instance.Session.Sequence.CurrentRunwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
         if (runway is null)
         {
-            logger.Verbose("{Callsign} landed on an off-mode runway, cannot update achieved rates", notification.Callsign);
+            logger.Information("{Callsign} landed on an off-mode runway, cannot update achieved rates", notification.Callsign);
             return;
         }
 
