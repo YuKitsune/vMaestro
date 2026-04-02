@@ -364,9 +364,51 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 
 `PressureSegments` represent a small path extension ATC can use to absorb minor delays, such as extending the downwind leg. The time to fly these segments is added to TTG to produce P.
 
-`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing, dog-legs, or similar. The time to fly these segments is added to P to produce Pmax.
+`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar. The time to fly these segments is added to P to produce Pmax.
 
 Both lists are optional. A trajectory with no pressure segments has P = Pmax = TTG.
+
+```yaml
+Trajectories:
+
+  # RIVET -> 34L
+  # Illustrates branching pressure trajectories
+  - FeederFix: RIVET
+    RunwayIdentifier: 34L
+    Segments:
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
+    - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+    - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+    - {Identifier: FINAL, Track: 335.2, DistanceNM: 12.8}
+
+    # Pressure trajectory: extends downwind after the NASHO segment from the normal trajectory
+    Pressure:
+      After: NASHO
+      Segments: 
+      - {Identifier: DOWNWIND, Track: 167.9, DistanceNM: 3.0}
+      - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+      - {Identifier: FINAL, Track: 335.2, DistanceNM: 15.8}
+      
+    # Max pressure trajectory: further extends downwind after NASHO
+    MaxPressure:
+      After: NASHO
+      Segments:
+      - {Identifier: DOWNWIND, Track: 167.9, DistanceNM: 6.0}
+      - {Identifier: BASE, Track: 065.0, DistanceNM: 6.5}
+      - {Identifier: FINAL, Track: 335.2, DistanceNM: 18.8}
+```
+
+##### Pressure and Maximum Pressure Properties
+
+Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has the following properties:
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `After` | string | Yes | The name of the segment in the normal trajectory where this trajectory extends from |
+| `Segments` | array | Yes | Ordered segments from the branching point to runway threshold |
 
 ### Departure Airports
 
@@ -439,6 +481,31 @@ FlightCoordinationMessages:
 ```
 
 Flight messages support `{Callsign}` placeholder.
+
+## Aircraft Performance Configuration
+
+vMaestro need to know the average descent speed of each aircraft in order to calculate it's trajectory.
+
+The performance data can be extracted from the vatSys `Performance.xml` file using the [Maestro Tools CLI](./05-maestro-tools.md).
+
+```yaml
+AircraftPerformance:
+  - {TypeCode: B738, DescentSpeedKnots: 220, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: A320, DescentSpeedKnots: 210, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: B77W, DescentSpeedKnots: 250, IsJet: true,  WakeCategory: Heavy}
+  - {TypeCode: A388, DescentSpeedKnots: 260, IsJet: true,  WakeCategory: Super}
+  - {TypeCode: DH8D, DescentSpeedKnots: 160, IsJet: false, WakeCategory: Medium}
+  - {TypeCode: PC12, DescentSpeedKnots: 120, IsJet: false, WakeCategory: Light}
+```
+
+### Aircraft Performance Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `TypeCode` | string | Yes | The ICAO type code for the aircraft |
+| `DescentSpeedKnots` | string | Yes | The average true airspeed at which the aircraft will descend through the TMA |
+| `IsJet` | bool | Yes | Whether or not the aircraft is a Jet |
+| `WakeCategory` | string | Yes | The wake turbulence category, either `Light`, `Medium`, `Heavy`, or `SuperHeavy` |
 
 ## Validation
 

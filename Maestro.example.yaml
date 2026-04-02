@@ -56,27 +56,6 @@ Server:
     ModifyWind: [Approach, Flow]
 
 # ==============================================================================
-# AIRCRAFT PERFORMANCE
-# ==============================================================================
-# Global table of aircraft approach speeds used for trajectory time calculations.
-# One entry per ICAO type code. Extracted from vatSys Performance.xml using the
-# Maestro.Tools CLI: maestro extract-performance --performance <Performance.xml>
-#
-# DescentSpeedKnots: TAS at TMA entry altitude (e.g. FL100) from Performance.xml
-# IsJet:             true for jet-powered aircraft, false for turboprop/piston
-# WakeCategory:      ICAO wake turbulence category (Light, Medium, Heavy, Super)
-
-AircraftPerformance:
-  - {TypeCode: B738, DescentSpeedKnots: 220, IsJet: true,  WakeCategory: Medium}
-  - {TypeCode: A320, DescentSpeedKnots: 210, IsJet: true,  WakeCategory: Medium}
-  - {TypeCode: B77W, DescentSpeedKnots: 250, IsJet: true,  WakeCategory: Heavy}
-  - {TypeCode: A388, DescentSpeedKnots: 260, IsJet: true,  WakeCategory: Super}
-  - {TypeCode: DH8D, DescentSpeedKnots: 160, IsJet: false, WakeCategory: Medium}
-  - {TypeCode: PC12, DescentSpeedKnots: 120, IsJet: false, WakeCategory: Light}
-  # Add entries for all aircraft types expected at your airports.
-  # Run: maestro extract-performance --performance <path/to/Performance.xml>
-
-# ==============================================================================
 # LABELS CONFIGURATION
 # ==============================================================================
 # Defines global colors and reusable label layouts for flight display
@@ -595,3 +574,24 @@ Airports:
   FlightCoordinationMessages:
     - '{Callsign} MEDEVAC'
     - '{Callsign} diverting'
+
+# ==============================================================================
+# AIRCRAFT PERFORMANCE
+# ==============================================================================
+# Global table of aircraft approach speeds used for trajectory time calculations.
+# One entry per ICAO type code. Extracted from vatSys Performance.xml using the
+# Maestro.Tools CLI: maestro extract-performance --performance <Performance.xml>
+#
+# DescentSpeedKnots: TAS at TMA entry altitude (e.g. FL100) from Performance.xml
+# IsJet:             true for jet-powered aircraft, false for turboprop/piston
+# WakeCategory:      ICAO wake turbulence category (Light, Medium, Heavy, Super)
+
+AircraftPerformance:
+  - {TypeCode: B738, DescentSpeedKnots: 220, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: A320, DescentSpeedKnots: 210, IsJet: true,  WakeCategory: Medium}
+  - {TypeCode: B77W, DescentSpeedKnots: 250, IsJet: true,  WakeCategory: Heavy}
+  - {TypeCode: A388, DescentSpeedKnots: 260, IsJet: true,  WakeCategory: Super}
+  - {TypeCode: DH8D, DescentSpeedKnots: 160, IsJet: false, WakeCategory: Medium}
+  - {TypeCode: PC12, DescentSpeedKnots: 120, IsJet: false, WakeCategory: Light}
+  # Add entries for all aircraft types expected at your airports.
+  # Run: maestro extract-performance --performance <path/to/Performance.xml>
