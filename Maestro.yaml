@@ -3,8 +3,8 @@
 CheckForUpdates: false
 
 Logging:
-  LogLevel: Information
-  MaxFileAgeDays: 7
+  LogLevel: Debug
+  MaxFileAgeDays: 1
 
 Server:
   Uri: https://maestro.eoinmotherway.dev/hub
