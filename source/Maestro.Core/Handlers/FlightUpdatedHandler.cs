@@ -176,7 +176,8 @@ public class FlightUpdatedHandler(
                         position: notification.Position);
 
                     instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
-                    logger.Verbose(
+                    logger.Information("{Callsign} added to the sequence", notification.Callsign);
+                    logger.Information(
                         "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
                         notification.Callsign,
                         runway.Identifier,
@@ -184,7 +185,6 @@ public class FlightUpdatedHandler(
                         trajectory.TimeToGo,
                         trajectory.Pressure,
                         trajectory.MaxPressure);
-                    logger.Information("{Callsign} added to the sequence", notification.Callsign);
                     return;
                 }
 
@@ -219,7 +219,7 @@ public class FlightUpdatedHandler(
                             notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
                             instance.Session.Sequence.UpperWind);
                         sequencedFlight.SetTrajectory(updatedTrajectory);
-                        logger.Verbose(
+                        logger.Debug(
                             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
                             sequencedFlight.Callsign,
                             sequencedFlight.AssignedRunwayIdentifier,
@@ -263,7 +263,7 @@ public class FlightUpdatedHandler(
 
                     sequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
-                    logger.Verbose("Flight updated: {Flight}", sequencedFlight);
+                    logger.Debug("Flight updated: {Flight}", sequencedFlight);
                 }
 
                 sessionDto = instance.Session.Snapshot();

@@ -17,7 +17,7 @@ public class SessionUpdatedNotificationHandler(
             connection.IsConnected &&
             connection.IsMaster)
         {
-            logger.Information("Re-publishing session update for {AirportIdentifier}", notification.AirportIdentifier);
+            logger.Debug("Re-publishing session update for {AirportIdentifier}", notification.AirportIdentifier);
             await connection.Send(notification, cancellationToken);
         }
     }
