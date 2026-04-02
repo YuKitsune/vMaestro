@@ -168,15 +168,17 @@ public class TrajectoryService(
             ttgHours,
             "Pressure");
 
-        // MaxPressure: branch from base trajectory, fly alternative path
-        var maxPressureHours = ComputeBranchingTrajectory(
-            config.Segments,
-            config.MaxPressure?.After,
-            config.MaxPressure?.Segments ?? [],
-            approachSpeedKnots,
-            wind,
-            ttgHours,
-            "MaxPressure");
+        // MaxPressure: branch from base trajectory, fly alternative path; fall back to Pressure if not configured
+        var maxPressureHours = config.MaxPressure is null
+            ? pressureHours
+            : ComputeBranchingTrajectory(
+                config.Segments,
+                config.MaxPressure.After,
+                config.MaxPressure.Segments,
+                approachSpeedKnots,
+                wind,
+                ttgHours,
+                "MaxPressure");
 
         var pressure = TimeSpan.FromHours(pressureHours);
         var maxPressure = TimeSpan.FromHours(maxPressureHours);
