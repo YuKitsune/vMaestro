@@ -3,6 +3,7 @@ using Maestro.Contracts.Sessions;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions.Contracts;
 using MediatR;
 using Serilog;
 
@@ -36,7 +37,7 @@ public class Session : IAsyncDisposable
         _mediator = mediator;
         _logger = logger;
 
-        _backgroundTask = new BackgroundTask(PeriodicMaintenanceTask);
+        _backgroundTask = new BackgroundTask(RunProcesses);
         _backgroundTask.Start();
     }
 
@@ -95,15 +96,16 @@ public class Session : IAsyncDisposable
         };
     }
 
-    async Task PeriodicMaintenanceTask(CancellationToken cancellationToken)
+    async Task RunProcesses(CancellationToken cancellationToken)
     {
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-
+                await _mediator.Send(new TrySwapRunwayModesRequest(AirportIdentifier), cancellationToken);
                 await _mediator.Send(new CleanUpFlightsRequest(AirportIdentifier), cancellationToken);
+
+                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

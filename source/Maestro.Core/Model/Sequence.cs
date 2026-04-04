@@ -84,22 +84,21 @@ public class Sequence
         }
     }
 
-    public void TrySwapRunwayModes()
+    public bool TrySwapRunwayModes()
     {
         lock (_gate)
         {
             if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null || FirstLandingTimeForNewMode is null)
-                return;
+                return false;
 
             if (_clock.UtcNow().IsBefore(FirstLandingTimeForNewMode.Value))
-                return;
+                return false;
 
-            var newMode = NextRunwayMode;
-            CurrentRunwayMode = newMode;
+            CurrentRunwayMode = NextRunwayMode;
+            NextRunwayMode = null;
             LastLandingTimeForCurrentMode = null;
             FirstLandingTimeForNewMode = null;
-
-            _logger.Information("Runway mode swapped to {RunwayMode}", newMode.Identifier);
+            return true;
         }
     }
 

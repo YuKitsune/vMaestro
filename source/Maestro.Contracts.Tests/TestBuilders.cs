@@ -224,9 +224,6 @@ public static class TestBuilders
     public static ManualDelayRequest CreateManualDelayRequest() =>
         new("YSSY", "QFA123", 15);
 
-    public static CleanUpFlightsRequest CreateCleanUpFlightsRequest() =>
-        new("YSSY");
-
     public static FlightUpdatedNotification CreateFlightUpdatedNotification() =>
         new("QFA123",
             "B738",

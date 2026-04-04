@@ -1,10 +1,11 @@
-using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
-using Maestro.Core.Handlers;
 using Maestro.Core.Sessions;
+using Maestro.Core.Sessions.Contracts;
+using Maestro.Core.Sessions.Handlers;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
+using Maestro.Core.Tests.Mocks;
 using NSubstitute;
 using Serilog;
 using Shouldly;
@@ -282,6 +283,44 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
         sequence.Flights.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task WhenNotMaster_DoesNothing()
+    {
+        // Arrange
+        var airportConfiguration = CreateAirportConfiguration();
+
+        var landedFlights = Enumerable.Range(1, 8)
+            .Select(i => new FlightBuilder($"QFA{i}")
+                .WithFeederFixEstimate(_now.Subtract(TimeSpan.FromMinutes(25)))
+                .WithLandingTime(_now.AddMinutes(-5))
+                .WithState(State.Landed)
+                .Build())
+            .ToArray();
+
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s
+                .WithClock(clockFixture.Instance)
+                .WithFlightsInOrder(landedFlights))
+            .Build();
+
+        var logger = Substitute.For<ILogger>();
+        var configProvider = new AirportConfigurationProvider([airportConfiguration]);
+        var handler =  new CleanUpFlightsRequestHandler(
+            new MockSlaveConnectionManager(),
+            sessionManager,
+            configProvider,
+            clockFixture.Instance,
+            logger);
+
+        var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        sequence.Flights.Count.ShouldBe(8, "All 8 flights should remain, as slave connections cannot modify the sequence locally");
+    }
+
     static AirportConfiguration CreateAirportConfiguration()
     {
         return new AirportConfigurationBuilder("YSSY")
@@ -301,6 +340,11 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     {
         var logger = Substitute.For<ILogger>();
         var configProvider = new AirportConfigurationProvider([airportConfiguration]);
-        return new CleanUpFlightsRequestHandler(sessionManager, configProvider, clockFixture.Instance, logger);
+        return new CleanUpFlightsRequestHandler(
+            new MockLocalConnectionManager(),
+            sessionManager,
+            configProvider,
+            clockFixture.Instance,
+            logger);
     }
 }
