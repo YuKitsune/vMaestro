@@ -1,15 +1,16 @@
-using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Sessions;
+using Maestro.Core.Sessions.Contracts;
 using MediatR;
 using Serilog;
 
-namespace Maestro.Core.Handlers;
+namespace Maestro.Core.Sessions.Handlers;
 
 public class CleanUpFlightsRequestHandler(
+    IMaestroConnectionManager connectionManager,
     ISessionManager sessionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
@@ -18,6 +19,16 @@ public class CleanUpFlightsRequestHandler(
 {
     public async Task Handle(CleanUpFlightsRequest request, CancellationToken cancellationToken)
     {
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
+        {
+            logger.Debug("Skipping flight clean up for {AirportIdentifier} as we are not the master of this sequence", request.AirportIdentifier);
+            return;
+        }
+
+        logger.Verbose("Attempting to clean up flights for {AirportIdentifier}", request.AirportIdentifier);
+
         var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
 
         using (await session.Semaphore.LockAsync(cancellationToken))
