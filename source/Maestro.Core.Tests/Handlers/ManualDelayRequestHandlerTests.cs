@@ -2,8 +2,8 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -39,8 +39,8 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
     {
         // Arrange
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
-        var handler = GetHandler(instanceManager, sequence);
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration).Build();
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA999", 5);
 
         // Act & Assert
@@ -58,11 +58,11 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA1", 8);
 
         // Act
@@ -88,12 +88,12 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
         var originalLandingTime = flight1.LandingTime;
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA1", 5);
 
         // Act
@@ -122,11 +122,11 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         var originalLandingTime = flight2.LandingTime;
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA1", 5); // Maximum delay is 5 minutes
 
         // Act
@@ -163,7 +163,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -172,7 +172,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         sequence.NumberInSequence(flight2).ShouldBe(2);
         sequence.NumberInSequence(flight3).ShouldBe(3);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA3", 0);
 
         // Act
@@ -217,7 +217,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -226,7 +226,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         sequence.NumberInSequence(flight2).ShouldBe(2);
         sequence.NumberInSequence(flight3).ShouldBe(3);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA3", 0); // Zero delay
 
         // Act
@@ -271,7 +271,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -280,7 +280,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         sequence.NumberInSequence(flight2).ShouldBe(2);
         sequence.NumberInSequence(flight3).ShouldBe(3);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA3", 0);
 
         // Act
@@ -332,7 +332,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
 
@@ -342,7 +342,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         sequence.NumberInSequence(flight3).ShouldBe(3);
         sequence.NumberInSequence(flight4).ShouldBe(4);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA4", 0); // Max 5 minute delay for flight4
 
         // Act
@@ -387,7 +387,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -396,7 +396,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         sequence.NumberInSequence(flight2).ShouldBe(2);
         sequence.NumberInSequence(flight3).ShouldBe(3);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA3", 0); // 0 delay for flight3
 
         // Act
@@ -428,7 +428,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -437,7 +437,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         var slotEnd = now.AddMinutes(15);
         sequence.CreateSlot(slotStart, slotEnd, [flight.AssignedRunwayIdentifier]);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA1", 0); // Zero delay
 
         // Act
@@ -462,7 +462,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -485,7 +485,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
         });
         sequence.ChangeRunwayMode(newRunwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode);
 
-        var handler = GetHandler(instanceManager, sequence);
+        var handler = GetHandler(sessionManager, sequence);
         var request = new ManualDelayRequest("YSSY", "QFA1", 0); // Zero delay
 
         // Act
@@ -496,14 +496,14 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
     }
 
     ManualDelayRequestHandler GetHandler(
-        IMaestroInstanceManager instanceManager,
+        ISessionManager sessionManager,
         Sequence sequence,
         IMediator? mediator = null)
     {
         mediator ??= Substitute.For<IMediator>();
 
         return new ManualDelayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());

@@ -3,14 +3,14 @@ using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class ResumeSequencingRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -29,14 +29,14 @@ public class ResumeSequencingRequestHandler(
 
         logger.Verbose("Resuming sequencing for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
 
-            var flight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
+            var flight = session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
             if (flight is null)
                 throw new MaestroException($"{request.Callsign} was not found in the desequenced list.");
 
@@ -56,16 +56,16 @@ public class ResumeSequencingRequestHandler(
                 f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
 
             sequence.Insert(Math.Max(earliestInsertionIndex, index), flight);
-            instance.Session.DeSequencedFlights.Remove(flight);
+            session.DeSequencedFlights.Remove(flight);
 
             logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

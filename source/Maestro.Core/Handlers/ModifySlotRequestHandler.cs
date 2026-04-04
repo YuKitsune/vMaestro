@@ -2,14 +2,14 @@
 using Maestro.Contracts.Slots;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class ModifySlotRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -28,22 +28,22 @@ public class ModifySlotRequestHandler(
 
         logger.Verbose("Modifying slot {SlotId} for {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
             sequence.ModifySlot(request.SlotId, request.StartTime, request.EndTime);
 
             logger.Information("Slot {SlotId} modified for {AirportIdentifier} from {StartTime} to {EndTime}", request.SlotId, request.AirportIdentifier, request.StartTime, request.EndTime);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

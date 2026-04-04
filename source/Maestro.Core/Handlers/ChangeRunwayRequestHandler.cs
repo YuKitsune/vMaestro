@@ -4,16 +4,16 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class ChangeRunwayRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
@@ -37,12 +37,12 @@ public class ChangeRunwayRequestHandler(
 
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
 
             var flight = sequence.FindFlight(request.Callsign);
             if (flight == null)
@@ -56,7 +56,7 @@ public class ChangeRunwayRequestHandler(
             var runwayMode = sequence.GetRunwayModeAt(flight.LandingTime);
             var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == runwayIdentifier);
 
-            var fixNames = instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
+            var fixNames = session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
                 ? flightDataRecord.Estimates.Select(x => x.FixIdentifier).ToArray()
                 : [];
 
@@ -70,7 +70,7 @@ public class ChangeRunwayRequestHandler(
                 request.RunwayIdentifier,
                 approachType,
                 fixNames,
-                instance.Session.Sequence.UpperWind);
+                session.Sequence.UpperWind);
 
             flight.SetRunway(request.RunwayIdentifier, trajectory);
 
@@ -95,12 +95,12 @@ public class ChangeRunwayRequestHandler(
 
             logger.Information("{Callsign} runway changed to {Runway}", flight.Callsign, request.RunwayIdentifier);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

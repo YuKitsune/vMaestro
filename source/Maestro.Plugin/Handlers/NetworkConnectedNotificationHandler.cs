@@ -1,5 +1,5 @@
 ﻿using Maestro.Core.Connectivity;
-using Maestro.Core.Hosting;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
@@ -9,13 +9,13 @@ public record NetworkConnectedNotification(string PositionIdentifier) : INotific
 
 public class NetworkConnectedNotificationHandler(
     IMaestroConnectionManager connectionManager,
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     ILogger logger)
     : INotificationHandler<NetworkConnectedNotification>
 {
     public async Task Handle(NetworkConnectedNotification notification, CancellationToken cancellationToken)
     {
-        foreach (var airportIdentifier in instanceManager.ActiveInstances)
+        foreach (var airportIdentifier in sessionManager.ActiveSessions)
         {
             if (!connectionManager.TryGetConnection(airportIdentifier, out var connection))
                 continue;

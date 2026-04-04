@@ -22,13 +22,13 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -43,8 +43,8 @@ public class ModifyWindRequestHandlerTests
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        instance.Session.Sequence.SurfaceWind.Direction.ShouldBe(340);
-        instance.Session.Sequence.SurfaceWind.Speed.ShouldBe(25);
+        session.Sequence.SurfaceWind.Direction.ShouldBe(340);
+        session.Sequence.SurfaceWind.Speed.ShouldBe(25);
     }
 
     [Fact]
@@ -56,13 +56,13 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -77,8 +77,8 @@ public class ModifyWindRequestHandlerTests
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        instance.Session.Sequence.UpperWind.Direction.ShouldBe(320);
-        instance.Session.Sequence.UpperWind.Speed.ShouldBe(45);
+        session.Sequence.UpperWind.Direction.ShouldBe(320);
+        session.Sequence.UpperWind.Speed.ShouldBe(45);
     }
 
     [Fact]
@@ -90,19 +90,19 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
 
         // Initially false
-        instance.Session.Sequence.ManualWind.ShouldBeFalse();
+        session.Sequence.ManualWind.ShouldBeFalse();
 
         var request = new ModifyWindRequest(
             "YSSY",
@@ -114,7 +114,7 @@ public class ModifyWindRequestHandlerTests
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        instance.Session.Sequence.ManualWind.ShouldBeTrue();
+        session.Sequence.ManualWind.ShouldBeTrue();
     }
 
     [Fact]
@@ -126,13 +126,13 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -167,13 +167,13 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -188,10 +188,10 @@ public class ModifyWindRequestHandlerTests
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        instance.Session.Sequence.SurfaceWind.Direction.ShouldBe(0);
-        instance.Session.Sequence.SurfaceWind.Speed.ShouldBe(0);
-        instance.Session.Sequence.UpperWind.Direction.ShouldBe(0);
-        instance.Session.Sequence.UpperWind.Speed.ShouldBe(0);
+        session.Sequence.SurfaceWind.Direction.ShouldBe(0);
+        session.Sequence.SurfaceWind.Speed.ShouldBe(0);
+        session.Sequence.UpperWind.Direction.ShouldBe(0);
+        session.Sequence.UpperWind.Speed.ShouldBe(0);
     }
 
     [Fact]
@@ -203,13 +203,13 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -224,11 +224,11 @@ public class ModifyWindRequestHandlerTests
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        instance.Session.Sequence.SurfaceWind.Direction.ShouldBe(180);
-        instance.Session.Sequence.SurfaceWind.Speed.ShouldBe(10);
-        instance.Session.Sequence.UpperWind.Direction.ShouldBe(270);
-        instance.Session.Sequence.UpperWind.Speed.ShouldBe(60);
-        instance.Session.Sequence.ManualWind.ShouldBeTrue();
+        session.Sequence.SurfaceWind.Direction.ShouldBe(180);
+        session.Sequence.SurfaceWind.Speed.ShouldBe(10);
+        session.Sequence.UpperWind.Direction.ShouldBe(270);
+        session.Sequence.UpperWind.Speed.ShouldBe(60);
+        session.Sequence.ManualWind.ShouldBeTrue();
     }
 
     [Fact]
@@ -240,14 +240,14 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());
@@ -258,9 +258,9 @@ public class ModifyWindRequestHandlerTests
             new WindDto(Direction: 320, Speed: 45),
             ManualWind: true);
 
-        var originalSurfaceWind = instance.Session.Sequence.SurfaceWind;
-        var originalUpperWind = instance.Session.Sequence.UpperWind;
-        var originalManualWind = instance.Session.Sequence.ManualWind;
+        var originalSurfaceWind = session.Sequence.SurfaceWind;
+        var originalUpperWind = session.Sequence.UpperWind;
+        var originalManualWind = session.Sequence.ManualWind;
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -270,9 +270,9 @@ public class ModifyWindRequestHandlerTests
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request);
 
         // Local session should not be modified when relaying
-        instance.Session.Sequence.SurfaceWind.ShouldBe(originalSurfaceWind);
-        instance.Session.Sequence.UpperWind.ShouldBe(originalUpperWind);
-        instance.Session.Sequence.ManualWind.ShouldBe(originalManualWind);
+        session.Sequence.SurfaceWind.ShouldBe(originalSurfaceWind);
+        session.Sequence.UpperWind.ShouldBe(originalUpperWind);
+        session.Sequence.ManualWind.ShouldBe(originalManualWind);
 
         // Should not publish notification when relaying
         await mediator.DidNotReceive().Publish(
@@ -289,14 +289,14 @@ public class ModifyWindRequestHandlerTests
             .WithRunwayMode("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ModifyWindRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());
@@ -307,9 +307,9 @@ public class ModifyWindRequestHandlerTests
             new WindDto(Direction: 320, Speed: 45),
             ManualWind: false); // Automatic update
 
-        var originalSurfaceWind = instance.Session.Sequence.SurfaceWind;
-        var originalUpperWind = instance.Session.Sequence.UpperWind;
-        var originalManualWind = instance.Session.Sequence.ManualWind;
+        var originalSurfaceWind = session.Sequence.SurfaceWind;
+        var originalUpperWind = session.Sequence.UpperWind;
+        var originalManualWind = session.Sequence.ManualWind;
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -318,9 +318,9 @@ public class ModifyWindRequestHandlerTests
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(0);
 
         // Local session should not be modified
-        instance.Session.Sequence.SurfaceWind.ShouldBe(originalSurfaceWind);
-        instance.Session.Sequence.UpperWind.ShouldBe(originalUpperWind);
-        instance.Session.Sequence.ManualWind.ShouldBe(originalManualWind);
+        session.Sequence.SurfaceWind.ShouldBe(originalSurfaceWind);
+        session.Sequence.UpperWind.ShouldBe(originalUpperWind);
+        session.Sequence.ManualWind.ShouldBe(originalManualWind);
 
         // Should not publish notification
         await mediator.DidNotReceive().Publish(

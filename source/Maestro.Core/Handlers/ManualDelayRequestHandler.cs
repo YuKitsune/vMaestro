@@ -2,14 +2,14 @@
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class ManualDelayRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -28,12 +28,12 @@ public class ManualDelayRequestHandler(
 
         logger.Verbose("Setting maximum delay for {Callsign} to {MaximumDelayMinutes}min at {AirportIdentifier}", request.Callsign, request.MaximumDelayMinutes, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
             var flight = sequence.FindFlight(request.Callsign);
             if (flight == null)
                 throw new MaestroException($"{request.Callsign} not found");
@@ -52,12 +52,12 @@ public class ManualDelayRequestHandler(
 
             logger.Information("Set maximum delay for {Callsign} to {MaximumDelay}", request.Callsign, maximumDelay);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

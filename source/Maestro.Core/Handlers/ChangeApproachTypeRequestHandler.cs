@@ -2,16 +2,16 @@
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class ChangeApproachTypeRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     ITrajectoryService trajectoryService,
     IClock clock,
@@ -32,12 +32,12 @@ public class ChangeApproachTypeRequestHandler(
 
         logger.Verbose("Changing approach type for {Callsign} to {NewApproachType} at {AirportIdentifier}", request.Callsign, request.ApproachType, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
 
             var flight = sequence.FindFlight(request.Callsign);
             if (flight == null)
@@ -46,7 +46,7 @@ public class ChangeApproachTypeRequestHandler(
                 return;
             }
 
-            var fixNames = instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
+            var fixNames = session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
                 ? flightDataRecord.Estimates.Select(x => x.FixIdentifier).ToArray()
                 : [];
 
@@ -56,7 +56,7 @@ public class ChangeApproachTypeRequestHandler(
                 flight.AssignedRunwayIdentifier,
                 request.ApproachType,
                 fixNames,
-                instance.Session.Sequence.UpperWind);
+                session.Sequence.UpperWind);
 
             flight.SetApproachType(request.ApproachType, trajectory);
 
@@ -71,12 +71,12 @@ public class ChangeApproachTypeRequestHandler(
 
             logger.Information("{Callsign} approach type changed to {ApproachType}", flight.Callsign, request.ApproachType);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

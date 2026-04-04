@@ -32,7 +32,7 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, session, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -42,7 +42,7 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new DesequenceRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -84,7 +84,7 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -93,7 +93,7 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new DesequenceRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -122,7 +122,7 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, session, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -132,7 +132,7 @@ public class DesequenceRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new DesequenceRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());

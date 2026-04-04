@@ -46,14 +46,14 @@ public class CreateSlotRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new CreateSlotRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -107,14 +107,14 @@ public class CreateSlotRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new CreateSlotRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -163,14 +163,14 @@ public class CreateSlotRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new CreateSlotRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -215,7 +215,7 @@ public class CreateSlotRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -223,7 +223,7 @@ public class CreateSlotRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new CreateSlotRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());

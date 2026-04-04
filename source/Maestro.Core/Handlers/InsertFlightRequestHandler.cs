@@ -4,7 +4,6 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
@@ -15,7 +14,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class InsertFlightRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IPerformanceLookup performanceLookup,
     IAirportConfigurationProvider airportConfigurationProvider,
@@ -40,15 +39,15 @@ public class InsertFlightRequestHandler(
 
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
             var callsign = request.Callsign?.Trim().ToUpperInvariant().Truncate(MaxCallsignLength)!;
             var isDummyFlight = string.IsNullOrWhiteSpace(callsign);
             if (isDummyFlight)
-                callsign = instance.Session.NewDummyCallsign();
+                callsign = session.NewDummyCallsign();
 
             logger.Verbose("Inserting {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
 
@@ -62,7 +61,7 @@ public class InsertFlightRequestHandler(
             {
                 ExactInsertionOptions exactInsertionOptions => InsertExact(
                     airportConfiguration,
-                    instance.Session,
+                    session,
                     request.AirportIdentifier,
                     callsign,
                     performanceData,
@@ -71,7 +70,7 @@ public class InsertFlightRequestHandler(
 
                 RelativeInsertionOptions relativeInsertionOptions => InsertRelative(
                     airportConfiguration,
-                    instance.Session,
+                    session,
                     request.AirportIdentifier,
                     callsign,
                     performanceData,
@@ -80,7 +79,7 @@ public class InsertFlightRequestHandler(
 
                 DepartureInsertionOptions departureInsertionOptions => InsertDeparture(
                     airportConfiguration,
-                    instance.Session,
+                    session,
                     request.AirportIdentifier,
                     callsign,
                     performanceData,
@@ -92,12 +91,12 @@ public class InsertFlightRequestHandler(
 
             logger.Information("Inserted flight {Callsign} with landing time {LandingTime:HHmm} (target time {TargetTime:HHmm}", callsign, flight.LandingTime, flight.TargetLandingTime);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

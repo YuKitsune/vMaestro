@@ -46,7 +46,7 @@ public class FlightDto
     public required string DestinationIdentifier { get; init; }
 
     /// <summary>
-    /// Whether the flight originated from a departure airport covered by this Maestro instance.
+    /// Whether the flight originated from a departure airport covered by this Maestro session.
     /// </summary>
     [Key(6)]
     public required bool IsFromDepartureAirport { get; init; }

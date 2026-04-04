@@ -1,15 +1,21 @@
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Sessions;
 
-public class Session
+public class Session : IAsyncDisposable
 {
     int _dummyCounter = 1;
+    readonly IMediator _mediator;
+    readonly ILogger _logger;
+    readonly BackgroundTask _backgroundTask;
 
+    public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public string AirportIdentifier => Sequence.AirportIdentifier;
     public List<PendingFlight> PendingFlights { get; } = new();
     public List<Flight> DeSequencedFlights { get; } = new();
@@ -22,10 +28,16 @@ public class Session
     /// </summary>
     public Dictionary<string, FlightDataRecord> FlightDataRecords { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public Session(Sequence sequence, ILogger logger)
+    public Session(Sequence sequence, IMediator mediator, ILogger logger)
     {
         Sequence = sequence;
         LandingStatistics = new LandingStatistics(logger);
+
+        _mediator = mediator;
+        _logger = logger;
+
+        _backgroundTask = new BackgroundTask(PeriodicMaintenanceTask);
+        _backgroundTask.Start();
     }
 
     // TODO: Move dummy stuff to a separate service
@@ -81,5 +93,33 @@ public class Session
             IsFromDepartureAirport = pending.IsFromDepartureAirport,
             IsHighPriority = pending.IsHighPriority
         };
+    }
+
+    async Task PeriodicMaintenanceTask(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+
+                await _mediator.Send(new CleanUpFlightsRequest(AirportIdentifier), cancellationToken);
+                await _mediator.Send(new TrySwapRunwayModesRequest(AirportIdentifier), cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Expected during shutdown
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Background maintenance failed for {AirportIdentifier}", AirportIdentifier);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _backgroundTask.DisposeAsync();
+        Semaphore.Dispose();
     }
 }

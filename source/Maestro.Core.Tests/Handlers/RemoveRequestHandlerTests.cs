@@ -2,8 +2,8 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -57,7 +57,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -65,17 +65,17 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first initially");
         sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second initially");
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        instance.Session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
+        session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
 
-        var pendingFlight = instance.Session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
+        var pendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
         pendingFlight.ShouldNotBeNull();
         pendingFlight.IsFromDepartureAirport.ShouldBeTrue();
         pendingFlight.IsHighPriority.ShouldBe(highPriority);
@@ -95,20 +95,20 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.DeSequencedFlights.Add(flight1);
+        session.DeSequencedFlights.Add(flight1);
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var sessionDto = instance.Session.Snapshot();
+        var sessionDto = session.Snapshot();
         sessionDto.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
         sessionDto.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in desequenced list");
         sessionDto.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
@@ -140,7 +140,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -148,7 +148,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         flight1.LandingTime.ShouldBe(now.AddMinutes(10), "flight1 lands at FF + TTG = -2 + 12");
         flight2.LandingTime.ShouldBe(now.AddMinutes(13), "flight2 delayed behind flight1 by acceptance rate");
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act
@@ -165,11 +165,11 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenRemovingAFlightThatDoesNotExist_AnExceptionIsThrown()
     {
         // Arrange
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "NONEXISTENT");
 
         // Act & Assert
@@ -183,13 +183,13 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
     public async Task WhenRemovingAFlightFromThePendingList_AnExceptionIsThrown()
     {
         // Arrange
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.PendingFlights.Add(new PendingFlight("QFA123", IsFromDepartureAirport: false, IsHighPriority: false));
+        session.PendingFlights.Add(new PendingFlight("QFA123", IsFromDepartureAirport: false, IsHighPriority: false));
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
 
         // Act & Assert
@@ -212,7 +212,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
@@ -220,7 +220,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new RemoveRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());
@@ -234,15 +234,15 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         sequence.Flights.ShouldContain(flight, "Flight should remain in sequence when relaying to master");
-        instance.Session.PendingFlights.ShouldNotContain(f => f.Callsign == "QFA123", "Flight should not be added to pending list when relaying to master");
+        session.PendingFlights.ShouldNotContain(f => f.Callsign == "QFA123", "Flight should not be added to pending list when relaying to master");
     }
 
-    RemoveRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence)
+    RemoveRequestHandler GetRequestHandler(ISessionManager sessionManager, Sequence sequence)
     {
         var mediator = Substitute.For<IMediator>();
 
         return new RemoveRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());

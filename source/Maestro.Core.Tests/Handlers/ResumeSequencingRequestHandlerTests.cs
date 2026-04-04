@@ -43,11 +43,11 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.DeSequencedFlights.Add(flight);
+        session.DeSequencedFlights.Add(flight);
 
         session.DeSequencedFlights.Count.ShouldBe(1, "Flight should be in desequenced list");
         sequence.Flights.Count.ShouldBe(0, "No flights in sequence initially");
@@ -55,7 +55,7 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ResumeSequencingRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -92,18 +92,18 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithFlightsInOrder(flight1, flight2)
                 .WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.DeSequencedFlights.Add(flight3);
+        session.DeSequencedFlights.Add(flight3);
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ResumeSequencingRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -147,13 +147,13 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithFlightsInOrder(frozenFlight1, frozenFlight2)
                 .WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.DeSequencedFlights.Add(flight3);
+        session.DeSequencedFlights.Add(flight3);
 
         var originalFrozenFlight1LandingTime = frozenFlight1.LandingTime;
         var originalFrozenFlight2LandingTime = frozenFlight2.LandingTime;
@@ -161,7 +161,7 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ResumeSequencingRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -196,17 +196,17 @@ public class ResumeSequencingRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, session, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        instance.Session.DeSequencedFlights.Add(flight);
+        session.DeSequencedFlights.Add(flight);
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ResumeSequencingRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());

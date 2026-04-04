@@ -3,8 +3,8 @@ using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -74,7 +74,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
 
         var trajectoryService = new MockTrajectoryService(ttg);
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithRunwayMode(_runwayMode)
@@ -84,10 +84,10 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         sequence.Flights[0].Callsign.ShouldBe("QFA1");
         sequence.Flights[1].Callsign.ShouldBe("QFA2");
 
-        var handler = GetRequestHandler(instanceManager, sequence, trajectoryService);
+        var handler = GetRequestHandler(sessionManager, sequence, trajectoryService);
 
         // Update flight2's estimates so its landing estimate is earlier than flight1
-        instance.Session.FlightDataRecords["QFA2"] = new FlightDataRecord(
+        session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", flight2.AircraftType, flight2.AircraftCategory, flight2.WakeCategory,
             flight2.OriginIdentifier, flight2.DestinationIdentifier, null, null,
             [new FixEstimate("RIVET", now.AddMinutes(5)), new FixEstimate("YSSY", now.AddMinutes(15))],
@@ -135,20 +135,20 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithSingleRunway("34L", TimeSpan.FromSeconds(180))
                 .WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, trajectoryService);
+        var handler = GetRequestHandler(sessionManager, sequence, trajectoryService);
 
         var originalFlight1LandingTime = flight1.LandingTime;
 
         // Change the landing estimate of the last flight to be earlier than the second flight
         var newFeederFixEstimate = now.AddMinutes(-8);
-        instance.Session.FlightDataRecords["QFA3"] = new FlightDataRecord(
+        session.FlightDataRecords["QFA3"] = new FlightDataRecord(
             "QFA3", flight3.AircraftType, flight3.AircraftCategory, flight3.WakeCategory,
             flight3.OriginIdentifier, flight3.DestinationIdentifier, null, null,
             [new FixEstimate("RIVET", newFeederFixEstimate), new FixEstimate("YSSY", newFeederFixEstimate.Add(_defaultTtg))],
@@ -186,11 +186,11 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(now.AddMinutes(5), manual: true)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         flight.ManualFeederFixEstimate.ShouldBeTrue("Manual feeder fix estimate should initially be set");
@@ -215,18 +215,18 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(landingTime)
             .Build();
 
-        var (instanceManager, instance, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
 
         // Re-route the flight to a new feeder fix
         var newFeederFixEstimate = now.AddMinutes(3);
-        instance.Session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+        session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", flight.AircraftType, flight.AircraftCategory, flight.WakeCategory,
             flight.OriginIdentifier, flight.DestinationIdentifier, null, null,
             [new FixEstimate("WELSH", newFeederFixEstimate), new FixEstimate("TESAT", landingTime)],
@@ -251,11 +251,11 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -277,11 +277,11 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .ManualDelay(TimeSpan.FromMinutes(5))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -304,11 +304,11 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .ManualDelay(TimeSpan.FromMinutes(5))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -333,12 +333,12 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithTrajectory(new Trajectory(_defaultTtg))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
-        var handler = GetRequestHandler(instanceManager, sequence, trajectoryService, mediator);
+        var handler = GetRequestHandler(sessionManager, sequence, trajectoryService, mediator);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -399,11 +399,11 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithActivationTime(now.Subtract(TimeSpan.FromMinutes(10)))
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, trajectoryService);
+        var handler = GetRequestHandler(sessionManager, sequence, trajectoryService);
         var request = new RecomputeRequest("YSSY", "QFA1");
 
         // Act
@@ -426,7 +426,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithRunwayMode(_runwayMode).WithFlight(flight))
             .Build();
 
@@ -439,7 +439,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         var logger = Substitute.For<Serilog.ILogger>();
 
         var handler = new RecomputeRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             airportConfigurationProvider,
             trajectoryService,
@@ -461,7 +461,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
     }
 
     RecomputeRequestHandler GetRequestHandler(
-        IMaestroInstanceManager instanceManager,
+        ISessionManager sessionManager,
         Sequence sequence,
         ITrajectoryService? trajectoryService = null,
         IMediator? mediator = null)
@@ -475,7 +475,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         var logger = Substitute.For<Serilog.ILogger>();
 
         return new RecomputeRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             trajectoryService,

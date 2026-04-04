@@ -4,16 +4,16 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class RecomputeRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
@@ -35,12 +35,12 @@ public class RecomputeRequestHandler(
 
         logger.Verbose("Recomputing {Callsign} for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
             var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
             var flight = sequence.FindFlight(request.Callsign);
@@ -51,7 +51,7 @@ public class RecomputeRequestHandler(
             }
 
             // Recalculate the feeder fix in case of a re-route
-            instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord);
+            session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord);
             var feederFix = flightDataRecord?.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
             var landingEstimate = flightDataRecord?.Estimates.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
 
@@ -73,7 +73,7 @@ public class RecomputeRequestHandler(
                 runway.Identifier,
                 runway.ApproachType,
                 fixNames,
-                instance.Session.Sequence.UpperWind);
+                session.Sequence.UpperWind);
 
             // Update feeder fix (may have changed due to re-routing)
             flight.SetFeederFix(
@@ -104,12 +104,12 @@ public class RecomputeRequestHandler(
 
             logger.Information("{Callsign} recomputed", flight.Callsign);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

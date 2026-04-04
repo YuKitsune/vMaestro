@@ -5,17 +5,17 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class FlightUpdatedHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IFlightUpdateRateLimiter rateLimiter,
     IAirportConfigurationProvider airportConfigurationProvider,
@@ -29,26 +29,26 @@ public class FlightUpdatedHandler(
     {
         try
         {
-            if (!instanceManager.InstanceExists(notification.Destination))
+            if (!sessionManager.SessionExists(notification.Destination))
                 return;
 
             logger.Debug("FDR update received for {Callsign}", notification.Callsign);
 
-            var instance = await instanceManager.GetInstance(notification.Destination, cancellationToken);
+            var session = await sessionManager.GetSession(notification.Destination, cancellationToken);
             SessionDto sessionDto;
 
-            using (await instance.Semaphore.LockAsync(cancellationToken))
+            using (await session.Semaphore.LockAsync(cancellationToken))
             {
                 // Check each list individually to find the flight
-                var sequencedFlight = instance.Session.Sequence.FindFlight(notification.Callsign);
-                var pendingFlight = instance.Session.PendingFlights.SingleOrDefault(f => f.Callsign == notification.Callsign);
-                var desequencedFlight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == notification.Callsign);
+                var sequencedFlight = session.Sequence.FindFlight(notification.Callsign);
+                var pendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == notification.Callsign);
+                var desequencedFlight = session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == notification.Callsign);
 
                 var isKnownFlight = sequencedFlight is not null || pendingFlight is not null || desequencedFlight is not null;
 
                 // Rate-limit updates for known flights using the last seen time from the store
                 if (isKnownFlight &&
-                    instance.Session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData))
+                    session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData))
                 {
                     if (!rateLimiter.ShouldUpdate(existingData.LastSeen))
                     {
@@ -78,7 +78,7 @@ public class FlightUpdatedHandler(
                     notification.Position,
                     notification.Estimates,
                     clock.UtcNow());
-                instance.Session.FlightDataRecords[notification.Callsign] = flightData;
+                session.FlightDataRecords[notification.Callsign] = flightData;
 
                 var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.Destination);
                 if (!isKnownFlight)
@@ -106,7 +106,7 @@ public class FlightUpdatedHandler(
                             IsFromDepartureAirport: isFromDepartureAirport,
                             IsHighPriority: feederFix is null);
 
-                        instance.Session.PendingFlights.Add(newPendingFlight);
+                        session.PendingFlights.Add(newPendingFlight);
 
                         var pendingReason = (isFromDepartureAirport && !hasDeparted) ? "not yet departed"
                             : feederFix is null ? "no feeder fix match"
@@ -141,7 +141,7 @@ public class FlightUpdatedHandler(
                     }
 
                     // Use the default runway for now. This will get re-calculated in the scheduling phase.
-                    var runwayMode = instance.Session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
+                    var runwayMode = session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
                     var runway = runwayMode.Default;
 
                     var trajectory = trajectoryService.GetTrajectory(
@@ -151,19 +151,19 @@ public class FlightUpdatedHandler(
                         runway.Identifier,
                         runway.ApproachType,
                         notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
-                        instance.Session.Sequence.UpperWind);
+                        session.Sequence.UpperWind);
 
                     // New flights can be inserted in front of existing Unstable and Stable flights on the same runway
-                    var earliestInsertionIndex = instance.Session.Sequence.FindLastIndex(f =>
+                    var earliestInsertionIndex = session.Sequence.FindLastIndex(f =>
                         f.State is not State.Unstable and not State.Stable &&
                         f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
-                    var insertionIndex = instance.Session.Sequence.FindIndex(
+                    var insertionIndex = session.Sequence.FindIndex(
                         earliestInsertionIndex,
                         f => f.LandingEstimate.IsAfter(approximateLandingEstimate.Value));
 
                     if (insertionIndex == -1)
-                        insertionIndex = Math.Min(earliestInsertionIndex, instance.Session.Sequence.Flights.Count);
+                        insertionIndex = Math.Min(earliestInsertionIndex, session.Sequence.Flights.Count);
 
                     sequencedFlight = new Flight(
                         callsign: notification.Callsign,
@@ -183,7 +183,7 @@ public class FlightUpdatedHandler(
                         activatedTime: clock.UtcNow(),
                         position: notification.Position);
 
-                    instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
+                    session.Sequence.Insert(insertionIndex, sequencedFlight);
                     logger.Information("{Callsign} added to the sequence", notification.Callsign);
                     logger.Information(
                         "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
@@ -225,7 +225,7 @@ public class FlightUpdatedHandler(
                             sequencedFlight.AssignedRunwayIdentifier,
                             sequencedFlight.ApproachType,
                             notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
-                            instance.Session.Sequence.UpperWind);
+                            session.Sequence.UpperWind);
                         sequencedFlight.SetTrajectory(updatedTrajectory);
                         logger.Debug(
                             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
@@ -245,17 +245,17 @@ public class FlightUpdatedHandler(
                     if (sequencedFlight.State is State.Unstable)
                     {
                         // Do not overtake any stable flights
-                        var currentIndex = instance.Session.Sequence.IndexOf(sequencedFlight);
-                        var earliestIndex = instance.Session.Sequence.FindLastIndex(
+                        var currentIndex = session.Sequence.IndexOf(sequencedFlight);
+                        var earliestIndex = session.Sequence.FindLastIndex(
                             currentIndex,
                             f => f.AssignedRunwayIdentifier == sequencedFlight.AssignedRunwayIdentifier &&
                                  f.State != State.Unstable) + 1;
 
-                        var desiredIndex = instance.Session.Sequence.FindIndex(f =>
+                        var desiredIndex = session.Sequence.FindIndex(f =>
                             f.LandingEstimate.IsAfter(sequencedFlight.LandingEstimate));
 
                         var newIndex = desiredIndex == -1
-                            ? instance.Session.Sequence.Flights.Count // No flight has a later estimate - move to end of sequence
+                            ? session.Sequence.Flights.Count // No flight has a later estimate - move to end of sequence
                             : desiredIndex;
 
                         // Cannot move before stable flights that are currently before us
@@ -265,7 +265,7 @@ public class FlightUpdatedHandler(
                         if (newIndex != currentIndex)
                         {
                             sequencedFlight.InvalidateSequenceData();
-                            instance.Session.Sequence.Move(sequencedFlight, newIndex);
+                            session.Sequence.Move(sequencedFlight, newIndex);
                         }
                     }
 
@@ -274,12 +274,12 @@ public class FlightUpdatedHandler(
                     logger.Debug("Flight updated: {Flight}", sequencedFlight);
                 }
 
-                sessionDto = instance.Session.Snapshot();
+                sessionDto = session.Snapshot();
             }
 
             await mediator.Publish(
                 new SessionUpdatedNotification(
-                    instance.AirportIdentifier,
+                    session.AirportIdentifier,
                     sessionDto),
                 cancellationToken);
         }

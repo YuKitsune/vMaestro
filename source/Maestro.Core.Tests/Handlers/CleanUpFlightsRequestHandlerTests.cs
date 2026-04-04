@@ -2,7 +2,7 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using NSubstitute;
@@ -24,11 +24,11 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
         // Arrange
         var airportConfiguration = CreateAirportConfiguration();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -54,13 +54,13 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -86,13 +86,13 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
                 .Build())
             .ToArray();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(landedFlights))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -116,13 +116,13 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
                 .Build())
             .ToArray();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(landedFlights))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -158,13 +158,13 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Landed)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(oldFlight, recentFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -188,13 +188,13 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Landed)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -232,13 +232,13 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Landed)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(unstableFlight, oldLandedFlight, stableFlight, recentLandedFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -266,13 +266,13 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
                 .Build())
             .ToArray();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(landedFlights))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration);
         var request = new CleanUpFlightsRequest(airportConfiguration.Identifier);
 
         // Act
@@ -296,11 +296,11 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     }
 
     CleanUpFlightsRequestHandler GetRequestHandler(
-        IMaestroInstanceManager instanceManager,
+        ISessionManager sessionManager,
         AirportConfiguration airportConfiguration)
     {
         var logger = Substitute.For<ILogger>();
         var configProvider = new AirportConfigurationProvider([airportConfiguration]);
-        return new CleanUpFlightsRequestHandler(instanceManager, configProvider, clockFixture.Instance, logger);
+        return new CleanUpFlightsRequestHandler(sessionManager, configProvider, clockFixture.Instance, logger);
     }
 }

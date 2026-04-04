@@ -2,14 +2,14 @@
 using Maestro.Contracts.Slots;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class CreateSlotRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -28,12 +28,12 @@ public class CreateSlotRequestHandler(
 
         logger.Verbose("Creating slot for {AirportIdentifier} from {StartTime:HHmm} to {EndTime:HHmm}", request.AirportIdentifier, request.StartTime, request.EndTime);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
 
             var slotId = sequence.CreateSlot(request.StartTime, request.EndTime, request.RunwayIdentifiers);
 
@@ -44,12 +44,12 @@ public class CreateSlotRequestHandler(
                 request.StartTime,
                 request.EndTime);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }
