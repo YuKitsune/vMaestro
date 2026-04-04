@@ -198,7 +198,7 @@ public static class TestBuilders
         new("YSSY", "QFA123", FixedTime.AddMinutes(5));
 
     public static MoveFlightRequest CreateMoveFlightRequest() =>
-        new("YSSY", "QFA123", ["34L", "34R"], FixedTime.AddMinutes(15));
+        new("YSSY", "QFA123", "34L", FixedTime.AddMinutes(15));
 
     public static SwapFlightsRequest CreateSwapFlightsRequest() =>
         new("YSSY", "QFA123", "QFA456");

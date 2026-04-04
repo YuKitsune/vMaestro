@@ -15,8 +15,6 @@ using Color = Maestro.Core.Configuration.Color;
 
 namespace Maestro.Wpf.ViewModels;
 
-public record ApproachTypeLookup(string FeederFix, string Runway, string ApproachType);
-
 public partial class FlightLabelViewModel(
     IMediator mediator,
     IErrorReporter errorReporter,
@@ -24,7 +22,7 @@ public partial class FlightLabelViewModel(
     GlobalColourConfiguration globalColorConfiguration,
     FlightDto flightViewModel,
     string[] availableRunways,
-    ApproachTypeLookup[] availableApproachTypes)
+    string[] availableApproachTypes)
     : ObservableObject
 {
     const string None = "NONE";
@@ -44,12 +42,7 @@ public partial class FlightLabelViewModel(
 
     public string[] AvailableRunways => availableRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
 
-    public string[] AvailableApproachTypes => availableApproachTypes.Where(a =>
-            a.FeederFix == FlightViewModel.FeederFixIdentifier &&
-            a.Runway == FlightViewModel.AssignedRunwayIdentifier &&
-            a.ApproachType != FlightViewModel.ApproachType)
-        .Select(a => string.IsNullOrEmpty(a.ApproachType) ? None : a.ApproachType)
-        .ToArray();
+    public string[] AvailableApproachTypes => availableApproachTypes.Where(a => a != FlightViewModel.ApproachType).ToArray();
 
     public bool CanChangeApproachType => AvailableApproachTypes.Any();
 

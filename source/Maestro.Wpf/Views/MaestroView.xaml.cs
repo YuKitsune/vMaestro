@@ -795,15 +795,21 @@ public partial class MaestroView
             var layout = CalculateLadderLayout(view, labelLayout!, canvasWidth);
 
             var clickedLadder = GetClickedLadder(clickPosition.X, layout);
-            var filterItems = clickedLadder != null && clickedLadder.Index < view.Ladders.Length
+            var availableRunways = clickedLadder != null && clickedLadder.Index < view.Ladders.Length
                 ? view.Ladders[clickedLadder.Index].Runways
                 : Array.Empty<string>();
+
+            // If the selected ladder doesn't have the assigned runway, move the flight to the first runway defined
+            // in the new ladder
+            var runwayIdentifier = ViewModel.SelectedFlight.AssignedRunwayIdentifier;
+            if (availableRunways.Length != 0 && !availableRunways.Contains(runwayIdentifier))
+                runwayIdentifier = availableRunways.First();
 
             // Move the selected flight to the clicked position
             ViewModel.MoveFlightWithoutConfirmationCommand.Execute(new MoveFlightRequest(
                 ViewModel.AirportIdentifier,
                 ViewModel.SelectedFlight.Callsign,
-                filterItems,
+                runwayIdentifier,
                 clickTime
             ));
 
@@ -1003,33 +1009,11 @@ public partial class MaestroView
             if (flightLabel.DataContext is FlightLabelViewModel flightLabelViewModel)
             {
                 var flight = flightLabelViewModel.FlightViewModel;
-                var view = ViewModel.SelectedView;
-
-                // Find which ladder this flight label belongs to by looking up in the dictionary
-                var ladderIndex = -1;
-                foreach (var kvp in _flightLabels)
-                {
-                    if (kvp.Value == flightLabel)
-                    {
-                        // Key format is "{callsign}_{ladderIndex}"
-                        var parts = kvp.Key.Split('_');
-                        if (parts.Length == 2 && int.TryParse(parts[1], out var index))
-                        {
-                            ladderIndex = index;
-                            break;
-                        }
-                    }
-                }
-
-                // Get runway filters from the ladder configuration
-                var runwayFilters = ladderIndex >= 0 && ladderIndex < view.Ladders.Length
-                    ? view.Ladders[ladderIndex].Runways
-                    : Array.Empty<string>();
 
                 ViewModel.MoveFlightWithConfirmationCommand.Execute(new MoveFlightRequest(
                     ViewModel.AirportIdentifier,
                     flight.Callsign,
-                    runwayFilters,
+                    flight.AssignedRunwayIdentifier,
                     newTime
                 ));
 
@@ -1221,7 +1205,7 @@ public partial class MaestroView
                 // Reuse existing flight label or create new one
                 if (!_flightLabels.TryGetValue(key, out var flightLabel))
                 {
-                    var approachTypeLookups = GetApproachTypeLookups(flight);
+                    var approachTypes = GetApproachTypes(flight);
                     // TODO: Grab the config from the View constructor or something
                     var labelConfiguration = Ioc.Default.GetRequiredService<LabelsConfiguration>();
 
@@ -1233,7 +1217,7 @@ public partial class MaestroView
                         labelConfiguration.GlobalColours,
                         flight,
                         ViewModel.Runways,
-                        approachTypeLookups);
+                        approachTypes);
 
                     flightLabelViewModel.UpdateLabelItems(labelLayout, flight, ladderIndex);
 
@@ -1290,14 +1274,14 @@ public partial class MaestroView
         }
     }
 
-    static ApproachTypeLookup[] GetApproachTypeLookups(FlightDto flight)
+    static string[] GetApproachTypes(FlightDto flight)
     {
         var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(flight.DestinationIdentifier);
-        var results = new HashSet<ApproachTypeLookup>();
-        foreach (var arrivalConfiguration in airportConfiguration.Trajectories)
+        var results = new HashSet<string>();
+        foreach (var trajectoryConfiguration in airportConfiguration.Trajectories)
         {
-            results.Add(new ApproachTypeLookup(arrivalConfiguration.FeederFix, arrivalConfiguration.RunwayIdentifier, arrivalConfiguration.ApproachType));
+            results.Add(trajectoryConfiguration.ApproachType);
         }
 
         return results.ToArray();
