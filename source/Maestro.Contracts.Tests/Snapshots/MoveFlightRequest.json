@@ -1,9 +1,6 @@
 {
   "airportIdentifier": "YSSY",
   "callsign": "QFA123",
-  "runwayIdentifiers": [
-    "34L",
-    "34R"
-  ],
+  "runwayIdentifier": "34L",
   "newLandingTime": "2024-06-15T12:45:00+00:00"
 }

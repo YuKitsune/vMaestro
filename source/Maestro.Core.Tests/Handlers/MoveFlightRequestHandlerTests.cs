@@ -4,6 +4,8 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Handlers;
 using Maestro.Core.Hosting;
+using Maestro.Core.Integration;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -45,7 +47,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA1",
-            ["34L"],
+            "34L",
             newLandingTime);
 
         // Act
@@ -82,7 +84,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA1",
-            ["34R"],
+            "34R",
             newLandingTime);
 
         // Act
@@ -90,6 +92,108 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34R", "Moving a flight should assign the desired runway");
+    }
+
+    [Fact]
+    public async Task ApproachTypeRemainsUnchangedWhenMovingRunways()
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        // Create configuration with 34L using A and 34R using P in mode
+        var airportConfig = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithRunwayMode(new RunwayModeConfiguration
+            {
+                Identifier = "34IVA",
+                DependencyRateSeconds = 0,
+                OffModeSeparationSeconds = 0,
+                Runways =
+                [
+                    new RunwayConfiguration
+                    {
+                        Identifier = "34L",
+                        ApproachType = "A",
+                        LandingRateSeconds = DefaultLandingRateSeconds,
+                        FeederFixes = []
+                    },
+                    new RunwayConfiguration
+                    {
+                        Identifier = "34R",
+                        ApproachType = "P",
+                        LandingRateSeconds = DefaultLandingRateSeconds,
+                        FeederFixes = []
+                    }
+                ]
+            })
+            .Build();
+
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("A")
+            .Build();
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfig)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, airportConfig);
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA1", "34R", newLandingTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.AssignedRunwayIdentifier.ShouldBe("34R", "Flight should be assigned to the requested runway");
+        flight.ApproachType.ShouldBe("A", "Flight should retain its original approach type when moved to a different runway");
+    }
+
+    [Fact]
+    public async Task TrajectoryRecalculatedWhenMovingRunways()
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        var airportConfig = CreateDualRunwayConfiguration();
+
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("A")
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(20)))
+            .Build();
+
+        var trajectoryFor34R = new Trajectory(TimeSpan.FromMinutes(25));
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory()
+            .OnRunway("34R")
+            .WithApproach("A")
+            .Returns(trajectoryFor34R);
+
+        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfig)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
+            .Build();
+
+        var handler = GetRequestHandler(instanceManager, airportConfig, trajectoryService: trajectoryService);
+
+        var newLandingTime = now.AddMinutes(12);
+        var request = new MoveFlightRequest("YSSY", "QFA1", "34R", newLandingTime);
+
+        var originalTrajectory = flight.Trajectory;
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.AssignedRunwayIdentifier.ShouldBe("34R", "Flight should be assigned to the requested runway");
+        flight.ApproachType.ShouldBe("A", "Approach type should remain unchanged");
+        flight.Trajectory.ShouldBe(trajectoryFor34R, "Trajectory should be recalculated for the new runway");
+        flight.Trajectory.ShouldNotBe(originalTrajectory, "Trajectory should be different from the original");
     }
 
     [Fact]
@@ -114,7 +218,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         flight.State.ShouldBe(State.Unstable, "Flight should initially be Unstable");
 
         var newLandingTime = now.AddMinutes(12);
-        var request = new MoveFlightRequest("YSSY", "QFA1", ["34L"], newLandingTime);
+        var request = new MoveFlightRequest("YSSY", "QFA1", "34L", newLandingTime);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -149,7 +253,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         flight.State.ShouldBe(state, $"Flight should initially be {state}");
 
         var newLandingTime = now.AddMinutes(12);
-        var request = new MoveFlightRequest("YSSY", "QFA1", ["34L"], newLandingTime);
+        var request = new MoveFlightRequest("YSSY", "QFA1", "34L", newLandingTime);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -192,7 +296,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var handler = GetRequestHandler(instanceManager);
 
         var newLandingTime = now.AddMinutes(12);
-        var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
+        var request = new MoveFlightRequest("YSSY", "QFA3", "34L", newLandingTime);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -243,7 +347,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA2",
-            ["34L"],
+            "34L",
             newLandingTime);
 
         var originalFlight1LandingTime = flight1.LandingTime;
@@ -292,7 +396,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA2",
-            ["34L"],
+            "34L",
             newLandingTime);
 
         var originalFlight1LandingTime = flight1.LandingTime;
@@ -336,7 +440,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA2",
-            ["34L"],
+            "34L",
             newLandingTime);
 
         // Act & Assert
@@ -374,7 +478,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA2",
-            ["34L"],
+            "34L",
             newLandingTime);
 
         // Act
@@ -422,7 +526,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA3",
-            ["34L"],
+            "34L",
             newLandingTime);
 
         // Act & Assert
@@ -468,7 +572,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var request = new MoveFlightRequest(
             "YSSY",
             "QFA3",
-            ["34L"],
+            "34L",
             newLandingTime);
 
         // Act
@@ -515,7 +619,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var handler = GetRequestHandler(instanceManager, airportConfiguration, slaveConnectionManager, mediator);
 
         var newLandingTime = now.AddMinutes(12);
-        var request = new MoveFlightRequest("YSSY", "QFA3", ["34L"], newLandingTime);
+        var request = new MoveFlightRequest("YSSY", "QFA3", "34L", newLandingTime);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -555,12 +659,14 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
                     new RunwayConfiguration
                     {
                         Identifier = "34L",
+                        ApproachType = "A",
                         LandingRateSeconds = DefaultLandingRateSeconds,
                         FeederFixes = []
                     },
                     new RunwayConfiguration
                     {
                         Identifier = "34R",
+                        ApproachType = "P",
                         LandingRateSeconds = DefaultLandingRateSeconds,
                         FeederFixes = []
                     }
@@ -573,11 +679,14 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         IMaestroInstanceManager instanceManager,
         AirportConfiguration? airportConfiguration = null,
         IMaestroConnectionManager? connectionManager = null,
-        IMediator? mediator = null)
+        IMediator? mediator = null,
+        MockTrajectoryService? trajectoryService = null,
+        IPerformanceLookup? performanceLookup = null)
     {
         airportConfiguration ??= CreateAirportConfiguration();
         var configProvider = new AirportConfigurationProvider([airportConfiguration]);
-        var trajectoryService = new MockTrajectoryService();
+        trajectoryService ??= new MockTrajectoryService();
+        performanceLookup ??= Substitute.For<IPerformanceLookup>();
         mediator ??= Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(
@@ -585,6 +694,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             connectionManager ?? new MockLocalConnectionManager(),
             configProvider,
             trajectoryService,
+            performanceLookup,
             mediator,
             clock,
             Substitute.For<ILogger>());

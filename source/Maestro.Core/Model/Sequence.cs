@@ -120,18 +120,6 @@ public class Sequence
         }
     }
 
-    /// <summary>
-    ///     Throws a <see cref="MaestroException"/> if a flight <b>cannot</b> be inserted or moved to the provided
-    ///     <paramref name="index"/>.
-    /// </summary>
-    public void ThrowIfSlotIsUnavailable(int index, string runwayIdentifier)
-    {
-        lock (_gate)
-        {
-            ValidateInsertionBetweenImmovableFlights(index, runwayIdentifier);
-        }
-    }
-
     public void ThrowIsTimeIsUnavailable(string callsign, DateTimeOffset landingTime, string runwayIdentifier)
     {
         lock (_gate)
