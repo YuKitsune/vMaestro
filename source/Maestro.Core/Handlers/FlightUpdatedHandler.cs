@@ -108,7 +108,11 @@ public class FlightUpdatedHandler(
 
                         instance.Session.PendingFlights.Add(newPendingFlight);
 
-                        logger.Information("Added {Callsign} to the pending list", notification.Callsign);
+                        var pendingReason = (isFromDepartureAirport && !hasDeparted) ? "not yet departed"
+                            : feederFix is null ? "no feeder fix match"
+                            : !feederFixEstimateIsKnown ? "feeder fix estimate unknown"
+                            : "no landing estimate";
+                        logger.Information("Added {Callsign} to the pending list ({Reason})", notification.Callsign, pendingReason);
 
                         await mediator.Send(new SendCoordinationMessageRequest(
                             notification.Destination,
@@ -130,7 +134,11 @@ public class FlightUpdatedHandler(
                     // Safe to unwrap as we exit early when adding flights to the Pending list
                     // If the feederFix is null, the flight should be added to the Pending list
                     if (feederFix!.Estimate - clock.UtcNow() > flightCreationThreshold)
+                    {
+                        logger.Debug("{Callsign} not yet within creation threshold (FF estimate {Estimate:HHmm}, threshold {Threshold})",
+                            notification.Callsign, feederFix.Estimate, flightCreationThreshold);
                         return;
+                    }
 
                     // Use the default runway for now. This will get re-calculated in the scheduling phase.
                     var runwayMode = instance.Session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);

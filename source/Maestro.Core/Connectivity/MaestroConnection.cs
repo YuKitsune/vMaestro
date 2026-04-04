@@ -150,9 +150,14 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         IsMaster = initResponse.IsMaster;
         _peers.AddRange(initResponse.ConnectedPeers);
 
+        _logger.Information(
+            "Connected to {AirportIdentifier} as {Role} ({MasterSlave}), {PeerCount} peer(s) online",
+            _airportIdentifier, Role, IsMaster ? "master" : "slave", _peers.Count);
+
         if (initResponse.Session is null)
             return;
 
+        _logger.Information("Restoring session for {AirportIdentifier} from server", _airportIdentifier);
         await _mediator.Send(
             new RestoreSessionRequest(initResponse.AirportIdentifier, initResponse.Session),
             GetMessageCancellationToken());
@@ -247,6 +252,8 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
                 return;
 
             _peers.Add(new PeerInfo(clientConnectedNotification.Callsign, clientConnectedNotification.Role));
+            _logger.Information("{Callsign} ({Role}) connected to {AirportIdentifier}",
+                clientConnectedNotification.Callsign, clientConnectedNotification.Role, _airportIdentifier);
             await _mediator.Publish(clientConnectedNotification, GetMessageCancellationToken());
         });
 
@@ -256,6 +263,8 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
                 return;
 
             _peers.RemoveAll(p => p.Callsign == clientDisconnectedNotification.Callsign);
+            _logger.Information("{Callsign} disconnected from {AirportIdentifier}",
+                clientDisconnectedNotification.Callsign, _airportIdentifier);
             await _mediator.Publish(clientDisconnectedNotification, GetMessageCancellationToken());
         });
 
