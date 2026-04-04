@@ -1,5 +1,4 @@
 ﻿using Maestro.Core.Connectivity;
-using Maestro.Core.Hosting;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
@@ -10,13 +9,13 @@ public record NetworkDisconnectedNotification : INotification;
 
 public class NetworkDisconnectedNotificationHandler(
     IMaestroConnectionManager connectionManager,
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     ILogger logger)
     : INotificationHandler<NetworkDisconnectedNotification>
 {
     public async Task Handle(NetworkDisconnectedNotification notification, CancellationToken cancellationToken)
     {
-        foreach (var airportIdentifier in instanceManager.ActiveInstances)
+        foreach (var airportIdentifier in sessionManager.ActiveSessions)
         {
             if (!connectionManager.TryGetConnection(airportIdentifier, out var connection))
                 continue;

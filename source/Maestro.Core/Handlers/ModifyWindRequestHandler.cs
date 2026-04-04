@@ -1,7 +1,7 @@
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
@@ -9,7 +9,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class ModifyWindRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -35,14 +35,14 @@ public class ModifyWindRequestHandler(
 
         logger.Verbose("Modifying wind for {AirportIdentifier}", request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            instance.Session.Sequence.SurfaceWind = new Wind(request.SurfaceWind.Direction, request.SurfaceWind.Speed);
-            instance.Session.Sequence.UpperWind = new Wind(request.UpperWind.Direction, request.UpperWind.Speed);
-            instance.Session.Sequence.ManualWind = request.ManualWind;
+            session.Sequence.SurfaceWind = new Wind(request.SurfaceWind.Direction, request.SurfaceWind.Speed);
+            session.Sequence.UpperWind = new Wind(request.UpperWind.Direction, request.UpperWind.Speed);
+            session.Sequence.ManualWind = request.ManualWind;
 
             logger.Information(
                 "Wind modified for {AirportIdentifier}: Surface {SurfaceWind}, Upper {UpperWind}, Manual={ManualWind}",
@@ -51,12 +51,12 @@ public class ModifyWindRequestHandler(
                 $"{request.UpperWind.Direction:000}/{request.UpperWind.Speed:000}",
                 request.ManualWind);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

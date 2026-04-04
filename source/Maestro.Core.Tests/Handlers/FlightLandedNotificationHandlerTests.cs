@@ -34,14 +34,14 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new FlightLandedNotificationHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             clockFixture.Instance,
@@ -77,14 +77,14 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable) // Stabilize to prevent re-assigning to the in-mode runway
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new FlightLandedNotificationHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             clockFixture.Instance,
@@ -96,7 +96,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        instance.Session.LandingStatistics.AchievedLandingRates.ShouldBeEmpty();
+        session.LandingStatistics.AchievedLandingRates.ShouldBeEmpty();
 
         await mediator.DidNotReceive().Publish(
             Arg.Any<SessionUpdatedNotification>(),
@@ -121,14 +121,14 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new FlightLandedNotificationHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             clockFixture.Instance,
@@ -141,7 +141,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        instance.Session.LandingStatistics.AchievedLandingRates.ShouldContainKey("34L");
+        session.LandingStatistics.AchievedLandingRates.ShouldContainKey("34L");
 
         await mediator.Received(1).Publish(
             Arg.Is<SessionUpdatedNotification>(n =>
@@ -175,14 +175,14 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new FlightLandedNotificationHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             clockFixture.Instance,
@@ -196,7 +196,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification2, CancellationToken.None);
 
         // Assert
-        var snapshot = instance.Session.LandingStatistics.Snapshot();
+        var snapshot = session.LandingStatistics.Snapshot();
         snapshot.RunwayLandingTimes["34L"].ActualLandingTimes.Length.ShouldBe(2);
         snapshot.RunwayLandingTimes["34L"].ActualLandingTimes[0].ShouldBe(now.AddMinutes(-5));
         snapshot.RunwayLandingTimes["34L"].ActualLandingTimes[1].ShouldBe(now.AddMinutes(-2));
@@ -232,14 +232,14 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, instance, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new FlightLandedNotificationHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             clockFixture.Instance,
@@ -253,7 +253,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification2, CancellationToken.None);
 
         // Assert
-        var snapshot = instance.Session.LandingStatistics.Snapshot();
+        var snapshot = session.LandingStatistics.Snapshot();
         snapshot.RunwayLandingTimes.ShouldContainKey("34L");
         snapshot.RunwayLandingTimes.ShouldContainKey("34R");
         snapshot.RunwayLandingTimes["34L"].ActualLandingTimes.Length.ShouldBe(1);
@@ -278,7 +278,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -286,7 +286,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new FlightLandedNotificationHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             clockFixture.Instance,

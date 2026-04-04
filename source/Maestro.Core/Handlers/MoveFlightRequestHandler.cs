@@ -4,7 +4,6 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
@@ -15,7 +14,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class MoveFlightRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
@@ -38,13 +37,13 @@ public class MoveFlightRequestHandler(
 
         logger.Verbose("Moving {Callsign} to {NewLandingTime:HHmm} at {AirportIdentifier}", request.Callsign, request.NewLandingTime, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
             var flight = sequence.FindFlight(request.Callsign);
             if (flight is null)
                 throw new MaestroException($"{request.Callsign} not found");
@@ -58,7 +57,7 @@ public class MoveFlightRequestHandler(
             // TODO: Manually set the runway for now, but we need to revisit this later
             // Re: delaying into a new runway mode
 
-            var fixNames = instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
+            var fixNames = session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
                 ? flightDataRecord.Estimates.Select(x => x.FixIdentifier).ToArray()
                 : [];
 
@@ -68,7 +67,7 @@ public class MoveFlightRequestHandler(
                 request.RunwayIdentifier,
                 flight.ApproachType,
                 fixNames,
-                instance.Session.Sequence.UpperWind);
+                session.Sequence.UpperWind);
 
             flight.SetRunway(request.RunwayIdentifier, trajectory);
 
@@ -91,12 +90,12 @@ public class MoveFlightRequestHandler(
 
             logger.Information("Flight {Callsign} moved to {NewLandingTime}", flight.Callsign, flight.LandingTime);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

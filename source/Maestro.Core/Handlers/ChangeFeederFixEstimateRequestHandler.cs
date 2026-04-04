@@ -4,16 +4,16 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class ChangeFeederFixEstimateRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
@@ -36,12 +36,12 @@ public class ChangeFeederFixEstimateRequestHandler(
 
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var flight = instance.Session.Sequence.FindFlight(request.Callsign);
+            var flight = session.Sequence.FindFlight(request.Callsign);
             if (flight == null)
             {
                 logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
@@ -50,18 +50,18 @@ public class ChangeFeederFixEstimateRequestHandler(
 
             flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
 
-            instance.Session.Sequence.RepositionByLandingEstimate(flight);
+            session.Sequence.RepositionByLandingEstimate(flight);
             if (flight.State is State.Unstable)
                 flight.SetState(airportConfiguration.ManualInteractionState, clock); // TODO: Make configurable
 
             logger.Information("{Callsign} feeder fix estimate changed to {NewFeederFixEstimate:HHmm}", flight.Callsign, request.NewFeederFixEstimate);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

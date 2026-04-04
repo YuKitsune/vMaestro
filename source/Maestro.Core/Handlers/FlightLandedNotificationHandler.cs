@@ -2,7 +2,6 @@
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Sessions;
 using MediatR;
@@ -11,7 +10,7 @@ using Serilog;
 namespace Maestro.Core.Handlers;
 
 public class FlightLandedNotificationHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     IClock clock,
@@ -20,8 +19,8 @@ public class FlightLandedNotificationHandler(
 {
     public async Task Handle(FlightLandedNotification notification, CancellationToken cancellationToken)
     {
-        var instance = await instanceManager.GetInstance(notification.AirportIdentifier, cancellationToken);
-        var flight = instance.Session.Sequence.FindFlight(notification.Callsign);
+        var session = await sessionManager.GetSession(notification.AirportIdentifier, cancellationToken);
+        var flight = session.Sequence.FindFlight(notification.Callsign);
         if (flight is null)
         {
             logger.Debug("FlightLandedNotification received for a {Callsign} who is not in the {AirportIdentifier} sequence", notification.Callsign,  notification.AirportIdentifier);
@@ -37,7 +36,7 @@ public class FlightLandedNotificationHandler(
             return;
         }
 
-        var runway = instance.Session.Sequence.CurrentRunwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
+        var runway = session.Sequence.CurrentRunwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
         if (runway is null)
         {
             logger.Information("{Callsign} landed on an off-mode runway, cannot update achieved rates", notification.Callsign);
@@ -45,16 +44,16 @@ public class FlightLandedNotificationHandler(
         }
 
         SessionDto sessionDto;
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            instance.Session.LandingStatistics.RecordLandingTime(
+            session.LandingStatistics.RecordLandingTime(
                 runway,
                 notification.ActualLandingTime,
                 clock);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
 
-            var achievedRate = instance.Session.LandingStatistics.AchievedLandingRates[runway.Identifier];
+            var achievedRate = session.LandingStatistics.AchievedLandingRates[runway.Identifier];
             if (achievedRate is AchievedRate rate)
                 logger.Information(
                     "{Callsign} landed on RWY {Runway} — avg {Average:F0}s, deviation {Deviation:+F0;-F0;0}s from {Target:F0}s target",
@@ -70,7 +69,7 @@ public class FlightLandedNotificationHandler(
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

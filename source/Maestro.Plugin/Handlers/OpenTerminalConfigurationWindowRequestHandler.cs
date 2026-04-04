@@ -1,6 +1,6 @@
 ﻿using Maestro.Core.Configuration;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Sessions;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
@@ -13,7 +13,7 @@ namespace Maestro.Plugin.Handlers;
 public class OpenTerminalConfigurationWindowRequestHandler(
     WindowManager windowManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMediator mediator,
     IClock clock,
     IErrorReporter errorReporter)
@@ -23,9 +23,9 @@ public class OpenTerminalConfigurationWindowRequestHandler(
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
 
-        var sessionDto = instance.Session.Snapshot();
+        var sessionDto = session.Snapshot();
 
         var runwayModes = airportConfiguration.RunwayModes
             .Select(r => new RunwayModeViewModel(r))

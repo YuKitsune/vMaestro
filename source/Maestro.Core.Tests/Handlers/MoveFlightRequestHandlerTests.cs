@@ -3,9 +3,9 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -37,11 +37,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest(
@@ -74,11 +74,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfig = CreateDualRunwayConfiguration();
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfig)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfig)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfig);
+        var handler = GetRequestHandler(sessionManager, airportConfig);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest(
@@ -135,11 +135,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithApproachType("A")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfig)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfig)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfig);
+        var handler = GetRequestHandler(sessionManager, airportConfig);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA1", "34R", newLandingTime);
@@ -175,11 +175,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithApproach("A")
             .Returns(trajectoryFor34R);
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfig)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfig)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, airportConfig, trajectoryService: trajectoryService);
+        var handler = GetRequestHandler(sessionManager, airportConfig, trajectoryService: trajectoryService);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA1", "34R", newLandingTime);
@@ -209,11 +209,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         flight.State.ShouldBe(State.Unstable, "Flight should initially be Unstable");
 
@@ -244,11 +244,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(state)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         flight.State.ShouldBe(state, $"Flight should initially be {state}");
 
@@ -289,11 +289,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA3", "34L", newLandingTime);
@@ -336,11 +336,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         // Move QFA2 to _just_ behind QFA1
         var newLandingTime = now.AddMinutes(11);
@@ -385,11 +385,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         // Move QFA2 to _just_ in front of QFA3
         var newLandingTime = now.AddMinutes(19);
@@ -430,11 +430,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         var newLandingTime = now.AddMinutes(9);
         var request = new MoveFlightRequest(
@@ -468,11 +468,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         var newLandingTime = now.AddMinutes(5);
         var request = new MoveFlightRequest(
@@ -516,11 +516,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         var newLandingTime = now.AddMinutes(13);
         var request = new MoveFlightRequest(
@@ -561,11 +561,11 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(CreateAirportConfiguration())
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager);
+        var handler = GetRequestHandler(sessionManager);
 
         // Move the flight perfectly between the two frozen flights
         var newLandingTime = now.AddMinutes(13);
@@ -609,14 +609,14 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
-        var handler = GetRequestHandler(instanceManager, airportConfiguration, slaveConnectionManager, mediator);
+        var handler = GetRequestHandler(sessionManager, airportConfiguration, slaveConnectionManager, mediator);
 
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA3", "34L", newLandingTime);
@@ -676,7 +676,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
     }
 
     MoveFlightRequestHandler GetRequestHandler(
-        IMaestroInstanceManager instanceManager,
+        ISessionManager sessionManager,
         AirportConfiguration? airportConfiguration = null,
         IMaestroConnectionManager? connectionManager = null,
         IMediator? mediator = null,
@@ -690,7 +690,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         mediator ??= Substitute.For<IMediator>();
         var clock = clockFixture.Instance;
         return new MoveFlightRequestHandler(
-            instanceManager,
+            sessionManager,
             connectionManager ?? new MockLocalConnectionManager(),
             configProvider,
             trajectoryService,

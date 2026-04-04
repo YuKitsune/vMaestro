@@ -2,9 +2,9 @@
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -49,11 +49,11 @@ public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(unstableFlight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(sessionManager, sequence, clockFixture.Instance);
         var request = new MakeStableRequest("YSSY", "QFA123");
 
         // Act
@@ -83,11 +83,11 @@ public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence, clockFixture.Instance);
+        var handler = GetRequestHandler(sessionManager, sequence, clockFixture.Instance);
         var request = new MakeStableRequest("YSSY", "QFA123");
 
         // Act
@@ -113,7 +113,7 @@ public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(unstableFlight))
             .Build();
 
@@ -121,7 +121,7 @@ public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new MakeStableRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             clockFixture.Instance,
             mediator,
@@ -138,11 +138,11 @@ public class MakeStableRequestHandlerTests(ClockFixture clockFixture)
         unstableFlight.State.ShouldBe(State.Unstable, "Flight state should not change when relaying to master");
     }
 
-    MakeStableRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, IClock clock)
+    MakeStableRequestHandler GetRequestHandler(ISessionManager sessionManager, Sequence sequence, IClock clock)
     {
         var mediator = Substitute.For<IMediator>();
         return new MakeStableRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             clock,
             mediator,

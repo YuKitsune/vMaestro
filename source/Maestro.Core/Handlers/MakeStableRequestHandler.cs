@@ -3,15 +3,15 @@ using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class MakeStableRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IClock clock,
     IMediator mediator,
@@ -31,12 +31,12 @@ public class MakeStableRequestHandler(
 
         logger.Verbose("Making {Callsign} stable for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
             var flight = sequence.FindFlight(request.Callsign);
             if (flight is null)
                 return;
@@ -48,12 +48,12 @@ public class MakeStableRequestHandler(
 
             logger.Information("Flight {Callsign} made stable", flight.Callsign);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }

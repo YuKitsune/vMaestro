@@ -2,8 +2,8 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -51,21 +51,21 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
             .HighPriority(highPriority)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
 
         // Act
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        var instance = await instanceManager.GetInstance(sequence.AirportIdentifier, CancellationToken.None);
-        instance.Session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
+        var session = await sessionManager.GetSession(sequence.AirportIdentifier, CancellationToken.None);
+        session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
 
-        var pendingFlight = instance.Session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
+        var pendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
         pendingFlight.ShouldNotBeNull();
         pendingFlight.IsFromDepartureAirport.ShouldBeTrue();
         pendingFlight.IsHighPriority.ShouldBe(highPriority);
@@ -78,10 +78,10 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
     {
         // Arrange
         var airportConfiguration = CreateAirportConfiguration();
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration).Build();
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration).Build();
 
         var logger = Substitute.For<ILogger>();
-        var handler = GetRequestHandler(instanceManager, sequence, logger: logger);
+        var handler = GetRequestHandler(sessionManager, sequence, logger: logger);
         var request = new MakePendingRequest("YSSY", "NONEXISTENT");
 
         // Act
@@ -111,11 +111,11 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
         // Mark flight as NOT from departure airport
         flight.IsFromDepartureAirport = false;
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
-        var handler = GetRequestHandler(instanceManager, sequence);
+        var handler = GetRequestHandler(sessionManager, sequence);
         var request = new MakePendingRequest("YSSY", "QFA123");
 
         // Act & Assert
@@ -125,12 +125,12 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
         exception.Message.ShouldContain("departure airport", Case.Insensitive);
     }
 
-    MakePendingRequestHandler GetRequestHandler(IMaestroInstanceManager instanceManager, Sequence sequence, ILogger? logger = null)
+    MakePendingRequestHandler GetRequestHandler(ISessionManager sessionManager, Sequence sequence, ILogger? logger = null)
     {
         var mediator = Substitute.For<IMediator>();
         logger ??= Substitute.For<ILogger>();
         return new MakePendingRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             logger);

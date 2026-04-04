@@ -9,11 +9,11 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core;
 using Maestro.Core.Configuration;
-using Maestro.Core.Hosting;
-using Maestro.Core.Hosting.Contracts;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
+using Maestro.Core.Sessions.Contracts;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Handlers;
 using Maestro.Plugin.Infrastructure;
@@ -39,7 +39,7 @@ public class Plugin : IPlugin
     string IPlugin.Name => Name;
 
     readonly IMediator? _mediator;
-    readonly IMaestroInstanceManager? _instanceManager;
+    readonly ISessionManager? _sessionManager;
     readonly ILogger? _logger;
 
     readonly AircraftLandingCircuitBreaker _aircraftLandingCircuitBreaker = new();
@@ -62,7 +62,7 @@ public class Plugin : IPlugin
             AddToolbarItems(configuration);
 
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
-            _instanceManager = Ioc.Default.GetRequiredService<IMaestroInstanceManager>();
+            _sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
 
             Network.Connected += NetworkOnConnected;
@@ -256,7 +256,7 @@ public class Plugin : IPlugin
                 if (_mediator is null)
                     return;
 
-                await _mediator.Send(new CreateMaestroInstanceRequest(airportIdentifier), CancellationToken.None);
+                await _mediator.Send(new CreateMaestroSessionRequest(airportIdentifier), CancellationToken.None);
             });
         }
     }
@@ -337,10 +337,10 @@ public class Plugin : IPlugin
             {
                 try
                 {
-                    if (Network.IsConnected && _instanceManager is not null && _mediator is not null)
+                    if (Network.IsConnected && _sessionManager is not null && _mediator is not null)
                     {
                         var timeoutCancellationTokenSource = new CancellationTokenSource(windCheckTimeout);
-                        foreach (var airportIdentifier in _instanceManager.ActiveInstances)
+                        foreach (var airportIdentifier in _sessionManager.ActiveSessions)
                         {
                             await _mediator.Send(
                                 new RefreshWindRequest(airportIdentifier),
@@ -433,7 +433,7 @@ public class Plugin : IPlugin
         if (_mediator is null)
             return;
 
-        if (_instanceManager is null || !_instanceManager.InstanceExists(fdr.DesAirport))
+        if (_sessionManager is null || !_sessionManager.SessionExists(fdr.DesAirport))
             return;
 
         // Already notified, nothing to do
@@ -456,7 +456,7 @@ public class Plugin : IPlugin
     {
         // BUG: FDR updates can be sent before the instance manager has been created, in which case we miss updates
         //  When an instance is created, scan the active FDRs to ensure it's populated.
-        if (_mediator is null || _instanceManager is null || !_instanceManager.InstanceExists(updated.DesAirport))
+        if (_mediator is null || _sessionManager is null || !_sessionManager.SessionExists(updated.DesAirport))
             return;
 
         var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;

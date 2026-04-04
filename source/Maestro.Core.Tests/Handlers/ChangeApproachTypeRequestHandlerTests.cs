@@ -42,7 +42,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
 
         // Configure sequence builder with trajectory service to ensure initial landing estimate is correct
         var sequenceTrajectoryService = new MockTrajectoryService(TimeSpan.FromMinutes(22));
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(sequenceTrajectoryService).WithFlightsInOrder(flight))
             .Build();
 
@@ -54,7 +54,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             trajectoryService,
             clockFixture.Instance,
@@ -96,14 +96,14 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             Substitute.For<IPerformanceLookup>(),
             Substitute.For<ILogger>());
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             trajectoryService,
             clockFixture.Instance,
@@ -149,14 +149,14 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             Substitute.For<IPerformanceLookup>(),
             Substitute.For<ILogger>());
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             trajectoryService,
             clockFixture.Instance,
@@ -193,7 +193,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -202,7 +202,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeApproachTypeRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             trajectoryService,
             clockFixture.Instance,

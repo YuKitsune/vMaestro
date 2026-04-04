@@ -45,7 +45,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFix("BOREE") // TODO: Sequence will re-assign the runway based on feeder fix preferences; need to remove this from the sequencing logic
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -59,7 +59,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             new MockTrajectoryService(),
@@ -109,7 +109,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
             .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
@@ -121,7 +121,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             new MockTrajectoryService(),
@@ -167,7 +167,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithTrajectory().OnRunway("34L").Returns(originalTrajectory)
             .WithTrajectory().OnRunway("34R").Returns(newTrajectory);
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
             .Build();
 
@@ -179,7 +179,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             new MockTrajectoryService(),
@@ -233,7 +233,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3))
             .Build();
 
@@ -241,7 +241,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             new MockTrajectoryService(),
@@ -303,7 +303,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34R")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2, flight3, flight4))
             .Build();
 
@@ -311,7 +311,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             new MockTrajectoryService(),
@@ -352,7 +352,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -360,7 +360,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             new MockTrajectoryService(),
@@ -404,7 +404,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithState(state)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -412,7 +412,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             airportConfigurationProvider,
             new MockTrajectoryService(),
@@ -451,7 +451,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway("34L")
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight))
             .Build();
 
@@ -460,7 +460,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new ChangeRunwayRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             airportConfigurationProvider,
             new MockTrajectoryService(),

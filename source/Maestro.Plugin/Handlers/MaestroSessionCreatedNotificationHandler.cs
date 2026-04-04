@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using Maestro.Core.Configuration;
-using Maestro.Core.Hosting.Contracts;
+using Maestro.Core.Sessions.Contracts;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.ViewModels;
@@ -10,15 +10,15 @@ using vatsys;
 
 namespace Maestro.Plugin.Handlers;
 
-public class MaestroInstanceCreatedNotificationHandler(
+public class MaestroSessionCreatedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
     LabelsConfiguration labelsConfiguration,
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter)
-    : INotificationHandler<MaestroInstanceCreatedNotification>
+    : INotificationHandler<MaestroSessionCreatedNotification>
 {
-    public async Task Handle(MaestroInstanceCreatedNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(MaestroSessionCreatedNotification notification, CancellationToken cancellationToken)
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.AirportIdentifier);
 
@@ -49,7 +49,7 @@ public class MaestroInstanceCreatedNotificationHandler(
                     {
                         // TODO: Revisit confirmation dialog
                         await mediator.Send(
-                            new DestroyMaestroInstanceRequest(notification.AirportIdentifier),
+                            new DestroyMaestroSessionRequest(notification.AirportIdentifier),
                             cancellationToken);
                     }
                     catch (Exception ex)

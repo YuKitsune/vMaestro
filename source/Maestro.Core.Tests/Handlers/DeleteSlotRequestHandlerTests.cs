@@ -24,7 +24,7 @@ public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
         // Arrange
         var airportConfiguration = CreateAirportConfiguration();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 
@@ -38,7 +38,7 @@ public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new DeleteSlotRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -72,7 +72,7 @@ public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
             .Build();
 
@@ -89,7 +89,7 @@ public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new DeleteSlotRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
@@ -112,7 +112,7 @@ public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
         // Arrange
         var airportConfiguration = CreateAirportConfiguration();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => { })
             .Build();
 
@@ -127,7 +127,7 @@ public class DeleteSlotRequestHandlerTests(ClockFixture clockFixture)
         var mediator = Substitute.For<IMediator>();
 
         var handler = new DeleteSlotRequestHandler(
-            instanceManager,
+            sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());

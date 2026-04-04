@@ -2,9 +2,9 @@
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Hosting;
 using Maestro.Core.Integration;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -31,13 +31,13 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
         var newEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newEstimate);
-        var handler = GetHandler(airportConfiguration, instanceManager);
+        var handler = GetHandler(airportConfiguration, sessionManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -67,7 +67,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
             .Build();
 
@@ -75,7 +75,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         var expectedLandingEstimate = newFeederFixEstimate.Add(timeToGo);
 
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(airportConfiguration, instanceManager);
+        var handler = GetHandler(airportConfiguration, sessionManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -111,7 +111,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             .WithRunway(DefaultRunway)
             .Build();
 
-        var (instanceManager, _, _, sequence) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight2, flight1)) // QFA2 first, QFA1 second
             .Build();
 
@@ -124,7 +124,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         var newLandingEstimate = newFeederFixEstimate.Add(timeToGo);
 
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newFeederFixEstimate);
-        var handler = GetHandler(airportConfiguration, instanceManager);
+        var handler = GetHandler(airportConfiguration, sessionManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -146,7 +146,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -154,7 +154,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             "YSSY",
             "QFA1",
             clockFixture.Instance.UtcNow().AddMinutes(15));
-        var handler = GetHandler(airportConfiguration, instanceManager);
+        var handler = GetHandler(airportConfiguration, sessionManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -179,7 +179,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -187,7 +187,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             "YSSY",
             "QFA1",
             clockFixture.Instance.UtcNow().AddMinutes(15));
-        var handler = GetHandler(airportConfiguration, instanceManager);
+        var handler = GetHandler(airportConfiguration, sessionManager);
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -208,7 +208,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(originalFeederFixEstimate)
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithFlight(flight))
             .Build();
 
@@ -218,7 +218,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         var newEstimate = clockFixture.Instance.UtcNow().AddMinutes(15);
         var request = new ChangeFeederFixEstimateRequest("YSSY", "QFA1", newEstimate);
         var handler = new ChangeFeederFixEstimateRequestHandler(
-            instanceManager,
+            sessionManager,
             mockConnectionManager,
             new AirportConfigurationProvider([airportConfiguration]),
             clockFixture.Instance,
@@ -258,7 +258,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
 
     ChangeFeederFixEstimateRequestHandler GetHandler(
         AirportConfiguration airportConfiguration,
-        IMaestroInstanceManager instanceManager,
+        ISessionManager sessionManager,
         IMediator? mediator = null,
         ILogger? logger = null)
     {
@@ -266,7 +266,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
         logger ??= Substitute.For<ILogger>();
 
         return new ChangeFeederFixEstimateRequestHandler(
-            instanceManager,
+            sessionManager,
             new MockLocalConnectionManager(),
             new AirportConfigurationProvider([airportConfiguration]),
             clockFixture.Instance,

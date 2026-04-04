@@ -2,15 +2,15 @@
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Hosting;
 using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
 namespace Maestro.Core.Handlers;
 
 public class RemoveRequestHandler(
-    IMaestroInstanceManager instanceManager,
+    ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
@@ -29,12 +29,12 @@ public class RemoveRequestHandler(
 
         logger.Verbose("Removing {Callsign} for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
-        var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
-        using (await instance.Semaphore.LockAsync(cancellationToken))
+        using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            var sequence = instance.Session.Sequence;
+            var sequence = session.Sequence;
 
             var sequencedFlight = sequence.FindFlight(request.Callsign);
             if (sequencedFlight is not null)
@@ -42,19 +42,19 @@ public class RemoveRequestHandler(
                 sequence.Remove(sequencedFlight);
 
                 if (!sequencedFlight.IsManuallyInserted)
-                    instance.Session.PendingFlights.Add(new PendingFlight(
+                    session.PendingFlights.Add(new PendingFlight(
                         sequencedFlight.Callsign,
                         sequencedFlight.IsFromDepartureAirport,
                         sequencedFlight.HighPriority));
             }
 
-            var desequencedFlight = instance.Session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
+            var desequencedFlight = session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
             if (desequencedFlight is not null)
             {
-                instance.Session.DeSequencedFlights.Remove(desequencedFlight);
+                session.DeSequencedFlights.Remove(desequencedFlight);
 
                 if (!desequencedFlight.IsManuallyInserted)
-                    instance.Session.PendingFlights.Add(new PendingFlight(
+                    session.PendingFlights.Add(new PendingFlight(
                         desequencedFlight.Callsign,
                         desequencedFlight.IsFromDepartureAirport,
                         desequencedFlight.HighPriority));
@@ -67,12 +67,12 @@ public class RemoveRequestHandler(
 
             logger.Information("{Callsign} removed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
-            sessionDto = instance.Session.Snapshot();
+            sessionDto = session.Snapshot();
         }
 
         await mediator.Publish(
             new SessionUpdatedNotification(
-                instance.AirportIdentifier,
+                session.AirportIdentifier,
                 sessionDto),
             cancellationToken);
     }
