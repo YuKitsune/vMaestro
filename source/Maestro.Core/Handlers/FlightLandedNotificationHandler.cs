@@ -4,6 +4,7 @@ using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
@@ -53,7 +54,18 @@ public class FlightLandedNotificationHandler(
 
             sessionDto = instance.Session.Snapshot();
 
-            logger.Information("{Callsign} landed, achieved rates updated", notification.Callsign);
+            var achievedRate = instance.Session.LandingStatistics.AchievedLandingRates[runway.Identifier];
+            if (achievedRate is AchievedRate rate)
+                logger.Information(
+                    "{Callsign} landed on RWY {Runway} — avg {Average:F0}s, deviation {Deviation:+F0;-F0;0}s from {Target:F0}s target",
+                    notification.Callsign, runway.Identifier,
+                    rate.AverageLandingInterval.TotalSeconds,
+                    rate.LandingIntervalDeviation.TotalSeconds,
+                    runway.AcceptanceRate.TotalSeconds);
+            else
+                logger.Information(
+                    "{Callsign} landed on RWY {Runway} — insufficient data for rate calculation",
+                    notification.Callsign, runway.Identifier);
         }
 
         await mediator.Publish(

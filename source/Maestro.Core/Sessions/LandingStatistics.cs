@@ -15,7 +15,7 @@ public record AchievedRate(
 
 public class LandingStatistics(ILogger logger)
 {
-    readonly ILogger _logger = logger;
+    readonly ILogger _logger = logger.ForContext<LandingStatistics>();
 
     readonly TimeSpan _averagingPeriod = TimeSpan.FromHours(1); // TODO: Add to configuration
 
@@ -25,7 +25,6 @@ public class LandingStatistics(ILogger logger)
 
     public void RecordLandingTime(Runway runway, DateTimeOffset actualLandingTime, IClock clock)
     {
-        _logger.Information($"Recording {runway.Identifier} Landing Time: {actualLandingTime}");
         if (_actualLandingTimesPerRunway.TryGetValue(runway.Identifier, out var landingTimes))
         {
             landingTimes.Add(actualLandingTime);
@@ -35,6 +34,9 @@ public class LandingStatistics(ILogger logger)
         {
             landingTimes = _actualLandingTimesPerRunway[runway.Identifier] = [actualLandingTime];
         }
+
+        _logger.Debug("RWY {Runway}: recorded landing at {LandingTime:HHmm}, {Count} sample(s) in window",
+            runway.Identifier, actualLandingTime, landingTimes.Count);
 
         AchievedLandingRates[runway.Identifier] = CalculateAchievedRate(runway, landingTimes);
 
@@ -48,37 +50,40 @@ public class LandingStatistics(ILogger logger)
     IAchievedRate CalculateAchievedRate(Runway runway, IReadOnlyList<DateTimeOffset> actualLandingTimes)
     {
         if (actualLandingTimes.Count == 0)
-        {
-            _logger.Debug($"No Landing Times for {runway.Identifier}, no deviation");
-
-            // No samples, no deviation
             return new NoDeviation();
-        }
 
         var diffs = new List<TimeSpan>();
         for (var i = 1; i < actualLandingTimes.Count; i++)
         {
             var previous = actualLandingTimes[i - 1];
             var current = actualLandingTimes[i];
-
-            var diff = current - previous;
-            diffs.Add(diff);
+            diffs.Add(current - previous);
         }
 
-        // If any two flights are separated by more than 2x the desired landing rate, then it's not busy enough
-        var doubleRate = TimeSpan.FromSeconds(runway.AcceptanceRate.TotalSeconds * 2);
-        if (diffs.Count == 0 || diffs.Any(d => d >= doubleRate))
+        if (diffs.Count == 0)
         {
-            _logger.Debug($"Not enough landings for {runway.Identifier} to calculate achieved rate");
+            _logger.Debug("RWY {Runway}: only 1 sample, no rate computed", runway.Identifier);
+            return new NoDeviation();
+        }
+
+        // If any gap exceeds 2x the acceptance rate, traffic is not busy enough to compute a rate
+        var doubleRate = TimeSpan.FromSeconds(runway.AcceptanceRate.TotalSeconds * 2);
+        var largeGap = diffs.FirstOrDefault(d => d >= doubleRate);
+        if (largeGap != default)
+        {
+            _logger.Debug(
+                "RWY {Runway}: gap of {Gap:F0}s exceeds 2x acceptance rate ({DoubleRate:F0}s), no rate computed",
+                runway.Identifier, largeGap.TotalSeconds, doubleRate.TotalSeconds);
             return new NoDeviation();
         }
 
         var averageSeconds = diffs.Average(t => t.TotalSeconds);
-        _logger.Debug($"{runway.Identifier} average landing rate {averageSeconds}s");
-
         var averageInterval = TimeSpan.FromSeconds(averageSeconds);
         var deviation = runway.AcceptanceRate - averageInterval;
-        _logger.Debug($"{runway.Identifier}: Average landing rate {averageSeconds}s; Desired rate {runway.AcceptanceRate.TotalSeconds}s; Deviation {deviation.TotalSeconds}s");
+
+        _logger.Debug(
+            "RWY {Runway}: {Samples} samples, avg {Average:F0}s, deviation {Deviation:+F0;-F0;0}s from {Target:F0}s target",
+            runway.Identifier, actualLandingTimes.Count, averageSeconds, deviation.TotalSeconds, runway.AcceptanceRate.TotalSeconds);
 
         return new AchievedRate(averageInterval, deviation);
     }
