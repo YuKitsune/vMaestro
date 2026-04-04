@@ -10,7 +10,7 @@ using vatsys;
 
 namespace Maestro.Plugin.Handlers;
 
-public class MaestroInstanceCreatedNotificationHandler(
+public class MaestroSessionCreatedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
     LabelsConfiguration labelsConfiguration,
     WindowManager windowManager,
