@@ -149,7 +149,6 @@ Airports:
   Trajectories:
   - FeederFix: BOREE
     RunwayIdentifier: '07'
-    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
@@ -160,7 +159,6 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: '25'
-    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
@@ -171,7 +169,6 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: 16L
-    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
@@ -180,7 +177,6 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: 16R
-    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
@@ -189,7 +185,6 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: 34L
-    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
@@ -202,7 +197,6 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: 34R
-    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
@@ -211,16 +205,6 @@ Airports:
     - {Identifier: DIPPA, Track: 167.8, DistanceNM: 8}
     - {Identifier: JAKLN, Track: 167.8, DistanceNM: 11.6}
     - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
-
-  - FeederFix: BOREE
-    RunwayIdentifier: 16R
-    ApproachType: P
-    Segments:
-    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
-    - {Identifier: DALAR, Track: 179.6, DistanceNM: 10.2}
-    - {Identifier: DUMOP, Track: 167.9, DistanceNM: 7}
-    - {Identifier: URDEN, Track: 167.9, DistanceNM: 5.9}
-    - {Identifier: 16R, Track: 167.9, DistanceNM: 11.3}
 
   - FeederFix: MARLN
     RunwayIdentifier: '07'
