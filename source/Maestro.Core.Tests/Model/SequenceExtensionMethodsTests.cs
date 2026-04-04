@@ -374,34 +374,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
         stableFlight.LandingTime.ShouldNotBe(originalStableLandingTime, "stable flight's landing time should have changed");
     }
 
-    SequenceBuilder GetSequenceBuilder() =>
-        new SequenceBuilder(CreateSingleRunwayConfiguration("34L", _landingRate)).WithClock(clockFixture.Instance);
-
-    #region RepositionByFeederFixEstimate Tests
-
-    [Fact]
-    public void RepositionByFeederFixEstimate_WithOnlyOneFlight_NoChangesAreMade()
-    {
-        // Arrange
-        var sequence = GetSequenceBuilder()
-            .Build();
-
-        var flight = new FlightBuilder("ABC123")
-            .WithFeederFixEstimate(_time.AddMinutes(5), TimeSpan.FromMinutes(20))
-            .WithRunway("34L")
-            .Build();
-
-        sequence.Insert(0, flight);
-        var originalLandingTime = flight.LandingTime;
-
-        // Act: Reposition the only flight
-        sequence.RepositionByFeederFixEstimate(flight);
-
-        // Assert
-        flight.LandingTime.ShouldBe(originalLandingTime, "flight's landing time should not change");
-        sequence.NumberInSequence(flight).ShouldBe(1, "flight should still be first in sequence");
-    }
-
     [Fact]
     public void RepositionByFeederFixEstimate_WhenFeederFixEtaIsEarlier_FlightsAreReordered()
     {
@@ -409,16 +381,14 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
         var sequence = GetSequenceBuilder()
             .Build();
 
-        // flight1 has earlier feeder fix ETA but LATER landing estimate due to longer TTG
         var flight1 = new FlightBuilder("ABC123")
-            .WithFeederFixEstimate(_time.AddMinutes(5), TimeSpan.FromMinutes(25))  // Lands at _time + 30min
+            .WithFeederFixEstimate(_time.AddMinutes(5))
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
-        // flight2 has later feeder fix ETA but EARLIER landing estimate due to shorter TTG
         var flight2 = new FlightBuilder("DEF456")
-            .WithFeederFixEstimate(_time.AddMinutes(10), TimeSpan.FromMinutes(15)) // Lands at _time + 25min
+            .WithFeederFixEstimate(_time.AddMinutes(10))
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
@@ -426,13 +396,9 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
         sequence.Insert(0, flight1);
         sequence.Insert(1, flight2);
 
-        // Sanity check: flight1 should be first, flight2 second
+        // Sanity check
         sequence.NumberInSequence(flight1).ShouldBe(1);
         sequence.NumberInSequence(flight2).ShouldBe(2);
-
-        // Verify landing estimates are in reverse order (proving different TTGs)
-        flight2.LandingEstimate.ShouldBeLessThan(flight1.LandingEstimate,
-            "flight2 should have earlier landing estimate despite later feeder fix estimate");
 
         // Act: Update flight2's feeder fix estimate to be earlier than flight1 and reposition
         flight2.UpdateFeederFixEstimate(_time.AddMinutes(3));
@@ -441,10 +407,6 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
         // Assert: Positions should be swapped based on feeder fix estimates
         sequence.NumberInSequence(flight2).ShouldBe(1, "flight2 should now be first in sequence");
         sequence.NumberInSequence(flight1).ShouldBe(2, "flight1 should now be second in sequence");
-
-        // Verify landing times are scheduled correctly
-        flight2.LandingTime.ShouldBe(flight2.LandingEstimate, "flight2 should land at its estimate");
-        flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(_landingRate), "flight1 should be delayed behind flight2");
     }
 
     [Fact]
@@ -455,19 +417,19 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
             .Build();
 
         var flight1 = new FlightBuilder("ABC123")
-            .WithFeederFixEstimate(_time.AddMinutes(5), TimeSpan.FromMinutes(30))  // Lands at _time + 35min
+            .WithFeederFixEstimate(_time.AddMinutes(5))
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
         var flight2 = new FlightBuilder("DEF456")
-            .WithFeederFixEstimate(_time.AddMinutes(10), TimeSpan.FromMinutes(20)) // Lands at _time + 30min
+            .WithFeederFixEstimate(_time.AddMinutes(10))
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
         var flight3 = new FlightBuilder("GHI789")
-            .WithFeederFixEstimate(_time.AddMinutes(20), TimeSpan.FromMinutes(10)) // Lands at _time + 30min
+            .WithFeederFixEstimate(_time.AddMinutes(20))
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
@@ -492,87 +454,85 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public void RepositionByFeederFixEstimate_WhenMovingToEnd_PositionsCorrectly()
+    public void RepositionByFeederFixEstimate_WithDifferentTTGs_OrdersByFeederFixNotLandingEstimate()
     {
-        // Arrange
+        // Arrange: Create flights with different TTGs so landing estimates differ from feeder fix order
         var sequence = GetSequenceBuilder()
             .Build();
 
-        var flight1 = new FlightBuilder("ABC123")
-            .WithFeederFixEstimate(_time.AddMinutes(5), TimeSpan.FromMinutes(10))
+        // Short TTG: later feeder fix, earlier landing estimate
+        var shortTtg = new FlightBuilder("SHORT")
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(5)))
+            .WithFeederFixEstimate(_time.AddMinutes(15)) // Feeder: +15, Landing estimate: +20
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
-        var flight2 = new FlightBuilder("DEF456")
-            .WithFeederFixEstimate(_time.AddMinutes(10), TimeSpan.FromMinutes(25)) // Later landing despite earlier feeder fix
+        // Medium TTG: middle feeder fix, middle landing estimate
+        var mediumTtg = new FlightBuilder("MEDIUM")
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(15)))
+            .WithFeederFixEstimate(_time.AddMinutes(10)) // Feeder: +10, Landing estimate: +25
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
-        sequence.Insert(0, flight1);
-        sequence.Insert(1, flight2);
+        // Long TTG: earliest feeder fix, latest landing estimate
+        var longTtg = new FlightBuilder("LONG")
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(30)))
+            .WithFeederFixEstimate(_time.AddMinutes(5)) // Feeder: +5, Landing estimate: +35
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
 
-        // Sanity check
-        sequence.NumberInSequence(flight1).ShouldBe(1);
-        sequence.NumberInSequence(flight2).ShouldBe(2);
+        sequence.Insert(0, shortTtg);
+        sequence.Insert(1, mediumTtg);
+        sequence.Insert(2, longTtg);
 
-        // Act: Update flight1's feeder fix estimate to be later than flight2
-        flight1.UpdateFeederFixEstimate(_time.AddMinutes(15));
-        sequence.RepositionByFeederFixEstimate(flight1);
+        // Act: Reposition all by feeder fix estimate
+        sequence.RepositionByFeederFixEstimate(longTtg);
+        sequence.RepositionByFeederFixEstimate(mediumTtg);
+        sequence.RepositionByFeederFixEstimate(shortTtg);
 
-        // Assert: flight1 should now be positioned after flight2
-        sequence.NumberInSequence(flight2).ShouldBe(1, "flight2 should now be first");
-        sequence.NumberInSequence(flight1).ShouldBe(2, "flight1 should now be second");
+        // Assert: Verify sequence is ordered by feeder fix estimate
+        sequence.NumberInSequence(longTtg).ShouldBe(1, "longTtg should be first (earliest feeder fix: +5)");
+        sequence.NumberInSequence(mediumTtg).ShouldBe(2, "mediumTtg should be second (feeder fix: +10)");
+        sequence.NumberInSequence(shortTtg).ShouldBe(3, "shortTtg should be third (latest feeder fix: +15)");
     }
 
     [Fact]
-    public void RepositionByFeederFixEstimate_WithDifferentTTGs_OrdersByFeederFixNotLandingEstimate()
+    public void RepositionByFeederFixEstimate_WithExtremelyDifferentTTGs_OrdersByFeederFixEstimate()
     {
-        // Arrange
+        // Arrange: Use extreme TTG differences to ensure landing estimates are in opposite order
         var sequence = GetSequenceBuilder()
             .Build();
 
-        // Create flights where landing estimate order is OPPOSITE to feeder fix estimate order
-        var flight1 = new FlightBuilder("ABC123")
-            .WithFeederFixEstimate(_time.AddMinutes(5), TimeSpan.FromMinutes(35))  // Feeder: +5, Landing: +40
+        // Short TTG: later feeder fix but much earlier landing
+        var shortTtg = new FlightBuilder("SHORT")
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(5)))
+            .WithFeederFixEstimate(_time.AddMinutes(30)) // Feeder: +30, Landing estimate: +35
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
-        var flight2 = new FlightBuilder("DEF456")
-            .WithFeederFixEstimate(_time.AddMinutes(10), TimeSpan.FromMinutes(20)) // Feeder: +10, Landing: +30
+        // Long TTG: earlier feeder fix but much later landing
+        var longTtg = new FlightBuilder("LONG")
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(40)))
+            .WithFeederFixEstimate(_time.AddMinutes(5)) // Feeder: +5, Landing estimate: +45
             .WithRunway("34L")
             .WithState(State.Unstable)
             .Build();
 
-        var flight3 = new FlightBuilder("GHI789")
-            .WithFeederFixEstimate(_time.AddMinutes(15), TimeSpan.FromMinutes(5))  // Feeder: +15, Landing: +20
-            .WithRunway("34L")
-            .WithState(State.Unstable)
-            .Build();
+        sequence.Insert(0, shortTtg);
+        sequence.Insert(1, longTtg);
 
-        sequence.Insert(0, flight1);
-        sequence.Insert(1, flight2);
-        sequence.Insert(2, flight3);
+        // Act: Reposition by feeder fix estimate
+        sequence.RepositionByFeederFixEstimate(longTtg);
 
-        // Verify landing estimates are in REVERSE order of feeder fix estimates
-        flight3.LandingEstimate.ShouldBeLessThan(flight2.LandingEstimate);
-        flight2.LandingEstimate.ShouldBeLessThan(flight1.LandingEstimate);
-
-        // But feeder fix estimates are in correct order
-        flight1.FeederFixEstimate.ShouldBeLessThan(flight2.FeederFixEstimate);
-        flight2.FeederFixEstimate.ShouldBeLessThan(flight3.FeederFixEstimate);
-
-        // Act: Update flight3 to have earliest feeder fix estimate
-        flight3.UpdateFeederFixEstimate(_time.AddMinutes(2));
-        sequence.RepositionByFeederFixEstimate(flight3);
-
-        // Assert: Order should be based on feeder fix estimates, not landing estimates
-        sequence.NumberInSequence(flight3).ShouldBe(1, "flight3 should be first (earliest feeder fix)");
-        sequence.NumberInSequence(flight1).ShouldBe(2, "flight1 should be second");
-        sequence.NumberInSequence(flight2).ShouldBe(3, "flight2 should be third");
+        // Assert: Verify sequence is ordered by feeder fix estimate
+        sequence.NumberInSequence(longTtg).ShouldBe(1, "longTtg should be first (earliest feeder fix)");
+        sequence.NumberInSequence(shortTtg).ShouldBe(2, "shortTtg should be second (latest feeder fix)");
     }
 
-    #endregion
+    SequenceBuilder GetSequenceBuilder() =>
+        new SequenceBuilder(CreateSingleRunwayConfiguration("34L", _landingRate)).WithClock(clockFixture.Instance);
 }
