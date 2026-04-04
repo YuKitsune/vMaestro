@@ -2,7 +2,6 @@ using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Hosting;
-using Maestro.Core.Infrastructure;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
@@ -25,14 +24,16 @@ public class ModifyWindRequestHandler(
             // Slaves may only relay manual wind updates
             if (!request.ManualWind)
             {
-                logger.Warning("Ignoring automatic wind update for {AirportIdentifier} - slaves may only relay manual updates", request.AirportIdentifier);
+                logger.Verbose("Ignoring automatic wind update for {AirportIdentifier} - slave connections may only relay manual updates", request.AirportIdentifier);
                 return;
             }
 
-            logger.Information("Relaying manual ModifyWindRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ModifyWindRequest for {AirportIdentifier}", request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Modifying wind for {AirportIdentifier}", request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

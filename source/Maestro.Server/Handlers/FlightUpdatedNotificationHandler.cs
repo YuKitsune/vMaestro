@@ -33,7 +33,7 @@ public class FlightUpdatedNotificationHandler(IConnectionManager connectionManag
             throw new InvalidOperationException("No master found");
         }
 
-        logger.Information("{Connection} relaying flight update to {Master}", connection, master);
+        logger.Debug("{Connection} relaying flight update to {Master}", connection, master);
         await hubProxy.Send(master.Id, "FlightUpdated", notification, cancellationToken);
     }
 }

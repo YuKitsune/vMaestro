@@ -20,7 +20,7 @@ public class RestoreSessionRequestHandler(IMaestroInstanceManager instanceManage
             sessionDto = instance.Session.Snapshot();
         }
 
-        logger.Information("Session restored");
+        logger.Debug("Session restored");
         await mediator.Publish(
             new SessionUpdatedNotification(
                 instance.AirportIdentifier,

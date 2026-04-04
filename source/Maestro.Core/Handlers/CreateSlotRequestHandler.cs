@@ -21,10 +21,12 @@ public class CreateSlotRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying CreateSlotRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying CreateSlotRequest for {AirportIdentifier} from {StartTime:HHmm} to {EndTime:HHmm}", request.AirportIdentifier, request.StartTime, request.EndTime);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Creating slot for {AirportIdentifier} from {StartTime:HHmm} to {EndTime:HHmm}", request.AirportIdentifier, request.StartTime, request.EndTime);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

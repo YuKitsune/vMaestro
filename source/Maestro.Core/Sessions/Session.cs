@@ -2,6 +2,7 @@ using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Extensions;
 using Maestro.Core.Model;
+using Serilog;
 
 namespace Maestro.Core.Sessions;
 
@@ -12,8 +13,8 @@ public class Session
     public string AirportIdentifier => Sequence.AirportIdentifier;
     public List<PendingFlight> PendingFlights { get; } = new();
     public List<Flight> DeSequencedFlights { get; } = new();
-    public Sequence Sequence { get; private set; }
-    public LandingStatistics LandingStatistics { get; } = new();
+    public Sequence Sequence { get; }
+    public LandingStatistics LandingStatistics { get; }
 
     /// <summary>
     /// The latest flight data received from the FDP, keyed by callsign.
@@ -21,9 +22,10 @@ public class Session
     /// </summary>
     public Dictionary<string, FlightDataRecord> FlightDataRecords { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public Session(Sequence sequence)
+    public Session(Sequence sequence, ILogger logger)
     {
         Sequence = sequence;
+        LandingStatistics = new LandingStatistics(logger);
     }
 
     // TODO: Move dummy stuff to a separate service

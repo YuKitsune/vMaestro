@@ -28,10 +28,12 @@ public class MoveFlightRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying MoveFlightRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying MoveFlightRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Moving {Callsign} to {NewLandingTime:HHmm} at {AirportIdentifier}", request.Callsign, request.NewLandingTime, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

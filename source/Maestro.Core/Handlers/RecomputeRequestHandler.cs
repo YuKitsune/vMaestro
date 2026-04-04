@@ -28,10 +28,12 @@ public class RecomputeRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying RecomputeRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying RecomputeRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Recomputing {Callsign} for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

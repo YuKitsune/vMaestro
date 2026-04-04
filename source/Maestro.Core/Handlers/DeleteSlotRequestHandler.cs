@@ -21,10 +21,12 @@ public class DeleteSlotRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying DeleteSlotRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying DeleteSlotRequest for slot {SlotId} at {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Deleting slot {SlotId} for {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

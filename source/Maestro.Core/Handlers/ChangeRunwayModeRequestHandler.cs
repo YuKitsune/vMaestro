@@ -27,10 +27,12 @@ public class ChangeRunwayModeRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeRunwayModeRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ChangeRunwayModeRequest for {AirportIdentifier} to {RunwayMode}", request.AirportIdentifier, request.RunwayMode.Identifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Changing runway mode for {AirportIdentifier} to {RunwayMode}", request.AirportIdentifier, request.RunwayMode.Identifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

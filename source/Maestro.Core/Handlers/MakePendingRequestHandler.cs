@@ -22,10 +22,12 @@ public class MakePendingRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying MakePendingRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying MakePendingRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Making {Callsign} pending for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

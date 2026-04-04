@@ -27,10 +27,12 @@ public class SwapFlightsRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying SwapFlightsRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying SwapFlightsRequest for {FirstCallsign} and {SecondCallsign} at {AirportIdentifier}", request.FirstFlightCallsign, request.SecondFlightCallsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Swapping {FirstCallsign} and {SecondCallsign} for {AirportIdentifier}", request.FirstFlightCallsign, request.SecondFlightCallsign, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

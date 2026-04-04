@@ -2,6 +2,8 @@ using Maestro.Contracts.Sessions;
 using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Fixtures;
+using NSubstitute;
+using Serilog;
 using Shouldly;
 
 namespace Maestro.Core.Tests.Sessions;
@@ -10,12 +12,13 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
 {
     readonly DateTimeOffset _now = clockFixture.Instance.UtcNow();
     readonly TimeSpan _acceptanceRate = TimeSpan.FromSeconds(180);
+    readonly ILogger _logger = Substitute.For<ILogger>();
 
     [Fact]
     public void RecordLandingTime_FirstLanding_RecordsTimeAndCalculatesNoDeviation()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
         var landingTime = _now.AddMinutes(-5);
 
@@ -35,7 +38,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void RecordLandingTime_MultipleLandingsWithinAcceptableGap_CalculatesAchievedRate()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
 
         // Act - Record three landings separated by the acceptance rate
@@ -54,7 +57,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void RecordLandingTime_MultipleLandingsWithVariableGaps_CalculatesAverageInterval()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
 
         // Act - Record landings with different separations: 2min, 3min, 4min
@@ -78,7 +81,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void RecordLandingTime_LandingGapExceedsTwiceAcceptanceRate_ReturnsNoDeviation()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
 
         // Act - Record landings with a gap of 7 minutes (more than 2x the 3-minute acceptance rate)
@@ -93,7 +96,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void RecordLandingTime_RemovesStaleTimesOlderThanAveragingPeriod()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
 
         // Record a landing more than 1 hour ago
@@ -115,7 +118,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void RecordLandingTime_DifferentRunways_TracksIndependently()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway34L = CreateRunway("34L", _acceptanceRate);
         var runway34R = CreateRunway("34R", _acceptanceRate);
 
@@ -137,7 +140,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void RecordLandingTime_CalculatesDeviationFromAcceptanceRate()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var acceptanceRate = TimeSpan.FromMinutes(3);
         var runway = CreateRunway("34L", acceptanceRate);
 
@@ -157,7 +160,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void Snapshot_CreatesCorrectDto()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
         var landingTime1 = _now.AddMinutes(-10);
         var landingTime2 = _now.AddMinutes(-7);
@@ -183,7 +186,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void Snapshot_WithNoDeviation_CreatesNoDeviationDto()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
 
         statistics.RecordLandingTime(runway, _now.AddMinutes(-5), clockFixture.Instance);
@@ -199,7 +202,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void Restore_RestoresLandingTimesAndAchievedRates()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var landingTime1 = _now.AddMinutes(-10);
         var landingTime2 = _now.AddMinutes(-7);
 
@@ -235,7 +238,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void Restore_WithNoDeviation_RestoresNoDeviation()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var landingTime = _now.AddMinutes(-5);
 
         var dto = new LandingStatisticsDto
@@ -260,7 +263,7 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     public void Restore_ClearsPreviousData()
     {
         // Arrange
-        var statistics = new LandingStatistics();
+        var statistics = new LandingStatistics(_logger);
         var runway = CreateRunway("34L", _acceptanceRate);
         statistics.RecordLandingTime(runway, _now.AddMinutes(-5), clockFixture.Instance);
 

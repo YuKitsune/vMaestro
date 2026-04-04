@@ -21,10 +21,12 @@ public class ModifySlotRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ModifySlotRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ModifySlotRequest for slot {SlotId} at {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Modifying slot {SlotId} for {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;

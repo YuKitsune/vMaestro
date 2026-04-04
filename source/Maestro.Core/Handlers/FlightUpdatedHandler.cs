@@ -108,7 +108,11 @@ public class FlightUpdatedHandler(
 
                         instance.Session.PendingFlights.Add(newPendingFlight);
 
-                        logger.Information("Added {Callsign} to the pending list", notification.Callsign);
+                        var pendingReason = (isFromDepartureAirport && !hasDeparted) ? "not yet departed"
+                            : feederFix is null ? "no feeder fix match"
+                            : !feederFixEstimateIsKnown ? "feeder fix estimate unknown"
+                            : "no landing estimate";
+                        logger.Information("Added {Callsign} to the pending list ({Reason})", notification.Callsign, pendingReason);
 
                         await mediator.Send(new SendCoordinationMessageRequest(
                             notification.Destination,
@@ -130,7 +134,11 @@ public class FlightUpdatedHandler(
                     // Safe to unwrap as we exit early when adding flights to the Pending list
                     // If the feederFix is null, the flight should be added to the Pending list
                     if (feederFix!.Estimate - clock.UtcNow() > flightCreationThreshold)
+                    {
+                        logger.Debug("{Callsign} not yet within creation threshold (FF estimate {Estimate:HHmm}, threshold {Threshold})",
+                            notification.Callsign, feederFix.Estimate, flightCreationThreshold);
                         return;
+                    }
 
                     // Use the default runway for now. This will get re-calculated in the scheduling phase.
                     var runwayMode = instance.Session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
@@ -176,7 +184,8 @@ public class FlightUpdatedHandler(
                         position: notification.Position);
 
                     instance.Session.Sequence.Insert(insertionIndex, sequencedFlight);
-                    logger.Verbose(
+                    logger.Information("{Callsign} added to the sequence", notification.Callsign);
+                    logger.Information(
                         "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
                         notification.Callsign,
                         runway.Identifier,
@@ -184,7 +193,6 @@ public class FlightUpdatedHandler(
                         trajectory.TimeToGo,
                         trajectory.Pressure,
                         trajectory.MaxPressure);
-                    logger.Information("{Callsign} added to the sequence", notification.Callsign);
                     return;
                 }
 
@@ -219,7 +227,7 @@ public class FlightUpdatedHandler(
                             notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
                             instance.Session.Sequence.UpperWind);
                         sequencedFlight.SetTrajectory(updatedTrajectory);
-                        logger.Verbose(
+                        logger.Debug(
                             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
                             sequencedFlight.Callsign,
                             sequencedFlight.AssignedRunwayIdentifier,
@@ -263,7 +271,7 @@ public class FlightUpdatedHandler(
 
                     sequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
-                    logger.Verbose("Flight updated: {Flight}", sequencedFlight);
+                    logger.Debug("Flight updated: {Flight}", sequencedFlight);
                 }
 
                 sessionDto = instance.Session.Snapshot();

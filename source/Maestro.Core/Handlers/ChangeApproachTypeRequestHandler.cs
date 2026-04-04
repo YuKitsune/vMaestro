@@ -25,10 +25,12 @@ public class ChangeApproachTypeRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeApproachTypeRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying ChangeApproachTypeRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
+
+        logger.Verbose("Changing approach type for {Callsign} to {NewApproachType} at {AirportIdentifier}", request.Callsign, request.ApproachType, request.AirportIdentifier);
 
         var instance = await instanceManager.GetInstance(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
@@ -43,9 +45,6 @@ public class ChangeApproachTypeRequestHandler(
                 logger.Warning("Flight {Callsign} not found for airport {AirportIdentifier}.", request.Callsign, request.AirportIdentifier);
                 return;
             }
-
-            // TODO: Track who initiated the change
-            logger.Information("Changing approach type for {Callsign} to {NewApproachType}.", request.Callsign, request.ApproachType);
 
             var fixNames = instance.Session.FlightDataRecords.TryGetValue(flight.Callsign, out var flightDataRecord)
                 ? flightDataRecord.Estimates.Select(x => x.FixIdentifier).ToArray()
@@ -69,6 +68,8 @@ public class ChangeApproachTypeRequestHandler(
                 trajectory.TimeToGo,
                 trajectory.Pressure,
                 trajectory.MaxPressure);
+
+            logger.Information("{Callsign} approach type changed to {ApproachType}", flight.Callsign, request.ApproachType);
 
             sessionDto = instance.Session.Snapshot();
         }

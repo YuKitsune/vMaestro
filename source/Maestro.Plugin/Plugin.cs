@@ -311,7 +311,6 @@ public class Plugin : IPlugin
         _logger?.Information("Wind check starting");
         _windCheckTask = new BackgroundTask(WindCheckWorker);
         _windCheckTask.Start();
-        _logger?.Verbose("Wind check started");
 
         return Task.CompletedTask;
     }
@@ -324,7 +323,6 @@ public class Plugin : IPlugin
         // Fire and forget - don't block the event handler waiting for the task to complete
         _logger?.Information("Wind check stopping");
         await _windCheckTask.Stop(CancellationToken.None);
-        _logger?.Verbose("Wind check stopped");
     }
 
     async Task WindCheckWorker(CancellationToken cancellationToken)

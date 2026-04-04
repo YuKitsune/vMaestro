@@ -71,7 +71,8 @@ public class MaestroInstanceManager(
             throw new MaestroException($"No configuration found for {airportIdentifier}");
 
         var session = new Session(
-            new Sequence(airportConfiguration, trajectoryService, clock, logger));
+            new Sequence(airportConfiguration, trajectoryService, clock, logger),
+            logger);
 
         return new MaestroInstance(airportIdentifier, session, mediator);
     }

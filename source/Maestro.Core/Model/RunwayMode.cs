@@ -1,4 +1,5 @@
-﻿using Maestro.Contracts.Runway;
+﻿using System.Text;
+using Maestro.Contracts.Runway;
 using Maestro.Core.Configuration;
 
 namespace Maestro.Core.Model;
@@ -32,6 +33,25 @@ public class RunwayMode
     public Runway Default => Runways.First();
     public TimeSpan DependencyRate { get; }
     public TimeSpan OffModeSeparation { get; }
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+
+        sb.Append(Identifier);
+        sb.Append(" (");
+        foreach (var runway in Runways)
+        {
+            sb.Append(runway.Identifier);
+            sb.Append(": ");
+            sb.Append(runway.AcceptanceRate.TotalSeconds);
+            sb.Append("s; ");
+        }
+
+        sb.Append($") OffMode: {OffModeSeparation.TotalSeconds}s Dependency: {DependencyRate.TotalSeconds}s");
+
+        return sb.ToString();
+    }
 }
 
 public class Runway
