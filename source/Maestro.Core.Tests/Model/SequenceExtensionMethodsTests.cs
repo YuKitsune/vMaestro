@@ -42,7 +42,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
         var originalLandingTime = flight.LandingTime;
 
         // Act: Reposition the only flight
-        sequence.RepositionByEstimate(flight);
+        sequence.RepositionByLandingEstimate(flight);
 
         // Assert
         flight.LandingTime.ShouldBe(originalLandingTime, "flight's landing time should not change");
@@ -77,7 +77,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update flight2's estimate to be earlier than flight1 and reposition
         flight2.UpdateFeederFixEstimate(_time.AddMinutes(3).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(flight2);
+        sequence.RepositionByLandingEstimate(flight2);
 
         // Assert: Positions should be swapped
         sequence.NumberInSequence(flight2).ShouldBe(1, "flight2 should now be first in sequence");
@@ -117,7 +117,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update unstableFlight's estimate to be earlier than stableFlight but close enough to conflict (within landing rate)
         unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(4).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByLandingEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved behind the stable flight due to conflict
         sequence.NumberInSequence(stableFlight).ShouldBe(1, "stable flight should remain first in sequence");
@@ -157,7 +157,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update unstableFlight's estimate to be earlier than stableFlight with enough separation (no conflict)
         unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(5).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByLandingEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved in front of the stable flight
         sequence.NumberInSequence(unstableFlight).ShouldBe(1, "unstable flight should now be first in sequence");
@@ -197,7 +197,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update unstableFlight's estimate to be 2 minutes before the stable flight (causing conflict with 3-minute spacing)
         unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(7).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByLandingEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved behind the stable flight due to conflict
         sequence.NumberInSequence(stableFlight).ShouldBe(1, "stable flight should now be first in sequence");
@@ -237,7 +237,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update unstableFlight's estimate to be later but still with enough separation (no conflict)
         unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(6).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByLandingEstimate(unstableFlight);
 
         // Assert: unstableFlight should remain in front of the stable flight
         sequence.NumberInSequence(unstableFlight).ShouldBe(1, "unstable flight should remain first in sequence");
@@ -278,7 +278,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update unstableFlight's estimate to conflict with the frozen flight
         unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(9).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByLandingEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved behind the frozen flight
         sequence.NumberInSequence(frozenFlight).ShouldBe(1, "frozen flight should remain first in sequence");
@@ -320,7 +320,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update unstableFlight's estimate to be earlier than stableFlight but close enough to conflict (within landing rate)
         unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(4).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByLandingEstimate(unstableFlight);
 
         // Assert: unstableFlight should be moved in front and land at its estimate, stable flight should be displaced
         sequence.NumberInSequence(unstableFlight).ShouldBe(1, "unstable flight should now be first in sequence");
@@ -363,7 +363,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Act: Update unstableFlight's estimate to be 2 minutes before the stable flight (causing conflict with 3-minute spacing)
         unstableFlight.UpdateFeederFixEstimate(_time.AddMinutes(8).Subtract(_defaultTtg));
-        sequence.RepositionByEstimate(unstableFlight);
+        sequence.RepositionByLandingEstimate(unstableFlight);
 
         // Assert: unstableFlight should remain in front and land at its new estimate, stable flight should be displaced
         sequence.NumberInSequence(unstableFlight).ShouldBe(1, "unstable flight should remain first in sequence");
