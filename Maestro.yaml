@@ -1841,7 +1841,7 @@ Airports:
   - '{Callsign} subject to CDO'
 
 - Identifier: YPPH
-  FeederFixes: [KAGMI, JULIM, KABLI, SOLUS, DAYLR, LAVEX, SAPKO]
+  FeederFixes: [KAGMI, JULIM, KABLI, SOLUS, DAYLR, LAVEX, SAPKO, OLMAM]
   Runways: ["03", "06", "21", "24"]
   DefaultAircraftType: B738
   DefaultPendingFlightState: Stable
@@ -2336,6 +2336,35 @@ Airports:
     - {Identifier: KARGO, Track: 344, DistanceNM: 8}
     - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
 
+  - FeederFix: OLMAM
+    RunwayIdentifier: '03'
+    ApproachType: A
+    Segments:
+    - {Identifier: '03', Track: 017, DistanceNM: 35.1}
+
+  - FeederFix: OLMAM
+    RunwayIdentifier: '06'
+    ApproachType: A
+    Segments:
+    - {Identifier: 'TUVBA', Track: 007, DistanceNM: 31.1}
+    - {Identifier: '06', Track: 062, DistanceNM: 7.7}
+
+  - FeederFix: OLMAM
+    RunwayIdentifier: '21'
+    ApproachType: A
+    Segments:
+    - {Identifier: 'WOOFY', Track: 005, DistanceNM: 40}
+    - {Identifier: 'HAIGH', Track: 072, DistanceNM: 10.4}
+    - {Identifier: '21', Track: 196, DistanceNM: 7.5}
+
+  - FeederFix: OLMAM
+    RunwayIdentifier: '24'
+    ApproachType: A
+    Segments:
+    - {Identifier: 'GUNGN', Track: 030, DistanceNM: 37.9}
+    - {Identifier: 'KOORI', Track: 352, DistanceNM: 6.6}
+    - {Identifier: '24', Track: 240, DistanceNM: 8.1}
+
 
   DepartureAirports:
   - {Identifier: YABA, Aircraft: [JET], Distance: 230, EstimatedFlightTimeMinutes: 48}
@@ -2366,6 +2395,7 @@ Airports:
     TimeWindowMinutes: 30
     Reference: FeederFixTime
     Ladders:
+    - {FeederFixes: [OLMAM]}
     - {FeederFixes: [SOLUS]}
 
   - Identifier: ALL/HYD
@@ -2374,7 +2404,7 @@ Airports:
     Reference: FeederFixTime
     Ladders:
     - {FeederFixes: [JULIM, SAPKO, KAGMI, SOLUS]}
-    - {FeederFixes: [KABLI, DAYLR, LAVEX]}
+    - {FeederFixes: [KABLI, DAYLR, LAVEX, OLMAM]}
     
   - Identifier: RWY
     LabelLayout: TMA
