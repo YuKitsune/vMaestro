@@ -88,6 +88,23 @@ public class Sequence
         }
     }
 
+    public void CancelRunwayModeChange()
+    {
+        lock (_gate)
+        {
+            if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null)
+                return;
+
+            var recomputeIndex = IndexOf(LastLandingTimeForCurrentMode.Value);
+
+            NextRunwayMode = null;
+            LastLandingTimeForCurrentMode = null;
+            FirstLandingTimeForNewMode = null;
+
+            Schedule(recomputeIndex);
+        }
+    }
+
     public bool TrySwapRunwayModes()
     {
         lock (_gate)
