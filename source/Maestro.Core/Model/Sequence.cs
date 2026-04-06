@@ -75,11 +75,15 @@ public class Sequence
     {
         lock (_gate)
         {
+            var recomputeBoundary = LastLandingTimeForCurrentMode.HasValue
+                ? DateTimeOffsetHelpers.Earliest(LastLandingTimeForCurrentMode.Value, lastLandingTimeForOldMode)
+                : lastLandingTimeForOldMode;
+
             NextRunwayMode = runwayMode;
             LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
             FirstLandingTimeForNewMode = firstLandingTimeForNewMode;
 
-            var recomputeIndex = IndexOf(lastLandingTimeForOldMode);
+            var recomputeIndex = IndexOf(recomputeBoundary);
             Schedule(recomputeIndex);
         }
     }
@@ -528,7 +532,7 @@ public class Sequence
                     // to avoid skipping flights beyond the effective start index
                     if (result.SequencePosition < i)
                     {
-                        log.Debug("Rewinding to {NewIndex} to re-schedule {Callsign}", i, currentFlight.Callsign);
+                        log.Debug("Moving forward to {NewIndex} to re-schedule {Callsign}", i, currentFlight.Callsign);
                         i = result.SequencePosition - 1;
                     }
                     continue;
@@ -770,15 +774,15 @@ public class Sequence
                 // Calculate earliest landing time at current position
                 var earliestLandingTime = GetEarliestLandingTimeForIndex(flight.Callsign, position, targetLandingTime, runwayMode, runway);
 
-                // Check for conflicts with items behind us in the sequence (later positions)
+                // Check for conflicts with items backward in the sequence (later positions)
                 var latestLandingTime = GetLatestLandingTimeForIndex(flight.Callsign, position, runwayMode, runway);
                 if (latestLandingTime.HasValue && earliestLandingTime.IsAfter(latestLandingTime.Value))
                 {
                     log.Debug(
-                        "  {Callsign} RWY {Runway}: conflict at i={Index} with the proceeding entry. Earliest {Earliest:HHmm} > latest {Latest:HHmm}, searching later",
+                        "  {Callsign} RWY {Runway}: conflict at i={Index} with the proceeding entry. Earliest {Earliest:HHmm} > latest {Latest:HHmm}, searching backward",
                         flight.Callsign, runwayOption.RunwayIdentifier, position, earliestLandingTime, latestLandingTime.Value);
 
-                    // Conflict detected - need to move later in sequence
+                    // Conflict detected - need to move backward in sequence
                     var foundValidPosition = false;
                     for (var candidateIndex = position + 1; candidateIndex <= sequence.Count; candidateIndex++)
                     {
@@ -818,11 +822,11 @@ public class Sequence
                         break;
                     }
 
-                    // If we couldn't find a valid position backwards, stay at current position
+                    // If we couldn't find a valid position backward, stay at current position
                     if (!foundValidPosition)
                     {
                         log.Debug(
-                            "  {Callsign} RWY {Runway}: no valid forward position found, staying at i={Index}",
+                            "  {Callsign} RWY {Runway}: no valid backward position found, staying at i={Index}",
                             flight.Callsign, runwayOption.RunwayIdentifier, currentIndex);
                         position = currentIndex;
                     }
