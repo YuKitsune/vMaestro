@@ -21,20 +21,7 @@ public partial class TimeControl : UserControl, INotifyPropertyChanged
     public DateTimeOffset? Time
     {
         get => (DateTimeOffset?)GetValue(TimeProperty);
-        set => SetValue(TimeProperty, RoundToNextMinute(value));
-    }
-
-    private static DateTimeOffset? RoundToNextMinute(DateTimeOffset? time)
-    {
-        if (!time.HasValue) return time;
-        
-        var rounded = time.Value;
-        if (rounded.Second > 0 || rounded.Millisecond > 0)
-        {
-            rounded = rounded.AddMinutes(1);
-        }
-        return new DateTimeOffset(rounded.Year, rounded.Month, rounded.Day, 
-                                 rounded.Hour, rounded.Minute, 0, 0, rounded.Offset);
+        set => SetValue(TimeProperty, value);
     }
 
     private static void OnTimeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
