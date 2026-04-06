@@ -127,7 +127,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Width="56" Command="{Binding ChangeRunwayModeCommand}">Ok</Button>
-            <Button Grid.Column="1" Width="56"
+            <Button Grid.Column="1" Width="Auto"
                     Command="{Binding CancelPendingChangesCommand}"
                     Visibility="{Binding HasPendingModeChange, Converter={StaticResource BoolToVisibilityConverter}}">Cancel Pending Changes</Button>
             <Button Grid.Column="2" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
