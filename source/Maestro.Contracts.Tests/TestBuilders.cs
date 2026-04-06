@@ -97,6 +97,9 @@ public static class TestBuilders
     public static ChangeRunwayModeRequest CreateChangeRunwayModeRequest() =>
         new("YSSY", CreateRunwayModeDto(), FixedTime.AddHours(1), FixedTime.AddHours(1).AddMinutes(5));
 
+    public static CancelRunwayModeChangeRequest CreateCancelRunwayModeChangeRequest() =>
+        new("YSSY");
+
     // Slots
     public static SlotDto CreateSlotDto() =>
         new(Guid.Parse("12345678-1234-1234-1234-123456789012"),

@@ -318,18 +318,15 @@ public class Flight : IEquatable<Flight>
         if (!string.IsNullOrEmpty(FeederFixIdentifier))
         {
             // Calculate ETA using ETA_FF + TTG
+            // Note: Don't update InitialLandingEstimate here - it should only change
+            // when external estimates change (feeder fix or landing estimate updates),
+            // not when the trajectory changes due to runway/approach reassignment
             LandingEstimate = FeederFixEstimate.Add(Trajectory.TimeToGo);
-
-            if (State is State.Unstable)
-                InitialLandingEstimate = LandingEstimate;
         }
         else
         {
             // Calculate ETA_FF from ETA - TTG
             FeederFixEstimate = LandingEstimate.Subtract(Trajectory.TimeToGo);
-
-            if (State is State.Unstable)
-                InitialFeederFixEstimate = FeederFixEstimate;
         }
 
         // Calculate STA_FF using STA - TTG

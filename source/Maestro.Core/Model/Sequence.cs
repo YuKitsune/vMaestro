@@ -75,11 +75,32 @@ public class Sequence
     {
         lock (_gate)
         {
+            var recomputeBoundary = LastLandingTimeForCurrentMode.HasValue
+                ? DateTimeOffsetHelpers.Earliest(LastLandingTimeForCurrentMode.Value, lastLandingTimeForOldMode)
+                : lastLandingTimeForOldMode;
+
             NextRunwayMode = runwayMode;
             LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
             FirstLandingTimeForNewMode = firstLandingTimeForNewMode;
 
-            var recomputeIndex = IndexOf(lastLandingTimeForOldMode);
+            var recomputeIndex = IndexOf(recomputeBoundary);
+            Schedule(recomputeIndex);
+        }
+    }
+
+    public void CancelRunwayModeChange()
+    {
+        lock (_gate)
+        {
+            if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null)
+                return;
+
+            var recomputeIndex = IndexOf(LastLandingTimeForCurrentMode.Value);
+
+            NextRunwayMode = null;
+            LastLandingTimeForCurrentMode = null;
+            FirstLandingTimeForNewMode = null;
+
             Schedule(recomputeIndex);
         }
     }
@@ -310,8 +331,22 @@ public class Sequence
             var approachType1 = flight1.ApproachType;
             var approachType2 = flight2.ApproachType;
 
-            Schedule(flight1, landingTime2, runway2, approachType2, flowControls2);
-            Schedule(flight2, landingTime1, runway1, approachType1, flowControls1);
+            var trajectory1 = _trajectoryService.GetTrajectory(
+                flight1,
+                runway2,
+                approachType2,
+                [], // TODO
+                UpperWind);
+
+            var trajectory2 = _trajectoryService.GetTrajectory(
+                flight2,
+                runway1,
+                approachType1,
+                [], // TODO
+                UpperWind);
+
+            Schedule(flight1, landingTime2, runway2, approachType2, trajectory1, flowControls2);
+            Schedule(flight2, landingTime1, runway1, approachType1, trajectory2, flowControls1);
 
             // No need to re-schedule as we're exchanging two flights that are already scheduled
         }
@@ -486,15 +521,13 @@ public class Sequence
 
                 log.Debug("Schedule {Callsign}: {Count} runway options found", currentFlight.Callsign, runwayOptions.Length);
 
-                // TODO: Use ETA_FF + TTGmin if no runway has been assigned
-
-                var targetLandingTime = currentFlight.TargetLandingTime ?? currentFlight.LandingEstimate;
-
-                log.Debug("Schedule {Callsign}: Target landing time is {TargetLandingTime} (ETA {LandingEstimate})", currentFlight.Callsign, currentFlight.TargetLandingTime, targetLandingTime, currentFlight.LandingEstimate);
-
-                // Evaluate each runway option to find the one with the earliest landing time
+                // For each option, calculate the earliest landing time using the trajectory for that specific runway
                 var results = runwayOptions
-                    .Select(runwayOption => EvaluateRunwayOption(runwayOption, currentFlight, i, targetLandingTime, currentRunwayMode))
+                    .Select(runwayOption =>
+                    {
+                        var targetLandingTime = CalculateTargetLandingTime(currentFlight, runwayOption);
+                        return EvaluateRunwayOption(runwayOption, currentFlight, i, targetLandingTime, currentRunwayMode);
+                    })
                     .ToList();
 
                 // Select the runway option with the earliest landing time
@@ -528,7 +561,7 @@ public class Sequence
                     // to avoid skipping flights beyond the effective start index
                     if (result.SequencePosition < i)
                     {
-                        log.Debug("Rewinding to {NewIndex} to re-schedule {Callsign}", i, currentFlight.Callsign);
+                        log.Debug("Moving forward to {NewIndex} to re-schedule {Callsign}", i, currentFlight.Callsign);
                         i = result.SequencePosition - 1;
                     }
                     continue;
@@ -552,7 +585,7 @@ public class Sequence
                     landingTime - currentFlight.LandingEstimate,
                     flowControls);
 
-                Schedule(currentFlight, landingTime, result.Option.RunwayIdentifier, result.Option.ApproachType, flowControls);
+                Schedule(currentFlight, landingTime, result.Option.RunwayIdentifier, result.Option.ApproachType, result.Option.Trajectory, flowControls);
             }
 
             _flights.Clear();
@@ -749,6 +782,27 @@ public class Sequence
                 return runwayMode.OffModeSeparation;
             }
 
+            DateTimeOffset CalculateTargetLandingTime(Flight currentFlight, RunwayOption runwayOption)
+            {
+                DateTimeOffset targetLandingTime;
+                if (currentFlight.TargetLandingTime.HasValue)
+                {
+                    targetLandingTime = currentFlight.TargetLandingTime.Value;
+                }
+                else if (!string.IsNullOrEmpty(currentFlight.FeederFixIdentifier))
+                {
+                    // Calculate target as FF + TTG for this runway
+                    targetLandingTime = currentFlight.FeederFixEstimate.Add(runwayOption.Trajectory.TimeToGo);
+                }
+                else
+                {
+                    // No feeder fix, use current landing estimate
+                    targetLandingTime = currentFlight.LandingEstimate;
+                }
+
+                return targetLandingTime;
+            }
+
             (RunwayOption Option, DateTimeOffset LandingTime, int SequencePosition) EvaluateRunwayOption(
                 RunwayOption runwayOption,
                 Flight flight,
@@ -770,15 +824,15 @@ public class Sequence
                 // Calculate earliest landing time at current position
                 var earliestLandingTime = GetEarliestLandingTimeForIndex(flight.Callsign, position, targetLandingTime, runwayMode, runway);
 
-                // Check for conflicts with items behind us in the sequence (later positions)
+                // Check for conflicts with items backward in the sequence (later positions)
                 var latestLandingTime = GetLatestLandingTimeForIndex(flight.Callsign, position, runwayMode, runway);
                 if (latestLandingTime.HasValue && earliestLandingTime.IsAfter(latestLandingTime.Value))
                 {
                     log.Debug(
-                        "  {Callsign} RWY {Runway}: conflict at i={Index} with the proceeding entry. Earliest {Earliest:HHmm} > latest {Latest:HHmm}, searching later",
+                        "  {Callsign} RWY {Runway}: conflict at i={Index} with the proceeding entry. Earliest {Earliest:HHmm} > latest {Latest:HHmm}, searching backward",
                         flight.Callsign, runwayOption.RunwayIdentifier, position, earliestLandingTime, latestLandingTime.Value);
 
-                    // Conflict detected - need to move later in sequence
+                    // Conflict detected - need to move backward in sequence
                     var foundValidPosition = false;
                     for (var candidateIndex = position + 1; candidateIndex <= sequence.Count; candidateIndex++)
                     {
@@ -818,11 +872,11 @@ public class Sequence
                         break;
                     }
 
-                    // If we couldn't find a valid position backwards, stay at current position
+                    // If we couldn't find a valid position backward, stay at current position
                     if (!foundValidPosition)
                     {
                         log.Debug(
-                            "  {Callsign} RWY {Runway}: no valid forward position found, staying at i={Index}",
+                            "  {Callsign} RWY {Runway}: no valid backward position found, staying at i={Index}",
                             flight.Callsign, runwayOption.RunwayIdentifier, currentIndex);
                         position = currentIndex;
                     }
@@ -885,12 +939,14 @@ public class Sequence
         }
     }
 
-    void Schedule(Flight flight, DateTimeOffset landingTime, string runwayIdentifier, string approachType, FlowControls flowControls)
+    void Schedule(
+        Flight flight,
+        DateTimeOffset landingTime,
+        string runwayIdentifier,
+        string approachType,
+        Trajectory trajectory,
+        FlowControls flowControls)
     {
-        // Lookup trajectory before setting runway/approach
-        // TODO: Find a different way to deal with transitions
-        var trajectory = _trajectoryService.GetTrajectory(flight, runwayIdentifier, approachType, [], UpperWind);
-
         // Atomic update: runway + trajectory + ETA + STA_FF
         flight.SetRunway(runwayIdentifier, trajectory);
         flight.SetApproachType(approachType, trajectory);
@@ -907,7 +963,7 @@ public class Sequence
         flight.SetSequenceData(landingTime, flowControls);
     }
 
-    record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation);
+    record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, Trajectory Trajectory);
 
     // TODO: Extract this out into a separate service so we can test it
     RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode)
@@ -919,12 +975,14 @@ public class Sequence
             var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
             if (runway is not null)
             {
-                return [new RunwayOption(runway.Identifier, flight.ApproachType, runway.AcceptanceRate)];
+                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, flight.ApproachType, [], UpperWind);
+                return [new RunwayOption(runway.Identifier, flight.ApproachType, runway.AcceptanceRate, trajectory)];
             }
 
             // Runway is off-mode, create an ad-hoc option
             var separation = runwayMode.OffModeSeparation;
-            return [new RunwayOption(flight.AssignedRunwayIdentifier, flight.ApproachType, separation)];
+            var offModeTrajectory = _trajectoryService.GetTrajectory(flight, flight.AssignedRunwayIdentifier, flight.ApproachType, [], UpperWind);
+            return [new RunwayOption(flight.AssignedRunwayIdentifier, flight.ApproachType, separation, offModeTrajectory)];
         }
 
         var possibleRunways = new HashSet<RunwayOption>();
@@ -933,13 +991,15 @@ public class Sequence
             // If the runway requires a feeder fix to match, and this aircraft is tracking via that fix, we can assign it
             if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && runway.FeederFixes.Contains(flight.FeederFixIdentifier))
             {
-                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate));
+                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, runway.ApproachType, [], UpperWind);
+                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate, trajectory));
             }
 
             // Runway has no specific feeder fix requirements, so we can assign it regardless of the feeder
             if (!runway.FeederFixes.Any())
             {
-                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate));
+                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, runway.ApproachType, [], UpperWind);
+                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate, trajectory));
             }
         }
 
@@ -949,7 +1009,8 @@ public class Sequence
             _logger.Debug(
                 "{Callsign}: no runway match for feeder fix {FeederFix}, using default {Default}",
                 flight.Callsign, flight.FeederFixIdentifier, runwayMode.Default.Identifier);
-            possibleRunways.Add(new RunwayOption(runwayMode.Default.Identifier, runwayMode.Default.ApproachType, runwayMode.Default.AcceptanceRate));
+            var defaultTrajectory = _trajectoryService.GetTrajectory(flight, runwayMode.Default.Identifier, runwayMode.Default.ApproachType, [], UpperWind);
+            possibleRunways.Add(new RunwayOption(runwayMode.Default.Identifier, runwayMode.Default.ApproachType, runwayMode.Default.AcceptanceRate, defaultTrajectory));
         }
 
         return possibleRunways.ToArray();

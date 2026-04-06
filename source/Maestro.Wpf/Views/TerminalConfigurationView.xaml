@@ -20,6 +20,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <converters:BoolInversionConverter x:Key="BoolInversionConverter" />
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
@@ -123,9 +124,13 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Width="56" Command="{Binding ChangeRunwayModeCommand}">Ok</Button>
-            <Button Grid.Column="1" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
+            <Button Grid.Column="1" Width="Auto"
+                    Command="{Binding CancelPendingChangesCommand}"
+                    Visibility="{Binding HasPendingModeChange, Converter={StaticResource BoolToVisibilityConverter}}">Cancel Pending Changes</Button>
+            <Button Grid.Column="2" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
         </Grid>
 
     </StackPanel>

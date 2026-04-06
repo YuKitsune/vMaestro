@@ -41,6 +41,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     DateTimeOffset _firstLandingTime;
 
     public RunwayModeViewModel[] AvailableRunwayModes { get; }
+    public bool HasPendingModeChange { get; }
 
     public double MinimumLandingRateSeconds => 30;
     public double MaximumLandingRateSeconds => 60 * 5; // 5 Minutes
@@ -70,6 +71,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         OriginalRunwayModeIdentifier = currentRunwayMode.Identifier;
 
         AvailableRunwayModes = availableRunwayModes;
+        HasPendingModeChange = nextTerminalConfiguration != null;
         SelectedRunwayMode = nextTerminalConfiguration ?? currentRunwayMode;
         SelectedRunwayModeIdentifier = SelectedRunwayMode.Identifier;
 
@@ -128,6 +130,20 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         catch (Exception ex)
         {
             _errorReporter.ReportError( ex);
+        }
+    }
+
+    [RelayCommand]
+    void CancelPendingChanges()
+    {
+        try
+        {
+            _mediator.Send(new CancelRunwayModeChangeRequest(_airportIdentifier), CancellationToken.None);
+            CloseWindow();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
         }
     }
 
