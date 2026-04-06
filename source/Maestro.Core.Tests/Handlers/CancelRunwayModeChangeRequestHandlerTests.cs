@@ -2,6 +2,7 @@ using Maestro.Contracts.Runway;
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -123,6 +124,91 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
         flight1.AssignedRunwayIdentifier.ShouldBe("34L", "flight1 should remain on 34L");
         flight2.AssignedRunwayIdentifier.ShouldBe("34L", "flight2 should be reassigned to 34L after cancel");
         flight2.LandingTime.ShouldBe(flight2.LandingEstimate, "flight2 delay should be removed after cancel");
+    }
+
+    // TODO: This is a more generalised test, move it into the Sequence tests instead
+
+    [Fact]
+    public async Task WhenCancellingModeChange_InitialEstimatesAreNotCorrupted()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var airportConfiguration = BuildAirportConfiguration();
+
+        // Configure different trajectories for different runways
+        // 34L has 30min TTG, 16R has 18min TTG
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory()
+                .OnRunway("34L")
+                .Returns(new Trajectory(TimeSpan.FromMinutes(30)))
+            .WithTrajectory()
+                .OnRunway("16R")
+                .Returns(new Trajectory(TimeSpan.FromMinutes(18)));
+
+        // Flight tracking via RIVET:
+        // - On 34IVA: assigned to 34L (TTG=30min)
+        // - On 16IVA: assigned to 16R (TTG=18min)
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(now.AddMinutes(10))  // FF at T+10
+            .WithRunway("34L")
+            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(30)))
+            .Build();
+
+        // Initial state: FF=T+10, TTG=30min, ETA=T+40, InitialETA=T+40
+        flight.FeederFixEstimate.ShouldBe(now.AddMinutes(10));
+        flight.LandingEstimate.ShouldBe(now.AddMinutes(40));
+        flight.InitialLandingEstimate.ShouldBe(now.AddMinutes(40));
+
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s
+                .WithTrajectoryService(trajectoryService)
+                .WithFlightsInOrder(flight))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        // Act 1: Schedule mode change
+        // Flight gets reassigned from 34L to 16R
+        // FF=T+10, TTG=18min (changed!), ETA=T+28
+        // But InitialETA should remain T+40
+        await ScheduleModeChange(sessionManager, airportConfiguration, mediator, now.AddMinutes(20), now.AddMinutes(25));
+
+        flight.AssignedRunwayIdentifier.ShouldBe("16R", "flight should be reassigned to 16R in new mode");
+        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(18), "trajectory should change to 16R");
+        flight.LandingEstimate.ShouldBe(now.AddMinutes(28), "ETA should be FF + new TTG");
+
+        // With the fix, InitialLandingEstimate should NOT have changed
+        flight.InitialLandingEstimate.ShouldBe(now.AddMinutes(40),
+            "InitialLandingEstimate should remain T+40 even after runway reassignment");
+
+        var initialEstimateAfterModeChange = flight.InitialLandingEstimate;
+
+        // Act 2: Cancel mode change
+        // Flight gets reassigned back to 34L
+        // FF=T+10, TTG=30min (changed back!), ETA=T+40
+        var handler = new CancelRunwayModeChangeRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
+
+        // Assert
+        flight.AssignedRunwayIdentifier.ShouldBe("34L", "flight should be reassigned back to 34L");
+        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(30), "trajectory should be back to 34L");
+        flight.LandingEstimate.ShouldBe(now.AddMinutes(40), "ETA should be FF + original TTG");
+
+        // The critical assertion: InitialLandingEstimate should never have changed
+        flight.InitialLandingEstimate.ShouldBe(now.AddMinutes(40),
+            "InitialLandingEstimate should remain T+40 throughout all runway reassignments");
+
+        // This demonstrates the bug: if InitialLandingEstimate was corrupted to T+28 during the mode change,
+        // then after cancellation TotalDelay = LandingTime - InitialLandingEstimate could be negative
+        flight.TotalDelay.ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero, "TotalDelay should never be negative");
+        flight.LandingTime.ShouldBeGreaterThanOrEqualTo(flight.InitialLandingEstimate,
+            "LandingTime should never be before InitialLandingEstimate");
     }
 
     [Fact]
