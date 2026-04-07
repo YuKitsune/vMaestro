@@ -108,43 +108,50 @@ Airports:
       WELSH: 96, 0, 0
       BOREE: 0, 235, 235
       YAKKA: 0, 235, 235
-      MARLN: 0, 235, 235
+      MARLN: 0, 105, 0
 
   RunwayModes:
 
+  # 24 landings per hour = 150s
   - Identifier: 34IVA
+    Runways:
+    - {Identifier: 34L, LandingRateSeconds: 150, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 34R, LandingRateSeconds: 150, FeederFixes: [BOREE, YAKKA, MARLN]}
+
+  # 20 landings per hour = 180s
+  - Identifier: 34I
+    DependencyRateSeconds: 60
     Runways:
     - {Identifier: 34L, LandingRateSeconds: 180, FeederFixes: [RIVET, WELSH]}
     - {Identifier: 34R, LandingRateSeconds: 180, FeederFixes: [BOREE, YAKKA, MARLN]}
 
-  - Identifier: 34I
-    DependencyRateSeconds: 60
-    Runways:
-    - {Identifier: 34L, LandingRateSeconds: 210, FeederFixes: [RIVET, WELSH]}
-    - {Identifier: 34R, LandingRateSeconds: 210, FeederFixes: [BOREE, YAKKA, MARLN]}
-
+  # 24 landings per hour = 150s
   - Identifier: 16IVA
+    Runways:
+    - {Identifier: 16R, LandingRateSeconds: 150, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 16L, LandingRateSeconds: 150, FeederFixes: [BOREE, YAKKA, MARLN]}
+
+  # 20 landings per hour = 180s
+  - Identifier: 16I
+    DependencyRateSeconds: 60
     Runways:
     - {Identifier: 16R, LandingRateSeconds: 180, FeederFixes: [RIVET, WELSH]}
     - {Identifier: 16L, LandingRateSeconds: 180, FeederFixes: [BOREE, YAKKA, MARLN]}
 
-  - Identifier: 16I
-    DependencyRateSeconds: 60
-    Runways:
-    - {Identifier: 16R, LandingRateSeconds: 210, FeederFixes: [RIVET, WELSH]}
-    - {Identifier: 16L, LandingRateSeconds: 210, FeederFixes: [BOREE, YAKKA, MARLN]}
-
+  # 25 landings per hour = 144s
   - Identifier: 25I
     Runways:
-    - {Identifier: "25", LandingRateSeconds: 210}
+    - {Identifier: "25", LandingRateSeconds: 144}
 
+  # 25 landings per hour = 144s
   - Identifier: 07I
     Runways:
-    - {Identifier: "07", LandingRateSeconds: 210}
+    - {Identifier: "07", LandingRateSeconds: 144}
 
+  # 24 landings per hour = 150s
   - Identifier: SODPROPS
     Runways:
-    - {Identifier: 34L, LandingRateSeconds: 300}
+    - {Identifier: 34L, LandingRateSeconds: 150}
 
   Trajectories:
   - FeederFix: BOREE
