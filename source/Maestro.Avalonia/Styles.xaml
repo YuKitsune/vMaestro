@@ -2,15 +2,10 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:Maestro.Avalonia"
-    xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
-    xmlns:converters="clr-namespace:Maestro.Avalonia.Converters">
+    xmlns:controls="clr-namespace:Maestro.Avalonia.Controls">
 
     <Styles.Resources>
         <ResourceDictionary>
-            <converters:FontSizeToHeightConverter x:Key="FontSizeToHeightConverter"/>
-            <converters:FontSizeToLineHeightConverter x:Key="FontSizeToLineHeightConverter"/>
-            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-
             <!-- ComboBox Toggle Button Template -->
             <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
                 <Border Background="{x:Static local:Theme.BackgroundColor}">
@@ -39,7 +34,7 @@
         <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
         <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
         <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
+        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={x:Static local:Converters.FontSizeToLineHeight}}" />
     </Style>
 
     <!-- TextBlock interactive class (InteractiveTextStyle) -->

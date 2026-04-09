@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Maestro.Avalonia"
              xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
-             xmlns:converters="clr-namespace:Maestro.Avalonia.Converters"
              Background="{x:Static local:Theme.BackgroundColor}"
              MinWidth="440"
              MinHeight="240"
@@ -11,10 +10,6 @@
     <UserControl.Styles>
         <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
     </UserControl.Styles>
-    <UserControl.Resources>
-        <converters:BoolInversionConverter x:Key="BoolInversionConverter" />
-    </UserControl.Resources>
-
     <StackPanel Orientation="Vertical">
 
         <!-- I think this needs its own window -->

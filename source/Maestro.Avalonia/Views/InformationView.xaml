@@ -2,7 +2,6 @@
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Maestro.Avalonia"
-        xmlns:converters="clr-namespace:Maestro.Avalonia.Converters"
         xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
         Background="{x:Static local:Theme.BackgroundColor}"
         MinWidth="640"
@@ -11,11 +10,6 @@
     <UserControl.Styles>
         <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
     </UserControl.Styles>
-    <UserControl.Resources>
-        <converters:WakeCategoryConverter x:Key="WakeCategoryConverter" />
-        <converters:TimeConverter x:Key="TimeConverter" />
-        <converters:MinutesConverter x:Key="MinutesConverter" />
-    </UserControl.Resources>
 
     <controls:GridWithBorder
         BorderBrush="{x:Static local:Theme.GenericTextColor}"
@@ -49,7 +43,7 @@
 
             <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Callsign}" />
             <TextBlock Grid.Column="1" Grid.Row="0">
-                <Run Text="{Binding AircraftType, Mode=OneWay}"/>/<Run Text="{Binding WakeCategory, Mode=OneWay, Converter={StaticResource WakeCategoryConverter}}" />
+                <Run Text="{Binding AircraftType, Mode=OneWay}"/>/<Run Text="{Binding WakeCategory, Mode=OneWay, Converter={x:Static local:Converters.WakeCategorySymbol}}" />
             </TextBlock>
             <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding OriginIdentifier}" />
             <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding DestinationIdentifier}" />
@@ -71,11 +65,11 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Column="0" Grid.Row="0" Text="ETA-FF"/>
-            <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialFeederFixEstimate, Converter={StaticResource TimeConverter}}"/>
-            <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding FeederFixEstimate, Converter={StaticResource TimeConverter}}"/>
+            <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialFeederFixEstimate, Converter={x:Static local:Converters.Time}}"/>
+            <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding FeederFixEstimate, Converter={x:Static local:Converters.Time}}"/>
 
             <TextBlock Grid.Column="0" Grid.Row="1" Text="STA-FF"/>
-            <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding FeederFixTime, Converter={StaticResource TimeConverter}}"/>
+            <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding FeederFixTime, Converter={x:Static local:Converters.Time}}"/>
         </Grid>
 
         <!-- Runway header -->
@@ -96,11 +90,11 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Column="0" Grid.Row="0" Text="ETA"/>
-            <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialLandingEstimate, Converter={StaticResource TimeConverter}}"/>
-            <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding LandingEstimate, Converter={StaticResource TimeConverter}}"/>
+            <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding InitialLandingEstimate, Converter={x:Static local:Converters.Time}}"/>
+            <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding LandingEstimate, Converter={x:Static local:Converters.Time}}"/>
 
             <TextBlock Grid.Column="0" Grid.Row="1" Text="STA"/>
-            <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding LandingTime, Converter={StaticResource TimeConverter}}"/>
+            <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding LandingTime, Converter={x:Static local:Converters.Time}}"/>
         </Grid>
 
         <!-- Delay header -->
@@ -118,10 +112,10 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0">
-                <Run Text="{Binding InitialDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>mn
+                <Run Text="{Binding InitialDelay, Mode=OneWay, Converter={x:Static local:Converters.Minutes}}"/>mn
             </TextBlock>
             <TextBlock Grid.Row="0" Grid.Column="1">
-                <Run Text="{Binding RemainingDelay, Mode=OneWay, Converter={StaticResource MinutesConverter}}"/>mn
+                <Run Text="{Binding RemainingDelay, Mode=OneWay, Converter={x:Static local:Converters.Minutes}}"/>mn
             </TextBlock>
         </Grid>
     </controls:GridWithBorder>

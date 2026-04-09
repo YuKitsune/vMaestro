@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Maestro.Avalonia"
              xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
-             xmlns:converters="clr-namespace:Maestro.Avalonia.Converters"
              Background="{x:Static local:Theme.BackgroundColor}"
              MinWidth="480"
              MinHeight="480">
@@ -19,12 +18,6 @@
             <Setter Property="Foreground" Value="White"/>
         </Style>
     </UserControl.Styles>
-    <UserControl.Resources>
-        <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
-        <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
-        <converters:EqualityConverter x:Key="EqualityConverter" />
-        <converters:LandingRateUnitSymbolConverter x:Key="LandingRateUnitSymbolConverter" />
-    </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -224,7 +217,7 @@
 
                 <!-- Units Selector -->
                 <Button Grid.Column="10" Width="24"
-                        Content="{Binding SelectedUnit, Converter={StaticResource LandingRateUnitSymbolConverter}}"
+                        Content="{Binding SelectedUnit, Converter={x:Static local:Converters.LandingRateUnitSymbol}}"
                         Command="{Binding CycleUnitsCommand}"
                         IsVisible="{Binding ShouldShowFlowControls}"/>
 

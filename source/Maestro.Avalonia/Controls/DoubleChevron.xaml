@@ -1,14 +1,11 @@
 <UserControl x:Class="Maestro.Avalonia.Controls.DoubleChevron"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:Maestro.Avalonia.Converters"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <UserControl.Styles>
         <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
     </UserControl.Styles>
-    <UserControl.Resources>
-        <converters:DirectionToRotationAngleConverter x:Key="DirectionToRotationAngleConverter" />
-    </UserControl.Resources>
 
     <Grid Width="8" Height="8">
         <Canvas>
@@ -19,7 +16,7 @@
                 Canvas.Top="0"
                 Data="M4,0 L8,4 L0,4 z">
                 <Path.RenderTransform>
-                    <RotateTransform CenterX="4" CenterY="2" Angle="{Binding Direction, Converter={StaticResource DirectionToRotationAngleConverter}}" />
+                    <RotateTransform CenterX="4" CenterY="2" Angle="{Binding Direction, Converter={x:Static local:Converters.DirectionToRotationAngle}}" />
                 </Path.RenderTransform>
             </Path>
 
@@ -30,7 +27,7 @@
                 Canvas.Top="4"
                 Data="M4,0 L8,4 L0,4 z">
                 <Path.RenderTransform>
-                    <RotateTransform CenterX="4" CenterY="2" Angle="{Binding Direction, Converter={StaticResource DirectionToRotationAngleConverter}}" />
+                    <RotateTransform CenterX="4" CenterY="2" Angle="{Binding Direction, Converter={x:Static local:Converters.DirectionToRotationAngle}}" />
                 </Path.RenderTransform>
             </Path>
         </Canvas>
