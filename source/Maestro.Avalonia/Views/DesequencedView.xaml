@@ -22,11 +22,7 @@
             <Setter Property="Foreground" Value="{x:Static local:Theme.BackgroundColor}"/>
         </Style>
     </UserControl.Styles>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <Grid ColumnDefinitions="*,*">
 
         <ListBox
             Name="CallsignList"

@@ -89,11 +89,7 @@
 
         <Border Padding="4" />
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <Grid ColumnDefinitions="*,*">
             <Button Grid.Column="0" Width="56" Command="{Binding ChangeWindCommand}">Ok</Button>
             <Button Grid.Column="1" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
         </Grid>

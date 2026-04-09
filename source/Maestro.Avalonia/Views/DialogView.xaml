@@ -18,17 +18,7 @@
             <Setter Property="Width" Value="80" />
         </Style>
     </UserControl.Styles>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="8"/>
-            <RowDefinition Height="24"/>
-        </Grid.RowDefinitions>
+    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,8,24">
 
         <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Message}" TextWrapping="Wrap"/>
         <Button Grid.Row="2" Grid.Column="0" Content="Confirm" Command="{Binding ConfirmCommand}" />

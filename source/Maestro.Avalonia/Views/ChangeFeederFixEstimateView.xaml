@@ -17,24 +17,9 @@
     </UserControl.Styles>
 
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <Grid RowDefinitions="Auto,Auto">
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="24"/>
-                <RowDefinition Height="24"/>
-                <RowDefinition Height="24"/>
-                <RowDefinition Height="24"/>
-            </Grid.RowDefinitions>
+        <Grid ColumnDefinitions="*,*" RowDefinitions="24,24,24,24">
 
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Flight"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Callsign}"/>
@@ -50,14 +35,7 @@
 
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <Grid Grid.Row="1" Margin="0,4,0,0" ColumnDefinitions="*,Auto,*,Auto,*">
 
             <Button Grid.Column="1" Content="OK" Command="{Binding ChangeFeederFixEstimateCommand}"/>
             <Button Grid.Column="3" Content="Cancel" Command="{Binding CloseWindowCommand}"/>

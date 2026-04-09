@@ -19,26 +19,11 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="16" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <Grid.RowDefinitions>
-            <RowDefinition Height="22" />
-            <RowDefinition Height="22"/>
-            <RowDefinition Height="22" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="32" />
-        </Grid.RowDefinitions>
+    <Grid ColumnDefinitions="16,*" RowDefinitions="22,22,22,*,32">
 
         <!-- Horizontal Scroll Buttons -->
-        <Grid Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Margin="2,0,0,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Margin="2,0,0,0"
+              RowDefinitions="*,*">
 
             <Button Grid.Row="0" Margin="0,1,0,1" Command="{Binding ScrollLeftCommand}">
                 <controls:Chevron Direction="Left" />
@@ -125,15 +110,7 @@
 
                 <!-- Wind Configuration -->
                 <Button Grid.Column="6" Command="{Binding OpenWindCommand}" IsVisible="{Binding ShouldShowFlowControls}">
-                    <Grid Margin="4,0,4,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
+                    <Grid Margin="4,0,4,0" ColumnDefinitions="Auto,Auto" RowDefinitions="*,*">
 
                         <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Right"
                                    Classes="interactive" Classes.active="{Binding ManualWind}">
@@ -160,15 +137,8 @@
                     IsVisible="{Binding ShouldShowFlowControls}" />
 
                 <!-- Achieved Rates -->
-                <Grid Grid.Column="8" VerticalAlignment="Center" IsVisible="{Binding ShouldShowFlowControls}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <Grid Grid.Column="8" VerticalAlignment="Center" IsVisible="{Binding ShouldShowFlowControls}"
+                      RowDefinitions="*,*" ColumnDefinitions="Auto,Auto">
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Real Rates" Margin="0,0,4,0"/>
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Deviation" Margin="0,0,4,0"/>
@@ -185,11 +155,7 @@
                                     <!-- 3-char padding -->
                                     <TextBlock Text="___" IsVisible="False"/>
 
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition/>
-                                            <RowDefinition/>
-                                        </Grid.RowDefinitions>
+                                    <Grid RowDefinitions="*,*">
 
                                         <StackPanel Grid.Row="0" Orientation="Horizontal">
                                             <TextBlock Text="{Binding Identifier}" />
@@ -270,12 +236,7 @@
         </StackPanel>
 
         <!-- Scroll Bar -->
-        <Grid Grid.Column="0" Grid.Row="3" Margin="2,0,0,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <Grid Grid.Column="0" Grid.Row="3" Margin="2,0,0,0" RowDefinitions="*,*,*">
 
             <Button Grid.Row="0" Margin="0,1,0,1" Command="{Binding ScrollUpCommand}"
                     Classes.active="{Binding IsScrollingUp}">

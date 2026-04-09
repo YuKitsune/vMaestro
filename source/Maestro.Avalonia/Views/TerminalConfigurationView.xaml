@@ -75,15 +75,7 @@
             BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
             BevelType="Sunken">
             <Border Padding="2">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,*">
 
                     <TextBlock Grid.Row="0" Grid.Column="0">
                         <Run Text="Last STA in configuration "/>
@@ -102,12 +94,7 @@
 
         <Border Padding="2" />
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <Grid ColumnDefinitions="*,*,*">
             <Button Grid.Column="0" Width="56" Command="{Binding ChangeRunwayModeCommand}">Ok</Button>
             <Button Grid.Column="1"
                     Command="{Binding CancelPendingChangesCommand}"

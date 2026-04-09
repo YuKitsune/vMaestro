@@ -227,11 +227,7 @@
 
                     <!-- Content area -->
                     <Border Padding="{x:Static local:Theme.BeveledBorderThickness}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid ColumnDefinitions="*,Auto">
 
                             <ContentPresenter
                                 Grid.Column="0"
@@ -301,11 +297,7 @@
                             <Thumb>
                                 <Thumb.Template>
                                     <ControlTemplate>
-                                        <Grid Width="32" Height="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
+                                        <Grid Width="32" Height="8" ColumnDefinitions="*,*">
 
                                             <Grid Grid.Column="0" Background="{x:Static local:Theme.BackgroundColor}">
                                                 <controls:BeveledBorder
@@ -347,11 +339,7 @@
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden"/>
         <Setter Property="Template">
             <ControlTemplate>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                    </Grid.ColumnDefinitions>
+                <Grid ColumnDefinitions="*,16">
 
                     <controls:BeveledBorder
                         Grid.Column="0"

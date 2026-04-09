@@ -15,16 +15,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="24"/>
-            <RowDefinition Height="24"/>
-            <RowDefinition Height="32"/>
-        </Grid.RowDefinitions>
+    <Grid ColumnDefinitions="*,Auto" RowDefinitions="24,24,32">
 
         <TextBlock Grid.Row="0" Grid.Column="0" Text="Start slot at"/>
         <controls:TimeControl Grid.Row="0" Grid.Column="1" Time="{Binding StartTime}"/>
@@ -32,16 +23,8 @@
         <TextBlock Grid.Row="1" Grid.Column="0" Text="End slot at"/>
         <controls:TimeControl Grid.Row="1" Grid.Column="1" Time="{Binding EndTime}"/>
 
-        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0"
+              ColumnDefinitions="*,Auto,*,Auto,*,Auto,*">
             <Button Grid.Column="1" Content="OK" Command="{Binding CreateOrModifySlotCommand}"/>
             <Button Grid.Column="3" Content="Remove" Command="{Binding DeleteSlotCommand}"/>
             <Button Grid.Column="5" Content="Cancel" Command="{Binding CloseWindowCommand}"/>

@@ -17,11 +17,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="3*"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid RowDefinitions="3*,*">
 
         <controls:BeveledBorder Grid.Row="0" BorderThickness="2" BevelType="Sunken">
             <TextBlock Text="{Binding MessageText}" TextWrapping="Wrap"/>

@@ -21,11 +21,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <Grid RowDefinitions="*,Auto">
 
         <ListBox
             Grid.Row="0"

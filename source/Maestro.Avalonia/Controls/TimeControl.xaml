@@ -9,14 +9,7 @@
         <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
     </UserControl.Styles>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="20"/>
-            <ColumnDefinition Width="20"/>
-            <ColumnDefinition Width="56"/>
-            <ColumnDefinition Width="20"/>
-            <ColumnDefinition Width="20"/>
-        </Grid.ColumnDefinitions>
+    <Grid ColumnDefinitions="20,20,56,20,20">
 
         <!-- Left buttons (single chevron - 1 minute intervals) -->
         <Button Grid.Column="0"

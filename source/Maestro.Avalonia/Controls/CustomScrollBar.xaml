@@ -10,12 +10,7 @@
         BevelType="Sunken"
         BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
         <Border Background="{x:Static local:Theme.SelectedButtonColor}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="12"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="12"/>
-                </Grid.RowDefinitions>
+            <Grid RowDefinitions="12,*,12">
 
                 <!-- Scroll up button area -->
                 <Border
