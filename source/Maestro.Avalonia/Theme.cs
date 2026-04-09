@@ -27,7 +27,7 @@ public static class Theme
     public static SolidColorBrush DelayMajor { get; set; } = new(Color.FromArgb(255, 235, 235, 0));
 
     // TODO: Support live updating font sizes
-    public static FontFamily FontFamily { get; set; } = new FontFamily("SF Mono");
+    public static FontFamily FontFamily { get; set; } = new("Terminus (TTF)");
     public static double FontSize { get; set; } = 16.0;
     public static FontWeight FontWeight { get; set; } = FontWeight.Bold;
 
