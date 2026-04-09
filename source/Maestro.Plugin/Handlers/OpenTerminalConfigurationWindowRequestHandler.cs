@@ -2,10 +2,10 @@
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Sessions;
 using Maestro.Plugin.Infrastructure;
-using Maestro.Wpf.Contracts;
-using Maestro.Wpf.Integrations;
-using Maestro.Wpf.ViewModels;
-using Maestro.Wpf.Views;
+using Maestro.Avalonia.Contracts;
+using Maestro.Avalonia.Integrations;
+using Maestro.Avalonia.ViewModels;
+using Maestro.Avalonia.Views;
 using MediatR;
 
 namespace Maestro.Plugin.Handlers;

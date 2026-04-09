@@ -1,0 +1,63 @@
+<UserControl x:Class="Maestro.Avalonia.Controls.CustomScrollBar"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             Loaded="UserControl_Loaded">
+
+    <!-- Single beveled border containing all scrollbar elements -->
+    <controls:BeveledBorder
+        BevelType="Sunken"
+        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+        <Border Background="{x:Static local:Theme.SelectedButtonColor}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="12"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="12"/>
+                </Grid.RowDefinitions>
+
+                <!-- Scroll up button area -->
+                <Border
+                    Grid.Row="0"
+                    x:Name="PART_ScrollUpButton"
+                    Background="Transparent">
+                    <controls:Chevron
+                        Direction="Up"
+                        Foreground="{x:Static local:Theme.BackgroundColor}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Scroll track area -->
+                <Grid Grid.Row="1" x:Name="PART_Track" Background="Transparent">
+                    <!-- Scroll thumb with gray background for beveling -->
+                    <Border
+                        x:Name="PART_Thumb"
+                        Background="{x:Static local:Theme.BackgroundColor}"
+                        Height="20"
+                        VerticalAlignment="Top"
+                        Margin="1">
+                        <controls:BeveledBorder
+                            BevelType="Raised"
+                            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                            <Border Background="{x:Static local:Theme.BackgroundColor}" />
+                        </controls:BeveledBorder>
+                    </Border>
+                </Grid>
+
+                <!-- Scroll down button area -->
+                <Border
+                    Grid.Row="2"
+                    x:Name="PART_ScrollDownButton"
+                    Background="Transparent">
+                    <controls:Chevron
+                        Direction="Down"
+                        Foreground="{x:Static local:Theme.BackgroundColor}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Border>
+            </Grid>
+        </Border>
+    </controls:BeveledBorder>
+</UserControl>

@@ -1,8 +1,9 @@
-﻿using System.Windows;
-using System.Windows.Forms.Integration;
 using System.Windows.Forms;
-using Maestro.Wpf.Integrations;
+using Avalonia.Controls;
+using Avalonia.Win32.Interoperability;
+using Maestro.Avalonia.Integrations;
 using vatsys;
+using Control = Avalonia.Controls.Control;
 
 namespace Maestro.Plugin;
 
@@ -20,7 +21,7 @@ public class VatSysForm : BaseForm
         Close();
     }
 
-    public VatSysForm(string title, Func<IWindowHandle, UIElement> childFactory, bool shrinkToContent)
+    public VatSysForm(string title, Func<IWindowHandle, Control> childFactory, bool shrinkToContent)
     {
         MiddleClickClose = false; // This is on by default. Why...
 
@@ -29,32 +30,31 @@ public class VatSysForm : BaseForm
         WindowHandle = new WindowHandle(this);
         var child = childFactory(WindowHandle);
 
-        var elementHost = new ElementHost();
+        var elementHost = new WinFormsAvaloniaControlHost();
+        elementHost.Content = child;
+        elementHost.Dock = DockStyle.Fill;
+
         if (shrinkToContent)
         {
-            // For text wrapping to work correctly, we need to measure with a constraint
-            var maxWidth = 1000; // Maximum dialog width
-            child.Measure(new Size(maxWidth, double.PositiveInfinity));
-            child.Arrange(new Rect(child.DesiredSize));
-            child.UpdateLayout();
-
-            var desired = child.DesiredSize;
-            elementHost.Child = child;
-            elementHost.Size = new System.Drawing.Size((int)Math.Ceiling(desired.Width), (int)Math.Ceiling(desired.Height));
-            elementHost.Location = new System.Drawing.Point(0, 0);
-
             FormBorderStyle = FormBorderStyle.FixedDialog;
-            ClientSize = elementHost.Size;
-        }
-        else
-        {
-            elementHost.Child = child;
-            elementHost.Dock = DockStyle.Fill;
-        }
 
-        if (!shrinkToContent)
-        {
-            elementHost.Dock = DockStyle.Fill;
+            // Avalonia controls return zero bounds before being attached to the visual tree,
+            // so resize the form after the first layout pass instead of pre-measuring.
+            void OnLayoutUpdated(object? sender, EventArgs e)
+            {
+                child.LayoutUpdated -= OnLayoutUpdated;
+                var bounds = child.Bounds;
+                if (bounds.Width > 0 && bounds.Height > 0)
+                {
+                    var size = new System.Drawing.Size(
+                        (int)Math.Ceiling(bounds.Width),
+                        (int)Math.Ceiling(bounds.Height));
+                    elementHost.Size = size;
+                    elementHost.Location = System.Drawing.Point.Empty;
+                    ClientSize = size;
+                }
+            }
+            child.LayoutUpdated += OnLayoutUpdated;
         }
 
         Controls.Add(elementHost);

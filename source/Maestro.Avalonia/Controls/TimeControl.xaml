@@ -1,0 +1,72 @@
+<UserControl x:Class="Maestro.Avalonia.Controls.TimeControl"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             Height="20">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+    </UserControl.Styles>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="56"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left buttons (single chevron - 1 minute intervals) -->
+        <Button Grid.Column="0"
+                Name="MinuteDownButton"
+                Click="MinuteDownButton_Click"
+                Padding="1"
+                Margin="0,0,1,0">
+            <controls:Chevron Direction="Down"
+                              Foreground="{x:Static local:Theme.InteractiveTextColor}"
+                              Width="8" Height="8"/>
+        </Button>
+
+        <Button Grid.Column="1"
+                Name="MinuteUpButton"
+                Click="MinuteUpButton_Click"
+                Padding="1"
+                Margin="1,0,1,0">
+            <controls:Chevron Direction="Up"
+                              Foreground="{x:Static local:Theme.InteractiveTextColor}"
+                              Width="8" Height="8"/>
+        </Button>
+
+        <!-- Middle time display -->
+        <Border Grid.Column="2"
+                BorderBrush="{x:Static local:Theme.InteractiveTextColor}"
+                BorderThickness="1"
+                Margin="1,0">
+            <TextBlock Text="{Binding TimeText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Margin="4,2"/>
+        </Border>
+
+        <!-- Right buttons (double chevron - 5 minute intervals) -->
+        <Button Grid.Column="3"
+                Name="FiveMinuteDownButton"
+                Click="FiveMinuteDownButton_Click"
+                Padding="1"
+                Margin="1,0,1,0">
+            <controls:DoubleChevron Direction="Down"
+                                    Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
+        </Button>
+
+        <Button Grid.Column="4"
+                Name="FiveMinuteUpButton"
+                Click="FiveMinuteUpButton_Click"
+                Padding="1"
+                Margin="1,0,0,0">
+            <controls:DoubleChevron Direction="Up"
+                                    Foreground="{x:Static local:Theme.InteractiveTextColor}"/>
+        </Button>
+    </Grid>
+</UserControl>

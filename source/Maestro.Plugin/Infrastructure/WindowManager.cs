@@ -1,6 +1,6 @@
-﻿using System.Windows;
-using System.Windows.Forms;
-using Maestro.Wpf.Integrations;
+﻿using System.Windows.Forms;
+using Avalonia.Controls;
+using Maestro.Avalonia.Integrations;
 
 namespace Maestro.Plugin.Infrastructure;
 
@@ -11,9 +11,9 @@ public class WindowManager(GuiInvoker guiInvoker)
     public void FocusOrCreateWindow(
         string key,
         string title,
-        Func<IWindowHandle, UIElement> createView,
+        Func<IWindowHandle, Control> createView,
         bool shrinkToContent = true,
-        Size? size = null,
+        System.Drawing.Size? size = null,
         Action<VatSysForm>? configureForm = null)
     {
         guiInvoker.InvokeOnUiThread(mainForm =>

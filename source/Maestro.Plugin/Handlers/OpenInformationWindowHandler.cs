@@ -1,8 +1,8 @@
 ﻿using Maestro.Plugin.Infrastructure;
-using Maestro.Wpf;
-using Maestro.Wpf.Contracts;
-using Maestro.Wpf.ViewModels;
-using Maestro.Wpf.Views;
+using Maestro.Avalonia;
+using Maestro.Avalonia.Contracts;
+using Maestro.Avalonia.ViewModels;
+using Maestro.Avalonia.Views;
 using MediatR;
 
 namespace Maestro.Plugin.Handlers;

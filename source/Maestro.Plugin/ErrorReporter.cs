@@ -1,4 +1,4 @@
-﻿using Maestro.Wpf.Integrations;
+﻿using Maestro.Avalonia.Integrations;
 using Serilog;
 using vatsys;
 

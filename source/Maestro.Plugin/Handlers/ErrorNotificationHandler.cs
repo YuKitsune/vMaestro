@@ -1,5 +1,5 @@
 ﻿using Maestro.Core.Contracts;
-using Maestro.Wpf.Integrations;
+using Maestro.Avalonia.Integrations;
 using MediatR;
 using Serilog;
 

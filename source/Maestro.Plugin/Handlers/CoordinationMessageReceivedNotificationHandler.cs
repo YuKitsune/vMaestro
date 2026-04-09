@@ -1,7 +1,7 @@
 using Maestro.Contracts.Coordination;
 using Maestro.Plugin.Infrastructure;
-using Maestro.Wpf.ViewModels;
-using Maestro.Wpf.Views;
+using Maestro.Avalonia.ViewModels;
+using Maestro.Avalonia.Views;
 using MediatR;
 using Serilog;
 

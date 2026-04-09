@@ -1,0 +1,111 @@
+<UserControl x:Class="Maestro.Avalonia.Views.FlightLabelView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Maestro.Avalonia.Views"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             Padding="{x:Static local:Theme.BeveledBorderThickness}">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+        </Style>
+        <!-- BeveledBorder visible states based on interaction -->
+        <Style Selector="controls|BeveledBorder.pointer-over">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="BevelType" Value="Raised"/>
+        </Style>
+        <Style Selector="controls|BeveledBorder.selected">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="BevelType" Value="Outline"/>
+        </Style>
+        <Style Selector="controls|BeveledBorder.context-open">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="BevelType" Value="Sunken"/>
+        </Style>
+        <Style Selector="controls|BeveledBorder.dragging">
+            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="BevelType" Value="Sunken"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border>
+        <Grid>
+            <controls:BeveledBorder
+                BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                IsVisible="False"
+                Classes.pointer-over="{Binding IsPointerOver, RelativeSource={RelativeSource AncestorType=views:FlightLabelView}}"
+                Classes.selected="{Binding IsSelected}"
+                Classes.context-open="{Binding IsOpen, ElementName=ContextMenu}"
+                Classes.dragging="{Binding IsDragging, RelativeSource={RelativeSource AncestorType=views:FlightLabelView}}">
+                <Border Background="Transparent"/>
+            </controls:BeveledBorder>
+
+            <ItemsControl
+                ItemsSource="{Binding LabelItems}"
+                Margin="{x:Static local:Theme.BeveledBorderThickness}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock
+                            Text="{Binding PaddedText}"
+                            Foreground="{Binding Foreground}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
+        <Border.ContextMenu>
+            <ContextMenu Name="ContextMenu">
+                <MenuItem Header="Change Runway" ItemsSource="{Binding AvailableRunways}">
+                    <MenuItem.ItemContainerTheme>
+                        <ControlTheme TargetType="MenuItem">
+                            <Setter Property="Header" Value="{Binding}"/>
+                            <Setter Property="Command" Value="{Binding DataContext.ChangeRunwayCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Setter Property="CommandParameter" Value="{Binding}"/>
+                        </ControlTheme>
+                    </MenuItem.ItemContainerTheme>
+                </MenuItem>
+                <MenuItem Header="Change Approach Type" ItemsSource="{Binding AvailableApproachTypes}"
+                          IsVisible="{Binding CanChangeApproachType}">
+                    <MenuItem.ItemContainerTheme>
+                        <ControlTheme TargetType="MenuItem">
+                            <Setter Property="Header" Value="{Binding}"/>
+                            <Setter Property="Command" Value="{Binding DataContext.ChangeApproachTypeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <Setter Property="CommandParameter" Value="{Binding}"/>
+                        </ControlTheme>
+                    </MenuItem.ItemContainerTheme>
+                </MenuItem>
+                <MenuItem Header="Insert Slot">
+                    <MenuItem Header="Before" Command="{Binding InsertSlotBeforeCommand}"/>
+                    <MenuItem Header="After" Command="{Binding InsertSlotAfterCommand}"/>
+                </MenuItem>
+                <MenuItem Header="Insert Flight">
+                    <MenuItem Header="Before" Command="{Binding InsertFlightBeforeCommand}" IsEnabled="{Binding CanInsertBefore}"/>
+                    <MenuItem Header="After" Command="{Binding InsertFlightAfterCommand}"/>
+                </MenuItem>
+                <MenuItem Header="Coordination" Command="{Binding CoordinationCommand}" />
+                <MenuItem Header="Change ETA FF" Command="{Binding ChangeEtaCommand}" />
+                <MenuItem Header="Information" Command="{Binding ShowInformationWindowCommand}" />
+                <MenuItem Header="Manual Delay">
+                    <MenuItem Header="00" Command="{Binding ManualDelayCommand}" CommandParameter="0"/>
+                    <MenuItem Header="05" Command="{Binding ManualDelayCommand}" CommandParameter="5"/>
+                    <MenuItem Header="10" Command="{Binding ManualDelayCommand}" CommandParameter="10"/>
+                    <MenuItem Header="15" Command="{Binding ManualDelayCommand}" CommandParameter="15"/>
+                    <MenuItem Header="20" Command="{Binding ManualDelayCommand}" CommandParameter="20"/>
+                </MenuItem>
+                <MenuItem Header="Remove" Command="{Binding RemoveCommand}" />
+                <MenuItem Header="Recompute" Command="{Binding RecomputeCommand}" />
+                <MenuItem Header="Desequence" Command="{Binding DesequenceCommand}" />
+                <MenuItem
+                    Header="Make Pending"
+                    Command="{Binding MakePendingCommand}"
+                    IsVisible="{Binding FlightViewModel.IsFromDepartureAirport}" />
+            </ContextMenu>
+        </Border.ContextMenu>
+    </Border>
+</UserControl>

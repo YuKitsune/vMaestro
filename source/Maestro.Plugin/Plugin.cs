@@ -1,8 +1,7 @@
 using System.ComponentModel.Composition;
 using System.Reflection;
-using System.Windows;
 using System.Windows.Forms;
-using System.Windows.Media;
+using Avalonia.Media;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Contracts.Flights;
@@ -17,8 +16,8 @@ using Maestro.Core.Sessions.Contracts;
 using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Handlers;
 using Maestro.Plugin.Infrastructure;
-using Maestro.Wpf;
-using Maestro.Wpf.Integrations;
+using Maestro.Avalonia;
+using Maestro.Avalonia.Integrations;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -95,14 +94,14 @@ public class Plugin : IPlugin
 
     void ConfigureTheme()
     {
-        Theme.BackgroundColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowBackground).ToWindowsColor());
-        Theme.GenericTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.GenericText).ToWindowsColor());
-        Theme.InteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.InteractiveText).ToWindowsColor());
-        Theme.NonInteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.NonInteractiveText).ToWindowsColor());
-        Theme.SelectedButtonColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowButtonSelected).ToWindowsColor());
+        Theme.BackgroundColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowBackground).ToAvaloniaColor());
+        Theme.GenericTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.GenericText).ToAvaloniaColor());
+        Theme.InteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.InteractiveText).ToAvaloniaColor());
+        Theme.NonInteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.NonInteractiveText).ToAvaloniaColor());
+        Theme.SelectedButtonColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowButtonSelected).ToAvaloniaColor());
         Theme.FontFamily = new FontFamily(MMI.eurofont_xsml.FontFamily.Name);
         Theme.FontSize = MMI.eurofont_xsml.Size;
-        Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeights.Bold : FontWeights.Regular;
+        Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeight.Bold : FontWeight.Regular;
     }
 
     void ConfigureServices(PluginConfiguration pluginConfiguration)
@@ -122,7 +121,7 @@ public class Plugin : IPlugin
                     c.RegisterServicesFromAssemblies(
                         typeof(Core.AssemblyMarker).Assembly,
                         typeof(AssemblyMarker).Assembly,
-                        typeof(Wpf.AssemblyMarker).Assembly
+                        typeof(Maestro.Avalonia.AssemblyMarker).Assembly
                     );
                 })
                 .AddSingleton<IFixLookup, VatsysFixLookup>()

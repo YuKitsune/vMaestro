@@ -1,5 +1,5 @@
 ﻿using System.Windows.Forms;
-using Maestro.Wpf.Integrations;
+using Maestro.Avalonia.Integrations;
 
 namespace Maestro.Plugin;
 

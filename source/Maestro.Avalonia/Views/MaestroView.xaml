@@ -1,0 +1,319 @@
+<UserControl x:Class="Maestro.Avalonia.Views.MaestroView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             xmlns:converters="clr-namespace:Maestro.Avalonia.Converters"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             MinWidth="480"
+             MinHeight="480">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+        <!-- Button active state (highlighted when scrolling or selected) -->
+        <Style Selector="Button.active">
+            <Setter Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}"/>
+            <Setter Property="Foreground" Value="{x:Static local:Theme.BackgroundColor}"/>
+        </Style>
+        <!-- TextBlock highlighted state (white foreground) -->
+        <Style Selector="TextBlock.active">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </UserControl.Styles>
+    <UserControl.Resources>
+        <converters:RunwaysToLadderTitleConverter x:Key="RunwaysToLadderTitleConverter" />
+        <converters:FeederFixesToLadderTitleConverter x:Key="FeederFixesToLadderTitleConverter" />
+        <converters:EqualityConverter x:Key="EqualityConverter" />
+        <converters:LandingRateUnitSymbolConverter x:Key="LandingRateUnitSymbolConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="22" />
+            <RowDefinition Height="22"/>
+            <RowDefinition Height="22" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="32" />
+        </Grid.RowDefinitions>
+
+        <!-- Horizontal Scroll Buttons -->
+        <Grid Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Margin="2,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Button Grid.Row="0" Margin="0,1,0,1" Command="{Binding ScrollLeftCommand}">
+                <controls:Chevron Direction="Left" />
+            </Button>
+
+            <Button Grid.Row="1" Margin="0,1,0,1" Command="{Binding ScrollRightCommand}"
+                    Classes.active="{Binding IsScrollingHorizontally}">
+                <controls:Chevron Direction="Right" />
+            </Button>
+
+        </Grid>
+
+        <!-- Header -->
+        <controls:BeveledBorder
+            Grid.Column="1"
+            Grid.Row="0"
+            BevelType="Outline"
+            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+            Margin="2,0,2,0"
+            Grid.RowSpan="2">
+
+            <Grid Margin="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="72" /> <!-- Online indicator (Position ID IRL) -->
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition MinWidth="72" Width="Auto" /> <!-- TMA Configuration -->
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition MinWidth="160" Width="*" /> <!-- Desired Rates -->
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" /> <!-- Winds -->
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" /> <!-- Achieved Rates -->
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" /> <!-- Units Selector -->
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" /> <!-- UTC Time -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Setup Button (Online Indicator) -->
+                <Button
+                    Grid.Column="0"
+                    Command="{Binding OpenConnectionWindowCommand}"
+                    Content="{Binding Status}"/>
+
+                <controls:BeveledLine Grid.Column="1" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
+
+                <!-- Runway Selector -->
+                <Button
+                    Grid.Column="2"
+                    Padding="5"
+                    Command="{Binding OpenTerminalConfigurationCommand}">
+                    <TextBlock TextWrapping="Wrap" Text="{Binding TerminalConfiguration}"
+                               Classes="interactive"
+                               Classes.active="{Binding RunwayChangeIsPlanned}"/>
+                </Button>
+
+                <controls:BeveledLine Grid.Column="3" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
+
+                <!-- Runway Intervals -->
+                <controls:BeveledBorder Grid.Column="4" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Raised">
+                    <ItemsControl ItemsSource="{Binding Path=RunwayIntervals}" VerticalAlignment="Center" Margin="2">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text=" - " Classes="interactive"/>
+                                    <TextBlock Text="{Binding Identifier}" Classes="interactive"/>
+                                    <TextBlock Text=":" Classes="interactive"/>
+                                    <TextBlock Text="{Binding LandingRateDisplay}" Classes="interactive"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </controls:BeveledBorder>
+
+                <controls:BeveledLine
+                    Grid.Column="5"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical" />
+
+                <!-- Wind Configuration -->
+                <Button Grid.Column="6" Command="{Binding OpenWindCommand}" IsVisible="{Binding ShouldShowFlowControls}">
+                    <Grid Margin="4,0,4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Right"
+                                   Classes="interactive" Classes.active="{Binding ManualWind}">
+                            <Run Text="{Binding UpperWindAltitude, StringFormat='{}{0} feet:'}" />
+                        </TextBlock>
+                        <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" Margin="4,0,0,0"
+                                   Classes="interactive" Classes.active="{Binding ManualWind}">
+                            <Run Text="{Binding UpperWind.Direction, StringFormat='{}{0:000}/'}" /><Run Text="{Binding UpperWind.Speed, StringFormat='{}{0:000}'}" />
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Text="Surface:"
+                                   Classes="interactive" Classes.active="{Binding ManualWind}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="4,0,0,0"
+                                   Classes="interactive" Classes.active="{Binding ManualWind}">
+                            <Run Text="{Binding SurfaceWind.Direction, StringFormat='{}{0:000}/'}" /><Run Text="{Binding SurfaceWind.Speed, StringFormat='{}{0:000}'}" />
+                        </TextBlock>
+                    </Grid>
+                </Button>
+
+                <controls:BeveledLine
+                    Grid.Column="7"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical"
+                    IsVisible="{Binding ShouldShowFlowControls}" />
+
+                <!-- Achieved Rates -->
+                <Grid Grid.Column="8" VerticalAlignment="Center" IsVisible="{Binding ShouldShowFlowControls}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Real Rates" Margin="0,0,4,0"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Deviation" Margin="0,0,4,0"/>
+
+                    <ItemsControl Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" ItemsSource="{Binding RunwayAchievedRates}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <!-- 3-char padding -->
+                                    <TextBlock Text="___" IsVisible="False"/>
+
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition/>
+                                            <RowDefinition/>
+                                        </Grid.RowDefinitions>
+
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Identifier}" />
+                                            <TextBlock Text=": " />
+                                            <TextBlock Text="{Binding AchievedRateDisplay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Identifier}" />
+                                            <TextBlock Text=": " />
+                                            <TextBlock Text="{Binding DeviationDisplay}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+
+                <controls:BeveledLine
+                    Grid.Column="9"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical"
+                    IsVisible="{Binding ShouldShowFlowControls}" />
+
+                <!-- Units Selector -->
+                <Button Grid.Column="10" Width="24"
+                        Content="{Binding SelectedUnit, Converter={StaticResource LandingRateUnitSymbolConverter}}"
+                        Command="{Binding CycleUnitsCommand}"
+                        IsVisible="{Binding ShouldShowFlowControls}"/>
+
+                <controls:BeveledLine
+                    Grid.Column="11"
+                    Width="{x:Static local:Theme.BeveledLineWidth}"
+                    Orientation="Vertical"
+                    IsVisible="{Binding ShouldShowFlowControls}" />
+
+                <!-- UTC Time -->
+                <TextBlock
+                    x:Name="UtcTimeText"
+                    Grid.Column="12"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                                       IsVisible="{Binding ShouldShowFlowControls}"/>
+            </Grid>
+
+        </controls:BeveledBorder>
+
+        <!-- Tab Bar -->
+        <StackPanel
+            Grid.Column="1"
+            Grid.Row="2"
+            Orientation="Horizontal"
+            Margin="2">
+            <Button Content="DEPS" Command="{Binding OpenPendingDeparturesWindowCommand}" Margin="0,0,2,0" Width="48"/>
+            <Button Content="COORD" Command="{Binding OpenCoordinationWindowCommand}" Margin="0,0,2,0" Width="48"/>
+            <Button Command="{Binding OpenDesequencedWindowCommand}" Margin="0,0,2,0" Width="48">
+                <TextBlock Text="DESQ" Classes="interactive"
+                           Classes.active="{Binding HasDesequencedFlight}"/>
+            </Button>
+
+            <ItemsControl ItemsSource="{Binding Views}" Name="SectorList">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Command="{Binding Path=DataContext.SelectViewCommand, ElementName=SectorList}"
+                                CommandParameter="{Binding}"
+                                Content="{Binding Identifier}"
+                                Width="72"
+                                Margin="0,0,2,0"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Scroll Bar -->
+        <Grid Grid.Column="0" Grid.Row="3" Margin="2,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Button Grid.Row="0" Margin="0,1,0,1" Command="{Binding ScrollUpCommand}"
+                    Classes.active="{Binding IsScrollingUp}">
+                <controls:Chevron Direction="Up" />
+            </Button>
+            <Button Grid.Row="1" Margin="0,1,0,1" Command="{Binding ResetScrollCommand}"
+                    Classes.active="{Binding !IsScrolling}">
+            </Button>
+            <Button Grid.Row="2" Margin="0,1,0,0" Command="{Binding ScrollDownCommand}"
+                    Classes.active="{Binding IsScrollingDown}">
+                <controls:Chevron Direction="Down" />
+            </Button>
+        </Grid>
+
+        <!-- Ladder -->
+        <Canvas
+            Grid.Column="1"
+            Grid.Row="3"
+            Grid.RowSpan="2"
+            Name="LadderCanvas"
+            Margin="1"
+            ClipToBounds="True"
+            Background="Transparent"
+            ContextRequested="SuppressContextMenuIfRequired"
+            PointerPressed="OnCanvasPointerPressed">
+            <Canvas.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Insert Flight" Click="InsertFlight" />
+                    <MenuItem Header="Insert Slot" Click="InsertSlot"/>
+                </ContextMenu>
+            </Canvas.ContextMenu>
+        </Canvas>
+    </Grid>
+</UserControl>

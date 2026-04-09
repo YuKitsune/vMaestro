@@ -1,0 +1,24 @@
+<UserControl x:Class="Maestro.Avalonia.Controls.TextInput"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             Height="24"
+             Background="{x:Static local:Theme.BackgroundColor}">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+        <Style Selector="TextBox:disabled">
+            <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid>
+        <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+            <TextBox x:Name="InputBox"
+                     TextChanged="InputBox_TextChanged"
+                     Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                     IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                     MaxLength="{Binding MaxCharacters, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        </controls:BeveledBorder>
+    </Grid>
+</UserControl>

@@ -6,6 +6,8 @@
   <Project Path="build/_build.csproj">
     <Build Project="false" />
   </Project>
+  <Project Path="Maestro.Avalonia.DesignHost/Maestro.Avalonia.DesignHost.csproj" />
+  <Project Path="Maestro.Avalonia/Maestro.Avalonia.csproj" />
   <Project Path="Maestro.Contracts.Tests/Maestro.Contracts.Tests.csproj" />
   <Project Path="Maestro.Contracts/Maestro.Contracts.csproj" />
   <Project Path="Maestro.Core.Tests/Maestro.Core.Tests.csproj" />
@@ -15,5 +17,4 @@
   <Project Path="Maestro.Server.Tests/Maestro.Server.Tests.csproj" />
   <Project Path="Maestro.Server/Maestro.Server.csproj" />
   <Project Path="Maestro.Tools/Maestro.Tools.csproj" />
-  <Project Path="Maestro.Wpf/Maestro.Wpf.csproj" />
 </Solution>

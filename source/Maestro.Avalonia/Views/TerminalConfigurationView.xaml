@@ -1,0 +1,124 @@
+<UserControl x:Class="Maestro.Avalonia.Views.TerminalConfigurationView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             xmlns:converters="clr-namespace:Maestro.Avalonia.Converters"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             MinWidth="440"
+             MinHeight="240"
+             Padding="8">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+    </UserControl.Styles>
+    <UserControl.Resources>
+        <converters:BoolInversionConverter x:Key="BoolInversionConverter" />
+    </UserControl.Resources>
+
+    <StackPanel Orientation="Vertical">
+
+        <!-- I think this needs its own window -->
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="New TMA Configuration: " />
+            <ComboBox
+                Padding="5"
+                ItemsSource="{Binding AvailableRunwayModes}"
+                SelectedItem="{Binding SelectedRunwayMode, Mode=TwoWay}"
+                Margin="8,0"
+                Width="80">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Identifier}" Classes="interactive"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+
+        <Border Padding="2" />
+
+        <TextBlock Text="Runway Acceptance Rates:"/>
+        <Border Padding="0,2,0,0" />
+        <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+            <Border Padding="2">
+                <ItemsControl ItemsSource="{Binding Path=RunwayConfigurationItems}" Margin="2">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Vertical">
+                                <Slider Value="{Binding LandingRateSeconds}"
+                                        TickFrequency="5"
+                                        IsSnapToTickEnabled="True"
+                                        Minimum="{Binding DataContext.MinimumLandingRateSeconds, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Maximum="{Binding DataContext.MaximumLandingRateSeconds, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Identifier}" Classes="interactive"/>
+                                    <TextBlock Text=": " Classes="interactive"/>
+                                    <TextBlock Text="{Binding LandingRateSeconds}" Padding="4,0,2,0" Classes="interactive"/>
+                                    <TextBlock Text="s" Classes="interactive"/>
+                                    <TextBlock Text="/" Classes="interactive"/>
+                                    <TextBlock Text="{Binding NauticalMiles, StringFormat='{}{0:0.0}'}" Padding="4,0,2,0" Classes="interactive"/>
+                                    <TextBlock Text="NM" Classes="interactive"/>
+                                    <TextBlock Text="/" Classes="interactive"/>
+                                    <TextBlock Text="{Binding AircraftPerHour}" Padding="4,0,2,0" Classes="interactive"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+        </controls:BeveledBorder>
+
+        <Border Padding="2" />
+
+        <TextBlock Text="Apply:" />
+        <Border Padding="0,2,0,0" />
+        <controls:BeveledBorder
+            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+            BevelType="Sunken">
+            <Border Padding="2">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0">
+                        <Run Text="Last STA in configuration "/>
+                        <Run Text="{Binding OriginalRunwayModeIdentifier}"/>
+                    </TextBlock>
+                    <controls:TimeControl Grid.Row="0" Grid.Column="1" Time="{Binding LastLandingTime}"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0">
+                        <Run Text="First STA in configuration "/>
+                        <Run Text="{Binding SelectedRunwayModeIdentifier}"/>
+                    </TextBlock>
+                    <controls:TimeControl Grid.Row="1" Grid.Column="1" Time="{Binding FirstLandingTime}"/>
+                </Grid>
+            </Border>
+        </controls:BeveledBorder>
+
+        <Border Padding="2" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Width="56" Command="{Binding ChangeRunwayModeCommand}">Ok</Button>
+            <Button Grid.Column="1"
+                    Command="{Binding CancelPendingChangesCommand}"
+                    IsVisible="{Binding HasPendingModeChange}">Cancel Pending Changes</Button>
+            <Button Grid.Column="2" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
+        </Grid>
+
+    </StackPanel>
+</UserControl>

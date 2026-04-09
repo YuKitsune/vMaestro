@@ -1,0 +1,102 @@
+<UserControl x:Class="Maestro.Avalonia.Views.WindView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             xmlns:viewModels="clr-namespace:Maestro.Avalonia.ViewModels"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             MinWidth="440"
+             Padding="8">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+    </UserControl.Styles>
+    <StackPanel Orientation="Vertical">
+
+        <TextBlock>
+            <Run Text="Wind at "/>
+            <Run Text="{Binding UpperWindAltitude}"/>
+            <Run Text=" feet"/>
+        </TextBlock>
+
+        <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+            <Border Padding="4">
+                <StackPanel Orientation="Vertical">
+                    <Slider Value="{Binding UpperWindSpeed}"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Minimum="0"
+                            Maximum="200"/>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Speed"/>
+                        <TextBlock Text=": "/>
+                        <TextBlock Text="{Binding UpperWindSpeed}" Padding="4,0,2,0"/>
+                        <TextBlock Text=" kts"/>
+                    </StackPanel>
+
+                    <Border Padding="4" />
+
+                    <Slider Value="{Binding UpperWindDirection}"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Minimum="0"
+                            Maximum="360"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Direction"/>
+                        <TextBlock Text=": "/>
+                        <TextBlock Text="{Binding UpperWindDirection}" Padding="4,0,2,0"/>
+                        <TextBlock Text=" deg"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </controls:BeveledBorder>
+
+        <Border Padding="8" />
+
+        <TextBlock Text="Surface wind"/>
+
+        <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+            <Border Padding="4">
+                <StackPanel Orientation="Vertical">
+                    <Slider Value="{Binding SurfaceWindSpeed}"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Minimum="0"
+                            Maximum="200"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Speed"/>
+                        <TextBlock Text=": "/>
+                        <TextBlock Text="{Binding SurfaceWindSpeed}" Padding="4,0,2,0"/>
+                        <TextBlock Text=" kts"/>
+                    </StackPanel>
+
+                    <Border Padding="4" />
+
+                    <Slider Value="{Binding SurfaceWindDirection}"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Minimum="0"
+                            Maximum="360"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Direction"/>
+                        <TextBlock Text=": "/>
+                        <TextBlock Text="{Binding SurfaceWindDirection}" Padding="4,0,2,0"/>
+                        <TextBlock Text=" deg"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </controls:BeveledBorder>
+
+        <Border Padding="4" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Width="56" Command="{Binding ChangeWindCommand}">Ok</Button>
+            <Button Grid.Column="1" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
+        </Grid>
+
+    </StackPanel>
+</UserControl>

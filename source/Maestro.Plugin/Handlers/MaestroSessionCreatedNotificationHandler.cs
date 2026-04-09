@@ -1,10 +1,9 @@
-﻿using System.Windows;
-using Maestro.Core.Configuration;
+﻿using Maestro.Core.Configuration;
 using Maestro.Core.Sessions.Contracts;
 using Maestro.Plugin.Infrastructure;
-using Maestro.Wpf.Integrations;
-using Maestro.Wpf.ViewModels;
-using Maestro.Wpf.Views;
+using Maestro.Avalonia.Integrations;
+using Maestro.Avalonia.ViewModels;
+using Maestro.Avalonia.Views;
 using MediatR;
 using vatsys;
 
@@ -40,7 +39,7 @@ public class MaestroSessionCreatedNotificationHandler(
                     labelsConfiguration,
                     airportConfiguration)),
             shrinkToContent: false,
-            new Size(640, 800),
+            new System.Drawing.Size(640, 800),
             configureForm: form =>
             {
                 form.Closed += async (_, _) =>

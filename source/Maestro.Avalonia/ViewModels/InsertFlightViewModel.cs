@@ -1,0 +1,109 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Maestro.Avalonia.Integrations;
+using Maestro.Contracts.Flights;
+using MediatR;
+
+namespace Maestro.Avalonia.ViewModels;
+
+// TODO: Try to combine this with PendingDeparturesViewModel (and associated views)
+
+public partial class InsertFlightViewModel : ObservableObject
+{
+    readonly IWindowHandle _windowHandle;
+    readonly IMediator _mediator;
+    readonly IErrorReporter _errorReporter;
+
+    readonly string _airportIdentifier;
+    readonly IInsertFlightOptions _options;
+
+    bool _isUpdatingFromSelection = false;
+
+    [ObservableProperty]
+    FlightDto[] _landedFlights = [];
+
+    [ObservableProperty]
+    PendingFlightDto[] _pendingFlights = [];
+
+    [ObservableProperty]
+    PendingFlightDto? _selectedFlight;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
+    string _callsign = "";
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
+    string _aircraftType = "";
+
+    public InsertFlightViewModel(
+        string airportIdentifier,
+        IInsertFlightOptions options,
+        FlightDto[] landedFlights,
+        PendingFlightDto[] pendingFlights,
+        IWindowHandle windowHandle,
+        IMediator mediator,
+        IErrorReporter errorReporter)
+    {
+        _airportIdentifier = airportIdentifier;
+        _options = options;
+
+        LandedFlights = landedFlights;
+        PendingFlights = pendingFlights;
+
+        _windowHandle = windowHandle;
+        _mediator = mediator;
+        _errorReporter = errorReporter;
+    }
+
+    partial void OnSelectedFlightChanged(PendingFlightDto? value)
+    {
+        _isUpdatingFromSelection = true;
+        Callsign = value?.Callsign ?? "";
+        AircraftType = value?.AircraftType ?? "";
+        _isUpdatingFromSelection = false;
+    }
+
+    partial void OnCallsignChanged(string _)
+    {
+        if (_isUpdatingFromSelection)
+            return;
+
+        SelectedFlight = null;
+    }
+
+    partial void OnAircraftTypeChanged(string _)
+    {
+        if (_isUpdatingFromSelection)
+            return;
+
+        SelectedFlight = null;
+    }
+
+    [RelayCommand]
+    void Insert()
+    {
+        try
+        {
+            _mediator.Send(
+                new InsertFlightRequest(
+                    _airportIdentifier,
+                    Callsign,
+                    AircraftType,
+                    _options),
+                CancellationToken.None);
+
+            CloseWindow();
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void CloseWindow()
+    {
+        _windowHandle.Close();
+    }
+}

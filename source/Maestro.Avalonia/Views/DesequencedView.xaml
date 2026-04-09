@@ -1,0 +1,51 @@
+<UserControl x:Class="Maestro.Avalonia.Views.DesequencedView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:viewModels="clr-namespace:Maestro.Avalonia.ViewModels"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             Width="220"
+             Height="240">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Margin" Value="2" />
+        </Style>
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected TextBlock">
+            <Setter Property="Foreground" Value="{x:Static local:Theme.BackgroundColor}"/>
+        </Style>
+    </UserControl.Styles>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <ListBox
+            Name="CallsignList"
+            ItemsSource="{Binding Callsigns, Mode=TwoWay}"
+            SelectionMode="Multiple"
+            BorderThickness="0"
+            Background="Transparent"
+            Margin="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" Margin="2"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Column="1" Orientation="Vertical">
+            <Button Content="Resequence" Command="{Binding ResumeCommand}" CommandParameter="{Binding ElementName=CallsignList, Path=SelectedItems}"/>
+            <Button Content="Remove" Command="{Binding RemoveCommand}" CommandParameter="{Binding ElementName=CallsignList, Path=SelectedItems}"/>
+            <Button Content="Close" Command="{Binding CloseCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

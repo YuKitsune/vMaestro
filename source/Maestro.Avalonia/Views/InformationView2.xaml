@@ -1,0 +1,31 @@
+<UserControl x:Class="Maestro.Avalonia.Views.InformationView2"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             Width="800"
+             Height="160"
+             Padding="8">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+        <Style Selector="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Margin" Value="2" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <controls:BeveledBorder Grid.Row="0" BorderThickness="2" BevelType="Sunken">
+            <TextBlock Text="{Binding MessageText}" TextWrapping="Wrap"/>
+        </controls:BeveledBorder>
+        <Button Grid.Row="1" Content="Ack" Command="{Binding AcknowledgeCommand}"/>
+    </Grid>
+</UserControl>

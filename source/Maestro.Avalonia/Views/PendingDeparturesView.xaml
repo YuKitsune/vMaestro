@@ -1,0 +1,107 @@
+<UserControl x:Class="Maestro.Avalonia.Views.PendingDeparturesView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:viewModels="clr-namespace:Maestro.Avalonia.ViewModels"
+             xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             Padding="8"
+             MinWidth="320"
+             Height="280">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+        <Style Selector="Button">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Width" Value="64" />
+        </Style>
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="{x:Static local:Theme.SelectedButtonColor}"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected TextBlock">
+            <Setter Property="Foreground" Value="{x:Static local:Theme.BackgroundColor}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,4,0">
+            <TextBlock>Over shoot</TextBlock>
+            <ListBox
+                BorderThickness="0"
+                Background="Transparent"
+                Margin="2"
+                Height="120"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4,0,0,0">
+            <TextBlock>Pending</TextBlock>
+
+            <ListBox
+                ItemsSource="{Binding PendingFlights, Mode=TwoWay}"
+                SelectedItem="{Binding SelectedFlight, Mode=TwoWay}"
+                BorderThickness="0"
+                Background="Transparent"
+                Margin="2"
+                Height="120">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Callsign}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Callsign"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Callsign, Mode=TwoWay}" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Aircraft Type"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding AircraftType, Mode=TwoWay}" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Departure Airport"/>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding DepartureIdentifier, Mode=TwoWay}" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Take Off"/>
+            <controls:TimeControl Grid.Row="4" Grid.Column="1" Time="{Binding TakeoffTime, Mode=TwoWay}" />
+
+        </Grid>
+
+        <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="1" Content="OK" Command="{Binding InsertCommand}"/>
+            <Button Grid.Column="3" Content="Cancel" Command="{Binding CloseWindowCommand}"/>
+        </Grid>
+
+    </Grid>
+</UserControl>

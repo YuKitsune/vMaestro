@@ -1,0 +1,37 @@
+<UserControl x:Class="Maestro.Avalonia.Views.DialogView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Maestro.Avalonia"
+             xmlns:viewModels="clr-namespace:Maestro.Avalonia.ViewModels"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             MaxWidth="400"
+             Width="400"
+             Height="120"
+             Padding="32,16,32,15">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Maestro.Avalonia/Styles.xaml"/>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Width" Value="80" />
+        </Style>
+    </UserControl.Styles>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="24"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Message}" TextWrapping="Wrap"/>
+        <Button Grid.Row="2" Grid.Column="0" Content="Confirm" Command="{Binding ConfirmCommand}" />
+        <Button Grid.Row="2" Grid.Column="2" Content="Cancel" Command="{Binding CloseCommand}"/>
+    </Grid>
+</UserControl>

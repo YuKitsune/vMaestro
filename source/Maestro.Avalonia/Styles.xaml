@@ -1,0 +1,384 @@
+<Styles
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:Maestro.Avalonia"
+    xmlns:controls="clr-namespace:Maestro.Avalonia.Controls"
+    xmlns:converters="clr-namespace:Maestro.Avalonia.Converters">
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <converters:FontSizeToHeightConverter x:Key="FontSizeToHeightConverter"/>
+            <converters:FontSizeToLineHeightConverter x:Key="FontSizeToLineHeightConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+            <!-- ComboBox Toggle Button Template -->
+            <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+                <Border Background="{x:Static local:Theme.BackgroundColor}">
+                    <controls:BeveledBorder
+                        Name="Border"
+                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                        BevelType="Raised" />
+                </Border>
+            </ControlTemplate>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!-- Global Styles: TemplatedControl (Button, ComboBox, Slider, ListBox, etc.) -->
+    <Style Selector="TemplatedControl">
+        <Setter Property="Background" Value="{x:Static local:Theme.BackgroundColor}"/>
+        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
+        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
+        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+    </Style>
+
+    <!-- Global TextBlock style (GenericTextStyle) -->
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}" />
+        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}" />
+        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}" />
+        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="LineHeight" Value="{Binding Source={x:Static local:Theme.FontSize}, Converter={StaticResource FontSizeToLineHeightConverter}}" />
+    </Style>
+
+    <!-- TextBlock interactive class (InteractiveTextStyle) -->
+    <Style Selector="TextBlock.interactive">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+    </Style>
+
+    <!-- Button -->
+    <Style Selector="Button">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{x:Static local:Theme.BackgroundColor}">
+                    <controls:BeveledBorder
+                        Name="BevelBorder"
+                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                        BevelType="Raised">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"/>
+                        </Border>
+                    </controls:BeveledBorder>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- Button pressed: switch bevel to sunken -->
+    <Style Selector="Button:pressed /template/ controls|BeveledBorder#BevelBorder">
+        <Setter Property="BevelType" Value="Sunken"/>
+    </Style>
+
+    <!-- Button disabled -->
+    <Style Selector="Button:disabled">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}"/>
+    </Style>
+
+    <!-- TextBox -->
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="TextWrapping" Value="NoWrap"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}"/>
+        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}"/>
+        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+        <Setter Property="CaretBrush" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+                    <ScrollViewer x:Name="PART_ScrollViewer" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden">
+                        <TextPresenter x:Name="PART_TextPresenter"
+                                       Text="{TemplateBinding Text, Mode=TwoWay}"
+                                       CaretBrush="{TemplateBinding CaretBrush}"/>
+                    </ScrollViewer>
+                </controls:BeveledBorder>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="TextBox:disabled">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <!-- ComboBox toggle button checked: sunken -->
+    <Style Selector="ToggleButton:checked /template/ controls|BeveledBorder#Border">
+        <Setter Property="BevelType" Value="Sunken"/>
+    </Style>
+
+    <!-- ComboBox -->
+    <Style Selector="ComboBox">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid>
+                    <ToggleButton
+                        Name="ToggleButton"
+                        Template="{StaticResource ComboBoxToggleButton}"
+                        Focusable="False"
+                        IsChecked="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
+                        ClickMode="Press" />
+
+                    <ContentPresenter
+                        Name="ContentSite"
+                        IsHitTestVisible="False"
+                        Content="{TemplateBinding SelectionBoxItem}"
+                        ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center" />
+
+                    <Popup
+                        Name="PART_Popup"
+                        Placement="Bottom"
+                        IsOpen="{TemplateBinding IsDropDownOpen}"
+                        Focusable="False">
+                        <Border Background="{x:Static local:Theme.BackgroundColor}">
+                            <controls:BeveledBorder BevelType="Raised" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                                <Grid
+                                    Name="DropDown"
+                                    MinWidth="{TemplateBinding MinWidth}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    Background="{x:Static local:Theme.BackgroundColor}">
+                                    <ScrollViewer>
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Grid>
+                            </controls:BeveledBorder>
+                        </Border>
+                    </Popup>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="ComboBox:disabled">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}"/>
+    </Style>
+
+    <!-- ComboBox Item -->
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border
+                    Name="Border"
+                    Padding="2,0,2,0">
+                    <ContentPresenter />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="ComboBoxItem:pointerover /template/ Border#Border">
+        <Setter Property="Background" Value="{x:Static local:Theme.DarkBrush}"/>
+    </Style>
+
+    <Style Selector="ComboBoxItem:disabled">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.NonInteractiveTextColor}"/>
+    </Style>
+
+    <!-- Context Menu -->
+    <Style Selector="ContextMenu">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{x:Static local:Theme.BackgroundColor}">
+                    <controls:BeveledBorder
+                        BevelType="Raised"
+                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                        <StackPanel
+                            Background="{x:Static local:Theme.BackgroundColor}"
+                            IsItemsHost="True" />
+                    </controls:BeveledBorder>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- Context Menu Item -->
+    <Style Selector="MenuItem">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.InteractiveTextColor}"/>
+        <Setter Property="FontFamily" Value="{x:Static local:Theme.FontFamily}"/>
+        <Setter Property="FontSize" Value="{x:Static local:Theme.FontSize}"/>
+        <Setter Property="FontWeight" Value="{x:Static local:Theme.FontWeight}"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid Background="Transparent">
+
+                    <!-- Beveled border (hidden by default, visible on hover) -->
+                    <controls:BeveledBorder
+                        Name="BevelBorder"
+                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                        BevelType="Raised"
+                        IsVisible="False">
+                        <Border Background="{x:Static local:Theme.BackgroundColor}" />
+                    </controls:BeveledBorder>
+
+                    <!-- Content area -->
+                    <Border Padding="{x:Static local:Theme.BeveledBorderThickness}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ContentPresenter
+                                Grid.Column="0"
+                                Content="{TemplateBinding Header}"
+                                VerticalAlignment="Center" />
+
+                            <controls:Chevron
+                                Grid.Column="1"
+                                Direction="Right"
+                                Margin="8,0,4,0" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Popup for submenu items -->
+                    <Popup
+                        Placement="Right"
+                        IsOpen="{TemplateBinding IsSubMenuOpen}"
+                        Focusable="False">
+                        <Border Background="{x:Static local:Theme.BackgroundColor}">
+                            <controls:BeveledBorder
+                                BevelType="Raised"
+                                BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                                <StackPanel
+                                    Background="{x:Static local:Theme.BackgroundColor}"
+                                    IsItemsHost="True" />
+                            </controls:BeveledBorder>
+                        </Border>
+                    </Popup>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="MenuItem:pointerover /template/ controls|BeveledBorder#BevelBorder">
+        <Setter Property="IsVisible" Value="True"/>
+    </Style>
+
+    <Style Selector="MenuItem:disabled">
+        <Setter Property="Foreground" Value="{x:Static local:Theme.GenericTextColor}"/>
+    </Style>
+
+    <!-- Slider -->
+    <Style Selector="Slider">
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid>
+                    <controls:BeveledBorder
+                        Height="12"
+                        BevelType="Sunken"
+                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}">
+                        <Border Background="{x:Static local:Theme.InteractiveTextColor}" />
+                    </controls:BeveledBorder>
+
+                    <Track x:Name="PART_Track" VerticalAlignment="Center">
+                        <Track.DecreaseButton>
+                            <RepeatButton Classes="track-part">
+                                <RepeatButton.Template>
+                                    <ControlTemplate>
+                                        <Rectangle Fill="Transparent" />
+                                    </ControlTemplate>
+                                </RepeatButton.Template>
+                            </RepeatButton>
+                        </Track.DecreaseButton>
+
+                        <Track.Thumb>
+                            <Thumb>
+                                <Thumb.Template>
+                                    <ControlTemplate>
+                                        <Grid Width="32" Height="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid Grid.Column="0" Background="{x:Static local:Theme.BackgroundColor}">
+                                                <controls:BeveledBorder
+                                                    BevelType="Raised"
+                                                    BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" />
+                                            </Grid>
+
+                                            <Grid Grid.Column="1" Background="{x:Static local:Theme.BackgroundColor}">
+                                                <controls:BeveledBorder
+                                                    BevelType="Raised"
+                                                    BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" />
+                                            </Grid>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Track.Thumb>
+
+                        <Track.IncreaseButton>
+                            <RepeatButton Classes="track-part">
+                                <RepeatButton.Template>
+                                    <ControlTemplate>
+                                        <Rectangle Fill="Transparent" />
+                                    </ControlTemplate>
+                                </RepeatButton.Template>
+                            </RepeatButton>
+                        </Track.IncreaseButton>
+                    </Track>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- ListBox -->
+    <Style Selector="ListBox">
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                    </Grid.ColumnDefinitions>
+
+                    <controls:BeveledBorder
+                        Grid.Column="0"
+                        BevelType="Sunken"
+                        BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+                        Margin="0,0,1,0">
+                        <ScrollViewer
+                            x:Name="PART_ScrollViewer"
+                            HorizontalScrollBarVisibility="Hidden"
+                            VerticalScrollBarVisibility="Hidden"
+                            Margin="2">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </controls:BeveledBorder>
+
+                    <controls:CustomScrollBar
+                        Grid.Column="1"
+                        Margin="1,0,0,0"
+                        ScrollViewer="{Binding ElementName=PART_ScrollViewer}" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+</Styles>
