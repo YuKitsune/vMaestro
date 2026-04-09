@@ -26,22 +26,9 @@ public class BeveledLine : Control
         set => SetValue(FlippedProperty, value);
     }
 
-    static void OnOrientationChanged(object sender, AvaloniaPropertyChangedEventArgs<Orientation> args)
+    static BeveledLine()
     {
-        if (sender is not BeveledLine separator)
-            return;
-
-        separator.Orientation = args.NewValue.Value;
-        separator.InvalidateVisual();
-    }
-
-    static void OnFlippedChanged(object sender, AvaloniaPropertyChangedEventArgs<bool> args)
-    {
-        if (sender is not BeveledLine separator)
-            return;
-
-        separator.Flipped = args.NewValue.Value;
-        separator.InvalidateVisual();
+        AffectsRender<BeveledLine>(OrientationProperty, FlippedProperty);
     }
 
     public override void Render(DrawingContext drawingContext)
