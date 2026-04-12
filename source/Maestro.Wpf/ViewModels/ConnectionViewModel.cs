@@ -38,7 +38,7 @@ public partial class ConnectionViewModel : ObservableObject
     public ConnectionViewModel(
         string airportIdentifier,
         ServerConfiguration serverConfiguration,
-        string partition,
+        string environment,
         bool isConnected,
         bool isReady,
         IMediator mediator,
@@ -46,8 +46,8 @@ public partial class ConnectionViewModel : ObservableObject
         IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
-        Servers = serverConfiguration.Partitions;
-        SelectedServer = !string.IsNullOrEmpty(partition) ? partition : serverConfiguration.Partitions.First();
+        Servers = serverConfiguration.Environments;
+        SelectedServer = !string.IsNullOrEmpty(environment) ? environment : serverConfiguration.Environments.First();
         IsConnected = isConnected;
         IsReady = isReady;
 

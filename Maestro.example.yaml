@@ -24,9 +24,9 @@ Server:
   # SignalR URL of the Maestro server hub
   Uri: https://maestro.example.com/hub
 
-  # Network partitions for isolating sessions
-  # Each partition represents a separate instance (e.g., VATSIM, SweatBox sessions)
-  Partitions:
+  # Named environments for isolating sessions within this server
+  # Each environment maintains its own independent sequence state (e.g., VATSIM live, training)
+  Environments:
     - VATSIM
     - SweatBox-1
     - SweatBox-2

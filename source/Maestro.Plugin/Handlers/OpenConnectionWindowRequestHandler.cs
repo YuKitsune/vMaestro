@@ -19,11 +19,11 @@ public class OpenConnectionWindowRequestHandler(
 {
     public Task Handle(OpenConnectionWindowRequest request, CancellationToken cancellationToken)
     {
-        var (partition, isConnected, isReady) = GetConnectionStatus(request.AirportIdentifier);
+        var (environment, isConnected, isReady) = GetConnectionStatus(request.AirportIdentifier);
         windowManager.FocusOrCreateWindow(
             WindowKeys.Connection(request.AirportIdentifier),
             "Setup",
-            windowHandle => new ConnectionView(new ConnectionViewModel(request.AirportIdentifier, serverConfiguration, partition, isConnected, isReady, mediator, windowHandle, errorReporter)));
+            windowHandle => new ConnectionView(new ConnectionViewModel(request.AirportIdentifier, serverConfiguration, environment, isConnected, isReady, mediator, windowHandle, errorReporter)));
 
         return Task.CompletedTask;
     }
@@ -32,8 +32,8 @@ public class OpenConnectionWindowRequestHandler(
     {
         var connectionExists = connectionManager.TryGetConnection(airportIdentifier, out var connection);
         var isConnected = connectionExists && connection is not null && connection.IsConnected;
-        var partition = connection?.Partition ?? string.Empty;
+        var environment = connection?.Environment ?? string.Empty;
 
-        return (partition, isConnected, connectionExists);
+        return (environment, isConnected, connectionExists);
     }
 }

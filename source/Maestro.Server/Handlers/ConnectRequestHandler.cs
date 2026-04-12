@@ -24,12 +24,12 @@ public class ConnectRequestHandler(
     {
         var (connectionId, request) = wrappedRequest;
 
-        var peers = connectionManager.GetConnections(request.Partition, request.AirportIdentifier);
+        var peers = connectionManager.GetConnections(request.Environment, request.AirportIdentifier);
 
         var connection = connectionManager.Add(
             connectionId,
             request.Version,
-            request.Partition,
+            request.Environment,
             request.AirportIdentifier,
             request.Callsign,
             request.Role);

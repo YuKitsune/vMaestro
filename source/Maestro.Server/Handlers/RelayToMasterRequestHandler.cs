@@ -27,7 +27,7 @@ public class RelayToMasterRequestHandler(IConnectionManager connectionManager, I
         var master = peers.SingleOrDefault(c => c.IsMaster);
         if (master is null)
         {
-            logger.Error("No master found for {AirportIdentifier} in partition {Partition}", connection.AirportIdentifier, connection.Partition);
+            logger.Error("No master found for {AirportIdentifier} in environment {Environment}", connection.AirportIdentifier, connection.Environment);
             return ServerResponse.CreateFailure("No master found");
         }
 

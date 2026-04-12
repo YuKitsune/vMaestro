@@ -8,6 +8,7 @@ using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
+using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.GitVersion;
@@ -31,7 +32,7 @@ using Serilog;
     ImportSecrets = [nameof(GitHubToken)],
     EnableGitHubToken = true,
     FetchDepth = 0,
-    WritePermissions = [GitHubActionsPermissions.Contents])]
+    WritePermissions = [GitHubActionsPermissions.Contents, GitHubActionsPermissions.Packages])]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -455,6 +456,7 @@ class Build : NukeBuild
     Target Release => _ => _
         .Description("Creates a GitHub release with the plugin and server binaries attached.")
         .DependsOn(PackagePlugin, PackageServer, PackageTools)
+        .Triggers(PushDockerImage)
         .Requires(() => GitHubToken)
         .Requires(() => GitRepository)
         .Requires(() => Configuration == Configuration.Release)
@@ -526,19 +528,56 @@ class Build : NukeBuild
             }
         });
 
-    /// <summary>
-    /// Publishes Docker image to GitHub Container Registry.
-    /// TODO: Implement when ready to publish Docker images alongside releases.
-    /// </summary>
-    Target PublishDockerImage => _ => _
-        .Description("Builds and uploads the Docker image for the server.")
-        .Unlisted()
-        .DependsOn(CompileServer)
+    Target BuildDockerImage => _ => _
+        .Description("Builds the Docker image for the server.")
         .Requires(() => Configuration == Configuration.Release)
+        .Requires(() => GitRepository)
         .Executes(() =>
         {
-            // Future: docker build, docker tag, docker push to ghcr.io
-            Log.Fatal("Docker image publishing not yet implemented");
+            var version = GetSemanticVersion();
+            var repositoryOwner = GitRepository.GetGitHubOwner().ToLowerInvariant();
+            var imageName = $"ghcr.io/{repositoryOwner}/vmaestro";
+            var tags = new[] { $"{imageName}:{version}", $"{imageName}:latest" };
+
+            Log.Information("Building Docker image {ImageName} with tags: {Tags}", imageName, string.Join(", ", tags));
+
+            DockerTasks.DockerBuild(s => s
+                .SetPath(RootDirectory)
+                .SetFile(RootDirectory / "source" / "Maestro.Server" / "Dockerfile")
+                .SetTag(tags));
+
+            Log.Information("Docker image built successfully");
+        });
+
+    Target PushDockerImage => _ => _
+        .Description("Pushes the Docker image to GitHub Container Registry.")
+        .DependsOn(BuildDockerImage)
+        .Requires(() => Configuration == Configuration.Release)
+        .Requires(() => GitHubToken)
+        .Requires(() => GitRepository)
+        .Executes(() =>
+        {
+            var version = GetSemanticVersion();
+            var repositoryOwner = GitRepository.GetGitHubOwner().ToLowerInvariant();
+            var imageName = $"ghcr.io/{repositoryOwner}/vmaestro";
+            var tags = new[] { $"{imageName}:{version}", $"{imageName}:latest" };
+
+            Log.Information("Logging in to GitHub Container Registry");
+
+            DockerTasks.DockerLogin(s => s
+                .SetServer("ghcr.io")
+                .SetUsername(repositoryOwner)
+                .SetPassword(GitHubToken));
+
+            // Push all tags
+            foreach (var tag in tags)
+            {
+                Log.Information("Pushing {Tag}", tag);
+                DockerTasks.DockerPush(s => s
+                    .SetName(tag));
+            }
+
+            Log.Information("Docker image pushed successfully");
         });
 
     static AbsolutePath GetVatSysPluginsDirectory(string profileName)

@@ -8,16 +8,18 @@ using Microsoft.OpenApi;
 using Serilog;
 using AssemblyMarker = Maestro.Server.AssemblyMarker;
 
-var loggerConfig = new LoggerConfiguration()
-    .WriteTo.Console();
+var dataPath = Environment.GetEnvironmentVariable("DATA_PATH") ?? "/app/data";
+var logsPath = Path.Combine(dataPath, "logs");
+Directory.CreateDirectory(logsPath);
 
-var seqServerUrl = Environment.GetEnvironmentVariable("SEQ_SERVER_URL");
-if (!string.IsNullOrEmpty(seqServerUrl))
-{
-    loggerConfig.WriteTo.Seq(seqServerUrl);
-}
-
-Log.Logger = loggerConfig.CreateLogger();
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: Path.Combine(logsPath, "maestro-.txt"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
 
 // Log version information at startup
 var assembly = Assembly.GetExecutingAssembly();
@@ -32,10 +34,7 @@ Log.Information("Starting Maestro.Server version {Version}", version);
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-    builder.Services.AddSignalR(options =>
-        {
-            options.AddFilter<SignalRLoggingFilter>();
-        })
+    builder.Services.AddSignalR()
         .AddHubOptions<MaestroHub>(x =>
         {
             x.EnableDetailedErrors = true;
@@ -78,19 +77,20 @@ try
     builder.Services.AddSingleton<SessionCache>();
     builder.Services.AddSingleton<IConnectionManager, ConnectionManager>();
     builder.Services.AddTransient<IHubProxy, HubProxy>();
-    builder.Services.AddHostedService<SystemMetricsService>();
 
     builder.Services.AddRazorPages();
 
     var app = builder.Build();
 
-    app.UseStaticFiles();
-
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    app.MapHub<MaestroHub>("/hub");
-    app.MapHub<DashboardHub>("/dashboard-hub");
+    app.MapHub<MaestroHub>(
+        "/hub",
+        opts =>
+        {
+            opts.AllowStatefulReconnects = true;
+        });
 
     // Session API
     var api = app.MapGroup("/api");
@@ -114,10 +114,10 @@ try
     .WithTags("Sessions")
     .Produces<SessionKey[]>();
 
-    api.MapGet("/sessions/{partition}/{airportIdentifier}",
-        (string partition, string airportIdentifier, SessionCache cache) =>
+    api.MapGet("/sessions/{environment}/{airportIdentifier}",
+        (string environment, string airportIdentifier, SessionCache cache) =>
     {
-        var session = cache.Get(partition, airportIdentifier);
+        var session = cache.Get(environment, airportIdentifier);
         return session is null
             ? Results.NotFound()
             : Results.Ok(session);
@@ -129,8 +129,6 @@ try
     .Produces(404);
 
     app.MapRazorPages();
-
-    app.MapFallbackToFile("index.html");
 
     app.Run();
 }

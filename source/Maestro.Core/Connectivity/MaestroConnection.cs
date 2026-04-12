@@ -27,7 +27,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 
     HubConnection? _hubConnection;
 
-    public string Partition { get; }
+    public string Environment { get; }
 
     // [MemberNotNull(nameof(_serverConfiguration))]
     public bool IsConnected => _hubConnection is not null && _hubConnection.State is not HubConnectionState.Disconnected;
@@ -38,13 +38,13 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
     public MaestroConnection(
         ServerConfiguration serverConfiguration,
         string airportIdentifier,
-        string partition,
+        string environment,
         IMediator mediator,
         ILogger logger)
     {
         _serverConfiguration = serverConfiguration;
         _airportIdentifier = airportIdentifier;
-        Partition = partition;
+        Environment = environment;
 
         _mediator = mediator;
         _logger = logger;
@@ -60,9 +60,9 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         var clientVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroConnection).Assembly);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(_serverConfiguration.Uri + $"?partition={Partition}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}&version={clientVersion}")
+            .WithUrl(_serverConfiguration.Uri + $"?environment={Environment}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}&version={clientVersion}")
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
-            .WithAutomaticReconnect()
+            .WithAutomaticReconnect(new InfiniteRetryPolicy())
             .WithStatefulReconnect()
             .AddMessagePackProtocol(options =>
             {
@@ -464,6 +464,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 
         hubConnection.Reconnecting += async exception =>
         {
+            _peers.Clear();
             _logger.Warning(exception, "Connection for {AirportIdentifier} reconnecting", _airportIdentifier);
             await _mediator.Publish(new ReconnectingNotification(_airportIdentifier), CancellationToken.None);
         };
@@ -471,8 +472,18 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         hubConnection.Reconnected += async connectionId =>
         {
             _logger.Information(
-                "Connection for {AirportIdentifier} reconnected with ConnectionId {ConnectionId}",
+                "Connection for {AirportIdentifier} reconnected with ConnectionId {ConnectionId}, re-initializing",
                 _airportIdentifier, connectionId);
+
+            try
+            {
+                await InitializeConnection(CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                _logger.Error(exception, "Failed to re-initialize connection for {AirportIdentifier} after reconnect", _airportIdentifier);
+            }
+
             await _mediator.Publish(new ReconnectedNotification(_airportIdentifier), CancellationToken.None);
         };
     }
@@ -526,5 +537,27 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         _hubConnection = null;
         _rootCancellationTokenSource.Cancel();
         _rootCancellationTokenSource.Dispose();
+    }
+
+    // Retries on an escalating schedule (0s, 2s, 5s, 10s, 30s), then every 60s indefinitely.
+    // NextRetryDelay returning null would stop retrying; returning a TimeSpan continues.
+    class InfiniteRetryPolicy : IRetryPolicy
+    {
+        static readonly TimeSpan[] InitialDelays =
+        [
+            TimeSpan.Zero,
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(30),
+        ];
+
+        public TimeSpan? NextRetryDelay(RetryContext retryContext)
+        {
+            if (retryContext.PreviousRetryCount < InitialDelays.Length)
+                return InitialDelays[retryContext.PreviousRetryCount];
+
+            return TimeSpan.FromSeconds(60);
+        }
     }
 }

@@ -18,7 +18,7 @@ public class CreateConnectionRequestHandler(
         {
             var connection = await connectionManager.CreateConnection(
                 request.AirportIdentifier,
-                request.Partition,
+                request.Environment,
                 cancellationToken);
 
             await mediator.Publish(new ConnectionCreatedNotification(request.AirportIdentifier), cancellationToken);

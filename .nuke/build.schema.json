@@ -24,6 +24,7 @@
     "ExecutableTarget": {
       "type": "string",
       "enum": [
+        "BuildDockerImage",
         "CheckVersion",
         "CompilePlugin",
         "CompileServer",
@@ -33,7 +34,7 @@
         "PackagePlugin",
         "PackageServer",
         "PackageTools",
-        "PublishDockerImage",
+        "PushDockerImage",
         "Release",
         "RepackPlugin",
         "Test",

@@ -56,7 +56,7 @@ public class ClientDisconnectedNotificationHandler(
 
         if (remainingPeers.Length == 0 || remainingPeers.All(p => p.Role == Role.Observer))
         {
-            sessionCache.Evict(connection.Partition, connection.AirportIdentifier);
+            sessionCache.Evict(connection.Environment, connection.AirportIdentifier);
         }
 
         // Broadcast to remaining clients that this client has disconnected

@@ -17,7 +17,7 @@ public class SessionModel : PageModel
     }
 
     [BindProperty(SupportsGet = true)]
-    public string Partition { get; set; } = "";
+    public string Environment { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
     public string Airport { get; set; } = "";
@@ -29,11 +29,11 @@ public class SessionModel : PageModel
 
     public IActionResult OnGet()
     {
-        Session = _sessionCache.Get(Partition, Airport);
+        Session = _sessionCache.Get(Environment, Airport);
         if (Session is null)
             return NotFound();
 
-        Connections = _connectionManager.GetConnections(Partition, Airport);
+        Connections = _connectionManager.GetConnections(Environment, Airport);
 
         Flights = Session.Sequence.Flights
             .OrderBy(f => f.LandingTime)

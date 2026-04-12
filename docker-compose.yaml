@@ -1,4 +1,4 @@
-﻿services:
+services:
   maestro.server:
     image: maestro.server
     build:
@@ -8,3 +8,5 @@
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "5272:8080"
+    volumes:
+      - ./data:/app/data

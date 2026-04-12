@@ -225,14 +225,14 @@ When no controller with the Flow role is online, all connected Approach and Enro
 - The first connected client becomes the master
 - Sequence changes are still synchronised across all clients
 
-### Partitions
+### Environments
 
-Partitions allow multiple independent sequences for the same airport to run simultaneously. Common uses include:
+Environments allow multiple independent sequences for the same airport to run simultaneously on a single server. Common uses include:
 
 - Separating live VATSIM operations from training sessions
 - Running multiple training scenarios concurrently
 
-Each partition maintains its own sequence state and does not affect other partitions.
+Each environment maintains its own sequence state and does not affect other environments.
 
 ### Permissions
 

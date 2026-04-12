@@ -16,19 +16,19 @@ public class ConnectRequestHandlerTests
     {
         // Arrange
         const string connectionId = "connection-1";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
         const string airportIdentifier = "YSSY";
         const string callsign = "ML-BIK_CTR";
         const Role role = Role.Enroute;
 
-        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, environment, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
-        var connection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role);
+        var connection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role);
 
         var connectionManager = new Mock<IConnectionManager>();
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([]);
-        connectionManager.Setup(x => x.Add(connectionId, Version, partition, airportIdentifier, callsign, role)).Returns(connection);
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([]);
+        connectionManager.Setup(x => x.Add(connectionId, Version, environment, airportIdentifier, callsign, role)).Returns(connection);
 
         var hubProxy = new Mock<IHubProxy>();
 
@@ -45,19 +45,19 @@ public class ConnectRequestHandlerTests
     {
         // Arrange
         const string connectionId = "connection-1";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
         const string airportIdentifier = "YSSY";
         const string callsign = "AA_OBS";
         const Role role = Role.Observer;
 
-        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, environment, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
-        var connection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role);
+        var connection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role);
 
         var connectionManager = new Mock<IConnectionManager>();
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([]);
-        connectionManager.Setup(x => x.Add(connectionId, Version, partition, airportIdentifier, callsign, role)).Returns(connection);
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([]);
+        connectionManager.Setup(x => x.Add(connectionId, Version, environment, airportIdentifier, callsign, role)).Returns(connection);
 
         var hubProxy = new Mock<IHubProxy>();
 
@@ -74,20 +74,20 @@ public class ConnectRequestHandlerTests
     {
         // Arrange
         const string connectionId = "connection-2";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
         const string airportIdentifier = "YSSY";
         const string callsign = "ML-BIK_CTR";
         const Role role = Role.Enroute;
 
-        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, environment, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
-        var existingConnection = new Connection("connection-1", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = true };
-        var newConnection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role);
+        var existingConnection = new Connection("connection-1", Version, environment, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = true };
+        var newConnection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role);
 
         var connectionManager = new Mock<IConnectionManager>();
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([existingConnection]);
-        connectionManager.Setup(x => x.Add(connectionId, Version, partition, airportIdentifier, callsign, role)).Returns(newConnection);
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([existingConnection]);
+        connectionManager.Setup(x => x.Add(connectionId, Version, environment, airportIdentifier, callsign, role)).Returns(newConnection);
 
         var hubProxy = new Mock<IHubProxy>();
 
@@ -111,20 +111,20 @@ public class ConnectRequestHandlerTests
     {
         // Arrange
         const string connectionId = "connection-2";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
         const string airportIdentifier = "YSSY";
         const string callsign = "SY_FMP";
         const Role role = Role.Flow;
 
-        var request = new ConnectRequest(Version, partition, airportIdentifier, callsign, role);
+        var request = new ConnectRequest(Version, environment, airportIdentifier, callsign, role);
         var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
 
-        var existingConnection = new Connection("connection-1", Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
-        var newConnection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role);
+        var existingConnection = new Connection("connection-1", Version, environment, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var newConnection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role);
 
         var connectionManager = new Mock<IConnectionManager>();
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([existingConnection]);
-        connectionManager.Setup(x => x.Add(connectionId, Version, partition, airportIdentifier, callsign, role)).Returns(newConnection);
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([existingConnection]);
+        connectionManager.Setup(x => x.Add(connectionId, Version, environment, airportIdentifier, callsign, role)).Returns(newConnection);
 
         var hubProxy = new Mock<IHubProxy>();
 

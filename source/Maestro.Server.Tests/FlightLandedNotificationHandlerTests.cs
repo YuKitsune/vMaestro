@@ -48,7 +48,7 @@ public class FlightLandedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightLandedNotification>(connectionId, flightLandedNotification);
 
-        var masterConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var masterConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
@@ -80,11 +80,11 @@ public class FlightLandedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightLandedNotification>(connectionId, flightLandedNotification);
 
-        var slaveConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
+        var slaveConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
         var peerConnections = new[]
         {
-            new Connection("peer-1", Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false },
-            new Connection("peer-2", Version, "partition-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false }
+            new Connection("peer-1", Version, "environment-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false },
+            new Connection("peer-2", Version, "environment-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false }
         };
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -119,8 +119,8 @@ public class FlightLandedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightLandedNotification>(connectionId, flightLandedNotification);
 
-        var slaveConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
-        var masterConnection = new Connection(masterConnectionId, Version, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var slaveConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
+        var masterConnection = new Connection(masterConnectionId, Version, "environment-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
         var peerConnections = new[] { masterConnection };
 
         var connectionManager = new Mock<IConnectionManager>();
@@ -159,9 +159,9 @@ public class FlightLandedNotificationHandlerTests
 
         var wrappedNotification = new NotificationContextWrapper<FlightLandedNotification>(connectionId, flightLandedNotification);
 
-        var slaveConnection = new Connection(connectionId, Version, "partition-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
-        var masterConnection = new Connection(masterConnectionId, Version, "partition-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
-        var otherPeer = new Connection("other-peer", Version, "partition-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false };
+        var slaveConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
+        var masterConnection = new Connection(masterConnectionId, Version, "environment-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var otherPeer = new Connection("other-peer", Version, "environment-1", "YSSY", "AA_OBS", Role.Observer) { IsMaster = false };
         var peerConnections = new[] { masterConnection, otherPeer };
 
         var connectionManager = new Mock<IConnectionManager>();

@@ -1,0 +1,67 @@
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+domains:
+  - domain: maestro.eoinmotherway.dev
+    type: PRIMARY
+  - domain: vatpac.maestro.eoinmotherway.dev
+    type: ALIAS
+
+features:
+  - buildpack-stack=ubuntu-22
+
+ingress:
+  rules:
+    # MAESTRO Docs
+    - component:
+        name: docs
+      match:
+        authority:
+          exact: maestro.eoinmotherway.dev
+        path:
+          prefix: /
+    
+    # VATPAC MAESTRO Server
+    - component:
+        name: vatpac
+      match:
+        authority:
+          exact: vatpac.maestro.eoinmotherway.dev
+        path:
+          prefix: /
+
+name: maestro
+region: syd
+services:
+
+  # MAESTRO Docs
+  - name: docs
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    github:
+      branch: main
+      deploy_on_push: false
+      repo: YuKitsune/vMaestro
+    dockerfile_path: docs/Dockerfile
+    source_dir: docs
+    http_port: 3000
+
+  # VATPAC MAESTRO Server
+  - name: vatpac
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    github:
+      branch: main
+      deploy_on_push: false
+      repo: YuKitsune/vMaestro
+    dockerfile_path: source/Maestro.Server/Dockerfile
+    source_dir: .
+    http_port: 8080
+    health_check:
+      http_path: /health
+
+    envs:
+      - key: Logging__Level
+        scope: RUN_AND_BUILD_TIME
+        value: Information

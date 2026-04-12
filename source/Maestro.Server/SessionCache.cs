@@ -3,32 +3,32 @@ using Maestro.Contracts.Sessions;
 namespace Maestro.Server;
 
 /// <summary>
-/// Identifies a unique session by partition and airport.
+/// Identifies a unique session by environment and airport.
 /// </summary>
-/// <param name="Partition">The network partition (e.g., VATSIM).</param>
+/// <param name="Environment">The network environment (e.g., VATSIM).</param>
 /// <param name="AirportIdentifier">The ICAO airport code (e.g., YSSY).</param>
-public record SessionKey(string Partition, string AirportIdentifier);
+public record SessionKey(string Environment, string AirportIdentifier);
 
 public class SessionCache
 {
     readonly Dictionary<SessionKey, SessionDto> _sessions = new();
 
-    public SessionDto? Get(string partition, string airportIdentifier)
+    public SessionDto? Get(string environment, string airportIdentifier)
     {
-        var key = new SessionKey(partition, airportIdentifier);
+        var key = new SessionKey(environment, airportIdentifier);
         return _sessions.GetValueOrDefault(key);
     }
 
-    public void Set(string partition, string airportIdentifier, SessionDto sessionDto)
+    public void Set(string environment, string airportIdentifier, SessionDto sessionDto)
     {
-        var key = new SessionKey(partition, airportIdentifier);
+        var key = new SessionKey(environment, airportIdentifier);
         _sessions[key] = sessionDto;
     }
 
     // BUG: Need to remove old entries after the last client disconnects
-    public void Evict(string partition, string airportIdentifier)
+    public void Evict(string environment, string airportIdentifier)
     {
-        var key = new SessionKey(partition, airportIdentifier);
+        var key = new SessionKey(environment, airportIdentifier);
         _sessions.Remove(key);
     }
 
