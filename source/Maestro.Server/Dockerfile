@@ -9,7 +9,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["source/Maestro.Server/Maestro.Server.csproj", "Maestro.Server/"]
-COPY ["source/Maestro.Server.Contracts/Maestro.Server.Contracts.csproj", "Maestro.Server.Contracts/"]
+COPY ["source/Maestro.Contracts/Maestro.Contracts.csproj", "Maestro.Contracts/"]
 RUN dotnet restore "Maestro.Server/Maestro.Server.csproj"
 COPY source/ .
 WORKDIR "/src/Maestro.Server"
