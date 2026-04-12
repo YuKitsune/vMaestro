@@ -19,7 +19,3 @@ spec:
           value: /data
         - key: Logging__Level
           value: Information
-  disks:
-    - name: data
-      mount_path: /data
-      size_gb: 1

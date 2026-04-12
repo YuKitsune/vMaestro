@@ -45,20 +45,15 @@ The server writes logs to `/app/data/logs/` inside the container. Mount a volume
 
 ## DigitalOcean App Platform
 
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/yukitsune/vmaestro/tree/main)
+You can deploy the server to DigitalOcean App Platform using the provided template.
 
-You can deploy the server to DigitalOcean App Platform using the template below. This provisions the server with a persistent disk for log storage.
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/yukitsune/vmaestro/tree/main)
 
 The deploy template is available in the repository at `.do/deploy.template.yaml`. You can use it as a starting point, or deploy directly using the DigitalOcean CLI:
 
 ```bash
 doctl apps create --spec .do/deploy.template.yaml
 ```
-
-The template configures:
-- A single server instance running the latest Docker image
-- A 1 GB persistent disk mounted at `/data` for log storage
-- A health check at `/health`
 
 ## Standalone Deployment
 
