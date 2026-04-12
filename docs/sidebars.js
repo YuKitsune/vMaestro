@@ -13,7 +13,7 @@ const sidebars = {
     'admin-guide/plugin-configuration',
     'admin-guide/server-deployment',
     'admin-guide/api-access',
-    'admin-guide/maestro-tool',
+    'admin-guide/maestro-tools',
   ],
 };
 
