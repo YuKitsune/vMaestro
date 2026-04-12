@@ -92,14 +92,14 @@ try
             opts.AllowStatefulReconnects = true;
         });
 
-    // Session API
-    var api = app.MapGroup("/api");
-
-    api.MapGet("/health", () => Results.Ok())
+    app.MapGet("/health", () => Results.Ok())
         .WithName("GetHealth")
         .WithDescription("Health check endpoint")
         .WithTags("Health")
         .Produces(200);
+
+    // Session API
+    var api = app.MapGroup("/api");
 
     api.MapGet("/sessions", (SessionCache cache) =>
     {
