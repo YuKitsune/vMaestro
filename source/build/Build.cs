@@ -16,13 +16,12 @@ using Nuke.Common.Tools.ILRepack;
 using Octokit;
 using Serilog;
 
-[SupportedOSPlatform("Windows")]
 [GitHubActions(
     "build",
     GitHubActionsImage.WindowsLatest,
     OnPushBranches = ["main"],
     OnPullRequestBranches = ["main"],
-    InvokedTargets = [nameof(CompilePlugin), nameof(Test)],
+    InvokedTargets = [nameof(CompilePlugin), nameof(CompileServer), nameof(Test)],
     FetchDepth = 0)]
 [GitHubActions(
     "release",
@@ -32,7 +31,16 @@ using Serilog;
     ImportSecrets = [nameof(GitHubToken)],
     EnableGitHubToken = true,
     FetchDepth = 0,
-    WritePermissions = [GitHubActionsPermissions.Contents, GitHubActionsPermissions.Packages])]
+    WritePermissions = [GitHubActionsPermissions.Contents])]
+[GitHubActions(
+    "deploy-container",
+    GitHubActionsImage.UbuntuLatest,
+    OnPushTags = ["v*"],
+    InvokedTargets = [nameof(PushDockerImage)],
+    ImportSecrets = [nameof(GitHubToken)],
+    EnableGitHubToken = true,
+    FetchDepth = 0,
+    WritePermissions = [GitHubActionsPermissions.Packages])]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -456,7 +464,6 @@ class Build : NukeBuild
     Target Release => _ => _
         .Description("Creates a GitHub release with the plugin and server binaries attached.")
         .DependsOn(PackagePlugin, PackageServer, PackageTools)
-        .Triggers(PushDockerImage)
         .Requires(() => GitHubToken)
         .Requires(() => GitRepository)
         .Requires(() => Configuration == Configuration.Release)
