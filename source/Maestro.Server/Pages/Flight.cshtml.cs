@@ -2,7 +2,7 @@ using Maestro.Contracts.Flights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Maestro.Server.Pages.Dashboard;
+namespace Maestro.Server.Pages;
 
 public class FlightModel : PageModel
 {
