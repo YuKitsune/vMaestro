@@ -1,0 +1,25 @@
+spec:
+  name: maestro-server
+  services:
+    - name: maestro-server
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      image:
+        registry_type: GHCR
+        registry: yukitsune
+        repository: vmaestro
+        tag: latest
+      http_port: 8080
+      health_check:
+        http_path: /health
+      envs:
+        - key: ASPNETCORE_ENVIRONMENT
+          value: Production
+        - key: DATA_PATH
+          value: /data
+        - key: Logging__Level
+          value: Information
+  disks:
+    - name: data
+      mount_path: /data
+      size_gb: 1
