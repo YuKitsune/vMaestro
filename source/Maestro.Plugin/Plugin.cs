@@ -55,8 +55,6 @@ public class Plugin : IPlugin
     {
         try
         {
-            EnsureDpiAwareness();
-
             var configuration = ConfigureConfiguration();
 
             ConfigureServices(configuration);
@@ -66,6 +64,13 @@ public class Plugin : IPlugin
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
+
+            AppBuilder.Configure<global::Avalonia.Application>()
+                .UseWin32()
+                .UseSkia()
+                .SetupWithoutStarting();
+
+            EnsureDpiAwareness();
 
             Network.Connected += NetworkOnConnected;
             Network.Disconnected += NetworkOnDisconnected;

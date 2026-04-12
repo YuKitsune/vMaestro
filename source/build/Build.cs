@@ -184,9 +184,15 @@ class Build : NukeBuild
         .Executes(() =>
         {
             var mainAssembly = PluginBuildOutputDirectory / PluginAssemblyFileName;
+
+            // SkiaSharp and HarfBuzzSharp use native libraries that can't survive ILRepack.
+            // They must remain as separate files so their native library loading works at runtime.
+            var nativeLibraryPrefixes = new[] { "SkiaSharp", "libSkiaSharp", "HarfBuzzSharp", "libHarfBuzzSharp" };
+
             var assembliesToMerge = PluginBuildOutputDirectory
                 .GlobFiles("*.dll")
                 .Except([mainAssembly])
+                .Where(a => !nativeLibraryPrefixes.Any(prefix => a.Name.StartsWith(prefix)))
                 .ToArray();
 
             if (!mainAssembly.FileExists())
@@ -204,6 +210,8 @@ class Build : NukeBuild
 
             var settings = new ILRepackSettings()
                 .SetAssemblies([mainAssembly.ToString(), ..existingAssemblies.Select(a => a.ToString())])
+                .SetAllowDuplicate()
+                .SetUnion(true)
                 .SetInternalize(false)
                 .SetParallel(true)
                 .SetOutput(mainAssembly.ToString())
