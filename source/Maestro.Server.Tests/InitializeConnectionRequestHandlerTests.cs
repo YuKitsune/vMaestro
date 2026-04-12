@@ -18,16 +18,16 @@ public class InitializeConnectionRequestHandlerTests
     {
         // Arrange
         const string connectionId = "connection-1";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
         const string airportIdentifier = "YSSY";
         const string callsign = "ML-BIK_CTR";
         const Role role = Role.Enroute;
 
-        var connection = new Connection(connectionId, Version, partition, airportIdentifier, callsign, role) { IsMaster = true };
+        var connection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role) { IsMaster = true };
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out connection)).Returns(true);
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([connection]);
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([connection]);
 
         var request = new InitializeConnectionRequest();
         var wrappedRequest = new RequestContextWrapper<InitializeConnectionRequest, InitializeConnectionResponse>(connectionId, request);
@@ -38,7 +38,7 @@ public class InitializeConnectionRequestHandlerTests
 
         // Assert
         response.ConnectionId.ShouldBe(connectionId);
-        response.Partition.ShouldBe(partition);
+        response.Environment.ShouldBe(environment);
         response.AirportIdentifier.ShouldBe(airportIdentifier);
         response.IsMaster.ShouldBeTrue();
         response.ConnectedPeers.ShouldBeEmpty();
@@ -50,15 +50,15 @@ public class InitializeConnectionRequestHandlerTests
     {
         // Arrange
         const string connectionId = "connection-2";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
         const string airportIdentifier = "YSSY";
 
-        var connection1 = new Connection("connection-1", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = true };
-        var connection2 = new Connection(connectionId, Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute);
+        var connection1 = new Connection("connection-1", Version, environment, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = true };
+        var connection2 = new Connection(connectionId, Version, environment, airportIdentifier, "ML-BIK_CTR", Role.Enroute);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out connection2)).Returns(true);
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([connection1, connection2]);
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([connection1, connection2]);
 
         var request = new InitializeConnectionRequest();
         var wrappedRequest = new RequestContextWrapper<InitializeConnectionRequest, InitializeConnectionResponse>(connectionId, request);
@@ -78,10 +78,10 @@ public class InitializeConnectionRequestHandlerTests
     {
         // Arrange
         const string connectionId = "connection-1";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
         const string airportIdentifier = "YSSY";
 
-        var connection = new Connection(connectionId, Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var connection = new Connection(connectionId, Version, environment, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
         var cachedSession = new SessionDto
         {
             AirportIdentifier = airportIdentifier,
@@ -108,10 +108,10 @@ public class InitializeConnectionRequestHandlerTests
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out connection)).Returns(true);
-        connectionManager.Setup(x => x.GetConnections(partition, airportIdentifier)).Returns([connection]);
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([connection]);
 
         var sessionCache = new SessionCache();
-        sessionCache.Set(partition, airportIdentifier, cachedSession);
+        sessionCache.Set(environment, airportIdentifier, cachedSession);
 
         var request = new InitializeConnectionRequest();
         var wrappedRequest = new RequestContextWrapper<InitializeConnectionRequest, InitializeConnectionResponse>(connectionId, request);

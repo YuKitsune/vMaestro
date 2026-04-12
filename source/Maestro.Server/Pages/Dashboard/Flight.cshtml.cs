@@ -14,7 +14,7 @@ public class FlightModel : PageModel
     }
 
     [BindProperty(SupportsGet = true)]
-    public string Partition { get; set; } = "";
+    public string Environment { get; set; } = "";
 
     [BindProperty(SupportsGet = true)]
     public string Airport { get; set; } = "";
@@ -26,7 +26,7 @@ public class FlightModel : PageModel
 
     public IActionResult OnGet()
     {
-        var session = _sessionCache.Get(Partition, Airport);
+        var session = _sessionCache.Get(Environment, Airport);
         if (session is null)
             return NotFound();
 

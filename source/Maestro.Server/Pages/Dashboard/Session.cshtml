@@ -1,19 +1,19 @@
 @page
 @model SessionModel
 @{
-    ViewData["Title"] = $"{Model.Airport} - {Model.Partition}";
+    ViewData["Title"] = $"{Model.Airport} - {Model.Environment}";
 }
 
 @section Breadcrumb {
     <nav aria-label="breadcrumb" class="border-bottom px-3 py-2">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="/dashboard">Sessions</a></li>
-            <li class="breadcrumb-item active" aria-current="page">@Model.Partition / @Model.Airport</li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Environment / @Model.Airport</li>
         </ol>
     </nav>
 }
 
-<h1>@Model.Airport <small class="text-muted">@Model.Partition</small></h1>
+<h1>@Model.Airport <small class="text-muted">@Model.Environment</small></h1>
 
 <div class="row mt-4">
     <div class="col-md-4">
@@ -143,7 +143,7 @@
                                 {
                                     <tr>
                                         <td>
-                                            <a href="/dashboard/flight?partition=@Model.Partition&airport=@Model.Airport&callsign=@flight.Callsign">
+                                            <a href="/dashboard/flight?environment=@Model.Environment&airport=@Model.Airport&callsign=@flight.Callsign">
                                                 @flight.Callsign
                                             </a>
                                         </td>

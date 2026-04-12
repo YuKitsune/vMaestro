@@ -27,7 +27,7 @@ public class SessionUpdatedNotificationHandler(IConnectionManager connectionMana
 
         logger.Debug("{Connection} updating session", connection);
 
-        sessionCache.Set(connection.Partition, notification.AirportIdentifier, notification.Session);
+        sessionCache.Set(connection.Environment, notification.AirportIdentifier, notification.Session);
 
         // Relay to all other clients in the session
         var peers = connectionManager.GetPeers(connection);

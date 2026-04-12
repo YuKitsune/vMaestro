@@ -18,7 +18,7 @@ else
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Partition</th>
+                    <th>Environment</th>
                     <th>Airport</th>
                 </tr>
             </thead>
@@ -27,12 +27,12 @@ else
                 {
                     <tr>
                         <td>
-                            <a href="/dashboard/session?partition=@session.Partition&airport=@session.AirportIdentifier">
-                                @session.Partition
+                            <a href="/dashboard/session?environment=@session.Environment&airport=@session.AirportIdentifier">
+                                @session.Environment
                             </a>
                         </td>
                         <td>
-                            <a href="/dashboard/session?partition=@session.Partition&airport=@session.AirportIdentifier">
+                            <a href="/dashboard/session?environment=@session.Environment&airport=@session.AirportIdentifier">
                                 @session.AirportIdentifier
                             </a>
                         </td>

@@ -3,12 +3,12 @@
 CheckForUpdates: false
 
 Logging:
-  LogLevel: Debug
+  LogLevel: Verbose
   MaxFileAgeDays: 1
 
 Server:
   Uri: https://maestro.eoinmotherway.dev/hub
-  Partitions:
+  Environments:
   - VATSIM
   - SweatBox-1
   - SweatBox-2

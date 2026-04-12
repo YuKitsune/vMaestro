@@ -67,9 +67,9 @@ public class SessionUpdatedNotificationHandlerTests
         const string connectionId = "master-connection";
         const string connectionAirport = "YSSY";
         const string notificationAirport = "YMML";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
 
-        var masterConnection = new Connection(connectionId, Version, partition, connectionAirport, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var masterConnection = new Connection(connectionId, Version, environment, connectionAirport, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
         var sessionDto = new SessionDto
         {
@@ -123,9 +123,9 @@ public class SessionUpdatedNotificationHandlerTests
         // Arrange
         const string connectionId = "slave-connection";
         const string airportIdentifier = "YSSY";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
 
-        var slaveConnection = new Connection(connectionId, Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var slaveConnection = new Connection(connectionId, Version, environment, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
 
         var sessionDto = new SessionDto
         {
@@ -179,11 +179,11 @@ public class SessionUpdatedNotificationHandlerTests
         // Arrange
         const string connectionId = "master-connection";
         const string airportIdentifier = "YSSY";
-        const string partition = "partition-1";
+        const string environment = "environment-1";
 
-        var masterConnection = new Connection(connectionId, Version, partition, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
-        var peer1 = new Connection("peer-1", Version, partition, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
-        var peer2 = new Connection("peer-2", Version, partition, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
+        var masterConnection = new Connection(connectionId, Version, environment, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var peer1 = new Connection("peer-1", Version, environment, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+        var peer2 = new Connection("peer-2", Version, environment, airportIdentifier, "AA_OBS", Role.Observer) { IsMaster = false };
         var peers = new[] { peer1, peer2 };
 
         var sessionDto = new SessionDto
@@ -230,7 +230,7 @@ public class SessionUpdatedNotificationHandlerTests
             .Handle(wrappedNotification, CancellationToken.None);
 
         // Assert
-        var cachedSequence = sessionCache.Get(partition, airportIdentifier);
+        var cachedSequence = sessionCache.Get(environment, airportIdentifier);
         cachedSequence.ShouldNotBeNull();
         cachedSequence.ShouldBe(sessionDto);
 

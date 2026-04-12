@@ -20,17 +20,17 @@ public class InitializeConnectionRequestHandler(
         if (!connectionManager.TryGetConnection(connectionId, out var connection))
             throw new InvalidOperationException($"Connection {connectionId} not found");
 
-        var peers = connectionManager.GetConnections(connection.Partition, connection.AirportIdentifier)
+        var peers = connectionManager.GetConnections(connection.Environment, connection.AirportIdentifier)
             .Where(c => c.Id != connectionId)
             .ToArray();
 
-        var latestSequence = sessionCache.Get(connection.Partition, connection.AirportIdentifier);
+        var latestSequence = sessionCache.Get(connection.Environment, connection.AirportIdentifier);
 
         logger.Information("Client {ConnectionId} ({Callsign}) requesting initialization", connectionId, connection.Callsign);
 
         return Task.FromResult(new InitializeConnectionResponse(
             connectionId,
-            connection.Partition,
+            connection.Environment,
             connection.AirportIdentifier,
             connection.IsMaster,
             latestSequence,

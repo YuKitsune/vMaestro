@@ -4,7 +4,7 @@ namespace Maestro.Server.Contracts;
 
 public record ConnectRequest(
     string Version,
-    string Partition,
+    string Environment,
     string AirportIdentifier,
     string Callsign,
     Role Role);

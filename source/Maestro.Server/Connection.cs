@@ -2,11 +2,11 @@ using Maestro.Contracts.Connectivity;
 
 namespace Maestro.Server;
 
-public class Connection(string id, string version, string partition, string airportIdentifier, string callsign, Role role)
+public class Connection(string id, string version, string environment, string airportIdentifier, string callsign, Role role)
 {
     public string Id { get; } = id;
     public string Version { get; } = version;
-    public string Partition { get; } = partition;
+    public string Environment { get; } = environment;
     public string AirportIdentifier { get; } = airportIdentifier;
     public string Callsign { get; } = callsign;
     public Role Role { get; } = role;

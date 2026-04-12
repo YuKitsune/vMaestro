@@ -171,11 +171,11 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
             throw new HubException($"Incompatible version. Client version: {clientVersion}, Server version: {ServerVersion}");
         }
 
-        var partition = httpContext.Request.Query["partition"].FirstOrDefault();
-        if (string.IsNullOrEmpty(partition))
+        var environment = httpContext.Request.Query["environment"].FirstOrDefault();
+        if (string.IsNullOrEmpty(environment))
         {
-            logger.Warning("{ConnectionId} attempted to connect with an empty partition", Context.ConnectionId);
-            throw new HubException("Connection rejected: Partition not provided");
+            logger.Warning("{ConnectionId} attempted to connect with an empty environment", Context.ConnectionId);
+            throw new HubException("Connection rejected: Environment not provided");
         }
 
         var airportIdentifier = httpContext.Request.Query["airportIdentifier"].FirstOrDefault();
@@ -204,7 +204,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
 
         var request = new ConnectRequest(
             clientVersion,
-            partition,
+            environment,
             airportIdentifier,
             callsign,
             role);

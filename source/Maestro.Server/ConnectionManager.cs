@@ -5,14 +5,14 @@ namespace Maestro.Server;
 
 public interface IConnectionManager
 {
-    Connection Add(string connectionId, string version, string partition, string airportIdentifier, string callsign, Role role);
+    Connection Add(string connectionId, string version, string environment, string airportIdentifier, string callsign, Role role);
 
     bool TryGetConnection(
         string connectionId,
         [NotNullWhen(true)] out Connection? connection);
 
     Connection[] GetPeers(Connection connection);
-    Connection[] GetConnections(string partition, string airportIdentifier);
+    Connection[] GetConnections(string environment, string airportIdentifier);
     Connection[] GetAllConnections();
     void Remove(Connection connection);
 }
@@ -21,12 +21,12 @@ public class ConnectionManager : IConnectionManager
 {
     readonly List<Connection> _connections = [];
 
-    public Connection Add(string connectionId, string version, string partition, string airportIdentifier, string callsign, Role role)
+    public Connection Add(string connectionId, string version, string environment, string airportIdentifier, string callsign, Role role)
     {
         if (_connections.Any(c => c.Id == connectionId))
             throw new InvalidOperationException($"Connection {connectionId} already exists");
 
-        var connection = new Connection(connectionId, version, partition, airportIdentifier, callsign, role);
+        var connection = new Connection(connectionId, version, environment, airportIdentifier, callsign, role);
         _connections.Add(connection);
         return connection;
     }
@@ -42,14 +42,14 @@ public class ConnectionManager : IConnectionManager
     public Connection[] GetPeers(Connection connection)
     {
         return _connections
-            .Where(c => c.Id != connection.Id && c.Partition == connection.Partition && c.AirportIdentifier == connection.AirportIdentifier)
+            .Where(c => c.Id != connection.Id && c.Environment == connection.Environment && c.AirportIdentifier == connection.AirportIdentifier)
             .ToArray();
     }
 
-    public Connection[] GetConnections(string partition, string airportIdentifier)
+    public Connection[] GetConnections(string environment, string airportIdentifier)
     {
         return _connections
-            .Where(c => c.Partition == partition && c.AirportIdentifier == airportIdentifier)
+            .Where(c => c.Environment == environment && c.AirportIdentifier == airportIdentifier)
             .ToArray();
     }
 

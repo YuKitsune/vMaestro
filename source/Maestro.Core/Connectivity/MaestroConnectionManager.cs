@@ -24,7 +24,7 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
 
     public async Task<IMaestroConnection> CreateConnection(
         string airportIdentifier,
-        string partition,
+        string environment,
         CancellationToken cancellationToken)
     {
         await _semaphore.WaitAsync(cancellationToken);
@@ -39,7 +39,7 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
             var connection = new MaestroConnection(
                 _serverConfiguration,
                 airportIdentifier,
-                partition,
+                environment,
                 _mediator,
                 _logger.ForContext<MaestroConnection>());
 

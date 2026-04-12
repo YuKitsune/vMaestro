@@ -14,7 +14,7 @@ public class MockSlaveConnectionManager : IMaestroConnectionManager
 
     public MockSlaveConnection Connection => _connection;
 
-    public Task<IMaestroConnection> CreateConnection(string airportIdentifier, string partition, CancellationToken cancellationToken)
+    public Task<IMaestroConnection> CreateConnection(string airportIdentifier, string environment, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -44,7 +44,7 @@ public class MockSlaveConnection : IMaestroConnection
     public bool IsMaster => false;
     public Role Role => Role.Flow;
     public IReadOnlyList<PeerInfo> Peers => [];
-    public string Partition => "TEST";
+    public string Environment => "TEST";
 
     public IReadOnlyList<object> InvokedRequests => _invokedRequests;
     public IReadOnlyList<object> InvokedNotifications => _invokedNotifications;

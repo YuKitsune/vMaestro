@@ -1,6 +1,6 @@
 {
   "connectionId": "conn-123",
-  "partition": "PROD",
+  "environment": "PROD",
   "airportIdentifier": "YSSY",
   "isMaster": true,
   "session": {
