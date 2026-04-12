@@ -55,7 +55,6 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                     sessionDto.Sequence.SurfaceWind,
                     mediator,
                     windowHandle,
-                    clock,
                     errorReporter);
 
                 return new TerminalConfigurationView(viewModel);

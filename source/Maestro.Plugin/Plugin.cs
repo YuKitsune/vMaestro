@@ -1,7 +1,9 @@
 using System.ComponentModel.Composition;
 using System.Reflection;
 using System.Windows.Forms;
+using Avalonia;
 using Avalonia.Media;
+using Avalonia.Skia;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Contracts.Flights;
@@ -23,6 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using vatsys;
 using vatsys.Plugin;
+using Color = Avalonia.Media.Color;
 
 namespace Maestro.Plugin;
 
@@ -94,11 +97,11 @@ public class Plugin : IPlugin
 
     void ConfigureTheme()
     {
-        Theme.BackgroundColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowBackground).ToAvaloniaColor());
-        Theme.GenericTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.GenericText).ToAvaloniaColor());
-        Theme.InteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.InteractiveText).ToAvaloniaColor());
-        Theme.NonInteractiveTextColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.NonInteractiveText).ToAvaloniaColor());
-        Theme.SelectedButtonColor = new SolidColorBrush(Colours.GetColour(Colours.Identities.WindowButtonSelected).ToAvaloniaColor());
+        Theme.BackgroundColor = Colours.GetColour(Colours.Identities.WindowBackground).ToSolidColorBrush();
+        Theme.GenericTextColor = Colours.GetColour(Colours.Identities.GenericText).ToSolidColorBrush();
+        Theme.InteractiveTextColor = Colours.GetColour(Colours.Identities.InteractiveText).ToSolidColorBrush();
+        Theme.NonInteractiveTextColor = Colours.GetColour(Colours.Identities.NonInteractiveText).ToSolidColorBrush();
+        Theme.SelectedButtonColor = Colours.GetColour(Colours.Identities.WindowButtonSelected).ToSolidColorBrush();
         Theme.FontFamily = new FontFamily(MMI.eurofont_xsml.FontFamily.Name);
         Theme.FontSize = MMI.eurofont_xsml.Size;
         Theme.FontWeight = MMI.eurofont_xsml.Bold ? FontWeight.Bold : FontWeight.Regular;

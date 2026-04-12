@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
-using Avalonia.Controls;
 using Maestro.Avalonia.Integrations;
+using Control = Avalonia.Controls.Control;
 
 namespace Maestro.Plugin.Infrastructure;
 
