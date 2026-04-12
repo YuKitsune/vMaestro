@@ -82,18 +82,6 @@ const config = {
             label: 'Admin Guide',
           },
           {
-            href: '/swagger',
-            target: '_blank',
-            label: 'API',
-            position: 'right',
-          },
-          {
-            href: '/dashboard',
-            target: '_blank',
-            label: 'Dashboard',
-            position: 'right',
-          },
-          {
             href: 'https://github.com/yukitsune/vMaestro',
             label: 'GitHub',
             position: 'right',

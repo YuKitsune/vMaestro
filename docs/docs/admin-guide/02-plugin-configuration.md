@@ -65,7 +65,7 @@ Configures the connection to the vMaestro server for online operation.
 ```yaml
 Server:
   Uri: https://maestro.example.com/hub
-  Partitions:
+  Environments:
     - VATSIM
     - SweatBox-1
   TimeoutSeconds: 30
@@ -91,13 +91,13 @@ Server:
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 | `Uri` | string | Yes | - | SignalR hub endpoint (must end in `/hub`) |
-| `Partitions` | array | Yes | `["Default"]` | Available partitions for session isolation |
+| `Environments` | array | Yes | `["Default"]` | Available environments for session isolation |
 | `TimeoutSeconds` | integer | No | 30 | Connection timeout |
 | `Permissions` | object | Yes | - | Maps actions to permitted roles |
 
-### Partitions
+### Environments
 
-Partitions allow multiple independent sequences for the same airport. Use cases include:
+Environments allow multiple independent sequences for the same airport. Use cases include:
 
 - Separating live operations from training
 - Running concurrent training sessions
