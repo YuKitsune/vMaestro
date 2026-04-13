@@ -169,6 +169,35 @@ public partial class MaestroViewModel : ObservableObject
         Role is Role.Flow or Role.Approach ||
         (Role == Role.Enroute && !FlowIsOnline);
 
+    partial void OnStatusChanged(string _)
+    {
+        if (ShouldShowFlowControls)
+            return;
+
+        ResetUnits();
+    }
+
+    partial void OnRoleChanged(Role _)
+    {
+        if (ShouldShowFlowControls)
+            return;
+
+        ResetUnits();
+    }
+
+    partial void OnFlowIsOnlineChanged(bool _)
+    {
+        if (ShouldShowFlowControls)
+            return;
+
+        ResetUnits();
+    }
+
+    void ResetUnits()
+    {
+        SelectedUnit = LandingRateUnit.Seconds;
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsScrolling), nameof(IsScrollingUp), nameof(IsScrollingDown))]
     TimeSpan _scrollOffset = TimeSpan.Zero;
