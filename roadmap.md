@@ -17,16 +17,16 @@
 
 - [X] Refactor flight insertion handlers (Consider combining or separating them)
 - [X] Remove (or trim down) SequenceMessage and introduce smaller DTOs or notifications (consider CRDTs) to reduce the size of the sequence when serialised
-- [ ] Improve separation between domain models, DTOs, and view models
-- [ ] Explore calculating TTG at runtime based on STAR track and upper winds
-- [ ] Make delaying action times configurable (lightweight enroute trajectory config?)
+- [X] Improve separation between domain models, DTOs, and view models
+- [X] Explore calculating TTG at runtime based on STAR track and upper winds
+- [X] Make delaying action times configurable (lightweight enroute trajectory config?)
 - [ ] Decompose Plugin.cs into multiple separate services (WindCheckService, vatSysEventAdapter, DpiAwarenessHelper, etc.)
 
 ### Server Deployment
 
 - [X] Package server binary
-- [ ] Build and publish server container
-- [ ] Separate docs and server
+- [X] Build and publish server container
+- [X] Separate docs and server
 
 ## Future Enhancements
 
