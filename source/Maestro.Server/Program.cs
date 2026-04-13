@@ -38,6 +38,7 @@ try
         .AddHubOptions<MaestroHub>(x =>
         {
             x.EnableDetailedErrors = true;
+            x.MaximumReceiveMessageSize = 64_000; // 64KB, default is 32KB
         })
         .AddMessagePackProtocol(options =>
         {
