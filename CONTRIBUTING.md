@@ -8,7 +8,7 @@ Thank you for your interest in contributing to vMaestro.
 
 - .NET SDK 10.0
 - .NET Framework 4.7.2 Developer Pack (for plugin compilation)
-- vatSys (required for plugin compilation - the `Maestro.Plugin` project automatically locates vatSys binaries)
+- vatSys (required for plugin compilation, the `Maestro.Plugin` project automatically locates vatSys binaries)
 - An IDE (Visual Studio, Rider, or VS Code with C# extension)
 
 ### Building
@@ -79,11 +79,13 @@ Server:
 
 ## Branching
 
-vMaestro uses a trunk-based development model. The short version: `main` is always the integration point, branches are short-lived, and release branches are cut at release milestones.
+vMaestro uses a trunk-based development model.
+In short, `main` is always the integration point, branches are short-lived, and release branches are cut at release milestones.
 
 ### Before v1
 
-`main` is the only long-lived branch. Branch from it, make your changes, and merge back via a pull request.
+`main` is the only long-lived branch.
+Branch from it, make your changes, and merge back via a pull request.
 
 ### After v1
 
@@ -91,12 +93,12 @@ Once v1 ships, the branching model expands:
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | vNext - active development, may contain breaking changes |
-| `releases/v1` | v1 maintenance - bug fixes and patches only |
+| `main` | vNext for active development, may contain breaking changes |
+| `releases/v1` | v1 maintenance, for bug fixes and patches only |
 
-**Features and breaking changes** go on `main` only. Create a short-lived branch from `main`, open a PR, and merge it back.
+**Breaking changes** go on `main` only. Create a short-lived branch from `main`, open a PR, and merge it back.
 
-**Bug fixes for v1** follow a merge-forward process:
+**Bug fixes and non-breaking changes for v1** follow a merge-forward process:
 
 1. Branch from `releases/v1`
 2. Fix the bug
@@ -106,12 +108,13 @@ Once v1 ships, the branching model expands:
 Merging forward keeps `main` up to date with all fixes shipped in v1. Do not cherry-pick - always merge the branch forward.
 
 Breaking changes must never be introduced on a release branch.
+Bug fixes, patches, and non-breaking improvements are all acceptable.
 
 ## Pull Requests
 
 1. Fork the repository (external contributors) or create a branch directly (maintainers)
 2. Branch from the appropriate base (see above)
-3. Keep changes focused - one concern per PR
+3. Keep changes focused, so one concern per PR
 4. Ensure all tests pass locally before opening a PR
 5. Add tests for new functionality
 6. Update documentation if behaviour changes
