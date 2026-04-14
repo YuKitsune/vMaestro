@@ -134,7 +134,7 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
         firstFlight.SetSequenceData(_clock.UtcNow().AddMinutes(20), firstFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero);
         secondFlight.SetSequenceData(_clock.UtcNow().AddMinutes(30), secondFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero);
 
-        var handler = GetHandler(instanceManager);
+        var handler = GetHandler(sessionManager);
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
 
         // Act
