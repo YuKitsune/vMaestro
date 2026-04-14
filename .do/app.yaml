@@ -51,16 +51,14 @@ services:
   - name: vatpac
     instance_count: 1
     instance_size_slug: basic-xxs
-    github:
-      branch: main
-      deploy_on_push: false
-      repo: YuKitsune/vMaestro
-    dockerfile_path: source/Maestro.Server/Dockerfile
-    source_dir: .
+    image:
+      registry_type: GHCR
+      registry: yukitsune
+      repository: vmaestro
+      tag: latest
     http_port: 8080
     health_check:
       http_path: /health
-
     envs:
       - key: Logging__Level
         scope: RUN_AND_BUILD_TIME

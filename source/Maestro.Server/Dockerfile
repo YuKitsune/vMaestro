@@ -17,7 +17,8 @@ RUN dotnet build "Maestro.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "Maestro.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+ARG VERSION=0.0.0
+RUN dotnet publish "Maestro.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:Version=$VERSION /p:AssemblyVersion=$VERSION /p:InformationalVersion=$VERSION
 
 FROM base AS final
 WORKDIR /app

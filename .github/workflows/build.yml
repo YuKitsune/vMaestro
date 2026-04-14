@@ -39,5 +39,5 @@ jobs:
             .nuke/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
-      - name: 'Run: CompilePlugin, CompileServer, Test'
-        run: ./build.cmd CompilePlugin CompileServer Test
+      - name: 'Run: CompilePlugin, CompileServer, CompileTools, Test'
+        run: ./build.cmd CompilePlugin CompileServer CompileTools Test

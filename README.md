@@ -5,7 +5,7 @@
 <h3 align="center">
   A vatSys plugin emulating the Maestro Traffic Flow Management System.
 
-  [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yukitsune/vmaestro/build.yml?branch=main)](https://github.com/YuKitsune/vMaestro/actions/workflows/build.yml)
+  [![Build and Tests](https://img.shields.io/github/actions/workflow/status/yukitsune/vmaestro/build.yml?branch=main&label=build+and+tests)](https://github.com/YuKitsune/vMaestro/actions/workflows/build.yml)
   [![License](https://img.shields.io/github/license/YuKitsune/vMaestro)](https://github.com/YuKitsune/vMaestro/blob/main/LICENSE)
   [![Latest Release](https://img.shields.io/github/v/release/YuKitsune/vMaestro?include_prereleases)](https://github.com/YuKitsune/vMaestro/releases)
 

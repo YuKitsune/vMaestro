@@ -21,7 +21,7 @@ using Serilog;
     GitHubActionsImage.WindowsLatest,
     OnPushBranches = ["main"],
     OnPullRequestBranches = ["main"],
-    InvokedTargets = [nameof(CompilePlugin), nameof(CompileServer), nameof(Test)],
+    InvokedTargets = [nameof(CompilePlugin), nameof(CompileServer), nameof(CompileTools), nameof(Test)],
     FetchDepth = 0)]
 [GitHubActions(
     "release",
@@ -551,7 +551,8 @@ class Build : NukeBuild
             DockerTasks.DockerBuild(s => s
                 .SetPath(RootDirectory)
                 .SetFile(RootDirectory / "source" / "Maestro.Server" / "Dockerfile")
-                .SetTag(tags));
+                .SetTag(tags)
+                .SetBuildArg($"VERSION={version}"));
 
             Log.Information("Docker image built successfully");
         });
