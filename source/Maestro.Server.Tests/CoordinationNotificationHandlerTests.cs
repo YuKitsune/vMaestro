@@ -117,12 +117,15 @@ public class SendCoordinationMessageRequestHandlerTests
         result.Success.ShouldBeTrue();
         result.ErrorMessage.ShouldBeEmpty();
 
-        // Sender should not receive their own message
+        // Sender should receive their own broadcast
         hubProxy.Verify(x => x.Send(
             senderConnection.Id,
             "CoordinationMessageReceived",
-            It.IsAny<CoordinationMessageReceivedNotification>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.Is<CoordinationMessageReceivedNotification>(n =>
+                n.Sender == senderCallsign &&
+                n.Message == TestMessage &&
+                n.AirportIdentifier == airportIdentifier),
+            It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify peer1 receives the message with correct sender
         hubProxy.Verify(x => x.Send(
@@ -213,7 +216,7 @@ public class SendCoordinationMessageRequestHandlerTests
     }
 
     [Fact]
-    public async Task WhenDestinationIsSpecificControllerButNotFound_NoMessageIsSent()
+    public async Task WhenDestinationIsSpecificControllerButNotFound_FailureIsReturned()
     {
         // Arrange
         const string connectionId = "sender-connection";
@@ -250,8 +253,8 @@ public class SendCoordinationMessageRequestHandlerTests
             .Handle(wrappedRequest, CancellationToken.None);
 
         // Assert
-        result.Success.ShouldBeTrue();
-        result.ErrorMessage.ShouldBeEmpty();
+        result.Success.ShouldBeFalse();
+        result.ErrorMessage.ShouldBe($"Unknown controller: {targetCallsign}");
 
         hubProxy.Verify(x => x.Send(
             It.IsAny<string>(),
@@ -261,7 +264,7 @@ public class SendCoordinationMessageRequestHandlerTests
     }
 
     [Fact]
-    public async Task WhenBroadcastingWithNoPeers_NoMessageIsSent()
+    public async Task WhenBroadcastingWithNoPeers_OnlySenderReceivesMessage()
     {
         // Arrange
         const string connectionId = "sender-connection";
@@ -300,10 +303,12 @@ public class SendCoordinationMessageRequestHandlerTests
         result.ErrorMessage.ShouldBeEmpty();
 
         hubProxy.Verify(x => x.Send(
-            It.IsAny<string>(),
+            senderConnection.Id,
             "CoordinationMessageReceived",
-            It.IsAny<CoordinationMessageReceivedNotification>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.Is<CoordinationMessageReceivedNotification>(n =>
+                n.Message == message &&
+                n.AirportIdentifier == airportIdentifier),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     SendCoordinationMessageRequestHandler GetHandler(
