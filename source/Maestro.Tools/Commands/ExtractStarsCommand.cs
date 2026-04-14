@@ -84,14 +84,14 @@ public static class ExtractStarsCommand
                 if (string.IsNullOrEmpty(routeText))
                     continue;
 
-                var routeWaypoints = routeText.Split('/');
+                var routeWaypoints = routeText.Split(['/', ' '], StringSplitOptions.RemoveEmptyEntries);
                 if (transitions.Count > 0)
                 {
                     // One trajectory per transition × route combination.
                     // The transition name is the feeder fix; the first route waypoint is the transition fix.
                     foreach (var transition in transitions)
                     {
-                        var transitionWaypoints = transition.Value.Trim().Split('/');
+                        var transitionWaypoints = transition.Value.Trim().Split(['/', ' '], StringSplitOptions.RemoveEmptyEntries);
                         if (transitionWaypoints.Length == 0)
                             continue;
 
