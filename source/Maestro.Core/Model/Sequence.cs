@@ -1076,50 +1076,59 @@ public class Sequence
 
     int NumberInSequence(string callsign)
     {
-        var index = _flights
-            .Where(f => f.State is not State.Landed)
-            .OrderBy(i => i.LandingTime)
-            .ToList()
-            .FindIndex(f => f.Callsign == callsign);
+        lock (_gate)
+        {
+            var index = _flights
+                .Where(f => f.State is not State.Landed)
+                .OrderBy(i => i.LandingTime)
+                .ToList()
+                .FindIndex(f => f.Callsign == callsign);
 
-        if (index == -1)
-            return -1;
+            if (index == -1)
+                return -1;
 
-        return index + 1;
+            return index + 1;
+        }
     }
 
     int NumberForRunway(string callsign, string runwayIdentifier)
     {
-        var index = _flights
-            .Where(f => f.State is not State.Landed && f.AssignedRunwayIdentifier == runwayIdentifier)
-            .OrderBy(i => i.LandingTime)
-            .ToList()
-            .FindIndex(f => f.Callsign == callsign);
+        lock (_gate)
+        {
+            var index = _flights
+                .Where(f => f.State is not State.Landed && f.AssignedRunwayIdentifier == runwayIdentifier)
+                .OrderBy(i => i.LandingTime)
+                .ToList()
+                .FindIndex(f => f.Callsign == callsign);
 
-        if (index == -1)
-            return -1;
+            if (index == -1)
+                return -1;
 
-        return index + 1;
+            return index + 1;
+        }
     }
 
     public SequenceDto ToDto()
     {
-        return new SequenceDto
+        lock (_gate)
         {
-            Flights = _flights
-                .Select(f => f.ToDto(this))
-                .ToArray(),
-            CurrentRunwayMode = CurrentRunwayMode.ToDto(),
-            NextRunwayMode = NextRunwayMode?.ToDto(),
-            LastLandingTimeForCurrentMode = LastLandingTimeForCurrentMode ?? default,
-            FirstLandingTimeForNextMode = FirstLandingTimeForNewMode ?? default,
-            Slots = _slots
-                .Select(s => s.ToDto())
-                .ToArray(),
-            SurfaceWind = new WindDto(SurfaceWind.Direction, SurfaceWind.Speed),
-            UpperWind = new WindDto(UpperWind.Direction, UpperWind.Speed),
-            ManualWind = ManualWind
-        };
+            return new SequenceDto
+            {
+                Flights = _flights
+                    .Select(f => f.ToDto(this))
+                    .ToArray(),
+                CurrentRunwayMode = CurrentRunwayMode.ToDto(),
+                NextRunwayMode = NextRunwayMode?.ToDto(),
+                LastLandingTimeForCurrentMode = LastLandingTimeForCurrentMode ?? default,
+                FirstLandingTimeForNextMode = FirstLandingTimeForNewMode ?? default,
+                Slots = _slots
+                    .Select(s => s.ToDto())
+                    .ToArray(),
+                SurfaceWind = new WindDto(SurfaceWind.Direction, SurfaceWind.Speed),
+                UpperWind = new WindDto(UpperWind.Direction, UpperWind.Speed),
+                ManualWind = ManualWind
+            };
+        }
     }
 
     public void Restore(SequenceDto dto)
@@ -1128,35 +1137,38 @@ public class Sequence
             "Restoring sequence from snapshot ({FlightCount} flights, {SlotCount} slots)",
             dto.Flights.Length, dto.Slots.Length);
 
-        // Clear existing state
-        _flights.Clear();
-        _slots.Clear();
-
-        CurrentRunwayMode = new RunwayMode(dto.CurrentRunwayMode);
-        if (dto.NextRunwayMode is not null)
+        lock (_gate)
         {
-            NextRunwayMode = new RunwayMode(dto.NextRunwayMode);
-            LastLandingTimeForCurrentMode = dto.LastLandingTimeForCurrentMode;
-            FirstLandingTimeForNewMode = dto.FirstLandingTimeForNextMode;
-        }
+            // Clear existing state
+            _flights.Clear();
+            _slots.Clear();
 
-        // Restore slots
-        foreach (var slotDto in dto.Slots)
-        {
-            var slot = new Slot(slotDto.Id, slotDto.StartTime, slotDto.EndTime, slotDto.RunwayIdentifiers);
-            _slots.Add(slot);
-        }
+            CurrentRunwayMode = new RunwayMode(dto.CurrentRunwayMode);
+            if (dto.NextRunwayMode is not null)
+            {
+                NextRunwayMode = new RunwayMode(dto.NextRunwayMode);
+                LastLandingTimeForCurrentMode = dto.LastLandingTimeForCurrentMode;
+                FirstLandingTimeForNewMode = dto.FirstLandingTimeForNextMode;
+            }
 
-        // Restore sequenced flights (both real and manually-inserted)
-        foreach (var flightDto in dto.Flights)
-        {
-            var flight = new Flight(flightDto);
-            _flights.Add(flight);
-        }
+            // Restore slots
+            foreach (var slotDto in dto.Slots)
+            {
+                var slot = new Slot(slotDto.Id, slotDto.StartTime, slotDto.EndTime, slotDto.RunwayIdentifiers);
+                _slots.Add(slot);
+            }
 
-        SurfaceWind = new Wind(dto.SurfaceWind.Direction, dto.SurfaceWind.Speed);
-        UpperWind = new Wind(dto.UpperWind.Direction, dto.UpperWind.Speed);
-        ManualWind = dto.ManualWind;
+            // Restore sequenced flights (both real and manually-inserted)
+            foreach (var flightDto in dto.Flights)
+            {
+                var flight = new Flight(flightDto);
+                _flights.Add(flight);
+            }
+
+            SurfaceWind = new Wind(dto.SurfaceWind.Direction, dto.SurfaceWind.Speed);
+            UpperWind = new Wind(dto.UpperWind.Direction, dto.UpperWind.Speed);
+            ManualWind = dto.ManualWind;
+        }
     }
 
     interface ISequenceItem
