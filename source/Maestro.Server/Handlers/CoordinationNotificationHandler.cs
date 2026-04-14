@@ -37,6 +37,7 @@ public class SendCoordinationMessageRequestHandler(IConnectionManager connection
                 logger.Information("{Connection} broadcasting coordination message to all peers: {Message}",
                     connection, notification.Message);
 
+                await hubProxy.Send(connectionId, "CoordinationMessageReceived", notification, cancellationToken);
                 foreach (var peer in peers)
                 {
                     await hubProxy.Send(peer.Id, "CoordinationMessageReceived", notification, cancellationToken);
@@ -58,6 +59,7 @@ public class SendCoordinationMessageRequestHandler(IConnectionManager connection
                 {
                     logger.Warning("{Connection} attempted to send coordination to unknown controller {Target}",
                         connection, controllerDest.Callsign);
+                    return ServerResponse.CreateFailure($"Unknown controller: {controllerDest.Callsign}");
                 }
                 break;
 
