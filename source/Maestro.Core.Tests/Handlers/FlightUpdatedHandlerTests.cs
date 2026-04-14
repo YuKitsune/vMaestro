@@ -329,7 +329,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
 
         var trajectoryService = new MockTrajectoryService(ttg);
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
             .Build();
 
@@ -377,7 +377,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithTrajectory(new TerminalTrajectory(ttg))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithTrajectoryService(trajectoryService)
                 .WithFlight(flight))
@@ -426,7 +426,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithTrajectory(new TerminalTrajectory(ttg))
             .Build();
 
-        var (instanceManager, _, _, _) = new InstanceBuilder(airportConfiguration)
+        var (instanceManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
             .Build();
 

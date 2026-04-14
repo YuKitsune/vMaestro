@@ -165,10 +165,10 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(10))
             .WithRunway("34L")
             .WithApproachType("A")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(20)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(20)))
             .Build();
 
-        var trajectoryFor34R = new Trajectory(TimeSpan.FromMinutes(25));
+        var trajectoryFor34R = new TerminalTrajectory(TimeSpan.FromMinutes(25));
         var trajectoryService = new MockTrajectoryService()
             .WithTrajectory()
             .OnRunway("34R")
@@ -184,7 +184,7 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         var newLandingTime = now.AddMinutes(12);
         var request = new MoveFlightRequest("YSSY", "QFA1", "34R", newLandingTime);
 
-        var originalTrajectory = flight.Trajectory;
+        var originalTrajectory = flight.TerminalTrajectory;
 
         // Act
         await handler.Handle(request, CancellationToken.None);
@@ -192,8 +192,8 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34R", "Flight should be assigned to the requested runway");
         flight.ApproachType.ShouldBe("A", "Approach type should remain unchanged");
-        flight.Trajectory.ShouldBe(trajectoryFor34R, "Trajectory should be recalculated for the new runway");
-        flight.Trajectory.ShouldNotBe(originalTrajectory, "Trajectory should be different from the original");
+        flight.TerminalTrajectory.ShouldBe(trajectoryFor34R, "Trajectory should be recalculated for the new runway");
+        flight.TerminalTrajectory.ShouldNotBe(originalTrajectory, "Trajectory should be different from the original");
     }
 
     [Fact]

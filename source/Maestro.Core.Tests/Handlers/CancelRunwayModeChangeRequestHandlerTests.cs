@@ -140,10 +140,10 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
         var trajectoryService = new MockTrajectoryService()
             .WithTrajectory()
                 .OnRunway("34L")
-                .Returns(new Trajectory(TimeSpan.FromMinutes(30)))
+                .Returns(new TerminalTrajectory(TimeSpan.FromMinutes(30)))
             .WithTrajectory()
                 .OnRunway("16R")
-                .Returns(new Trajectory(TimeSpan.FromMinutes(18)));
+                .Returns(new TerminalTrajectory(TimeSpan.FromMinutes(18)));
 
         // Flight tracking via RIVET:
         // - On 34IVA: assigned to 34L (TTG=30min)
@@ -152,7 +152,7 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(now.AddMinutes(10))  // FF at T+10
             .WithRunway("34L")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(30)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(30)))
             .Build();
 
         // Initial state: FF=T+10, TTG=30min, ETA=T+40, InitialETA=T+40
@@ -175,7 +175,7 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
         await ScheduleModeChange(sessionManager, airportConfiguration, mediator, now.AddMinutes(20), now.AddMinutes(25));
 
         flight.AssignedRunwayIdentifier.ShouldBe("16R", "flight should be reassigned to 16R in new mode");
-        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(18), "trajectory should change to 16R");
+        flight.TerminalTrajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(18), "trajectory should change to 16R");
         flight.LandingEstimate.ShouldBe(now.AddMinutes(28), "ETA should be FF + new TTG");
 
         // With the fix, InitialLandingEstimate should NOT have changed
@@ -197,7 +197,7 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
 
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34L", "flight should be reassigned back to 34L");
-        flight.Trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(30), "trajectory should be back to 34L");
+        flight.TerminalTrajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(30), "trajectory should be back to 34L");
         flight.LandingEstimate.ShouldBe(now.AddMinutes(40), "ETA should be FF + original TTG");
 
         // The critical assertion: InitialLandingEstimate should never have changed
@@ -206,7 +206,7 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
 
         // This demonstrates the bug: if InitialLandingEstimate was corrupted to T+28 during the mode change,
         // then after cancellation TotalDelay = LandingTime - InitialLandingEstimate could be negative
-        flight.TotalDelay.ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero, "TotalDelay should never be negative");
+        (flight.LandingTime - flight.InitialLandingEstimate).ShouldBeGreaterThanOrEqualTo(TimeSpan.Zero, "TotalDelay should never be negative");
         flight.LandingTime.ShouldBeGreaterThanOrEqualTo(flight.InitialLandingEstimate,
             "LandingTime should never be before InitialLandingEstimate");
     }
