@@ -1,4 +1,6 @@
-﻿using Maestro.Core.Configuration;
+﻿using Maestro.Contracts.Sessions;
+using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Core.Sessions;
 using Maestro.Plugin.Infrastructure;
@@ -25,7 +27,11 @@ public class OpenTerminalConfigurationWindowRequestHandler(
 
         var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
 
-        var sessionDto = session.Snapshot();
+        SessionDto sessionDto;
+        using (await session.Semaphore.LockAsync(cancellationToken))
+        {
+            sessionDto = session.Snapshot();
+        }
 
         var runwayModes = airportConfiguration.RunwayModes
             .Select(r => new RunwayModeViewModel(r))
