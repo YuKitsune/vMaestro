@@ -163,13 +163,13 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
             throw new HubException("Connection rejected: Client version not provided");
         }
 
-        // if (!VersionCompatibility.IsCompatible(clientVersion, ServerVersion))
-        // {
-        //     logger.Warning(
-        //         "{ConnectionId} attempted to connect with incompatible version {ClientVersion} (server version: {ServerVersion})",
-        //         Context.ConnectionId, clientVersion, ServerVersion);
-        //     throw new HubException($"Incompatible version. Client version: {clientVersion}, Server version: {ServerVersion}");
-        // }
+        if (!VersionCompatibility.IsCompatible(clientVersion, ServerVersion))
+        {
+            logger.Warning(
+                "{ConnectionId} attempted to connect with incompatible version {ClientVersion} (server version: {ServerVersion})",
+                Context.ConnectionId, clientVersion, ServerVersion);
+            throw new HubException($"Incompatible version. Client version: {clientVersion}, Server version: {ServerVersion}");
+        }
 
         var environment = httpContext.Request.Query["environment"].FirstOrDefault();
         if (string.IsNullOrEmpty(environment))
