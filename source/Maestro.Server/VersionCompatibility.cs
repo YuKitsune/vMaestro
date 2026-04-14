@@ -7,6 +7,10 @@ public static class VersionCompatibility
         var clientParts = ParseVersion(clientVersion);
         var serverParts = ParseVersion(serverVersion);
 
+        // 0.0.0 indicates a local dev build - skip version check
+        if (IsDevBuild(clientParts) || IsDevBuild(serverParts))
+            return true;
+
         // If either version is a pre-release, require exact match
         if (clientParts.PreRelease is not null || serverParts.PreRelease is not null)
         {
@@ -19,6 +23,9 @@ public static class VersionCompatibility
         // For stable releases, major and minor versions must match
         return clientParts.Major == serverParts.Major && clientParts.Minor == serverParts.Minor;
     }
+
+    static bool IsDevBuild((int Major, int Minor, int Patch, string? PreRelease) version)
+        => version is { Major: 0, Minor: 0, Patch: 0, PreRelease: null };
 
     static (int Major, int Minor, int Patch, string? PreRelease) ParseVersion(string version)
     {

@@ -99,15 +99,15 @@ public class VersionCompatibilityTests
     }
 
     [Theory]
-    [InlineData("0.0.0", "0.0.0", true)]
-    [InlineData("0.0.0", "0.0.1", true)]
-    [InlineData("0.1.0", "0.0.0", false)]
-    public void IsCompatible_ShouldHandleZeroVersions(
+    [InlineData("0.0.0", "1.0.0")]
+    [InlineData("1.0.0", "0.0.0")]
+    [InlineData("0.0.0", "0.0.0")]
+    [InlineData("0.0.0", "2.3.4")]
+    public void IsCompatible_ShouldReturnTrue_WhenEitherVersionIsDevBuild(
         string clientVersion,
-        string serverVersion,
-        bool expected)
+        string serverVersion)
     {
         var result = VersionCompatibility.IsCompatible(clientVersion, serverVersion);
-        result.ShouldBe(expected);
+        result.ShouldBeTrue();
     }
 }
