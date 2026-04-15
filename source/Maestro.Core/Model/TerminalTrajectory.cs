@@ -2,7 +2,7 @@ namespace Maestro.Core.Model;
 
 public record EnrouteTrajectory(
     TimeSpan MaxLinearEnrouteDelay,
-    TimeSpan ShortCutTimeToGain);
+    TimeSpan ShortcutTimeToGain);
 
 public record TerminalTrajectory(
     TimeSpan NormalTimeToGo,

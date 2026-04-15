@@ -183,29 +183,35 @@ public class FlightDto
     [Key(31)]
     public required bool IsManuallyInserted { get; init; }
 
+    /// <summary>
+    /// Time savings available by flying a shortcut through the enroute area.
+    /// </summary>
     [Key(32)]
-    public TimeSpan EnrouteShortCutTimeToGain { get; init; }
-
-    [Key(33)]
-    public TimeSpan MaxEnrouteLinearDelay { get; init; }
+    public TimeSpan EnrouteShortcutTimeToGain { get; init; }
 
     /// <summary>
-    /// The time-to-go for the normal (direct) trajectory from the feeder fix to the runway threshold.
+    /// Maximum delay absorbable in the enroute area via linear techniques (speed reduction or path stretching).
+    /// </summary>
+    [Key(33)]
+    public TimeSpan EnrouteMaxLinearDelay { get; init; }
+
+    /// <summary>
+    /// The time-to-go for the normal (direct) terminal trajectory from the feeder fix to the runway threshold.
     /// </summary>
     [Key(34)]
-    public TimeSpan NormalTimeToGo { get; init; }
+    public TimeSpan TerminalNormalTimeToGo { get; init; }
 
     /// <summary>
-    /// The time-to-go for the pressure trajectory — normal path plus pressure-zone path stretching.
+    /// The time-to-go for the pressure terminal trajectory — normal path plus pressure-zone path stretching.
     /// </summary>
     [Key(35)]
-    public TimeSpan PressureTimeToGo { get; init; }
+    public TimeSpan TerminalPressureTimeToGo { get; init; }
 
     /// <summary>
-    /// The time-to-go for the maximum-pressure trajectory — pressure path plus maximum vectoring.
+    /// The time-to-go for the maximum-pressure terminal trajectory — pressure path plus maximum vectoring.
     /// </summary>
     [Key(36)]
-    public TimeSpan MaxPressureTimeToGo { get; init; }
+    public TimeSpan TerminalMaxPressureTimeToGo { get; init; }
 
     /// <summary>
     /// The action the controllers must take to ensure this flight lands at their scheduled landing time.
@@ -230,4 +236,16 @@ public class FlightDto
     /// </summary>
     [Key(40)]
     public TimeSpan RemainingEnrouteDelay { get; init; }
+
+    /// <summary>
+    /// The terminal delay assigned to this flight at scheduling time.
+    /// </summary>
+    [Key(41)]
+    public TimeSpan RequiredTerminalDelay { get; init; }
+
+    /// <summary>
+    /// The remaining terminal delay, recomputed each time the flight's estimate changes.
+    /// </summary>
+    [Key(42)]
+    public TimeSpan RemainingTerminalDelay { get; init; }
 }

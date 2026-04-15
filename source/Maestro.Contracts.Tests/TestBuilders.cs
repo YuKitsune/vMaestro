@@ -174,7 +174,7 @@ public static class TestBuilders
             LastSeen = FixedTime,
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,
-            NormalTimeToGo = TimeSpan.FromMinutes(18),
+            TerminalNormalTimeToGo = TimeSpan.FromMinutes(18),
             RequiredControlAction = ControlAction.NoDelay
         };
 

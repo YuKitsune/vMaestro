@@ -6,9 +6,9 @@ namespace Maestro.Core.Model;
 ///     The result of a delay distribution calculation.
 /// </summary>
 /// <param name="EnrouteDelay">Portion of delay to be absorbed in the enroute (ACC) phase.</param>
-/// <param name="TmaDelay">Portion of delay to be absorbed in the approach (TMA) phase.</param>
+/// <param name="TerminalDelay">Portion of delay to be absorbed in the approach (TMA) phase.</param>
 /// <param name="ControlAction">The control action required to achieve the delay distribution.</param>
-public record DelayDistribution(TimeSpan EnrouteDelay, TimeSpan TmaDelay, ControlAction ControlAction);
+public record DelayDistribution(TimeSpan EnrouteDelay, TimeSpan TerminalDelay, ControlAction ControlAction);
 
 public static class DelayStrategyCalculator
 {
@@ -48,7 +48,7 @@ public static class DelayStrategyCalculator
         var availablePressure = terminalTrajectory.PressureTimeToGo - terminalTrajectory.NormalTimeToGo;
 
         // The maximum amount of delay that can be absorbed within the TMA linearly (maximum pressure)
-        var maxLinearTmaDelay = terminalTrajectory.MaxPressureTimeToGo - terminalTrajectory.NormalTimeToGo;
+        var maxLinearTerminalDelay = terminalTrajectory.MaxPressureTimeToGo - terminalTrajectory.NormalTimeToGo;
 
         // Needs to speed up
         if (totalDelay < TimeSpan.Zero)
@@ -65,14 +65,14 @@ public static class DelayStrategyCalculator
                 ControlAction.NoDelay);
 
         // Use the pressure in the TMA, absorb the rest in ENR
-        if (totalDelay <= availablePressure + enrouteTrajectory.ShortCutTimeToGain)
+        if (totalDelay <= availablePressure + enrouteTrajectory.ShortcutTimeToGain)
             return new DelayDistribution(
                 totalDelay - availablePressure,
                 availablePressure,
                 ControlAction.Resume);
 
         // Use the pressure in the TMA, absorb the rest in ENR
-        if (totalDelay <= availablePressure + enrouteTrajectory.ShortCutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay)
+        if (totalDelay <= availablePressure + enrouteTrajectory.ShortcutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay)
             return new DelayDistribution(
                 totalDelay - availablePressure,
                 availablePressure,
@@ -80,7 +80,7 @@ public static class DelayStrategyCalculator
 
         // Max out the ENR delay, absorb the rest in the TMA
         // so long as the total delay won't exceed the TMAs max pressure
-        if (totalDelay <= enrouteTrajectory.ShortCutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay + maxLinearTmaDelay)
+        if (totalDelay <= enrouteTrajectory.ShortcutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay + maxLinearTerminalDelay)
             return new DelayDistribution(
                 enrouteTrajectory.MaxLinearEnrouteDelay,
                 totalDelay - enrouteTrajectory.MaxLinearEnrouteDelay,
@@ -89,8 +89,8 @@ public static class DelayStrategyCalculator
         // Both ENR and TMA max delays exceeded, holding required.
         // Delay as much as possible in the TMA, absorb the rest in ENR
         return new DelayDistribution(
-            totalDelay - maxLinearTmaDelay,
-            maxLinearTmaDelay,
+            totalDelay - maxLinearTerminalDelay,
+            maxLinearTerminalDelay,
             ControlAction.Holding);
     }
 
@@ -101,7 +101,7 @@ public static class DelayStrategyCalculator
         var availablePressure = terminalTrajectory.PressureTimeToGo - terminalTrajectory.NormalTimeToGo;
 
         // The maximum amount of delay that can be absorbed within the TMA linearly (maximum pressure)
-        var maxLinearTmaDelay = terminalTrajectory.MaxPressureTimeToGo - terminalTrajectory.NormalTimeToGo;
+        var maxLinearTerminalDelay = terminalTrajectory.MaxPressureTimeToGo - terminalTrajectory.NormalTimeToGo;
 
         // Needs to speed up
         if (totalDelay < TimeSpan.Zero)
@@ -118,31 +118,31 @@ public static class DelayStrategyCalculator
                 ControlAction.NoDelay);
 
         // If the delay required is within the max TMA pressure, just absorb it within the TMA
-        if (totalDelay <= maxLinearTmaDelay)
+        if (totalDelay <= maxLinearTerminalDelay)
             return new DelayDistribution(
                 TimeSpan.Zero,
                 totalDelay,
                 ControlAction.Resume);
 
         // Absorb as much delay as possible in the TMA, absorb the rest in ENR
-        if (totalDelay <= maxLinearTmaDelay + enrouteTrajectory.ShortCutTimeToGain)
+        if (totalDelay <= maxLinearTerminalDelay + enrouteTrajectory.ShortcutTimeToGain)
             return new DelayDistribution(
-                totalDelay - maxLinearTmaDelay,
-                maxLinearTmaDelay,
+                totalDelay - maxLinearTerminalDelay,
+                maxLinearTerminalDelay,
                 ControlAction.SpeedReduction);
 
         // Absorb as much delay as possible in the TMA, absorb the rest in ENR
-        if (totalDelay <= maxLinearTmaDelay + enrouteTrajectory.ShortCutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay)
+        if (totalDelay <= maxLinearTerminalDelay + enrouteTrajectory.ShortcutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay)
             return new DelayDistribution(
-                totalDelay - maxLinearTmaDelay,
-                maxLinearTmaDelay,
+                totalDelay - maxLinearTerminalDelay,
+                maxLinearTerminalDelay,
                 ControlAction.PathStretching);
 
         // Both ENR and TMA max delays exceeded, holding required.
         // Delay as much as possible in the TMA, absorb the rest in ENR
         return new DelayDistribution(
-            totalDelay - maxLinearTmaDelay,
-            maxLinearTmaDelay,
+            totalDelay - maxLinearTerminalDelay,
+            maxLinearTerminalDelay,
             ControlAction.Holding);
     }
 }

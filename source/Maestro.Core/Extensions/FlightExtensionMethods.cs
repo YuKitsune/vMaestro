@@ -39,15 +39,17 @@ public static class FlightExtensionMethods
             LastSeen = flight.LastSeen,
             Position = flight.Position,
             IsManuallyInserted = flight.IsManuallyInserted,
-            NormalTimeToGo = flight.TerminalTrajectory.NormalTimeToGo,
-            PressureTimeToGo = flight.TerminalTrajectory.PressureTimeToGo,
-            MaxPressureTimeToGo = flight.TerminalTrajectory.MaxPressureTimeToGo,
-            EnrouteShortCutTimeToGain = flight.EnrouteTrajectory.ShortCutTimeToGain,
-            MaxEnrouteLinearDelay = flight.EnrouteTrajectory.MaxLinearEnrouteDelay,
+            TerminalNormalTimeToGo = flight.TerminalTrajectory.NormalTimeToGo,
+            TerminalPressureTimeToGo = flight.TerminalTrajectory.PressureTimeToGo,
+            TerminalMaxPressureTimeToGo = flight.TerminalTrajectory.MaxPressureTimeToGo,
+            EnrouteShortcutTimeToGain = flight.EnrouteTrajectory.ShortcutTimeToGain,
+            EnrouteMaxLinearDelay = flight.EnrouteTrajectory.MaxLinearEnrouteDelay,
             RequiredControlAction = flight.RequiredControlAction,
             RemainingControlAction = flight.RemainingControlAction,
             RequiredEnrouteDelay = flight.RequiredEnrouteDelay,
-            RemainingEnrouteDelay = flight.RemainingEnrouteDelay
+            RequiredTerminalDelay = flight.RequiredTerminalDelay,
+            RemainingEnrouteDelay = flight.RemainingEnrouteDelay,
+            RemainingTerminalDelay = flight.RemainingTerminalDelay
         };
     }
 
