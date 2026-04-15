@@ -185,8 +185,8 @@ Labels:
 | `ApproachType` | Approach type | |
 | `LandingTime` | Scheduled landing time | |
 | `FeederFixTime` | Scheduled feeder fix time | |
-| `RequiredDelay` | Total delay required | |
-| `RemainingDelay` | Remaining delay | |
+| `RequiredDelay` | Delay assigned at scheduling time | `Component` |
+| `RemainingDelay` | Remaining delay to absorb | `Component` |
 | `ManualDelay` | Manual delay indicator | `ZeroDelaySymbol`, `ManualDelaySymbol` |
 | `HighSpeed` | High speed indicator | `Symbol` |
 | `CouplingStatus` | Coupling status | `UncoupledSymbol` |
@@ -199,6 +199,16 @@ Labels:
 | `Width` | integer | Yes | Display width in characters |
 | `Padding` | integer | No | Padding in characters |
 | `ColourSources` | array | No | Colour sources in priority order |
+
+#### Delay Component
+
+The `Component` property on `RequiredDelay` and `RemainingDelay` controls which portion of the split delay is displayed. Defaults to `Total`.
+
+| Value | Description |
+|-------|-------------|
+| `Total` | Sum of enroute and terminal delay |
+| `Enroute` | Enroute delay only |
+| `Tma` | Terminal delay only |
 
 #### Colour Sources
 
@@ -259,6 +269,7 @@ Airports:
 | `LostFlightTimeoutMinutes` | integer | 10 | Timeout for lost flights |
 | `AverageLandingSpeed` | integer | 150 | Average landing speed (TAS) in knots for distance calculations |
 | `UpperWindAltitude` | integer | 6000 | Altitude in feet for upper winds from GRIB data |
+| `DefaultMaxEnrouteLinearDelay` | duration | `00:05:00` | Default enroute delay capacity used when no matching enroute trajectory is configured |
 
 Flight states: `Unstable`, `Stable`, `SuperStable`, `Frozen`
 
@@ -409,6 +420,28 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 |----------|------|----------|-------------|
 | `After` | string | Yes | The name of the segment in the normal trajectory where this trajectory extends from |
 | `Segments` | array | Yes | Ordered segments from the branching point to runway threshold |
+
+### Enroute Trajectories
+
+Enroute trajectories define how much delay can be absorbed in the enroute phase for flights arriving via each feeder fix. When a flight's route passes through a matching entry point, that trajectories values are used. Flights with no matching entry use `DefaultMaxEnrouteLinearDelay`.
+
+```yaml
+EnrouteTrajectories:
+  - EntryPoint: ENLOU
+    FeederFix: RIVET
+    MaxEnrouteLinearDelay: 00:08:00
+    ShortcutTimeToGain: 00:03:00
+  - EntryPoint: AKMIR
+    FeederFix: WELSH
+    MaxEnrouteLinearDelay: 00:06:00
+```
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `EntryPoint` | string | Yes | Waypoint along the flight plan route where the enroute phase begins |
+| `FeederFix` | string | Yes | Feeder fix this entry applies to |
+| `MaxEnrouteLinearDelay` | duration | Yes | Maximum delay absorbable in the enroute phase via speed reduction or holding |
+| `ShortcutTimeToGain` | duration | No | Time that can be gained by flying a direct routing through the enroute area. Default: `00:00:00` |
 
 ### Departure Airports
 
