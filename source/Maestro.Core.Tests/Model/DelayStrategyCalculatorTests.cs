@@ -8,8 +8,91 @@ public class DelayStrategyCalculatorTests
 {
     static readonly TimeSpan PressureWindow = TimeSpan.FromMinutes(3);
     static readonly TimeSpan MaximumTmaPressure = TimeSpan.FromMinutes(4);
-    static readonly TimeSpan ShortCutTimeToGain = TimeSpan.Zero;
+    static readonly TimeSpan ShortcutTimeToGain = TimeSpan.Zero;
     static readonly TimeSpan MaxLinearEnrouteDelay = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// When no pressure trajectory is configured, <see cref="TrajectoryService"/> returns
+    /// <c>TerminalTrajectory(ttg, ttg, ttg)</c> (pressure == normal == max). Both strategies
+    /// must then allocate all delay to enroute, preserving the pre-branch behaviour where TMA
+    /// delay did not exist.
+    /// </summary>
+    public class NoPressureTrajectory
+    {
+        static readonly TimeSpan NormalTtg = TimeSpan.FromMinutes(20);
+
+        // PressureTTG = MaxPressureTTG = NormalTTG → availablePressure = 0, maxLinearTerminalDelay = 0
+        static readonly TerminalTrajectory Trajectory = new(NormalTtg, NormalTtg, NormalTtg);
+        static readonly EnrouteTrajectory EnrouteTrajectory = new(TimeSpan.FromMinutes(5), TimeSpan.Zero);
+
+        [Fact]
+        public void EarlyFlight_ReturnsExpedite_WithZeroEnrouteDelay()
+        {
+            var totalDelay = TimeSpan.FromMinutes(-2);
+            foreach (var strategy in new[] { DelayStrategy.EnrouteFirst, DelayStrategy.ApproachFirst })
+            {
+                var r = DelayStrategyCalculator.Compute(totalDelay, Trajectory, EnrouteTrajectory, strategy);
+                r.ControlAction.ShouldBe(ControlAction.Expedite, $"strategy={strategy}");
+                r.EnrouteDelay.ShouldBe(TimeSpan.Zero, $"strategy={strategy}: early flights speed up in TMA, no enroute action");
+                r.TerminalDelay.ShouldBe(totalDelay, $"strategy={strategy}: negative deviation absorbed in TMA");
+            }
+        }
+
+        [Fact]
+        public void ZeroDelay_ReturnsNoDelay()
+        {
+            var totalDelay = TimeSpan.Zero;
+            foreach (var strategy in new[] { DelayStrategy.EnrouteFirst, DelayStrategy.ApproachFirst })
+            {
+                var r = DelayStrategyCalculator.Compute(totalDelay, Trajectory, EnrouteTrajectory, strategy);
+                r.ControlAction.ShouldBe(ControlAction.NoDelay, $"strategy={strategy}");
+                r.EnrouteDelay.ShouldBe(TimeSpan.Zero, $"strategy={strategy}");
+                r.TerminalDelay.ShouldBe(TimeSpan.Zero, $"strategy={strategy}");
+            }
+        }
+
+        [Fact]
+        public void SmallPositiveDelay_AllGoesToEnroute()
+        {
+            // Any positive delay with no TMA capacity must be assigned fully to enroute.
+            var totalDelay = TimeSpan.FromMinutes(3);
+            foreach (var strategy in new[] { DelayStrategy.EnrouteFirst, DelayStrategy.ApproachFirst })
+            {
+                var r = DelayStrategyCalculator.Compute(totalDelay, Trajectory, EnrouteTrajectory, strategy);
+                r.EnrouteDelay.ShouldBe(totalDelay, $"strategy={strategy}: all delay to enroute when no TMA pressure configured");
+                r.TerminalDelay.ShouldBe(TimeSpan.Zero, $"strategy={strategy}: no TMA delay when pressure == normal TTG");
+            }
+        }
+
+        [Fact]
+        public void DelayBeyondEnrouteCapacity_StillAllEnroute_ReturnsHolding()
+        {
+            var totalDelay = TimeSpan.FromMinutes(10); // beyond MaxLinearEnrouteDelay=5m
+            foreach (var strategy in new[] { DelayStrategy.EnrouteFirst, DelayStrategy.ApproachFirst })
+            {
+                var r = DelayStrategyCalculator.Compute(totalDelay, Trajectory, EnrouteTrajectory, strategy);
+                r.ControlAction.ShouldBe(ControlAction.Holding, $"strategy={strategy}");
+                r.EnrouteDelay.ShouldBe(totalDelay, $"strategy={strategy}: all delay to enroute even in holding");
+                r.TerminalDelay.ShouldBe(TimeSpan.Zero, $"strategy={strategy}: no TMA delay when no pressure configured");
+            }
+        }
+
+        [Theory]
+        [InlineData(-2)]
+        [InlineData(0)]
+        [InlineData(3)]
+        [InlineData(5)]
+        [InlineData(10)]
+        public void DelaySplitSumsToTotal(int totalDelayMinutes)
+        {
+            var totalDelay = TimeSpan.FromMinutes(totalDelayMinutes);
+            foreach (var strategy in new[] { DelayStrategy.EnrouteFirst, DelayStrategy.ApproachFirst })
+            {
+                var r = DelayStrategyCalculator.Compute(totalDelay, Trajectory, EnrouteTrajectory, strategy);
+                (r.EnrouteDelay + r.TerminalDelay).ShouldBe(totalDelay, $"strategy={strategy}: dC + dP must equal total delay");
+            }
+        }
+    }
 
     public class EnrouteFirst
     {
@@ -20,7 +103,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Expedite);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute action for early flights");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
         }
 
         [Fact]
@@ -30,7 +113,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.NoDelay);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute delay needed");
-            r.TmaDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA delay needed");
+            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA delay needed");
         }
 
         [Fact]
@@ -40,7 +123,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.NoDelay);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: delay within pressure window, no enroute action");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = totalDelay: all delay absorbed as TMA pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = totalDelay: all delay absorbed as TMA pressure");
         }
 
         [Fact]
@@ -50,7 +133,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay - P: excess over pressure window assigned to enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
         }
 
         [Fact]
@@ -60,7 +143,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5), "dC = totalDelay - P = 5m: enroute at maximum linear capacity");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
         }
 
         [Fact]
@@ -70,7 +153,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.PathStretching);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5), "dC = dCmax: enroute capped at maximum linear delay");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3) + TimeSpan.FromSeconds(1), "dP = totalDelay - dCmax: TMA absorbs remainder beyond enroute capacity");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3) + TimeSpan.FromSeconds(1), "dP = totalDelay - dCmax: TMA absorbs remainder beyond enroute capacity");
         }
 
         [Fact]
@@ -80,7 +163,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.PathStretching);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5), "dC = dCmax: enroute at maximum linear capacity");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = totalDelay - dCmax = 7m: TMA at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = totalDelay - dCmax = 7m: TMA at maximum pressure");
         }
 
         [Fact]
@@ -90,7 +173,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Holding);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1), "dC = totalDelay - P - dPmax: excess beyond both TMA and enroute linear capacity");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
         }
 
         [Fact]
@@ -101,7 +184,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA pressure available, all delay assigned to enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no pressure trajectory configured");
+            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no pressure trajectory configured");
         }
 
         [Fact]
@@ -112,7 +195,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay - P: excess over pressure window assigned to enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at pressure window (P = max pressure, dPmax = 0)");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at pressure window (P = max pressure, dPmax = 0)");
         }
 
         [Fact]
@@ -123,7 +206,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.Holding);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1), "dC = totalDelay - P: no additional TMA capacity (dPmax = 0), excess requires holding");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at maximum (P = max pressure)");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at maximum (P = max pressure)");
         }
 
         [Fact]
@@ -134,7 +217,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA capacity, all delay assigned to enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
+            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
         }
 
         [Fact]
@@ -145,7 +228,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.Holding);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA capacity, all delay in enroute including holding");
-            r.TmaDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
+            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
         }
 
         [Fact]
@@ -156,7 +239,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, shortCutTimeToGain: shortCut);
             r.ControlAction.ShouldBe(ControlAction.Resume);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(2), "dC = totalDelay - P = 2m: excess absorbed via enroute shortcut");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
         }
 
         [Fact]
@@ -167,7 +250,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, shortCutTimeToGain: shortCut);
             r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1), "dC = totalDelay - P: shortcut exhausted, linear enroute delay required");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at full pressure window");
         }
 
         [Fact]
@@ -177,7 +260,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, maxLinearEnrouteDelay: TimeSpan.Zero);
             // With MaxLinearEnrouteDelay=0 the PathStretching range is empty; goes straight to Holding
             r.ControlAction.ShouldBe(ControlAction.Holding);
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay - P - dPmax: no linear enroute capacity, excess requires holding");
         }
 
@@ -198,7 +281,7 @@ public class DelayStrategyCalculatorTests
         {
             var totalDelay = TimeSpan.FromMinutes(totalDelayMinutes);
             var r = Compute(totalDelay);
-            (r.EnrouteDelay + r.TmaDelay).ShouldBe(TimeSpan.FromMinutes(totalDelayMinutes), "dC + dP must equal total delay");
+            (r.EnrouteDelay + r.TerminalDelay).ShouldBe(TimeSpan.FromMinutes(totalDelayMinutes), "dC + dP must equal total delay");
         }
 
         static DelayDistribution Compute(
@@ -211,7 +294,7 @@ public class DelayStrategyCalculatorTests
             var effectivePressureWindow = pressureWindow ?? PressureWindow;
             var effectiveMaximumTmaPressure = maximumTmaPressure ?? MaximumTmaPressure;
             var terminalTrajectory = new TerminalTrajectory(TimeSpan.Zero, effectivePressureWindow, effectivePressureWindow + effectiveMaximumTmaPressure);
-            var enrouteTrajectory = new EnrouteTrajectory(maxLinearEnrouteDelay ?? MaxLinearEnrouteDelay, shortCutTimeToGain ?? ShortCutTimeToGain);
+            var enrouteTrajectory = new EnrouteTrajectory(maxLinearEnrouteDelay ?? MaxLinearEnrouteDelay, shortCutTimeToGain ?? ShortcutTimeToGain);
             return DelayStrategyCalculator.Compute(totalDelay, terminalTrajectory, enrouteTrajectory, DelayStrategy.EnrouteFirst);
         }
     }
@@ -225,7 +308,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Expedite);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute action for early flights");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
         }
 
         [Fact]
@@ -235,7 +318,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.NoDelay);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute delay needed");
-            r.TmaDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA delay needed");
+            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA delay needed");
         }
 
         [Fact]
@@ -245,7 +328,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.NoDelay);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: delay within pressure window, no enroute action");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = totalDelay: all delay absorbed as TMA pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = totalDelay: all delay absorbed as TMA pressure");
         }
 
         [Fact]
@@ -255,7 +338,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Resume);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: approach-first keeps delay in TMA up to maximum pressure");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3) + TimeSpan.FromSeconds(1), "dP = totalDelay: TMA absorbs all delay within maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3) + TimeSpan.FromSeconds(1), "dP = totalDelay: TMA absorbs all delay within maximum pressure");
         }
 
         [Fact]
@@ -265,18 +348,18 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Resume);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: delay exactly at maximum TMA pressure, still absorbed in TMA");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = totalDelay = P + dPmax: TMA at maximum pressure boundary");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = totalDelay = P + dPmax: TMA at maximum pressure boundary");
         }
 
         [Fact]
         public void DelayBeyondMaximumTmaPressure_WithinMaxLinearEnrouteDelay_ReturnsPathStretching()
         {
-            // With ShortCutTimeToGain=0, SpeedReduction range is empty; PathStretching starts immediately after P + dPmax
+            // With ShortcutTimeToGain=0, SpeedReduction range is empty; PathStretching starts immediately after P + dPmax
             var totalDelay = TimeSpan.FromMinutes(7) + TimeSpan.FromSeconds(1); // totalDelay = P + dPmax + 1s
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.PathStretching);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay - P - dPmax: excess beyond maximum TMA pressure assigned to enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
         }
 
         [Fact]
@@ -286,7 +369,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.PathStretching);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5), "dC = totalDelay - P - dPmax = 5m: enroute at maximum linear capacity");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
         }
 
         [Fact]
@@ -296,7 +379,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Holding);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1), "dC = totalDelay - P - dPmax: both TMA and enroute linear capacity exhausted");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
         }
 
         [Fact]
@@ -307,7 +390,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.Resume);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: approach-first absorbs delay in TMA before enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.FromSeconds(1), "dP = totalDelay: delay within maximum TMA pressure, absorbed entirely in TMA");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromSeconds(1), "dP = totalDelay: delay within maximum TMA pressure, absorbed entirely in TMA");
         }
 
         [Fact]
@@ -318,7 +401,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.PathStretching);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay - P: no additional TMA capacity (dPmax = 0), excess goes to enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA at maximum (P = max pressure)");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA at maximum (P = max pressure)");
         }
 
         [Fact]
@@ -329,7 +412,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.Holding);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1), "dC = totalDelay - P: both TMA and enroute linear capacity exhausted");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at maximum (P = max pressure)");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(3), "dP = P: TMA held at maximum (P = max pressure)");
         }
 
         [Fact]
@@ -340,7 +423,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.PathStretching);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA capacity, all delay assigned to enroute");
-            r.TmaDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
+            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
         }
 
         [Fact]
@@ -351,7 +434,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
             r.ControlAction.ShouldBe(ControlAction.Holding);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA capacity, all delay in enroute including holding");
-            r.TmaDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
+            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
         }
 
         [Fact]
@@ -362,7 +445,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, shortCutTimeToGain: shortCut);
             r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(2), "dC = totalDelay - P - dPmax = 2m: excess absorbed via enroute shortcut");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
         }
 
         [Fact]
@@ -373,7 +456,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, shortCutTimeToGain: shortCut);
             r.ControlAction.ShouldBe(ControlAction.PathStretching);
             r.EnrouteDelay.ShouldBe(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1), "dC = totalDelay - P - dPmax: shortcut exhausted, linear enroute delay required");
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
         }
 
         [Fact]
@@ -383,7 +466,7 @@ public class DelayStrategyCalculatorTests
             var r = Compute(totalDelay, maxLinearEnrouteDelay: TimeSpan.Zero);
             // With MaxLinearEnrouteDelay=0, PathStretching and SpeedReduction ranges are empty; goes to Holding
             r.ControlAction.ShouldBe(ControlAction.Holding);
-            r.TmaDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(7), "dP = P + dPmax: TMA held at maximum pressure");
             r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay - P - dPmax: no linear enroute capacity, excess requires holding");
         }
 
@@ -404,7 +487,7 @@ public class DelayStrategyCalculatorTests
         {
             var totalDelay = TimeSpan.FromMinutes(totalDelayMinutes);
             var r = Compute(totalDelay);
-            (r.EnrouteDelay + r.TmaDelay).ShouldBe(TimeSpan.FromMinutes(totalDelayMinutes), "dC + dP must equal total delay");
+            (r.EnrouteDelay + r.TerminalDelay).ShouldBe(TimeSpan.FromMinutes(totalDelayMinutes), "dC + dP must equal total delay");
         }
 
         static DelayDistribution Compute(
@@ -417,7 +500,7 @@ public class DelayStrategyCalculatorTests
             var effectivePressureWindow = pressureWindow ?? PressureWindow;
             var effectiveMaximumTmaPressure = maximumTmaPressure ?? MaximumTmaPressure;
             var terminalTrajectory = new TerminalTrajectory(TimeSpan.Zero, effectivePressureWindow, effectivePressureWindow + effectiveMaximumTmaPressure);
-            var enrouteTrajectory = new EnrouteTrajectory(maxLinearEnrouteDelay ?? MaxLinearEnrouteDelay, shortCutTimeToGain ?? ShortCutTimeToGain);
+            var enrouteTrajectory = new EnrouteTrajectory(maxLinearEnrouteDelay ?? MaxLinearEnrouteDelay, shortCutTimeToGain ?? ShortcutTimeToGain);
             return DelayStrategyCalculator.Compute(totalDelay, terminalTrajectory, enrouteTrajectory, DelayStrategy.ApproachFirst);
         }
     }

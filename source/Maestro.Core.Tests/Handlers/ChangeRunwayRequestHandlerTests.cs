@@ -76,7 +76,7 @@ public class ChangeRunwayRequestHandlerTests(ClockFixture clockFixture)
         flight1.AssignedRunwayIdentifier.ShouldBe("34R", "QFA1 should be assigned to 34R");
 
         flight1.LandingTime.ShouldBe(flight2.LandingTime.Add(AcceptanceRate), "QFA1 should be delayed to maintain separation behind QFA2");
-        (flight1.RequiredEnrouteDelay + flight1.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(2));
+        (flight1.RequiredEnrouteDelay + flight1.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(2));
 
         // Verify QFA1 is now scheduled on 34R and positioned appropriately
         sequence.NumberForRunway(flight2).ShouldBe(1, "QFA2 should be #1 on 34R");
