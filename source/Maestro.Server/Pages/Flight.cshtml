@@ -80,10 +80,10 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-5">Max Linear Delay</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.MaxEnrouteLinearDelay)</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.EnrouteMaxLinearDelay)</dd>
 
                     <dt class="col-sm-5">Shortcut</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.EnrouteShortCutTimeToGain)</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.EnrouteShortcutTimeToGain)</dd>
                 </dl>
             </div>
         </div>
@@ -118,13 +118,13 @@
                     <dd class="col-sm-7">@(string.IsNullOrEmpty(flight.ApproachType) ? "-" : flight.ApproachType)</dd>
 
                     <dt class="col-sm-5">Normal TTG</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.NormalTimeToGo)</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.TerminalNormalTimeToGo)</dd>
 
                     <dt class="col-sm-5">Pressure Window</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.PressureTimeToGo - flight.NormalTimeToGo)</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.TerminalPressureTimeToGo - flight.TerminalNormalTimeToGo)</dd>
 
                     <dt class="col-sm-5">Max Pressure Window</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.MaxPressureTimeToGo - flight.PressureTimeToGo)</dd>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.TerminalMaxPressureTimeToGo - flight.TerminalPressureTimeToGo)</dd>
                 </dl>
             </div>
         </div>
@@ -133,10 +133,8 @@
             <div class="card-header">Scheduling Data</div>
             <div class="card-body">
                 @{
-                    var requiredDelay = flight.LandingTime - flight.InitialLandingEstimate;
-                    var remainingDelay = flight.LandingTime - flight.LandingEstimate;
-                    var requiredTmaDelay = requiredDelay - flight.RequiredEnrouteDelay;
-                    var remainingTmaDelay = remainingDelay - flight.RemainingEnrouteDelay;
+                    var requiredDelay = flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay;
+                    var remainingDelay = flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay;
                 }
                 <dl class="row mb-0">
                     <dt class="col-sm-5">State</dt>
@@ -164,14 +162,12 @@
 
                     <dt class="col-sm-5">Required Delay</dt>
                     <dd class="col-sm-7">
-                        @FormatTimeSpan(requiredDelay) - @flight.RequiredControlAction
-                        <span class="text-muted small">(ENR @FormatTimeSpan(flight.RequiredEnrouteDelay) / TMA @FormatTimeSpan(requiredTmaDelay))</span>
+                        ENR @FormatTimeSpan(flight.RequiredEnrouteDelay) / TMA @FormatTimeSpan(flight.RequiredTerminalDelay) (Total @FormatTimeSpan(requiredDelay)) - @flight.RequiredControlAction
                     </dd>
 
                     <dt class="col-sm-5">Remaining Delay</dt>
                     <dd class="col-sm-7">
-                        @FormatTimeSpan(remainingDelay) - @flight.RemainingControlAction
-                        <span class="text-muted small">(ENR @FormatTimeSpan(flight.RemainingEnrouteDelay) / TMA @FormatTimeSpan(remainingTmaDelay))</span>
+                        ENR @FormatTimeSpan(flight.RemainingEnrouteDelay) / TMA @FormatTimeSpan(flight.RemainingTerminalDelay) (Total @FormatTimeSpan(remainingDelay)) - @flight.RemainingControlAction
                     </dd>
 
                     <dt class="col-sm-5">Maximum Delay</dt>
