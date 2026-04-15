@@ -4,12 +4,14 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.Versioning;
+using JetBrains.Annotations;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.ILRepack;
@@ -109,10 +111,27 @@ class Build : NukeBuild
     AbsolutePath VatSysSetupDirectory => TemporaryDirectory / "vatsys-setup";
     AbsolutePath VatSysExePath => VatSysPath ?? VatSysSetupDirectory / "bin" / "vatSys.exe";
 
+    [UsedImplicitly]
     public Target CheckVersion => _ => _
         .Description("Prints the semantic version that will be assigned to the binaries.")
         .Unlisted()
         .Executes(() => Log.Information("Version: {Version}", GetSemanticVersion()));
+
+    [UsedImplicitly]
+    public Target CreateRelease => _ => _
+        .Description("Tags the current commit with an appropriate version, triggering the release workflow in GitHub.")
+        .Requires(() => IsLocalBuild)
+        .Executes(() =>
+        {
+            var semanticVersion = GetSemanticVersion();
+            var tagName = $"v{semanticVersion}";
+            Log.Information("Tagging {CommitSha} with version {Version}", GitVersion.Sha, tagName);
+
+            GitTasks.Git($"tag {tagName}");
+            GitTasks.Git($"push origin {tagName}");
+
+            Log.Information("{Version} pushed", GitVersion.Sha, tagName);
+        });
 
     Target DownloadVatSys => _ => _
         .Description("Downloads and extracts the vatSys executable so the plugin can be built in a headless environment (i.e. a CI system)")

@@ -55,16 +55,15 @@ This workflow is intentionally decoupled from `deploy-container` via `workflow_r
 
 ## Releasing
 
-To cut a release, push a tag following the `v<major>.<minor>.<patch>` format:
+To cut a release, use Nuke to calculate the version and tag the commit
 
 ```sh
-git tag v1.2.3
-git push origin v1.2.3
+nuke create-release
 ```
 
-This triggers `release` and `deploy-container` in parallel, followed by `deploy` once the container is pushed.
+This will use [GitVersion](https://gitversion.net) to calculate the version number based on the commit messages, tag the current commit with the calculated version, and push the tag.
 
-Versioning is handled by [GitVersion](https://gitversion.net), configured in `source/build/Build.cs`. The version embedded in each binary is derived from the tag at build time.
+When the tag is pushed, the `release` and `deploy-container` workflows in GitHub Actions will execute in parallel, followed by `deploy` once the container is pushed.
 
 ## DigitalOcean App
 

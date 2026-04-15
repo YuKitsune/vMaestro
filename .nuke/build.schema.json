@@ -29,6 +29,7 @@
         "CompilePlugin",
         "CompileServer",
         "CompileTools",
+        "CreateRelease",
         "DownloadVatSys",
         "Install",
         "PackagePlugin",
