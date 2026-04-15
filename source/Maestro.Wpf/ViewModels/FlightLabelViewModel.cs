@@ -409,27 +409,13 @@ public partial class FlightLabelViewModel(
             ApproachTypeItemConfiguration => flight.ApproachType,
             LandingTimeItemConfiguration => flight.LandingTime.ToString("mm"),
             FeederFixTimeItemConfiguration => flight.FeederFixTime.ToString("mm"),
-            RequiredDelayItemConfiguration required => FormatDelay(ComputeRequiredEnrouteDelay(flight), ComputeRequiredTmaDelay(flight), required.Component),
-            RemainingDelayItemConfiguration remaining => FormatDelay(ComputeRemainingEnrouteDelay(flight), ComputeRemainingTmaDelay(flight), remaining.Component),
+            RequiredDelayItemConfiguration required => FormatDelay(flight.RequiredEnrouteDelay, flight.RequiredTerminalDelay, required.Component),
+            RemainingDelayItemConfiguration remaining => FormatDelay(flight.RemainingEnrouteDelay, flight.RemainingTerminalDelay, remaining.Component),
             ManualDelayItemConfiguration manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
             HighSpeedItemConfiguration highSpeed => flight.FlowControls == FlowControls.HighSpeed ? highSpeed.Symbol : "",
             CouplingStatusItemConfiguration coupling => flight.Position is not null ? "" : coupling.UncoupledSymbol,
             _ => "?"
         };
-    }
-
-    static TimeSpan ComputeRequiredEnrouteDelay(FlightDto flight) => flight.RequiredEnrouteDelay;
-
-    static TimeSpan ComputeRemainingEnrouteDelay(FlightDto flight) => flight.RemainingEnrouteDelay;
-
-    static TimeSpan ComputeRequiredTmaDelay(FlightDto flight)
-    {
-        return flight.LandingTime - flight.InitialLandingEstimate - flight.RequiredEnrouteDelay;
-    }
-
-    static TimeSpan ComputeRemainingTmaDelay(FlightDto flight)
-    {
-        return flight.LandingTime - flight.LandingEstimate - flight.RemainingEnrouteDelay;
     }
 
     static string FormatDelay(TimeSpan enroute, TimeSpan tma, DelayComponent component)

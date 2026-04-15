@@ -20,5 +20,5 @@ public class EnrouteTrajectoryConfiguration
     /// <summary>
     ///     Time savings available by flying a direct route (short-cut) through the en-route area.
     /// </summary>
-    public TimeSpan ShortCutTimeToGain { get; init; } = TimeSpan.Zero;
+    public TimeSpan ShortcutTimeToGain { get; init; } = TimeSpan.Zero;
 }

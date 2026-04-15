@@ -26,7 +26,7 @@ public class TrajectoryService(
 
         return new EnrouteTrajectory(
             enrouteTrajectoryConfiguration.MaxEnrouteLinearDelay,
-            enrouteTrajectoryConfiguration.ShortCutTimeToGain);
+            enrouteTrajectoryConfiguration.ShortcutTimeToGain);
     }
 
     public TerminalTrajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)

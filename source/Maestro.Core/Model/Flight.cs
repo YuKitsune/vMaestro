@@ -147,8 +147,8 @@ public class Flight : IEquatable<Flight>
 
         AssignedRunwayIdentifier = dto.AssignedRunwayIdentifier;
         ApproachType = dto.ApproachType;
-        TerminalTrajectory = new TerminalTrajectory(dto.NormalTimeToGo, dto.PressureTimeToGo, dto.MaxPressureTimeToGo);
-        EnrouteTrajectory = new EnrouteTrajectory(dto.MaxEnrouteLinearDelay, dto.EnrouteShortCutTimeToGain);
+        TerminalTrajectory = new TerminalTrajectory(dto.TerminalNormalTimeToGo, dto.TerminalPressureTimeToGo, dto.TerminalMaxPressureTimeToGo);
+        EnrouteTrajectory = new EnrouteTrajectory(dto.EnrouteMaxLinearDelay, dto.EnrouteShortcutTimeToGain);
 
         FeederFixIdentifier = dto.FeederFixIdentifier;
         FeederFixEstimate = dto.FeederFixEstimate;
@@ -165,7 +165,9 @@ public class Flight : IEquatable<Flight>
         HighPriority = dto.HighPriority;
         MaximumDelay = dto.MaximumDelay;
         RequiredEnrouteDelay = dto.RequiredEnrouteDelay;
+        RequiredTerminalDelay = dto.RequiredTerminalDelay;
         RemainingEnrouteDelay = dto.RemainingEnrouteDelay;
+        RemainingTerminalDelay = dto.RemainingTerminalDelay;
         RequiredControlAction = dto.RequiredControlAction;
         RemainingControlAction = dto.RemainingControlAction;
         ActivatedTime = dto.ActivatedTime;
@@ -185,12 +187,10 @@ public class Flight : IEquatable<Flight>
 
     public bool IsFromDepartureAirport { get; set; }
 
-    public string AssignedRunwayIdentifier { get; private set; }
-
     public State State { get; private set; }
     public bool HighPriority { get; set; }
-    public TimeSpan? MaximumDelay { get; private set; }
     public DateTimeOffset? ActivatedTime { get; private set; }
+    public DateTimeOffset LastSeen { get; private set; }
 
     public string? FeederFixIdentifier { get; private set; }
     public DateTimeOffset InitialFeederFixEstimate { get; private set; }
@@ -198,30 +198,26 @@ public class Flight : IEquatable<Flight>
     public bool ManualFeederFixEstimate { get; private set; }
     public DateTimeOffset FeederFixTime { get; private set; } // STA_FF
 
+    public string AssignedRunwayIdentifier { get; private set; }
+    public string ApproachType { get; private set; }
+    public TerminalTrajectory TerminalTrajectory { get; private set; }
+    public EnrouteTrajectory EnrouteTrajectory { get; private set; }
+
     public DateTimeOffset InitialLandingEstimate { get; private set; }
     public DateTimeOffset LandingEstimate { get; private set; } // ETA
     public DateTimeOffset? TargetLandingTime { get; private set; }
     public DateTimeOffset LandingTime { get; private set; } // STA
 
-    public FlowControls FlowControls { get; private set; } = FlowControls.HighSpeed;
-
-    public string ApproachType { get; private set; }
-    public DateTimeOffset LastSeen { get; private set; }
-    public FlightPosition? Position { get; private set; }
-    public EnrouteTrajectory EnrouteTrajectory { get; private set; }
-    public TerminalTrajectory TerminalTrajectory { get; private set; }
-
+    public TimeSpan? MaximumDelay { get; private set; }
     public TimeSpan RequiredEnrouteDelay { get; private set; }
+    public TimeSpan RequiredTerminalDelay { get; private set; }
     public TimeSpan RemainingEnrouteDelay { get; private set; }
-
-    public TimeSpan RequiredTmaDelay => LandingTime - InitialLandingEstimate - RequiredEnrouteDelay;
-    public TimeSpan RemainingTmaDelay => LandingTime - LandingEstimate - RemainingEnrouteDelay;
-
+    public TimeSpan RemainingTerminalDelay { get; private set; }
     public ControlAction RequiredControlAction { get; private set; } = ControlAction.NoDelay;
     public ControlAction RemainingControlAction { get; private set; } = ControlAction.NoDelay;
+    public FlowControls FlowControls { get; private set; } = FlowControls.HighSpeed;
 
-    // public TimeSpan TotalDelay => TotalEnrouteDelay + TotalTmaDelay;
-    // public TimeSpan RemainingDelay => RemainingEnrouteDelay + RemainingTmaDelay;
+    public FlightPosition? Position { get; private set; }
 
     public void SetState(State state, IClock clock)
     {
@@ -361,7 +357,9 @@ public class Flight : IEquatable<Flight>
         FeederFixTime = FeederFixEstimate;
         FlowControls = FlowControls.HighSpeed;
         RequiredEnrouteDelay = TimeSpan.Zero;
+        RequiredTerminalDelay = TimeSpan.Zero;
         RemainingEnrouteDelay = TimeSpan.Zero;
+        RemainingTerminalDelay = TimeSpan.Zero;
     }
 
     public void SetSequenceData(
@@ -369,7 +367,8 @@ public class Flight : IEquatable<Flight>
         DateTimeOffset feederFixTime,
         ControlAction requiredControlAction,
         FlowControls flowControls,
-        TimeSpan enrouteDelay)
+        TimeSpan enrouteDelay,
+        TimeSpan terminalDelay)
     {
         LandingTime = landingTime;
         FeederFixTime = feederFixTime;
@@ -377,7 +376,9 @@ public class Flight : IEquatable<Flight>
         RemainingControlAction = requiredControlAction;
         FlowControls = flowControls;
         RequiredEnrouteDelay = enrouteDelay;
+        RequiredTerminalDelay = terminalDelay;
         RemainingEnrouteDelay = enrouteDelay;
+        RemainingTerminalDelay = terminalDelay;
     }
 
     public void SetRemainingControlAction(ControlAction remainingControlAction)
@@ -388,6 +389,7 @@ public class Flight : IEquatable<Flight>
     public void SetRemainingDelayData(DelayDistribution distribution)
     {
         RemainingEnrouteDelay = distribution.EnrouteDelay;
+        RemainingTerminalDelay = distribution.TerminalDelay;
         RemainingControlAction = distribution.ControlAction;
     }
 

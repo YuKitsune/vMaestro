@@ -981,7 +981,8 @@ public class Sequence
             feederFixTime,
             distribution.ControlAction,
             flowControl,
-            distribution.EnrouteDelay);
+            distribution.EnrouteDelay,
+            distribution.TerminalDelay);
     }
 
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, TerminalTrajectory Trajectory);
