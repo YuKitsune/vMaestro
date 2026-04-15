@@ -37,13 +37,15 @@
     "isOnGround": false
   },
   "isManuallyInserted": false,
-  "enrouteShortCutTimeToGain": "00:00:00",
-  "maxEnrouteLinearDelay": "00:00:00",
-  "normalTimeToGo": "00:18:00",
-  "pressureTimeToGo": "00:00:00",
-  "maxPressureTimeToGo": "00:00:00",
+  "enrouteShortcutTimeToGain": "00:00:00",
+  "enrouteMaxLinearDelay": "00:00:00",
+  "terminalNormalTimeToGo": "00:18:00",
+  "terminalPressureTimeToGo": "00:00:00",
+  "terminalMaxPressureTimeToGo": "00:00:00",
   "requiredControlAction": "NoDelay",
   "remainingControlAction": "Expedite",
   "requiredEnrouteDelay": "00:02:00",
-  "remainingEnrouteDelay": "00:01:00"
+  "remainingEnrouteDelay": "00:01:00",
+  "requiredTerminalDelay": "00:00:00",
+  "remainingTerminalDelay": "00:00:00"
 }
