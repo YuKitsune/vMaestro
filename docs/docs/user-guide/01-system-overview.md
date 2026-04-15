@@ -42,9 +42,9 @@ vMaestro uses the feeder fix to:
 A flight may have an `ETA_FF` without tracking via a specific feeder fix. In this case, the time represents the expected transfer time to the TMA.
 :::
 
-## Trajectories
+## Terminal Trajectories
 
-A trajectory represents the flight path from a feeder fix to the runway threshold. vMaestro uses trajectories to calculate TTG, taking into account the aircraft's speed and upper winds.
+A terminal trajectory represents the flight path from a feeder fix to the runway threshold. vMaestro uses terminal trajectories to calculate TTG, taking into account the aircraft's speed and upper winds.
 
 TTG is recalculated each time a flight enters the sequence, is recomputed, or has its runway or approach type changed.
 
@@ -55,6 +55,8 @@ Each trajectory also defines two delay-absorption parameters used by the schedul
 **Pressure (P)** is the additional time available through a small path extension, such as extending the downwind leg before turning base. The delay that can be absorbed this way is the difference between P and TTG.
 
 **Maximum Pressure (Pmax)** is the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may involve more significant routing such as extended vectoring. The delay available beyond P is the difference between Pmax and P.
+
+Pmax defines the total terminal delay capacity. Any required delay beyond this capacity is handled in the enroute phase.
 
 ## Runway Modes
 
@@ -136,9 +138,16 @@ Multiple flights tracking via the same feeder fix may share the same `STA_FF` if
 
 ### 4. Delay Calculation
 
-The required delay is the difference between the scheduled landing time and the initial estimate. The remaining delay is also calculated, which decreases as the flight absorbs delay through speed reduction or vectoring.
+The required delay is the difference between the scheduled landing time and the initial estimate. This delay is split into two portions:
 
-A controller action indicating how the delay should be absorbed will be calculated for the total delay and remaining delay values:
+- **Enroute delay**: absorbed before the feeder fix through speed reduction, vectoring, or holding
+- **Terminal delay**: absorbed within the TMA through speed reduction and vectoring
+
+The terminal trajectory's Pmax determines how much delay can be assigned as terminal delay. Any remainder is assigned to enroute.
+If no pressure trajectory is configured, all delay is enroute.
+
+The remaining delay for each portion decreases as the flight absorbs it.
+A controller action is calculated based on the total required and remaining delay:
 
 | Controller Action | Meaning |
 | ----------------- | ------- |
