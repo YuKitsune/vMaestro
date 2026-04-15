@@ -48,22 +48,22 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Sanity check
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
 
         // Act: New estimate after slowing down (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(2).Subtract(_defaultTtg));
 
         // Assert
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.FromMinutes(3));
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(3));
 
         // Act: New estimate after slowing down
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(5).Subtract(_defaultTtg));
 
         // Assert
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.Zero);
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]
@@ -77,22 +77,22 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Sanity check
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
 
         // Act: New estimate after speeding up (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(-2).Subtract(_defaultTtg));
 
         // Assert
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.FromMinutes(7));
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(7));
 
         // Act: New estimate after speeding up more
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(-5).Subtract(_defaultTtg));
 
         // Assert
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.FromMinutes(10));
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(10));
     }
 
     [Fact]
@@ -106,15 +106,15 @@ public class FlightTests(ClockFixture clockFixture)
             .Build();
 
         // Sanity check
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
 
         // Act: New estimate after slowing down too much (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(8).Subtract(_defaultTtg));
 
         // Assert
-        (flight.RequiredEnrouteDelay + flight.RequiredTmaDelay).ShouldBe(TimeSpan.FromMinutes(5));
-        (flight.RemainingEnrouteDelay + flight.RemainingTmaDelay).ShouldBe(TimeSpan.FromMinutes(-3));
+        (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(-3));
     }
 
     [Fact]
