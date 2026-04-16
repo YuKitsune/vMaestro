@@ -272,13 +272,29 @@ public static class ExtractStarsCommand
 
     static Dictionary<string, (double Lat, double Lon)> BuildFixLookup(XDocument doc)
     {
+        var points = doc.Descendants("Point")
+            .Where(p => !string.IsNullOrWhiteSpace(p.Value))
+            .Select(p => (
+                Name: p.Attribute("Name")!.Value,
+                NavaidType: p.Attribute("NavaidType")?.Value,
+                Coord: ParseCoordinate(p.Value.Trim())))
+            .ToList();
+
+        // Names shared by multiple navaids of different types need a type suffix to disambiguate.
+        var duplicateNavaidNames = points
+            .Where(p => p.NavaidType is "NDB" or "VOR" or "TAC")
+            .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var lookup = new Dictionary<string, (double Lat, double Lon)>(StringComparer.OrdinalIgnoreCase);
-        foreach (var point in doc.Descendants("Point").Where(p => !string.IsNullOrWhiteSpace(p.Value)))
+        foreach (var (name, navaidType, coord) in points)
         {
-            var name = point.Attribute("Name")!.Value;
-            var navaidType = point.Attribute("NavaidType")?.Value;
-            var key = navaidType is "NDB" or "VOR" or "TAC" ? $"{name} {navaidType}" : name;
-            lookup.TryAdd(key, ParseCoordinate(point.Value.Trim()));
+            if (navaidType is "NDB" or "VOR" or "TAC" && duplicateNavaidNames.Contains(name))
+                lookup.TryAdd($"{name} {navaidType}", coord);
+            else
+                lookup.TryAdd(name, coord);
         }
         return lookup;
     }
