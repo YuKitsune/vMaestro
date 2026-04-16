@@ -34,15 +34,6 @@ using Serilog;
     EnableGitHubToken = true,
     FetchDepth = 0,
     WritePermissions = [GitHubActionsPermissions.Contents])]
-[GitHubActions(
-    "deploy-container",
-    GitHubActionsImage.UbuntuLatest,
-    OnPushTags = ["v*"],
-    InvokedTargets = [nameof(PushDockerImage)],
-    ImportSecrets = [nameof(GitHubToken)],
-    EnableGitHubToken = true,
-    FetchDepth = 0,
-    WritePermissions = [GitHubActionsPermissions.Contents, GitHubActionsPermissions.Packages])]
 class Build : NukeBuild
 {
     /// Support plugins are available for:
@@ -554,31 +545,9 @@ class Build : NukeBuild
             }
         });
 
-    Target BuildDockerImage => _ => _
-        .Description("Builds the Docker image for the server.")
-        .Requires(() => Configuration == Configuration.Release)
-        .Requires(() => GitRepository)
-        .Executes(() =>
-        {
-            var version = GetSemanticVersion();
-            var repositoryOwner = GitRepository.GetGitHubOwner().ToLowerInvariant();
-            var imageName = $"ghcr.io/{repositoryOwner}/vmaestro";
-            var tags = new[] { $"{imageName}:{version}", $"{imageName}:latest" };
-
-            Log.Information("Building Docker image {ImageName} with tags: {Tags}", imageName, string.Join(", ", tags));
-
-            DockerTasks.DockerBuild(s => s
-                .SetPath(RootDirectory)
-                .SetFile(RootDirectory / "source" / "Maestro.Server" / "Dockerfile")
-                .SetTag(tags)
-                .SetBuildArg($"VERSION={version}"));
-
-            Log.Information("Docker image built successfully");
-        });
-
     Target PushDockerImage => _ => _
-        .Description("Pushes the Docker image to GitHub Container Registry.")
-        .DependsOn(BuildDockerImage)
+        .Description("Builds and pushes a multi-platform Docker image to GitHub Container Registry.")
+        .Requires(() => !IsLocalBuild)
         .Requires(() => Configuration == Configuration.Release)
         .Requires(() => GitHubToken)
         .Requires(() => GitRepository)
@@ -596,13 +565,15 @@ class Build : NukeBuild
                 .SetUsername(repositoryOwner)
                 .SetPassword(GitHubToken));
 
-            // Push all tags
-            foreach (var tag in tags)
-            {
-                Log.Information("Pushing {Tag}", tag);
-                DockerTasks.DockerPush(s => s
-                    .SetName(tag));
-            }
+            Log.Information("Building and pushing multi-platform Docker image {ImageName} with tags: {Tags}", imageName, string.Join(", ", tags));
+
+            DockerTasks.DockerBuildxBuild(s => s
+                .SetPath(RootDirectory)
+                .SetFile(RootDirectory / "source" / "Maestro.Server" / "Dockerfile")
+                .SetTag(tags)
+                .SetBuildArg($"VERSION={version}")
+                .SetPlatform("linux/amd64,linux/arm64")
+                .EnablePush());
 
             Log.Information("Docker image pushed successfully");
         });
