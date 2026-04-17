@@ -24,7 +24,7 @@
   "landingEstimate": "2024-06-15T12:37:00+00:00",
   "targetLandingTime": "2024-06-15T12:38:00+00:00",
   "landingTime": "2024-06-15T12:38:00+00:00",
-  "flowControls": "ReduceSpeed",
+  "highSpeed": false,
   "lastSeen": "2024-06-15T12:30:00+00:00",
   "position": {
     "coordinate": {

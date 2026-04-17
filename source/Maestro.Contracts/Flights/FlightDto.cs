@@ -160,10 +160,10 @@ public class FlightDto
     public required DateTimeOffset LandingTime { get; init; }
 
     /// <summary>
-    /// The flow control instructions assigned to this flight.
+    /// Whether the flight is on a high speed descent (no enroute delay allocated).
     /// </summary>
     [Key(28)]
-    public required FlowControls FlowControls { get; init; }
+    public required bool HighSpeed { get; init; }
 
     /// <summary>
     /// The last time this flight's data was updated.

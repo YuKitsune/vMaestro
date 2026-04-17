@@ -30,7 +30,7 @@ public static class FlightExtensionMethods
             LandingEstimate = flight.LandingEstimate,
             TargetLandingTime = flight.TargetLandingTime,
             LandingTime = flight.LandingTime,
-            FlowControls = flight.FlowControls,
+            HighSpeed = flight.HighSpeed,
             ActivatedTime = flight.ActivatedTime,
             HighPriority = flight.HighPriority,
             MaximumDelay = flight.MaximumDelay,
