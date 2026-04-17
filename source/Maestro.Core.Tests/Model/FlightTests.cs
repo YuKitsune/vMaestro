@@ -266,6 +266,24 @@ public class FlightTests(ClockFixture clockFixture)
         }
 
         [Fact]
+        public void WhenSubMinuteEnrouteDelayAllocated_HighSpeedIsTrue()
+        {
+            // Sub-minute delays can't be displayed or actioned by ATC, so HighSpeed remains true
+            var flight = new FlightBuilder("QFA1")
+                .WithLandingEstimate(_now.AddMinutes(20))
+                .Build();
+
+            flight.SetSequenceData(
+                landingTime: _now.AddMinutes(20).AddSeconds(30),
+                feederFixTime: _now.AddSeconds(30),
+                requiredControlAction: ControlAction.PathStretching,
+                enrouteDelay: TimeSpan.FromSeconds(30),
+                terminalDelay: TimeSpan.Zero);
+
+            flight.HighSpeed.ShouldBeTrue();
+        }
+
+        [Fact]
         public void WhenEnrouteDelayAllocated_ThenInvalidated_HighSpeedIsTrue()
         {
             var flight = new FlightBuilder("QFA1")
