@@ -68,7 +68,7 @@ public partial class FlightLabelViewModel(
             sb.Append(" ");
         }
 
-        if (FlightViewModel.FlowControls == FlowControls.HighSpeed)
+        if (FlightViewModel.HighSpeed)
         {
             sb.Append("+");
         }
@@ -412,7 +412,7 @@ public partial class FlightLabelViewModel(
             RequiredDelayItemConfiguration required => FormatDelay(flight.RequiredEnrouteDelay, flight.RequiredTerminalDelay, required.Component),
             RemainingDelayItemConfiguration remaining => FormatDelay(flight.RemainingEnrouteDelay, flight.RemainingTerminalDelay, remaining.Component),
             ManualDelayItemConfiguration manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
-            HighSpeedItemConfiguration highSpeed => flight.FlowControls == FlowControls.HighSpeed ? highSpeed.Symbol : "",
+            HighSpeedItemConfiguration highSpeed => flight.HighSpeed ? highSpeed.Symbol : "",
             CouplingStatusItemConfiguration coupling => flight.Position is not null ? "" : coupling.UncoupledSymbol,
             _ => "?"
         };

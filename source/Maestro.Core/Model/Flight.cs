@@ -171,7 +171,6 @@ public class Flight : IEquatable<Flight>
         RequiredControlAction = dto.RequiredControlAction;
         RemainingControlAction = dto.RemainingControlAction;
         ActivatedTime = dto.ActivatedTime;
-        FlowControls = dto.FlowControls;
         LastSeen = dto.LastSeen;
         Position = dto.Position;
     }
@@ -215,7 +214,7 @@ public class Flight : IEquatable<Flight>
     public TimeSpan RemainingTerminalDelay { get; private set; }
     public ControlAction RequiredControlAction { get; private set; } = ControlAction.NoDelay;
     public ControlAction RemainingControlAction { get; private set; } = ControlAction.NoDelay;
-    public FlowControls FlowControls { get; private set; } = FlowControls.HighSpeed;
+    public bool HighSpeed => RequiredEnrouteDelay == TimeSpan.Zero;
 
     public FlightPosition? Position { get; private set; }
 
@@ -355,7 +354,6 @@ public class Flight : IEquatable<Flight>
     {
         LandingTime = LandingEstimate;
         FeederFixTime = FeederFixEstimate;
-        FlowControls = FlowControls.HighSpeed;
         RequiredEnrouteDelay = TimeSpan.Zero;
         RequiredTerminalDelay = TimeSpan.Zero;
         RemainingEnrouteDelay = TimeSpan.Zero;
@@ -366,7 +364,6 @@ public class Flight : IEquatable<Flight>
         DateTimeOffset landingTime,
         DateTimeOffset feederFixTime,
         ControlAction requiredControlAction,
-        FlowControls flowControls,
         TimeSpan enrouteDelay,
         TimeSpan terminalDelay)
     {
@@ -374,7 +371,6 @@ public class Flight : IEquatable<Flight>
         FeederFixTime = feederFixTime;
         RequiredControlAction = requiredControlAction;
         RemainingControlAction = requiredControlAction;
-        FlowControls = flowControls;
         RequiredEnrouteDelay = enrouteDelay;
         RequiredTerminalDelay = terminalDelay;
         RemainingEnrouteDelay = enrouteDelay;

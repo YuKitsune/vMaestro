@@ -131,8 +131,8 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
         // Insert triggers Schedule(), which overwrites LandingTime with natural estimates.
         // Manually apply pre-delays so both flights have positive enroute delay after the swap.
         // firstFlight STA = now+20m; secondFlight STA = now+30m
-        firstFlight.SetSequenceData(_clock.UtcNow().AddMinutes(20), firstFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero, TimeSpan.Zero);
-        secondFlight.SetSequenceData(_clock.UtcNow().AddMinutes(30), secondFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.HighSpeed, TimeSpan.Zero, TimeSpan.Zero);
+        firstFlight.SetSequenceData(_clock.UtcNow().AddMinutes(20), firstFlight.FeederFixEstimate, ControlAction.NoDelay, TimeSpan.Zero, TimeSpan.Zero);
+        secondFlight.SetSequenceData(_clock.UtcNow().AddMinutes(30), secondFlight.FeederFixEstimate, ControlAction.NoDelay, TimeSpan.Zero, TimeSpan.Zero);
 
         var handler = GetHandler(sessionManager);
         var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
@@ -320,7 +320,7 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         // Artificial 10-minute delay to ensure recomputation is not performed
-        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), thirdFlight.FeederFixEstimate, ControlAction.NoDelay, FlowControls.ReduceSpeed, TimeSpan.Zero, TimeSpan.Zero);
+        thirdFlight.SetSequenceData(_clock.UtcNow().AddMinutes(40), thirdFlight.FeederFixEstimate, ControlAction.NoDelay, TimeSpan.Zero, TimeSpan.Zero);
 
         var handler = GetHandler(sessionManager);
 

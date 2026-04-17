@@ -170,7 +170,7 @@ public static class TestBuilders
             LandingTime = FixedTime.AddMinutes(8),
             RequiredEnrouteDelay = TimeSpan.FromMinutes(2),
             RemainingEnrouteDelay = TimeSpan.FromMinutes(1),
-            FlowControls = FlowControls.ReduceSpeed,
+            HighSpeed = false,
             LastSeen = FixedTime,
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,

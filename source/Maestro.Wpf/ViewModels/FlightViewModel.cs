@@ -25,7 +25,7 @@ public class FlightViewModel
         LandingTime = DateTimeOffset.Now.AddMinutes(7);
         RequiredControlAction = ControlAction.PathStretching;
         RemainingControlAction = ControlAction.Resume;
-        FlowControls = FlowControls.ReduceSpeed;
+        HighSpeed = false;
     }
 
     public FlightViewModel(FlightDto flight)
@@ -49,7 +49,7 @@ public class FlightViewModel
         LandingTime = flight.LandingTime;
         RequiredControlAction = flight.RequiredControlAction;
         RemainingControlAction = flight.RemainingControlAction;
-        FlowControls = flight.FlowControls;
+        HighSpeed = flight.HighSpeed;
     }
     public string Callsign { get; }
     public string? AircraftType { get; }
@@ -71,5 +71,5 @@ public class FlightViewModel
     public ControlAction RequiredControlAction { get; }
     public ControlAction RemainingControlAction { get; }
 
-    public FlowControls FlowControls { get; }
+    public bool HighSpeed { get; }
 }

@@ -209,4 +209,81 @@ public class FlightTests(ClockFixture clockFixture)
         // Assert
         flight.State.ShouldBe(State.Landed);
     }
+
+    public class HighSpeedTests(ClockFixture clockFixture)
+    {
+        readonly DateTimeOffset _now = clockFixture.Instance.UtcNow();
+
+        [Fact]
+        public void WhenNoDelayAllocated_HighSpeedIsTrue()
+        {
+            var flight = new FlightBuilder("QFA1")
+                .WithLandingEstimate(_now.AddMinutes(20))
+                .Build();
+
+            flight.SetSequenceData(
+                landingTime: _now.AddMinutes(20),
+                feederFixTime: _now,
+                requiredControlAction: ControlAction.NoDelay,
+                enrouteDelay: TimeSpan.Zero,
+                terminalDelay: TimeSpan.Zero);
+
+            flight.HighSpeed.ShouldBeTrue();
+        }
+
+        [Fact]
+        public void WhenEnrouteDelayAllocated_HighSpeedIsFalse()
+        {
+            var flight = new FlightBuilder("QFA1")
+                .WithLandingEstimate(_now.AddMinutes(20))
+                .Build();
+
+            flight.SetSequenceData(
+                landingTime: _now.AddMinutes(25),
+                feederFixTime: _now.AddMinutes(5),
+                requiredControlAction: ControlAction.PathStretching,
+                enrouteDelay: TimeSpan.FromMinutes(5),
+                terminalDelay: TimeSpan.Zero);
+
+            flight.HighSpeed.ShouldBeFalse();
+        }
+
+        [Fact]
+        public void WhenOnlyTMADelayAllocated_HighSpeedIsTrue()
+        {
+            var flight = new FlightBuilder("QFA1")
+                .WithLandingEstimate(_now.AddMinutes(20))
+                .Build();
+
+            flight.SetSequenceData(
+                landingTime: _now.AddMinutes(23),
+                feederFixTime: _now,
+                requiredControlAction: ControlAction.PathStretching,
+                enrouteDelay: TimeSpan.Zero,
+                terminalDelay: TimeSpan.FromMinutes(3));
+
+            flight.HighSpeed.ShouldBeTrue();
+        }
+
+        [Fact]
+        public void WhenEnrouteDelayAllocated_ThenInvalidated_HighSpeedIsTrue()
+        {
+            var flight = new FlightBuilder("QFA1")
+                .WithLandingEstimate(_now.AddMinutes(20))
+                .Build();
+
+            flight.SetSequenceData(
+                landingTime: _now.AddMinutes(25),
+                feederFixTime: _now.AddMinutes(5),
+                requiredControlAction: ControlAction.PathStretching,
+                enrouteDelay: TimeSpan.FromMinutes(5),
+                terminalDelay: TimeSpan.Zero);
+
+            flight.HighSpeed.ShouldBeFalse();
+
+            flight.InvalidateSequenceData();
+
+            flight.HighSpeed.ShouldBeTrue();
+        }
+    }
 }
