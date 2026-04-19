@@ -72,7 +72,7 @@ public static class DelayStrategyCalculator
                 ControlAction.Resume);
 
         // Use the pressure in the TMA, absorb the rest in ENR
-        if (totalDelay <= availablePressure + enrouteTrajectory.ShortcutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay)
+        if (totalDelay <= availablePressure + enrouteTrajectory.MaxLinearEnrouteDelay)
             return new DelayDistribution(
                 totalDelay - availablePressure,
                 availablePressure,
@@ -80,7 +80,7 @@ public static class DelayStrategyCalculator
 
         // Max out the ENR delay, absorb the rest in the TMA
         // so long as the total delay won't exceed the TMAs max pressure
-        if (totalDelay <= enrouteTrajectory.ShortcutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay + maxLinearTerminalDelay)
+        if (totalDelay <= maxLinearTerminalDelay + enrouteTrajectory.MaxLinearEnrouteDelay)
             return new DelayDistribution(
                 enrouteTrajectory.MaxLinearEnrouteDelay,
                 totalDelay - enrouteTrajectory.MaxLinearEnrouteDelay,
@@ -132,7 +132,7 @@ public static class DelayStrategyCalculator
                 ControlAction.SpeedReduction);
 
         // Absorb as much delay as possible in the TMA, absorb the rest in ENR
-        if (totalDelay <= maxLinearTerminalDelay + enrouteTrajectory.ShortcutTimeToGain + enrouteTrajectory.MaxLinearEnrouteDelay)
+        if (totalDelay <= maxLinearTerminalDelay + enrouteTrajectory.MaxLinearEnrouteDelay)
             return new DelayDistribution(
                 totalDelay - maxLinearTerminalDelay,
                 maxLinearTerminalDelay,
