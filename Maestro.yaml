@@ -529,8 +529,7 @@ Airports:
     Reference: FeederFixTime
     Ladders:
     - {FeederFixes: [RIVET, WELSH]}
-    - {FeederFixes: [YAKKA, MARLN]}
-    - {FeederFixes: [BOREE]}
+    - {FeederFixes: [BOREE, YAKKA, MARLN]}
 
   - Identifier: RWY
     LabelLayout: TMA
