@@ -68,7 +68,7 @@ public class MockTrajectoryService : ITrajectoryService
 
     public EnrouteTrajectory GetEnrouteTrajectory(string airportIdentifier, string[] waypointNames, string feederFixIdentifier)
     {
-        return new EnrouteTrajectory(TimeSpan.Zero, TimeSpan.Zero);
+        return new EnrouteTrajectory(TimeSpan.FromMinutes(8), TimeSpan.Zero);
     }
 
     public TerminalTrajectory GetAverageTrajectory(string airportIdentifier)

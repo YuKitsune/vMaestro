@@ -34,7 +34,7 @@ public class FlightBuilder(string callsign)
     bool _isFromDepartureAirport = false;
     FlightPosition? _position = null;
     TerminalTrajectory _terminalTrajectory = new(TimeSpan.FromMinutes(20), default, default);
-    EnrouteTrajectory _enrouteTrajectory = new(TimeSpan.Zero, TimeSpan.Zero);
+    EnrouteTrajectory _enrouteTrajectory = new(TimeSpan.FromMinutes(8), TimeSpan.Zero);
     bool _isManuallyInserted = false;
 
     public FlightBuilder WithActivationTime(DateTimeOffset time)
@@ -161,6 +161,12 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
+    public FlightBuilder WithEnrouteTrajectory(TimeSpan maxLinearDelay, TimeSpan shortcutTimeToGain = default)
+    {
+        _enrouteTrajectory = new EnrouteTrajectory(maxLinearDelay, shortcutTimeToGain);
+        return this;
+    }
+
     public FlightBuilder AsManuallyInserted(bool value = true)
     {
         _isManuallyInserted = value;
@@ -182,6 +188,7 @@ public class FlightBuilder(string callsign)
                 assignedRunwayIdentifier: _assignedRunway,
                 approachType: _approachType,
                 terminalTrajectory: _terminalTrajectory,
+                enrouteTrajectory: _enrouteTrajectory,
                 targetLandingTime: _targetLandingTime ?? _landingTime,
                 state: _state);
         }
