@@ -219,16 +219,33 @@ public class FlightUpdatedHandler(
                     sequencedFlight.UpdateLastSeen(clock);
                     UpdateFlightData(notification, sequencedFlight);
 
-                    // Recompute trajectory for unstable flights so wind changes propagate to TTG before estimates are calculated
+                    // Recompute feeder fix, trajectories, and estimates for unstable flights on every update
+                    // so that re-routes and wind changes propagate before scheduling
                     if (sequencedFlight.State is State.Unstable && !string.IsNullOrEmpty(sequencedFlight.AssignedRunwayIdentifier))
                     {
+                        var fixNames = notification.Estimates.Select(e => e.FixIdentifier).ToArray();
+                        var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+                        var landingEstimate = notification.Estimates.LastOrDefault()?.Estimate ?? sequencedFlight.LandingEstimate;
+
                         var updatedTrajectory = trajectoryService.GetTrajectory(
                             sequencedFlight,
                             sequencedFlight.AssignedRunwayIdentifier,
                             sequencedFlight.ApproachType,
-                            notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
+                            fixNames,
                             session.Sequence.UpperWind);
-                        sequencedFlight.SetTrajectory(updatedTrajectory);
+
+                        sequencedFlight.SetFeederFix(
+                            feederFix?.FixIdentifier,
+                            updatedTrajectory,
+                            feederFix?.Estimate,
+                            landingEstimate);
+
+                        var updatedEnrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
+                            sequencedFlight.DestinationIdentifier,
+                            fixNames,
+                            feederFix?.FixIdentifier ?? string.Empty);
+                        sequencedFlight.SetEnrouteTrajectory(updatedEnrouteTrajectory);
+
                         logger.Debug(
                             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
                             sequencedFlight.Callsign,

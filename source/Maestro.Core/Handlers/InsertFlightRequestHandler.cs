@@ -139,6 +139,7 @@ public class InsertFlightRequestHandler(
                 runway.ApproachType,
                 [],
                 session.Sequence.UpperWind);
+            var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(airportIdentifier, [], string.Empty);
 
             // TODO: test case - When inserting a dummy flight, at an exact time, FeederFixEstimate is TargetTime - Trajectory.TimeToGo
             flight = new Flight(
@@ -150,6 +151,7 @@ public class InsertFlightRequestHandler(
                 assignedRunwayIdentifier: runway.Identifier,
                 approachType: runway.ApproachType,
                 terminalTrajectory: trajectory,
+                enrouteTrajectory: enrouteTrajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
 
@@ -249,6 +251,7 @@ public class InsertFlightRequestHandler(
                 runway.ApproachType,
                 [],
                 session.Sequence.UpperWind);
+            var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(airportIdentifier, [], string.Empty);
 
             // TODO: test case - When inserting a dummy flight, relative to another, FeederFixEstimate is ReferenceFlight.LandingTime - AcceptanceRate - Trajectory.TimeToGo
             flight = new Flight(
@@ -260,6 +263,7 @@ public class InsertFlightRequestHandler(
                 assignedRunwayIdentifier: runway.Identifier,
                 approachType: runway.ApproachType,
                 terminalTrajectory: trajectory,
+                enrouteTrajectory: enrouteTrajectory,
                 targetLandingTime: targetLandingTime,
                 state: State.Stable);
 
@@ -348,6 +352,7 @@ public class InsertFlightRequestHandler(
                 runway.ApproachType,
                 [],
                 session.Sequence.UpperWind);
+            var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(airportIdentifier, [], string.Empty);
 
             // TODO: test case - When inserting a dummy flight, from a departure airport, the FeederFixEstimate is TakeOffTime + DepartureETI - Trajectory.TimeToGo
             flight = new Flight(
@@ -359,6 +364,7 @@ public class InsertFlightRequestHandler(
                 assignedRunwayIdentifier: runway.Identifier,
                 approachType: runway.ApproachType,
                 terminalTrajectory: trajectory,
+                enrouteTrajectory: enrouteTrajectory,
                 targetLandingTime: landingEstimate,
                 state: State.Stable);
 
