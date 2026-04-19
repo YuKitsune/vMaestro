@@ -99,7 +99,7 @@ public class AirportConfiguration
     /// <summary>
     ///     Default maximum delay absorbable in the enroute phase when no matching enroute trajectory is found.
     /// </summary>
-    public TimeSpan DefaultMaxEnrouteLinearDelay { get; init; } = TimeSpan.FromMinutes(5);
+    public TimeSpan DefaultMaxEnrouteLinearDelay { get; init; } = TimeSpan.FromMinutes(8);
 
     public required TerminalTrajectoryConfiguration[] TerminalTrajectories { get; init; }
 
