@@ -15,10 +15,10 @@ public class EnrouteTrajectoryConfiguration
     /// <summary>
     ///     Maximum delay absorbable in the en-route area via linear techniques (speed reduction or path stretching).
     /// </summary>
-    public required TimeSpan MaxEnrouteLinearDelay { get; init; }
+    public required int MaxEnrouteLinearDelayMinutes { get; init; }
 
     /// <summary>
     ///     Time savings available by flying a direct route (short-cut) through the en-route area.
     /// </summary>
-    public TimeSpan ShortcutTimeToGain { get; init; } = TimeSpan.Zero;
+    public int ShortcutTimeToGainMinutes { get; init; } = 0;
 }

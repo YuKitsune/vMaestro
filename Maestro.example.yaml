@@ -250,8 +250,8 @@ Airports:
   UpperWindAltitude: 6000
 
   # Enroute delay capacity used when no matching enroute trajectory is found
-  # Default: 5 minutes
-  DefaultMaxEnrouteLinearDelay: 00:05:00
+  # Default: 8
+  DefaultMaxEnrouteLinearDelayMinutes: 8
 
   # ---------------------------------------------------------------------------
   # Airport-Specific Colors (optional)
@@ -408,22 +408,22 @@ Airports:
   # ---------------------------------------------------------------------------
   # Define the enroute delay capacity for each feeder fix route.
   # Matched by EntryPoint and FeederFix from the flight's route.
-  # Flights with no matching entry use DefaultMaxEnrouteLinearDelay.
+  # Flights with no matching entry use DefaultMaxEnrouteLinearDelayMinutes.
   #
   # Fields:
   #   EntryPoint:            Waypoint where the enroute phase begins for this route (required)
   #   FeederFix:             Feeder fix this entry applies to (required)
-  #   MaxEnrouteLinearDelay: Maximum delay absorbable via speed reduction or holding (required)
-  #   ShortcutTimeToGain:    Time that can be gained by flying a direct routing, if available (default: 0)
+  #   MaxEnrouteLinearDelayMinutes: Maximum delay absorbable via speed reduction or holding (required)
+  #   ShortcutTimeToGainMinutes:    Time that can be gained by flying a direct routing, if available (default: 0)
 
   EnrouteTrajectories:
     - EntryPoint: ENLOU
       FeederFix: RIVET
-      MaxEnrouteLinearDelay: 00:08:00
-      ShortcutTimeToGain: 00:03:00
+      MaxEnrouteLinearDelayMinutes: 8
+      ShortcutTimeToGainMinutes: 3
     - EntryPoint: AKMIR
       FeederFix: WELSH
-      MaxEnrouteLinearDelay: 00:06:00
+      MaxEnrouteLinearDelayMinutes: 6
 
   # ---------------------------------------------------------------------------
   # Departure Airports

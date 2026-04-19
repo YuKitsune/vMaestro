@@ -22,11 +22,11 @@ public class TrajectoryService(
 
         var enrouteTrajectoryConfiguration = airportConfiguration.EnrouteTrajectories.FirstOrDefault(c => waypointNames.Contains(c.EntryPoint) && c.FeederFix == feederFixIdentifier);
         if (enrouteTrajectoryConfiguration is null)
-            return new EnrouteTrajectory(airportConfiguration.DefaultMaxEnrouteLinearDelay, TimeSpan.Zero);
+            return new EnrouteTrajectory(TimeSpan.FromMinutes(airportConfiguration.DefaultMaxEnrouteLinearDelayMinutes), TimeSpan.Zero);
 
         return new EnrouteTrajectory(
-            enrouteTrajectoryConfiguration.MaxEnrouteLinearDelay,
-            enrouteTrajectoryConfiguration.ShortcutTimeToGain);
+            TimeSpan.FromMinutes(enrouteTrajectoryConfiguration.MaxEnrouteLinearDelayMinutes),
+            TimeSpan.FromMinutes(enrouteTrajectoryConfiguration.ShortcutTimeToGainMinutes));
     }
 
     public TerminalTrajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)
