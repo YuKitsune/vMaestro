@@ -95,6 +95,7 @@ public class Flight : IEquatable<Flight>
         string assignedRunwayIdentifier,
         string approachType,
         TerminalTrajectory terminalTrajectory,
+        EnrouteTrajectory enrouteTrajectory,
         DateTimeOffset targetLandingTime,
         State state = State.Frozen)
     {
@@ -112,7 +113,7 @@ public class Flight : IEquatable<Flight>
         AssignedRunwayIdentifier = assignedRunwayIdentifier;
         ApproachType = approachType;
         TerminalTrajectory = terminalTrajectory;
-        EnrouteTrajectory = new EnrouteTrajectory(TimeSpan.Zero, TimeSpan.Zero);
+        EnrouteTrajectory = enrouteTrajectory;
 
         FeederFixIdentifier = null;
 
@@ -240,6 +241,11 @@ public class Flight : IEquatable<Flight>
         UpdateTrajectoryAndEstimates(terminalTrajectory);
     }
 
+    public void SetEnrouteTrajectory(EnrouteTrajectory enrouteTrajectory)
+    {
+        EnrouteTrajectory = enrouteTrajectory;
+    }
+
     public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate, bool manual = false)
     {
         FeederFixEstimate = feederFixEstimate;
@@ -291,11 +297,7 @@ public class Flight : IEquatable<Flight>
         InitialFeederFixEstimate = FeederFixEstimate;
         InitialLandingEstimate = LandingEstimate;
 
-        // Recalculate STA_FF using STA - TTG
-        if (LandingTime != default)
-        {
-            FeederFixTime = LandingTime.Subtract(terminalTrajectory.NormalTimeToGo);
-        }
+        FeederFixTime = InitialFeederFixEstimate.Add(RequiredEnrouteDelay);
     }
 
     public void SetTargetLandingTime(DateTimeOffset targetLandingTime)
@@ -337,11 +339,7 @@ public class Flight : IEquatable<Flight>
             FeederFixEstimate = LandingEstimate.Subtract(TerminalTrajectory.NormalTimeToGo);
         }
 
-        // Recalculate STA_FF using STA - TTG to preserve the landing time
-        if (LandingTime != default)
-        {
-            FeederFixTime = LandingTime.Subtract(TerminalTrajectory.NormalTimeToGo);
-        }
+        FeederFixTime = InitialFeederFixEstimate.Add(RequiredEnrouteDelay);
     }
 
     public void SetMaximumDelay(TimeSpan? maximumDelay)
@@ -375,11 +373,6 @@ public class Flight : IEquatable<Flight>
         RequiredTerminalDelay = terminalDelay;
         RemainingEnrouteDelay = enrouteDelay;
         RemainingTerminalDelay = terminalDelay;
-    }
-
-    public void SetRemainingControlAction(ControlAction remainingControlAction)
-    {
-        RemainingControlAction = remainingControlAction;
     }
 
     public void SetRemainingDelayData(DelayDistribution distribution)
