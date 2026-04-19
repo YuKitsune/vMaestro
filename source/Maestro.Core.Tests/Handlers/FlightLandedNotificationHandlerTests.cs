@@ -28,7 +28,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var flight = new FlightBuilder("QFA1")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
             .WithRunway("34L")
@@ -70,7 +70,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var flight = new FlightBuilder("QFA1")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
             .WithRunway("16R") // Off-mode runway
@@ -115,7 +115,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var flight = new FlightBuilder("QFA1")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
             .WithRunway("34L")
@@ -162,14 +162,14 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var flight1 = new FlightBuilder("QFA1")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-12))
             .WithLandingTime(now.AddMinutes(-2))
             .WithRunway("34L")
@@ -219,14 +219,14 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var flight1 = new FlightBuilder("QFA1")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
             .WithRunway("34R")
@@ -272,7 +272,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var flight = new FlightBuilder("QFA1")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
             .WithRunway("34L")

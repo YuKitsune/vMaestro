@@ -11,7 +11,7 @@ public class AirportConfigurationBuilder(string identifier)
     string[] _runways = [];
     string[] _feederFixes = [];
     List<RunwayModeConfiguration> _runwayModes = [];
-    List<TrajectoryConfiguration> _trajectories = [];
+    List<TerminalTrajectoryConfiguration> _trajectories = [];
     List<DepartureConfiguration> _departures = [];
 
     public AirportConfigurationBuilder WithRunways(params string[] runways)
@@ -54,7 +54,7 @@ public class AirportConfigurationBuilder(string identifier)
         string runwayIdentifier,
         int timeToGoMinutes)
     {
-        _trajectories.Add(new TrajectoryConfiguration
+        _trajectories.Add(new TerminalTrajectoryConfiguration
         {
             FeederFix = feederFix,
             RunwayIdentifier = runwayIdentifier,
@@ -75,7 +75,7 @@ public class AirportConfigurationBuilder(string identifier)
         string runwayIdentifier,
         int timeToGoMinutes)
     {
-        _trajectories.Add(new TrajectoryConfiguration
+        _trajectories.Add(new TerminalTrajectoryConfiguration
         {
             FeederFix = feederFix,
             ApproachType = approachType,
@@ -129,9 +129,9 @@ public class AirportConfigurationBuilder(string identifier)
         return WithTrajectory(feederFix, approachType, runwayIdentifier, timeToGoMinutes);
     }
 
-    public AirportConfigurationBuilder WithTrajectory(TrajectoryConfiguration trajectory)
+    public AirportConfigurationBuilder WithTrajectory(TerminalTrajectoryConfiguration terminalTrajectory)
     {
-        _trajectories.Add(trajectory);
+        _trajectories.Add(terminalTrajectory);
         return this;
     }
 
@@ -159,7 +159,7 @@ public class AirportConfigurationBuilder(string identifier)
             Runways = _runways,
             FeederFixes = _feederFixes,
             RunwayModes = _runwayModes.ToArray(),
-            Trajectories = _trajectories.ToArray(),
+            TerminalTrajectories = _trajectories.ToArray(),
             DepartureAirports = _departures.ToArray(),
             Views = [],
             GlobalCoordinationMessages = [],

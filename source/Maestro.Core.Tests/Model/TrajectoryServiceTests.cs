@@ -38,7 +38,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new(0, 0));
 
         // Assert
-        trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(15));
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(15));
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new(0 ,0));
 
         // Assert: (15 + 20) / 2 = 17.5 minutes
-        trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(17.5), TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(17.5), TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "A", [], new(0 ,0));
 
         // Assert
-        trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(18));
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(18));
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetAverageTrajectory("YSSY");
 
         // Assert: (10 + 12 + 20 + 22) / 4 = 16 minutes
-        trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(16), TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(16), TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetAverageTrajectory("YSSY");
 
         // Assert — default is 20 minutes
-        trajectory.TimeToGo.ShouldBe(TimeSpan.FromMinutes(20));
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(20));
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
-            .WithTrajectory(new TrajectoryConfiguration
+            .WithTrajectory(new TerminalTrajectoryConfiguration
             {
                 FeederFix = "RIVET",
                 RunwayIdentifier = "34L",
@@ -227,7 +227,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
 
         // Assert
-        trajectory.TimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
-            .WithTrajectory(new TrajectoryConfiguration
+            .WithTrajectory(new TerminalTrajectoryConfiguration
             {
                 FeederFix = "RIVET",
                 RunwayIdentifier = "34L",
@@ -271,7 +271,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], headWind);
 
         // Assert
-        trajectory.TimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
-            .WithTrajectory(new TrajectoryConfiguration
+            .WithTrajectory(new TerminalTrajectoryConfiguration
             {
                 FeederFix = "RIVET",
                 RunwayIdentifier = "34L",
@@ -315,7 +315,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], tailWind);
 
         // Assert
-        trajectory.TimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -331,7 +331,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
-            .WithTrajectory(new TrajectoryConfiguration
+            .WithTrajectory(new TerminalTrajectoryConfiguration
             {
                 FeederFix = "RIVET",
                 RunwayIdentifier = "34L",
@@ -358,7 +358,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], crossWind);
 
         // Assert
-        trajectory.TimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -372,7 +372,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
-            .WithTrajectory(new TrajectoryConfiguration
+            .WithTrajectory(new TerminalTrajectoryConfiguration
             {
                 FeederFix = "RIVET",
                 RunwayIdentifier = "34L",
@@ -398,23 +398,23 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
 
         // Assert: no pressure branch configured, so P and Pmax both fall back to TTG
-        trajectory.TimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
-        trajectory.Pressure.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
-        trajectory.MaxPressure.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.PressureTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
     public void GetTrajectory_Pressure_IsCumulativeTimeFromFeederFixToThresholdViaPressurePath()
     {
-        // Arrange: two segments — first is normal, second has Pressure: true
+        // Arrange: base segment "RIVET" + pressure branch branching after "RIVET"
         const int approachSpeedKnots = 150;
-        const double distanceNm = 25.0; // each segment
+        const double distanceNm = 25.0;
         var segmentTime = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
 
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
-            .WithTrajectory(new TrajectoryConfiguration
+            .WithTrajectory(new TerminalTrajectoryConfiguration
             {
                 FeederFix = "RIVET",
                 RunwayIdentifier = "34L",
@@ -452,9 +452,9 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         // Assert: TTG  = cumulative FF->LEG1->threshold (base path)
         //         P    = cumulative FF->LEG1->pressure segment->threshold
         //         Pmax = P (no MaxPressure configured, falls back to P)
-        trajectory.TimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
-        trajectory.Pressure.ShouldBe(segmentTime + segmentTime, TimeSpan.FromSeconds(1));
-        trajectory.MaxPressure.ShouldBe(segmentTime + segmentTime, TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
+        trajectory.PressureTimeToGo.ShouldBe(segmentTime + segmentTime, TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(segmentTime + segmentTime, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -462,13 +462,13 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     {
         // Arrange: three segments — normal, pressure, max-pressure
         const int approachSpeedKnots = 150;
-        const double distanceNm = 25.0; // each segment
+        const double distanceNm = 25.0;
         var segmentTime = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
 
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithFeederFixes("RIVET")
             .WithRunways("34L")
-            .WithTrajectory(new TrajectoryConfiguration
+            .WithTrajectory(new TerminalTrajectoryConfiguration
             {
                 FeederFix = "RIVET",
                 RunwayIdentifier = "34L",
@@ -515,8 +515,8 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         // Assert: TTG  = cumulative FF->LEG1->threshold (base path)
         //         P    = cumulative FF->LEG1->pressure segment->threshold
         //         Pmax = cumulative FF->LEG1->maxpressure seg 1->maxpressure seg 2->threshold
-        trajectory.TimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
-        trajectory.Pressure.ShouldBe(segmentTime * 2, TimeSpan.FromSeconds(1));
-        trajectory.MaxPressure.ShouldBe(segmentTime * 3, TimeSpan.FromSeconds(1));
+        trajectory.NormalTimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
+        trajectory.PressureTimeToGo.ShouldBe(segmentTime * 2, TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(segmentTime * 3, TimeSpan.FromSeconds(1));
     }
 }

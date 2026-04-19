@@ -1279,7 +1279,7 @@ public partial class MaestroView
         var airportConfigurationProvider = Ioc.Default.GetRequiredService<IAirportConfigurationProvider>();
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(flight.DestinationIdentifier);
         var results = new HashSet<string>();
-        foreach (var trajectoryConfiguration in airportConfiguration.Trajectories)
+        foreach (var trajectoryConfiguration in airportConfiguration.TerminalTrajectories)
         {
             results.Add(trajectoryConfiguration.ApproachType);
         }

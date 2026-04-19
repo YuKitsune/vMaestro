@@ -105,8 +105,12 @@ Labels:
   # ApproachType: Displays the assigned approach type
   # LandingTime: Scheduled landing time (STA) - minutes only
   # FeederFixTime: Scheduled feeder fix time (STA_FF) - minutes only
-  # RequiredDelay: Total delay required in minutes
-  # RemainingDelay: Remaining delay to absorb in minutes
+  # RequiredDelay: Delay assigned at scheduling time.
+  #   - Additional Properties:
+  #     - Component: Which portion to display - Total (default), Enroute, or Tma
+  # RemainingDelay: Remaining delay to absorb.
+  #   - Additional Properties:
+  #     - Component: Which portion to display - Total (default), Enroute, or Tma
   # ManualDelay: Indicates whether a manual delay has been assigned.
   #   - Additional Properties:
   #     - ZeroDelaySymbol: Character to display when a manual delay of zero is assigned (required)
@@ -244,6 +248,10 @@ Airports:
   # Altitude in feet for upper winds to load from GRIB data
   # Default: 6000
   UpperWindAltitude: 6000
+
+  # Enroute delay capacity used when no matching enroute trajectory is found
+  # Default: 5 minutes
+  DefaultMaxEnrouteLinearDelay: 00:05:00
 
   # ---------------------------------------------------------------------------
   # Airport-Specific Colors (optional)
@@ -394,6 +402,28 @@ Airports:
         - {Identifier: FINAL, Track: 335.2, DistanceNM: 18.8}
 
     # Add trajectories for WELSH, YAKKA, MARLN and remaining combinations of feeder fix, runway, and approach type.
+
+  # ---------------------------------------------------------------------------
+  # Enroute Trajectories
+  # ---------------------------------------------------------------------------
+  # Define the enroute delay capacity for each feeder fix route.
+  # Matched by EntryPoint and FeederFix from the flight's route.
+  # Flights with no matching entry use DefaultMaxEnrouteLinearDelay.
+  #
+  # Fields:
+  #   EntryPoint:            Waypoint where the enroute phase begins for this route (required)
+  #   FeederFix:             Feeder fix this entry applies to (required)
+  #   MaxEnrouteLinearDelay: Maximum delay absorbable via speed reduction or holding (required)
+  #   ShortcutTimeToGain:    Time that can be gained by flying a direct routing, if available (default: 0)
+
+  EnrouteTrajectories:
+    - EntryPoint: ENLOU
+      FeederFix: RIVET
+      MaxEnrouteLinearDelay: 00:08:00
+      ShortcutTimeToGain: 00:03:00
+    - EntryPoint: AKMIR
+      FeederFix: WELSH
+      MaxEnrouteLinearDelay: 00:06:00
 
   # ---------------------------------------------------------------------------
   # Departure Airports

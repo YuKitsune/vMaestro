@@ -13,7 +13,23 @@ public class TrajectoryService(
 {
     const int DefaultDescentSpeedKnots = 150;
 
-    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)
+    public EnrouteTrajectory GetEnrouteTrajectory(
+        string airportIdentifier,
+        string[] waypointNames,
+        string feederFixIdentifier)
+    {
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
+
+        var enrouteTrajectoryConfiguration = airportConfiguration.EnrouteTrajectories.FirstOrDefault(c => waypointNames.Contains(c.EntryPoint) && c.FeederFix == feederFixIdentifier);
+        if (enrouteTrajectoryConfiguration is null)
+            return new EnrouteTrajectory(airportConfiguration.DefaultMaxEnrouteLinearDelay, TimeSpan.Zero);
+
+        return new EnrouteTrajectory(
+            enrouteTrajectoryConfiguration.MaxEnrouteLinearDelay,
+            enrouteTrajectoryConfiguration.ShortcutTimeToGain);
+    }
+
+    public TerminalTrajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)
     {
         var config = FindConfiguration(
             flight.DestinationIdentifier,
@@ -36,7 +52,7 @@ public class TrajectoryService(
         return ComputeTrajectory(config, approachSpeed, upperWind ?? new Wind(0, 0));
     }
 
-    public Trajectory GetTrajectory(
+    public TerminalTrajectory GetTrajectory(
         AircraftPerformanceData aircraftPerformanceData,
         string destinationIdentifier,
         string? feederFixIdentifier,
@@ -68,26 +84,26 @@ public class TrajectoryService(
         return ComputeTrajectory(config, approachSpeed, upperWind ?? new Wind(0, 0));
     }
 
-    public Trajectory GetAverageTrajectory(string airportIdentifier)
+    public TerminalTrajectory GetAverageTrajectory(string airportIdentifier)
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
 
-        if (airportConfiguration.Trajectories.Length == 0)
+        if (airportConfiguration.TerminalTrajectories.Length == 0)
         {
-            var defaultTtg = TimeSpan.FromMinutes(airportConfiguration.DefaultTTGMinutes);
-            return new Trajectory(defaultTtg, defaultTtg, defaultTtg);
+            var defaultTtg = TimeSpan.FromMinutes(airportConfiguration.DefaultTimeToGoMinutes);
+            return new TerminalTrajectory(defaultTtg, defaultTtg, defaultTtg);
         }
 
         var zeroWind = new Wind(0, 0);
-        var trajectories = airportConfiguration.Trajectories
+        var trajectories = airportConfiguration.TerminalTrajectories
             .Select(t => ComputeTrajectory(t, DefaultDescentSpeedKnots, zeroWind))
             .ToArray();
 
-        var avgTtg = TimeSpan.FromTicks((long)trajectories.Average(t => t.TimeToGo.Ticks));
-        var avgPressure = TimeSpan.FromTicks((long)trajectories.Average(t => t.Pressure.Ticks));
-        var avgMaxPressure = TimeSpan.FromTicks((long)trajectories.Average(t => t.MaxPressure.Ticks));
+        var avgTtg = TimeSpan.FromTicks((long)trajectories.Average(t => t.NormalTimeToGo.Ticks));
+        var avgPressure = TimeSpan.FromTicks((long)trajectories.Average(t => t.PressureTimeToGo.Ticks));
+        var avgMaxPressure = TimeSpan.FromTicks((long)trajectories.Average(t => t.MaxPressureTimeToGo.Ticks));
 
-        return new Trajectory(avgTtg, avgPressure, avgMaxPressure);
+        return new TerminalTrajectory(avgTtg, avgPressure, avgMaxPressure);
     }
 
     public string[] GetApproachTypes(
@@ -99,7 +115,7 @@ public class TrajectoryService(
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
 
-        var matches = airportConfiguration.Trajectories
+        var matches = airportConfiguration.TerminalTrajectories
             .Where(x => x.FeederFix == feederFixIdentifier)
             .Where(x => x.RunwayIdentifier == runwayIdentifier)
             .Where(x => string.IsNullOrEmpty(x.TransitionFix) || fixNames.Contains(x.TransitionFix))
@@ -112,7 +128,7 @@ public class TrajectoryService(
         return matches.Select(a => a.ApproachType).Distinct().ToArray();
     }
 
-    TrajectoryConfiguration? FindConfiguration(
+    TerminalTrajectoryConfiguration? FindConfiguration(
         string airportIdentifier,
         string? feederFixIdentifier,
         string[] fixNames,
@@ -121,7 +137,7 @@ public class TrajectoryService(
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
 
-        var matches = airportConfiguration.Trajectories
+        var matches = airportConfiguration.TerminalTrajectories
             .Where(x => x.FeederFix == feederFixIdentifier)
             .Where(x => x.ApproachType == approachType)
             .Where(x => x.RunwayIdentifier == runwayIdentifier)
@@ -153,7 +169,7 @@ public class TrajectoryService(
         return matches[0];
     }
 
-    Trajectory ComputeTrajectory(TrajectoryConfiguration config, int approachSpeedKnots, Wind wind)
+    TerminalTrajectory ComputeTrajectory(TerminalTrajectoryConfiguration config, int approachSpeedKnots, Wind wind)
     {
         var ttgHours = SumEti(config.Segments, approachSpeedKnots, wind);
         var ttg = TimeSpan.FromHours(ttgHours);
@@ -183,7 +199,7 @@ public class TrajectoryService(
         var pressure = TimeSpan.FromHours(pressureHours);
         var maxPressure = TimeSpan.FromHours(maxPressureHours);
 
-        return new Trajectory(ttg, pressure, maxPressure);
+        return new TerminalTrajectory(ttg, pressure, maxPressure);
     }
 
     double ComputeBranchingTrajectory(

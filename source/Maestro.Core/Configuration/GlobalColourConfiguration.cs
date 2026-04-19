@@ -1,5 +1,4 @@
 using Maestro.Contracts.Shared;
-using Maestro.Core.Model;
 
 namespace Maestro.Core.Configuration;
 

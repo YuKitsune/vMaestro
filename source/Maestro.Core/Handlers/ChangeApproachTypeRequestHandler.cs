@@ -65,9 +65,9 @@ public class ChangeApproachTypeRequestHandler(
                 flight.Callsign,
                 flight.AssignedRunwayIdentifier,
                 request.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
 
             logger.Information("{Callsign} approach type changed to {ApproachType}", flight.Callsign, request.ApproachType);
 
