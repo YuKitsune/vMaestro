@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
-using Microsoft.Win32;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
@@ -38,25 +37,21 @@ public class Plugin : IPlugin
 
     string IPlugin.Name => Name;
 
+    readonly AircraftLandingCircuitBreaker _aircraftLandingCircuitBreaker = new();
+
     readonly IMediator? _mediator;
     readonly ISessionManager? _sessionManager;
     readonly ILogger? _logger;
-
-    readonly AircraftLandingCircuitBreaker _aircraftLandingCircuitBreaker = new();
-    readonly WorkQueue _workQueue = new(AddError);
-
-    static readonly Dictionary<string, DateTimeOffset> ErrorMessages = new();
-
-    BackgroundTask? _windCheckTask;
+    readonly WorkQueue? _workQueue;
+    readonly BackgroundTask? _windCheckTask;
 
     public Plugin()
     {
         try
         {
-            EnsureDpiAwareness();
+            DpiAwareness.EnsureDpiAwareness();
 
             var configuration = ConfigureConfiguration();
-
             ConfigureServices(configuration);
             ConfigureTheme();
             AddToolbarItems(configuration);
@@ -64,6 +59,8 @@ public class Plugin : IPlugin
             _mediator = Ioc.Default.GetRequiredService<IMediator>();
             _sessionManager = Ioc.Default.GetRequiredService<ISessionManager>();
             _logger = Ioc.Default.GetRequiredService<ILogger>();
+            _workQueue = Ioc.Default.GetRequiredService<WorkQueue>();
+            _windCheckTask = new BackgroundTask(WindCheckWorker);
 
             Network.Connected += NetworkOnConnected;
             Network.Disconnected += NetworkOnDisconnected;
@@ -129,45 +126,15 @@ public class Plugin : IPlugin
                 .AddSingleton<IPerformanceLookup>(new YamlPerformanceLookup(pluginConfiguration.AircraftPerformance))
                 .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
                 .AddSingleton(logger)
-                .AddSingleton<IErrorReporter>(new ErrorReporter(Name, logger))
+                .AddSingleton<IErrorReporter>(x => new ErrorReporter(Name, logger, x.GetRequiredService<IClock>()))
                 .AddSingleton<WindowManager>()
+                .AddSingleton<WorkQueue>()
                 .BuildServiceProvider());
     }
 
     PluginConfiguration ConfigureConfiguration()
     {
-        const string configFileName = "Maestro.yaml";
-
-        var searchDirectories = new List<string>();
-
-        // Search the profile first
-        if (TryFindProfileDirectory(out var profileDirectory))
-        {
-            searchDirectories.AddRange([
-                Path.Combine(profileDirectory.FullName, "Plugins", "Configs", "Maestro"),
-                Path.Combine(profileDirectory.FullName, "Plugins", "Configs"),
-                Path.Combine(profileDirectory.FullName, "Plugins"),
-                profileDirectory.FullName
-            ]);
-        }
-
-        // Search the assembly directory last
-        var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        searchDirectories.Add(assemblyDirectory);
-
-        var configFilePath = string.Empty;
-        foreach (var searchDirectory in searchDirectories)
-        {
-            var filePath = Path.Combine(searchDirectory, configFileName);
-            if (!File.Exists(filePath))
-                continue;
-
-            configFilePath = filePath;
-            break;
-        }
-
-        if (string.IsNullOrEmpty(configFilePath))
-            throw new MaestroException($"Unable to locate {configFileName}");
+        var configFilePath = ConfigurationLocator.LocateConfigurationFile();
 
         var configurationYaml = File.ReadAllText(configFilePath);
         var configuration = YamlConfigurationLoader.LoadFromYaml(configurationYaml);
@@ -194,41 +161,15 @@ public class Plugin : IPlugin
         return logger;
     }
 
-    static void AddError(Exception exception)
-    {
-        Log.Error(exception, "An error has occurred");
-        TryAddErrorInternal(exception);
-    }
-
-    public static void AddError(Exception exception, string message)
-    {
-        Log.Error(exception, message);
-        TryAddErrorInternal(exception);
-    }
-
-    static void TryAddErrorInternal(Exception exception)
-    {
-        lock (ErrorMessages)
-        {
-            // Don't flood the error window with the same message over and over again
-            if (ErrorMessages.TryGetValue(exception.Message, out var lastShown) &&
-                DateTimeOffset.Now - lastShown <= TimeSpan.FromMinutes(1))
-                return;
-
-            Errors.Add(exception, Name);
-            ErrorMessages[exception.Message] = DateTimeOffset.Now;
-        }
-    }
-
     void AddToolbarItems(PluginConfiguration pluginConfiguration)
     {
-        const string MenuItemCategory = "TFMS";
+        const string menuItemCategory = "TFMS";
 
         foreach (var airportConfiguration in pluginConfiguration.Airports)
         {
             var menuItem = new CustomToolStripMenuItem(
                 CustomToolStripMenuItemWindowType.Main,
-                MenuItemCategory,
+                menuItemCategory,
                 new ToolStripMenuItem(airportConfiguration.Identifier));
 
             menuItem.Item.Click += (_, _) => OpenOrFocusWindowFor(airportConfiguration.Identifier);
@@ -251,7 +192,7 @@ public class Plugin : IPlugin
         }
         else
         {
-            _workQueue.Enqueue(async () =>
+            TryEnqueue(async () =>
             {
                 if (_mediator is null)
                     return;
@@ -265,7 +206,7 @@ public class Plugin : IPlugin
     {
         try
         {
-            _workQueue.Enqueue(async () =>
+            TryEnqueue(async () =>
             {
                 if (_mediator is null)
                     return;
@@ -273,7 +214,7 @@ public class Plugin : IPlugin
                 await _mediator.Publish(new NetworkConnectedNotification(Network.Callsign), CancellationToken.None);
             });
 
-            _workQueue.Enqueue(StartWindCheck);
+            TryEnqueue(StartWindCheck);
         }
         catch (Exception ex)
         {
@@ -286,7 +227,7 @@ public class Plugin : IPlugin
     {
         try
         {
-            _workQueue.Enqueue(async () =>
+            TryEnqueue(async () =>
             {
                 if (_mediator is null)
                     return;
@@ -294,7 +235,7 @@ public class Plugin : IPlugin
                 await _mediator.Publish(new NetworkDisconnectedNotification(), CancellationToken.None);
             });
 
-            _workQueue.Enqueue(StopWindCheck);
+            TryEnqueue(StopWindCheck);
         }
         catch (Exception ex)
         {
@@ -305,11 +246,10 @@ public class Plugin : IPlugin
 
     Task StartWindCheck()
     {
-        if (_windCheckTask is not null && _windCheckTask.IsRunning)
+        if (_windCheckTask is null || _windCheckTask.IsRunning)
             return Task.CompletedTask;
 
         _logger?.Information("Wind check starting");
-        _windCheckTask = new BackgroundTask(WindCheckWorker);
         _windCheckTask.Start();
 
         return Task.CompletedTask;
@@ -378,10 +318,10 @@ public class Plugin : IPlugin
             // Check if the flight has landed
             if (HasLanded(updated))
             {
-                _workQueue.Enqueue(async () => await TryNotifyLanded(updated, CancellationToken.None));
+                TryEnqueue(async () => await TryNotifyLanded(updated, CancellationToken.None));
             }
 
-            _workQueue.Enqueue(async () => await PublishFlightUpdatedEvent(updated));
+            TryEnqueue(async () => await PublishFlightUpdatedEvent(updated));
         }
         catch (Exception ex)
         {
@@ -399,7 +339,7 @@ public class Plugin : IPlugin
                 var fdr = FDP2.GetFDRs.FirstOrDefault(f => f.Callsign == updated.ActualAircraft.Callsign);
                 if (fdr is not null && HasLanded(fdr))
                 {
-                    _workQueue.Enqueue(async () => await TryNotifyLanded(fdr, CancellationToken.None));
+                    TryEnqueue(async () => await TryNotifyLanded(fdr, CancellationToken.None));
                 }
             }
 
@@ -410,7 +350,7 @@ public class Plugin : IPlugin
             // fire for all flights when initially connecting to the network.
             // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
 
-            _workQueue.Enqueue(async () => await PublishFlightUpdatedEvent(updated.CoupledFDR));
+            TryEnqueue(async () => await PublishFlightUpdatedEvent(updated.CoupledFDR));
         }
         catch (Exception ex)
         {
@@ -541,92 +481,8 @@ public class Plugin : IPlugin
             TimeSpan.Zero);
     }
 
-    void EnsureDpiAwareness()
+    void TryEnqueue(Func<Task> func)
     {
-        try
-        {
-            if (!TryGetVatSysExecutablePath(out var vatSysExecutablePath))
-                return;
-
-            const string registryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
-            const string dpiValue = "DPIUNAWARE";
-
-            using var key = Registry.CurrentUser.OpenSubKey(registryPath, writable: false);
-            var existingValue = key?.GetValue(vatSysExecutablePath) as string;
-
-            // If already set, exit early
-            if (existingValue != null && existingValue.Contains(dpiValue))
-                return;
-
-            // Set the registry key
-            using var writableKey = Registry.CurrentUser.OpenSubKey(registryPath, writable: true)
-                ?? Registry.CurrentUser.CreateSubKey(registryPath);
-
-            writableKey.SetValue(vatSysExecutablePath, dpiValue, RegistryValueKind.String);
-
-            // Restart vatSys to apply the DPI setting
-            RestartVatSys();
-        }
-        catch (Exception ex)
-        {
-            Errors.Add(ex, Name);
-        }
-    }
-
-    void RestartVatSys()
-    {
-        try
-        {
-            if (!TryGetVatSysExecutablePath(out var vatSysExecutablePath))
-                return;
-
-            System.Diagnostics.Process.Start(vatSysExecutablePath);
-            Environment.Exit(0);
-        }
-        catch (Exception ex)
-        {
-            Errors.Add(ex, Name);
-        }
-    }
-
-    bool TryGetVatSysInstallationPath(out string? installationPath)
-    {
-        using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Sawbe\vatSys");
-        installationPath = key?.GetValue("Path") as string;
-        return !string.IsNullOrEmpty(installationPath) && Directory.Exists(installationPath);
-    }
-
-    bool TryGetVatSysExecutablePath(out string? executablePath)
-    {
-        try
-        {
-            if (!TryGetVatSysInstallationPath(out var installationPath))
-            {
-                executablePath = null;
-                return false;
-            }
-
-            executablePath = Path.Combine(installationPath, "bin", "vatSys.exe");
-            return File.Exists(executablePath);
-        }
-        catch
-        {
-            executablePath = null;
-            return false;
-        }
-    }
-
-    // Thanks Max!
-    bool TryFindProfileDirectory(out DirectoryInfo? directoryInfo)
-    {
-        directoryInfo = null;
-        if (!Profile.Loaded)
-            return false;
-
-        var shortNameObject = typeof(Profile).GetField("shortName", BindingFlags.Static | BindingFlags.NonPublic);
-        var shortName = (string)shortNameObject.GetValue(shortNameObject);
-
-        directoryInfo = new DirectoryInfo(Path.Combine(Helpers.GetFilesFolder(), "Profiles", shortName));
-        return true;
+        _workQueue?.Enqueue(func);
     }
 }

@@ -1,18 +1,19 @@
 ﻿using System.Threading.Channels;
+using Maestro.Wpf.Integrations;
 
 namespace Maestro.Plugin;
 
 public class WorkQueue : IAsyncDisposable
 {
-    readonly Action<Exception> _onError;
+    readonly IErrorReporter _errorReporter;
     readonly Channel<Func<Task>> _workQueue = Channel.CreateUnbounded<Func<Task>>();
 
     readonly CancellationTokenSource _cancellationTokenSource;
     readonly Task _worker;
 
-    public WorkQueue(Action<Exception> onError)
+    public WorkQueue(IErrorReporter errorReporter)
     {
-        _onError = onError;
+        _errorReporter = errorReporter;
 
         _cancellationTokenSource = new CancellationTokenSource();
         _worker = Worker(_cancellationTokenSource.Token);
@@ -41,7 +42,7 @@ public class WorkQueue : IAsyncDisposable
             {
                 try
                 {
-                    _onError(ex);
+                    _errorReporter.ReportError(ex);
                 }
                 catch
                 {
