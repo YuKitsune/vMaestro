@@ -362,12 +362,12 @@ Airports:
   #   maestro extract-stars --airspace <Airspace.xml> --config maestro-tool.yaml
   # Then manually mark pressure zones (Pressure/MaxPressure) as required.
   #
-  # DefaultTTGMinutes (below) is used when no trajectory matches a flight.
+  # DefaultTimeToGoMinutes (below) is used when no trajectory matches a flight.
 
   # Fallback TTG used when no trajectory matches (minutes, default: 20)
-  DefaultTTGMinutes: 18
+  DefaultTimeToGoMinutes: 18
 
-  Trajectories:
+  TerminalTrajectories:
 
     # RIVET -> 34L
     # Illustrates branching pressure trajectories
@@ -566,10 +566,10 @@ Airports:
           ApproachType: A
           LandingRateSeconds: 180
 
-  DefaultTTGMinutes: 18
+  DefaultTimeToGoMinutes: 18
 
   # Define trajectories
-  Trajectories:
+  TerminalTrajectories:
     - FeederFix: ARBEY
       RunwayIdentifier: '09'
       ApproachType: A

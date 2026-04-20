@@ -157,7 +157,7 @@ Airports:
     Runways:
     - {Identifier: 34L, LandingRateSeconds: 150}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: BOREE
     RunwayIdentifier: '07'
     Segments:
@@ -622,7 +622,7 @@ Airports:
     - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
     - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: ALAXO
     RunwayIdentifier: '09'
     ApproachType: A
@@ -1067,7 +1067,7 @@ Airports:
     Runways:
     - {Identifier: 19R, ApproachType: A, LandingRateSeconds: 300}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: BLAKA
     RunwayIdentifier: 01L
     ApproachType: A
@@ -1896,7 +1896,7 @@ Airports:
     Runways:
     - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
 
-  Trajectories:
+  TerminalTrajectories:
   - FeederFix: KAGMI
     RunwayIdentifier: '03'
     ApproachType: A
