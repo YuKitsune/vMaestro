@@ -1286,42 +1286,6 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         sequence.Flights.ShouldBeEmpty("flight with no estimates should not be in the sequence");
     }
 
-    [Fact]
-    public async Task WhenAFlightIsUpdated_AndFeederFixEstimateIsNull_ItIsAddedToThePendingList()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration).Build();
-
-        // Feeder fix is present in the route but has no estimate (vatSys uses null when the estimate is not yet known)
-        var notification = new FlightUpdatedNotification(
-            "QFA123",
-            "B738",
-            AircraftCategory.Jet,
-            WakeCategory.Medium,
-            "YMML",
-            "YSSY",
-            clock.UtcNow().AddHours(-1),
-            TimeSpan.FromHours(1.5),
-            _position,
-            [
-                new FixEstimate("RIVET", null), // Feeder fix with no estimate
-                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(50))
-            ]);
-
-        var handler = GetHandler(airportConfiguration, sessionManager, clock);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        var pendingFlight = session.PendingFlights.ShouldHaveSingleItem();
-        pendingFlight.Callsign.ShouldBe("QFA123");
-        pendingFlight.IsHighPriority.ShouldBeFalse("flight has a feeder fix, estimate is just not yet known");
-        sequence.Flights.ShouldBeEmpty("flight with no feeder fix estimate should not be in the sequence");
-    }
-
     FlightUpdatedHandler GetHandler(
         AirportConfiguration airportConfiguration,
         ISessionManager sessionManager,

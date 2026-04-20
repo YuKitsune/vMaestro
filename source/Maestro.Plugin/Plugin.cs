@@ -407,12 +407,20 @@ public class Plugin : IPlugin
         if (!updated.ESTed)
             return;
 
-        var estimates = updated.ParsedRoute
+        var routeSegments = updated.ParsedRoute
             .ToArray() // Materialize to avoid mutation during enumeration
-            .Select((s, i) => (Segment: s, Index: i, Dto: new FixEstimate(s.Intersection.Name, ToDateTimeOffsetOrNull(s.ETO))))
+            .Select((s, i) => (Segment: s, Index: i, Dto: new FixEstimate(s.Intersection.Name, ToDateTimeOffset(s.ETO))))
             .Where(x => x.Index > updated.ParsedRoute.OverflownIndex && x.Segment.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
-            .Select(x => x.Dto)
             .ToArray();
+
+        // If any remaining estimates are null, ETOs haven't finished computing yet — wait for the next update
+        if (routeSegments.Any(x => x.Dto.Estimate == DateTimeOffset.MaxValue))
+        {
+            _logger?.Verbose("{Callsign} skipped: one or more ETOs not yet computed", updated.Callsign);
+            return;
+        }
+
+        var estimates = routeSegments.Select(x => x.Dto).ToArray();
 
         FlightPosition? position = null;
         if (updated.CoupledTrack is not null)
@@ -459,15 +467,6 @@ public class Plugin : IPlugin
             estimates);
 
         await _mediator.Publish(notification, CancellationToken.None);
-    }
-
-    internal static DateTimeOffset? ToDateTimeOffsetOrNull(DateTime dateTime)
-    {
-        var value = ToDateTimeOffset(dateTime);
-        if (value == DateTimeOffset.MaxValue)
-            return null;
-
-        return value;
     }
 
     internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)

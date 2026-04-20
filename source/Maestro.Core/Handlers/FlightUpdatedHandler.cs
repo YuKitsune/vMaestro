@@ -86,17 +86,14 @@ public class FlightUpdatedHandler(
                     var isFromDepartureAirport = airportConfiguration.DepartureAirports.Any(d => d.Identifier == notification.Origin);
                     var hasDeparted = notification.Position is not null && !notification.Position.IsOnGround;
                     var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-                    var feederFixEstimateIsKnown = feederFix?.Estimate != null;
                     var approximateLandingEstimate = notification.Estimates.LastOrDefault()?.Estimate;
 
                     // Flights go to the pending list if they cannot be auto-inserted into the sequence:
                     // - Departure airport flights that haven't yet departed
                     // - Flights with no matching feeder fix
-                    // - Flights with a feeder fix but no known estimate
                     // - Flights with no landing estimate at all
                     var addToPending = (isFromDepartureAirport && !hasDeparted)
                         || feederFix is null
-                        || !feederFixEstimateIsKnown
                         || approximateLandingEstimate is null;
 
                     if (addToPending)
@@ -110,7 +107,6 @@ public class FlightUpdatedHandler(
 
                         var pendingReason = (isFromDepartureAirport && !hasDeparted) ? "not yet departed"
                             : feederFix is null ? "no feeder fix match"
-                            : !feederFixEstimateIsKnown ? "feeder fix estimate unknown"
                             : "no landing estimate";
                         logger.Information("Added {Callsign} to the pending list ({Reason})", notification.Callsign, pendingReason);
 
@@ -309,7 +305,7 @@ public class FlightUpdatedHandler(
                     flight.FeederFixIdentifier,
                     feederFixSystemEstimate.Estimate);
 
-                flight.UpdateFeederFixEstimate(feederFixSystemEstimate.Estimate.Value);
+                flight.UpdateFeederFixEstimate(feederFixSystemEstimate.Estimate);
                 // Landing estimate automatically calculated using TTG
             }
 

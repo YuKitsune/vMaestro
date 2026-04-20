@@ -12,11 +12,11 @@ public class FixEstimate
     public string FixIdentifier { get; }
 
     [Key(1)]
-    public DateTimeOffset? Estimate { get; }
+    public DateTimeOffset Estimate { get; }
 
     [JsonConstructor]
     [SerializationConstructor]
-    public FixEstimate(string fixIdentifier, DateTimeOffset? estimate)
+    public FixEstimate(string fixIdentifier, DateTimeOffset estimate)
     {
         FixIdentifier = fixIdentifier;
         Estimate = estimate;
