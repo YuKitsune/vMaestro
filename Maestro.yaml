@@ -106,9 +106,9 @@ Airports:
     FeederFixes:
       RIVET: 96, 0, 0
       WELSH: 96, 0, 0
-      BOREE: 0, 235, 235
-      YAKKA: 0, 235, 235
-      MARLN: 0, 105, 0
+      BOREE: 0, 105, 0
+      YAKKA: 0, 105, 0
+      MARLN: 0, 235, 235
 
   RunwayModes:
 
