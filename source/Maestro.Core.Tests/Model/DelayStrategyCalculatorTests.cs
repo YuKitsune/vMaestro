@@ -97,13 +97,23 @@ public class DelayStrategyCalculatorTests
     public class EnrouteFirst
     {
         [Fact]
-        public void EarlyFlight_ReturnsExpedite()
+        public void EarlyFlight_WithinOneMintue_ReturnsNoDelay()
         {
             var totalDelay = TimeSpan.FromMinutes(-1);
             var r = Compute(totalDelay);
+            r.ControlAction.ShouldBe(ControlAction.NoDelay);
+            r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute action for sub-minute early flights");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
+        }
+
+        [Fact]
+        public void EarlyFlight_BeyondOneMinute_ReturnsExpedite()
+        {
+            var totalDelay = TimeSpan.FromMinutes(-1) - TimeSpan.FromSeconds(1);
+            var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Expedite);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute action for early flights");
-            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
+            r.TerminalDelay.ShouldBe(totalDelay, "dP = totalDelay: deviation absorbed entirely in TMA");
         }
 
         [Fact]
@@ -177,14 +187,14 @@ public class DelayStrategyCalculatorTests
         }
 
         [Fact]
-        public void WithNoPressureTrajectory_SmallPositiveDelay_ReturnsSpeedReduction()
+        public void WithNoPressureTrajectory_SubMinuteDelay_ReturnsNoDelay()
         {
-            // When PressureWindow=0 and MaximumTmaPressure=0, any positive delay is immediately enroute
+            // Sub-minute delays always return NoDelay regardless of pressure configuration
             var totalDelay = TimeSpan.FromSeconds(1);
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
-            r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
-            r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA pressure available, all delay assigned to enroute");
-            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no pressure trajectory configured");
+            r.ControlAction.ShouldBe(ControlAction.NoDelay);
+            r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: sub-minute delay requires no controller action");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromSeconds(1), "dP = totalDelay: sub-minute delay absorbed in TMA");
         }
 
         [Fact]
@@ -210,14 +220,14 @@ public class DelayStrategyCalculatorTests
         }
 
         [Fact]
-        public void WithNoPressureOrMaxPressure_SmallPositiveDelay_ReturnsSpeedReduction()
+        public void WithNoPressureOrMaxPressure_SubMinuteDelay_ReturnsNoDelay()
         {
-            // P = 0 and dPmax = 0: any positive delay is immediately assigned to enroute
+            // Sub-minute delays always return NoDelay regardless of pressure configuration
             var totalDelay = TimeSpan.FromSeconds(1);
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
-            r.ControlAction.ShouldBe(ControlAction.SpeedReduction);
-            r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA capacity, all delay assigned to enroute");
-            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
+            r.ControlAction.ShouldBe(ControlAction.NoDelay);
+            r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: sub-minute delay requires no controller action");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromSeconds(1), "dP = totalDelay: sub-minute delay absorbed in TMA");
         }
 
         [Fact]
@@ -302,13 +312,23 @@ public class DelayStrategyCalculatorTests
     public class ApproachFirst
     {
         [Fact]
-        public void EarlyFlight_ReturnsExpedite()
+        public void EarlyFlight_WithinOneMinute_ReturnsNoDelay()
         {
             var totalDelay = TimeSpan.FromMinutes(-1);
             var r = Compute(totalDelay);
+            r.ControlAction.ShouldBe(ControlAction.NoDelay);
+            r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute action for sub-minute early flights");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
+        }
+
+        [Fact]
+        public void EarlyFlight_BeyondOneMinute_ReturnsExpedite()
+        {
+            var totalDelay = TimeSpan.FromMinutes(-1) - TimeSpan.FromSeconds(1);
+            var r = Compute(totalDelay);
             r.ControlAction.ShouldBe(ControlAction.Expedite);
             r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: no enroute action for early flights");
-            r.TerminalDelay.ShouldBe(TimeSpan.FromMinutes(-1), "dP = totalDelay: deviation absorbed entirely in TMA");
+            r.TerminalDelay.ShouldBe(totalDelay, "dP = totalDelay: deviation absorbed entirely in TMA");
         }
 
         [Fact]
@@ -383,14 +403,14 @@ public class DelayStrategyCalculatorTests
         }
 
         [Fact]
-        public void WithNoPressureTrajectory_SmallPositiveDelay_ReturnsResume()
+        public void WithNoPressureTrajectory_SubMinuteDelay_ReturnsNoDelay()
         {
-            // When PressureWindow=0, positive delay up to MaximumTmaPressure is absorbed in approach
+            // Sub-minute delays always return NoDelay regardless of pressure configuration
             var totalDelay = TimeSpan.FromSeconds(1);
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero);
-            r.ControlAction.ShouldBe(ControlAction.Resume);
-            r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: approach-first absorbs delay in TMA before enroute");
-            r.TerminalDelay.ShouldBe(TimeSpan.FromSeconds(1), "dP = totalDelay: delay within maximum TMA pressure, absorbed entirely in TMA");
+            r.ControlAction.ShouldBe(ControlAction.NoDelay);
+            r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: sub-minute delay requires no controller action");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromSeconds(1), "dP = totalDelay: sub-minute delay absorbed in TMA");
         }
 
         [Fact]
@@ -416,14 +436,14 @@ public class DelayStrategyCalculatorTests
         }
 
         [Fact]
-        public void WithNoPressureOrMaxPressure_SmallPositiveDelay_ReturnsPathStretching()
+        public void WithNoPressureOrMaxPressure_SubMinuteDelay_ReturnsNoDelay()
         {
-            // P = 0 and dPmax = 0: any positive delay is immediately assigned to enroute via path stretching
+            // Sub-minute delays always return NoDelay regardless of pressure configuration
             var totalDelay = TimeSpan.FromSeconds(1);
             var r = Compute(totalDelay, pressureWindow: TimeSpan.Zero, maximumTmaPressure: TimeSpan.Zero);
-            r.ControlAction.ShouldBe(ControlAction.PathStretching);
-            r.EnrouteDelay.ShouldBe(TimeSpan.FromSeconds(1), "dC = totalDelay: no TMA capacity, all delay assigned to enroute");
-            r.TerminalDelay.ShouldBe(TimeSpan.Zero, "dP = 0: no TMA pressure configured");
+            r.ControlAction.ShouldBe(ControlAction.NoDelay);
+            r.EnrouteDelay.ShouldBe(TimeSpan.Zero, "dC = 0: sub-minute delay requires no controller action");
+            r.TerminalDelay.ShouldBe(TimeSpan.FromSeconds(1), "dP = totalDelay: sub-minute delay absorbed in TMA");
         }
 
         [Fact]

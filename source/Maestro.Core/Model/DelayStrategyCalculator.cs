@@ -50,12 +50,19 @@ public static class DelayStrategyCalculator
         // The maximum amount of delay that can be absorbed within the TMA linearly (maximum pressure)
         var maxLinearTerminalDelay = terminalTrajectory.MaxPressureTimeToGo - terminalTrajectory.NormalTimeToGo;
 
-        // Needs to speed up
-        if (totalDelay < TimeSpan.Zero)
+        // Needs to speed up beyond sub-minute tolerance
+        if (totalDelay < TimeSpan.FromMinutes(-1))
             return new DelayDistribution(
                 TimeSpan.Zero,
                 totalDelay,
                 ControlAction.Expedite);
+
+        // Sub-minute delay: no controller action needed to avoid showing "0" with colour coding
+        if (totalDelay < TimeSpan.FromMinutes(1))
+            return new DelayDistribution(
+                TimeSpan.Zero,
+                totalDelay,
+                ControlAction.NoDelay);
 
         // If the delay required is within the TMA pressure, just absorb it within the TMA
         if (totalDelay <= availablePressure)
@@ -103,12 +110,19 @@ public static class DelayStrategyCalculator
         // The maximum amount of delay that can be absorbed within the TMA linearly (maximum pressure)
         var maxLinearTerminalDelay = terminalTrajectory.MaxPressureTimeToGo - terminalTrajectory.NormalTimeToGo;
 
-        // Needs to speed up
-        if (totalDelay < TimeSpan.Zero)
+        // Needs to speed up beyond sub-minute tolerance
+        if (totalDelay < TimeSpan.FromMinutes(-1))
             return new DelayDistribution(
                 TimeSpan.Zero,
                 totalDelay,
                 ControlAction.Expedite);
+
+        // Sub-minute delay: no controller action needed to avoid showing "0" with colour coding
+        if (totalDelay < TimeSpan.FromMinutes(1))
+            return new DelayDistribution(
+                TimeSpan.Zero,
+                totalDelay,
+                ControlAction.NoDelay);
 
         // If the delay required is within the TMA pressure, just absorb it within the TMA
         if (totalDelay <= availablePressure)
