@@ -151,12 +151,12 @@ A controller action is calculated based on the total required and remaining dela
 
 | Controller Action | Meaning |
 | ----------------- | ------- |
-| Expedite | Delay is negative; aircraft needs to speed up to meet the required time |
+| Expedite | Delay is negative, and aircraft needs to speed up to meet the required time |
 | No Delay | No delay is required |
-| Resume | Very small delay remaining; aircraft will absorb it by resuming track (e.g., completing a turn out of holding) |
-| Speed Reduction | Small delay; can be absorbed through speed reduction |
-| Path Stretching | Medium delay; requires additional track miles (e.g., vectoring) |
-| Holding | Large delay; aircraft must enter a holding pattern |
+| Resume | Very small delay remaining, and aircraft will absorb it by resuming track (e.g., completing a turn out of holding) |
+| Speed Reduction | Small delay that can be absorbed through speed reduction |
+| Path Stretching | Medium delay that requires additional track miles (e.g., vectoring) |
+| Holding | Large delay requiring the aircraft to enter a holding pattern |
 
 ### 5. State Transition
 
