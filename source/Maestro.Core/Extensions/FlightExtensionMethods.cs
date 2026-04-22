@@ -30,9 +30,7 @@ public static class FlightExtensionMethods
             LandingEstimate = flight.LandingEstimate,
             TargetLandingTime = flight.TargetLandingTime,
             LandingTime = flight.LandingTime,
-            InitialDelay = flight.TotalDelay,
-            RemainingDelay = flight.RemainingDelay,
-            FlowControls = flight.FlowControls,
+            HighSpeed = flight.HighSpeed,
             ActivatedTime = flight.ActivatedTime,
             HighPriority = flight.HighPriority,
             MaximumDelay = flight.MaximumDelay,
@@ -41,9 +39,17 @@ public static class FlightExtensionMethods
             LastSeen = flight.LastSeen,
             Position = flight.Position,
             IsManuallyInserted = flight.IsManuallyInserted,
-            TimeToGo = flight.Trajectory.TimeToGo,
-            Pressure = flight.Trajectory.Pressure,
-            MaxPressure = flight.Trajectory.MaxPressure,
+            TerminalNormalTimeToGo = flight.TerminalTrajectory.NormalTimeToGo,
+            TerminalPressureTimeToGo = flight.TerminalTrajectory.PressureTimeToGo,
+            TerminalMaxPressureTimeToGo = flight.TerminalTrajectory.MaxPressureTimeToGo,
+            EnrouteShortcutTimeToGain = flight.EnrouteTrajectory.ShortcutTimeToGain,
+            EnrouteMaxLinearDelay = flight.EnrouteTrajectory.MaxLinearEnrouteDelay,
+            RequiredControlAction = flight.RequiredControlAction,
+            RemainingControlAction = flight.RemainingControlAction,
+            RequiredEnrouteDelay = flight.RequiredEnrouteDelay,
+            RequiredTerminalDelay = flight.RequiredTerminalDelay,
+            RemainingEnrouteDelay = flight.RemainingEnrouteDelay,
+            RemainingTerminalDelay = flight.RemainingTerminalDelay
         };
     }
 

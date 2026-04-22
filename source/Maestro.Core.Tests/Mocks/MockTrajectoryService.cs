@@ -6,20 +6,20 @@ namespace Maestro.Core.Tests.Mocks;
 
 public class MockTrajectoryService : ITrajectoryService
 {
-    readonly Trajectory _defaultTrajectory;
-    readonly Dictionary<string, Trajectory> _flightTrajectories = new();
+    readonly TerminalTrajectory _defaultTerminalTrajectory;
+    readonly Dictionary<string, TerminalTrajectory> _flightTrajectories = new();
     readonly List<TrajectoryConfiguration> _configurations = new();
     readonly Dictionary<(string, string?, string), string[]> _approachTypes = new();
 
     public MockTrajectoryService(TimeSpan? defaultTtg = null)
     {
         var ttg = defaultTtg ?? TimeSpan.FromMinutes(20);
-        _defaultTrajectory = new Trajectory(ttg, ttg, ttg);
+        _defaultTerminalTrajectory = new TerminalTrajectory(ttg, ttg, ttg);
     }
 
-    public MockTrajectoryService WithTrajectoryForFlight(Flight flight, Trajectory trajectory)
+    public MockTrajectoryService WithTrajectoryForFlight(Flight flight, TerminalTrajectory terminalTrajectory)
     {
-        _flightTrajectories[flight.Callsign] = trajectory;
+        _flightTrajectories[flight.Callsign] = terminalTrajectory;
         return this;
     }
 
@@ -38,7 +38,7 @@ public class MockTrajectoryService : ITrajectoryService
         return new TrajectoryConfigurationBuilder(this);
     }
 
-    public Trajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)
+    public TerminalTrajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)
     {
         if (_flightTrajectories.TryGetValue(flight.Callsign, out var trajectory))
             return trajectory;
@@ -50,10 +50,10 @@ public class MockTrajectoryService : ITrajectoryService
             runwayIdentifier,
             approachType);
 
-        return match ?? _defaultTrajectory;
+        return match ?? _defaultTerminalTrajectory;
     }
 
-    public Trajectory GetTrajectory(
+    public TerminalTrajectory GetTrajectory(
         AircraftPerformanceData aircraftPerformanceData,
         string destinationIdentifier,
         string? feederFixIdentifier,
@@ -63,12 +63,17 @@ public class MockTrajectoryService : ITrajectoryService
         Wind upperWind)
     {
         var match = FindBestMatch(aircraftPerformanceData.TypeCode, destinationIdentifier, feederFixIdentifier, runwayIdentifier, approachType);
-        return match ?? _defaultTrajectory;
+        return match ?? _defaultTerminalTrajectory;
     }
 
-    public Trajectory GetAverageTrajectory(string airportIdentifier)
+    public EnrouteTrajectory GetEnrouteTrajectory(string airportIdentifier, string[] waypointNames, string feederFixIdentifier)
     {
-        return _defaultTrajectory;
+        return new EnrouteTrajectory(TimeSpan.FromMinutes(8), TimeSpan.Zero);
+    }
+
+    public TerminalTrajectory GetAverageTrajectory(string airportIdentifier)
+    {
+        return _defaultTerminalTrajectory;
     }
 
     public string[] GetApproachTypes(
@@ -84,7 +89,7 @@ public class MockTrajectoryService : ITrajectoryService
         return [];
     }
 
-    Trajectory? FindBestMatch(
+    TerminalTrajectory? FindBestMatch(
         string aircraftType,
         string? destinationIdentifier,
         string? feederFixIdentifier,
@@ -99,7 +104,7 @@ public class MockTrajectoryService : ITrajectoryService
             return null;
 
         // Return the most specific match (most criteria specified)
-        return matches.OrderByDescending(c => c.Specificity).First().Trajectory;
+        return matches.OrderByDescending(c => c.Specificity).First().TerminalTrajectory;
     }
 
     internal void AddConfiguration(TrajectoryConfiguration configuration)
@@ -151,7 +156,7 @@ public class MockTrajectoryService : ITrajectoryService
             return this;
         }
 
-        public MockTrajectoryService Returns(Trajectory trajectory)
+        public MockTrajectoryService Returns(TerminalTrajectory terminalTrajectory)
         {
             _service.AddConfiguration(new TrajectoryConfiguration(
                 _aircraftType,
@@ -159,7 +164,7 @@ public class MockTrajectoryService : ITrajectoryService
                 _feederFixIdentifier,
                 _runwayIdentifier,
                 _approachType,
-                trajectory));
+                terminalTrajectory));
 
             return _service;
         }
@@ -172,7 +177,7 @@ public class MockTrajectoryService : ITrajectoryService
         public string? FeederFixIdentifier { get; }
         public string? RunwayIdentifier { get; }
         public string? ApproachType { get; }
-        public Trajectory Trajectory { get; }
+        public TerminalTrajectory TerminalTrajectory { get; }
         public int Specificity { get; }
 
         public TrajectoryConfiguration(
@@ -181,14 +186,14 @@ public class MockTrajectoryService : ITrajectoryService
             string? feederFixIdentifier,
             string? runwayIdentifier,
             string? approachType,
-            Trajectory trajectory)
+            TerminalTrajectory terminalTrajectory)
         {
             AircraftType = aircraftType;
             DestinationIdentifier = destinationIdentifier;
             FeederFixIdentifier = feederFixIdentifier;
             RunwayIdentifier = runwayIdentifier;
             ApproachType = approachType;
-            Trajectory = trajectory;
+            TerminalTrajectory = terminalTrajectory;
 
             // Calculate specificity (how many criteria are specified)
             Specificity = 0;

@@ -68,7 +68,7 @@ public partial class FlightLabelViewModel(
             sb.Append(" ");
         }
 
-        if (FlightViewModel.FlowControls == FlowControls.HighSpeed)
+        if (FlightViewModel.HighSpeed)
         {
             sb.Append("+");
         }
@@ -257,7 +257,7 @@ public partial class FlightLabelViewModel(
                     FlightViewModel.DestinationIdentifier,
                     FlightViewModel.Callsign,
                     FlightViewModel.FeederFixIdentifier!,
-                    FlightViewModel.FeederFixEstimate!.Value));
+                    FlightViewModel.FeederFixEstimate));
         }
         catch (Exception ex)
         {
@@ -408,14 +408,26 @@ public partial class FlightLabelViewModel(
             RunwayItemConfiguration => flight.AssignedRunwayIdentifier,
             ApproachTypeItemConfiguration => flight.ApproachType,
             LandingTimeItemConfiguration => flight.LandingTime.ToString("mm"),
-            FeederFixTimeItemConfiguration => flight.FeederFixTime?.ToString("mm") ?? "",
-            RequiredDelayItemConfiguration => ((int)flight.InitialDelay.TotalMinutes).ToString(CultureInfo.InvariantCulture),
-            RemainingDelayItemConfiguration => ((int)flight.RemainingDelay.TotalMinutes).ToString(CultureInfo.InvariantCulture),
+            FeederFixTimeItemConfiguration => flight.FeederFixTime.ToString("mm"),
+            RequiredDelayItemConfiguration required => FormatDelay(flight.RequiredEnrouteDelay, flight.RequiredTerminalDelay, required.Component),
+            RemainingDelayItemConfiguration remaining => FormatDelay(flight.RemainingEnrouteDelay, flight.RemainingTerminalDelay, remaining.Component),
             ManualDelayItemConfiguration manual => FormatManualDelay(flight, manual.ZeroDelaySymbol, manual.ManualDelaySymbol),
-            HighSpeedItemConfiguration highSpeed => flight.FlowControls == FlowControls.HighSpeed ? highSpeed.Symbol : "",
+            HighSpeedItemConfiguration highSpeed => flight.HighSpeed ? highSpeed.Symbol : "",
             CouplingStatusItemConfiguration coupling => flight.Position is not null ? "" : coupling.UncoupledSymbol,
             _ => "?"
         };
+    }
+
+    static string FormatDelay(TimeSpan enroute, TimeSpan tma, DelayComponent component)
+    {
+        var value = component switch
+        {
+            DelayComponent.Enroute => enroute,
+            DelayComponent.Tma => tma,
+            _ => enroute + tma
+        };
+
+        return ((int)value.TotalMinutes).ToString(CultureInfo.InvariantCulture);
     }
 
     string FormatManualDelay(FlightDto flight, string zeroDelaySymbol, string manualDelaySymbol)
@@ -441,7 +453,8 @@ public partial class FlightLabelViewModel(
                 LabelItemColourSource.FeederFix when maestroViewModel.AirportConfiguration.Colours is not null => GetColorByFeederFix(maestroViewModel.AirportConfiguration.Colours, flight),
                 LabelItemColourSource.State => GetColorByState(globalColorConfiguration, flight),
                 LabelItemColourSource.RunwayMode => GetColorByRunwayMode(globalColorConfiguration, flight),
-                LabelItemColourSource.ControlAction => GetColorByControlAction(itemConfig, globalColorConfiguration, flight),
+                LabelItemColourSource.RequiredControlAction => GetColorByRequiredControlAction(itemConfig, globalColorConfiguration, flight),
+                LabelItemColourSource.RemainingControlAction => GetColorByRemainingControlAction(itemConfig, globalColorConfiguration, flight),
                 _ => null
             };
 
@@ -496,35 +509,18 @@ public partial class FlightLabelViewModel(
         return null;
     }
 
-    System.Windows.Media.Color? GetColorByControlAction(LabelItemConfiguration labelItemConfiguration, GlobalColourConfiguration globalColourConfiguration, FlightDto flight)
+    System.Windows.Media.Color? GetColorByRequiredControlAction(LabelItemConfiguration labelItemConfiguration, GlobalColourConfiguration globalColourConfiguration, FlightDto flight)
     {
-        // TODO: Move this calculation into Core
-        //  Re-calculate it every 30 seconds along with the flight state
-        // if (colourConfiguration.ControlActions.TryGetValue(flight.ControlAction, out var actionColor))
-        // {
-        //     return ToColor(actionColor);
-        // }
+        if (globalColourConfiguration.ControlActions.TryGetValue(flight.RequiredControlAction, out var actionColor))
+            return ToColor(actionColor);
 
-        var total = labelItemConfiguration.Type switch
-        {
-            LabelItemType.RequiredDelay => flight.InitialDelay,
-            LabelItemType.RemainingDelay => flight.RemainingDelay,
-            _ => TimeSpan.Zero,
-        };
+        return null;
+    }
 
-        var totalMinutes = total.TotalMinutes;
-
-        if (totalMinutes >= 8 && globalColourConfiguration.ControlActions.TryGetValue(ControlAction.Holding, out var holdingColor))
-            return ToColor(holdingColor);
-
-        if (totalMinutes >= 1 && globalColourConfiguration.ControlActions.TryGetValue(ControlAction.SpeedReduction, out var delayMinorColor))
-            return ToColor(delayMinorColor);
-
-        if (totalMinutes >= -1 && globalColourConfiguration.ControlActions.TryGetValue(ControlAction.NoDelay, out var noDelayColor))
-            return ToColor(noDelayColor);
-
-        if (totalMinutes < -1 && globalColourConfiguration.ControlActions.TryGetValue(ControlAction.Expedite, out var expediteColor))
-            return ToColor(expediteColor);
+    System.Windows.Media.Color? GetColorByRemainingControlAction(LabelItemConfiguration labelItemConfiguration, GlobalColourConfiguration globalColourConfiguration, FlightDto flight)
+    {
+        if (globalColourConfiguration.ControlActions.TryGetValue(flight.RemainingControlAction, out var actionColor))
+            return ToColor(actionColor);
 
         return null;
     }

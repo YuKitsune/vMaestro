@@ -3,8 +3,12 @@ using System.Text.Json.Serialization;
 namespace Maestro.Contracts.Shared;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum FlowControls
+public enum ControlAction
 {
-    HighSpeed,
-    ReduceSpeed
+    Expedite,
+    NoDelay,
+    Resume,
+    SpeedReduction,
+    PathStretching,
+    Holding
 }

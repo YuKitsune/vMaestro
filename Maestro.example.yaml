@@ -105,8 +105,12 @@ Labels:
   # ApproachType: Displays the assigned approach type
   # LandingTime: Scheduled landing time (STA) - minutes only
   # FeederFixTime: Scheduled feeder fix time (STA_FF) - minutes only
-  # RequiredDelay: Total delay required in minutes
-  # RemainingDelay: Remaining delay to absorb in minutes
+  # RequiredDelay: Delay assigned at scheduling time.
+  #   - Additional Properties:
+  #     - Component: Which portion to display - Total (default), Enroute, or Tma
+  # RemainingDelay: Remaining delay to absorb.
+  #   - Additional Properties:
+  #     - Component: Which portion to display - Total (default), Enroute, or Tma
   # ManualDelay: Indicates whether a manual delay has been assigned.
   #   - Additional Properties:
   #     - ZeroDelaySymbol: Character to display when a manual delay of zero is assigned (required)
@@ -245,6 +249,10 @@ Airports:
   # Default: 6000
   UpperWindAltitude: 6000
 
+  # Enroute delay capacity used when no matching enroute trajectory is found
+  # Default: 8
+  DefaultMaxEnrouteLinearDelayMinutes: 8
+
   # ---------------------------------------------------------------------------
   # Airport-Specific Colors (optional)
   # ---------------------------------------------------------------------------
@@ -354,12 +362,12 @@ Airports:
   #   maestro extract-stars --airspace <Airspace.xml> --config maestro-tool.yaml
   # Then manually mark pressure zones (Pressure/MaxPressure) as required.
   #
-  # DefaultTTGMinutes (below) is used when no trajectory matches a flight.
+  # DefaultTimeToGoMinutes (below) is used when no trajectory matches a flight.
 
   # Fallback TTG used when no trajectory matches (minutes, default: 20)
-  DefaultTTGMinutes: 18
+  DefaultTimeToGoMinutes: 18
 
-  Trajectories:
+  TerminalTrajectories:
 
     # RIVET -> 34L
     # Illustrates branching pressure trajectories
@@ -394,6 +402,32 @@ Airports:
         - {Identifier: FINAL, Track: 335.2, DistanceNM: 18.8}
 
     # Add trajectories for WELSH, YAKKA, MARLN and remaining combinations of feeder fix, runway, and approach type.
+
+  # ---------------------------------------------------------------------------
+  # Enroute Trajectories
+  # ---------------------------------------------------------------------------
+  # Define the enroute delay capacity for each feeder fix route.
+  # Matched by EntryPoint and FeederFix from the flight's route.
+  # Flights with no matching entry use DefaultMaxEnrouteLinearDelayMinutes.
+  #
+  # Fields:
+  #   EntryPoint:            Waypoint where the enroute phase begins for this route (required)
+  #   FeederFix:             Feeder fix this entry applies to (required)
+  #   MaxEnrouteLinearDelayMinutes: Maximum delay absorbable via speed reduction or holding (required)
+  #   ShortcutTimeToGainMinutes:    Time that can be gained by flying a direct routing, if available (default: 0)
+
+  EnrouteTrajectories:
+
+    # Example: Arrivals via VELGI can take a shortcut (i.e. cutting the corner) to gain 3 minutes
+    - EntryPoint: VELGI
+      FeederFix: RIVET
+      MaxEnrouteLinearDelayMinutes: 8
+      ShortcutTimeToGainMinutes: 3
+
+    # Example: Arrivals via NONUP spend less time in the enroute phase, and have a lower threshold before holding is required
+    - EntryPoint: NONUP
+      FeederFix: RIVET
+      MaxEnrouteLinearDelayMinutes: 6
 
   # ---------------------------------------------------------------------------
   # Departure Airports
@@ -536,10 +570,10 @@ Airports:
           ApproachType: A
           LandingRateSeconds: 180
 
-  DefaultTTGMinutes: 18
+  DefaultTimeToGoMinutes: 18
 
-  # Define trajectories
-  Trajectories:
+  # Define terminal trajectories
+  TerminalTrajectories:
     - FeederFix: ARBEY
       RunwayIdentifier: '09'
       ApproachType: A

@@ -140,7 +140,12 @@ public class FlightUpdatedHandler(
                     var runwayMode = session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
                     var runway = runwayMode.Default;
 
-                    var trajectory = trajectoryService.GetTrajectory(
+                    var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
+                        notification.Destination,
+                        notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
+                        feederFix!.FixIdentifier);
+
+                    var terminalTrajectory = trajectoryService.GetTrajectory(
                         new AircraftPerformanceData(notification.AircraftType, notification.AircraftCategory, notification.WakeCategory),
                         notification.Destination,
                         feederFix.FixIdentifier,
@@ -172,7 +177,8 @@ public class FlightUpdatedHandler(
                         estimatedDepartureTime: notification.EstimatedDepartureTime,
                         assignedRunwayIdentifier: runway.Identifier,
                         approachType: runway.ApproachType,
-                        trajectory: trajectory,
+                        enrouteTrajectory: enrouteTrajectory,
+                        terminalTrajectory: terminalTrajectory,
                         feederFixIdentifier: feederFix.FixIdentifier,
                         feederFixEstimate: feederFix.Estimate,
                         landingEstimate: approximateLandingEstimate.Value,
@@ -186,9 +192,9 @@ public class FlightUpdatedHandler(
                         notification.Callsign,
                         runway.Identifier,
                         runway.ApproachType,
-                        trajectory.TimeToGo,
-                        trajectory.Pressure,
-                        trajectory.MaxPressure);
+                        terminalTrajectory.NormalTimeToGo,
+                        terminalTrajectory.PressureTimeToGo,
+                        terminalTrajectory.MaxPressureTimeToGo);
                     return;
                 }
 
@@ -213,24 +219,47 @@ public class FlightUpdatedHandler(
                     sequencedFlight.UpdateLastSeen(clock);
                     UpdateFlightData(notification, sequencedFlight);
 
-                    // Recompute trajectory for unstable flights so wind changes propagate to TTG before estimates are calculated
+                    // Recompute feeder fix, trajectories, and estimates for unstable flights on every update
+                    // so that re-routes and wind changes propagate before scheduling
                     if (sequencedFlight.State is State.Unstable && !string.IsNullOrEmpty(sequencedFlight.AssignedRunwayIdentifier))
                     {
+                        var fixNames = notification.Estimates.Select(e => e.FixIdentifier).ToArray();
+                        var feederFix = notification.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+                        var landingEstimate = notification.Estimates.LastOrDefault()?.Estimate ?? sequencedFlight.LandingEstimate;
+
                         var updatedTrajectory = trajectoryService.GetTrajectory(
                             sequencedFlight,
                             sequencedFlight.AssignedRunwayIdentifier,
                             sequencedFlight.ApproachType,
-                            notification.Estimates.Select(e => e.FixIdentifier).ToArray(),
+                            fixNames,
                             session.Sequence.UpperWind);
-                        sequencedFlight.SetTrajectory(updatedTrajectory);
+
+                        // Don't update estimates if: no position, manually set, or already past the feeder fix
+                        if (notification.Position is not null && !notification.Position.IsOnGround &&
+                            !sequencedFlight.ManualFeederFixEstimate &&
+                            (string.IsNullOrEmpty(sequencedFlight.FeederFixIdentifier) || sequencedFlight.FeederFixEstimate > clock.UtcNow()))
+                        {
+                            sequencedFlight.SetFeederFix(
+                                feederFix?.FixIdentifier,
+                                updatedTrajectory,
+                                feederFix?.Estimate,
+                                landingEstimate);
+                        }
+
+                        var updatedEnrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
+                            sequencedFlight.DestinationIdentifier,
+                            fixNames,
+                            feederFix?.FixIdentifier ?? string.Empty);
+                        sequencedFlight.SetEnrouteTrajectory(updatedEnrouteTrajectory);
+
                         logger.Debug(
                             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
                             sequencedFlight.Callsign,
                             sequencedFlight.AssignedRunwayIdentifier,
                             sequencedFlight.ApproachType,
-                            updatedTrajectory.TimeToGo,
-                            updatedTrajectory.Pressure,
-                            updatedTrajectory.MaxPressure);
+                            updatedTrajectory.NormalTimeToGo,
+                            updatedTrajectory.PressureTimeToGo,
+                            updatedTrajectory.MaxPressureTimeToGo);
                     }
 
                     // Only update the estimates if the flight is coupled to a radar track, and it's not on the ground
@@ -265,6 +294,15 @@ public class FlightUpdatedHandler(
                         }
                     }
 
+                    // Update the remaining delay distribution to reflect how much delay remains
+                    var remainingDelay = sequencedFlight.LandingTime - sequencedFlight.LandingEstimate;
+                    var remainingDistribution = DelayStrategyCalculator.Compute(
+                        remainingDelay,
+                        sequencedFlight.TerminalTrajectory,
+                        sequencedFlight.EnrouteTrajectory,
+                        airportConfiguration.DelayStrategy);
+                    sequencedFlight.SetRemainingDelayData(remainingDistribution);
+
                     sequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
                     logger.Debug("Flight updated: {Flight}", sequencedFlight);
@@ -296,6 +334,10 @@ public class FlightUpdatedHandler(
 
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
         {
+            // If the feeder fix estimate is already in the past, the flight has crossed the FF; don't update further
+            if (flight.FeederFixEstimate <= clock.UtcNow())
+                return;
+
             var feederFixSystemEstimate = notification.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
             if (feederFixSystemEstimate?.Estimate != null)
             {

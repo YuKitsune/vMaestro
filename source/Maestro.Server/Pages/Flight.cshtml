@@ -72,11 +72,22 @@
                 </div>
             </div>
         }
-
-
     </div>
 
     <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Enroute Trajectory</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Max Linear Delay</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.EnrouteMaxLinearDelay)</dd>
+
+                    <dt class="col-sm-5">Shortcut</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.EnrouteShortcutTimeToGain)</dd>
+                </dl>
+            </div>
+        </div>
+
         <div class="card mb-4">
             <div class="card-header">Feeder Fix</div>
             <div class="card-body">
@@ -97,23 +108,23 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">Trajectory</div>
+            <div class="card-header">TMA Trajectory</div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-5">Approach Type</dt>
-                    <dd class="col-sm-7">@(string.IsNullOrEmpty(flight.ApproachType) ? "-" : flight.ApproachType)</dd>
-
                     <dt class="col-sm-5">Runway</dt>
                     <dd class="col-sm-7">@flight.AssignedRunwayIdentifier</dd>
 
-                    <dt class="col-sm-5">Time to Go</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.TimeToGo)</dd>
+                    <dt class="col-sm-5">Approach Type</dt>
+                    <dd class="col-sm-7">@(string.IsNullOrEmpty(flight.ApproachType) ? "-" : flight.ApproachType)</dd>
 
-                    <dt class="col-sm-5">Pressure</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.Pressure)</dd>
+                    <dt class="col-sm-5">Normal TTG</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.TerminalNormalTimeToGo)</dd>
 
-                    <dt class="col-sm-5">Maximum Pressure</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.MaxPressure)</dd>
+                    <dt class="col-sm-5">Pressure Window</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.TerminalPressureTimeToGo - flight.TerminalNormalTimeToGo)</dd>
+
+                    <dt class="col-sm-5">Max Pressure Window</dt>
+                    <dd class="col-sm-7">@FormatTimeSpan(flight.TerminalMaxPressureTimeToGo - flight.TerminalPressureTimeToGo)</dd>
                 </dl>
             </div>
         </div>
@@ -121,6 +132,10 @@
         <div class="card mb-4">
             <div class="card-header">Scheduling Data</div>
             <div class="card-body">
+                @{
+                    var requiredDelay = flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay;
+                    var remainingDelay = flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay;
+                }
                 <dl class="row mb-0">
                     <dt class="col-sm-5">State</dt>
                     <dd class="col-sm-7">
@@ -145,17 +160,21 @@
                     <dt class="col-sm-5">Scheduled Landing Time (STA)</dt>
                     <dd class="col-sm-7">@FormatHelpers.ToDDHHMM(flight.LandingTime)</dd>
 
-                    <dt class="col-sm-5">Initial Delay</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.InitialDelay)</dd>
+                    <dt class="col-sm-5">Required Delay</dt>
+                    <dd class="col-sm-7">
+                        ENR @FormatTimeSpan(flight.RequiredEnrouteDelay) / TMA @FormatTimeSpan(flight.RequiredTerminalDelay) (Total @FormatTimeSpan(requiredDelay)) - @flight.RequiredControlAction
+                    </dd>
 
                     <dt class="col-sm-5">Remaining Delay</dt>
-                    <dd class="col-sm-7">@FormatTimeSpan(flight.RemainingDelay)</dd>
+                    <dd class="col-sm-7">
+                        ENR @FormatTimeSpan(flight.RemainingEnrouteDelay) / TMA @FormatTimeSpan(flight.RemainingTerminalDelay) (Total @FormatTimeSpan(remainingDelay)) - @flight.RemainingControlAction
+                    </dd>
 
                     <dt class="col-sm-5">Maximum Delay</dt>
                     <dd class="col-sm-7">@(flight.MaximumDelay.HasValue ? FormatTimeSpan(flight.MaximumDelay.Value) : "-")</dd>
 
-                    <dt class="col-sm-5">Flow Controls</dt>
-                    <dd class="col-sm-7">@flight.FlowControls</dd>
+                    <dt class="col-sm-5">High Speed</dt>
+                    <dd class="col-sm-7">@flight.HighSpeed</dd>
                 </dl>
             </div>
         </div>

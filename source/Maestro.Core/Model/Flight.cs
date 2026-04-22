@@ -27,7 +27,8 @@ public class Flight : IEquatable<Flight>
         // Runway and trajectory
         string assignedRunwayIdentifier,
         string approachType,
-        Trajectory trajectory,
+        TerminalTrajectory terminalTrajectory,
+        EnrouteTrajectory enrouteTrajectory,
 
         // Feeder fix info (optional - flight may not track via FF)
         string? feederFixIdentifier,
@@ -55,7 +56,8 @@ public class Flight : IEquatable<Flight>
 
         AssignedRunwayIdentifier = assignedRunwayIdentifier;
         ApproachType = approachType;
-        Trajectory = trajectory;
+        EnrouteTrajectory = enrouteTrajectory;
+        TerminalTrajectory = terminalTrajectory;
 
         FeederFixIdentifier = feederFixIdentifier;
 
@@ -63,12 +65,12 @@ public class Flight : IEquatable<Flight>
         if (!string.IsNullOrEmpty(feederFixIdentifier) && feederFixEstimate.HasValue)
         {
             FeederFixEstimate = feederFixEstimate.Value;
-            LandingEstimate = feederFixEstimate.Value.Add(trajectory.TimeToGo);
+            LandingEstimate = feederFixEstimate.Value.Add(terminalTrajectory.NormalTimeToGo);
         }
         else
         {
             LandingEstimate = landingEstimate;
-            FeederFixEstimate = landingEstimate.Subtract(trajectory.TimeToGo);
+            FeederFixEstimate = landingEstimate.Subtract(terminalTrajectory.NormalTimeToGo);
         }
 
         InitialFeederFixEstimate = FeederFixEstimate;
@@ -92,7 +94,8 @@ public class Flight : IEquatable<Flight>
         string destinationIdentifier,
         string assignedRunwayIdentifier,
         string approachType,
-        Trajectory trajectory,
+        TerminalTrajectory terminalTrajectory,
+        EnrouteTrajectory enrouteTrajectory,
         DateTimeOffset targetLandingTime,
         State state = State.Frozen)
     {
@@ -109,12 +112,13 @@ public class Flight : IEquatable<Flight>
 
         AssignedRunwayIdentifier = assignedRunwayIdentifier;
         ApproachType = approachType;
-        Trajectory = trajectory;
+        TerminalTrajectory = terminalTrajectory;
+        EnrouteTrajectory = enrouteTrajectory;
 
         FeederFixIdentifier = null;
 
         LandingEstimate = targetLandingTime;
-        FeederFixEstimate = targetLandingTime.Subtract(trajectory.TimeToGo);
+        FeederFixEstimate = targetLandingTime.Subtract(terminalTrajectory.NormalTimeToGo);
         InitialFeederFixEstimate = FeederFixEstimate;
         InitialLandingEstimate = LandingEstimate;
 
@@ -142,20 +146,16 @@ public class Flight : IEquatable<Flight>
         EstimatedDepartureTime = dto.EstimatedDepartureTime;
         IsFromDepartureAirport = dto.IsFromDepartureAirport;
 
-        AssignedRunwayIdentifier = dto.AssignedRunwayIdentifier
-            ?? throw new ArgumentException("AssignedRunwayIdentifier required", nameof(dto));
-        ApproachType = dto.ApproachType
-            ?? throw new ArgumentException("ApproachType required", nameof(dto));
-        Trajectory = new Trajectory(dto.TimeToGo, dto.Pressure, dto.MaxPressure);
+        AssignedRunwayIdentifier = dto.AssignedRunwayIdentifier;
+        ApproachType = dto.ApproachType;
+        TerminalTrajectory = new TerminalTrajectory(dto.TerminalNormalTimeToGo, dto.TerminalPressureTimeToGo, dto.TerminalMaxPressureTimeToGo);
+        EnrouteTrajectory = new EnrouteTrajectory(dto.EnrouteMaxLinearDelay, dto.EnrouteShortcutTimeToGain);
 
         FeederFixIdentifier = dto.FeederFixIdentifier;
-        FeederFixEstimate = dto.FeederFixEstimate
-            ?? throw new ArgumentException("FeederFixEstimate required", nameof(dto));
-        InitialFeederFixEstimate = dto.InitialFeederFixEstimate
-            ?? throw new ArgumentException("InitialFeederFixEstimate required", nameof(dto));
+        FeederFixEstimate = dto.FeederFixEstimate;
+        InitialFeederFixEstimate = dto.InitialFeederFixEstimate;
         ManualFeederFixEstimate = dto.ManualFeederFixEstimate;
-        FeederFixTime = dto.FeederFixTime
-            ?? throw new ArgumentException("FeederFixTime required", nameof(dto));
+        FeederFixTime = dto.FeederFixTime;
 
         InitialLandingEstimate = dto.InitialLandingEstimate;
         LandingEstimate = dto.LandingEstimate;
@@ -165,8 +165,13 @@ public class Flight : IEquatable<Flight>
         State = dto.State;
         HighPriority = dto.HighPriority;
         MaximumDelay = dto.MaximumDelay;
+        RequiredEnrouteDelay = dto.RequiredEnrouteDelay;
+        RequiredTerminalDelay = dto.RequiredTerminalDelay;
+        RemainingEnrouteDelay = dto.RemainingEnrouteDelay;
+        RemainingTerminalDelay = dto.RemainingTerminalDelay;
+        RequiredControlAction = dto.RequiredControlAction;
+        RemainingControlAction = dto.RemainingControlAction;
         ActivatedTime = dto.ActivatedTime;
-        FlowControls = dto.FlowControls;
         LastSeen = dto.LastSeen;
         Position = dto.Position;
     }
@@ -182,12 +187,10 @@ public class Flight : IEquatable<Flight>
 
     public bool IsFromDepartureAirport { get; set; }
 
-    public string AssignedRunwayIdentifier { get; private set; }
-
     public State State { get; private set; }
     public bool HighPriority { get; set; }
-    public TimeSpan? MaximumDelay { get; private set; }
     public DateTimeOffset? ActivatedTime { get; private set; }
+    public DateTimeOffset LastSeen { get; private set; }
 
     public string? FeederFixIdentifier { get; private set; }
     public DateTimeOffset InitialFeederFixEstimate { get; private set; }
@@ -195,41 +198,52 @@ public class Flight : IEquatable<Flight>
     public bool ManualFeederFixEstimate { get; private set; }
     public DateTimeOffset FeederFixTime { get; private set; } // STA_FF
 
+    public string AssignedRunwayIdentifier { get; private set; }
+    public string ApproachType { get; private set; }
+    public TerminalTrajectory TerminalTrajectory { get; private set; }
+    public EnrouteTrajectory EnrouteTrajectory { get; private set; }
+
     public DateTimeOffset InitialLandingEstimate { get; private set; }
     public DateTimeOffset LandingEstimate { get; private set; } // ETA
     public DateTimeOffset? TargetLandingTime { get; private set; }
     public DateTimeOffset LandingTime { get; private set; } // STA
 
-    public TimeSpan TotalDelay => LandingTime - InitialLandingEstimate;
-    public TimeSpan RemainingDelay => LandingTime - LandingEstimate;
+    public TimeSpan? MaximumDelay { get; private set; }
+    public TimeSpan RequiredEnrouteDelay { get; private set; }
+    public TimeSpan RequiredTerminalDelay { get; private set; }
+    public TimeSpan RemainingEnrouteDelay { get; private set; }
+    public TimeSpan RemainingTerminalDelay { get; private set; }
+    public ControlAction RequiredControlAction { get; private set; } = ControlAction.NoDelay;
+    public ControlAction RemainingControlAction { get; private set; } = ControlAction.NoDelay;
+    public bool HighSpeed => RequiredEnrouteDelay < TimeSpan.FromMinutes(1);
 
-    public FlowControls FlowControls { get; private set; } = FlowControls.HighSpeed;
-
-    public string ApproachType { get; private set; }
-    public DateTimeOffset LastSeen { get; private set; }
     public FlightPosition? Position { get; private set; }
-    public Trajectory Trajectory { get; private set; }
 
     public void SetState(State state, IClock clock)
     {
         State = state;
     }
 
-    public void SetRunway(string runwayIdentifier, Trajectory trajectory)
+    public void SetRunway(string runwayIdentifier, TerminalTrajectory terminalTrajectory)
     {
         AssignedRunwayIdentifier = runwayIdentifier;
-        SetTrajectory(trajectory);
+        SetTrajectory(terminalTrajectory);
     }
 
-    public void SetApproachType(string approachType, Trajectory trajectory)
+    public void SetApproachType(string approachType, TerminalTrajectory terminalTrajectory)
     {
         ApproachType = approachType;
-        SetTrajectory(trajectory);
+        SetTrajectory(terminalTrajectory);
     }
 
-    public void SetTrajectory(Trajectory trajectory)
+    public void SetTrajectory(TerminalTrajectory terminalTrajectory)
     {
-        UpdateTrajectoryAndEstimates(trajectory);
+        UpdateTrajectoryAndEstimates(terminalTrajectory);
+    }
+
+    public void SetEnrouteTrajectory(EnrouteTrajectory enrouteTrajectory)
+    {
+        EnrouteTrajectory = enrouteTrajectory;
     }
 
     public void UpdateFeederFixEstimate(DateTimeOffset feederFixEstimate, bool manual = false)
@@ -237,7 +251,7 @@ public class Flight : IEquatable<Flight>
         FeederFixEstimate = feederFixEstimate;
         ManualFeederFixEstimate = manual;
 
-        LandingEstimate = feederFixEstimate.Add(Trajectory.TimeToGo);
+        LandingEstimate = feederFixEstimate.Add(TerminalTrajectory.NormalTimeToGo);
         if (State is State.Unstable)
         {
             InitialFeederFixEstimate = FeederFixEstimate;
@@ -248,7 +262,7 @@ public class Flight : IEquatable<Flight>
     public void UpdateLandingEstimate(DateTimeOffset landingEstimate)
     {
         LandingEstimate = landingEstimate;
-        FeederFixEstimate = landingEstimate.Subtract(Trajectory.TimeToGo);
+        FeederFixEstimate = LandingEstimate.Subtract(TerminalTrajectory.NormalTimeToGo);
 
         if (State is State.Unstable)
         {
@@ -259,35 +273,31 @@ public class Flight : IEquatable<Flight>
 
     public void SetFeederFix(
         string? feederFixIdentifier,
-        Trajectory trajectory,
+        TerminalTrajectory terminalTrajectory,
         DateTimeOffset? feederFixEstimate,
         DateTimeOffset landingEstimate)
     {
         ManualFeederFixEstimate = false;
         FeederFixIdentifier = feederFixIdentifier;
-        Trajectory = trajectory;
+        TerminalTrajectory = terminalTrajectory;
 
         // Calculate estimates based on whether flight tracks via feeder fix
         if (!string.IsNullOrEmpty(feederFixIdentifier) && feederFixEstimate.HasValue)
         {
             FeederFixEstimate = feederFixEstimate.Value;
-            LandingEstimate = feederFixEstimate.Value.Add(trajectory.TimeToGo);
+            LandingEstimate = feederFixEstimate.Value.Add(terminalTrajectory.NormalTimeToGo);
         }
         else
         {
             LandingEstimate = landingEstimate;
-            FeederFixEstimate = landingEstimate.Subtract(trajectory.TimeToGo);
+            FeederFixEstimate = landingEstimate.Subtract(terminalTrajectory.NormalTimeToGo);
         }
 
         // Always reset initial estimates when feeder fix changes
         InitialFeederFixEstimate = FeederFixEstimate;
         InitialLandingEstimate = LandingEstimate;
 
-        // Recalculate STA_FF using STA - TTG
-        if (LandingTime != default)
-        {
-            FeederFixTime = LandingTime.Subtract(trajectory.TimeToGo);
-        }
+        FeederFixTime = InitialFeederFixEstimate.Add(RequiredEnrouteDelay);
     }
 
     public void SetTargetLandingTime(DateTimeOffset targetLandingTime)
@@ -311,9 +321,9 @@ public class Flight : IEquatable<Flight>
         Position = position;
     }
 
-    private void UpdateTrajectoryAndEstimates(Trajectory trajectory)
+    private void UpdateTrajectoryAndEstimates(TerminalTrajectory terminalTrajectory)
     {
-        Trajectory = trajectory;
+        TerminalTrajectory = terminalTrajectory;
 
         if (!string.IsNullOrEmpty(FeederFixIdentifier))
         {
@@ -321,19 +331,15 @@ public class Flight : IEquatable<Flight>
             // Note: Don't update InitialLandingEstimate here - it should only change
             // when external estimates change (feeder fix or landing estimate updates),
             // not when the trajectory changes due to runway/approach reassignment
-            LandingEstimate = FeederFixEstimate.Add(Trajectory.TimeToGo);
+            LandingEstimate = FeederFixEstimate.Add(TerminalTrajectory.NormalTimeToGo);
         }
         else
         {
             // Calculate ETA_FF from ETA - TTG
-            FeederFixEstimate = LandingEstimate.Subtract(Trajectory.TimeToGo);
+            FeederFixEstimate = LandingEstimate.Subtract(TerminalTrajectory.NormalTimeToGo);
         }
 
-        // Calculate STA_FF using STA - TTG
-        if (LandingTime != default)
-        {
-            FeederFixTime = LandingTime.Subtract(Trajectory.TimeToGo);
-        }
+        FeederFixTime = InitialFeederFixEstimate.Add(RequiredEnrouteDelay);
     }
 
     public void SetMaximumDelay(TimeSpan? maximumDelay)
@@ -346,16 +352,34 @@ public class Flight : IEquatable<Flight>
     {
         LandingTime = LandingEstimate;
         FeederFixTime = FeederFixEstimate;
-        FlowControls = FlowControls.HighSpeed;
+        RequiredEnrouteDelay = TimeSpan.Zero;
+        RequiredTerminalDelay = TimeSpan.Zero;
+        RemainingEnrouteDelay = TimeSpan.Zero;
+        RemainingTerminalDelay = TimeSpan.Zero;
     }
 
     public void SetSequenceData(
         DateTimeOffset landingTime,
-        FlowControls flowControls)
+        DateTimeOffset feederFixTime,
+        ControlAction requiredControlAction,
+        TimeSpan enrouteDelay,
+        TimeSpan terminalDelay)
     {
         LandingTime = landingTime;
-        FeederFixTime = landingTime.Subtract(Trajectory.TimeToGo);
-        FlowControls = flowControls;
+        FeederFixTime = feederFixTime;
+        RequiredControlAction = requiredControlAction;
+        RemainingControlAction = requiredControlAction;
+        RequiredEnrouteDelay = enrouteDelay;
+        RequiredTerminalDelay = terminalDelay;
+        RemainingEnrouteDelay = enrouteDelay;
+        RemainingTerminalDelay = terminalDelay;
+    }
+
+    public void SetRemainingDelayData(DelayDistribution distribution)
+    {
+        RemainingEnrouteDelay = distribution.EnrouteDelay;
+        RemainingTerminalDelay = distribution.TerminalDelay;
+        RemainingControlAction = distribution.ControlAction;
     }
 
     // TODO: Move this into Flight Updated handler

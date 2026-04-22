@@ -225,7 +225,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(state)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .Build();
 
         var trajectoryService = new MockTrajectoryService(ttg);
@@ -277,7 +277,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .WithFeederFix(null)
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .Build();
 
         var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
@@ -309,6 +309,153 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         // Assert
         flight.FeederFixEstimate.ShouldBe(newLandingEstimate.Subtract(ttg));
         flight.LandingEstimate.ShouldBe(newLandingEstimate);
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndItPassesTheFeederFix_EstimatesAreUpdated()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
+
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        var trajectoryService = new MockTrajectoryService(ttg);
+
+        var (instanceManager, _, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
+            .Build();
+
+        // New estimate has the feeder fix in the past (flight just crossed it)
+        var pastFeederFixEstimate = clock.UtcNow().AddMinutes(-2);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            _position,
+            [
+                new FixEstimate("RIVET", pastFeederFixEstimate),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(30))
+            ]);
+
+        var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        flight.FeederFixEstimate.ShouldBe(pastFeederFixEstimate);
+        flight.LandingEstimate.ShouldBe(pastFeederFixEstimate.Add(ttg));
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndItIsNotTrackingViaAFeederFix_AndItPassesTheVirtualFeederFixPoint_EstimatesAreUpdated()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
+        var trajectoryService = new MockTrajectoryService(ttg);
+
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithFeederFix(null)
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        var (instanceManager, _, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s
+                .WithTrajectoryService(trajectoryService)
+                .WithFlight(flight))
+            .Build();
+
+        // Landing estimate that puts the virtual feeder fix point at exactly now
+        var newLandingEstimate = clock.UtcNow().Add(ttg);
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            _position,
+            [new FixEstimate("YSSY", newLandingEstimate)]);
+
+        var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        flight.LandingEstimate.ShouldBe(newLandingEstimate);
+        flight.FeederFixEstimate.ShouldBe(newLandingEstimate.Subtract(ttg));
+    }
+
+    [Fact]
+    public async Task WhenAnExistingFlightIsUpdated_AndItHasPassedTheFeederFix_EstimatesAreNoLongerUpdated()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(10);
+        var trajectoryService = new MockTrajectoryService(ttg);
+
+        // Flight with a feeder fix estimate already in the past (has crossed the FF)
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(-5))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(5))
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        var (instanceManager, _, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
+            .Build();
+
+        var originalFeederFixEstimate = flight.FeederFixEstimate;
+        var originalLandingEstimate = flight.LandingEstimate;
+
+        var notification = new FlightUpdatedNotification(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1),
+            _position,
+            [
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(10)),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(20))
+            ]);
+
+        var handler = GetHandler(airportConfiguration, instanceManager, clock, trajectoryService: trajectoryService);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        flight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate);
+        flight.LandingEstimate.ShouldBe(originalLandingEstimate);
     }
 
     [Fact]
@@ -446,7 +593,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
             .WithLandingTime(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .Build();
 
         var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
@@ -493,7 +640,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
             .Build();
 
@@ -501,7 +648,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
             .Build();
 
@@ -562,7 +709,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Frozen)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithRunway("34L")
             .Build();
 
@@ -570,13 +717,13 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(state)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(10)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithRunway("34L")
             .Build();
 
         var trajectoryService = new MockTrajectoryService()
-            .WithTrajectoryForFlight(flight1, new Trajectory(TimeSpan.FromMinutes(10)))
-            .WithTrajectoryForFlight(flight2, new Trajectory(TimeSpan.FromMinutes(10)));
+            .WithTrajectoryForFlight(flight1, new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
+            .WithTrajectoryForFlight(flight2, new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default));
 
         var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight1, flight2))
@@ -727,7 +874,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         var stableFlight = new FlightBuilder("QFA456")
             .WithState(State.Stable)
             .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
             .Build();
 
@@ -1036,7 +1183,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .Build();
 
         var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration).Build();
@@ -1084,7 +1231,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
             .Build();
 
@@ -1092,7 +1239,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
             .Build();
 
@@ -1100,7 +1247,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
             .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
-            .WithTrajectory(new Trajectory(ttg))
+            .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
             .Build();
 
@@ -1151,25 +1298,31 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
         var ttg = TimeSpan.FromMinutes(10);
+        var terminalTrajectory = new TerminalTrajectory(ttg, ttg, ttg);
 
+        // Build flights with a trajectory matching the mock service so FF estimates and landing estimates are consistent.
+        // FF estimates must be in the future so CalculateEstimates doesn't treat them as already-crossed.
         var flight1 = new FlightBuilder("QFA123")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(15))
+            .WithTrajectory(terminalTrajectory)
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(5))   // Landing = now+15m
             .WithRunway("34L")
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(20))
+            .WithTrajectory(terminalTrajectory)
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))  // Landing = now+20m
             .WithRunway("34L")
             .Build();
 
         var flight3 = new FlightBuilder("QFA789")
             .WithState(State.Unstable)
             .WithFeederFix("RIVET")
-            .WithLandingEstimate(clock.UtcNow().AddMinutes(25))
+            .WithTrajectory(terminalTrajectory)
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(15))  // Landing = now+25m
             .WithRunway("34L")
             .Build();
 
@@ -1197,7 +1350,7 @@ public class FlightUpdatedHandlerTests(ClockFixture clockFixture)
             TimeSpan.FromHours(1),
             _position,
             [
-                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20)),
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20)), // Landing = now+30m
                 new FixEstimate("YSSY", newLandingEstimate)
             ]);
 

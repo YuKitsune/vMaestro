@@ -462,7 +462,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Short TTG: later feeder fix, earlier landing estimate
         var shortTtg = new FlightBuilder("SHORT")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(5)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(5)))
             .WithFeederFixEstimate(_time.AddMinutes(15)) // Feeder: +15, Landing estimate: +20
             .WithRunway("34L")
             .WithState(State.Unstable)
@@ -470,7 +470,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Medium TTG: middle feeder fix, middle landing estimate
         var mediumTtg = new FlightBuilder("MEDIUM")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(15)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(15)))
             .WithFeederFixEstimate(_time.AddMinutes(10)) // Feeder: +10, Landing estimate: +25
             .WithRunway("34L")
             .WithState(State.Unstable)
@@ -478,7 +478,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Long TTG: earliest feeder fix, latest landing estimate
         var longTtg = new FlightBuilder("LONG")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(30)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(30)))
             .WithFeederFixEstimate(_time.AddMinutes(5)) // Feeder: +5, Landing estimate: +35
             .WithRunway("34L")
             .WithState(State.Unstable)
@@ -508,7 +508,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Short TTG: later feeder fix but much earlier landing
         var shortTtg = new FlightBuilder("SHORT")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(5)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(5)))
             .WithFeederFixEstimate(_time.AddMinutes(30)) // Feeder: +30, Landing estimate: +35
             .WithRunway("34L")
             .WithState(State.Unstable)
@@ -516,7 +516,7 @@ public class SequenceExtensionMethodsTests(ClockFixture clockFixture)
 
         // Long TTG: earlier feeder fix but much later landing
         var longTtg = new FlightBuilder("LONG")
-            .WithTrajectory(new Trajectory(TimeSpan.FromMinutes(40)))
+            .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(40)))
             .WithFeederFixEstimate(_time.AddMinutes(5)) // Feeder: +5, Landing estimate: +45
             .WithRunway("34L")
             .WithState(State.Unstable)

@@ -74,11 +74,11 @@ public class MoveFlightRequestHandler(
             logger.Verbose(
                 "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
                 flight.Callsign,
-                flight.AssignedRunwayIdentifier,
+                request.RunwayIdentifier,
                 flight.ApproachType,
-                trajectory.TimeToGo,
-                trajectory.Pressure,
-                trajectory.MaxPressure);
+                trajectory.NormalTimeToGo,
+                trajectory.PressureTimeToGo,
+                trajectory.MaxPressureTimeToGo);
 
             flight.InvalidateSequenceData();
 

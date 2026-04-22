@@ -170,8 +170,8 @@ Labels:
         - {Type: HighSpeed, Width: 1, Padding: 0, Symbol: '+'}
         - {Type: ManualDelay, Width: 1, Padding: 0, ZeroDelaySymbol: '#', ManualDelaySymbol: '%'}
         - {Type: CouplingStatus, Width: 1, Padding: 1, UncoupledSymbol: '*'}
-        - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [ControlAction]}
-        - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [ControlAction]}
+        - {Type: RequiredDelay, Width: 3, Padding: 1, ColourSources: [RequiredControlAction]}
+        - {Type: RemainingDelay, Width: 3, Padding: 0, ColourSources: [RemainingControlAction]}
 ```
 
 #### Item Types
@@ -185,8 +185,8 @@ Labels:
 | `ApproachType` | Approach type | |
 | `LandingTime` | Scheduled landing time | |
 | `FeederFixTime` | Scheduled feeder fix time | |
-| `RequiredDelay` | Total delay required | |
-| `RemainingDelay` | Remaining delay | |
+| `RequiredDelay` | Delay assigned at scheduling time | `Component` |
+| `RemainingDelay` | Remaining delay to absorb | `Component` |
 | `ManualDelay` | Manual delay indicator | `ZeroDelaySymbol`, `ManualDelaySymbol` |
 | `HighSpeed` | High speed indicator | `Symbol` |
 | `CouplingStatus` | Coupling status | `UncoupledSymbol` |
@@ -200,6 +200,16 @@ Labels:
 | `Padding` | integer | No | Padding in characters |
 | `ColourSources` | array | No | Colour sources in priority order |
 
+#### Delay Component
+
+The `Component` property on `RequiredDelay` and `RemainingDelay` controls which portion of the split delay is displayed. Defaults to `Total`.
+
+| Value | Description |
+|-------|-------------|
+| `Total` | Sum of enroute and terminal delay |
+| `Enroute` | Enroute delay only |
+| `Tma` | Terminal delay only |
+
 #### Colour Sources
 
 - `Runway` - From airport runway colours
@@ -207,7 +217,8 @@ Labels:
 - `FeederFix` - From airport feeder fix colours
 - `State` - From global state colours
 - `RunwayMode` - From global runway mode colour
-- `ControlAction` - From global control action colours
+- `RequiredControlAction` - From global control action colours representing the required delay
+- `RemainingControlAction` - From global control action colours representing the remaining delay
 
 ## Airport Configuration
 
@@ -259,6 +270,7 @@ Airports:
 | `LostFlightTimeoutMinutes` | integer | 10 | Timeout for lost flights |
 | `AverageLandingSpeed` | integer | 150 | Average landing speed (TAS) in knots for distance calculations |
 | `UpperWindAltitude` | integer | 6000 | Altitude in feet for upper winds from GRIB data |
+| `DefaultMaxEnrouteLinearDelayMinutes` | integer | `8` | Default enroute delay capacity used when no matching enroute trajectory is configured |
 
 Flight states: `Unstable`, `Stable`, `SuperStable`, `Frozen`
 
@@ -362,11 +374,11 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 
 #### Pressure and Maximum Pressure
 
-`PressureSegments` represent a small path extension ATC can use to absorb minor delays, such as extending the downwind leg. The time to fly these segments is added to TTG to produce P.
+`PressureSegments` represent a small path extension ATC can use to absorb minor delays, such as extending the downwind leg.
 
-`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar. The time to fly these segments is added to P to produce Pmax.
+`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar.
 
-Both lists are optional. A trajectory with no pressure segments has P = Pmax = TTG.
+Both lists are optional. A trajectory with no pressure segments will result in all delay needing to be absorbed prior to the feeder fix (i.e. in the enroute phase)
 
 ```yaml
 Trajectories:
@@ -409,6 +421,34 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 |----------|------|----------|-------------|
 | `After` | string | Yes | The name of the segment in the normal trajectory where this trajectory extends from |
 | `Segments` | array | Yes | Ordered segments from the branching point to runway threshold |
+
+### Enroute Trajectories
+
+Enroute trajectories define how much delay can be absorbed in the enroute phase for flights arriving via each feeder fix.
+When a flight's route passes through a matching entry point, that trajectories values are used.
+Flights with no matching entry use `DefaultMaxEnrouteLinearDelayMinutes`.
+
+```yaml
+EnrouteTrajectories:
+
+    # Example: Arrivals via VELGI can take a shortcut (i.e. cutting the corner) to gain 3 minutes
+  - EntryPoint: VELGI
+    FeederFix: RIVET
+    MaxEnrouteLinearDelayMinutes: 8
+    ShortcutTimeToGainMinutes: 3
+
+    # Example: Arrivals via NONUP spend less time in the enroute phase, and have a lower threshold before holding is required
+  - EntryPoint: NONUP
+    FeederFix: RIVET
+    MaxEnrouteLinearDelayMinutes: 6
+```
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `EntryPoint` | string | Yes | Waypoint along the flight plan route where the enroute phase begins |
+| `FeederFix` | string | Yes | Feeder fix this entry applies to |
+| `MaxEnrouteLinearDelayMinutes` | integer | Yes | Maximum delay absorbable in the enroute phase via speed reduction or holding |
+| `ShortcutTimeToGainMinutes` | integer | No | Time that can be gained by flying a direct routing through the enroute area. Default: `0` |
 
 ### Departure Airports
 

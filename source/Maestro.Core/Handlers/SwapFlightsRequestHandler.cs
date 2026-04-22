@@ -53,29 +53,6 @@ public class SwapFlightsRequestHandler(
             // Swap positions
             sequence.Swap(firstFlight, secondFlight);
 
-            // TODO: This has been moved into the Sequence. I'm not sure how I feel about it.
-
-            // // Swap landing times
-            // var firstLandingTime = firstFlight.LandingTime;
-            // var secondLandingTime = secondFlight.LandingTime;
-            // firstFlight.SetLandingTime(secondLandingTime);
-            // secondFlight.SetLandingTime(firstLandingTime);
-            //
-            // // Re-calculate feeder-fix times (don't swap because they could be on different arrivals with different intervals)
-            // var firstFeederFixTime = GetFeederFixTime(firstFlight);
-            // if (firstFeederFixTime is not null)
-            //     firstFlight.SetFeederFixTime(firstFeederFixTime.Value);
-            //
-            // var secondFeederFixTime = GetFeederFixTime(secondFlight);
-            // if (secondFeederFixTime is not null)
-            //     secondFlight.SetFeederFixTime(secondFeederFixTime.Value);
-            //
-            // // Swap runways
-            // var firstRunway = firstFlight.AssignedRunwayIdentifier;
-            // var secondRunway = secondFlight.AssignedRunwayIdentifier;
-            // firstFlight.SetRunway(secondRunway, manual: true);
-            // secondFlight.SetRunway(firstRunway, manual: true);
-
             // Unstable flights become stable when swapped
             if (firstFlight.State == State.Unstable) firstFlight.SetState(airportConfiguration.ManualInteractionState, clock);
             if (secondFlight.State == State.Unstable) secondFlight.SetState(airportConfiguration.ManualInteractionState, clock);
@@ -92,11 +69,4 @@ public class SwapFlightsRequestHandler(
             cancellationToken);
     }
 
-    DateTimeOffset? GetFeederFixTime(Flight flight)
-    {
-        if (flight.Trajectory is null)
-            return null;
-
-        return flight.LandingTime.Subtract(flight.Trajectory.TimeToGo);
-    }
 }
