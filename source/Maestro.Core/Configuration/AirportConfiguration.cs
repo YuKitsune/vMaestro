@@ -102,7 +102,6 @@ public class AirportConfiguration
     public int DefaultMaxEnrouteLinearDelayMinutes { get; init; } = 8;
 
     public required TerminalTrajectoryConfiguration[] TerminalTrajectories { get; init; }
-get; init; }
 
     /// <summary>
     ///     The default TTG in minutes used when no matching trajectory is found.
@@ -114,7 +113,7 @@ get; init; }
     /// </summary>
     public DelayStrategy DelayStrategy { get; init; } = DelayStrategy.EnrouteFirst;
 
-    public required DepartureConfiguration[] DepartureAirports { get; init; } = []
+    public required DepartureConfiguration[] DepartureAirports { get; init; } = [];
 
     // TODO: Average taxi times and terminal assignments
 
