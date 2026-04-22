@@ -428,12 +428,12 @@ Enroute trajectories define how much delay can be absorbed in the enroute phase 
 
 ```yaml
 EnrouteTrajectories:
-  - EntryPoint: ENLOU
+  - EntryPoint: VELGI
     FeederFix: RIVET
     MaxEnrouteLinearDelayMinutes: 8
     ShortcutTimeToGainMinutes: 3
-  - EntryPoint: AKMIR
-    FeederFix: WELSH
+  - EntryPoint: NONUP
+    FeederFix: RIVET
     MaxEnrouteLinearDelayMinutes: 6
 ```
 

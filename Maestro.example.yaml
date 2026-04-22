@@ -417,12 +417,12 @@ Airports:
   #   ShortcutTimeToGainMinutes:    Time that can be gained by flying a direct routing, if available (default: 0)
 
   EnrouteTrajectories:
-    - EntryPoint: ENLOU
+    - EntryPoint: VELGI
       FeederFix: RIVET
       MaxEnrouteLinearDelayMinutes: 8
       ShortcutTimeToGainMinutes: 3
-    - EntryPoint: AKMIR
-      FeederFix: WELSH
+    - EntryPoint: NONUP
+      FeederFix: RIVET
       MaxEnrouteLinearDelayMinutes: 6
 
   # ---------------------------------------------------------------------------
