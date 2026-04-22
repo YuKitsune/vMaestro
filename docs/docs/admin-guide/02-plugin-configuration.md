@@ -374,11 +374,11 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 
 #### Pressure and Maximum Pressure
 
-`PressureSegments` represent a small path extension ATC can use to absorb minor delays, such as extending the downwind leg. The time to fly these segments is added to TTG to produce P.
+`PressureSegments` represent a small path extension ATC can use to absorb minor delays, such as extending the downwind leg.
 
-`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar. The time to fly these segments is added to P to produce Pmax.
+`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar.
 
-Both lists are optional. A trajectory with no pressure segments has P = Pmax = TTG.
+Both lists are optional.
 
 ```yaml
 Trajectories:
@@ -424,14 +424,20 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 
 ### Enroute Trajectories
 
-Enroute trajectories define how much delay can be absorbed in the enroute phase for flights arriving via each feeder fix. When a flight's route passes through a matching entry point, that trajectories values are used. Flights with no matching entry use `DefaultMaxEnrouteLinearDelayMinutes`.
+Enroute trajectories define how much delay can be absorbed in the enroute phase for flights arriving via each feeder fix.
+When a flight's route passes through a matching entry point, that trajectories values are used.
+Flights with no matching entry use `DefaultMaxEnrouteLinearDelayMinutes`.
 
 ```yaml
 EnrouteTrajectories:
+
+    # Example: Arrivals via VELGI can take a shortcut (i.e. cutting the corner) to gain 3 minutes
   - EntryPoint: VELGI
     FeederFix: RIVET
     MaxEnrouteLinearDelayMinutes: 8
     ShortcutTimeToGainMinutes: 3
+
+    # Example: Arrivals via NONUP spend less time in the enroute phase, and have a lower threshold before holding is required
   - EntryPoint: NONUP
     FeederFix: RIVET
     MaxEnrouteLinearDelayMinutes: 6

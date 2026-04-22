@@ -44,19 +44,16 @@ A flight may have an `ETA_FF` without tracking via a specific feeder fix. In thi
 
 ## Terminal Trajectories
 
-A terminal trajectory represents the flight path from a feeder fix to the runway threshold. vMaestro uses terminal trajectories to calculate TTG, taking into account the aircraft's speed and upper winds.
+Terminal trajectories define the paths a flight takes from its feeder fix to the runway threshold.
+vMaestro uses them to estimate arrival times and determine how much delay can be absorbed in each phase of flight.
 
-TTG is recalculated each time a flight enters the sequence, is recomputed, or has its runway or approach type changed.
+vMaestro models three terminal trajectories:
 
-### Pressure and Maximum Pressure
+- Normal Approach: Used to calculate the travel time from the feeder fix to the runway threshold, or time-to-go (TTG)
+- Pressure Approach: A small path extension for absorbing minor delays
+- Maximum Pressure Approach: The largest path extension that can be used for absorbing delay within the TMA
 
-Each trajectory also defines two delay-absorption parameters used by the scheduling algorithm.
-
-**Pressure (P)** is the additional time available through a small path extension, such as extending the downwind leg before turning base. The delay that can be absorbed this way is the difference between P and TTG.
-
-**Maximum Pressure (Pmax)** is the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may involve more significant routing such as extended vectoring. The delay available beyond P is the difference between Pmax and P.
-
-Pmax defines the total terminal delay capacity. Any required delay beyond this capacity is handled in the enroute phase.
+![Terminal Trajectories Diagram](../../static/img/tma_trajectory.png)
 
 ## Runway Modes
 
