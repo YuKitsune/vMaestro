@@ -378,7 +378,7 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 
 `MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar.
 
-Both lists are optional.
+Both lists are optional. A trajectory with no pressure segments will result in all delay needing to be absorbed prior to the feeder fix (i.e. in the enroute phase)
 
 ```yaml
 Trajectories:

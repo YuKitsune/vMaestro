@@ -417,10 +417,14 @@ Airports:
   #   ShortcutTimeToGainMinutes:    Time that can be gained by flying a direct routing, if available (default: 0)
 
   EnrouteTrajectories:
+
+    # Example: Arrivals via VELGI can take a shortcut (i.e. cutting the corner) to gain 3 minutes
     - EntryPoint: VELGI
       FeederFix: RIVET
       MaxEnrouteLinearDelayMinutes: 8
       ShortcutTimeToGainMinutes: 3
+
+    # Example: Arrivals via NONUP spend less time in the enroute phase, and have a lower threshold before holding is required
     - EntryPoint: NONUP
       FeederFix: RIVET
       MaxEnrouteLinearDelayMinutes: 6
@@ -568,7 +572,7 @@ Airports:
 
   DefaultTimeToGoMinutes: 18
 
-  # Define trajectories
+  # Define terminal trajectories
   TerminalTrajectories:
     - FeederFix: ARBEY
       RunwayIdentifier: '09'
