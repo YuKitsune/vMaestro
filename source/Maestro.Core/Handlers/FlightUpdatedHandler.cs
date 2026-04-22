@@ -234,11 +234,17 @@ public class FlightUpdatedHandler(
                             fixNames,
                             session.Sequence.UpperWind);
 
-                        sequencedFlight.SetFeederFix(
-                            feederFix?.FixIdentifier,
-                            updatedTrajectory,
-                            feederFix?.Estimate,
-                            landingEstimate);
+                        // Don't update estimates if: no position, manually set, or already past the feeder fix
+                        if (notification.Position is not null && !notification.Position.IsOnGround &&
+                            !sequencedFlight.ManualFeederFixEstimate &&
+                            (string.IsNullOrEmpty(sequencedFlight.FeederFixIdentifier) || sequencedFlight.FeederFixEstimate > clock.UtcNow()))
+                        {
+                            sequencedFlight.SetFeederFix(
+                                feederFix?.FixIdentifier,
+                                updatedTrajectory,
+                                feederFix?.Estimate,
+                                landingEstimate);
+                        }
 
                         var updatedEnrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
                             sequencedFlight.DestinationIdentifier,
