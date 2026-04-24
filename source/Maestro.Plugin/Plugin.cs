@@ -98,7 +98,7 @@ public class Plugin : IPlugin
     {
         var selectedTrack = MMI.SelectedTrack;
         var callsign = selectedTrack?.GetFDR()?.Callsign;
-        WeakReferenceMessenger.Default.Send(new TrackSelectedMessage(callsign));
+        WeakReferenceMessenger.Default.Send(new VatsysTrackSelectedNotification(callsign));
     }
 
     void ConfigureTheme()

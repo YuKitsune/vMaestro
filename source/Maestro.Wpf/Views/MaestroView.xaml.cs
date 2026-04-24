@@ -3,6 +3,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Mvvm.Messaging;
+using Maestro.Wpf.Contracts;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
@@ -35,6 +37,7 @@ public partial class MaestroView
 
     // Flight label reuse pool
     private readonly Dictionary<string, FlightLabelView> _flightLabels = new();
+    private string? _vatsysSelectedTrackCallsign;
 
     DateTimeOffset ReferenceTime => DateTimeOffset.UtcNow.Add(ViewModel.ScrollOffset);
 
@@ -53,6 +56,9 @@ public partial class MaestroView
 
         Loaded += ControlLoaded;
         SizeChanged += OnSizeChanged;
+
+        WeakReferenceMessenger.Default.Register<VatsysTrackSelectedNotification>(this, (_, m) =>
+            _vatsysSelectedTrackCallsign = m.Callsign);
 
         // Subscribe to property changes that affect rendering
         maestroViewModel.PropertyChanged += (sender, args) =>
@@ -1217,7 +1223,8 @@ public partial class MaestroView
                         labelConfiguration.GlobalColours,
                         flight,
                         ViewModel.Runways,
-                        approachTypes);
+                        approachTypes,
+                        _vatsysSelectedTrackCallsign);
 
                     flightLabelViewModel.UpdateLabelItems(labelLayout, flight, ladderIndex);
 

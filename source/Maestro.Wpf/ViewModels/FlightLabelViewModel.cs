@@ -363,7 +363,8 @@ public partial class FlightLabelViewModel : ObservableObject
         GlobalColourConfiguration globalColorConfiguration,
         FlightDto flightViewModel,
         string[] availableRunways,
-        string[] availableApproachTypes)
+        string[] availableApproachTypes,
+        string? vatsysSelectedTrackCallsign = null)
     {
         _mediator = mediator;
         _errorReporter = errorReporter;
@@ -372,8 +373,9 @@ public partial class FlightLabelViewModel : ObservableObject
         _availableRunways = availableRunways;
         _availableApproachTypes = availableApproachTypes;
         _flightViewModel = flightViewModel;
+        _isVatsysTrackSelected = vatsysSelectedTrackCallsign == flightViewModel.Callsign;
 
-        WeakReferenceMessenger.Default.Register<TrackSelectedMessage>(this, (_, m) =>
+        WeakReferenceMessenger.Default.Register<VatsysTrackSelectedNotification>(this, (_, m) =>
             IsVatsysTrackSelected = m.Callsign == FlightViewModel.Callsign);
     }
 
