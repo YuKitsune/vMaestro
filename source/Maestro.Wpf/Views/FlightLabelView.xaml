@@ -50,6 +50,10 @@
                                 <Setter Property="Visibility" Value="Visible"/>
                                 <Setter Property="BevelType" Value="Raised"/>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding IsVatsysTrackSelected}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Setter Property="BevelType" Value="Raised"/>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                 <Setter Property="Visibility" Value="Visible"/>
                                 <Setter Property="BevelType" Value="Outline"/>
