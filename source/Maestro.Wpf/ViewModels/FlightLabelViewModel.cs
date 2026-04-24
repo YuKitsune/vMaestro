@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
@@ -15,15 +16,7 @@ using Color = Maestro.Core.Configuration.Color;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class FlightLabelViewModel(
-    IMediator mediator,
-    IErrorReporter errorReporter,
-    MaestroViewModel maestroViewModel,
-    GlobalColourConfiguration globalColorConfiguration,
-    FlightDto flightViewModel,
-    string[] availableRunways,
-    string[] availableApproachTypes)
-    : ObservableObject
+public partial class FlightLabelViewModel : ObservableObject
 {
     const string None = "NONE";
 
@@ -33,16 +26,19 @@ public partial class FlightLabelViewModel(
     [NotifyPropertyChangedFor(nameof(CanChangeApproachType))]
     [NotifyPropertyChangedFor(nameof(Indicators))]
     [NotifyCanExecuteChangedFor(nameof(ShowInformationWindowCommand))]
-    FlightDto _flightViewModel = flightViewModel;
+    FlightDto _flightViewModel;
 
     [ObservableProperty]
     bool _isSelected = false;
 
+    [ObservableProperty]
+    bool _isVatsysTrackSelected = false;
+
     public string Indicators => BuildIndicators();
 
-    public string[] AvailableRunways => availableRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
+    public string[] AvailableRunways => _availableRunways.Where(r => r != FlightViewModel.AssignedRunwayIdentifier).ToArray();
 
-    public string[] AvailableApproachTypes => availableApproachTypes.Where(a => a != FlightViewModel.ApproachType).ToArray();
+    public string[] AvailableApproachTypes => _availableApproachTypes.Where(a => a != FlightViewModel.ApproachType).ToArray();
 
     public bool CanChangeApproachType => AvailableApproachTypes.Any();
 
@@ -94,11 +90,11 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new OpenInformationWindowRequest(FlightViewModel));
+            _mediator.Send(new OpenInformationWindowRequest(FlightViewModel));
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -112,13 +108,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new RecomputeRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
                 CancellationToken.None);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -132,13 +128,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new ChangeRunwayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, runwayIdentifier),
                 CancellationToken.None);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -150,13 +146,13 @@ public partial class FlightLabelViewModel(
             if (approachType == None)
                 approachType = string.Empty;
 
-            mediator.Send(
+            _mediator.Send(
                 new ChangeApproachTypeRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, approachType),
                 CancellationToken.None);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -165,16 +161,16 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
-                    maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    maestroViewModel.PendingFlights.ToArray()));
+                    _maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
+                    _maestroViewModel.PendingFlights.ToArray()));
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -188,16 +184,16 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.After),
-                    maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    maestroViewModel.PendingFlights.ToArray()));
+                    _maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
+                    _maestroViewModel.PendingFlights.ToArray()));
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -210,7 +206,7 @@ public partial class FlightLabelViewModel(
                 ? [FlightViewModel.AssignedRunwayIdentifier]
                 : Array.Empty<string>();
 
-            mediator.Send(
+            _mediator.Send(
                 new OpenSlotWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     SlotId: null, // slotId is null for new slots
@@ -220,7 +216,7 @@ public partial class FlightLabelViewModel(
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -233,7 +229,7 @@ public partial class FlightLabelViewModel(
                 ? [FlightViewModel.AssignedRunwayIdentifier]
                 : Array.Empty<string>();
 
-            mediator.Send(
+            _mediator.Send(
                 new OpenSlotWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     SlotId: null, // slotId is null for new slots
@@ -243,7 +239,7 @@ public partial class FlightLabelViewModel(
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -252,7 +248,7 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new OpenChangeFeederFixEstimateWindowRequest(
                     FlightViewModel.DestinationIdentifier,
                     FlightViewModel.Callsign,
@@ -261,7 +257,7 @@ public partial class FlightLabelViewModel(
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -275,13 +271,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new RemoveRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
                 CancellationToken.None);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -290,13 +286,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new DesequenceRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
                 CancellationToken.None);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -305,13 +301,13 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(
+            _mediator.Send(
                 new MakePendingRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign),
                 CancellationToken.None);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -328,13 +324,13 @@ public partial class FlightLabelViewModel(
                 _ => throw new ArgumentException($"Invalid parameter type: {parameter?.GetType().Name ?? "null"}")
             };
 
-            mediator.Send(
+            _mediator.Send(
                 new ManualDelayRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign, maximumDelayMinutes),
                 CancellationToken.None);
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
@@ -343,16 +339,43 @@ public partial class FlightLabelViewModel(
     {
         try
         {
-            mediator.Send(new OpenCoordinationWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
+            _mediator.Send(new OpenCoordinationWindowRequest(FlightViewModel.DestinationIdentifier, FlightViewModel.Callsign));
         }
         catch (Exception ex)
         {
-            errorReporter.ReportError(ex);
+            _errorReporter.ReportError(ex);
         }
     }
 
     [ObservableProperty]
     ObservableCollection<LabelItemViewModel> _labelItems = [];
+
+    readonly IMediator _mediator;
+    readonly IErrorReporter _errorReporter;
+    readonly MaestroViewModel _maestroViewModel;
+    readonly GlobalColourConfiguration _globalColorConfiguration;
+    readonly string[] _availableRunways;
+    readonly string[] _availableApproachTypes;
+
+    public FlightLabelViewModel(IMediator mediator,
+        IErrorReporter errorReporter,
+        MaestroViewModel maestroViewModel,
+        GlobalColourConfiguration globalColorConfiguration,
+        FlightDto flightViewModel,
+        string[] availableRunways,
+        string[] availableApproachTypes)
+    {
+        _mediator = mediator;
+        _errorReporter = errorReporter;
+        _maestroViewModel = maestroViewModel;
+        _globalColorConfiguration = globalColorConfiguration;
+        _availableRunways = availableRunways;
+        _availableApproachTypes = availableApproachTypes;
+        _flightViewModel = flightViewModel;
+
+        WeakReferenceMessenger.Default.Register<TrackSelectedMessage>(this, (_, m) =>
+            IsVatsysTrackSelected = m.Callsign == FlightViewModel.Callsign);
+    }
 
     public void UpdateLabelItems(LabelLayoutConfiguration labelLayout, FlightDto flight, int ladderIndex)
     {
@@ -448,13 +471,13 @@ public partial class FlightLabelViewModel(
         {
             var color = itemConfigColourSource switch
             {
-                LabelItemColourSource.Runway when maestroViewModel.AirportConfiguration.Colours is not null => GetColorByRunway(maestroViewModel.AirportConfiguration.Colours, flight),
-                LabelItemColourSource.ApproachType when maestroViewModel.AirportConfiguration.Colours is not null => GetColorByApproachType(maestroViewModel.AirportConfiguration.Colours, flight),
-                LabelItemColourSource.FeederFix when maestroViewModel.AirportConfiguration.Colours is not null => GetColorByFeederFix(maestroViewModel.AirportConfiguration.Colours, flight),
-                LabelItemColourSource.State => GetColorByState(globalColorConfiguration, flight),
-                LabelItemColourSource.RunwayMode => GetColorByRunwayMode(globalColorConfiguration, flight),
-                LabelItemColourSource.RequiredControlAction => GetColorByRequiredControlAction(itemConfig, globalColorConfiguration, flight),
-                LabelItemColourSource.RemainingControlAction => GetColorByRemainingControlAction(itemConfig, globalColorConfiguration, flight),
+                LabelItemColourSource.Runway when _maestroViewModel.AirportConfiguration.Colours is not null => GetColorByRunway(_maestroViewModel.AirportConfiguration.Colours, flight),
+                LabelItemColourSource.ApproachType when _maestroViewModel.AirportConfiguration.Colours is not null => GetColorByApproachType(_maestroViewModel.AirportConfiguration.Colours, flight),
+                LabelItemColourSource.FeederFix when _maestroViewModel.AirportConfiguration.Colours is not null => GetColorByFeederFix(_maestroViewModel.AirportConfiguration.Colours, flight),
+                LabelItemColourSource.State => GetColorByState(_globalColorConfiguration, flight),
+                LabelItemColourSource.RunwayMode => GetColorByRunwayMode(_globalColorConfiguration, flight),
+                LabelItemColourSource.RequiredControlAction => GetColorByRequiredControlAction(itemConfig, _globalColorConfiguration, flight),
+                LabelItemColourSource.RemainingControlAction => GetColorByRemainingControlAction(itemConfig, _globalColorConfiguration, flight),
                 _ => null
             };
 

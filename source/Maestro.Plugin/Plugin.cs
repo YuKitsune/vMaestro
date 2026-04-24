@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core;
@@ -17,6 +18,7 @@ using Maestro.Plugin.Configuration;
 using Maestro.Plugin.Handlers;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf;
+using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,6 +67,8 @@ public class Plugin : IPlugin
             Network.Connected += NetworkOnConnected;
             Network.Disconnected += NetworkOnDisconnected;
 
+            MMI.SelectedTrackChanged += SelectedTrackChanged;
+
             var executingAssembly = Assembly.GetExecutingAssembly();
             var version = executingAssembly
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
@@ -88,6 +92,13 @@ public class Plugin : IPlugin
             Errors.Add(ex, Name);
             _logger?.Error(ex, "An error occurred during initialization.");
         }
+    }
+
+    void SelectedTrackChanged(object sender, EventArgs e)
+    {
+        var selectedTrack = MMI.SelectedTrack;
+        var callsign = selectedTrack?.GetFDR()?.Callsign;
+        WeakReferenceMessenger.Default.Send(new TrackSelectedMessage(callsign));
     }
 
     void ConfigureTheme()
