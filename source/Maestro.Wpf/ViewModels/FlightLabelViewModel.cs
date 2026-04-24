@@ -8,7 +8,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
-using Maestro.Core.Model;
 using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
 using MediatR;
@@ -16,7 +15,7 @@ using Color = Maestro.Core.Configuration.Color;
 
 namespace Maestro.Wpf.ViewModels;
 
-public partial class FlightLabelViewModel : ObservableObject
+public partial class FlightLabelViewModel : ObservableObject, IRecipient<VatsysTrackSelectedNotification>
 {
     const string None = "NONE";
 
@@ -375,8 +374,12 @@ public partial class FlightLabelViewModel : ObservableObject
         _flightViewModel = flightViewModel;
         _isVatsysTrackSelected = vatsysSelectedTrackCallsign == flightViewModel.Callsign;
 
-        WeakReferenceMessenger.Default.Register<VatsysTrackSelectedNotification>(this, (_, m) =>
-            IsVatsysTrackSelected = m.Callsign == FlightViewModel.Callsign);
+        WeakReferenceMessenger.Default.Register(this);
+    }
+
+    public void Receive(VatsysTrackSelectedNotification message)
+    {
+        IsVatsysTrackSelected = message.Callsign == FlightViewModel.Callsign;
     }
 
     public void UpdateLabelItems(LabelLayoutConfiguration labelLayout, FlightDto flight, int ladderIndex)

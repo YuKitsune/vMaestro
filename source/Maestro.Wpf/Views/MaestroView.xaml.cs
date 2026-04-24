@@ -19,7 +19,7 @@ namespace Maestro.Wpf.Views;
 /// <summary>
 /// Interaction logic for MaestroView.xaml
 /// </summary>
-public partial class MaestroView
+public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
 {
     const int FooterHeight = 32;
     const int LineThickness = 2;
@@ -57,8 +57,7 @@ public partial class MaestroView
         Loaded += ControlLoaded;
         SizeChanged += OnSizeChanged;
 
-        WeakReferenceMessenger.Default.Register<VatsysTrackSelectedNotification>(this, (_, m) =>
-            _vatsysSelectedTrackCallsign = m.Callsign);
+        WeakReferenceMessenger.Default.Register(this);
 
         // Subscribe to property changes that affect rendering
         maestroViewModel.PropertyChanged += (sender, args) =>
@@ -73,6 +72,11 @@ public partial class MaestroView
     }
 
     public MaestroViewModel ViewModel => (MaestroViewModel)DataContext;
+
+    public void Receive(VatsysTrackSelectedNotification message)
+    {
+        _vatsysSelectedTrackCallsign = message.Callsign;
+    }
 
     void TimerTick(object sender, EventArgs args)
     {
