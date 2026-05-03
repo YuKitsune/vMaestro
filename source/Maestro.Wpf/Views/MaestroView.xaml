@@ -25,6 +25,7 @@
             <converters:EqualityConverter x:Key="EqualityConverter" />
             <converters:LandingRateUnitSymbolConverter x:Key="LandingRateUnitSymbolConverter" />
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:BoolToHiddenVisibilityConverter x:Key="BoolToHiddenVisibilityConverter" />
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
@@ -174,7 +175,10 @@
                     Orientation="Vertical" />
 
                 <!-- Wind Configuration -->
-                <Button Grid.Column="6" Command="{Binding OpenWindCommand}" Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Button
+                    Grid.Column="6"
+                    Command="{Binding OpenWindCommand}"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToHiddenVisibilityConverter}}">
                     <Grid Margin="4,0,4,0">
                         <Grid.Resources>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource InteractiveTextStyle}">
@@ -212,10 +216,13 @@
                     Grid.Column="7"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
                     Orientation="Vertical"
-                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToHiddenVisibilityConverter}}"/>
 
                 <!-- Achieved Rates -->
-                <Grid Grid.Column="8" VerticalAlignment="Center" Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid
+                    Grid.Column="8"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToHiddenVisibilityConverter}}">
                     <Grid.RowDefinitions>
                         <RowDefinition/>
                         <RowDefinition/>
@@ -275,16 +282,19 @@
                     Grid.Column="9"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
                     Orientation="Vertical"
-                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToHiddenVisibilityConverter}}"/>
 
                 <!-- Units Selector -->
-                <Button Grid.Column="10" Width="24" Content="{Binding SelectedUnit, Converter={StaticResource LandingRateUnitSymbolConverter}}" Command="{Binding CycleUnitsCommand}" Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <Button
+                    Grid.Column="10"
+                    Width="24"
+                    Content="{Binding SelectedUnit, Converter={StaticResource LandingRateUnitSymbolConverter}}"
+                    Command="{Binding CycleUnitsCommand}"/>
 
                 <controls:BeveledLine
                     Grid.Column="11"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
-                    Orientation="Vertical"
-                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Orientation="Vertical" />
 
                 <!-- UTC Time -->
                 <TextBlock
@@ -292,8 +302,7 @@
                     Grid.Column="12"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Style="{StaticResource GenericTextStyle}"
-                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    Style="{StaticResource GenericTextStyle}"/>
             </Grid>
 
         </controls:BeveledBorder>
