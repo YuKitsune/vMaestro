@@ -1,5 +1,7 @@
 ﻿using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Shared;
+using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
@@ -13,6 +15,7 @@ namespace Maestro.Core.Handlers;
 public class ChangeApproachTypeRequestHandler(
     ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
+    IAirportConfigurationProvider airportConfigurationProvider,
     ITrajectoryService trajectoryService,
     IClock clock,
     IMediator mediator,
@@ -31,6 +34,8 @@ public class ChangeApproachTypeRequestHandler(
         }
 
         logger.Verbose("Changing approach type for {Callsign} to {NewApproachType} at {AirportIdentifier}", request.Callsign, request.ApproachType, request.AirportIdentifier);
+
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
         var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
@@ -59,6 +64,10 @@ public class ChangeApproachTypeRequestHandler(
                 session.Sequence.UpperWind);
 
             flight.SetApproachType(request.ApproachType, trajectory);
+
+            // Unstable flights become Stable when approach type is changed manually
+            if (flight.State is State.Unstable)
+                flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
             logger.Verbose(
                 "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",

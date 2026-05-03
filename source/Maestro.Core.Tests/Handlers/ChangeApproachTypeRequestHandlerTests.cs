@@ -56,6 +56,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var handler = new ChangeApproachTypeRequestHandler(
             sessionManager,
             new MockLocalConnectionManager(),
+            new AirportConfigurationProvider([airportConfiguration]),
             trajectoryService,
             clockFixture.Instance,
             mediator,
@@ -105,6 +106,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var handler = new ChangeApproachTypeRequestHandler(
             sessionManager,
             new MockLocalConnectionManager(),
+            new AirportConfigurationProvider([airportConfiguration]),
             trajectoryService,
             clockFixture.Instance,
             mediator,
@@ -158,6 +160,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var handler = new ChangeApproachTypeRequestHandler(
             sessionManager,
             new MockLocalConnectionManager(),
+            new AirportConfigurationProvider([airportConfiguration]),
             trajectoryService,
             clockFixture.Instance,
             mediator,
@@ -204,6 +207,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         var handler = new ChangeApproachTypeRequestHandler(
             sessionManager,
             slaveConnectionManager,
+            new AirportConfigurationProvider([airportConfiguration]),
             trajectoryService,
             clockFixture.Instance,
             mediator,
@@ -220,6 +224,102 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         flight.ApproachType.ShouldBe(originalApproachType, "Local flight should not be modified when relaying to master");
+    }
+
+    [Fact]
+    public async Task WhenChangingApproachType_AndTheFlightWasUnstable_ItBecomesStable()
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        var airportConfiguration = CreateAirportConfiguration();
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("BOREE")
+            .WithFeederFixEstimate(now.AddMinutes(10))
+            .WithApproachType(FirstApproachType)
+            .WithLandingEstimate(now.AddMinutes(30))
+            .WithLandingTime(now.AddMinutes(30))
+            .WithRunway("34R")
+            .WithState(State.Unstable)
+            .Build();
+
+        var trajectoryService = new MockTrajectoryService();
+
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeApproachTypeRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            new AirportConfigurationProvider([airportConfiguration]),
+            trajectoryService,
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", SecondApproachType);
+
+        flight.State.ShouldBe(State.Unstable, "Flight should initially be Unstable");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.State.ShouldBe(State.Stable, "Unstable flight should become Stable when approach type is changed");
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    [InlineData(State.Landed)]
+    public async Task WhenChangingApproachType_AndTheFlightWasNotUnstable_StateRemainsUnchanged(State state)
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        var airportConfiguration = CreateAirportConfiguration();
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("BOREE")
+            .WithFeederFixEstimate(now.AddMinutes(10))
+            .WithApproachType(FirstApproachType)
+            .WithLandingEstimate(now.AddMinutes(30))
+            .WithLandingTime(now.AddMinutes(30))
+            .WithRunway("34R")
+            .WithState(state)
+            .Build();
+
+        var trajectoryService = new MockTrajectoryService();
+
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        var handler = new ChangeApproachTypeRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            new AirportConfigurationProvider([airportConfiguration]),
+            trajectoryService,
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var request = new ChangeApproachTypeRequest("YSSY", "QFA1", SecondApproachType);
+
+        flight.State.ShouldBe(state, $"Flight should initially be {state}");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight.State.ShouldBe(state, $"Flight state should remain {state} when changing approach type");
     }
 
     static AirportConfiguration CreateAirportConfiguration()
