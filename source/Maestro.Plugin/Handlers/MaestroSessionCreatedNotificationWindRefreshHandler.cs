@@ -10,13 +10,14 @@ namespace Maestro.Plugin.Handlers;
 public class MaestroSessionCreatedNotificationWindRefreshHandler(IMediator mediator)
     : INotificationHandler<MaestroSessionCreatedNotification>
 {
-    public async Task Handle(MaestroSessionCreatedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(MaestroSessionCreatedNotification notification, CancellationToken cancellationToken)
     {
         if (!Network.IsConnected)
-            return;
+            return Task.CompletedTask;
 
-        await mediator.Send(
-            new RefreshWindRequest(notification.AirportIdentifier),
-            cancellationToken);
+        // Fire-and-forget: awaiting blocks the channel publisher from processing subsequent notifications
+        // (e.g. NetworkConnectedNotification) until the wind timeout expires, leaving the window blank.
+        _ = mediator.Send(new RefreshWindRequest(notification.AirportIdentifier), cancellationToken);
+        return Task.CompletedTask;
     }
 }
