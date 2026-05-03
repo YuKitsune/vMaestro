@@ -215,7 +215,8 @@
                 <controls:BeveledLine
                     Grid.Column="7"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
-                    Orientation="Vertical"/>
+                    Orientation="Vertical"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToHiddenVisibilityConverter}}"/>
 
                 <!-- Achieved Rates -->
                 <Grid
@@ -280,7 +281,8 @@
                 <controls:BeveledLine
                     Grid.Column="9"
                     Width="{x:Static local:Theme.BeveledLineWidth}"
-                    Orientation="Vertical" />
+                    Orientation="Vertical"
+                    Visibility="{Binding ShouldShowFlowControls, Converter={StaticResource BoolToHiddenVisibilityConverter}}"/>
 
                 <!-- Units Selector -->
                 <Button
