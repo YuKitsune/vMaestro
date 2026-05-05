@@ -53,7 +53,10 @@ public class FlightTests(ClockFixture clockFixture)
 
         // Act: New estimate after slowing down (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(2).Subtract(_defaultTtg));
-        flight.SetRemainingDelayData(DelayStrategyCalculator.Compute(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst));
+        flight.SetRemainingDelayData(new DelayDistribution(
+            flight.FeederFixTime - flight.FeederFixEstimate,
+            (flight.LandingTime - flight.LandingEstimate) - (flight.FeederFixTime - flight.FeederFixEstimate),
+            DelayStrategyCalculator.GetControlAction(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst)));
 
         // Assert
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
@@ -61,7 +64,10 @@ public class FlightTests(ClockFixture clockFixture)
 
         // Act: New estimate after slowing down
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(5).Subtract(_defaultTtg));
-        flight.SetRemainingDelayData(DelayStrategyCalculator.Compute(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst));
+        flight.SetRemainingDelayData(new DelayDistribution(
+            flight.FeederFixTime - flight.FeederFixEstimate,
+            (flight.LandingTime - flight.LandingEstimate) - (flight.FeederFixTime - flight.FeederFixEstimate),
+            DelayStrategyCalculator.GetControlAction(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst)));
 
         // Assert
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
@@ -84,7 +90,10 @@ public class FlightTests(ClockFixture clockFixture)
 
         // Act: New estimate after speeding up (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(-2).Subtract(_defaultTtg));
-        flight.SetRemainingDelayData(DelayStrategyCalculator.Compute(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst));
+        flight.SetRemainingDelayData(new DelayDistribution(
+            flight.FeederFixTime - flight.FeederFixEstimate,
+            (flight.LandingTime - flight.LandingEstimate) - (flight.FeederFixTime - flight.FeederFixEstimate),
+            DelayStrategyCalculator.GetControlAction(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst)));
 
         // Assert
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
@@ -92,7 +101,10 @@ public class FlightTests(ClockFixture clockFixture)
 
         // Act: New estimate after speeding up more
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(-5).Subtract(_defaultTtg));
-        flight.SetRemainingDelayData(DelayStrategyCalculator.Compute(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst));
+        flight.SetRemainingDelayData(new DelayDistribution(
+            flight.FeederFixTime - flight.FeederFixEstimate,
+            (flight.LandingTime - flight.LandingEstimate) - (flight.FeederFixTime - flight.FeederFixEstimate),
+            DelayStrategyCalculator.GetControlAction(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst)));
 
         // Assert
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
@@ -115,10 +127,46 @@ public class FlightTests(ClockFixture clockFixture)
 
         // Act: New estimate after slowing down too much (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(8).Subtract(_defaultTtg));
-        flight.SetRemainingDelayData(DelayStrategyCalculator.Compute(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst));
+        flight.SetRemainingDelayData(new DelayDistribution(
+            flight.FeederFixTime - flight.FeederFixEstimate,
+            (flight.LandingTime - flight.LandingEstimate) - (flight.FeederFixTime - flight.FeederFixEstimate),
+            DelayStrategyCalculator.GetControlAction(flight.LandingTime - flight.LandingEstimate, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst)));
 
         // Assert
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(-3));
+    }
+
+    [Fact]
+    public void WhenRemainingDelayIsNegative_NegativeDelayIsAllocatedToEnroute()
+    {
+        // Arrange: flight with 5 mins of enroute delay (STA_FF = ETA_FF + 5min)
+        var feederFixEta = _landingTime.AddMinutes(-20);
+        var feederFixSta = feederFixEta.AddMinutes(5);
+
+        var flight = new FlightBuilder("QFA1")
+            .WithLandingEstimate(_landingTime)
+            .WithLandingTime(_landingTime.AddMinutes(5))
+            .WithFeederFixEstimate(feederFixEta)
+            .WithFeederFixTime(feederFixSta)
+            .WithState(State.Stable)
+            .Build();
+
+        // Sanity: 5 mins of enroute remaining, 0 TMA
+        flight.RemainingEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5));
+        flight.RemainingTerminalDelay.ShouldBe(TimeSpan.Zero);
+
+        // Act: ETA_FF moves 8 mins later, past STA_FF - flight needs to expedite at feeder fix
+        flight.UpdateFeederFixEstimate(feederFixEta.AddMinutes(8));
+
+        var remainingEnroute = flight.FeederFixTime - flight.FeederFixEstimate;
+        var remainingTotal = flight.LandingTime - flight.LandingEstimate;
+        flight.SetRemainingDelayData(new DelayDistribution(remainingEnroute, remainingTotal - remainingEnroute,
+            DelayStrategyCalculator.GetControlAction(remainingTotal, flight.TerminalTrajectory, flight.EnrouteTrajectory, DelayStrategy.EnrouteFirst)));
+
+        // Assert: negative remaining delay is in enroute (STA_FF - ETA_FF = -3), not TMA
+        flight.RemainingEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(-3));
+        flight.RemainingTerminalDelay.ShouldBe(TimeSpan.Zero);
         (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(-3));
     }
 

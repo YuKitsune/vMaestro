@@ -294,14 +294,19 @@ public class FlightUpdatedHandler(
                         }
                     }
 
-                    // Update the remaining delay distribution to reflect how much delay remains
-                    var remainingDelay = sequencedFlight.LandingTime - sequencedFlight.LandingEstimate;
-                    var remainingDistribution = DelayStrategyCalculator.Compute(
-                        remainingDelay,
+                    // Update remaining delay directly from estimates: enroute = STA_FF - ETA_FF, TMA = remainder
+                    var remainingEnrouteDelay = sequencedFlight.FeederFixTime - sequencedFlight.FeederFixEstimate;
+                    var remainingTotalDelay = sequencedFlight.LandingTime - sequencedFlight.LandingEstimate;
+                    var remainingControlAction = DelayStrategyCalculator.GetControlAction(
+                        remainingTotalDelay,
                         sequencedFlight.TerminalTrajectory,
                         sequencedFlight.EnrouteTrajectory,
                         airportConfiguration.DelayStrategy);
-                    sequencedFlight.SetRemainingDelayData(remainingDistribution);
+                    sequencedFlight.SetRemainingDelayData(
+                        new DelayDistribution(
+                            remainingEnrouteDelay,
+                            TerminalDelay: remainingTotalDelay - remainingEnrouteDelay,
+                            remainingControlAction));
 
                     sequencedFlight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
