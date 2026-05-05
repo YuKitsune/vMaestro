@@ -11,7 +11,7 @@ class MinutesConverter : IValueConverter
     {
         return value switch
         {
-            TimeSpan timeSpan => timeSpan.TotalMinutes.ToString("00"),
+            TimeSpan timeSpan => ((int)timeSpan.TotalMinutes).ToString("00"),
             DateTimeOffset dateTime => dateTime.Minute.ToString("00"),
             _ => string.Empty
         };
