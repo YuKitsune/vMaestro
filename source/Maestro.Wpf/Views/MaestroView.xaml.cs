@@ -12,6 +12,7 @@ using Maestro.Wpf.Controls;
 using Maestro.Wpf.Integrations;
 using Maestro.Wpf.ViewModels;
 using MediatR;
+using Serilog;
 using Point = System.Windows.Point;
 
 namespace Maestro.Wpf.Views;
@@ -38,11 +39,13 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
     // Flight label reuse pool
     private readonly Dictionary<string, FlightLabelView> _flightLabels = new();
     private string? _vatsysSelectedTrackCallsign;
+    private readonly ILogger _logger;
 
     DateTimeOffset ReferenceTime => DateTimeOffset.UtcNow.Add(ViewModel.ScrollOffset);
 
-    public MaestroView(MaestroViewModel maestroViewModel)
+    public MaestroView(MaestroViewModel maestroViewModel, ILogger logger)
     {
+        _logger = logger;
         InitializeComponent();
         DataContext = maestroViewModel;
 
@@ -1183,7 +1186,10 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
             var matchingLadders = GetMatchingLadders(flight);
             if (matchingLadders.Count == 0)
             {
-                // Flight doesn't match any ladder
+                if (_flightLabels.Keys.Any(k => k.StartsWith($"{flight.Callsign}_")))
+                    _logger.Debug(
+                        "UpdateLabels: {Callsign} has no matching ladders — runway={Runway}, feederFix={FeederFix}",
+                        flight.Callsign, flight.AssignedRunwayIdentifier, flight.FeederFixIdentifier);
                 continue;
             }
 
@@ -1197,6 +1203,10 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
                 // Skip creating/updating label if not visible in time window
                 if (!isVisible)
                 {
+                    if (_flightLabels.ContainsKey(key))
+                        _logger.Debug(
+                            "UpdateLabels: {Callsign} outside time window — STA {STA:HH:mm}, ref {Ref:HH:mm}, yOffset {YOffset:F0}px, ladderHeight {LadderHeight:F0}px",
+                            flight.Callsign, referenceFlightTime.Value, referenceTime, yOffset, ladderHeight);
                     continue;
                 }
 
@@ -1207,7 +1217,13 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
 
                 // Skip if ladder is scrolled out of view (no ladder element exists)
                 if (ladderElement == null)
+                {
+                    if (_flightLabels.ContainsKey(key))
+                        _logger.Debug(
+                            "UpdateLabels: {Callsign} ladder {Index} scrolled out of view",
+                            flight.Callsign, ladderIndex);
                     continue;
+                }
 
                 // Only track labels that are both time-visible AND on visible ladders
                 expectedKeys.Add(key);
@@ -1276,12 +1292,25 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
         }
 
         // Remove flight labels that are no longer visible
+        var previousLabelCount = _flightLabels.Count;
         var keysToRemove = _flightLabels.Keys.Except(expectedKeys).ToList();
         foreach (var key in keysToRemove)
         {
             var flightLabel = _flightLabels[key];
             LadderCanvas.Children.Remove(flightLabel);
             _flightLabels.Remove(key);
+        }
+
+        if (keysToRemove.Count > 0)
+        {
+            _logger.Debug(
+                "UpdateLabels: removed {Count} label(s) — {Keys}",
+                keysToRemove.Count, string.Join(", ", keysToRemove));
+
+            if (_flightLabels.Count == 0 && previousLabelCount > 0)
+                _logger.Warning(
+                    "UpdateLabels: all {PreviousCount} label(s) cleared — ViewModel.Flights={FlightCount}, currentFlights={CurrentCount}, expectedKeys={ExpectedCount}",
+                    previousLabelCount, ViewModel.Flights.Count, currentFlights.Count, expectedKeys.Count);
         }
     }
 

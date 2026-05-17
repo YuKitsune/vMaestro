@@ -6,6 +6,7 @@ using Maestro.Wpf.Integrations;
 using Maestro.Wpf.ViewModels;
 using Maestro.Wpf.Views;
 using MediatR;
+using Serilog;
 using vatsys;
 
 namespace Maestro.Plugin.Handlers;
@@ -15,7 +16,8 @@ public class MaestroSessionCreatedNotificationHandler(
     LabelsConfiguration labelsConfiguration,
     WindowManager windowManager,
     IMediator mediator,
-    IErrorReporter errorReporter)
+    IErrorReporter errorReporter,
+    ILogger logger)
     : INotificationHandler<MaestroSessionCreatedNotification>
 {
     public async Task Handle(MaestroSessionCreatedNotification notification, CancellationToken cancellationToken)
@@ -38,7 +40,8 @@ public class MaestroSessionCreatedNotificationHandler(
                     mediator,
                     errorReporter,
                     labelsConfiguration,
-                    airportConfiguration)),
+                    airportConfiguration),
+                logger),
             shrinkToContent: false,
             new Size(640, 800),
             configureForm: form =>
