@@ -1,7 +1,9 @@
+using Maestro.Contracts.Flights;
 using Maestro.Contracts.Runway;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
+using Maestro.Core.Infrastructure;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -702,6 +704,111 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
         actualSeparation.ShouldBeGreaterThanOrEqualTo(
             TimeSpan.FromSeconds(offModeRateSeconds),
             "off-mode flight should be separated from in-mode flight by the off-mode rate");
+    }
+
+    [Fact]
+    public async Task FlightDelayedByModeChange_RemainsDelayedWhenRunwayIsManuallyChanged()
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R", "16L", "16R")
+            .WithFeederFixes("RIVET", "BOREE")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithRunwayMode("16IVA",
+                new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
+                new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] })
+            .Build();
+
+
+        // flight1 lands at T+30, well before the gap zone.
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(30))
+            .WithLandingTime(now.AddMinutes(30))
+            .WithFeederFix("RIVET")
+            .WithRunway("34L")
+            .Build();
+
+        // flight2 has ETA T+31; with a 3-minute (180 s) acceptance rate the scheduler places
+        // it at T+33, which falls in the gap zone [T+32, T+35].
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(31))
+            .WithLandingTime(now.AddMinutes(31))
+            .WithFeederFix("RIVET")
+            .WithRunway("34L")
+            .Build();
+
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        var airportConfigurationProvider = new AirportConfigurationProvider([airportConfiguration]);
+        var mediator = Substitute.For<IMediator>();
+
+        var modeChangeHandler = new ChangeRunwayModeRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            airportConfigurationProvider,
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        var runwayModeDto = new RunwayModeDto(
+            "16IVA",
+            [
+                new RunwayDto("16L", string.Empty, 180, []),
+                new RunwayDto("16R", string.Empty, 180, [])
+            ],
+            DefaultDependencyRateSeconds,
+            DefaultOffModeSeconds);
+
+        var lastLandingTime = now.AddMinutes(32);
+        var firstLandingTime = now.AddMinutes(35);
+
+        var modeChangeRequest = new ChangeRunwayModeRequest(
+            "YSSY",
+            runwayModeDto,
+            lastLandingTime,
+            firstLandingTime);
+
+        // Act: Schedule the mode change
+        await modeChangeHandler.Handle(modeChangeRequest, CancellationToken.None);
+
+        // Assert: flight1 has no delay and is in the current mode
+        flight1.LandingTime.ShouldBe(flight1.LandingEstimate, "flight1 lands before the mode change boundary and should have no delay");
+        flight1.AssignedRunwayIdentifier.ShouldBeOneOf("34L", "34R");
+
+        // Assert: flight2 is delayed to firstLandingTime and assigned to the new mode
+        flight2.LandingTime.ShouldBe(firstLandingTime, "flight2 falls in the gap zone and should be delayed to firstLandingTime");
+        flight2.AssignedRunwayIdentifier.ShouldBeOneOf("16L", "16R");
+
+        var runwayChangeHandler = new ChangeRunwayRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            airportConfigurationProvider,
+            new MockTrajectoryService(),
+            Substitute.For<IClock>(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        // Act: Change flight2 to the other runway within the new mode (e.g. 16R -> 16L)
+        var otherNewModeRunway = flight2.AssignedRunwayIdentifier == "16L" ? "16R" : "16L";
+        await runwayChangeHandler.Handle(
+            new ChangeRunwayRequest("YSSY", "QFA2", otherNewModeRunway),
+            CancellationToken.None);
+
+        // Assert: delay must be preserved when switching between new-mode runways
+        flight2.LandingTime.ShouldBe(firstLandingTime, "changing to another runway in the new mode should not remove the mode-change delay");
+
+        // Act: change flight2 to a runway that is not in the new mode (34R)
+        await runwayChangeHandler.Handle(
+            new ChangeRunwayRequest("YSSY", "QFA2", "34R"),
+            CancellationToken.None);
+
+        // Assert: delay must be preserved even when assigned to an off-mode runway
+        flight2.LandingTime.ShouldBe(firstLandingTime, "changing to an off-mode runway should not remove the mode-change delay");
     }
 
     [Fact]
