@@ -47,7 +47,8 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
                 new RunwayConfiguration { Identifier = "34L", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = ["RIVET", "WELSH"]},
                 new RunwayConfiguration { Identifier = "34R", ApproachType = string.Empty, LandingRateSeconds = 180, FeederFixes = ["RIVET", "WELSH"] }
             ]
-        });
+        },
+        TimeSpan.Zero);
 
     [Fact]
     public async Task TheFlightIsMovedBasedOnItsLandingEstimate()

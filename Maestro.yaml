@@ -105,6 +105,7 @@ Airports:
   MaxLandedFlights: 5
   LandedFlightTimeoutMinutes: 10
   LostFlightTimeoutMinutes: 10
+  DefaultOffModeSeparationSeconds: 300
 
   Colours:
     FeederFixes:
@@ -580,6 +581,7 @@ Airports:
   MaxLandedFlights: 5
   LandedFlightTimeoutMinutes: 10
   LostFlightTimeoutMinutes: 10
+  DefaultOffModeSeparationSeconds: 300
 
   RunwayModes:
   - Identifier: 09
@@ -1051,6 +1053,7 @@ Airports:
   MaxLandedFlights: 5
   LandedFlightTimeoutMinutes: 10
   LostFlightTimeoutMinutes: 10
+  DefaultOffModeSeparationSeconds: 300
 
   RunwayModes:
   - Identifier: 19
@@ -1863,36 +1866,32 @@ Airports:
   MaxLandedFlights: 5
   LandedFlightTimeoutMinutes: 10
   LostFlightTimeoutMinutes: 10
+  DefaultOffModeSeparationSeconds: 300
 
   RunwayModes:
   - Identifier: 21/24
     DependencyRateSeconds: 30
-    OffModeSeparationSeconds: 0
     Runways:
     - {Identifier: "21", ApproachType: A, LandingRateSeconds: 180}
     - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
 
   - Identifier: "03"
     DependencyRateSeconds: 0
-    OffModeSeparationSeconds: 0
     Runways:
     - {Identifier: "03", ApproachType: A, LandingRateSeconds: 180}
 
   - Identifier: "06"
     DependencyRateSeconds: 0
-    OffModeSeparationSeconds: 0
     Runways:
     - {Identifier: "06", ApproachType: A, LandingRateSeconds: 180}
 
   - Identifier: "21"
     DependencyRateSeconds: 0
-    OffModeSeparationSeconds: 0
     Runways:
     - {Identifier: "21", ApproachType: A, LandingRateSeconds: 180}
 
   - Identifier: "24"
     DependencyRateSeconds: 0
-    OffModeSeparationSeconds: 0
     Runways:
     - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
 

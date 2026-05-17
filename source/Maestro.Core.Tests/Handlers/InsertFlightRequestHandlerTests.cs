@@ -700,7 +700,9 @@ public class InsertFlightRequestHandlerTests(
 
         // Schedule a runway change from T10 to T15
         session.Sequence.ChangeRunwayMode(
-            new RunwayMode(airportConfiguration.RunwayModes[1]),
+            new RunwayMode(
+                airportConfiguration.RunwayModes[1],
+                TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds)),
             now.AddMinutes(10),
             now.AddMinutes(15));
 

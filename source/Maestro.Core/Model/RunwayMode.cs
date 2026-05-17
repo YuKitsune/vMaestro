@@ -9,14 +9,16 @@ namespace Maestro.Core.Model;
 
 public class RunwayMode
 {
-    public RunwayMode(RunwayModeConfiguration runwayModeConfigurationConfiguration)
+    public RunwayMode(RunwayModeConfiguration runwayModeConfigurationConfiguration, TimeSpan defaultOffModeSeparation)
     {
         Identifier = runwayModeConfigurationConfiguration.Identifier;
         Runways = runwayModeConfigurationConfiguration.Runways
             .Select(r => new Runway(r))
             .ToArray();
         DependencyRate = TimeSpan.FromSeconds(runwayModeConfigurationConfiguration.DependencyRateSeconds);
-        OffModeSeparation = TimeSpan.FromSeconds(runwayModeConfigurationConfiguration.OffModeSeparationSeconds);
+        OffModeSeparation = runwayModeConfigurationConfiguration.OffModeSeparationSeconds.HasValue
+            ? TimeSpan.FromSeconds(runwayModeConfigurationConfiguration.OffModeSeparationSeconds.Value)
+            : defaultOffModeSeparation;
     }
 
     public RunwayMode(RunwayModeDto runwayModeDto)

@@ -271,6 +271,7 @@ Airports:
 | `AverageLandingSpeed` | integer | 150 | Average landing speed (TAS) in knots for distance calculations |
 | `UpperWindAltitude` | integer | 6000 | Altitude in feet for upper winds from GRIB data |
 | `DefaultMaxEnrouteLinearDelayMinutes` | integer | `8` | Default enroute delay capacity used when no matching enroute trajectory is configured |
+| `DefaultOffModeSeparationSeconds` | integer | - | Required. Default separation applied to flights landing on a runway not defined in the active runway mode. Used when an individual runway mode does not specify its own `OffModeSeparationSeconds`. |
 
 Flight states: `Unstable`, `Stable`, `SuperStable`, `Frozen`
 
@@ -301,7 +302,7 @@ All airport colours are optional. Values are RGB (0-255).
 RunwayModes:
   - Identifier: 34IVA
     DependencyRateSeconds: 0
-    OffModeSeparationSeconds: 0
+    OffModeSeparationSeconds: 300
     Runways:
       - Identifier: 34L
         ApproachType: I
@@ -318,7 +319,7 @@ RunwayModes:
 |----------|------|---------|-------------|
 | `Identifier` | string | - | Mode name |
 | `DependencyRateSeconds` | integer | 0 | Additional separation for dependent runways |
-| `OffModeSeparationSeconds` | integer | 0 | Separation for off-mode runways |
+| `OffModeSeparationSeconds` | integer | airport `DefaultOffModeSeparationSeconds` | Separation for off-mode runways. When omitted, the airport-level default is used. |
 | `Runways` | array | - | Runway configurations |
 
 #### Runway Configuration

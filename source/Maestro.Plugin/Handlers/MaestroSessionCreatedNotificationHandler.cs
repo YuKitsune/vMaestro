@@ -25,7 +25,7 @@ public class MaestroSessionCreatedNotificationHandler(
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.AirportIdentifier);
 
         var runwayModes = airportConfiguration.RunwayModes
-            .Select(rm => new RunwayModeViewModel(rm))
+            .Select(rm => new RunwayModeViewModel(rm, airportConfiguration.DefaultOffModeSeparationSeconds))
             .ToArray();
 
         windowManager.FocusOrCreateWindow(

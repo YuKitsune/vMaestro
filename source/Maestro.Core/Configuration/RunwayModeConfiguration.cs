@@ -14,8 +14,9 @@ public class RunwayModeConfiguration
 
     /// <summary>
     ///     The minimum amount of separation to apply to flights landing on a runway not defined in this runway mode.
+    ///     When <c>null</c>, the airport-level <see cref="AirportConfiguration.DefaultOffModeSeparationSeconds"/> is used.
     /// </summary>
-    public int OffModeSeparationSeconds { get; init; } = 0;
+    public int? OffModeSeparationSeconds { get; init; }
 
     public required RunwayConfiguration[] Runways { get; init; }
 }

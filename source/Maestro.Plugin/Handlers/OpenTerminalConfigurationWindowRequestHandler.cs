@@ -34,7 +34,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
         }
 
         var runwayModes = airportConfiguration.RunwayModes
-            .Select(r => new RunwayModeViewModel(r))
+            .Select(r => new RunwayModeViewModel(r, airportConfiguration.DefaultOffModeSeparationSeconds))
             .ToArray();
 
         windowManager.FocusOrCreateWindow(
