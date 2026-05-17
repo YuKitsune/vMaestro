@@ -35,7 +35,9 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
 
     public SequenceBuilder WithRunwayMode(RunwayModeConfiguration runwayModeConfiguration)
     {
-        _runwayMode = new RunwayMode(runwayModeConfiguration);
+        _runwayMode = new RunwayMode(
+            runwayModeConfiguration,
+            TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds));
         return this;
     }
 
@@ -61,7 +63,8 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
                             FeederFixes = []
                         }
                     ]
-                }));
+                },
+                TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds)));
     }
 
     public SequenceBuilder WithFlight(Flight flight)
@@ -79,7 +82,9 @@ public class SequenceBuilder(AirportConfiguration airportConfiguration)
     public Sequence Build()
     {
         var sequence = new Sequence(airportConfiguration, _trajectoryService, _clock, _logger);
-        sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(airportConfiguration.RunwayModes.First()));
+        sequence.ChangeRunwayMode(_runwayMode ?? new RunwayMode(
+            airportConfiguration.RunwayModes.First(),
+            TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds)));
         for (var i = 0; i < _flights.Count; i++)
         {
             sequence.Insert(i, _flights[i]);

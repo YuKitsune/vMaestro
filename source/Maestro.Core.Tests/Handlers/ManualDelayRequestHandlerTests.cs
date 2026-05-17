@@ -482,7 +482,7 @@ public class ManualDelayRequestHandlerTests(ClockFixture clockFixture)
                     FeederFixes = []
                 }
             ]
-        });
+        }, TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds));
         sequence.ChangeRunwayMode(newRunwayMode, lastLandingTimeForOldMode, firstLandingTimeForNewMode);
 
         var handler = GetHandler(sessionManager, sequence);

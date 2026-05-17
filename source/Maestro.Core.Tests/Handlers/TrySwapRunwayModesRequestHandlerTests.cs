@@ -18,31 +18,35 @@ public class TrySwapRunwayModesRequestHandlerTests(ClockFixture clockFixture)
 {
     readonly DateTimeOffset _now = clockFixture.Instance.UtcNow();
 
-    readonly RunwayMode _firstRunwayMode = new(new RunwayModeConfiguration
-    {
-        Identifier = "FIRST",
-        Runways =
-        [
-            new RunwayConfiguration
-            {
-                Identifier = "34L",
-                LandingRateSeconds = 180
-            }
-        ]
-    });
+    readonly RunwayMode _firstRunwayMode = new(
+        new RunwayModeConfiguration
+        {
+            Identifier = "FIRST",
+            Runways =
+            [
+                new RunwayConfiguration
+                {
+                    Identifier = "34L",
+                    LandingRateSeconds = 180
+                }
+            ]
+        },
+        TimeSpan.Zero);
 
-    readonly RunwayMode _secondRunwayMode = new(new RunwayModeConfiguration
-    {
-        Identifier = "SECOND",
-        Runways =
-        [
-            new RunwayConfiguration
-            {
-                Identifier = "16R",
-                LandingRateSeconds = 180
-            }
-        ]
-    });
+    readonly RunwayMode _secondRunwayMode = new(
+        new RunwayModeConfiguration
+        {
+            Identifier = "SECOND",
+            Runways =
+            [
+                new RunwayConfiguration
+                {
+                    Identifier = "16R",
+                    LandingRateSeconds = 180
+                }
+            ]
+        },
+        TimeSpan.Zero);
 
     [Fact]
     public async Task WhenNoChangeIsInProgress_NothingHappens()

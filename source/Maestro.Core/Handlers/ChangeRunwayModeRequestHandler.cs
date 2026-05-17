@@ -50,7 +50,9 @@ public class ChangeRunwayModeRequestHandler(
                 return;
             }
 
-            var configuration = new RunwayMode(runwayModeConfig);
+            var configuration = new RunwayMode(
+                runwayModeConfig,
+                TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds));
             foreach (var runwayDto in request.RunwayMode.Runways)
             {
                 var runwayIdentifier = runwayDto.Identifier;

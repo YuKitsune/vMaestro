@@ -47,7 +47,9 @@ public class Sequence
             .ForContext("AirportIdentifier", airportConfiguration.Identifier);
 
         AirportIdentifier = airportConfiguration.Identifier;
-        CurrentRunwayMode = new RunwayMode(airportConfiguration.RunwayModes.First());
+        CurrentRunwayMode = new RunwayMode(
+            airportConfiguration.RunwayModes.First(),
+            TimeSpan.FromSeconds(airportConfiguration.DefaultOffModeSeparationSeconds));
 
         UpperWindAltitude = airportConfiguration.UpperWindAltitude;
     }

@@ -87,6 +87,13 @@ public class AirportConfiguration
     /// </summary>
     public int LostFlightTimeoutMinutes { get; init; } = 10;
 
+    /// <summary>
+    ///     The default minimum amount of separation, in seconds, to apply to flights landing on a runway not defined
+    ///     in the active runway mode. Used when an individual <see cref="RunwayModeConfiguration"/> does not specify
+    ///     its own <c>OffModeSeparationSeconds</c>.
+    /// </summary>
+    public required int DefaultOffModeSeparationSeconds { get; init; }
+
     public required RunwayModeConfiguration[] RunwayModes { get; init; }
 
     // Look-up tables

@@ -19,6 +19,7 @@ const sidebars = {
       label: 'Migration Guides',
       link: null,
       items: [
+        'admin-guide/migration-guides/v0.31-to-v0.32',
         'admin-guide/migration-guides/v0.30-to-v0.31',
       ],
     },
