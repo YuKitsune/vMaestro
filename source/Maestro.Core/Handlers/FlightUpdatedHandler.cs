@@ -164,7 +164,7 @@ public class FlightUpdatedHandler(
                         f => f.LandingEstimate.IsAfter(approximateLandingEstimate.Value));
 
                     if (insertionIndex == -1)
-                        insertionIndex = Math.Min(earliestInsertionIndex, session.Sequence.Flights.Count);
+                        insertionIndex = session.Sequence.Flights.Count;
 
                     sequencedFlight = new Flight(
                         callsign: notification.Callsign,
