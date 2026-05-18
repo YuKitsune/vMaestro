@@ -1,4 +1,5 @@
 using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
 using Maestro.Core.Integration;
 using Maestro.Core.Sessions;
 using Serilog;
@@ -11,8 +12,6 @@ public class TrajectoryService(
     ILogger logger)
     : ITrajectoryService
 {
-    const int DefaultDescentSpeedKnots = 150;
-
     public EnrouteTrajectory GetEnrouteTrajectory(
         string airportIdentifier,
         string[] waypointNames,
@@ -48,8 +47,8 @@ public class TrajectoryService(
             return GetAverageTrajectory(flight.DestinationIdentifier);
         }
 
-        var approachSpeed = performanceLookup.GetApproachSpeed(flight.AircraftType) ?? DefaultDescentSpeedKnots;
-        return ComputeTrajectory(config, approachSpeed, upperWind ?? new Wind(0, 0));
+        var speedBands = performanceLookup.GetSpeedProfile(flight.GetPerformanceData());
+        return ComputeTrajectory(config, speedBands, upperWind ?? new Wind(0, 0));
     }
 
     public TerminalTrajectory GetTrajectory(
@@ -80,8 +79,8 @@ public class TrajectoryService(
             return GetAverageTrajectory(destinationIdentifier);
         }
 
-        var approachSpeed = performanceLookup.GetApproachSpeed(aircraftPerformanceData.TypeCode) ?? DefaultDescentSpeedKnots;
-        return ComputeTrajectory(config, approachSpeed, upperWind ?? new Wind(0, 0));
+        var speedBands = performanceLookup.GetSpeedProfile(aircraftPerformanceData);
+        return ComputeTrajectory(config, speedBands, upperWind ?? new Wind(0, 0));
     }
 
     public TerminalTrajectory GetAverageTrajectory(string airportIdentifier)
@@ -95,8 +94,9 @@ public class TrajectoryService(
         }
 
         var zeroWind = new Wind(0, 0);
+        var defaultSpeedBands = performanceLookup.GetSpeedProfile(AircraftPerformanceData.Default);
         var trajectories = airportConfiguration.TerminalTrajectories
-            .Select(t => ComputeTrajectory(t, DefaultDescentSpeedKnots, zeroWind))
+            .Select(t => ComputeTrajectory(t, defaultSpeedBands, zeroWind))
             .ToArray();
 
         var avgTtg = TimeSpan.FromTicks((long)trajectories.Average(t => t.NormalTimeToGo.Ticks));
@@ -169,9 +169,9 @@ public class TrajectoryService(
         return matches[0];
     }
 
-    TerminalTrajectory ComputeTrajectory(TerminalTrajectoryConfiguration config, int approachSpeedKnots, Wind wind)
+    TerminalTrajectory ComputeTrajectory(TerminalTrajectoryConfiguration config, SpeedBand[] speedBands, Wind wind)
     {
-        var ttgHours = SumEti(config.Segments, approachSpeedKnots, wind);
+        var ttgHours = SumEti(config.Segments, speedBands, wind);
         var ttg = TimeSpan.FromHours(ttgHours);
 
         // Pressure: branch from base trajectory, fly alternative path
@@ -179,7 +179,7 @@ public class TrajectoryService(
             config.Segments,
             config.Pressure?.After,
             config.Pressure?.Segments ?? [],
-            approachSpeedKnots,
+            speedBands,
             wind,
             ttgHours,
             "Pressure");
@@ -191,7 +191,7 @@ public class TrajectoryService(
                 config.Segments,
                 config.MaxPressure.After,
                 config.MaxPressure.Segments,
-                approachSpeedKnots,
+                speedBands,
                 wind,
                 ttgHours,
                 "MaxPressure");
@@ -206,7 +206,7 @@ public class TrajectoryService(
         TrajectorySegmentConfiguration[] baseSegments,
         string? after,
         TrajectorySegmentConfiguration[] alternativeSegments,
-        int approachSpeedKnots,
+        SpeedBand[] speedBands,
         Wind wind,
         double ttgHours,
         string trajectoryType)
@@ -226,10 +226,16 @@ public class TrajectoryService(
             return ttgHours;
         }
 
-        // Sum ETI from feeder fix through after segment, then along alternative path
+        // Sum ETI from feeder fix through after segment, then along alternative path.
+        // For the base portion, initialDtg is the full route distance (feeder fix to runway) so
+        // speed bands reflect where each segment sits relative to the runway.
+        // For the alternative segments, they replace the remainder of the base route and lead to
+        // the runway, so their initialDtg is their own total distance.
         var segmentsThroughAfter = baseSegments.Take(afterIdx.Value + 1).ToArray();
-        var baseThroughAfter = SumEti(segmentsThroughAfter, approachSpeedKnots, wind);
-        var alternativeFromAfter = SumEti(alternativeSegments, approachSpeedKnots, wind);
+        var totalBaseDistance = baseSegments.Sum(s => s.DistanceNM);
+
+        var baseThroughAfter = SumEti(segmentsThroughAfter, speedBands, wind, totalBaseDistance);
+        var alternativeFromAfter = SumEti(alternativeSegments, speedBands, wind);
 
         return baseThroughAfter + alternativeFromAfter;
     }
@@ -248,16 +254,72 @@ public class TrajectoryService(
         return null;
     }
 
-    static double SumEti(TrajectorySegmentConfiguration[] segments, int approachSpeedKnots, Wind wind)
+    // Computes the total estimated time in hours for a sequence of segments, using distance-to-go
+    // speed bands. The initial DTG is the total route distance (feeder fix to runway), so that speed
+    // band selection reflects how far the aircraft is from the runway at each segment.
+    static double SumEti(TrajectorySegmentConfiguration[] segments, SpeedBand[] speedBands, Wind wind)
     {
+        var totalDistance = segments.Sum(s => s.DistanceNM);
+        return SumEti(segments, speedBands, wind, totalDistance);
+    }
+
+    // Overload allowing the caller to specify the DTG at the start of the first segment.
+    // Used for branching trajectories where the sub-route starts partway through the full route.
+    static double SumEti(TrajectorySegmentConfiguration[] segments, SpeedBand[] speedBands, Wind wind, double initialDtg)
+    {
+        if (speedBands.Length == 0)
+            return 0;
+
+        var sortedBands = speedBands.OrderByDescending(b => b.ThresholdNM).ToArray();
+        var dtg = initialDtg;
         double total = 0;
+
         foreach (var segment in segments)
         {
             var headwind = wind.Speed * Math.Cos(ToRadians(segment.Track - wind.Direction));
-            var groundSpeed = Math.Max(approachSpeedKnots - headwind, 1.0);
-            total += segment.DistanceNM / groundSpeed;
+            var dtgStart = dtg;
+            var dtgEnd = dtg - segment.DistanceNM;
+
+            // Find all band boundaries (ThresholdNM values) that fall strictly inside (dtgEnd, dtgStart).
+            // These are the points where the speed changes mid-segment and require a split.
+            var splitPoints = sortedBands
+                .Select(b => b.ThresholdNM)
+                .Where(nm => nm > dtgEnd && nm < dtgStart)
+                .ToArray(); // already sorted descending from sortedBands
+
+            // Build breakpoints: segment start, each speed boundary, segment end.
+            var breakpoints = new double[splitPoints.Length + 2];
+            breakpoints[0] = dtgStart;
+            splitPoints.CopyTo(breakpoints, 1);
+            breakpoints[^1] = dtgEnd;
+
+            for (var i = 0; i < breakpoints.Length - 1; i++)
+            {
+                var subDtgStart = breakpoints[i];
+                var subDistance = subDtgStart - breakpoints[i + 1];
+                var speed = GetSpeedForDtg(sortedBands, subDtgStart);
+                var groundSpeed = Math.Max(speed - headwind, 1.0);
+                total += subDistance / groundSpeed;
+            }
+
+            dtg = dtgEnd;
         }
+
         return total;
+    }
+
+    // Returns the speed (knots) for the given distance-to-go.
+    // Iterates bands sorted descending by ThresholdNM; returns the first band where dtg > ThresholdNM.
+    static int GetSpeedForDtg(SpeedBand[] sortedBands, double dtg)
+    {
+        foreach (var band in sortedBands)
+        {
+            if (dtg > band.ThresholdNM)
+                return band.SpeedKnots;
+        }
+
+        // Fallback: use the last (lowest) band. Handles dtg == 0 edge case.
+        return sortedBands[^1].SpeedKnots;
     }
 
     static double ToRadians(double degrees) => degrees * Math.PI / 180.0;

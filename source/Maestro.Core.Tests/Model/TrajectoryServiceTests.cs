@@ -14,6 +14,18 @@ namespace Maestro.Core.Tests.Model;
 public class TrajectoryServiceTests(ClockFixture clockFixture)
     : IClassFixture<ClockFixture>
 {
+    // Single-band flat profile — speed is constant regardless of DTG.
+    // Used to keep existing geometry-based tests deterministic.
+    static SpeedBand[] FlatProfile(int speedKnots) =>
+        [new SpeedBand { ThresholdNM = 0, SpeedKnots = speedKnots }];
+
+    static IPerformanceLookup MockLookupWithFlatProfile(int speedKnots = 150)
+    {
+        var lookup = Substitute.For<IPerformanceLookup>();
+        lookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(speedKnots));
+        return lookup;
+    }
+
     [Fact]
     public void GetTrajectory_ReturnsMatchingTrajectory()
     {
@@ -25,7 +37,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
-        var trajectoryService = new TrajectoryService(provider, Substitute.For<IPerformanceLookup>(), Substitute.For<ILogger>());
+        var trajectoryService = new TrajectoryService(provider, MockLookupWithFlatProfile(), Substitute.For<ILogger>());
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
@@ -53,7 +65,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
-        var trajectoryService = new TrajectoryService(provider, Substitute.For<IPerformanceLookup>(), Substitute.For<ILogger>());
+        var trajectoryService = new TrajectoryService(provider, MockLookupWithFlatProfile(), Substitute.For<ILogger>());
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("WELSH") // Different feeder fix, no match
@@ -63,7 +75,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         // Act — no match, should fall back to average of all configured trajectories
-        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new(0 ,0));
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new(0, 0));
 
         // Assert: (15 + 20) / 2 = 17.5 minutes
         trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(17.5), TimeSpan.FromSeconds(1));
@@ -81,7 +93,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
-        var trajectoryService = new TrajectoryService(provider, Substitute.For<IPerformanceLookup>(), Substitute.For<ILogger>());
+        var trajectoryService = new TrajectoryService(provider, MockLookupWithFlatProfile(), Substitute.For<ILogger>());
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
@@ -91,7 +103,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         // Act
-        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "A", [], new(0 ,0));
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "A", [], new(0, 0));
 
         // Assert
         trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(18));
@@ -111,7 +123,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
-        var trajectoryService = new TrajectoryService(provider, Substitute.For<IPerformanceLookup>(), Substitute.For<ILogger>());
+        var trajectoryService = new TrajectoryService(provider, MockLookupWithFlatProfile(), Substitute.For<ILogger>());
 
         // Act
         var trajectory = trajectoryService.GetAverageTrajectory("YSSY");
@@ -211,7 +223,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var performanceLookup = Substitute.For<IPerformanceLookup>();
-        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
@@ -252,7 +264,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var performanceLookup = Substitute.For<IPerformanceLookup>();
-        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
@@ -296,7 +308,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var performanceLookup = Substitute.For<IPerformanceLookup>();
-        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
@@ -340,7 +352,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var performanceLookup = Substitute.For<IPerformanceLookup>();
-        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
@@ -382,7 +394,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var performanceLookup = Substitute.For<IPerformanceLookup>();
-        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
@@ -434,7 +446,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var performanceLookup = Substitute.For<IPerformanceLookup>();
-        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
@@ -497,7 +509,7 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
             .Build();
 
         var performanceLookup = Substitute.For<IPerformanceLookup>();
-        performanceLookup.GetApproachSpeed(Arg.Any<string>()).Returns(approachSpeedKnots);
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
 
         var provider = new AirportConfigurationProvider([airportConfiguration]);
         var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
@@ -518,5 +530,104 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         trajectory.NormalTimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
         trajectory.PressureTimeToGo.ShouldBe(segmentTime * 2, TimeSpan.FromSeconds(1));
         trajectory.MaxPressureTimeToGo.ShouldBe(segmentTime * 3, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void GetTrajectory_SpeedBand_SplitsSegmentAtBandBoundary()
+    {
+        // Arrange: one 30 NM segment from DTG=30 to DTG=0.
+        // Speed profile: 200 kts when DTG > 15 NM, 100 kts when DTG <= 15 NM.
+        // Expected: first 15 NM at 200 kts + last 15 NM at 100 kts.
+        const double distanceNm = 30.0;
+        var speedBands = new SpeedBand[]
+        {
+            new() { ThresholdNM = 15, SpeedKnots = 200 },
+            new() { ThresholdNM = 0,  SpeedKnots = 100 },
+        };
+
+        var expectedTtg = TimeSpan.FromHours(15.0 / 200 + 15.0 / 100);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithTrajectory(new TerminalTrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments = [new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm }]
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(speedBands);
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromMilliseconds(100));
+    }
+
+    [Fact]
+    public void GetTrajectory_SpeedBand_MultipleSegmentsUseDtgRelativeToFullRoute()
+    {
+        // Arrange: two 20 NM segments (total 40 NM).
+        // Speed profile: 200 kts when DTG > 20 NM, 100 kts when DTG <= 20 NM.
+        // Segment 1 (DTG 40→20): entirely in the 200 kt band → 20/200 hours.
+        // Segment 2 (DTG 20→0): entirely in the 100 kt band → 20/100 hours.
+        const double segmentNm = 20.0;
+        var speedBands = new SpeedBand[]
+        {
+            new() { ThresholdNM = 20, SpeedKnots = 200 },
+            new() { ThresholdNM = 0,  SpeedKnots = 100 },
+        };
+
+        // Seg 1 starts at DTG=40 → 40 > 20, so 200 kts for the first segment.
+        // Seg 2 starts at DTG=20 → 20 > 20 is false, so 100 kts for the second segment.
+        var expectedTtg = TimeSpan.FromHours(segmentNm / 200.0 + segmentNm / 100.0);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithTrajectory(new TerminalTrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments =
+                [
+                    new TrajectorySegmentConfiguration { Track = 0, DistanceNM = segmentNm },
+                    new TrajectorySegmentConfiguration { Track = 0, DistanceNM = segmentNm },
+                ]
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(speedBands);
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromMilliseconds(100));
     }
 }
