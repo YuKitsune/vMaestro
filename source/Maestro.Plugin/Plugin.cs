@@ -374,7 +374,7 @@ public class Plugin : IPlugin
         var lastWaypointIndex = updated.ParsedRoute.FindLastIndex(s => s.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT);
         var didPassLastWaypoint = updated.ParsedRoute.OverflownIndex >= lastWaypointIndex;
 
-        var isOnGround = updated.CoupledTrack is null || updated.CoupledTrack.OnGround;
+        var isOnGround = updated.CoupledTrack is not null && updated.CoupledTrack.OnGround;
 
         return didPassLastWaypoint && isOnGround;
     }
