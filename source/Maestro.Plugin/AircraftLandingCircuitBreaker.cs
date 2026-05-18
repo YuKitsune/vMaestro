@@ -22,6 +22,17 @@ public class AircraftLandingCircuitBreaker
         }
     }
 
+    /// <summary>
+    /// Resets the breaker for the given callsign, allowing it to be tripped again.
+    /// </summary>
+    public void ResetBreaker(string callsign)
+    {
+        lock (_gate)
+        {
+            _breakers.Remove(callsign);
+        }
+    }
+
     class CircuitBreaker
     {
         public bool IsSet { get; private set; }

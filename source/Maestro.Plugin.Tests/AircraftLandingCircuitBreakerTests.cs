@@ -80,6 +80,31 @@ public class AircraftLandingCircuitBreakerTests
     }
 
     [Fact]
+    public void ResetBreaker_AfterBreakerSet_ShouldAllowBreakerToBeSetAgain()
+    {
+        var circuitBoard = new AircraftLandingCircuitBreaker();
+
+        circuitBoard.TrySetBreaker("QFA123");
+        circuitBoard.ResetBreaker("QFA123");
+        var result = circuitBoard.TrySetBreaker("QFA123");
+
+        result.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void ResetBreaker_DoesNotAffectOtherCallsigns()
+    {
+        var circuitBoard = new AircraftLandingCircuitBreaker();
+
+        circuitBoard.TrySetBreaker("QFA123");
+        circuitBoard.TrySetBreaker("VOZ456");
+        circuitBoard.ResetBreaker("QFA123");
+
+        circuitBoard.TrySetBreaker("QFA123").ShouldBeTrue();
+        circuitBoard.TrySetBreaker("VOZ456").ShouldBeFalse();
+    }
+
+    [Fact]
     public void TrySetBreaker_MultipleConcurrentCallsigns_ShouldMaintainIndependence()
     {
         var circuitBoard = new AircraftLandingCircuitBreaker();
