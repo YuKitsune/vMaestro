@@ -291,7 +291,7 @@ public class TrajectoryService(
             var breakpoints = new double[splitPoints.Length + 2];
             breakpoints[0] = dtgStart;
             splitPoints.CopyTo(breakpoints, 1);
-            breakpoints[^1] = dtgEnd;
+            breakpoints[breakpoints.Length - 1] = dtgEnd;
 
             for (var i = 0; i < breakpoints.Length - 1; i++)
             {
@@ -319,7 +319,7 @@ public class TrajectoryService(
         }
 
         // Fallback: use the last (lowest) band. Handles dtg == 0 edge case.
-        return sortedBands[^1].SpeedKnots;
+        return sortedBands[sortedBands.Length - 1].SpeedKnots;
     }
 
     static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
