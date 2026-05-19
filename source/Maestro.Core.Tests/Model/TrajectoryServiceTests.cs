@@ -26,6 +26,36 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
         return lookup;
     }
 
+    // Trajectory geometry copied verbatim from Maestro.yaml: YSSY TerminalTrajectories, FeederFix=RIVET, RunwayIdentifier=34L.
+    static readonly TerminalTrajectoryConfiguration RivetArrival34L = new()
+    {
+        FeederFix = "RIVET",
+        RunwayIdentifier = "34L",
+        Segments =
+        [
+            new() { Identifier = "BIGEM", Track = 61.6,  DistanceNM = 12.6 },
+            new() { Identifier = "TAMMI", Track = 61.5,  DistanceNM = 9.9  },
+            new() { Identifier = "BOOGI", Track = 61.5,  DistanceNM = 10.0 },
+            new() { Identifier = "DUDOK", Track = 133.6, DistanceNM = 5.0  },
+            new() { Identifier = "NASHO", Track = 167.9, DistanceNM = 7.1  },
+            new() { Identifier = "34LDW", Track = 117.0, DistanceNM = 5.0  },
+            new() { Identifier = "34LBS", Track = 15.0,  DistanceNM = 5.0  },
+            new() { Identifier = "34LF",  Track = 335.0, DistanceNM = 13.0 },
+        ]
+    };
+
+    // Speed profile copied verbatim from Maestro.yaml: AircraftPerformance, AircraftTypes=[Jet, DH8D].
+    static readonly SpeedBand[] JetSpeedProfile =
+    [
+        new() { ThresholdNM = 45, SpeedKnots = 330 },
+        new() { ThresholdNM = 35, SpeedKnots = 320 },
+        new() { ThresholdNM = 25, SpeedKnots = 285 },
+        new() { ThresholdNM = 15, SpeedKnots = 250 },
+        new() { ThresholdNM = 6,  SpeedKnots = 205 },
+        new() { ThresholdNM = 2,  SpeedKnots = 160 },
+        new() { ThresholdNM = 0,  SpeedKnots = 140 },
+    ];
+
     [Fact]
     public void GetTrajectory_ReturnsMatchingTrajectory()
     {
@@ -629,5 +659,97 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
 
         // Assert
         trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromMilliseconds(100));
+    }
+
+    [Fact]
+    public void CalculateEtiNilWind()
+    {
+        // Arrange: real YSSY RIVET→34L geometry with the Jet speed profile, zero wind.
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithTrajectory(RivetArrival34L)
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(JetSpeedProfile);
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(15), TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public void CalculateEti_EasterlyWind()
+    {
+        // Arrange: real YSSY RIVET→34L geometry with the Jet speed profile.
+        // 50 kt wind from 090 (east) creates a headwind for the majority of the arrival, resulting in a longer TTG.
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithTrajectory(RivetArrival34L)
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(JetSpeedProfile);
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(90, 50));
+
+        // Assert
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(16), TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
+    public void CalculateEti_WesterlyWind()
+    {
+        // Arrange: real YSSY RIVET→34L geometry with the Jet speed profile.
+        // 50 kt wind from 270 (west) creates a tailwind for the majority of the arrival, resulting in a shorter TTG.
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithTrajectory(RivetArrival34L)
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(JetSpeedProfile);
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(20))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(270, 50));
+
+        // Assert
+        trajectory.NormalTimeToGo.ShouldBe(TimeSpan.FromMinutes(15), TimeSpan.FromSeconds(30));
     }
 }
