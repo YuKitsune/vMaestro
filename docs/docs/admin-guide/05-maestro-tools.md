@@ -42,6 +42,30 @@ The tool extracts geometry as defined in vatSys. For airports where operational 
 **Pressure trajectories** model alternative paths ATC may use to absorb delay. Configure them in `maestro-tools.yaml` using the branching model: specify the last shared segment (`After`) where the alternative path diverges, and the complete path from after that segment to the runway.
 :::
 
+### `visualize`
+
+Opens a window displaying trajectory segments from a `Maestro.yaml` file. Intended for verifying trajectory geometry before deploying configuration.
+
+```
+maestro-tools visualize --config <path>
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--config` | Yes | Path to the `Maestro.yaml` file to read trajectories from |
+
+The left panel lists all terminal trajectories found in the file. Clicking a trajectory draws it on the canvas:
+
+- **Green** - normal path from feeder fix to runway threshold
+- **Orange** - pressure branch (diverges from the normal path after the configured `After` segment)
+- **Red** - max-pressure branch
+
+Waypoint identifiers are labelled along the normal path. The view scales automatically to fit the selected trajectory.
+
+![Trajectory Visualizer screenshot](../../static/img/visualize-screenshot.png)
+
+---
+
 ## Configuration File
 
 The tool is configured via a YAML file (conventionally named `maestro-tools.yaml`). It supports multiple airports in a single run.
