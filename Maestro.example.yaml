@@ -627,21 +627,25 @@ Airports:
 #   SpeedKnots:  True airspeed in knots for this distance band.
 
 AircraftPerformance:
-
+  
   # Jets (DH8D included here as it descends at similar speeds to jets)
   - AircraftTypes: [Jet, DH8D]
     Speeds:
-      - {ThresholdNM: 45, SpeedKnots: 330}
-      - {ThresholdNM: 35, SpeedKnots: 310}
-      - {ThresholdNM: 25, SpeedKnots: 280}
-      - {ThresholdNM: 15, SpeedKnots: 250}
-      - {ThresholdNM: 0,  SpeedKnots: 210}
-
+    - { ThresholdNM: 45, SpeedKnots: 330 }
+    - { ThresholdNM: 35, SpeedKnots: 320 }
+    - { ThresholdNM: 25, SpeedKnots: 285 }
+    - { ThresholdNM: 15, SpeedKnots: 250 }
+    - { ThresholdNM: 6, SpeedKnots: 205 }
+    - { ThresholdNM: 2, SpeedKnots: 160 }
+    - { ThresholdNM: 0,  SpeedKnots: 140 }
+  
   # Turboprops and pistons
   - AircraftTypes: [Prop]
     Speeds:
-      - {ThresholdNM: 45, SpeedKnots: 280}
-      - {ThresholdNM: 35, SpeedKnots: 260}
-      - {ThresholdNM: 25, SpeedKnots: 230}
-      - {ThresholdNM: 15, SpeedKnots: 200}
-      - {ThresholdNM: 0,  SpeedKnots: 160}
+    - { ThresholdNM: 45, SpeedKnots: 285 }
+    - { ThresholdNM: 35, SpeedKnots: 270 }
+    - { ThresholdNM: 25, SpeedKnots: 260 }
+    - { ThresholdNM: 15, SpeedKnots: 230 }
+    - { ThresholdNM: 6, SpeedKnots: 180 }
+    - { ThresholdNM: 2, SpeedKnots: 150 }
+    - { ThresholdNM: 0,  SpeedKnots: 120 }
