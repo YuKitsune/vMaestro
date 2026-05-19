@@ -2,7 +2,6 @@
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
-using Maestro.Core.Integration;
 using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -46,10 +45,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             .WithSequence(s => s.WithTrajectoryService(sequenceTrajectoryService).WithFlightsInOrder(flight))
             .Build();
 
-        var trajectoryService = new TrajectoryService(
-            new AirportConfigurationProvider([airportConfiguration]),
-            Substitute.For<IPerformanceLookup>(),
-            Substitute.For<ILogger>());
+        var trajectoryService = CreateTrajectoryService();
 
         var mediator = Substitute.For<IMediator>();
 
@@ -92,10 +88,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         // Set up trajectory service to return different TTG for each approach type
-        var trajectoryService = new TrajectoryService(
-            new AirportConfigurationProvider([airportConfiguration]),
-            Substitute.For<IPerformanceLookup>(),
-            Substitute.For<ILogger>());
+        var trajectoryService = CreateTrajectoryService();
 
         var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
@@ -146,10 +139,7 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
             .Build();
 
         // Set up trajectory service to return different TTG for each approach type
-        var trajectoryService = new TrajectoryService(
-            new AirportConfigurationProvider([airportConfiguration]),
-            Substitute.For<IPerformanceLookup>(),
-            Substitute.For<ILogger>());
+        var trajectoryService = CreateTrajectoryService();
 
         var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(flight))
@@ -321,6 +311,15 @@ public class ChangeApproachTypeRequestHandlerTests(ClockFixture clockFixture)
         // Assert
         flight.State.ShouldBe(state, $"Flight state should remain {state} when changing approach type");
     }
+
+    static MockTrajectoryService CreateTrajectoryService() =>
+        new MockTrajectoryService()
+            .WithTrajectory()
+                .WithApproach(FirstApproachType)
+                .Returns(new TerminalTrajectory(TimeSpan.FromMinutes(FirstApproachTypeTtg), default, default))
+            .WithTrajectory()
+                .WithApproach(SecondApproachType)
+                .Returns(new TerminalTrajectory(TimeSpan.FromMinutes(SecondApproachTypeTtg), default, default));
 
     static AirportConfiguration CreateAirportConfiguration()
     {

@@ -9,6 +9,9 @@ public class WakeCategoryConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
+        if (value is null)
+            return "?";
+
         if (value is WakeCategory wakeCategory)
         {
             return wakeCategory switch

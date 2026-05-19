@@ -431,6 +431,7 @@ public partial class FlightLabelViewModel : ObservableObject, IRecipient<VatsysT
                 WakeCategory.Medium => "M",
                 WakeCategory.Heavy => "H",
                 WakeCategory.SuperHeavy => "J",
+                null => "?",
                 _ => "?"
             },
             RunwayItemConfiguration => flight.AssignedRunwayIdentifier,

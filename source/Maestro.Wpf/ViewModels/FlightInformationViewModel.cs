@@ -11,7 +11,7 @@ public partial class FlightInformationViewModel : ObservableObject
     [ObservableProperty] int _numberInSequence;
     [ObservableProperty] string _callsign;
     [ObservableProperty] string _aircraftType;
-    [ObservableProperty] WakeCategory _wakeCategory;
+    [ObservableProperty] WakeCategory? _wakeCategory;
     [ObservableProperty] string? _originIdentifier;
     [ObservableProperty] string _destinationIdentifier;
     [ObservableProperty] string? _feederFixIdentifier;

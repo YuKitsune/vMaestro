@@ -183,7 +183,6 @@ public class FlightBuilder(string callsign)
                 callsign: callsign,
                 aircraftType: _aircraftType,
                 aircraftCategory: _aircraftCategory,
-                wakeCategory: _wakeCategory,
                 destinationIdentifier: _destination,
                 assignedRunwayIdentifier: _assignedRunway,
                 approachType: _approachType,
