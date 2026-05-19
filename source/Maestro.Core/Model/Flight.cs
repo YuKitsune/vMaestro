@@ -16,7 +16,7 @@ public class Flight : IEquatable<Flight>
         string callsign,
         string aircraftType,
         AircraftCategory aircraftCategory,
-        WakeCategory wakeCategory,
+        WakeCategory? wakeCategory,
         string destinationIdentifier,
 
         // Origin info
@@ -90,7 +90,6 @@ public class Flight : IEquatable<Flight>
         string callsign,
         string aircraftType,
         AircraftCategory aircraftCategory,
-        WakeCategory wakeCategory,
         string destinationIdentifier,
         string assignedRunwayIdentifier,
         string approachType,
@@ -102,7 +101,7 @@ public class Flight : IEquatable<Flight>
         Callsign = callsign;
         AircraftType = aircraftType;
         AircraftCategory = aircraftCategory;
-        WakeCategory = wakeCategory;
+        WakeCategory = null;
         DestinationIdentifier = destinationIdentifier;
         IsManuallyInserted = true;
 
@@ -179,7 +178,7 @@ public class Flight : IEquatable<Flight>
     public string Callsign { get; }
     public string AircraftType { get; set; }
     public AircraftCategory AircraftCategory { get; set; }
-    public WakeCategory WakeCategory { get; set; }
+    public WakeCategory? WakeCategory { get; set; }
     public string? OriginIdentifier { get; set; }
     public string DestinationIdentifier { get; }
     public bool IsManuallyInserted { get; }

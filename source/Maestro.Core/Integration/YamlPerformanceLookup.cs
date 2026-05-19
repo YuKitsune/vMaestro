@@ -28,7 +28,7 @@ public class YamlPerformanceLookup(AircraftSpeedProfile[] profiles, ILogger logg
             return new AircraftPerformanceData(
                 aircraftType,
                 category ?? AircraftCategory.Jet,
-                WakeCategory.Medium);
+                null);
         }
 
         return AircraftPerformanceData.Default;

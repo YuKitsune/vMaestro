@@ -13,7 +13,7 @@ public static class AircraftDescriptorExtensionMethods
         {
             SpecificAircraftTypeDescriptor specificAircraftTypeDescriptor => aircraftPerformanceData.TypeCode == specificAircraftTypeDescriptor.TypeCode,
             AircraftCategoryDescriptor aircraftCategoryDescriptor => aircraftPerformanceData.AircraftCategory == aircraftCategoryDescriptor.AircraftCategory,
-            WakeCategoryDescriptor wakeCategoryDescriptor => aircraftPerformanceData.WakeCategory == wakeCategoryDescriptor.WakeCategory,
+            WakeCategoryDescriptor wakeCategoryDescriptor => aircraftPerformanceData.WakeCategory.HasValue && aircraftPerformanceData.WakeCategory.Value == wakeCategoryDescriptor.WakeCategory,
             AllAircraftTypesDescriptor => true,
             _ => throw new ArgumentOutOfRangeException(nameof(aircraftDescriptor))
         };
