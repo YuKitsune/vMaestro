@@ -525,28 +525,43 @@ Flight messages support `{Callsign}` placeholder.
 
 ## Aircraft Performance Configuration
 
-vMaestro need to know the average descent speed of each aircraft in order to calculate it's trajectory.
+vMaestro uses aircraft speed profiles to calculate the TTG for a particular trajectory.
+Each profile defines how fast an aircraft flies at various distances from the runway threshold, allowing TTG to account for the speed reductions as aircraft near the runway.
 
-The performance data can be extracted from the vatSys `Performance.xml` file using the [Maestro Tools CLI](./05-maestro-tools.md).
+Profiles are matched to aircraft using descriptors. An exact type code match takes priority over a category match.
 
 ```yaml
 AircraftPerformance:
-  - {TypeCode: B738, DescentSpeedKnots: 220, IsJet: true,  WakeCategory: Medium}
-  - {TypeCode: A320, DescentSpeedKnots: 210, IsJet: true,  WakeCategory: Medium}
-  - {TypeCode: B77W, DescentSpeedKnots: 250, IsJet: true,  WakeCategory: Heavy}
-  - {TypeCode: A388, DescentSpeedKnots: 260, IsJet: true,  WakeCategory: Super}
-  - {TypeCode: DH8D, DescentSpeedKnots: 160, IsJet: false, WakeCategory: Medium}
-  - {TypeCode: PC12, DescentSpeedKnots: 120, IsJet: false, WakeCategory: Light}
+  - AircraftTypes: [Jet, DH8D]
+    Speeds:
+      - {ThresholdNM: 45, SpeedKnots: 330}
+      - {ThresholdNM: 35, SpeedKnots: 310}
+      - {ThresholdNM: 25, SpeedKnots: 280}
+      - {ThresholdNM: 15, SpeedKnots: 250}
+      - {ThresholdNM: 0,  SpeedKnots: 210}
+
+  - AircraftTypes: [Prop]
+    Speeds:
+      - {ThresholdNM: 45, SpeedKnots: 280}
+      - {ThresholdNM: 35, SpeedKnots: 260}
+      - {ThresholdNM: 25, SpeedKnots: 230}
+      - {ThresholdNM: 15, SpeedKnots: 200}
+      - {ThresholdNM: 0,  SpeedKnots: 160}
 ```
 
-### Aircraft Performance Properties
+### Speed Profile Properties
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `TypeCode` | string | Yes | The ICAO type code for the aircraft |
-| `DescentSpeedKnots` | string | Yes | The average true airspeed at which the aircraft will descend through the TMA |
-| `IsJet` | bool | Yes | Whether or not the aircraft is a Jet |
-| `WakeCategory` | string | Yes | The wake turbulence category, either `Light`, `Medium`, `Heavy`, or `SuperHeavy` |
+| `AircraftTypes` | array | Yes | Descriptors identifying which aircraft this profile applies to. Supports type codes (e.g. `DH8D`), category keywords (`Jet`, `Prop`), wake categories (`Light`, `Medium`, `Heavy`, `Super`), or `All`. |
+| `Speeds` | array | Yes | Speed bands ordered descending by `ThresholdNM`. |
+
+### Speed Band Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `ThresholdNM` | number | Yes | This band's speed applies when distance-to-run is greater than this value (NM). Set to `0` to define the floor speed covering the final approach. |
+| `SpeedKnots` | integer | Yes | **True airspeed** in knots for this distance band. |
 
 ## Validation
 

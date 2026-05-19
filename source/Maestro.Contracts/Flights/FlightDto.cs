@@ -25,7 +25,7 @@ public class FlightDto
     /// The wake turbulence category of the aircraft.
     /// </summary>
     [Key(2)]
-    public required WakeCategory WakeCategory { get; init; }
+    public required WakeCategory? WakeCategory { get; init; }
 
     /// <summary>
     /// The category of the aircraft (e.g., jet, turboprop).

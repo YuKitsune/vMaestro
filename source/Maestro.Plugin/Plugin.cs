@@ -134,7 +134,7 @@ public class Plugin : IPlugin
                     );
                 })
                 .AddSingleton<IFixLookup, VatsysFixLookup>()
-                .AddSingleton<IPerformanceLookup>(new YamlPerformanceLookup(pluginConfiguration.AircraftPerformance))
+                .AddSingleton<IPerformanceLookup>(new YamlPerformanceLookup(pluginConfiguration.AircraftPerformance, logger))
                 .AddSingleton(new GuiInvoker(MMI.InvokeOnGUI))
                 .AddSingleton(logger)
                 .AddSingleton<IErrorReporter>(x => new ErrorReporter(Name, logger, x.GetRequiredService<IClock>()))

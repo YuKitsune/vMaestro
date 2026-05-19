@@ -612,20 +612,36 @@ Airports:
 # ==============================================================================
 # AIRCRAFT PERFORMANCE
 # ==============================================================================
-# Global table of aircraft approach speeds used for trajectory time calculations.
-# One entry per ICAO type code. Extracted from vatSys Performance.xml using the
-# Maestro.Tools CLI: maestro extract-performance --performance <Performance.xml>
+# Speed profiles used for trajectory TTG calculations.
+# Each profile defines how fast aircraft fly at each distance from the runway,
+# allowing TTG to account for the speed reductions that occur on the approach.
 #
-# DescentSpeedKnots: TAS at TMA entry altitude (e.g. FL100) from Performance.xml
-# IsJet:             true for jet-powered aircraft, false for turboprop/piston
-# WakeCategory:      ICAO wake turbulence category (Light, Medium, Heavy, Super)
+# AircraftTypes: Descriptors identifying which aircraft this profile applies to.
+#   Supports type codes (e.g. DH8D), category keywords (Jet, Prop),
+#   wake categories (Light, Medium, Heavy, Super), or All.
+#   An exact type code match takes priority over a category match.
+#
+# Speeds: Distance-to-go speed bands, ordered descending by ThresholdNM.
+#   ThresholdNM: This band applies when distance-to-go is greater than this value.
+#                Set to 0 to define the floor speed covering the final approach.
+#   SpeedKnots:  True airspeed in knots for this distance band.
 
 AircraftPerformance:
-  - {TypeCode: B738, DescentSpeedKnots: 220, IsJet: true,  WakeCategory: Medium}
-  - {TypeCode: A320, DescentSpeedKnots: 210, IsJet: true,  WakeCategory: Medium}
-  - {TypeCode: B77W, DescentSpeedKnots: 250, IsJet: true,  WakeCategory: Heavy}
-  - {TypeCode: A388, DescentSpeedKnots: 260, IsJet: true,  WakeCategory: Super}
-  - {TypeCode: DH8D, DescentSpeedKnots: 160, IsJet: false, WakeCategory: Medium}
-  - {TypeCode: PC12, DescentSpeedKnots: 120, IsJet: false, WakeCategory: Light}
-  # Add entries for all aircraft types expected at your airports.
-  # Run: maestro extract-performance --performance <path/to/Performance.xml>
+
+  # Jets (DH8D included here as it descends at similar speeds to jets)
+  - AircraftTypes: [Jet, DH8D]
+    Speeds:
+      - {ThresholdNM: 45, SpeedKnots: 330}
+      - {ThresholdNM: 35, SpeedKnots: 310}
+      - {ThresholdNM: 25, SpeedKnots: 280}
+      - {ThresholdNM: 15, SpeedKnots: 250}
+      - {ThresholdNM: 0,  SpeedKnots: 210}
+
+  # Turboprops and pistons
+  - AircraftTypes: [Prop]
+    Speeds:
+      - {ThresholdNM: 45, SpeedKnots: 280}
+      - {ThresholdNM: 35, SpeedKnots: 260}
+      - {ThresholdNM: 25, SpeedKnots: 230}
+      - {ThresholdNM: 15, SpeedKnots: 200}
+      - {ThresholdNM: 0,  SpeedKnots: 160}

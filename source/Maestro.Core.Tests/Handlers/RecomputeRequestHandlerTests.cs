@@ -89,7 +89,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
 
         // Update flight2's estimates so its landing estimate is earlier than flight1
         session.FlightDataRecords["QFA2"] = new FlightDataRecord(
-            "QFA2", flight2.AircraftType, flight2.AircraftCategory, flight2.WakeCategory,
+            "QFA2", flight2.AircraftType, flight2.AircraftCategory, flight2.WakeCategory ?? WakeCategory.Medium,
             flight2.OriginIdentifier, flight2.DestinationIdentifier, null, null,
             [new FixEstimate("RIVET", now.AddMinutes(5)), new FixEstimate("YSSY", now.AddMinutes(15))],
             now);
@@ -150,7 +150,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         // Change the landing estimate of the last flight to be earlier than the second flight
         var newFeederFixEstimate = now.AddMinutes(-8);
         session.FlightDataRecords["QFA3"] = new FlightDataRecord(
-            "QFA3", flight3.AircraftType, flight3.AircraftCategory, flight3.WakeCategory,
+            "QFA3", flight3.AircraftType, flight3.AircraftCategory, flight3.WakeCategory ?? WakeCategory.Medium,
             flight3.OriginIdentifier, flight3.DestinationIdentifier, null, null,
             [new FixEstimate("RIVET", newFeederFixEstimate), new FixEstimate("YSSY", newFeederFixEstimate.Add(_defaultTtg))],
             now);
@@ -228,7 +228,7 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         // Re-route the flight to a new feeder fix
         var newFeederFixEstimate = now.AddMinutes(3);
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
-            "QFA1", flight.AircraftType, flight.AircraftCategory, flight.WakeCategory,
+            "QFA1", flight.AircraftType, flight.AircraftCategory, flight.WakeCategory ?? WakeCategory.Medium,
             flight.OriginIdentifier, flight.DestinationIdentifier, null, null,
             [new FixEstimate("WELSH", newFeederFixEstimate), new FixEstimate("TESAT", landingTime)],
             now);

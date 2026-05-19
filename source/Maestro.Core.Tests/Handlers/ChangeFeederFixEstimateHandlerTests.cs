@@ -56,10 +56,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
 
         var airportConfiguration = CreateAirportConfiguration(timeToGoMinutes);
 
-        var trajectoryService = new TrajectoryService(
-            new AirportConfigurationProvider([airportConfiguration]),
-            Substitute.For<IPerformanceLookup>(),
-            Substitute.For<ILogger>());
+        var trajectoryService = new MockTrajectoryService(timeToGo);
 
         var flight = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")
@@ -92,10 +89,7 @@ public class ChangeFeederFixEstimateHandlerTests(ClockFixture clockFixture)
 
         var airportConfiguration = CreateAirportConfiguration(timeToGoMinutes);
 
-        var trajectoryService = new TrajectoryService(
-            new AirportConfigurationProvider([airportConfiguration]),
-            Substitute.For<IPerformanceLookup>(),
-            Substitute.For<ILogger>());
+        var trajectoryService = new MockTrajectoryService(TimeSpan.FromMinutes(timeToGoMinutes));
 
         var flight1 = new FlightBuilder("QFA1")
             .WithFeederFix("RIVET")

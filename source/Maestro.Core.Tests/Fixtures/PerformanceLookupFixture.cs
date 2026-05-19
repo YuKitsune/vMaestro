@@ -1,4 +1,5 @@
 ﻿using Maestro.Contracts.Shared;
+using Maestro.Core.Configuration;
 using Maestro.Core.Integration;
 using Maestro.Core.Tests.Fixtures;
 using NSubstitute;
@@ -44,6 +45,9 @@ public class PerformanceLookupFixture
                     AircraftTypes.SuperHeavyJet,
                     AircraftCategory.Jet,
                     WakeCategory.SuperHeavy));
+
+            lookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>())
+                .Returns([new SpeedBand { ThresholdNM = 0, SpeedKnots = 150 }]);
 
             return lookup;
         }
