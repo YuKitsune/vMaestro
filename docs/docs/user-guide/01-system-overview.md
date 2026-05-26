@@ -100,6 +100,11 @@ Each cycle performs the following steps for each flight.
 
 The `ETA_FF` is sourced from vatSys route estimates. The landing estimate (`ETA`) is then calculated by adding the time-to-go (`TTG`) from the allocated trajectory.
 
+:::info
+If a PETO has been set along the route, vatSys will re-calculate the route estimates based on the PETO, rather than the natural ETO.
+This will affect the `ETA_FF` used by vMaestro.
+:::
+
 For flights not tracking via a feeder fix, an average `TTG` will be calculated, and the `ETA_FF` is derived by subtracting the average `TTG` from the last estimate in the flight plan route.
 
 ![Diagram of ETA_FF calculation](../../static/img/eta_ff.png)
@@ -112,6 +117,10 @@ vMaestro tracks two sets of estimates for each flight:
 - **Initial estimates** (`Initial ETA_FF`, `Initial ETA`) — The estimates at the time the flight became Stable
 
 While Unstable, both sets match. Once Stable, the initial estimates are locked and used as the baseline for delay calculations. Recomputing a flight resets the initial estimates to the current values.
+
+#### Hold Exit Times
+
+When using vMaestro in conjunction with the [Hold Plugin](https://github.com/yukitsune/holdplugin), the `ETA_FF` will be calculated based on the hold exit time, rather than the natural `ETO`.
 
 ### 2. Sequencing
 
