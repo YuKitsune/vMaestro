@@ -415,6 +415,63 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenStableFlightsAreNoLongerInConflict_DelayIsReset()
+    {
+        var now = clockFixture.Instance.UtcNow();
+        var ttg = TimeSpan.FromMinutes(20);
+
+        // Arrange: two Stable flights with ETAs 1 minute apart (< 3-minute acceptance rate -> conflict)
+        var flight1 = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(now.AddMinutes(10), TimeSpan.FromMinutes(20))
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(now.AddMinutes(11), TimeSpan.FromMinutes(20))
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var trajectoryService = new MockTrajectoryService(ttg);
+
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
+            .WithSequence(s => s
+                .WithTrajectoryService(trajectoryService)
+                .WithSingleRunway("34L", TimeSpan.FromSeconds(DefaultLandingRateSeconds))
+                .WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        // Confirm initial delay is applied due to conflict
+        flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate), "flight2 should have delay due to initial conflict");
+        flight2.RequiredEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(2), "flight2 should have delay due to initial conflict");
+
+        // Update flight2's ETA to be well-separated (5 min gap from flight1 > 3 min acceptance rate)
+        var newFeederFixEstimate = now.AddMinutes(15);
+        session.FlightDataRecords["QFA2"] = new FlightDataRecord(
+            "QFA2", flight2.AircraftType, flight2.AircraftCategory, flight2.WakeCategory ?? WakeCategory.Medium,
+            flight2.OriginIdentifier, flight2.DestinationIdentifier, null, null,
+            [new FixEstimate("RIVET", newFeederFixEstimate), new FixEstimate("YSSY", newFeederFixEstimate.Add(ttg))],
+            now);
+
+        var handler = GetRequestHandler(sessionManager, sequence, trajectoryService);
+        var request = new RecomputeRequest("YSSY", "QFA2");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert: no delay required on either flight
+        flight1.RequiredEnrouteDelay.ShouldBe(TimeSpan.Zero, "flight1 should have no required delay");
+        flight1.RequiredTerminalDelay.ShouldBe(TimeSpan.Zero, "flight1 should have no required delay");
+        flight2.RequiredEnrouteDelay.ShouldBe(TimeSpan.Zero, "flight2 should have no required delay after conflict is resolved");
+        flight2.RequiredTerminalDelay.ShouldBe(TimeSpan.Zero, "flight2 should have no required delay after conflict is resolved");
+    }
+
+    [Fact]
     public async Task RedirectedToMaster()
     {
         var now = clockFixture.Instance.UtcNow();
