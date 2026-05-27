@@ -126,7 +126,7 @@ public class InsertFlightRequestHandler(
             session.PendingFlights.Any(f => f.Callsign == callsign) ||
             session.DeSequencedFlights.Any(f => f.Callsign == callsign))
         {
-            logger.Debug("{Callsign} already tracked, skipping FDR insertion", callsign);
+            logger.Warning("{Callsign} already inserted, skipping FDR insertion", callsign);
             return false;
         }
 
@@ -178,11 +178,12 @@ public class InsertFlightRequestHandler(
             return false;
         }
 
-        var runwayMode = session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
-        var runway = runwayMode.Default;
-
         var performanceData = new AircraftPerformanceData(record.AircraftType, record.AircraftCategory, record.WakeCategory);
         var fixNames = record.Estimates.Select(e => e.FixIdentifier).ToArray();
+
+        var runwayMode = session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
+        var runway = runwayMode.Runways.FirstOrDefault(r => r.FeederFixes.Contains(feederFix.FixIdentifier))
+                     ?? runwayMode.Default;
 
         var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
             airportIdentifier,
@@ -198,6 +199,7 @@ public class InsertFlightRequestHandler(
             fixNames,
             session.Sequence.UpperWind);
 
+        // New flights may overtake Unstable and Stable ones
         var earliestInsertionIndex = session.Sequence.FindLastIndex(f =>
             f.State is not State.Unstable and not State.Stable &&
             f.AssignedRunwayIdentifier == runway.Identifier) + 1;
