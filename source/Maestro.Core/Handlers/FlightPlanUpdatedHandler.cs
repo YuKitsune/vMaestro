@@ -28,33 +28,33 @@ public class FlightPlanUpdatedHandler(
 
             var session = await sessionManager.GetSession(notification.Destination, cancellationToken);
 
-            bool isNewFlight;
-            using (await session.Semaphore.LockAsync(cancellationToken))
+            if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
+                connection!.IsConnected &&
+                !connection.IsMaster)
             {
-                var isKnownFlight =
-                    session.Sequence.FindFlight(notification.Callsign) is not null ||
-                    session.PendingFlights.Any(f => f.Callsign == notification.Callsign) ||
-                    session.DeSequencedFlights.Any(f => f.Callsign == notification.Callsign);
-
-                if (isKnownFlight &&
-                    session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData))
+                if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
+                    !rateLimiter.ShouldUpdateFlight(existingData.LastSeen))
                 {
-                    if (!rateLimiter.ShouldUpdate(existingData.LastSeen))
-                    {
-                        logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
-                        return;
-                    }
-                }
-
-                if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
-                    connection.IsConnected &&
-                    !connection.IsMaster)
-                {
-                    logger.Debug("Relaying FlightPlanUpdatedNotification for {Callsign}", notification.Callsign);
-                    await connection.Send(notification, cancellationToken);
+                    logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
                     return;
                 }
 
+                logger.Debug("Relaying FlightPlanUpdatedNotification for {Callsign}", notification.Callsign);
+                await connection.Send(notification, cancellationToken);
+                return;
+            }
+
+            bool isNewFlight;
+            using (await session.Semaphore.LockAsync(cancellationToken))
+            {
+                if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
+                    !rateLimiter.ShouldUpdateFlight(existingData.LastSeen))
+                {
+                    logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
+                    return;
+                }
+
+                isNewFlight = !session.FlightDataRecords.ContainsKey(notification.Callsign);
                 session.FlightDataRecords[notification.Callsign] = new FlightDataRecord(
                     notification.Callsign,
                     notification.AircraftType,
@@ -66,20 +66,19 @@ public class FlightPlanUpdatedHandler(
                     notification.Position,
                     notification.Estimates,
                     clock.UtcNow());
-
-                isNewFlight = !isKnownFlight;
             }
 
-            if (isNewFlight)
-            {
-                await mediator.Send(
-                    new InsertFlightRequest(
-                        notification.Destination,
-                        notification.Callsign,
-                        notification.AircraftType,
-                        new FdrInsertionOptions()),
-                    cancellationToken);
-            }
+            if (!isNewFlight)
+                return;
+
+            // Do this outside the lock to avoid a deadlock
+            await mediator.Send(
+                new InsertFlightRequest(
+                    notification.Destination,
+                    notification.Callsign,
+                    notification.AircraftType,
+                    new FdrInsertionOptions()),
+                cancellationToken);
         }
         catch (Exception exception)
         {

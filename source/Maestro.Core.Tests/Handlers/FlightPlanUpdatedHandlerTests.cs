@@ -4,7 +4,6 @@ using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
-using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
@@ -38,7 +37,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightIsUpdated_TheFlightDataRecordIsStored()
+    public async Task WhenAFlightPlanIsUpdated_TheSessionIsUpdated()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
@@ -57,7 +56,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
                 new FixEstimate("YSSY", landingEstimate)
             ]);
 
-        var handler = GetHandler(airportConfiguration, sessionManager, clock);
+        var handler = GetHandler(sessionManager, clock);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -75,72 +74,42 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightIsUpdated_AndItIsAlreadyKnown_FlightDataRecordIsUpdated()
+    public async Task WhenAFlightPlanIsUpdated_AndTooSoonSinceLastUpdate_TheUpdateIsRateLimited()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
-        var flight = new FlightBuilder("QFA123")
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .Build();
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
 
-        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
-            .WithSequence(s => s.WithFlight(flight))
-            .Build();
+        var originalLastSeen = clock.UtcNow().AddSeconds(-5);
+        session.FlightDataRecords["QFA123"] = new FlightDataRecord(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))],
+            originalLastSeen);
 
-        var newFeederFixEstimate = clock.UtcNow().AddMinutes(15);
+        var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
+        rateLimiter.ShouldUpdateFlight(Arg.Any<DateTimeOffset>()).Returns(false);
 
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B744", AircraftCategory.Jet, WakeCategory.Heavy,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
             _position,
-            [new FixEstimate("RIVET", newFeederFixEstimate)]);
-
-        var handler = GetHandler(airportConfiguration, sessionManager, clock);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        session.FlightDataRecords.TryGetValue("QFA123", out var record).ShouldBeTrue();
-        record!.AircraftType.ShouldBe("B744");
-        record.WakeCategory.ShouldBe(WakeCategory.Heavy);
-    }
-
-    [Fact]
-    public async Task WhenAFlightIsUpdated_AndItIsAlreadyKnown_InsertFlightRequestIsNotSent()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var flight = new FlightBuilder("QFA123")
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .Build();
-
-        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
-            .WithSequence(s => s.WithFlight(flight))
-            .Build();
-
-        var mediator = Substitute.For<IMediator>();
-        var notification = new FlightPlanUpdatedNotification(
-            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
-            _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
 
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, mediator: mediator);
+        var handler = GetHandler(sessionManager, clock, rateLimiter: rateLimiter);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        await mediator.DidNotReceive().Send(Arg.Any<InsertFlightRequest>(), Arg.Any<CancellationToken>());
+        var record = session.FlightDataRecords["QFA123"];
+        record.LastSeen.ShouldBe(originalLastSeen, "FlightDataRecord should not update when rate-limited");
+        record.AircraftType.ShouldBe("B738", "FlightDataRecord should not update when rate-limited");
     }
 
     [Fact]
-    public async Task WhenANewFlightIsUpdated_InsertFlightRequestIsSent()
+    public async Task WhenAFlightPlanIsUpdated_AndItIsNew_InsertFlightRequestIsSent()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
@@ -154,7 +123,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, mediator: mediator);
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -169,108 +138,42 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAPendingFlightIsUpdated_InsertFlightRequestIsNotSent()
+    public async Task WhenAFlightPlanIsUpdated_AndItIsNotNew_InsertFlightRequestIsNotSent()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
         var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
-        session.PendingFlights.Add(new PendingFlight("QFA123", IsFromDepartureAirport: false, IsHighPriority: false));
-
-        var mediator = Substitute.For<IMediator>();
-        var notification = new FlightPlanUpdatedNotification(
-            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
-            _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
-
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, mediator: mediator);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        await mediator.DidNotReceive().Send(Arg.Any<InsertFlightRequest>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task WhenADesequencedFlightIsUpdated_InsertFlightRequestIsNotSent()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var flight = new FlightBuilder("QFA123")
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .Build();
-
-        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
-        session.DeSequencedFlights.Add(flight);
-
-        var mediator = Substitute.For<IMediator>();
-        var notification = new FlightPlanUpdatedNotification(
-            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
-            _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
-
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, mediator: mediator);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        await mediator.DidNotReceive().Send(Arg.Any<InsertFlightRequest>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task WhenLastUpdateWasRecent_TheUpdateIsIgnored()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var flight = new FlightBuilder("QFA123")
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
-            .Build();
-
-        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
-            .WithSequence(s => s.WithFlight(flight))
-            .Build();
 
         session.FlightDataRecords["QFA123"] = new FlightDataRecord(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null, _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))],
-            clock.UtcNow());
+            clock.UtcNow().AddMinutes(-5));
 
-        var originalLastSeen = session.FlightDataRecords["QFA123"].LastSeen;
-
-        var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-        rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(false);
-
+        var mediator = Substitute.For<IMediator>();
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
 
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, rateLimiter: rateLimiter);
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        session.FlightDataRecords["QFA123"].LastSeen.ShouldBe(originalLastSeen, "FlightDataRecord should not update when rate-limited");
+        await mediator.DidNotReceive().Send(Arg.Any<InsertFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task WhenInSlaveMode_UpdateIsRelayedToMaster()
+    public async Task WhenAFlightPlanIsUpdated_AndConnectedToAServer_NotificationIsRelayedToMaster()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
-        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
 
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
@@ -279,7 +182,8 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
         var slaveConnectionManager = new MockSlaveConnectionManager();
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, connectionManager: slaveConnectionManager);
+        var mediator = Substitute.For<IMediator>();
+        var handler = GetHandler(sessionManager, clock, connectionManager: slaveConnectionManager, mediator: mediator);
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -287,58 +191,11 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         // Assert
         slaveConnectionManager.Connection.InvokedNotifications.Count.ShouldBe(1, "notification should be relayed to master");
         slaveConnectionManager.Connection.InvokedNotifications[0].ShouldBe(notification);
-    }
-
-    [Fact]
-    public async Task WhenInSlaveMode_FlightDataRecordIsNotUpdatedLocally()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
-
-        var notification = new FlightPlanUpdatedNotification(
-            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1.5),
-            _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
-
-        var slaveConnectionManager = new MockSlaveConnectionManager();
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, connectionManager: slaveConnectionManager);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
         session.FlightDataRecords.ShouldNotContainKey("QFA123", "slave should not update FlightDataRecords locally");
-    }
-
-    [Fact]
-    public async Task WhenNoSessionExistsForDestination_NothingHappens()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
-
-        var mediator = Substitute.For<IMediator>();
-        var notification = new FlightPlanUpdatedNotification(
-            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YBBN", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1.5),
-            _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
-
-        var handler = GetHandler(airportConfiguration, sessionManager, clock, mediator: mediator);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
         await mediator.DidNotReceive().Send(Arg.Any<InsertFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
     FlightPlanUpdatedHandler GetHandler(
-        AirportConfiguration airportConfiguration,
         ISessionManager sessionManager,
         IClock clock,
         IFlightUpdateRateLimiter? rateLimiter = null,
@@ -348,7 +205,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         if (rateLimiter is null)
         {
             rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-            rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(true);
+            rateLimiter.ShouldUpdateFlight(Arg.Any<DateTimeOffset>()).Returns(true);
         }
 
         connectionManager ??= new MockLocalConnectionManager();
