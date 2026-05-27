@@ -120,132 +120,126 @@ public class FlightDto
     /// <summary>
     /// The identifier of the runway assigned to this flight.
     /// </summary>
-    [Key(19)]
+    [Key(18)]
     public required string AssignedRunwayIdentifier { get; init; }
 
     /// <summary>
     /// The flight's position in the sequence for its assigned runway.
     /// </summary>
-    [Key(20)]
+    [Key(19)]
     public required int NumberToLandOnRunway { get; init; }
 
     /// <summary>
     /// The assigned approach type if any.
     /// </summary>
-    [Key(21)]
+    [Key(20)]
     public required string ApproachType { get; init; }
 
     /// <summary>
     /// The initial estimated landing time before the flight became Stable.
     /// </summary>
-    [Key(22)]
+    [Key(21)]
     public required DateTimeOffset InitialLandingEstimate { get; init; }
 
     /// <summary>
     /// The current estimated landing time.
     /// </summary>
-    [Key(23)]
+    [Key(22)]
     public required DateTimeOffset LandingEstimate { get; init; }
 
     /// <summary>
     /// The target landing time assigned by flow control, if any.
     /// </summary>
-    [Key(24)]
+    [Key(23)]
     public DateTimeOffset? TargetLandingTime { get; init; }
 
     /// <summary>
     /// The scheduled landing time assigned by Maestro.
     /// </summary>
-    [Key(25)]
+    [Key(24)]
     public required DateTimeOffset LandingTime { get; init; }
 
     /// <summary>
     /// Whether the flight is on a high speed descent (no enroute delay allocated).
     /// </summary>
-    [Key(28)]
+    [Key(25)]
     public required bool HighSpeed { get; init; }
-
-    /// <summary>
-    /// The last time this flight's data was updated.
-    /// </summary>
-    [Key(29)]
-    public required DateTimeOffset LastSeen { get; init; }
 
     /// <summary>
     /// The current position of the flight, if known.
     /// </summary>
-    [Key(30)]
+    [Key(26)]
     public required FlightPosition? Position { get; init; }
 
     /// <summary>
     /// Whether this flight was manually inserted into the sequence.
     /// </summary>
-    [Key(31)]
+    [Key(27)]
     public required bool IsManuallyInserted { get; init; }
 
     /// <summary>
     /// Time savings available by flying a shortcut through the enroute area.
     /// </summary>
-    [Key(32)]
+    [Key(28)]
     public TimeSpan EnrouteShortcutTimeToGain { get; init; }
 
     /// <summary>
     /// Maximum delay absorbable in the enroute area via linear techniques (speed reduction or path stretching).
     /// </summary>
-    [Key(33)]
+    [Key(29)]
     public TimeSpan EnrouteMaxLinearDelay { get; init; }
 
     /// <summary>
     /// The time-to-go for the normal (direct) terminal trajectory from the feeder fix to the runway threshold.
     /// </summary>
-    [Key(34)]
+    [Key(30)]
     public TimeSpan TerminalNormalTimeToGo { get; init; }
 
     /// <summary>
     /// The time-to-go for the pressure terminal trajectory — normal path plus pressure-zone path stretching.
     /// </summary>
-    [Key(35)]
+    [Key(31)]
     public TimeSpan TerminalPressureTimeToGo { get; init; }
 
     /// <summary>
     /// The time-to-go for the maximum-pressure terminal trajectory — pressure path plus maximum vectoring.
     /// </summary>
-    [Key(36)]
+    [Key(32)]
     public TimeSpan TerminalMaxPressureTimeToGo { get; init; }
 
     /// <summary>
     /// The action the controllers must take to ensure this flight lands at their scheduled landing time.
     /// </summary>
-    [Key(37)]
+    [Key(33)]
     public ControlAction RequiredControlAction { get; init; }
 
     /// <summary>
     /// The remaining action required for the controllers to take ensure this flight lands at their scheduled landing time.
     /// </summary>
-    [Key(38)]
+    [Key(34)]
     public ControlAction RemainingControlAction { get; init; }
 
     /// <summary>
     /// The enroute delay assigned to this flight at scheduling time.
     /// </summary>
-    [Key(39)]
+    [Key(35)]
     public TimeSpan RequiredEnrouteDelay { get; init; }
 
     /// <summary>
     /// The remaining enroute delay, recomputed each time the flight's estimate changes.
     /// </summary>
-    [Key(40)]
+    [Key(36)]
     public TimeSpan RemainingEnrouteDelay { get; init; }
 
     /// <summary>
     /// The terminal delay assigned to this flight at scheduling time.
     /// </summary>
-    [Key(41)]
+    [Key(37)]
     public TimeSpan RequiredTerminalDelay { get; init; }
 
     /// <summary>
     /// The remaining terminal delay, recomputed each time the flight's estimate changes.
     /// </summary>
-    [Key(42)]
+    [Key(38)]
     public TimeSpan RemainingTerminalDelay { get; init; }
 }

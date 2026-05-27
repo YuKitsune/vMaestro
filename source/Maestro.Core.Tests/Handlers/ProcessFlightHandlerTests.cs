@@ -292,7 +292,6 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
         flight.OriginIdentifier.ShouldBe("YMAV");
         flight.Position!.Coordinate.Latitude.ShouldBe(newPosition.Coordinate.Latitude);
         flight.Position.Altitude.ShouldBe(newPosition.Altitude);
-        flight.LastSeen.ShouldBe(clock.UtcNow());
     }
 
     [Fact]

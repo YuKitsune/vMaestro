@@ -65,7 +65,6 @@ public class ProcessFlightsHandler(
 
             if (!isLost && record is not null)
             {
-                flight.UpdateLastSeen(record.LastSeen);
                 UpdateFlightData(record, flight);
                 RecomputeIfUnstable(flight, record, session, airportConfiguration);
 
@@ -109,7 +108,6 @@ public class ProcessFlightsHandler(
 
             if (!isLost)
             {
-                flight.UpdateLastSeen(record!.LastSeen);
                 UpdateFlightData(record, flight);
                 CalculateEstimates(flight, record);
             }

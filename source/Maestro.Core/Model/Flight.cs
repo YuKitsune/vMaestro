@@ -171,7 +171,6 @@ public class Flight : IEquatable<Flight>
         RequiredControlAction = dto.RequiredControlAction;
         RemainingControlAction = dto.RemainingControlAction;
         ActivatedTime = dto.ActivatedTime;
-        LastSeen = dto.LastSeen;
         Position = dto.Position;
     }
 
@@ -189,7 +188,6 @@ public class Flight : IEquatable<Flight>
     public State State { get; private set; }
     public bool HighPriority { get; set; }
     public DateTimeOffset? ActivatedTime { get; private set; }
-    public DateTimeOffset LastSeen { get; private set; }
 
     public string? FeederFixIdentifier { get; private set; }
     public DateTimeOffset InitialFeederFixEstimate { get; private set; }
@@ -310,10 +308,6 @@ public class Flight : IEquatable<Flight>
         TargetLandingTime = null;
     }
 
-    public void UpdateLastSeen(DateTimeOffset time)
-    {
-        LastSeen = time;
-    }
 
     public void UpdatePosition(FlightPosition? position)
     {

@@ -171,7 +171,6 @@ public static class TestBuilders
             RequiredEnrouteDelay = TimeSpan.FromMinutes(2),
             RemainingEnrouteDelay = TimeSpan.FromMinutes(1),
             HighSpeed = false,
-            LastSeen = FixedTime,
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,
             TerminalNormalTimeToGo = TimeSpan.FromMinutes(18),
