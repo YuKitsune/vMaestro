@@ -52,11 +52,12 @@ public class LandingStatistics(ILogger logger)
         if (actualLandingTimes.Count == 0)
             return new NoDeviation();
 
+        var sortedTimes = actualLandingTimes.OrderBy(t => t).ToList();
         var diffs = new List<TimeSpan>();
-        for (var i = 1; i < actualLandingTimes.Count; i++)
+        for (var i = 1; i < sortedTimes.Count; i++)
         {
-            var previous = actualLandingTimes[i - 1];
-            var current = actualLandingTimes[i];
+            var previous = sortedTimes[i - 1];
+            var current = sortedTimes[i];
             diffs.Add(current - previous);
         }
 

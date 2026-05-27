@@ -286,6 +286,23 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
         statistics.AchievedLandingRates.ShouldContainKey("34R");
     }
 
+    [Fact]
+    public void RecordLandingTime_OutOfOrderLandingTimes_ComputesCorrectAverageInterval()
+    {
+        // Arrange
+        var statistics = new LandingStatistics(_logger);
+        var runway = CreateRunway("34L", _acceptanceRate);
+
+        // Act - Record landings out of chronological order
+        statistics.RecordLandingTime(runway, _now.AddMinutes(-4), clockFixture.Instance);
+        statistics.RecordLandingTime(runway, _now.AddMinutes(-10), clockFixture.Instance); // earlier than previous
+
+        // Assert - average interval should be 6 minutes, not negative
+        statistics.AchievedLandingRates["34L"].ShouldBeOfType<AchievedRate>();
+        var achievedRate = (AchievedRate)statistics.AchievedLandingRates["34L"];
+        achievedRate.AverageLandingInterval.ShouldBe(TimeSpan.FromMinutes(6));
+    }
+
     static Runway CreateRunway(string identifier, TimeSpan acceptanceRate)
     {
         return new Runway(identifier, "", acceptanceRate, []);
