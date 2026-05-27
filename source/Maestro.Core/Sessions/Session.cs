@@ -103,7 +103,8 @@ public class Session : IAsyncDisposable
             while (!cancellationToken.IsCancellationRequested)
             {
                 await _mediator.Send(new TrySwapRunwayModesRequest(AirportIdentifier), cancellationToken);
-                await _mediator.Send(new CleanUpFlightsRequest(AirportIdentifier), cancellationToken);
+                await _mediator.Send(new ProcessFlightsRequest(AirportIdentifier), cancellationToken);
+                await _mediator.Send(new CleanUpLandedFlightsRequest(AirportIdentifier), cancellationToken);
 
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
             }

@@ -4,15 +4,10 @@ using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Handlers;
 
-// TODO: Test cases
-// - When the connection is not tracked, exception is thrown
-// - When the connection is the mater, exception is thrown
-// - Flight updates are relayed to the master
-
-public class FlightUpdatedNotificationHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
-    : INotificationHandler<NotificationContextWrapper<FlightUpdatedNotification>>
+public class FlightPlanUpdatedNotificationHandler(IConnectionManager connectionManager, IHubProxy hubProxy, ILogger logger)
+    : INotificationHandler<NotificationContextWrapper<FlightPlanUpdatedNotification>>
 {
-    public async Task Handle(NotificationContextWrapper<FlightUpdatedNotification> wrappedNotification, CancellationToken cancellationToken)
+    public async Task Handle(NotificationContextWrapper<FlightPlanUpdatedNotification> wrappedNotification, CancellationToken cancellationToken)
     {
         var (connectionId, notification) = wrappedNotification;
 
@@ -33,7 +28,7 @@ public class FlightUpdatedNotificationHandler(IConnectionManager connectionManag
             throw new InvalidOperationException("No master found");
         }
 
-        logger.Debug("{Connection} relaying flight update to {Master}", connection, master);
-        await hubProxy.Send(master.Id, "FlightUpdated", notification, cancellationToken);
+        logger.Debug("{Connection} relaying flight plan update to {Master}", connection, master);
+        await hubProxy.Send(master.Id, "FlightPlanUpdated", notification, cancellationToken);
     }
 }

@@ -229,7 +229,7 @@ public class FlightBuilder(string callsign)
         var enrouteDelay = landingTimeToUse - flight.LandingEstimate;
         flight.SetSequenceData(landingTimeToUse, feederFixTimeToUse, ControlAction.NoDelay, enrouteDelay, TimeSpan.Zero);
 
-        flight.UpdateLastSeen(new FixedClock(_lastSeen));
+        flight.UpdateLastSeen(_lastSeen);
 
         flight.SetMaximumDelay(_manualDelay);
         flight.HighPriority = _highPriority;

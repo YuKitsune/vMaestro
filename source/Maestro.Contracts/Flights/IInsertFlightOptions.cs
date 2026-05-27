@@ -7,9 +7,11 @@ namespace Maestro.Contracts.Flights;
 [JsonDerivedType(typeof(RelativeInsertionOptions), "Relative")]
 [JsonDerivedType(typeof(ExactInsertionOptions), "Exact")]
 [JsonDerivedType(typeof(DepartureInsertionOptions), "Departure")]
+[JsonDerivedType(typeof(FdrInsertionOptions), "Fdr")]
 [Union(0, typeof(RelativeInsertionOptions))]
 [Union(1, typeof(ExactInsertionOptions))]
 [Union(2, typeof(DepartureInsertionOptions))]
+[Union(3, typeof(FdrInsertionOptions))]
 public interface IInsertFlightOptions;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -36,3 +38,10 @@ public record DepartureInsertionOptions(
     [property: Key(0)] string OriginIdentifier,
     [property: Key(1)] DateTimeOffset TakeoffTime)
     : IInsertFlightOptions;
+
+/// <summary>
+/// Triggers automatic insertion based on FDR data already stored in <c>FlightDataRecords</c>.
+/// Used by <c>FlightPlanUpdatedHandler</c> when a new flight is detected.
+/// </summary>
+[MessagePackObject]
+public record FdrInsertionOptions : IInsertFlightOptions;

@@ -29,9 +29,9 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         await mediator.Publish(new NotificationContextWrapper<SessionUpdatedNotification>(Context.ConnectionId, sessionUpdatedNotification));
     }
 
-    public async Task FlightUpdated(FlightUpdatedNotification flightUpdatedNotification)
+    public async Task FlightPlanUpdated(FlightPlanUpdatedNotification notification)
     {
-        await mediator.Publish(new NotificationContextWrapper<FlightUpdatedNotification>(Context.ConnectionId, flightUpdatedNotification));
+        await mediator.Publish(new NotificationContextWrapper<FlightPlanUpdatedNotification>(Context.ConnectionId, notification));
     }
 
     public async Task FlightLanded(FlightLandedNotification flightLandedNotification)

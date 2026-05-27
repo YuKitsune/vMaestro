@@ -9,15 +9,15 @@ using Serilog;
 
 namespace Maestro.Core.Sessions.Handlers;
 
-public class CleanUpFlightsRequestHandler(
+public class CleanUpLandedFlightsRequestHandler(
     IMaestroConnectionManager connectionManager,
     ISessionManager sessionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     IClock clock,
     ILogger logger)
-    : IRequestHandler<CleanUpFlightsRequest>
+    : IRequestHandler<CleanUpLandedFlightsRequest>
 {
-    public async Task Handle(CleanUpFlightsRequest request, CancellationToken cancellationToken)
+    public async Task Handle(CleanUpLandedFlightsRequest request, CancellationToken cancellationToken)
     {
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
@@ -27,7 +27,7 @@ public class CleanUpFlightsRequestHandler(
             return;
         }
 
-        logger.Verbose("Attempting to clean up flights for {AirportIdentifier}", request.AirportIdentifier);
+        logger.Verbose("Attempting to clean up landed flights for {AirportIdentifier}", request.AirportIdentifier);
 
         var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
 
@@ -54,8 +54,6 @@ public class CleanUpFlightsRequestHandler(
                     landedFlight.Callsign,
                     sequence.AirportIdentifier);
             }
-
-            // TODO: Lost flights
         }
     }
 }

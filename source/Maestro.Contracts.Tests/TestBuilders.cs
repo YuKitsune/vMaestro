@@ -226,7 +226,7 @@ public static class TestBuilders
     public static ManualDelayRequest CreateManualDelayRequest() =>
         new("YSSY", "QFA123", 15);
 
-    public static FlightUpdatedNotification CreateFlightUpdatedNotification() =>
+    public static FlightPlanUpdatedNotification CreateFlightPlanUpdatedNotification() =>
         new("QFA123",
             "B738",
             AircraftCategory.Jet,

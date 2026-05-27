@@ -465,7 +465,7 @@ public class Plugin : IPlugin
             _ => WakeCategory.Heavy
         };
 
-        var notification = new FlightUpdatedNotification(
+        var notification = new FlightPlanUpdatedNotification(
             updated.Callsign,
             updated.AircraftType,
             aircraftCategory,

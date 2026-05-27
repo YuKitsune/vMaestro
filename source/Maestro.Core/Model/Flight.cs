@@ -310,9 +310,9 @@ public class Flight : IEquatable<Flight>
         TargetLandingTime = null;
     }
 
-    public void UpdateLastSeen(IClock clock)
+    public void UpdateLastSeen(DateTimeOffset time)
     {
-        LastSeen = clock.UtcNow();
+        LastSeen = time;
     }
 
     public void UpdatePosition(FlightPosition? position)

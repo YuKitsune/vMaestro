@@ -5,7 +5,7 @@ using MessagePack;
 namespace Maestro.Contracts.Flights;
 
 [MessagePackObject]
-public record FlightUpdatedNotification(
+public record FlightPlanUpdatedNotification(
     [property: Key(0)] string Callsign,
     [property: Key(1)] string AircraftType,
     [property: Key(2)] AircraftCategory AircraftCategory,
