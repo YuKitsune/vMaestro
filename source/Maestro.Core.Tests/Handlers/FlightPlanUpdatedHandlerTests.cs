@@ -89,7 +89,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             originalLastSeen);
 
         var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-        rateLimiter.ShouldUpdateFlight(Arg.Any<DateTimeOffset>()).Returns(false);
+        rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(false);
 
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B744", AircraftCategory.Jet, WakeCategory.Heavy,
@@ -205,7 +205,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         if (rateLimiter is null)
         {
             rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-            rateLimiter.ShouldUpdateFlight(Arg.Any<DateTimeOffset>()).Returns(true);
+            rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(true);
         }
 
         connectionManager ??= new MockLocalConnectionManager();

@@ -33,7 +33,7 @@ public class FlightPlanUpdatedHandler(
                 !connection.IsMaster)
             {
                 if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
-                    !rateLimiter.ShouldUpdateFlight(existingData.LastSeen))
+                    !rateLimiter.ShouldUpdate(existingData.LastSeen))
                 {
                     logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
                     return;
@@ -48,7 +48,7 @@ public class FlightPlanUpdatedHandler(
             using (await session.Semaphore.LockAsync(cancellationToken))
             {
                 if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
-                    !rateLimiter.ShouldUpdateFlight(existingData.LastSeen))
+                    !rateLimiter.ShouldUpdate(existingData.LastSeen))
                 {
                     logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
                     return;
