@@ -157,6 +157,25 @@ public class LandingStatisticsTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public void RecordLandingTime_OutOfOrderLandingTimes_ComputesCorrectAverageInterval()
+    {
+        // Arrange
+        var statistics = new LandingStatistics(_logger);
+        var runway = CreateRunway("34L", _acceptanceRate);
+
+        // Act - Record landings out of chronological order
+        statistics.RecordLandingTime(runway, _now.AddMinutes(-8), clockFixture.Instance);
+        statistics.RecordLandingTime(runway, _now.AddMinutes(-6), clockFixture.Instance);
+        statistics.RecordLandingTime(runway, _now.AddMinutes(-10), clockFixture.Instance);
+
+        // Assert - average interval should be 6 minutes, not negative
+        statistics.AchievedLandingRates["34L"].ShouldBeOfType<AchievedRate>();
+        var achievedRate = (AchievedRate)statistics.AchievedLandingRates["34L"];
+        achievedRate.AverageLandingInterval.ShouldBe(TimeSpan.FromMinutes(2));
+        achievedRate.LandingIntervalDeviation.ShouldBe(TimeSpan.FromMinutes(1));
+    }
+
+    [Fact]
     public void Snapshot_CreatesCorrectDto()
     {
         // Arrange
