@@ -1,4 +1,3 @@
-using Maestro.Contracts.Coordination;
 using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
@@ -52,56 +51,47 @@ public class InsertFlightRequestHandler(
 
             logger.Verbose("Inserting {Callsign} for {AirportIdentifier}", callsign, request.AirportIdentifier);
 
-            if (request.Options is FdrInsertionOptions)
+            var aircraftType = string.IsNullOrEmpty(request.AircraftType)
+                ? airportConfiguration.DefaultAircraftType
+                : request.AircraftType!;
+
+            var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
+
+            var flight = request.Options switch
             {
-                var changed = await TryInsertFromFdr(session, airportConfiguration, callsign, request.AirportIdentifier, cancellationToken);
-                if (changed)
-                    sessionDto = session.Snapshot();
-            }
-            else
-            {
-                var aircraftType = string.IsNullOrEmpty(request.AircraftType)
-                    ? airportConfiguration.DefaultAircraftType
-                    : request.AircraftType!;
+                ExactInsertionOptions exactInsertionOptions => InsertExact(
+                    airportConfiguration,
+                    session,
+                    request.AirportIdentifier,
+                    callsign,
+                    performanceData,
+                    exactInsertionOptions.TargetLandingTime,
+                    exactInsertionOptions.RunwayIdentifiers),
 
-                var performanceData = performanceLookup.GetPerformanceDataFor(aircraftType);
+                RelativeInsertionOptions relativeInsertionOptions => InsertRelative(
+                    airportConfiguration,
+                    session,
+                    request.AirportIdentifier,
+                    callsign,
+                    performanceData,
+                    relativeInsertionOptions.ReferenceCallsign,
+                    relativeInsertionOptions.Position),
 
-                var flight = request.Options switch
-                {
-                    ExactInsertionOptions exactInsertionOptions => InsertExact(
-                        airportConfiguration,
-                        session,
-                        request.AirportIdentifier,
-                        callsign,
-                        performanceData,
-                        exactInsertionOptions.TargetLandingTime,
-                        exactInsertionOptions.RunwayIdentifiers),
+                DepartureInsertionOptions departureInsertionOptions => InsertDeparture(
+                    airportConfiguration,
+                    session,
+                    request.AirportIdentifier,
+                    callsign,
+                    performanceData,
+                    departureInsertionOptions.OriginIdentifier,
+                    departureInsertionOptions.TakeoffTime),
 
-                    RelativeInsertionOptions relativeInsertionOptions => InsertRelative(
-                        airportConfiguration,
-                        session,
-                        request.AirportIdentifier,
-                        callsign,
-                        performanceData,
-                        relativeInsertionOptions.ReferenceCallsign,
-                        relativeInsertionOptions.Position),
+                _ => throw new NotSupportedException($"Unexpected insertion option: \"{request.Options.GetType()}\"")
+            };
 
-                    DepartureInsertionOptions departureInsertionOptions => InsertDeparture(
-                        airportConfiguration,
-                        session,
-                        request.AirportIdentifier,
-                        callsign,
-                        performanceData,
-                        departureInsertionOptions.OriginIdentifier,
-                        departureInsertionOptions.TakeoffTime),
+            logger.Information("Inserted flight {Callsign} with landing time {LandingTime:HHmm} (target time {TargetTime:HHmm}", callsign, flight.LandingTime, flight.TargetLandingTime);
 
-                    _ => throw new NotSupportedException($"Unexpected insertion option: \"{request.Options.GetType()}\"")
-                };
-
-                logger.Information("Inserted flight {Callsign} with landing time {LandingTime:HHmm} (target time {TargetTime:HHmm}", callsign, flight.LandingTime, flight.TargetLandingTime);
-
-                sessionDto = session.Snapshot();
-            }
+            sessionDto = session.Snapshot();
         }
 
         if (sessionDto is not null)
@@ -112,137 +102,6 @@ public class InsertFlightRequestHandler(
                     sessionDto),
                 cancellationToken);
         }
-    }
-
-    async Task<bool> TryInsertFromFdr(
-        Session session,
-        AirportConfiguration airportConfiguration,
-        string callsign,
-        string airportIdentifier,
-        CancellationToken cancellationToken)
-    {
-        // Race-condition guard: another FDR update may have already inserted the flight
-        if (session.Sequence.FindFlight(callsign) is not null ||
-            session.PendingFlights.Any(f => f.Callsign == callsign) ||
-            session.DeSequencedFlights.Any(f => f.Callsign == callsign))
-        {
-            logger.Warning("{Callsign} already inserted, skipping FDR insertion", callsign);
-            return false;
-        }
-
-        if (!session.FlightDataRecords.TryGetValue(callsign, out var record))
-        {
-            logger.Warning("No FlightDataRecord for {Callsign}, cannot process FDR insertion", callsign);
-            return false;
-        }
-
-        var isFromDepartureAirport = airportConfiguration.DepartureAirports.Any(d => d.Identifier == record.Origin);
-        var hasDeparted = record.Position is not null && !record.Position.IsOnGround;
-        var feederFix = record.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-        var approximateLandingEstimate = record.Estimates.LastOrDefault()?.Estimate;
-
-        var addToPending = (isFromDepartureAirport && !hasDeparted)
-            || feederFix is null
-            || approximateLandingEstimate is null;
-
-        if (addToPending)
-        {
-            session.PendingFlights.Add(new PendingFlight(
-                callsign,
-                IsFromDepartureAirport: isFromDepartureAirport,
-                IsHighPriority: feederFix is null));
-
-            var pendingReason = (isFromDepartureAirport && !hasDeparted) ? "not yet departed"
-                : feederFix is null ? "no feeder fix match"
-                : "no landing estimate";
-            logger.Information("Added {Callsign} to the pending list ({Reason})", callsign, pendingReason);
-
-            await mediator.Send(new SendCoordinationMessageRequest(
-                airportIdentifier,
-                clock.UtcNow(),
-                $"{callsign} added to pending list",
-                new CoordinationDestination.Broadcast()),
-                cancellationToken);
-
-            return true;
-        }
-
-        if (!hasDeparted)
-            return false;
-
-        var flightCreationThreshold = TimeSpan.FromMinutes(airportConfiguration.FlightCreationThresholdMinutes);
-        if (feederFix!.Estimate - clock.UtcNow() > flightCreationThreshold)
-        {
-            logger.Debug("{Callsign} not yet within creation threshold (FF estimate {Estimate:HHmm}, threshold {Threshold})",
-                callsign, feederFix.Estimate, flightCreationThreshold);
-            return false;
-        }
-
-        var performanceData = new AircraftPerformanceData(record.AircraftType, record.AircraftCategory, record.WakeCategory);
-        var fixNames = record.Estimates.Select(e => e.FixIdentifier).ToArray();
-
-        var runwayMode = session.Sequence.GetRunwayModeAt(approximateLandingEstimate!.Value);
-        var runway = runwayMode.Runways.FirstOrDefault(r => r.FeederFixes.Contains(feederFix.FixIdentifier))
-                     ?? runwayMode.Default;
-
-        var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
-            airportIdentifier,
-            fixNames,
-            feederFix.FixIdentifier);
-
-        var terminalTrajectory = trajectoryService.GetTrajectory(
-            performanceData,
-            airportIdentifier,
-            feederFix.FixIdentifier,
-            runway.Identifier,
-            runway.ApproachType,
-            fixNames,
-            session.Sequence.UpperWind);
-
-        // New flights may overtake Unstable and Stable ones
-        var earliestInsertionIndex = session.Sequence.FindLastIndex(f =>
-            f.State is not State.Unstable and not State.Stable &&
-            f.AssignedRunwayIdentifier == runway.Identifier) + 1;
-
-        var insertionIndex = session.Sequence.FindIndex(
-            earliestInsertionIndex,
-            f => f.LandingEstimate.IsAfter(approximateLandingEstimate.Value));
-
-        if (insertionIndex == -1)
-            insertionIndex = session.Sequence.Flights.Count;
-
-        var flight = new Flight(
-            callsign: callsign,
-            aircraftType: record.AircraftType,
-            aircraftCategory: record.AircraftCategory,
-            wakeCategory: record.WakeCategory,
-            destinationIdentifier: airportIdentifier,
-            originIdentifier: record.Origin,
-            isFromDepartureAirport: isFromDepartureAirport,
-            estimatedDepartureTime: record.EstimatedDepartureTime,
-            assignedRunwayIdentifier: runway.Identifier,
-            approachType: runway.ApproachType,
-            enrouteTrajectory: enrouteTrajectory,
-            terminalTrajectory: terminalTrajectory,
-            feederFixIdentifier: feederFix.FixIdentifier,
-            feederFixEstimate: feederFix.Estimate,
-            landingEstimate: approximateLandingEstimate.Value,
-            activatedTime: clock.UtcNow(),
-            position: record.Position);
-
-        session.Sequence.Insert(insertionIndex, flight);
-
-        logger.Information("{Callsign} added to the sequence", callsign);
-        logger.Information(
-            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
-            callsign,
-            runway.Identifier,
-            runway.ApproachType,
-            terminalTrajectory.NormalTimeToGo,
-            terminalTrajectory.PressureTimeToGo,
-            terminalTrajectory.MaxPressureTimeToGo);
-
-        return true;
     }
 
     Flight InsertExact(
@@ -269,12 +128,24 @@ public class InsertFlightRequestHandler(
 
         CheckAndRemoveExistingFlight(session.Sequence, callsign);
 
-        var existingPendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == callsign);
-
         Flight flight;
-        if (existingPendingFlight is null)
+        if (session.FlightDataRecords.TryGetValue(callsign, out var flightDataRecord))
         {
-            // Create a dummy flight if a pending flight couldn't be found
+            flight = CreateFlightFromRecord(
+                flightDataRecord,
+                session,
+                airportConfiguration,
+                airportIdentifier,
+                performanceData,
+                runway,
+                landingEstimate: targetLandingTime);
+
+            flight.SetTargetLandingTime(targetLandingTime);
+            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
+        }
+        else
+        {
+            // Create a dummy flight if no flight plan exists
             var trajectory = trajectoryService.GetTrajectory(
                 performanceData,
                 airportIdentifier,
@@ -306,22 +177,6 @@ public class InsertFlightRequestHandler(
                 trajectory.NormalTimeToGo,
                 trajectory.PressureTimeToGo,
                 trajectory.MaxPressureTimeToGo);
-        }
-        else
-        {
-            session.PendingFlights.Remove(existingPendingFlight);
-
-            flight = CreateFlightFromPending(
-                existingPendingFlight,
-                session,
-                airportConfiguration,
-                airportIdentifier,
-                performanceData,
-                runway,
-                landingEstimate: targetLandingTime);
-
-            flight.SetTargetLandingTime(targetLandingTime);
-            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
 
         // Calculate the insertion index based on the landing time.
@@ -380,12 +235,24 @@ public class InsertFlightRequestHandler(
         // Check if flight already exists in sequence
         CheckAndRemoveExistingFlight(session.Sequence, callsign);
 
-        var existingPendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == callsign);
-
         Flight flight;
-        if (existingPendingFlight is null)
+        if (session.FlightDataRecords.TryGetValue(callsign, out var flightDataRecord))
         {
-            // Create a dummy flight if a pending flight couldn't be found
+            flight = CreateFlightFromRecord(
+                flightDataRecord,
+                session,
+                airportConfiguration,
+                airportIdentifier,
+                performanceData,
+                runway,
+                landingEstimate: targetLandingTime);
+
+            flight.SetTargetLandingTime(targetLandingTime);
+            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
+        }
+        else
+        {
+            // Create a dummy flight if no flight plan exists
             var trajectory = trajectoryService.GetTrajectory(
                 performanceData,
                 airportIdentifier,
@@ -417,22 +284,6 @@ public class InsertFlightRequestHandler(
                 trajectory.NormalTimeToGo,
                 trajectory.PressureTimeToGo,
                 trajectory.MaxPressureTimeToGo);
-        }
-        else
-        {
-            session.PendingFlights.Remove(existingPendingFlight);
-
-            flight = CreateFlightFromPending(
-                existingPendingFlight,
-                session,
-                airportConfiguration,
-                airportIdentifier,
-                performanceData,
-                runway,
-                landingEstimate: targetLandingTime);
-
-            flight.SetTargetLandingTime(targetLandingTime);
-            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
 
         // Calculate the insertion index based on the landing time.
@@ -478,14 +329,24 @@ public class InsertFlightRequestHandler(
         // Check if flight already exists in sequence
         CheckAndRemoveExistingFlight(session.Sequence, callsign);
 
-        var existingPendingFlight = session.PendingFlights.SingleOrDefault(f =>
-            f.Callsign == callsign &&
-            f.IsFromDepartureAirport);
-
         Flight flight;
-        if (existingPendingFlight is null)
+        if (session.FlightDataRecords.TryGetValue(callsign, out var flightDataRecord))
         {
-            // Create a dummy flight if a pending flight couldn't be found
+            flight = CreateFlightFromRecord(
+                flightDataRecord,
+                session,
+                airportConfiguration,
+                airportIdentifier,
+                performanceData,
+                runway,
+                landingEstimate);
+
+            // Departures remain unstable as their landing estimate will become more accurate as they depart, couple, and climb
+            flight.SetState(airportConfiguration.DefaultDepartureFlightState, clock);
+        }
+        else
+        {
+            // Create a dummy flight if no flight plan exists
             var trajectory = trajectoryService.GetTrajectory(
                 performanceData,
                 airportIdentifier,
@@ -518,22 +379,6 @@ public class InsertFlightRequestHandler(
                 trajectory.PressureTimeToGo,
                 trajectory.MaxPressureTimeToGo);
         }
-        else
-        {
-            session.PendingFlights.Remove(existingPendingFlight);
-
-            flight = CreateFlightFromPending(
-                existingPendingFlight,
-                session,
-                airportConfiguration,
-                airportIdentifier,
-                performanceData,
-                runway,
-                landingEstimate);
-
-            // Departures remain unstable as their landing estimate will become more accurate as they depart, couple, and climb
-            flight.SetState(airportConfiguration.DefaultDepartureFlightState, clock);
-        }
 
         // Departures can't overtake SuperStable flights, but they can overtake Unstable and Stable flights
         var earliestInsertionIndex = session.Sequence.FindLastIndex(f =>
@@ -558,12 +403,8 @@ public class InsertFlightRequestHandler(
         return flight;
     }
 
-    /// <summary>
-    /// Creates a full <see cref="Flight"/> from a <see cref="PendingFlight"/> record by looking up
-    /// the latest <see cref="FlightDataRecord"/>..
-    /// </summary>
-    Flight CreateFlightFromPending(
-        PendingFlight pendingFlight,
+    Flight CreateFlightFromRecord(
+        FlightDataRecord flightDataRecord,
         Session session,
         AirportConfiguration airportConfiguration,
         string airportIdentifier,
@@ -571,11 +412,10 @@ public class InsertFlightRequestHandler(
         Runway runway,
         DateTimeOffset landingEstimate)
     {
-        session.FlightDataRecords.TryGetValue(pendingFlight.Callsign, out var flightDataRecord);
+        var feederFix = flightDataRecord.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+        var isFromDepartureAirport = airportConfiguration.DepartureAirports.Any(d => d.Identifier == flightDataRecord.Origin);
 
-        var feederFix = flightDataRecord?.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
-
-        var fixNames = flightDataRecord?.Estimates.Select(e => e.FixIdentifier).ToArray() ?? [];
+        var fixNames = flightDataRecord.Estimates.Select(e => e.FixIdentifier).ToArray();
         var terminalTrajectory = trajectoryService.GetTrajectory(
             performanceData,
             airportIdentifier,
@@ -594,17 +434,17 @@ public class InsertFlightRequestHandler(
         // for exact/relative insertions, or takeoff time + ETI for departures, and derive FeederFixEstimate
         // from landingEstimate - TTG.
         // Live updates via ProcessFlightsHandler will refine both estimates once the flight couples.
-        var feederFixEstimate = flightDataRecord?.Position is not null ? feederFix?.Estimate : null;
+        var feederFixEstimate = flightDataRecord.Position is not null ? feederFix?.Estimate : null;
 
         var flight = new Flight(
-            callsign: pendingFlight.Callsign,
+            callsign: flightDataRecord.Callsign,
             aircraftType: performanceData.TypeCode,
             aircraftCategory: performanceData.AircraftCategory,
-            wakeCategory: flightDataRecord?.WakeCategory,
+            wakeCategory: flightDataRecord.WakeCategory,
             destinationIdentifier: airportIdentifier,
-            originIdentifier: flightDataRecord?.Origin,
-            isFromDepartureAirport: pendingFlight.IsFromDepartureAirport,
-            estimatedDepartureTime: flightDataRecord?.EstimatedDepartureTime,
+            originIdentifier: flightDataRecord.Origin,
+            isFromDepartureAirport: isFromDepartureAirport,
+            estimatedDepartureTime: flightDataRecord.EstimatedDepartureTime,
             assignedRunwayIdentifier: runway.Identifier,
             approachType: runway.ApproachType,
             terminalTrajectory: terminalTrajectory,
@@ -613,11 +453,11 @@ public class InsertFlightRequestHandler(
             feederFixEstimate: feederFixEstimate,
             landingEstimate: landingEstimate,
             activatedTime: clock.UtcNow(),
-            position: flightDataRecord?.Position);
+            position: flightDataRecord.Position);
 
         logger.Verbose(
             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
-            pendingFlight.Callsign,
+            flightDataRecord.Callsign,
             runway.Identifier,
             runway.ApproachType,
             terminalTrajectory.NormalTimeToGo,

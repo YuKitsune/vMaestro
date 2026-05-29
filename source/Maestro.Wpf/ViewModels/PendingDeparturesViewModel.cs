@@ -20,10 +20,10 @@ public partial class PendingDeparturesViewModel : ObservableObject
     bool _isUpdatingFromSelection = false;
 
     [ObservableProperty]
-    PendingFlightDto[] _pendingFlights = [];
+    FlightDataRecord[] _pendingFlights = [];
 
     [ObservableProperty]
-    PendingFlightDto? _selectedFlight;
+    FlightDataRecord? _selectedFlight;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(InsertCommand))]
@@ -43,7 +43,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
 
     public PendingDeparturesViewModel(
         string airportIdentifier,
-        PendingFlightDto[] pendingFlights,
+        FlightDataRecord[] pendingFlights,
         IWindowHandle windowHandle,
         IMediator mediator,
         IClock clock,
@@ -58,12 +58,12 @@ public partial class PendingDeparturesViewModel : ObservableObject
         TakeoffTime = clock.UtcNow().AddMinutes(5).Rounded();
     }
 
-    partial void OnSelectedFlightChanged(PendingFlightDto? value)
+    partial void OnSelectedFlightChanged(FlightDataRecord? value)
     {
         _isUpdatingFromSelection = true;
         Callsign = value?.Callsign ?? "";
         AircraftType = value?.AircraftType ?? "";
-        DepartureIdentifier = value?.OriginIdentifier ?? "";
+        DepartureIdentifier = value?.Origin ?? "";
         _isUpdatingFromSelection = false;
     }
 

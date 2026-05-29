@@ -2,7 +2,6 @@
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
@@ -46,10 +45,6 @@ public class MakePendingRequestHandler(
                 throw new MaestroException($"{flight.Callsign} is not from a departure airport.");
 
             sequence.Remove(flight);
-            session.PendingFlights.Add(new PendingFlight(
-                flight.Callsign,
-                flight.IsFromDepartureAirport,
-                flight.HighPriority));
 
             logger.Information("Marked flight {Callsign} as pending for {AirportIdentifier}", flight.Callsign, request.AirportIdentifier);
 

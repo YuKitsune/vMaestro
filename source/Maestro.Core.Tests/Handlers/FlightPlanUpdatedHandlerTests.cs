@@ -109,7 +109,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightPlanIsUpdated_AndItIsNew_InsertFlightRequestIsSent()
+    public async Task WhenAFlightPlanIsUpdated_AndAutoActivationNotImplemented_ActivateFlightRequestIsNotSent()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
@@ -129,27 +129,21 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        await mediator.Received(1).Send(
-            Arg.Is<InsertFlightRequest>(r =>
-                r.Callsign == "QFA123" &&
-                r.AirportIdentifier == "YSSY" &&
-                r.Options is FdrInsertionOptions),
-            Arg.Any<CancellationToken>());
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task WhenAFlightPlanIsUpdated_AndItIsNotNew_InsertFlightRequestIsNotSent()
+    public async Task WhenAFlightPlanIsUpdated_AndAlreadyActivated_ActivateFlightRequestIsNotSent()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
-        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
-
-        session.FlightDataRecords["QFA123"] = new FlightDataRecord(
-            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))],
-            clock.UtcNow().AddMinutes(-5));
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithFlight(new FlightBuilder("QFA123")
+                .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
+                .WithLandingEstimate(clock.UtcNow().AddMinutes(40))
+                .Build()))
+            .Build();
 
         var mediator = Substitute.For<IMediator>();
         var notification = new FlightPlanUpdatedNotification(
@@ -164,7 +158,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        await mediator.DidNotReceive().Send(Arg.Any<InsertFlightRequest>(), Arg.Any<CancellationToken>());
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -192,7 +186,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedNotifications.Count.ShouldBe(1, "notification should be relayed to master");
         slaveConnectionManager.Connection.InvokedNotifications[0].ShouldBe(notification);
         session.FlightDataRecords.ShouldNotContainKey("QFA123", "slave should not update FlightDataRecords locally");
-        await mediator.DidNotReceive().Send(Arg.Any<InsertFlightRequest>(), Arg.Any<CancellationToken>());
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
     FlightPlanUpdatedHandler GetHandler(
@@ -200,6 +194,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         IClock clock,
         IFlightUpdateRateLimiter? rateLimiter = null,
         IMaestroConnectionManager? connectionManager = null,
+        IAirportConfigurationProvider? airportConfigurationProvider = null,
         IMediator? mediator = null)
     {
         if (rateLimiter is null)
@@ -208,12 +203,19 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(true);
         }
 
+        if (airportConfigurationProvider is null)
+        {
+            airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
+            airportConfigurationProvider.GetAirportConfiguration(Arg.Any<string>()).Returns(GetDefaultAirportConfiguration());
+        }
+
         connectionManager ??= new MockLocalConnectionManager();
         mediator ??= Substitute.For<IMediator>();
 
         return new FlightPlanUpdatedHandler(
             sessionManager,
             connectionManager,
+            airportConfigurationProvider,
             rateLimiter,
             mediator,
             clock,

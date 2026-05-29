@@ -207,7 +207,6 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null, null,
@@ -228,7 +227,7 @@ public class InsertFlightRequestHandlerTests(
         // Assert
         var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
         insertedFlight.Callsign.ShouldBe("QFA1");
-        insertedFlight.State.ShouldBe(State.Stable, "Pending flight should be Stable when inserted");
+        insertedFlight.State.ShouldBe(State.Stable, "Flight with flight plan should be Stable when inserted");
     }
 
     [Fact]
@@ -272,7 +271,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
+        session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -346,7 +347,7 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
-    public async Task InsertExact_PendingFlightExists_PendingFlightInserted()
+    public async Task InsertExact_FlightPlanExists_FlightInserted()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -357,7 +358,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
+        session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -371,8 +374,7 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        session.PendingFlights.ShouldBeEmpty("Pending flight should be removed from pending list");
-        sequence.Flights.ShouldContain(f => f.Callsign == "QFA1", "Pending flight should be in the sequence");
+        sequence.Flights.ShouldContain(f => f.Callsign == "QFA1", "Flight should be in the sequence");
     }
 
     [Fact]
@@ -423,7 +425,6 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null, position,
@@ -460,7 +461,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
+        session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -544,7 +547,6 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: false, IsHighPriority: false));
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null, null,
@@ -1042,7 +1044,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
+        session.FlightDataRecords["QFA2"] = new FlightDataRecord(
+            "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1056,13 +1060,12 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        session.PendingFlights.ShouldBeEmpty("Pending flight should be removed from pending list");
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA2");
-        sequence.Flights.ShouldContain(f => f.Callsign == "QFA2", "Pending flight should be in the sequence");
+        sequence.Flights.ShouldContain(f => f.Callsign == "QFA2", "Flight should be in the sequence");
         insertedFlight.LandingTime.ShouldBe(
             stableFlight.LandingTime.Add(AcceptanceRate),
-            "Pending flight should be scheduled at target time");
-        insertedFlight.State.ShouldBe(State.Stable, "Pending flight should have default state (Stable)");
+            "Flight should be scheduled at target time");
+        insertedFlight.State.ShouldBe(State.Stable, "Flight with flight plan should have default state (Stable)");
     }
 
     [Fact]
@@ -1133,7 +1136,6 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
         session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null, position,
@@ -1181,7 +1183,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
+        session.FlightDataRecords["QFA2"] = new FlightDataRecord(
+            "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1198,11 +1202,11 @@ public class InsertFlightRequestHandlerTests(
         var insertedFlight = sequence.Flights.Single(f => f.Callsign == "QFA2");
         var expectedTargetTime = stableFlight.LandingTime.Add(AcceptanceRate);
         insertedFlight.TargetLandingTime.ShouldBe(expectedTargetTime,
-            "Pending flight target time should be reference flight's landing time + acceptance rate");
+            "Flight target time should be reference flight's landing time + acceptance rate");
         insertedFlight.LandingEstimate.ShouldBe(insertedFlight.TargetLandingTime!.Value,
-            "Pending flight landing estimate should match target time for uncoupled flight");
+            "Flight landing estimate should match target time for uncoupled flight");
         insertedFlight.LandingTime.ShouldBe(insertedFlight.TargetLandingTime!.Value,
-            "Pending flight landing time should match target time");
+            "Flight landing time should match target time");
     }
 
     [Fact]
@@ -1233,7 +1237,6 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithClock(clockFixture.Instance).WithFlight(stableFlight))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA2", IsFromDepartureAirport: false, IsHighPriority: false));
         session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null, null,
@@ -1258,7 +1261,7 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
-    public async Task InsertDeparture_PendingFlightExists_DepartureInserted()
+    public async Task InsertDeparture_FlightPlanExists_DepartureInserted()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -1270,7 +1273,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
+        session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YSCB", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1284,10 +1289,9 @@ public class InsertFlightRequestHandlerTests(
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
-        session.PendingFlights.ShouldBeEmpty("Pending flight should be removed from pending list");
         var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
-        insertedFlight.Callsign.ShouldBe("QFA1", "Pending flight should be in the sequence");
-        insertedFlight.State.ShouldBe(State.Unstable, "Pending flight should remain Unstable when inserted");
+        insertedFlight.Callsign.ShouldBe("QFA1", "Flight should be in the sequence");
+        insertedFlight.State.ShouldBe(State.Unstable, "Flight with flight plan should remain Unstable when inserted");
     }
 
     [Fact]
@@ -1334,7 +1338,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
+        session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YSCB", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1353,7 +1359,7 @@ public class InsertFlightRequestHandlerTests(
     }
 
     [Fact]
-    public async Task InsertDeparture_PendingFlight_TargetTimeIsNull()
+    public async Task InsertDeparture_FlightPlan_TargetTimeIsNull()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -1365,7 +1371,9 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
+        session.FlightDataRecords["QFA1"] = new FlightDataRecord(
+            "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YSCB", "YSSY", null, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1380,7 +1388,7 @@ public class InsertFlightRequestHandlerTests(
 
         // Assert
         var insertedFlight = sequence.Flights.ShouldHaveSingleItem();
-        insertedFlight.TargetLandingTime.ShouldBeNull("Target time should be null for pending departure flights");
+        insertedFlight.TargetLandingTime.ShouldBeNull("Target time should be null for departure flights with flight plan");
     }
 
     [Fact]
@@ -1429,7 +1437,6 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YSCB", "YSSY", null, position,
@@ -1568,7 +1575,6 @@ public class InsertFlightRequestHandlerTests(
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA1", IsFromDepartureAirport: true, IsHighPriority: false));
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YSCB", "YSSY", null, null,

@@ -85,7 +85,6 @@ public class InitializeConnectionRequestHandlerTests
         var cachedSession = new SessionDto
         {
             AirportIdentifier = airportIdentifier,
-            PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
             Sequence = new SequenceDto

@@ -7,5 +7,5 @@ public record OpenInsertFlightWindowRequest(
     string AirportIdentifier,
     IInsertFlightOptions Options,
     FlightDto[] LandedFlights,
-    PendingFlightDto[] PendingFlights)
+    FlightDataRecord[] FlightDataRecords)
     : IRequest;

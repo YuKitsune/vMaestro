@@ -32,10 +32,8 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .Build();
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task WhenAnActiveFlightIsRemoved_ItIsPlacedInThePendingList(bool highPriority)
+    [Fact]
+    public async Task WhenAnActiveFlightIsRemoved_ItIsRemovedFromSequence()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -47,7 +45,6 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(now.AddMinutes(3))
             .WithRunway("34L")
             .FromDepartureAirport()
-            .HighPriority(highPriority)
             .Build();
 
         var flight2 = new FlightBuilder("QFA456")
@@ -74,15 +71,38 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         // Assert
         session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
         sequence.NumberInSequence(flight2).ShouldBe(1, "QFA456 should now be first in sequence");
-
-        var pendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
-        pendingFlight.ShouldNotBeNull();
-        pendingFlight.IsFromDepartureAirport.ShouldBeTrue();
-        pendingFlight.IsHighPriority.ShouldBe(highPriority);
     }
 
     [Fact]
-    public async Task WhenADesequencedFlightIsRemoved_ItIsPlacedInThePendingList()
+    public async Task WhenAFlightIsRemoved_TheFlightPlanIsRemoved()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Stable)
+            .WithLandingTime(now.AddMinutes(10))
+            .WithLandingEstimate(now.AddMinutes(8))
+            .WithRunway("34L")
+            .Build();
+
+        var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
+            .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
+            .Build();
+
+        session.FlightDataRecords["QFA123"] = new FlightDataRecord("QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium, null, "YSSY", null, null, [], DateTimeOffset.MinValue);
+
+        var handler = GetRequestHandler(sessionManager, sequence);
+        var request = new RemoveRequest("YSSY", "QFA123");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        session.FlightDataRecords.ContainsKey("QFA123").ShouldBeFalse("flight plan should be removed");
+    }
+
+    [Fact]
+    public async Task WhenADesequencedFlightIsRemoved_ItIsRemovedFromDesequencedList()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -109,7 +129,6 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         var sessionDto = session.Snapshot();
-        sessionDto.PendingFlights.ShouldContain(f => f.Callsign == "QFA123", "flight should be in pending list");
         sessionDto.DeSequencedFlights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in desequenced list");
         sessionDto.Sequence.Flights.ShouldNotContain(f => f.Callsign == "QFA123", "flight should not be in main sequence");
     }
@@ -180,14 +199,14 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenRemovingAFlightFromThePendingList_AnExceptionIsThrown()
+    public async Task WhenRemovingAFlightThatIsOnlyInFlightPlans_AnExceptionIsThrown()
     {
         // Arrange
         var (sessionManager, session, sequence) = new SessionBuilder(CreateAirportConfiguration())
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.PendingFlights.Add(new PendingFlight("QFA123", IsFromDepartureAirport: false, IsHighPriority: false));
+        session.FlightDataRecords["QFA123"] = new FlightDataRecord("QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium, "YSCB", "YSSY", null, null, [], DateTimeOffset.MinValue);
 
         var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
@@ -234,7 +253,6 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedRequests.Count.ShouldBe(1, "Request should be relayed to master");
         slaveConnectionManager.Connection.InvokedRequests[0].ShouldBe(request, "The relayed request should match the original request");
         sequence.Flights.ShouldContain(flight, "Flight should remain in sequence when relaying to master");
-        session.PendingFlights.ShouldNotContain(f => f.Callsign == "QFA123", "Flight should not be added to pending list when relaying to master");
     }
 
     RemoveRequestHandler GetRequestHandler(ISessionManager sessionManager, Sequence sequence)

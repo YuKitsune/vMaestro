@@ -32,10 +32,8 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
             .Build();
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task WhenMakingFlightPending_ItIsRemovedFromTheSequenceAndAddedToPendingList(bool highPriority)
+    [Fact]
+    public async Task WhenMakingFlightPending_ItIsRemovedFromTheSequence()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -48,7 +46,6 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
             .WithLandingTime(now.AddMinutes(10))
             .WithLandingEstimate(now.AddMinutes(8))
             .WithRunway(DefaultRunway)
-            .HighPriority(highPriority)
             .Build();
 
         var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
@@ -64,11 +61,6 @@ public class MakePendingRequestHandlerTests(ClockFixture clockFixture)
         // Assert
         var session = await sessionManager.GetSession(sequence.AirportIdentifier, CancellationToken.None);
         session.Sequence.FindFlight("QFA123").ShouldBeNull("flight should be removed from the sequence");
-
-        var pendingFlight = session.PendingFlights.SingleOrDefault(f => f.Callsign == "QFA123");
-        pendingFlight.ShouldNotBeNull();
-        pendingFlight.IsFromDepartureAirport.ShouldBeTrue();
-        pendingFlight.IsHighPriority.ShouldBe(highPriority);
     }
 
     // TODO: Throw an error
