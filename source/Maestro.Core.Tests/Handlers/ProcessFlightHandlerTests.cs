@@ -432,33 +432,6 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightHasNoFdrDataAndIsNotManuallyInserted_ItIsRemovedFromSequence()
-    {
-        // Arrange - #98: disconnected aircraft should be removed
-        var airportConfiguration = GetDefaultAirportConfiguration(lostFlightTimeoutMinutes: 10);
-        var clock = clockFixture.Instance;
-        var flight = new FlightBuilder("QFA123")
-            .WithState(State.Frozen)
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(5))
-            .Build();
-
-        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
-            .WithSequence(s => s.WithFlight(flight))
-            .Build();
-
-        // No FlightDataRecord for this flight
-
-        var handler = GetHandler(airportConfiguration, sessionManager, clock);
-
-        // Act
-        await handler.Handle(new ProcessFlightsRequest("YSSY"), CancellationToken.None);
-
-        // Assert
-        sequence.Flights.ShouldBeEmpty("flight with no FDR data should be removed");
-    }
-
-    [Fact]
     public async Task WhenAFlightHasNoFdrData_StateIsStillUpdatedBasedOnTime()
     {
         // Arrange - #84: state transitions should happen on timer, not FDR arrival

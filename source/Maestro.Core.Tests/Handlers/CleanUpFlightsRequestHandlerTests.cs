@@ -54,11 +54,14 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Stable)
             .Build();
 
-        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(flight1, flight2))
             .Build();
+
+        session.FlightDataRecords["QFA1"] = MakeRecord("QFA1");
+        session.FlightDataRecords["QFA2"] = MakeRecord("QFA2");
 
         var handler = GetHandler(sessionManager, airportConfiguration);
         await handler.Handle(new CleanUpFlightsRequest(airportConfiguration.Identifier), CancellationToken.None);
@@ -207,11 +210,14 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
             .WithState(State.Landed)
             .Build();
 
-        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration)
             .WithSequence(s => s
                 .WithClock(clockFixture.Instance)
                 .WithFlightsInOrder(unstableFlight, oldLandedFlight, stableFlight, recentLandedFlight))
             .Build();
+
+        session.FlightDataRecords["QFA1"] = MakeRecord("QFA1");
+        session.FlightDataRecords["QFA3"] = MakeRecord("QFA3");
 
         var handler = GetHandler(sessionManager, airportConfiguration);
         await handler.Handle(new CleanUpFlightsRequest(airportConfiguration.Identifier), CancellationToken.None);
@@ -272,6 +278,30 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
         await handler.Handle(new CleanUpFlightsRequest(airportConfiguration.Identifier), CancellationToken.None);
 
         sequence.Flights.ShouldBeEmpty("flight not seen within lost timeout should be removed");
+    }
+
+    [Fact]
+    public async Task WhenAFlightHasNoFdrData_ItIsRemovedFromSequence()
+    {
+        var airportConfiguration = CreateAirportConfiguration();
+
+        var flight = new FlightBuilder("QFA1")
+            .WithState(State.Frozen)
+            .WithFeederFixEstimate(_now.AddMinutes(5))
+            .Build();
+
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s
+                .WithClock(clockFixture.Instance)
+                .WithFlight(flight))
+            .Build();
+
+        // No FlightDataRecord
+
+        var handler = GetHandler(sessionManager, airportConfiguration);
+        await handler.Handle(new CleanUpFlightsRequest(airportConfiguration.Identifier), CancellationToken.None);
+
+        sequence.Flights.ShouldBeEmpty("flight with no FDR data should be removed");
     }
 
     [Fact]

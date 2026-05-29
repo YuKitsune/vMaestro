@@ -112,7 +112,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightPlanIsUpdated_AndAutoActivationNotImplemented_ActivateFlightRequestIsNotSent()
+    public async Task WhenAFlightPlanIsUpdated_AndFlightIsActive_ActivateFlightRequestIsSent()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
@@ -124,6 +124,31 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
             FlightPlanState.Active,
+            _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.Received(1).Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndFlightIsPreactive_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
+            FlightPlanState.Preactive,
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
