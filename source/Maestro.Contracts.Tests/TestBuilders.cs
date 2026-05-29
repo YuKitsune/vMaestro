@@ -129,17 +129,6 @@ public static class TestBuilders
             [CreateFixEstimate()],
             FixedTime);
 
-    public static PendingFlightDto CreatePendingFlightDto() =>
-        new()
-        {
-            Callsign = "QFA123",
-            AircraftType = "B738",
-            OriginIdentifier = "YMML",
-            DestinationIdentifier = "YSSY",
-            IsFromDepartureAirport = false,
-            IsHighPriority = false
-        };
-
     public static FlightDto CreateFlightDto() =>
         new()
         {
@@ -293,7 +282,6 @@ public static class TestBuilders
         new()
         {
             AirportIdentifier = "YSSY",
-            PendingFlights = [CreatePendingFlightDto()],
             DeSequencedFlights = [],
             Sequence = CreateSequenceDto(),
             DummyCounter = 42,
