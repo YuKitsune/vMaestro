@@ -390,7 +390,7 @@ public class InsertFlightRequestHandler(
             earliestInsertionIndex,
             f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
         if (insertionIndex == -1)
-            insertionIndex = Math.Min(earliestInsertionIndex, session.Sequence.Flights.Count);
+            insertionIndex = session.Sequence.Flights.Count;
 
         session.Sequence.Insert(insertionIndex, flight);
 

@@ -5,16 +5,6 @@
   "isMaster": true,
   "session": {
     "airportIdentifier": "YSSY",
-    "pendingFlights": [
-      {
-        "callsign": "QFA123",
-        "aircraftType": "B738",
-        "originIdentifier": "YMML",
-        "destinationIdentifier": "YSSY",
-        "isFromDepartureAirport": false,
-        "isHighPriority": false
-      }
-    ],
     "deSequencedFlights": [],
     "sequence": {
       "currentRunwayMode": {
@@ -154,6 +144,7 @@
         "origin": "YMML",
         "destination": "YSSY",
         "estimatedDepartureTime": "2024-06-15T10:30:00+00:00",
+        "state": 1,
         "position": {
           "coordinate": {
             "latitude": -33.9461,

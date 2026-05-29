@@ -50,6 +50,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             _position,
             [
                 new FixEstimate("RIVET", feederFixEstimate),
@@ -84,7 +85,8 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         var originalLastSeen = clock.UtcNow().AddSeconds(-5);
         session.FlightDataRecords["QFA123"] = new FlightDataRecord(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, _position,
+            "YMML", "YSSY", null,
+            FlightPlanState.Active, _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))],
             originalLastSeen);
 
@@ -94,6 +96,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B744", AircraftCategory.Jet, WakeCategory.Heavy,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
+            FlightPlanState.Active,
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
 
@@ -120,6 +123,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
+            FlightPlanState.Active,
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 
@@ -149,6 +153,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
+            FlightPlanState.Active,
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
 
@@ -172,6 +177,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         var notification = new FlightPlanUpdatedNotification(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
 

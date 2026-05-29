@@ -332,7 +332,7 @@ public class Plugin : IPlugin
                 TryEnqueue(async () => await TryNotifyLanded(updated, CancellationToken.None));
             }
 
-            TryEnqueue(async () => await PublishFlightUpdatedEvent(updated));
+            TryEnqueue(async () => await TransmitFdr(updated));
         }
         catch (Exception ex)
         {
@@ -361,7 +361,7 @@ public class Plugin : IPlugin
             // fire for all flights when initially connecting to the network.
             // The handler for this event will publish the FlightPositionReport if a FlightPosition is available.
 
-            TryEnqueue(async () => await PublishFlightUpdatedEvent(updated.CoupledFDR));
+            TryEnqueue(async () => await TransmitFdr(updated.CoupledFDR));
         }
         catch (Exception ex)
         {
@@ -403,92 +403,12 @@ public class Plugin : IPlugin
         await _mediator.Publish(new FlightLandedNotification(fdr.DesAirport, fdr.Callsign, landingTime), cancellationToken);
     }
 
-    async Task PublishFlightUpdatedEvent(FDP2.FDR updated)
+    async Task TransmitFdr(FDP2.FDR updated)
     {
-        // BUG: FDR updates can be sent before the instance manager has been created, in which case we miss updates
-        //  When an instance is created, scan the active FDRs to ensure it's populated.
-        if (_mediator is null || _sessionManager is null || !_sessionManager.SessionExists(updated.DesAirport))
+        if (_mediator is null)
             return;
 
-        var isActivated = updated.State > FDP2.FDR.FDRStates.STATE_PREACTIVE;
-        if (!isActivated)
-            return;
-
-        // Estimates have not been calculated yet
-        if (!updated.ESTed)
-            return;
-
-        var routeSegments = updated.ParsedRoute
-            .ToArray() // Materialize to avoid mutation during enumeration
-            .Select((s, i) => (Segment: s, Index: i, Dto: new FixEstimate(s.Intersection.Name, ToDateTimeOffset(s.ETO))))
-            .Where(x => x.Index > updated.ParsedRoute.OverflownIndex && x.Segment.Type == FDP2.FDR.ExtractedRoute.Segment.SegmentTypes.WAYPOINT)
-            .ToArray();
-
-        // If any remaining estimates are null, ETOs haven't finished computing yet — wait for the next update
-        if (routeSegments.Any(x => x.Dto.Estimate == DateTimeOffset.MaxValue))
-        {
-            _logger?.Verbose("{Callsign} skipped: one or more ETOs not yet computed", updated.Callsign);
-            return;
-        }
-
-        var estimates = routeSegments.Select(x => x.Dto).ToArray();
-
-        FlightPosition? position = null;
-        if (updated.CoupledTrack is not null)
-        {
-            var track = updated.CoupledTrack;
-            var verticalTrack = track.VerticalSpeed >= RDP.VS_CLIMB
-                ? VerticalTrack.Climbing
-                : track.VerticalSpeed <= RDP.VS_DESCENT
-                    ? VerticalTrack.Descending
-                    : VerticalTrack.Maintaining;
-
-            position = new FlightPosition(
-                new Contracts.Shared.Coordinate(track.LatLong.Latitude, track.LatLong.Longitude),
-                track.CorrectedAltitude,
-                verticalTrack,
-                track.GroundSpeed,
-                track.OnGround);
-        }
-
-        // PerformanceData can be null
-        var aircraftCategory = updated.PerformanceData is null || updated.PerformanceData.IsJet
-            ? AircraftCategory.Jet
-            : AircraftCategory.NonJet;
-
-        var wake = updated.AircraftWake switch
-        {
-            "J" => WakeCategory.SuperHeavy,
-            "H" => WakeCategory.Heavy,
-            "M" => WakeCategory.Medium,
-            "L" => WakeCategory.Light,
-            _ => WakeCategory.Heavy
-        };
-
-        var notification = new FlightPlanUpdatedNotification(
-            updated.Callsign,
-            updated.AircraftType,
-            aircraftCategory,
-            wake,
-            updated.DepAirport,
-            updated.DesAirport,
-            ToDateTimeOffset(updated.ETD),
-            updated.EET,
-            position,
-            estimates);
-
-        await _mediator.Publish(notification, CancellationToken.None);
-    }
-
-    internal static DateTimeOffset ToDateTimeOffset(DateTime dateTime)
-    {
-        if (dateTime == DateTime.MaxValue)
-            return DateTimeOffset.MaxValue;
-
-        return new DateTimeOffset(
-            dateTime.Year, dateTime.Month, dateTime.Day,
-            dateTime.Hour, dateTime.Minute, dateTime.Second, dateTime.Millisecond,
-            TimeSpan.Zero);
+        await _mediator.Send(new TransmitFdrRequest(updated), CancellationToken.None);
     }
 
     void TryEnqueue(Func<Task> func)

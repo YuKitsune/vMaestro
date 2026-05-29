@@ -14,6 +14,7 @@ public record FlightPlanUpdatedNotification(
     [property: Key(5)] string Destination,
     [property: Key(6)] DateTimeOffset EstimatedDepartureTime,
     [property: Key(7)] TimeSpan EstimatedFlightTime,
-    [property: Key(8)] FlightPosition? Position,
-    [property: Key(9)] FixEstimate[] Estimates)
+    [property: Key(8)] FlightPlanState State,
+    [property: Key(9)] FlightPosition? Position,
+    [property: Key(10)] FixEstimate[] Estimates)
     : INotification;

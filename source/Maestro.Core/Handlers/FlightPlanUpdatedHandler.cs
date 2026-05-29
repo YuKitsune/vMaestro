@@ -66,6 +66,7 @@ public class FlightPlanUpdatedHandler(
                     notification.Origin,
                     notification.Destination,
                     notification.EstimatedDepartureTime,
+                    notification.State,
                     notification.Position,
                     notification.Estimates,
                     clock.UtcNow());
@@ -107,6 +108,11 @@ public class FlightPlanUpdatedHandler(
 
     static bool ShouldAutoActivate(FlightDataRecord record, AirportConfiguration config)
     {
-        throw new NotImplementedException();
+        if (record.State is FlightPlanState.Active)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

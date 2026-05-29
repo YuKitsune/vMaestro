@@ -209,7 +209,8 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null,
+            "YMML", "YSSY", null,
+            FlightPlanState.Active, null,
             [new FixEstimate("RIVET", now.AddMinutes(10))],
             now);
 
@@ -273,7 +274,8 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null, [], now);
+            "YMML", "YSSY", null,
+            FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -360,7 +362,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null, [], now);
+            "YMML", "YSSY", null, FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -427,7 +429,8 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, position,
+            "YMML", "YSSY", null,
+            FlightPlanState.Active, position,
             [new FixEstimate("RIVET", feederFixEstimate), new FixEstimate("YSSY", expectedLandingEstimate)],
             now);
 
@@ -463,7 +466,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null, [], now);
+            "YMML", "YSSY", null, FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -549,7 +552,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null,
+            "YMML", "YSSY", null, FlightPlanState.Active, null,
             [new FixEstimate("RIVET", now.AddMinutes(20)), new FixEstimate("YSSY", targetTime)],
             now);
 
@@ -1046,7 +1049,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null, [], now);
+            "YMML", "YSSY", null, FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1138,7 +1141,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, position,
+            "YMML", "YSSY", null, FlightPlanState.Active, position,
             [new FixEstimate("RIVET", feederFixEstimate), new FixEstimate("YSSY", feederFixEstimate.Add(trajectory.NormalTimeToGo))],
             now);
 
@@ -1185,7 +1188,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null, [], now);
+            "YMML", "YSSY", null, FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1239,7 +1242,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA2"] = new FlightDataRecord(
             "QFA2", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null,
+            "YMML", "YSSY", null, FlightPlanState.Active, null,
             [new FixEstimate("RIVET", now.AddMinutes(21)), new FixEstimate("YSSY", now.AddMinutes(43))],
             now);
 
@@ -1275,7 +1278,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YSCB", "YSSY", null, null, [], now);
+            "YSCB", "YSSY", null, FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1340,7 +1343,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YSCB", "YSSY", null, null, [], now);
+            "YSCB", "YSSY", null, FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1373,7 +1376,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YSCB", "YSSY", null, null, [], now);
+            "YSCB", "YSSY", null, FlightPlanState.Active, null, [], now);
 
         var handler = GetRequestHandler(airportConfiguration, sessionManager);
 
@@ -1439,7 +1442,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YSCB", "YSSY", null, position,
+            "YSCB", "YSSY", null, FlightPlanState.Active, position,
             [new FixEstimate("RIVET", originalFeederFixEstimate), new FixEstimate("YSSY", originalFeederFixEstimate.AddMinutes(20))],
             now);
 
@@ -1577,7 +1580,7 @@ public class InsertFlightRequestHandlerTests(
 
         session.FlightDataRecords["QFA1"] = new FlightDataRecord(
             "QFA1", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YSCB", "YSSY", null, null,
+            "YSCB", "YSSY", null, FlightPlanState.Active, null,
             [new FixEstimate("RIVET", now.AddMinutes(5)), new FixEstimate("YSSY", now.AddMinutes(40))],
             now);
 

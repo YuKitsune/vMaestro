@@ -1,3 +1,4 @@
+using System.ComponentModel.Design;
 using Maestro.Contracts.Connectivity;
 using Maestro.Contracts.Coordination;
 using Maestro.Contracts.Flights;
@@ -125,6 +126,7 @@ public static class TestBuilders
             "YMML",
             "YSSY",
             FixedTime.AddHours(-2),
+            FlightPlanState.Active,
             CreateFlightPosition(),
             [CreateFixEstimate()],
             FixedTime);
@@ -223,6 +225,7 @@ public static class TestBuilders
             "YSSY",
             FixedTime.AddHours(-2),
             TimeSpan.FromHours(1),
+            FlightPlanState.Active,
             CreateFlightPosition(),
             [CreateFixEstimate()]);
 

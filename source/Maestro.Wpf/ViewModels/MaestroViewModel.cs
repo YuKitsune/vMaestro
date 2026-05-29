@@ -459,7 +459,7 @@ public partial class MaestroViewModel : ObservableObject
                     AirportIdentifier,
                     options,
                     Flights.Where(f => f.State is State.Landed).ToArray(),
-                    FlightDataRecords));
+                    PendingFlights));
         }
         catch (Exception ex)
         {
@@ -504,7 +504,7 @@ public partial class MaestroViewModel : ObservableObject
             _mediator.Send(
                 new OpenPendingDeparturesWindowRequest(
                     AirportIdentifier,
-                    FlightDataRecords));
+                    PendingFlights));
         }
         catch (Exception ex)
         {

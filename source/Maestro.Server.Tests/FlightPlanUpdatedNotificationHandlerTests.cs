@@ -26,6 +26,7 @@ public class FlightPlanUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
@@ -58,6 +59,7 @@ public class FlightPlanUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
@@ -97,6 +99,7 @@ public class FlightPlanUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
@@ -143,6 +146,7 @@ public class FlightPlanUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
@@ -190,6 +194,7 @@ public class FlightPlanUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 

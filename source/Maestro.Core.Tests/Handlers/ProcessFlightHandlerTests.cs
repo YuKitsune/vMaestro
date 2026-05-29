@@ -49,6 +49,7 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
             "YMML",
             "YSSY",
             null,
+            FlightPlanState.Active,
             position ?? _position,
             estimates ?? [],
             lastSeen ?? clockFixture.Instance.UtcNow());
@@ -217,7 +218,7 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
 
         session.FlightDataRecords["QFA123"] = new FlightDataRecord(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null, null,
+            "YMML", "YSSY", null, FlightPlanState.Active, null,
             [new FixEstimate("RIVET", clock.UtcNow().AddHours(1))],
             clock.UtcNow());
 
@@ -277,6 +278,7 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
         session.FlightDataRecords["QFA123"] = new FlightDataRecord(
             "QFA123", "B744", AircraftCategory.Jet, WakeCategory.Heavy,
             "YMAV", "YSSY", clock.UtcNow().AddHours(-1.5),
+            FlightPlanState.Active,
             newPosition,
             [new FixEstimate("WELSH", clock.UtcNow().AddMinutes(10))],
             clock.UtcNow());
