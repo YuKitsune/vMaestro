@@ -53,8 +53,6 @@ public class ProcessFlightsHandler(
 
     void ProcessSequencedFlights(Session session, AirportConfiguration airportConfiguration, TimeSpan lostTimeout)
     {
-        var flightsToRemove = new List<Flight>();
-
         foreach (var flight in session.Sequence.Flights.ToList())
         {
             session.FlightDataRecords.TryGetValue(flight.Callsign, out var record);
@@ -79,27 +77,12 @@ public class ProcessFlightsHandler(
 
             flight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
-            if (isLost && !flight.IsManuallyInserted && flight.State != State.Landed)
-            {
-                logger.Information(
-                    "{Callsign} not seen within lost timeout, removing from sequence",
-                    flight.Callsign);
-                flightsToRemove.Add(flight);
-            }
-            else
-            {
-                logger.Debug("Flight updated: {Flight}", flight);
-            }
+            logger.Debug("Flight updated: {Flight}", flight);
         }
-
-        foreach (var flight in flightsToRemove)
-            session.Sequence.Remove(flight);
     }
 
     void ProcessDesequencedFlights(Session session, AirportConfiguration airportConfiguration, TimeSpan lostTimeout)
     {
-        var flightsToRemove = new List<Flight>();
-
         foreach (var flight in session.DeSequencedFlights)
         {
             session.FlightDataRecords.TryGetValue(flight.Callsign, out var record);
@@ -114,21 +97,8 @@ public class ProcessFlightsHandler(
 
             flight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
-            if (isLost && flight.State != State.Landed)
-            {
-                logger.Information(
-                    "{Callsign} not seen within lost timeout, removing from desequenced list",
-                    flight.Callsign);
-                flightsToRemove.Add(flight);
-            }
-            else
-            {
-                logger.Debug("Desequenced flight updated: {Flight}", flight);
-            }
+            logger.Debug("Desequenced flight updated: {Flight}", flight);
         }
-
-        foreach (var flight in flightsToRemove)
-            session.DeSequencedFlights.Remove(flight);
     }
 
     void RecomputeIfUnstable(Flight flight, FlightDataRecord record, Session session, AirportConfiguration airportConfiguration)
