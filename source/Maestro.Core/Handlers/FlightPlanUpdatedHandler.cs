@@ -82,16 +82,7 @@ public class FlightPlanUpdatedHandler(
 
             // Activation check: determine whether the flight should be automatically activated
             var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.Destination);
-            bool shouldActivate;
-            try
-            {
-                shouldActivate = ShouldAutoActivate(newRecord, airportConfiguration, clock.UtcNow());
-            }
-            catch (NotImplementedException)
-            {
-                logger.Warning("Auto-activation criteria not yet implemented, skipping activation for {Callsign}", notification.Callsign);
-                return;
-            }
+            var shouldActivate = ShouldAutoActivate(newRecord, airportConfiguration, clock.UtcNow());
 
             if (shouldActivate)
             {

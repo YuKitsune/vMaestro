@@ -85,11 +85,54 @@ public class ActivateFlightRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenFlightIsAlreadyDesequenced_ItIsNotDuplicated()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var existingFlight = new FlightBuilder("QFA123")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(40))
+            .Build();
+
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration).Build();
+        session.DeSequencedFlights.Add(existingFlight);
+        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123");
+
+        var handler = GetHandler(sessionManager, airportConfiguration);
+
+        // Act
+        await handler.Handle(new ActivateFlightRequest("YSSY", "QFA123"), CancellationToken.None);
+
+        // Assert
+        sequence.Flights.ShouldBeEmpty("desequenced flight should not be re-inserted into sequence");
+    }
+
+    [Fact]
     public async Task WhenNoFdrExists_FlightIsNotActivated()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
         var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration).Build();
+
+        var handler = GetHandler(sessionManager, airportConfiguration);
+
+        // Act
+        await handler.Handle(new ActivateFlightRequest("YSSY", "QFA123"), CancellationToken.None);
+
+        // Assert
+        sequence.Flights.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task WhenNoLandingEstimateExists_FlightIsNotActivated()
+    {
+        // Arrange - only a feeder fix estimate, no downstream estimate to use as landing
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration).Build();
+
+        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123", estimates: []);
 
         var handler = GetHandler(sessionManager, airportConfiguration);
 
@@ -365,6 +408,41 @@ public class ActivateFlightRequestHandlerTests(ClockFixture clockFixture)
         newFlight.ShouldNotBeNull();
         sequence.NumberInSequence(existingFlight).ShouldBe(1);
         sequence.NumberInSequence(newFlight).ShouldBe(2, "QFA123 cannot overtake a SuperStable/Frozen flight");
+    }
+
+    [Fact]
+    public async Task WhenEstimateIsAheadOfLandedFlight_NewFlightIsInsertedBehind()
+    {
+        // Arrange - Landed flights are excluded from NumberInSequence, so assert raw insertion order
+        var clock = clockFixture.Instance;
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var existingFlight = new FlightBuilder("QFA456")
+            .WithState(State.Landed)
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(30))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(50))
+            .Build();
+
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithFlight(existingFlight))
+            .Build();
+
+        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123", estimates: [
+            new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20)),
+            new FixEstimate("YSSY", clock.UtcNow().AddMinutes(40))
+        ]);
+
+        var handler = GetHandler(sessionManager, airportConfiguration);
+
+        // Act
+        await handler.Handle(new ActivateFlightRequest("YSSY", "QFA123"), CancellationToken.None);
+
+        // Assert
+        var existingIndex = sequence.Flights.ToList().FindIndex(f => f.Callsign == "QFA456");
+        var newIndex = sequence.Flights.ToList().FindIndex(f => f.Callsign == "QFA123");
+        newIndex.ShouldNotBe(-1);
+        newIndex.ShouldBeGreaterThan(existingIndex, "QFA123 cannot overtake a Landed flight");
     }
 
     [Fact]
