@@ -120,6 +120,7 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
+  MinimumAutoActivationFlightTimeMinutes: 30
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15
@@ -596,6 +597,7 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
+  MinimumAutoActivationFlightTimeMinutes: 30
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15
@@ -1068,6 +1070,7 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
+  MinimumAutoActivationFlightTimeMinutes: 30
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15
@@ -1881,6 +1884,7 @@ Airports:
   DefaultPendingFlightState: Stable
   DefaultDepartureFlightState: Unstable
   DefaultDummyFlightState: Frozen
+  MinimumAutoActivationFlightTimeMinutes: 30
   MinimumUnstableMinutes: 5
   StabilityThresholdMinutes: 25
   FrozenThresholdMinutes: 15

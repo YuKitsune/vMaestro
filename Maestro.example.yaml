@@ -207,6 +207,11 @@ Airports:
   # Default: 120
   FlightCreationThresholdMinutes: 120
 
+  # Minimum estimated flight time (minutes) required for auto-activation
+  # Flights with a shorter EFT will not be auto-activated
+  # Default: 30
+  MinimumAutoActivationFlightTimeMinutes: 30
+
   # Minimum time a flight must remain in Unstable state (minutes)
   # Prevents rapid state transitions
   # Default: 5
