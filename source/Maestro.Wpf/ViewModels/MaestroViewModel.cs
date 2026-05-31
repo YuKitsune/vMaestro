@@ -501,10 +501,7 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(
-                new OpenPendingDeparturesWindowRequest(
-                    AirportIdentifier,
-                    PendingFlights));
+            _mediator.Send(new OpenPendingDeparturesWindowRequest(AirportIdentifier));
         }
         catch (Exception ex)
         {
