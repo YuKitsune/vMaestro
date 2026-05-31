@@ -56,6 +56,12 @@ public class AirportConfiguration
     public int FlightCreationThresholdMinutes { get; init; } = 120;
 
     /// <summary>
+    ///     The minimum estimated flight time (in minutes) for a flight to be auto-activated.
+    ///     Flights with an <see cref="EstimatedFlightTime"/> shorter than this will not be auto-activated.
+    /// </summary>
+    public int MinimumAutoActivationFlightTimeMinutes { get; init; } = 30;
+
+    /// <summary>
     ///     The minimum amount of time a flight must be considered <see cref="State.Unstable"/> before it may progress to <see cref="State.Stable"/>.
     /// </summary>
     public int MinimumUnstableMinutes { get; init; } = 5;

@@ -66,6 +66,7 @@ public class FlightPlanUpdatedHandler(
                     notification.Origin,
                     notification.Destination,
                     notification.EstimatedDepartureTime,
+                    notification.EstimatedFlightTime,
                     notification.State,
                     notification.Position,
                     notification.Estimates,
@@ -108,10 +109,11 @@ public class FlightPlanUpdatedHandler(
 
     static bool ShouldAutoActivate(FlightDataRecord record, AirportConfiguration config)
     {
+        if (record.EstimatedFlightTime < TimeSpan.FromMinutes(config.MinimumAutoActivationFlightTimeMinutes))
+            return false;
+
         if (record.State is FlightPlanState.Active)
-        {
             return true;
-        }
 
         return false;
     }

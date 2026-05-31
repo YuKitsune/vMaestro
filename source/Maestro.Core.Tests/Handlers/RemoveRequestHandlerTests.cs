@@ -89,7 +89,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithSequence(s => s.WithClock(clockFixture.Instance).WithFlight(flight))
             .Build();
 
-        session.FlightDataRecords["QFA123"] = new FlightDataRecord("QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium, null, "YSSY", null, FlightPlanState.Active, null, [], DateTimeOffset.MinValue);
+        session.FlightDataRecords["QFA123"] = new FlightDataRecord("QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium, null, "YSSY", null, TimeSpan.FromHours(1), FlightPlanState.Active, null, [], DateTimeOffset.MinValue);
 
         var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");
@@ -206,7 +206,7 @@ public class RemoveRequestHandlerTests(ClockFixture clockFixture)
             .WithSequence(s => s.WithClock(clockFixture.Instance))
             .Build();
 
-        session.FlightDataRecords["QFA123"] = new FlightDataRecord("QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium, "YSCB", "YSSY", null, FlightPlanState.Active, null, [], DateTimeOffset.MinValue);
+        session.FlightDataRecords["QFA123"] = new FlightDataRecord("QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium, "YSCB", "YSSY", null, TimeSpan.FromHours(1), FlightPlanState.Active, null, [], DateTimeOffset.MinValue);
 
         var handler = GetRequestHandler(sessionManager, sequence);
         var request = new RemoveRequest("YSSY", "QFA123");

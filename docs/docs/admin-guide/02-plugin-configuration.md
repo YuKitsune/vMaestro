@@ -239,6 +239,7 @@ Airports:
     ManualInteractionState: Stable
 
     FlightCreationThresholdMinutes: 120
+    MinimumAutoActivationFlightTimeMinutes: 30
     MinimumUnstableMinutes: 5
     StabilityThresholdMinutes: 25
     FrozenThresholdMinutes: 15
@@ -262,6 +263,7 @@ Airports:
 | `DefaultDummyFlightState` | string | `Frozen` | State for dummy flights |
 | `ManualInteractionState` | string | `Stable` | State after manual changes |
 | `FlightCreationThresholdMinutes` | integer | 120 | Tracking range in minutes |
+| `MinimumAutoActivationFlightTimeMinutes` | integer | 30 | Flights with an estimated flight time shorter than this value will not be auto-activated |
 | `MinimumUnstableMinutes` | integer | 5 | Minimum time in Unstable state |
 | `StabilityThresholdMinutes` | integer | 25 | Minutes before ETA_FF to become Stable |
 | `FrozenThresholdMinutes` | integer | 15 | Minutes before STA to become Frozen |

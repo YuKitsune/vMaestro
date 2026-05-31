@@ -144,6 +144,7 @@
         "origin": "YMML",
         "destination": "YSSY",
         "estimatedDepartureTime": "2024-06-15T10:30:00+00:00",
+        "estimatedFlightTime": "01:00:00",
         "state": 1,
         "position": {
           "coordinate": {

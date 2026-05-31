@@ -22,8 +22,6 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     const int DefaultLandingRateSeconds = 180;
     const int DefaultLostFlightTimeoutMinutes = 10;
 
-    // --- Landed flight cleanup ---
-
     [Fact]
     public async Task WhenNoFlights_NothingIsRemoved()
     {
@@ -254,8 +252,6 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
         sequence.Flights.ShouldBeEmpty();
     }
 
-    // --- Lost flight cleanup ---
-
     [Fact]
     public async Task WhenAFlightIsLost_ItIsRemovedFromSequence()
     {
@@ -379,8 +375,6 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
         session.DeSequencedFlights.ShouldBeEmpty("lost desequenced flight should be removed");
     }
 
-    // --- Stale flight data record cleanup ---
-
     [Fact]
     public async Task WhenAnUnactivatedFlightDataRecordIsStale_ItIsRemoved()
     {
@@ -415,8 +409,6 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
 
         session.FlightDataRecords.ShouldContainKey("QFA1", "recent flight data record should not be removed");
     }
-
-    // --- Slave mode ---
 
     [Fact]
     public async Task WhenNotMaster_DoesNothing()
@@ -475,6 +467,7 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
             "YMML",
             "YSSY",
             null,
+            TimeSpan.FromHours(1),
             FlightPlanState.Active,
             null,
             [],

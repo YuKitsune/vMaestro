@@ -86,6 +86,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         session.FlightDataRecords["QFA123"] = new FlightDataRecord(
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", null,
+            TimeSpan.FromHours(1),
             FlightPlanState.Active, _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))],
             originalLastSeen);
@@ -217,6 +218,62 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         slaveConnectionManager.Connection.InvokedNotifications.Count.ShouldBe(1, "notification should be relayed to master");
         slaveConnectionManager.Connection.InvokedNotifications[0].ShouldBe(notification);
         session.FlightDataRecords.ShouldNotContainKey("QFA123", "slave should not update FlightDataRecords locally");
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndEstimatedFlightTimeExceedsMinimum_ActivateFlightRequestIsSent()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration() with { MinimumAutoActivationFlightTimeMinutes = 30 };
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
+        airportConfigurationProvider.GetAirportConfiguration(Arg.Any<string>()).Returns(airportConfiguration);
+
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromMinutes(31),
+            FlightPlanState.Active,
+            _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
+
+        var handler = GetHandler(sessionManager, clock, airportConfigurationProvider: airportConfigurationProvider, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.Received(1).Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndEstimatedFlightTimeIsBelowMinimum_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration() with { MinimumAutoActivationFlightTimeMinutes = 30 };
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
+        airportConfigurationProvider.GetAirportConfiguration(Arg.Any<string>()).Returns(airportConfiguration);
+
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddMinutes(-20), TimeSpan.FromMinutes(20),
+            FlightPlanState.Active,
+            _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(10))]);
+
+        var handler = GetHandler(sessionManager, clock, airportConfigurationProvider: airportConfigurationProvider, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
         await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
     }
 

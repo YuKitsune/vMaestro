@@ -126,6 +126,7 @@ public static class TestBuilders
             "YMML",
             "YSSY",
             FixedTime.AddHours(-2),
+            TimeSpan.FromHours(1),
             FlightPlanState.Active,
             CreateFlightPosition(),
             [CreateFixEstimate()],
