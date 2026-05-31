@@ -5,7 +5,5 @@ namespace Maestro.Wpf.Contracts;
 
 public record OpenInsertFlightWindowRequest(
     string AirportIdentifier,
-    IInsertFlightOptions Options,
-    FlightDto[] LandedFlights,
-    FlightDataRecord[] FlightDataRecords)
+    IInsertFlightOptions Options)
     : IRequest;

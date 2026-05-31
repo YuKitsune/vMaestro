@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Contracts.Runway;
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Configuration;
@@ -40,8 +41,10 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     [ObservableProperty]
     DateTimeOffset _firstLandingTime;
 
+    [ObservableProperty]
+    bool _hasPendingModeChange;
+
     public RunwayModeViewModel[] AvailableRunwayModes { get; }
-    public bool HasPendingModeChange { get; }
 
     public double MinimumLandingRateSeconds => 30;
     public double MaximumLandingRateSeconds => 60 * 5; // 5 Minutes
@@ -79,6 +82,18 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         FirstLandingTime = firstLandingTimeForNewMode;
 
         RunwayConfigurationItems = CreateRunwayConfigurationItems(SelectedRunwayMode);
+
+        WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (_, notification) =>
+        {
+            if (notification.AirportIdentifier != _airportIdentifier)
+                return;
+
+            OriginalRunwayModeIdentifier = notification.Session.Sequence.CurrentRunwayMode.Identifier;
+            HasPendingModeChange = notification.Session.Sequence.NextRunwayMode is not null;
+            LastLandingTime = notification.Session.Sequence.LastLandingTimeForCurrentMode == default
+                ? _clock.UtcNow()
+                : notification.Session.Sequence.LastLandingTimeForCurrentMode;
+        });
     }
 
     partial void OnSelectedRunwayModeIdentifierChanged(string value)

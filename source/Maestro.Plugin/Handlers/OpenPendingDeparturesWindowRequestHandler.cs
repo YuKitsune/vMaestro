@@ -32,14 +32,8 @@ public class OpenPendingDeparturesWindowRequestHandler(
             sessionDto = session.Snapshot();
         }
 
-        var activatedCallsigns = new HashSet<string>(
-            sessionDto.Sequence.Flights.Select(f => f.Callsign)
-                .Concat(sessionDto.DeSequencedFlights.Select(f => f.Callsign)),
-            StringComparer.OrdinalIgnoreCase);
-
-        var departureFlights = sessionDto.FlightDataRecords
-            .Where(r => !activatedCallsigns.Contains(r.Callsign) &&
-                        airportConfiguration.DepartureAirports.Any(d => d.Identifier == r.Origin))
+        var departureAirportIdentifiers = airportConfiguration.DepartureAirports
+            .Select(d => d.Identifier)
             .ToArray();
 
         windowManager.FocusOrCreateWindow(
@@ -49,7 +43,8 @@ public class OpenPendingDeparturesWindowRequestHandler(
             {
                 var viewModel = new PendingDeparturesViewModel(
                     request.AirportIdentifier,
-                    departureFlights,
+                    departureAirportIdentifiers,
+                    sessionDto,
                     windowHandle,
                     mediator,
                     clock,

@@ -104,11 +104,6 @@ public partial class MaestroViewModel : ObservableObject
 
     public bool HasDesequencedFlight => DeSequencedFlights.Any();
 
-    public FlightDataRecord[] PendingFlights => FlightDataRecords
-        .Where(r => !Flights.Any(f => f.Callsign == r.Callsign) &&
-                    !DeSequencedFlights.Any(f => f.Callsign == r.Callsign))
-        .ToArray();
-
     public RunwayIntervalViewModel[] RunwayIntervals
     {
         get
@@ -454,12 +449,7 @@ public partial class MaestroViewModel : ObservableObject
             if (string.IsNullOrEmpty(AirportIdentifier))
                 return;
 
-            _mediator.Send(
-                new OpenInsertFlightWindowRequest(
-                    AirportIdentifier,
-                    options,
-                    Flights.Where(f => f.State is State.Landed).ToArray(),
-                    PendingFlights));
+            _mediator.Send(new OpenInsertFlightWindowRequest(AirportIdentifier, options));
         }
         catch (Exception ex)
         {
@@ -514,12 +504,7 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(
-                new OpenDesequencedWindowRequest(
-                    AirportIdentifier,
-                    DeSequencedFlights
-                        .Select(f => f.Callsign)
-                        .ToArray()));
+            _mediator.Send(new OpenDesequencedWindowRequest(AirportIdentifier));
         }
         catch (Exception ex)
         {

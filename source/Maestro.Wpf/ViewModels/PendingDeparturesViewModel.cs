@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Contracts.Flights;
+using Maestro.Contracts.Sessions;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
 using Maestro.Wpf.Integrations;
@@ -13,6 +15,7 @@ namespace Maestro.Wpf.ViewModels;
 public partial class PendingDeparturesViewModel : ObservableObject
 {
     readonly string _airportIdentifier;
+    readonly string[] _departureAirportIdentifiers;
     readonly IWindowHandle _windowHandle;
     readonly IMediator _mediator;
     readonly IErrorReporter _errorReporter;
@@ -43,19 +46,42 @@ public partial class PendingDeparturesViewModel : ObservableObject
 
     public PendingDeparturesViewModel(
         string airportIdentifier,
-        FlightDataRecord[] pendingFlights,
+        string[] departureAirportIdentifiers,
+        SessionDto session,
         IWindowHandle windowHandle,
         IMediator mediator,
         IClock clock,
         IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
+        _departureAirportIdentifiers = departureAirportIdentifiers;
         _windowHandle = windowHandle;
         _mediator = mediator;
         _errorReporter = errorReporter;
 
-        PendingFlights = pendingFlights;
         TakeoffTime = clock.UtcNow().AddMinutes(5).Rounded();
+        ApplySession(session);
+
+        WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (_, notification) =>
+        {
+            if (notification.AirportIdentifier != _airportIdentifier)
+                return;
+
+            ApplySession(notification.Session);
+        });
+    }
+
+    void ApplySession(SessionDto session)
+    {
+        var activatedCallsigns = new HashSet<string>(
+            session.Sequence.Flights.Select(f => f.Callsign)
+                .Concat(session.DeSequencedFlights.Select(f => f.Callsign)),
+            StringComparer.OrdinalIgnoreCase);
+
+        PendingFlights = session.FlightDataRecords
+            .Where(r => !activatedCallsigns.Contains(r.Callsign) &&
+                        _departureAirportIdentifiers.Contains(r.Origin, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
     }
 
     partial void OnSelectedFlightChanged(FlightDataRecord? value)
