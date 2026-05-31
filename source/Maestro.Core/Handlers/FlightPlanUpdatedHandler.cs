@@ -85,7 +85,7 @@ public class FlightPlanUpdatedHandler(
             bool shouldActivate;
             try
             {
-                shouldActivate = ShouldAutoActivate(newRecord, airportConfiguration);
+                shouldActivate = ShouldAutoActivate(newRecord, airportConfiguration, clock.UtcNow());
             }
             catch (NotImplementedException)
             {
@@ -107,10 +107,18 @@ public class FlightPlanUpdatedHandler(
         }
     }
 
-    static bool ShouldAutoActivate(FlightDataRecord record, AirportConfiguration config)
+    static bool ShouldAutoActivate(FlightDataRecord record, AirportConfiguration config, DateTimeOffset now)
     {
         if (config.DepartureAirports.Any(d => d.Identifier == record.Origin))
-            return true;
+            return config.AutoActivateDepartures;
+
+        var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
+        if (landingEstimate is not null)
+        {
+            var timeToLanding = landingEstimate.Value - now;
+            if (timeToLanding > TimeSpan.FromMinutes(config.MaximumAutoActivationLeadTimeMinutes))
+                return false;
+        }
 
         if (record.EstimatedFlightTime < TimeSpan.FromMinutes(config.MinimumAutoActivationFlightTimeMinutes))
             return false;

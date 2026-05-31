@@ -51,15 +51,22 @@ public class AirportConfiguration
     // State transition times
 
     /// <summary>
-    ///     The maximum amount of time a flight must be away from landing before it is tracked by Maestro.
+    ///     The maximum time-to-landing (in minutes) for a flight to be auto-activated.
+    ///     Flights with a landing estimate further out than this will not be auto-activated.
     /// </summary>
-    public int FlightCreationThresholdMinutes { get; init; } = 120;
+    public int MaximumAutoActivationLeadTimeMinutes { get; init; } = 120;
 
     /// <summary>
     ///     The minimum estimated flight time (in minutes) for a flight to be auto-activated.
     ///     Flights with an <see cref="EstimatedFlightTime"/> shorter than this will not be auto-activated.
     /// </summary>
-    public int MinimumAutoActivationFlightTimeMinutes { get; init; } = 30;
+    public int MinimumAutoActivationFlightTimeMinutes { get; init; } = 25;
+
+    /// <summary>
+    ///     When true, flights originating from a configured departure airport are auto-activated when the FDR state is active.
+    ///     When false, departure airport flights are not auto-activated.
+    /// </summary>
+    public bool AutoActivateDepartures { get; init; } = true;
 
     /// <summary>
     ///     The minimum amount of time a flight must be considered <see cref="State.Unstable"/> before it may progress to <see cref="State.Stable"/>.
