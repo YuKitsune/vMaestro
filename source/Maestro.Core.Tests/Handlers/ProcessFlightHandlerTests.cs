@@ -56,6 +56,36 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
             lastSeen ?? clockFixture.Instance.UtcNow());
     }
 
+    [Fact]
+    public async Task WhenNoFdrExistsForAFlight_NothingChanges()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var originalFeederFixEstimate = clock.UtcNow().AddMinutes(10);
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(originalFeederFixEstimate)
+            .WithAircraftType("B738")
+            .Build();
+
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithFlight(flight))
+            .Build();
+
+        // No FDR added to session.FlightDataRecords
+
+        var handler = GetHandler(airportConfiguration, sessionManager, clock);
+
+        // Act
+        await handler.Handle(new ProcessFlightsRequest("YSSY"), CancellationToken.None);
+
+        // Assert
+        flight.AircraftType.ShouldBe("B738");
+        flight.FeederFixEstimate.ShouldBe(originalFeederFixEstimate);
+    }
+
     [Theory]
     [InlineData(State.Unstable)]
     [InlineData(State.Stable)]
@@ -261,6 +291,174 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenProcessingAnUnstableFlight_AndDelayIsBeingAbsorbed_RequiredDelayIsRecalculated()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(20);
+
+        // QFA456 (Frozen) lands at +30min; 3min runway separation means QFA123 needs STA = +33min
+        var frozenFlight = new FlightBuilder("QFA456")
+            .WithState(State.Frozen)
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(30))
+            .WithLandingTime(clock.UtcNow().AddMinutes(30))
+            .Build();
+
+        // QFA123 (Unstable): ETA_FF = +10, ETA = +30, STA_FF = +13, STA = +33 → RequiredEnrouteDelay = 3min
+        var etaFF = clock.UtcNow().AddMinutes(10);
+        var staFF = etaFF.AddMinutes(3);
+        var eta = etaFF.Add(ttg);
+        var sta = eta.AddMinutes(3);
+
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(etaFF)
+            .WithFeederFixTime(staFF)
+            .WithLandingEstimate(eta)
+            .WithLandingTime(sta)
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        var trajectoryService = new MockTrajectoryService(ttg);
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(frozenFlight, flight))
+            .Build();
+
+        // FDR moves ETA_FF by +2min: new ETA = +32, which still needs 1min of separation from QFA456
+        var updatedEtaFF = etaFF.AddMinutes(2);
+        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123",
+            estimates: [new FixEstimate("RIVET", updatedEtaFF), new FixEstimate("YSSY", updatedEtaFF.Add(ttg))]);
+
+        var handler = GetHandler(airportConfiguration, sessionManager, clock, trajectoryService: trajectoryService);
+
+        // Act
+        await handler.Handle(new ProcessFlightsRequest("YSSY"), CancellationToken.None);
+
+        // Assert - for Unstable flights the scheduler recalculates Required, so Required = Remaining
+        flight.RequiredEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(1), "required delay is recalculated after rescheduling");
+        flight.RemainingEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(1));
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    public async Task WhenProcessingAStableFlight_AndDelayIsBeingAbsorbed_RequiredDelayIsUnchanged(State state)
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(20);
+
+        // Flight requires 3min of enroute delay: STA_FF = ETA_FF + 3min
+        // ETA = ETA_FF + TTG, STA = ETA + 3min (same total delay)
+        var etaFF = clock.UtcNow().AddMinutes(30);
+        var eta = etaFF.Add(ttg);
+        var staFF = etaFF.AddMinutes(3);
+        var sta = eta.AddMinutes(3);
+
+        // Frozen blocker occupies the landing slot at eta, forcing QFA123 to be scheduled at eta+3min
+        var blocker = new FlightBuilder("QFA456")
+            .WithState(State.Frozen)
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(etaFF)
+            .WithLandingEstimate(eta)
+            .WithLandingTime(eta)
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        var flight = new FlightBuilder("QFA123")
+            .WithState(state)
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(etaFF)
+            .WithFeederFixTime(staFF)
+            .WithLandingEstimate(eta)
+            .WithLandingTime(sta)
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(blocker, flight))
+            .Build();
+
+        // FDR updates ETA_FF by +2min: flight has absorbed 2min of its 3min delay
+        var updatedEtaFF = etaFF.AddMinutes(2);
+        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123",
+            estimates: [new FixEstimate("RIVET", updatedEtaFF), new FixEstimate("YSSY", updatedEtaFF.Add(ttg))]);
+
+        var handler = GetHandler(airportConfiguration, sessionManager, clock);
+
+        // Act
+        await handler.Handle(new ProcessFlightsRequest("YSSY"), CancellationToken.None);
+
+        // Assert - for non-Unstable flights the required delay is not recalculated
+        flight.RequiredEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(3), "required delay should not change");
+        flight.RemainingEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(1), "remaining delay should reflect absorbed delay");
+    }
+
+    [Fact]
+    public async Task WhenProcessingAnUnstableFlight_AndTheFdrShowsADifferentFeederFix_TheFeederFixAndTrajectoriesAreUpdated()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+
+        // Flight starts via RIVET, FDR will report BOREE
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(40))
+            .Build();
+
+        var expectedTerminalTrajectory = new TerminalTrajectory(TimeSpan.FromMinutes(25));
+        var expectedEnrouteTrajectory = new EnrouteTrajectory(TimeSpan.FromMinutes(5), TimeSpan.Zero);
+
+        var trajectoryService = Substitute.For<ITrajectoryService>();
+        trajectoryService
+            .GetTrajectory(
+                Arg.Any<Flight>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string[]>(),
+                Arg.Any<Wind>())
+            .Returns(expectedTerminalTrajectory);
+        trajectoryService
+            .GetEnrouteTrajectory(Arg.Any<string>(), Arg.Any<string[]>(), Arg.Any<string>())
+            .Returns(expectedEnrouteTrajectory);
+
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlight(flight))
+            .Build();
+
+        // FDR now reports BOREE as the feeder fix
+        var boreeEstimate = clock.UtcNow().AddMinutes(15);
+        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123",
+            estimates: [
+                new FixEstimate("BOREE", boreeEstimate),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(40))
+            ]);
+
+        var handler = GetHandler(airportConfiguration, sessionManager, clock, trajectoryService: trajectoryService);
+
+        // Act
+        await handler.Handle(new ProcessFlightsRequest("YSSY"), CancellationToken.None);
+
+        // Assert
+        flight.FeederFixIdentifier.ShouldBe("BOREE");
+        flight.TerminalTrajectory.ShouldBe(expectedTerminalTrajectory);
+        flight.EnrouteTrajectory.ShouldBe(expectedEnrouteTrajectory);
+    }
+
+    [Fact]
     public async Task WhenAnExistingFlightHasFdrData_AllFlightDataIsUpdated()
     {
         // Arrange
@@ -296,37 +494,6 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
         flight.OriginIdentifier.ShouldBe("YMAV");
         flight.Position!.Coordinate.Latitude.ShouldBe(newPosition.Coordinate.Latitude);
         flight.Position.Altitude.ShouldBe(newPosition.Altitude);
-    }
-
-    [Fact]
-    public async Task WhenADesequencedFlightHasFdrData_ItsEstimatesAreStillUpdated()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var ttg = TimeSpan.FromMinutes(10);
-        var clock = clockFixture.Instance;
-        var flight = new FlightBuilder("QFA123")
-            .WithFeederFix("RIVET")
-            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(10))
-            .WithLandingTime(clock.UtcNow().AddMinutes(20))
-            .WithTrajectory(new TerminalTrajectory(ttg))
-            .Build();
-
-        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
-        session.DeSequencedFlights.Add(flight);
-
-        var newFeederFixTime = clock.UtcNow().AddMinutes(15);
-        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123",
-            estimates: [new FixEstimate("RIVET", newFeederFixTime), new FixEstimate("YSSY", clock.UtcNow().AddMinutes(26))]);
-
-        var handler = GetHandler(airportConfiguration, sessionManager, clock);
-
-        // Act
-        await handler.Handle(new ProcessFlightsRequest("YSSY"), CancellationToken.None);
-
-        // Assert
-        flight.FeederFixEstimate.ShouldBe(newFeederFixTime);
-        flight.LandingEstimate.ShouldBe(newFeederFixTime.Add(ttg));
     }
 
     [Fact]
@@ -376,6 +543,65 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
         sequence.NumberInSequence(flight1).ShouldBe(1, "QFA123 should be first after update (earlier landing estimate)");
         sequence.NumberInSequence(flight2).ShouldBe(2, "QFA456 should be second (later landing estimate)");
         flight1.LandingEstimate.ShouldBe(newFeederFixTime.Add(ttg));
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    [InlineData(State.Frozen)]
+    public async Task WhenProcessingAnUnstableFlight_AndItsEstimateMovesAheadOfAStableFlight_ItDoesNotOvertake(State blockerState)
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var ttg = TimeSpan.FromMinutes(20);
+
+        // Blocker flight is Stable/SuperStable/Frozen at position 1
+        var blocker = new FlightBuilder("QFA456")
+            .WithState(blockerState)
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(30))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(50))
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        // Unstable flight at position 2 with a later estimate
+        var flight = new FlightBuilder("QFA123")
+            .WithState(State.Unstable)
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(40))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(60))
+            .WithTrajectory(new TerminalTrajectory(ttg))
+            .Build();
+
+        var trajectoryService = new MockTrajectoryService(ttg);
+        var (sessionManager, session, sequence) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(blocker, flight))
+            .Build();
+
+        sequence.NumberInSequence(blocker).ShouldBe(1);
+        sequence.NumberInSequence(flight).ShouldBe(2);
+
+        // FDR updates QFA123's estimate to be earlier than the blocker
+        var updatedEtaFF = clock.UtcNow().AddMinutes(10);
+        session.FlightDataRecords["QFA123"] = MakeRecord("QFA123",
+            estimates: [
+                new FixEstimate("RIVET", updatedEtaFF),
+                new FixEstimate("YSSY", updatedEtaFF.Add(ttg))
+            ]);
+        session.FlightDataRecords["QFA456"] = MakeRecord("QFA456",
+            estimates: [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30))]);
+
+        var handler = GetHandler(airportConfiguration, sessionManager, clock, trajectoryService: trajectoryService);
+
+        // Act
+        await handler.Handle(new ProcessFlightsRequest("YSSY"), CancellationToken.None);
+
+        // Assert - Unstable flight cannot overtake the Stable/SuperStable/Frozen blocker
+        sequence.NumberInSequence(blocker).ShouldBe(1, "blocker should remain first");
+        sequence.NumberInSequence(flight).ShouldBe(2, "unstable flight cannot overtake a stable/frozen flight");
     }
 
     [Theory]

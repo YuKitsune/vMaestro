@@ -75,6 +75,54 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndFdrIsAlreadyKnown_FdrIsUpdated()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
+
+        session.FlightDataRecords["QFA123"] = new FlightDataRecord(
+            "QFA123",
+            "B738",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YMML",
+            "YSSY",
+            null,
+            TimeSpan.FromHours(1),
+            FlightPlanState.Active,
+            _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))],
+            clock.UtcNow().AddSeconds(-10));
+
+        var newFeederFixEstimate = clock.UtcNow().AddMinutes(15);
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123",
+            "B744",
+            AircraftCategory.Jet,
+            WakeCategory.Heavy,
+            "YMML",
+            "YSSY",
+            clock.UtcNow().AddHours(-1),
+            TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
+            _position,
+            [new FixEstimate("RIVET", newFeederFixEstimate)]);
+
+        var handler = GetHandler(sessionManager, clock);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        session.FlightDataRecords.TryGetValue("QFA123", out var record).ShouldBeTrue();
+        record.AircraftType.ShouldBe("B744");
+        record.WakeCategory.ShouldBe(WakeCategory.Heavy);
+        record.Estimates.ShouldContain(e => e.FixIdentifier == "RIVET" && e.Estimate == newFeederFixEstimate);
+    }
+
+    [Fact]
     public async Task WhenAFlightPlanIsUpdated_AndTooSoonSinceLastUpdate_TheUpdateIsRateLimited()
     {
         // Arrange
@@ -222,10 +270,42 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndFlightIsFromDepartureAirport_ActivateFlightRequestIsSent()
+    {
+        // Arrange - YSCB is configured as a departure airport
+        // Ensure flights from departure airports auto-activate by themselves from departure airports once airborne
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "JST425",
+            "A320",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YSCB",
+            "YSSY",
+            clock.UtcNow(),
+            TimeSpan.FromMinutes(35),
+            FlightPlanState.Preactive,
+            _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.Received(1).Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task WhenAFlightPlanIsUpdated_AndEstimatedFlightTimeExceedsMinimum_ActivateFlightRequestIsSent()
     {
         // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration() with { MinimumAutoActivationFlightTimeMinutes = 30 };
+        var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
         var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
 
@@ -253,7 +333,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     public async Task WhenAFlightPlanIsUpdated_AndEstimatedFlightTimeIsBelowMinimum_ActivateFlightRequestIsNotSent()
     {
         // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration() with { MinimumAutoActivationFlightTimeMinutes = 30 };
+        var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
         var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
 

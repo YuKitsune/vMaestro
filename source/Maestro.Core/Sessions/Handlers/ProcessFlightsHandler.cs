@@ -38,10 +38,10 @@ public class ProcessFlightsHandler(
         using (await session.Semaphore.LockAsync(cancellationToken))
         {
             var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
-            var lostTimeout = TimeSpan.FromMinutes(airportConfiguration.LostFlightTimeoutMinutes);
-
-            ProcessSequencedFlights(session, airportConfiguration, lostTimeout);
-            ProcessDesequencedFlights(session, airportConfiguration, lostTimeout);
+            foreach (var flight in session.Sequence.Flights.ToList())
+            {
+                ProcessFlight(session, airportConfiguration, flight);
+            }
 
             sessionDto = session.Snapshot();
         }
@@ -51,62 +51,25 @@ public class ProcessFlightsHandler(
             cancellationToken);
     }
 
-    void ProcessSequencedFlights(Session session, AirportConfiguration airportConfiguration, TimeSpan lostTimeout)
+    void ProcessFlight(Session session, AirportConfiguration airportConfiguration, Flight flight)
     {
-        foreach (var flight in session.Sequence.Flights.ToList())
-        {
-            session.FlightDataRecords.TryGetValue(flight.Callsign, out var record);
+        if (!session.FlightDataRecords.TryGetValue(flight.Callsign, out var record))
+            return;
 
-            var isLost = record is null
-                ? !flight.IsManuallyInserted
-                : clock.UtcNow() - record.LastSeen > lostTimeout;
-        // TODO test case: When processing a flight, and no FDR exists, nothing changes
+        UpdateFlightData(record, flight);
+        RecomputeIfUnstable(flight, record, session, airportConfiguration);
 
-            if (!isLost && record is not null)
-            {
-        // TODO test case: When processing a flight, data is updated
-                UpdateFlightData(record, flight);
-                RecomputeIfUnstable(flight, record, session, airportConfiguration);
+        if (record.Position is not null && !record.Position.IsOnGround)
+            CalculateEstimates(flight, record);
 
-        // TODO test case: When processing a flight, estimates are updated
-                if (record.Position is not null && !record.Position.IsOnGround)
-                    CalculateEstimates(flight, record);
+        if (flight.State is State.Unstable)
+            RepositionInSequence(flight, session);
 
-        // TODO test case: When processing a flight, and it is unstable, it is repositioned based on its estimate
-        // TODO test case: When processing a flight, and it is unstable, and its estimate moves ahead of a Stable, SuperStable, or Frozen flight, it does not overtake the Stable, SuperStable, or Frozen flight (Theory with InlineData)
-        // TODO test case: When processing a flight, and it is unstable, and its estimate moves ahead of an Unstable flight, its position is changed
-                if (flight.State is State.Unstable)
-                    RepositionInSequence(flight, session);
+        UpdateRemainingDelay(flight, airportConfiguration);
 
-        // TODO test case: When processing a flight, and delay is being absorbed, remaining delay is updated
-                UpdateRemainingDelay(flight, airportConfiguration);
-            }
+        flight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
-        // TODO test case: When processing a flight, state is updated
-            flight.UpdateStateBasedOnTime(clock, airportConfiguration);
-
-            logger.Debug("Flight updated: {Flight}", flight);
-        }
-    }
-
-    void ProcessDesequencedFlights(Session session, AirportConfiguration airportConfiguration, TimeSpan lostTimeout)
-    {
-        foreach (var flight in session.DeSequencedFlights)
-        {
-            session.FlightDataRecords.TryGetValue(flight.Callsign, out var record);
-
-            var isLost = record is null || clock.UtcNow() - record.LastSeen > lostTimeout;
-
-            if (!isLost)
-            {
-                UpdateFlightData(record, flight);
-                CalculateEstimates(flight, record);
-            }
-
-            flight.UpdateStateBasedOnTime(clock, airportConfiguration);
-
-            logger.Debug("Desequenced flight updated: {Flight}", flight);
-        }
+        logger.Debug("Flight updated: {Flight}", flight);
     }
 
     void RecomputeIfUnstable(Flight flight, FlightDataRecord record, Session session, AirportConfiguration airportConfiguration)
@@ -114,7 +77,6 @@ public class ProcessFlightsHandler(
         if (flight.State is not State.Unstable || string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
             return;
 
-        // TODO test case: When processing a flight, and it is unstable, feeder fix changes are detected (check new FF, and trajectory)
         var fixNames = record.Estimates.Select(e => e.FixIdentifier).ToArray();
         var feederFix = record.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
         var landingEstimate = record.Estimates.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
@@ -196,14 +158,12 @@ public class ProcessFlightsHandler(
 
     void CalculateEstimates(Flight flight, FlightDataRecord record)
     {
-        // TODO test case: When processing a flight, and manual ETA_FF is set, ETA_FF is not changed
         if (flight.ManualFeederFixEstimate)
             return;
 
         if (record.Position is null || record.Position.IsOnGround)
             return;
 
-        // TODO test case: When processing a flight, and ETA_FF exists, ETA_FF is sourced from route estimates
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
         {
             if (flight.FeederFixEstimate <= clock.UtcNow())
@@ -224,7 +184,6 @@ public class ProcessFlightsHandler(
             return;
         }
 
-        // TODO test case: When processing a flight, and no FF exists, ETA_FF is ETA (last waypoint) - TTG
         var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
         if (landingEstimate is null)
         {
