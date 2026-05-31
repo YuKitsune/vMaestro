@@ -60,21 +60,29 @@ public class ProcessFlightsHandler(
             var isLost = record is null
                 ? !flight.IsManuallyInserted
                 : clock.UtcNow() - record.LastSeen > lostTimeout;
+        // TODO test case: When processing a flight, and no FDR exists, nothing changes
 
             if (!isLost && record is not null)
             {
+        // TODO test case: When processing a flight, data is updated
                 UpdateFlightData(record, flight);
                 RecomputeIfUnstable(flight, record, session, airportConfiguration);
 
+        // TODO test case: When processing a flight, estimates are updated
                 if (record.Position is not null && !record.Position.IsOnGround)
                     CalculateEstimates(flight, record);
 
+        // TODO test case: When processing a flight, and it is unstable, it is repositioned based on its estimate
+        // TODO test case: When processing a flight, and it is unstable, and its estimate moves ahead of a Stable, SuperStable, or Frozen flight, it does not overtake the Stable, SuperStable, or Frozen flight (Theory with InlineData)
+        // TODO test case: When processing a flight, and it is unstable, and its estimate moves ahead of an Unstable flight, its position is changed
                 if (flight.State is State.Unstable)
                     RepositionInSequence(flight, session);
 
+        // TODO test case: When processing a flight, and delay is being absorbed, remaining delay is updated
                 UpdateRemainingDelay(flight, airportConfiguration);
             }
 
+        // TODO test case: When processing a flight, state is updated
             flight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
             logger.Debug("Flight updated: {Flight}", flight);
@@ -106,6 +114,7 @@ public class ProcessFlightsHandler(
         if (flight.State is not State.Unstable || string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
             return;
 
+        // TODO test case: When processing a flight, and it is unstable, feeder fix changes are detected (check new FF, and trajectory)
         var fixNames = record.Estimates.Select(e => e.FixIdentifier).ToArray();
         var feederFix = record.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
         var landingEstimate = record.Estimates.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
@@ -187,12 +196,14 @@ public class ProcessFlightsHandler(
 
     void CalculateEstimates(Flight flight, FlightDataRecord record)
     {
+        // TODO test case: When processing a flight, and manual ETA_FF is set, ETA_FF is not changed
         if (flight.ManualFeederFixEstimate)
             return;
 
         if (record.Position is null || record.Position.IsOnGround)
             return;
 
+        // TODO test case: When processing a flight, and ETA_FF exists, ETA_FF is sourced from route estimates
         if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
         {
             if (flight.FeederFixEstimate <= clock.UtcNow())
@@ -213,6 +224,7 @@ public class ProcessFlightsHandler(
             return;
         }
 
+        // TODO test case: When processing a flight, and no FF exists, ETA_FF is ETA (last waypoint) - TTG
         var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
         if (landingEstimate is null)
         {

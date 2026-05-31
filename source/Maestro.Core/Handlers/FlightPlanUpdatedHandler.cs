@@ -30,6 +30,7 @@ public class FlightPlanUpdatedHandler(
 
             var session = await sessionManager.GetSession(notification.Destination, cancellationToken);
 
+            // TODO test case: When slave connection, notification is relayed to master
             if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
                 connection!.IsConnected &&
                 !connection.IsMaster)
@@ -51,6 +52,7 @@ public class FlightPlanUpdatedHandler(
             bool alreadyActivated;
             using (await session.Semaphore.LockAsync(cancellationToken))
             {
+                // TODO test case: When subsequent updates are too close, rate limit applies
                 if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
                     !rateLimiter.ShouldUpdate(existingData.LastSeen))
                 {
@@ -58,6 +60,8 @@ public class FlightPlanUpdatedHandler(
                     return;
                 }
 
+                // TODO test case: When FDR is not known, it is created
+                // TODO test case: When FDR is known, it is updated
                 newRecord = new FlightDataRecord(
                     notification.Callsign,
                     notification.AircraftType,
@@ -77,6 +81,7 @@ public class FlightPlanUpdatedHandler(
                     || session.DeSequencedFlights.Any(f => f.Callsign == notification.Callsign);
             }
 
+            // TODO test case: When flight is already active, another one is not activated.
             if (alreadyActivated)
                 return;
 
@@ -93,6 +98,11 @@ public class FlightPlanUpdatedHandler(
                 return;
             }
 
+            // TODO test case: When flight is not active, and the FDR becomes active, flight is activated
+            // TODO test case: When flight is not active, and the FDR is not active, flight is not activated
+            // TODO test case: When flight is not active, and it is beyond the required EET threshold, flight is activated
+            // TODO test case: When flight is not active, and it is within the required EET threshold, flight is not activated
+            // TODO test case: When flight is not active, and it departs from a departure airport, flight is activated
             if (shouldActivate)
             {
                 // Do this outside the lock to avoid a deadlock

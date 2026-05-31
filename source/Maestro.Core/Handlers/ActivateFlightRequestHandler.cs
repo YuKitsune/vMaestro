@@ -1,4 +1,3 @@
-using Maestro.Contracts.Flights;
 using Maestro.Contracts.Sessions;
 using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
@@ -51,6 +50,7 @@ public class ActivateFlightRequestHandler(
         string airportIdentifier,
         CancellationToken cancellationToken)
     {
+        // TODO test case: When the flight is already active, it is not duplicated
         // Race-condition guard: another FDR update may have already activated the flight
         if (session.Sequence.FindFlight(callsign) is not null ||
             session.DeSequencedFlights.Any(f => f.Callsign == callsign))
@@ -59,12 +59,14 @@ public class ActivateFlightRequestHandler(
             return Task.FromResult(false);
         }
 
+        // TODO test case: When no FDR exists, flight is not activated
         if (!session.FlightDataRecords.TryGetValue(callsign, out var record))
         {
             logger.Warning("No FlightDataRecord for {Callsign}, cannot activate", callsign);
             return Task.FromResult(false);
         }
 
+        // TODO test case: When feeder fix exists multiple times, last instance is used
         var feederFix = record.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
         var approximateLandingEstimate = record.Estimates.LastOrDefault()?.Estimate;
 
@@ -78,15 +80,20 @@ public class ActivateFlightRequestHandler(
         var performanceData = new AircraftPerformanceData(record.AircraftType, record.AircraftCategory, record.WakeCategory);
         var fixNames = record.Estimates.Select(e => e.FixIdentifier).ToArray();
 
+        // TODO test case: When one runway is active, that runway is assigned
+        // TODO test case: When multiple runways are active, runway is assigned based on feeder fix
+        // TODO test case: When multiple runways are active, and no rules apply, first runway is assigned
         var runwayMode = session.Sequence.GetRunwayModeAt(approximateLandingEstimate.Value);
         var runway = runwayMode.Runways.FirstOrDefault(r => feederFix is not null && r.FeederFixes.Contains(feederFix.FixIdentifier))
                      ?? runwayMode.Default;
 
+        // TODO test case: Enroute trajectory is assigned
         var enrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
             airportIdentifier,
             fixNames,
             feederFix?.FixIdentifier ?? string.Empty);
 
+        // TODO test case: Terminal trajectory is assigned
         var terminalTrajectory = trajectoryService.GetTrajectory(
             performanceData,
             airportIdentifier,
@@ -96,6 +103,9 @@ public class ActivateFlightRequestHandler(
             fixNames,
             session.Sequence.UpperWind);
 
+        // TODO test case: When estimate is ahead of an Unstable flight, new flight is inserted in front
+        // TODO test case: When estimate is ahead of a Stable flight, new flight is inserted in front
+        // TODO test case: When estimate is ahead of a SuperStable or Frozen flight, new flight is inserted behind them
         // New flights may overtake Unstable and Stable ones
         var earliestInsertionIndex = session.Sequence.FindLastIndex(f =>
             f.State is not State.Unstable and not State.Stable &&
@@ -127,6 +137,7 @@ public class ActivateFlightRequestHandler(
             activatedTime: clock.UtcNow(),
             position: record.Position);
 
+        // TODO test case: When no feeder fix could be found, HighPriority is assigned
         flight.HighPriority = feederFix is null;
 
         session.Sequence.Insert(insertionIndex, flight);
