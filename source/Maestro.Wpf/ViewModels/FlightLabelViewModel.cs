@@ -163,9 +163,7 @@ public partial class FlightLabelViewModel : ObservableObject, IRecipient<VatsysT
             _mediator.Send(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
-                    new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before),
-                    _maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    _maestroViewModel.PendingFlights.ToArray()));
+                    new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.Before)));
         }
         catch (Exception ex)
         {
@@ -186,9 +184,7 @@ public partial class FlightLabelViewModel : ObservableObject, IRecipient<VatsysT
             _mediator.Send(
                 new OpenInsertFlightWindowRequest(
                     FlightViewModel.DestinationIdentifier,
-                    new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.After),
-                    _maestroViewModel.Flights.Where(f => f.State == State.Landed).ToArray(),
-                    _maestroViewModel.PendingFlights.ToArray()));
+                    new RelativeInsertionOptions(FlightViewModel.Callsign, RelativePosition.After)));
         }
         catch (Exception ex)
         {
