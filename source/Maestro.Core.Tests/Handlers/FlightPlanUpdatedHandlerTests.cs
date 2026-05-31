@@ -241,6 +241,36 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndAlreadyDesequenced_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
+
+        session.DeSequencedFlights.Add(new FlightBuilder("QFA123")
+            .WithFeederFixEstimate(clock.UtcNow().AddMinutes(20))
+            .WithLandingEstimate(clock.UtcNow().AddMinutes(40))
+            .Build());
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
+            FlightPlanState.Active,
+            _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task WhenAFlightPlanIsUpdated_AndConnectedToAServer_NotificationIsRelayedToMaster()
     {
         // Arrange
@@ -299,6 +329,82 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
 
         // Assert
         await mediator.Received(1).Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAutoActivateDeparturesIsDisabled_AndFlightIsFromDepartureAirport_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange - YSCB is configured as a departure airport, but AutoActivateDepartures is disabled
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE", "WELSH")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithDepartureAirport("YSCB", [new AllAircraftTypesDescriptor()], 15)
+            .WithAutoActivateDepartures(false)
+            .Build();
+
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
+        airportConfigurationProvider.GetAirportConfiguration(Arg.Any<string>()).Returns(airportConfiguration);
+
+        var notification = new FlightPlanUpdatedNotification(
+            "JST425", "A320", AircraftCategory.Jet, WakeCategory.Medium,
+            "YSCB", "YSSY", clock.UtcNow(), TimeSpan.FromMinutes(35),
+            FlightPlanState.Preactive,
+            _position,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
+
+        var handler = GetHandler(sessionManager, clock, airportConfigurationProvider: airportConfigurationProvider, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndLandingEstimateExceedsMaxLeadTime_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange - MaximumAutoActivationLeadTimeMinutes set to 60; landing estimate is 90 min out
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithRunways("34L", "34R")
+            .WithFeederFixes("RIVET", "BOREE", "WELSH")
+            .WithRunwayMode("34IVA",
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+            .WithMaximumAutoActivationLeadTimeMinutes(60)
+            .Build();
+
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
+        airportConfigurationProvider.GetAirportConfiguration(Arg.Any<string>()).Returns(airportConfiguration);
+
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
+            _position,
+            [
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(70)),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(90))
+            ]);
+
+        var handler = GetHandler(sessionManager, clock, airportConfigurationProvider: airportConfigurationProvider, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
