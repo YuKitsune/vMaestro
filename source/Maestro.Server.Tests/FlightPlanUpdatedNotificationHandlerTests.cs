@@ -8,7 +8,7 @@ using ILogger = Serilog.ILogger;
 
 namespace Maestro.Server.Tests;
 
-public class FlightUpdatedNotificationHandlerTests
+public class FlightPlanUpdatedNotificationHandlerTests
 {
     const string Version = "0.0.0";
 
@@ -17,7 +17,7 @@ public class FlightUpdatedNotificationHandlerTests
     {
         // Arrange
         const string connectionId = "unknown-connection";
-        var flightUpdatedNotification = new FlightUpdatedNotification(
+        var notification = new FlightPlanUpdatedNotification(
             "QFA123",
             "B738",
             AircraftCategory.Jet,
@@ -26,10 +26,11 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
-        var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
+        var wrappedNotification = new NotificationContextWrapper<FlightPlanUpdatedNotification>(connectionId, notification);
 
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny)).Returns(false);
@@ -49,7 +50,7 @@ public class FlightUpdatedNotificationHandlerTests
     {
         // Arrange
         const string connectionId = "master-connection";
-        var flightUpdatedNotification = new FlightUpdatedNotification(
+        var notification = new FlightPlanUpdatedNotification(
             "QFA123",
             "B738",
             AircraftCategory.Jet,
@@ -58,10 +59,11 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
-        var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
+        var wrappedNotification = new NotificationContextWrapper<FlightPlanUpdatedNotification>(connectionId, notification);
 
         var masterConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
 
@@ -88,7 +90,7 @@ public class FlightUpdatedNotificationHandlerTests
     {
         // Arrange
         const string connectionId = "slave-connection";
-        var flightUpdatedNotification = new FlightUpdatedNotification(
+        var notification = new FlightPlanUpdatedNotification(
             "QFA123",
             "B738",
             AircraftCategory.Jet,
@@ -97,10 +99,11 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
-        var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
+        var wrappedNotification = new NotificationContextWrapper<FlightPlanUpdatedNotification>(connectionId, notification);
 
         var slaveConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
         var peerConnections = new[]
@@ -129,12 +132,12 @@ public class FlightUpdatedNotificationHandlerTests
     }
 
     [Fact]
-    public async Task FlightUpdatesAreRelayedToTheMaster()
+    public async Task FlightPlanUpdatesAreRelayedToTheMaster()
     {
         // Arrange
         const string connectionId = "slave-connection";
         const string masterConnectionId = "master-connection";
-        var flightUpdatedNotification = new FlightUpdatedNotification(
+        var notification = new FlightPlanUpdatedNotification(
             "QFA123",
             "B738",
             AircraftCategory.Jet,
@@ -143,10 +146,11 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
-        var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
+        var wrappedNotification = new NotificationContextWrapper<FlightPlanUpdatedNotification>(connectionId, notification);
 
         var slaveConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
         var masterConnection = new Connection(masterConnectionId, Version, "environment-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
@@ -170,18 +174,18 @@ public class FlightUpdatedNotificationHandlerTests
         // Assert
         hubProxy.Verify(x => x.Send(
             masterConnectionId,
-            "FlightUpdated",
-            flightUpdatedNotification,
+            "FlightPlanUpdated",
+            notification,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task WhenMultiplePeersExist_OnlyMasterReceivesFlightUpdate()
+    public async Task WhenMultiplePeersExist_OnlyMasterReceivesFlightPlanUpdate()
     {
         // Arrange
         const string connectionId = "slave-connection";
         const string masterConnectionId = "master-connection";
-        var flightUpdatedNotification = new FlightUpdatedNotification(
+        var notification = new FlightPlanUpdatedNotification(
             "QFA123",
             "B738",
             AircraftCategory.Jet,
@@ -190,10 +194,11 @@ public class FlightUpdatedNotificationHandlerTests
             "YMML",
             DateTimeOffset.UtcNow,
             TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
             null,
             []);
 
-        var wrappedNotification = new NotificationContextWrapper<FlightUpdatedNotification>(connectionId, flightUpdatedNotification);
+        var wrappedNotification = new NotificationContextWrapper<FlightPlanUpdatedNotification>(connectionId, notification);
 
         var slaveConnection = new Connection(connectionId, Version, "environment-1", "YSSY", "SY_APP", Role.Approach) { IsMaster = false };
         var masterConnection = new Connection(masterConnectionId, Version, "environment-1", "YSSY", "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
@@ -218,25 +223,25 @@ public class FlightUpdatedNotificationHandlerTests
         // Assert
         hubProxy.Verify(x => x.Send(
             masterConnectionId,
-            "FlightUpdated",
-            flightUpdatedNotification,
+            "FlightPlanUpdated",
+            notification,
             It.IsAny<CancellationToken>()), Times.Once);
 
         hubProxy.Verify(x => x.Send(
             otherPeer.Id,
-            "FlightUpdated",
-            It.IsAny<FlightUpdatedNotification>(),
+            "FlightPlanUpdated",
+            It.IsAny<FlightPlanUpdatedNotification>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    FlightUpdatedNotificationHandler GetHandler(
+    FlightPlanUpdatedNotificationHandler GetHandler(
         IConnectionManager? connectionManager = null,
         IHubProxy? hubProxy = null)
     {
         connectionManager ??= new Mock<IConnectionManager>().Object;
         hubProxy ??= new Mock<IHubProxy>().Object;
         var logger = new Mock<ILogger>().Object;
-        return new FlightUpdatedNotificationHandler(connectionManager, hubProxy, logger);
+        return new FlightPlanUpdatedNotificationHandler(connectionManager, hubProxy, logger);
     }
 
     delegate bool TryGetConnectionCallback(string connectionId, out Connection? connection);

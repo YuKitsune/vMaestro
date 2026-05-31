@@ -202,10 +202,20 @@ Airports:
   # State Transition Times (all optional)
   # ---------------------------------------------------------------------------
 
-  # Maximum time before landing to start tracking flights (minutes)
-  # Flights further out than this are ignored
+  # Maximum time-to-landing (minutes) for a flight to be auto-activated.
+  # Flights with a landing estimate further out than this will not be auto-activated.
   # Default: 120
-  FlightCreationThresholdMinutes: 120
+  MaximumAutoActivationLeadTimeMinutes: 120
+
+  # Minimum estimated flight time (minutes) required for auto-activation
+  # Flights with a shorter EFT will not be auto-activated
+  # Default: 25
+  MinimumAutoActivationFlightTimeMinutes: 25
+
+  # When true, flights from departure airports are auto-activated when the FDR state becomes active.
+  # When false, departure airport flights are not auto-activated.
+  # Default: true
+  AutoActivateDepartures: true
 
   # Minimum time a flight must remain in Unstable state (minutes)
   # Prevents rapid state transitions

@@ -18,7 +18,6 @@ public class Session : IAsyncDisposable
 
     public SemaphoreSlim Semaphore { get; } = new(1, 1);
     public string AirportIdentifier => Sequence.AirportIdentifier;
-    public List<PendingFlight> PendingFlights { get; } = new();
     public List<Flight> DeSequencedFlights { get; } = new();
     public Sequence Sequence { get; }
     public LandingStatistics LandingStatistics { get; }
@@ -52,7 +51,6 @@ public class Session : IAsyncDisposable
         return new SessionDto
         {
             AirportIdentifier = AirportIdentifier,
-            PendingFlights = PendingFlights.Select(ToPendingFlightDto).ToArray(),
             DeSequencedFlights = DeSequencedFlights.Select(f => f.ToDto(Sequence)).ToArray(),
             Sequence = Sequence.ToDto(),
             DummyCounter = _dummyCounter,
@@ -69,31 +67,11 @@ public class Session : IAsyncDisposable
         foreach (var data in dto.FlightDataRecords)
             FlightDataRecords[data.Callsign] = data;
 
-        PendingFlights.Clear();
-        PendingFlights.AddRange(dto.PendingFlights.Select(p => new PendingFlight(
-            p.Callsign,
-            p.IsFromDepartureAirport,
-            p.IsHighPriority)));
-
         DeSequencedFlights.Clear();
         DeSequencedFlights.AddRange(dto.DeSequencedFlights.Select(f => new Flight(f)));
 
         Sequence.Restore(dto.Sequence);
         LandingStatistics.Restore(dto.LandingStatistics);
-    }
-
-    PendingFlightDto ToPendingFlightDto(PendingFlight pending)
-    {
-        FlightDataRecords.TryGetValue(pending.Callsign, out var data);
-        return new PendingFlightDto
-        {
-            Callsign = pending.Callsign,
-            AircraftType = data?.AircraftType,
-            OriginIdentifier = data?.Origin,
-            DestinationIdentifier = data?.Destination ?? AirportIdentifier,
-            IsFromDepartureAirport = pending.IsFromDepartureAirport,
-            IsHighPriority = pending.IsHighPriority
-        };
     }
 
     async Task RunProcesses(CancellationToken cancellationToken)
@@ -103,6 +81,7 @@ public class Session : IAsyncDisposable
             while (!cancellationToken.IsCancellationRequested)
             {
                 await _mediator.Send(new TrySwapRunwayModesRequest(AirportIdentifier), cancellationToken);
+                await _mediator.Send(new ProcessFlightsRequest(AirportIdentifier), cancellationToken);
                 await _mediator.Send(new CleanUpFlightsRequest(AirportIdentifier), cancellationToken);
 
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);

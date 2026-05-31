@@ -1,4 +1,8 @@
-﻿using Maestro.Core.Infrastructure;
+﻿using Maestro.Contracts.Sessions;
+using Maestro.Core.Configuration;
+using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Sessions;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
@@ -8,11 +12,36 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenPendingDeparturesWindowRequestHandler(WindowManager windowManager, IMediator mediator, IClock clock, IErrorReporter errorReporter)
+public class OpenPendingDeparturesWindowRequestHandler(
+    WindowManager windowManager,
+    ISessionManager sessionManager,
+    IAirportConfigurationProvider airportConfigurationProvider,
+    IMediator mediator,
+    IClock clock,
+    IErrorReporter errorReporter)
     : IRequestHandler<OpenPendingDeparturesWindowRequest>
 {
-    public Task Handle(OpenPendingDeparturesWindowRequest request, CancellationToken cancellationToken)
+    public async Task Handle(OpenPendingDeparturesWindowRequest request, CancellationToken cancellationToken)
     {
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
+
+        SessionDto sessionDto;
+        using (await session.Semaphore.LockAsync(cancellationToken))
+        {
+            sessionDto = session.Snapshot();
+        }
+
+        var activatedCallsigns = new HashSet<string>(
+            sessionDto.Sequence.Flights.Select(f => f.Callsign)
+                .Concat(sessionDto.DeSequencedFlights.Select(f => f.Callsign)),
+            StringComparer.OrdinalIgnoreCase);
+
+        var departureFlights = sessionDto.FlightDataRecords
+            .Where(r => !activatedCallsigns.Contains(r.Callsign) &&
+                        airportConfiguration.DepartureAirports.Any(d => d.Identifier == r.Origin))
+            .ToArray();
+
         windowManager.FocusOrCreateWindow(
             WindowKeys.InsertDeparture(request.AirportIdentifier),
             "Insert a Flight",
@@ -20,7 +49,7 @@ public class OpenPendingDeparturesWindowRequestHandler(WindowManager windowManag
             {
                 var viewModel = new PendingDeparturesViewModel(
                     request.AirportIdentifier,
-                    request.PendingFlights.Where(f => f.IsFromDepartureAirport).ToArray(),
+                    departureFlights,
                     windowHandle,
                     mediator,
                     clock,
@@ -28,7 +57,5 @@ public class OpenPendingDeparturesWindowRequestHandler(WindowManager windowManag
 
                 return new PendingDeparturesView(viewModel);
             });
-
-        return Task.CompletedTask;
     }
 }

@@ -264,7 +264,6 @@ public class ClientDisconnectedNotificationHandlerTests
         sessionCache.Set(environment, airportIdentifier, new SessionDto
         {
             AirportIdentifier = null,
-            PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
             Sequence = new SequenceDto
@@ -324,7 +323,6 @@ public class ClientDisconnectedNotificationHandlerTests
         sessionCache.Set(environment, airportIdentifier, new SessionDto
         {
             AirportIdentifier = null,
-            PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
             Sequence = new SequenceDto

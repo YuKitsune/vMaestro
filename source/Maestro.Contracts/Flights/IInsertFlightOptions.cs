@@ -36,3 +36,4 @@ public record DepartureInsertionOptions(
     [property: Key(0)] string OriginIdentifier,
     [property: Key(1)] DateTimeOffset TakeoffTime)
     : IInsertFlightOptions;
+

@@ -1,6 +1,5 @@
-﻿using Maestro.Contracts.Flights;
-using MediatR;
+﻿using MediatR;
 
 namespace Maestro.Wpf.Contracts;
 
-public record OpenPendingDeparturesWindowRequest(string AirportIdentifier, PendingFlightDto[] PendingFlights) : IRequest;
+public record OpenPendingDeparturesWindowRequest(string AirportIdentifier) : IRequest;

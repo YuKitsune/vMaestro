@@ -170,7 +170,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         {
             // Notifications
             SessionUpdatedNotification => "SessionUpdated",
-            FlightUpdatedNotification => "FlightUpdated",
+            FlightPlanUpdatedNotification => "FlightPlanUpdated",
             FlightLandedNotification => "FlightLanded",
 
             // Requests
@@ -230,12 +230,12 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
                 GetMessageCancellationToken());
         });
 
-        hubConnection.On<FlightUpdatedNotification>("FlightUpdated", async flightUpdatedNotification =>
+        hubConnection.On<FlightPlanUpdatedNotification>("FlightPlanUpdated", async notification =>
         {
-            if (flightUpdatedNotification.Destination != _airportIdentifier)
+            if (notification.Destination != _airportIdentifier)
                 return;
 
-            await _mediator.Publish(flightUpdatedNotification, GetMessageCancellationToken());
+            await _mediator.Publish(notification, GetMessageCancellationToken());
         });
 
         hubConnection.On<CoordinationMessageReceivedNotification>("CoordinationMessageReceived", async coordinationNotification =>

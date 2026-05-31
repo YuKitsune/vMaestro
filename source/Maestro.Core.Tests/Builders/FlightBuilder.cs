@@ -30,7 +30,6 @@ public class FlightBuilder(string callsign)
 
     State _state = State.Unstable;
 
-    DateTimeOffset _lastSeen = default;
     bool _isFromDepartureAirport = false;
     FlightPosition? _position = null;
     TerminalTrajectory _terminalTrajectory = new(TimeSpan.FromMinutes(20), default, default);
@@ -136,12 +135,6 @@ public class FlightBuilder(string callsign)
         return this;
     }
 
-    public FlightBuilder WithLastSeen(DateTimeOffset lastSeen)
-    {
-        _lastSeen = lastSeen;
-        return this;
-    }
-
     public FlightBuilder FromDepartureAirport(bool value = true)
     {
         _origin = "YSCB";
@@ -228,8 +221,6 @@ public class FlightBuilder(string callsign)
         var feederFixTimeToUse = _feederFixTime != default ? _feederFixTime : flight.FeederFixEstimate;
         var enrouteDelay = landingTimeToUse - flight.LandingEstimate;
         flight.SetSequenceData(landingTimeToUse, feederFixTimeToUse, ControlAction.NoDelay, enrouteDelay, TimeSpan.Zero);
-
-        flight.UpdateLastSeen(new FixedClock(_lastSeen));
 
         flight.SetMaximumDelay(_manualDelay);
         flight.HighPriority = _highPriority;

@@ -1,3 +1,4 @@
+using System.ComponentModel.Design;
 using Maestro.Contracts.Connectivity;
 using Maestro.Contracts.Coordination;
 using Maestro.Contracts.Flights;
@@ -125,20 +126,11 @@ public static class TestBuilders
             "YMML",
             "YSSY",
             FixedTime.AddHours(-2),
+            TimeSpan.FromHours(1),
+            FlightPlanState.Active,
             CreateFlightPosition(),
             [CreateFixEstimate()],
             FixedTime);
-
-    public static PendingFlightDto CreatePendingFlightDto() =>
-        new()
-        {
-            Callsign = "QFA123",
-            AircraftType = "B738",
-            OriginIdentifier = "YMML",
-            DestinationIdentifier = "YSSY",
-            IsFromDepartureAirport = false,
-            IsHighPriority = false
-        };
 
     public static FlightDto CreateFlightDto() =>
         new()
@@ -171,7 +163,6 @@ public static class TestBuilders
             RequiredEnrouteDelay = TimeSpan.FromMinutes(2),
             RemainingEnrouteDelay = TimeSpan.FromMinutes(1),
             HighSpeed = false,
-            LastSeen = FixedTime,
             Position = CreateFlightPosition(),
             IsManuallyInserted = false,
             TerminalNormalTimeToGo = TimeSpan.FromMinutes(18),
@@ -226,7 +217,7 @@ public static class TestBuilders
     public static ManualDelayRequest CreateManualDelayRequest() =>
         new("YSSY", "QFA123", 15);
 
-    public static FlightUpdatedNotification CreateFlightUpdatedNotification() =>
+    public static FlightPlanUpdatedNotification CreateFlightPlanUpdatedNotification() =>
         new("QFA123",
             "B738",
             AircraftCategory.Jet,
@@ -235,6 +226,7 @@ public static class TestBuilders
             "YSSY",
             FixedTime.AddHours(-2),
             TimeSpan.FromHours(1),
+            FlightPlanState.Active,
             CreateFlightPosition(),
             [CreateFixEstimate()]);
 
@@ -294,7 +286,6 @@ public static class TestBuilders
         new()
         {
             AirportIdentifier = "YSSY",
-            PendingFlights = [CreatePendingFlightDto()],
             DeSequencedFlights = [],
             Sequence = CreateSequenceDto(),
             DummyCounter = 42,

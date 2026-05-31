@@ -51,11 +51,14 @@ public class ResumeSequencingRequestHandler(
                 f.State is not State.Unstable and not State.Stable &&
                 f.AssignedRunwayIdentifier == runway.Identifier) + 1;
 
-            var index = sequence.FindIndex(
+            var insertionIndex = sequence.FindIndex(
                 earliestInsertionIndex,
-                f => f.LandingEstimate.IsBefore(flight.LandingEstimate)) + 1;
+                f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
 
-            sequence.Insert(Math.Max(earliestInsertionIndex, index), flight);
+            if (insertionIndex == -1)
+                insertionIndex = sequence.Flights.Count;
+
+            sequence.Insert(insertionIndex, flight);
             session.DeSequencedFlights.Remove(flight);
 
             logger.Information("Flight {Callsign} resumed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);

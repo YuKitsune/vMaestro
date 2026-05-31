@@ -48,7 +48,7 @@ public partial class MaestroViewModel : ObservableObject
     List<FlightDto> _deSequencedFlights = [];
 
     [ObservableProperty]
-    List<PendingFlightDto> _pendingFlights = [];
+    FlightDataRecord[] _flightDataRecords = [];
 
     [ObservableProperty]
     List<FlightDto> _flights = [];
@@ -103,6 +103,11 @@ public partial class MaestroViewModel : ObservableObject
     public bool RunwayChangeIsPlanned => NextRunwayMode is not null;
 
     public bool HasDesequencedFlight => DeSequencedFlights.Any();
+
+    public FlightDataRecord[] PendingFlights => FlightDataRecords
+        .Where(r => !Flights.Any(f => f.Callsign == r.Callsign) &&
+                    !DeSequencedFlights.Any(f => f.Callsign == r.Callsign))
+        .ToArray();
 
     public RunwayIntervalViewModel[] RunwayIntervals
     {
@@ -274,7 +279,7 @@ public partial class MaestroViewModel : ObservableObject
             RunwayModeChangeTime = notification.Session.Sequence.FirstLandingTimeForNextMode;
 
             DeSequencedFlights = notification.Session.DeSequencedFlights.ToList();
-            PendingFlights = notification.Session.PendingFlights.ToList();
+            FlightDataRecords = notification.Session.FlightDataRecords;
             Flights = notification.Session.Sequence.Flights.ToList();
             Slots = notification.Session.Sequence.Slots.ToList();
             LandingStatistics = notification.Session.LandingStatistics;
@@ -454,7 +459,7 @@ public partial class MaestroViewModel : ObservableObject
                     AirportIdentifier,
                     options,
                     Flights.Where(f => f.State is State.Landed).ToArray(),
-                    PendingFlights.ToArray()));
+                    PendingFlights));
         }
         catch (Exception ex)
         {
@@ -496,10 +501,7 @@ public partial class MaestroViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(
-                new OpenPendingDeparturesWindowRequest(
-                    AirportIdentifier,
-                    PendingFlights.ToArray()));
+            _mediator.Send(new OpenPendingDeparturesWindowRequest(AirportIdentifier));
         }
         catch (Exception ex)
         {

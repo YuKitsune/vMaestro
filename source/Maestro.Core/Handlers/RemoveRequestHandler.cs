@@ -2,7 +2,6 @@
 using Maestro.Contracts.Sessions;
 using Maestro.Core.Connectivity;
 using Maestro.Core.Extensions;
-using Maestro.Core.Model;
 using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
@@ -38,32 +37,18 @@ public class RemoveRequestHandler(
 
             var sequencedFlight = sequence.FindFlight(request.Callsign);
             if (sequencedFlight is not null)
-            {
                 sequence.Remove(sequencedFlight);
-
-                if (!sequencedFlight.IsManuallyInserted)
-                    session.PendingFlights.Add(new PendingFlight(
-                        sequencedFlight.Callsign,
-                        sequencedFlight.IsFromDepartureAirport,
-                        sequencedFlight.HighPriority));
-            }
 
             var desequencedFlight = session.DeSequencedFlights.SingleOrDefault(f => f.Callsign == request.Callsign);
             if (desequencedFlight is not null)
-            {
                 session.DeSequencedFlights.Remove(desequencedFlight);
-
-                if (!desequencedFlight.IsManuallyInserted)
-                    session.PendingFlights.Add(new PendingFlight(
-                        desequencedFlight.Callsign,
-                        desequencedFlight.IsFromDepartureAirport,
-                        desequencedFlight.HighPriority));
-            }
 
             if (sequencedFlight is null && desequencedFlight is null)
             {
                 throw new MaestroException($"{request.Callsign} not found");
             }
+
+            session.FlightDataRecords.Remove(request.Callsign);
 
             logger.Information("{Callsign} removed for {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
 

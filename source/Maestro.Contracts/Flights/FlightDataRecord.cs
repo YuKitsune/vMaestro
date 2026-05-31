@@ -16,6 +16,8 @@ public record FlightDataRecord(
     [property: Key(4)] string? Origin,
     [property: Key(5)] string Destination,
     [property: Key(6)] DateTimeOffset? EstimatedDepartureTime,
-    [property: Key(7)] FlightPosition? Position,
-    [property: Key(8)] FixEstimate[] Estimates,
-    [property: Key(9)] DateTimeOffset LastSeen);
+    [property: Key(7)] TimeSpan EstimatedFlightTime,
+    [property: Key(8)] FlightPlanState State,
+    [property: Key(9)] FlightPosition? Position,
+    [property: Key(10)] FixEstimate[] Estimates,
+    [property: Key(11)] DateTimeOffset LastSeen);

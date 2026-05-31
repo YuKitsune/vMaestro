@@ -22,7 +22,6 @@ public class SessionUpdatedNotificationHandlerTests
         var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
-            PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
             Sequence = new SequenceDto
@@ -74,7 +73,6 @@ public class SessionUpdatedNotificationHandlerTests
         var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
-            PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
             Sequence = new SequenceDto
@@ -130,7 +128,6 @@ public class SessionUpdatedNotificationHandlerTests
         var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
-            PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 0,
             Sequence = new SequenceDto
@@ -189,7 +186,6 @@ public class SessionUpdatedNotificationHandlerTests
         var sessionDto = new SessionDto
         {
             AirportIdentifier = null,
-            PendingFlights = [],
             DeSequencedFlights = [],
             DummyCounter = 42,
             Sequence = new SequenceDto

@@ -21,7 +21,7 @@ public class OpenInsertFlightWindowRequestHandler(WindowManager windowManager, I
                     request.AirportIdentifier,
                     request.Options,
                     request.LandedFlights,
-                    request.PendingFlights,
+                    request.FlightDataRecords,
                     windowHandle,
                     mediator,
                     errorReporter);

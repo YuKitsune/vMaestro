@@ -1,0 +1,122 @@
+using Maestro.Contracts.Flights;
+using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Sessions;
+using MediatR;
+using Serilog;
+
+namespace Maestro.Core.Handlers;
+
+public class FlightPlanUpdatedHandler(
+    ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
+    IAirportConfigurationProvider airportConfigurationProvider,
+    IFlightUpdateRateLimiter rateLimiter,
+    IMediator mediator,
+    IClock clock,
+    ILogger logger)
+    : INotificationHandler<FlightPlanUpdatedNotification>
+{
+    public async Task Handle(FlightPlanUpdatedNotification notification, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!sessionManager.SessionExists(notification.Destination))
+                return;
+
+            logger.Debug("FDR update received for {Callsign}", notification.Callsign);
+
+            var session = await sessionManager.GetSession(notification.Destination, cancellationToken);
+
+            if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
+                connection!.IsConnected &&
+                !connection.IsMaster)
+            {
+                if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
+                    !rateLimiter.ShouldUpdate(existingData.LastSeen))
+                {
+                    logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
+                    return;
+                }
+
+                logger.Debug("Relaying FlightPlanUpdatedNotification for {Callsign}", notification.Callsign);
+                await connection.Send(notification, cancellationToken);
+                return;
+            }
+
+            // Creation: store the latest flight plan data
+            FlightDataRecord newRecord;
+            bool alreadyActivated;
+            using (await session.Semaphore.LockAsync(cancellationToken))
+            {
+                if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
+                    !rateLimiter.ShouldUpdate(existingData.LastSeen))
+                {
+                    logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
+                    return;
+                }
+
+                newRecord = new FlightDataRecord(
+                    notification.Callsign,
+                    notification.AircraftType,
+                    notification.AircraftCategory,
+                    notification.WakeCategory,
+                    notification.Origin,
+                    notification.Destination,
+                    notification.EstimatedDepartureTime,
+                    notification.EstimatedFlightTime,
+                    notification.State,
+                    notification.Position,
+                    notification.Estimates,
+                    clock.UtcNow());
+                session.FlightDataRecords[notification.Callsign] = newRecord;
+
+                alreadyActivated = session.Sequence.FindFlight(notification.Callsign) is not null
+                    || session.DeSequencedFlights.Any(f => f.Callsign == notification.Callsign);
+            }
+
+            if (alreadyActivated)
+                return;
+
+            // Activation check: determine whether the flight should be automatically activated
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(notification.Destination);
+            var shouldActivate = ShouldAutoActivate(newRecord, airportConfiguration, clock.UtcNow());
+
+            if (shouldActivate)
+            {
+                // Do this outside the lock to avoid a deadlock
+                await mediator.Send(
+                    new ActivateFlightRequest(notification.Destination, notification.Callsign),
+                    cancellationToken);
+            }
+        }
+        catch (Exception exception)
+        {
+            logger.Error(exception, "Error processing FDR update for {Callsign}", notification.Callsign);
+        }
+    }
+
+    static bool ShouldAutoActivate(FlightDataRecord record, AirportConfiguration config, DateTimeOffset now)
+    {
+        if (config.DepartureAirports.Any(d => d.Identifier == record.Origin))
+            return config.AutoActivateDepartures;
+
+        var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
+        if (landingEstimate is not null)
+        {
+            var timeToLanding = landingEstimate.Value - now;
+            if (timeToLanding > TimeSpan.FromMinutes(config.MaximumAutoActivationLeadTimeMinutes))
+                return false;
+        }
+
+        if (record.EstimatedFlightTime < TimeSpan.FromMinutes(config.MinimumAutoActivationFlightTimeMinutes))
+            return false;
+
+        if (record.State is FlightPlanState.Active)
+            return true;
+
+        return false;
+    }
+}

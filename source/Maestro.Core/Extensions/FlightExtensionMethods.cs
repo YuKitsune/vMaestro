@@ -36,7 +36,6 @@ public static class FlightExtensionMethods
             MaximumDelay = flight.MaximumDelay,
             ManualFeederFixEstimate = flight.ManualFeederFixEstimate,
             ApproachType = flight.ApproachType,
-            LastSeen = flight.LastSeen,
             Position = flight.Position,
             IsManuallyInserted = flight.IsManuallyInserted,
             TerminalNormalTimeToGo = flight.TerminalTrajectory.NormalTimeToGo,

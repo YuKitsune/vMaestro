@@ -11,6 +11,9 @@ public class AirportConfigurationBuilder(string identifier)
     string[] _runways = [];
     string[] _feederFixes = [];
     int _defaultOffModeSeparationSeconds = 0;
+    int _lostFlightTimeoutMinutes = 10;
+    int _maximumAutoActivationLeadTimeMinutes = 120;
+    bool _autoActivateDepartures = true;
     List<RunwayModeConfiguration> _runwayModes = [];
     List<TerminalTrajectoryConfiguration> _trajectories = [];
     List<DepartureConfiguration> _departures = [];
@@ -30,6 +33,24 @@ public class AirportConfigurationBuilder(string identifier)
     public AirportConfigurationBuilder WithDefaultOffModeSeparationSeconds(int seconds)
     {
         _defaultOffModeSeparationSeconds = seconds;
+        return this;
+    }
+
+    public AirportConfigurationBuilder WithLostFlightTimeoutMinutes(int minutes)
+    {
+        _lostFlightTimeoutMinutes = minutes;
+        return this;
+    }
+
+    public AirportConfigurationBuilder WithMaximumAutoActivationLeadTimeMinutes(int minutes)
+    {
+        _maximumAutoActivationLeadTimeMinutes = minutes;
+        return this;
+    }
+
+    public AirportConfigurationBuilder WithAutoActivateDepartures(bool autoActivateDepartures)
+    {
+        _autoActivateDepartures = autoActivateDepartures;
         return this;
     }
 
@@ -166,6 +187,9 @@ public class AirportConfigurationBuilder(string identifier)
             Runways = _runways,
             FeederFixes = _feederFixes,
             DefaultOffModeSeparationSeconds = _defaultOffModeSeparationSeconds,
+            LostFlightTimeoutMinutes = _lostFlightTimeoutMinutes,
+            MaximumAutoActivationLeadTimeMinutes = _maximumAutoActivationLeadTimeMinutes,
+            AutoActivateDepartures = _autoActivateDepartures,
             RunwayModes = _runwayModes.ToArray(),
             TerminalTrajectories = _trajectories.ToArray(),
             DepartureAirports = _departures.ToArray(),

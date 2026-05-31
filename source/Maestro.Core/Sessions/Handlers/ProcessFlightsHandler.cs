@@ -1,0 +1,207 @@
+using Maestro.Contracts.Flights;
+using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Shared;
+using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
+using Maestro.Core.Extensions;
+using Maestro.Core.Infrastructure;
+using Maestro.Core.Model;
+using Maestro.Core.Sessions.Contracts;
+using MediatR;
+using Serilog;
+
+namespace Maestro.Core.Sessions.Handlers;
+
+public class ProcessFlightsHandler(
+    ISessionManager sessionManager,
+    IMaestroConnectionManager connectionManager,
+    IAirportConfigurationProvider airportConfigurationProvider,
+    ITrajectoryService trajectoryService,
+    IMediator mediator,
+    IClock clock,
+    ILogger logger)
+    : IRequestHandler<ProcessFlightsRequest>
+{
+    public async Task Handle(ProcessFlightsRequest request, CancellationToken cancellationToken)
+    {
+        if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
+            connection.IsConnected &&
+            !connection.IsMaster)
+        {
+            logger.Debug("Skipping flight processing for {AirportIdentifier} as we are not the master", request.AirportIdentifier);
+            return;
+        }
+
+        var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
+        SessionDto sessionDto;
+
+        using (await session.Semaphore.LockAsync(cancellationToken))
+        {
+            var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
+            foreach (var flight in session.Sequence.Flights.ToList())
+            {
+                ProcessFlight(session, airportConfiguration, flight);
+            }
+
+            sessionDto = session.Snapshot();
+        }
+
+        await mediator.Publish(
+            new SessionUpdatedNotification(session.AirportIdentifier, sessionDto),
+            cancellationToken);
+    }
+
+    void ProcessFlight(Session session, AirportConfiguration airportConfiguration, Flight flight)
+    {
+        if (!session.FlightDataRecords.TryGetValue(flight.Callsign, out var record))
+            return;
+
+        UpdateFlightData(record, flight);
+        RecomputeIfUnstable(flight, record, session, airportConfiguration);
+
+        if (record.Position is not null && !record.Position.IsOnGround)
+            CalculateEstimates(flight, record);
+
+        if (flight.State is State.Unstable)
+            RepositionInSequence(flight, session);
+
+        UpdateRemainingDelay(flight, airportConfiguration);
+
+        flight.UpdateStateBasedOnTime(clock, airportConfiguration);
+
+        logger.Debug("Flight updated: {Flight}", flight);
+    }
+
+    void RecomputeIfUnstable(Flight flight, FlightDataRecord record, Session session, AirportConfiguration airportConfiguration)
+    {
+        if (flight.State is not State.Unstable || string.IsNullOrEmpty(flight.AssignedRunwayIdentifier))
+            return;
+
+        var fixNames = record.Estimates.Select(e => e.FixIdentifier).ToArray();
+        var feederFix = record.Estimates.LastOrDefault(x => airportConfiguration.FeederFixes.Contains(x.FixIdentifier));
+        var landingEstimate = record.Estimates.LastOrDefault()?.Estimate ?? flight.LandingEstimate;
+
+        var updatedTrajectory = trajectoryService.GetTrajectory(
+            flight,
+            flight.AssignedRunwayIdentifier,
+            flight.ApproachType,
+            fixNames,
+            session.Sequence.UpperWind);
+
+        if (record.Position is not null && !record.Position.IsOnGround &&
+            !flight.ManualFeederFixEstimate &&
+            (string.IsNullOrEmpty(flight.FeederFixIdentifier) || flight.FeederFixEstimate > clock.UtcNow()))
+        {
+            flight.SetFeederFix(
+                feederFix?.FixIdentifier,
+                updatedTrajectory,
+                feederFix?.Estimate,
+                landingEstimate);
+        }
+
+        var updatedEnrouteTrajectory = trajectoryService.GetEnrouteTrajectory(
+            flight.DestinationIdentifier,
+            fixNames,
+            feederFix?.FixIdentifier ?? string.Empty);
+        flight.SetEnrouteTrajectory(updatedEnrouteTrajectory);
+
+        logger.Debug(
+            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+            flight.Callsign,
+            flight.AssignedRunwayIdentifier,
+            flight.ApproachType,
+            updatedTrajectory.NormalTimeToGo,
+            updatedTrajectory.PressureTimeToGo,
+            updatedTrajectory.MaxPressureTimeToGo);
+    }
+
+    void RepositionInSequence(Flight flight, Session session)
+    {
+        var currentIndex = session.Sequence.IndexOf(flight);
+        var earliestIndex = session.Sequence.FindLastIndex(
+            currentIndex,
+            f => f.AssignedRunwayIdentifier == flight.AssignedRunwayIdentifier &&
+                 f.State != State.Unstable) + 1;
+
+        var desiredIndex = session.Sequence.FindIndex(f =>
+            f.LandingEstimate.IsAfter(flight.LandingEstimate));
+
+        var newIndex = desiredIndex == -1
+            ? session.Sequence.Flights.Count
+            : desiredIndex;
+
+        if (newIndex < earliestIndex)
+            newIndex = earliestIndex;
+
+        if (newIndex != currentIndex)
+        {
+            flight.InvalidateSequenceData();
+            session.Sequence.Move(flight, newIndex);
+        }
+    }
+
+    void UpdateRemainingDelay(Flight flight, AirportConfiguration airportConfiguration)
+    {
+        var remainingEnrouteDelay = flight.FeederFixTime - flight.FeederFixEstimate;
+        var remainingTotalDelay = flight.LandingTime - flight.LandingEstimate;
+        var remainingControlAction = DelayStrategyCalculator.GetControlAction(
+            remainingTotalDelay,
+            flight.TerminalTrajectory,
+            flight.EnrouteTrajectory,
+            airportConfiguration.DelayStrategy);
+        flight.SetRemainingDelayData(
+            new DelayDistribution(
+                remainingEnrouteDelay,
+                TerminalDelay: remainingTotalDelay - remainingEnrouteDelay,
+                remainingControlAction));
+    }
+
+    void CalculateEstimates(Flight flight, FlightDataRecord record)
+    {
+        if (flight.ManualFeederFixEstimate)
+            return;
+
+        if (record.Position is null || record.Position.IsOnGround)
+            return;
+
+        if (!string.IsNullOrEmpty(flight.FeederFixIdentifier))
+        {
+            if (flight.FeederFixEstimate <= clock.UtcNow())
+                return;
+
+            var feederFixSystemEstimate = record.Estimates.LastOrDefault(e => e.FixIdentifier == flight.FeederFixIdentifier);
+            if (feederFixSystemEstimate?.Estimate != null)
+            {
+                logger.Debug(
+                    "{Callsign} ETA_FF for {FeederFix} now {FeederFixEstimate}",
+                    flight.Callsign,
+                    flight.FeederFixIdentifier,
+                    feederFixSystemEstimate.Estimate);
+
+                flight.UpdateFeederFixEstimate(feederFixSystemEstimate.Estimate);
+            }
+
+            return;
+        }
+
+        var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
+        if (landingEstimate is null)
+        {
+            logger.Warning("No estimates available for {Callsign}, cannot update estimates", flight.Callsign);
+            return;
+        }
+
+        logger.Debug("{Callsign} (no FF) ETA now {LandingEstimate}", flight.Callsign, landingEstimate);
+        flight.UpdateLandingEstimate(landingEstimate.Value);
+    }
+
+    static void UpdateFlightData(FlightDataRecord record, Flight flight)
+    {
+        flight.AircraftType = record.AircraftType;
+        flight.AircraftCategory = record.AircraftCategory;
+        flight.WakeCategory = record.WakeCategory;
+        flight.OriginIdentifier = record.Origin;
+        flight.EstimatedDepartureTime = record.EstimatedDepartureTime;
+        flight.UpdatePosition(record.Position);
+    }
+}

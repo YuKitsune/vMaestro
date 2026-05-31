@@ -216,7 +216,7 @@ The Units Selector is only visible to Flow and Approach controllers, and to Enro
 
 #### Departures
 
-Flights from departure airports must be manually inserted into the sequence.
+Departure flights can be manually activated early from the pending list, allowing any required delay to be absorbed on the ground before departure.
 
 1. Click the `DEPS` button
 2. Select the flight from the Pending list
@@ -364,7 +364,7 @@ For departures that have not yet taken off:
 1. Right-click the flight
 2. Select `Make Pending`
 
-The flight returns to the Pending list and can be reinserted later.
+The flight returns to the Pending list and can be manually activated again later.
 
 #### Remove
 
@@ -374,7 +374,7 @@ Removing deletes a flight from the sequence (for diversions, cancellations, etc.
 2. Select `Remove`
 3. Click `Confirm`
 
-The flight moves to the Pending list and can be reinserted if needed.
+The flight is removed from the sequence. If the flight plan is still active in vatSys, it will reappear in the pending list and can be manually activated again if needed.
 
 ### Viewing Flight Information
 
