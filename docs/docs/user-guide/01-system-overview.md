@@ -79,26 +79,29 @@ When a flight plan is created in vatSys, the flight becomes visible to vMaestro.
 
 ## Flight Activation
 
-When a flight plan is activated in vatSys, the flight becomes active in vMaestro. Enroute flights within 2 hours of their feeder fix are tracked automatically and added to the sequence.
+A flight is activated in vMaestro when it is added to the sequence. This can happen automatically or manually.
+
+Flights are automatically activated when their flight plan is active in vatSys and their estimated flight time and time-to-landing fall within the configured thresholds.
+
+Flights from departure airports are activated automatically when a flight plan update is received, or can be manually activated early from the Pending List.
 
 ## Pending List
 
-Flights from departure airports appear in the pending list when their flight plan is activated. These flights must be manually inserted into the sequence.
+The pending list contains all flights that have not yet been activated. A flight remains pending until it either meets the criteria for automatic activation, or is manually activated by a controller.
 
-Pending flights can be inserted prior to departure, allowing any required delay to be absorbed on the ground rather than in the air.
+Pending flights can be manually activated early, allowing any required delay to be absorbed on the ground rather than in the air.
 
-Flights not tracking via a feeder fix also appear in the pending list and must be manually inserted.
+Flights not tracking via a feeder fix cannot be automatically activated and must be manually activated.
 
 ## The Processing Cycle
 
 vMaestro processes all active flights every 30 seconds.
 Each cycle performs the following steps for each flight.
 
-![Flight Processing Cycle Flowchart](../../static/img/process-flowchart.png)
-
 ### 1. Estimate Calculation
 
-The `ETA_FF` is sourced from vatSys route estimates. The landing estimate (`ETA`) is then calculated by adding the time-to-go (`TTG`) from the allocated trajectory.
+The `ETA_FF` is sourced from vatSys route estimates.
+The landing estimate (`ETA`) is then calculated by adding the time-to-go (`TTG`) from the allocated trajectory.
 
 :::info
 If a PETO has been set along the route, vatSys will re-calculate the route estimates based on the PETO, rather than the natural ETO.
@@ -125,6 +128,9 @@ When using vMaestro in conjunction with the [Hold Plugin](https://github.com/yuk
 ### 2. Sequencing
 
 Flights are ordered by their `ETA` following a first-come, first-served approach.
+
+`Unstable` flights may change position as their ETA changes.
+Stablised flights will generally not change their position in the sequence unless manual intervention is performed.
 
 ### 3. Scheduling
 
