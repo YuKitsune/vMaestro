@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Contracts.Flights;
+using Maestro.Contracts.Sessions;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
@@ -21,13 +23,27 @@ public partial class DesequencedViewModel : ObservableObject
         IWindowHandle windowHandle,
         IErrorReporter errorReporter,
         string airportIdentifier,
-        string[] callsigns)
+        SessionDto session)
     {
         AirportIdentifier = airportIdentifier;
         _errorReporter = errorReporter;
-        Callsigns = callsigns.ToList();
         _mediator = mediator;
         _windowHandle = windowHandle;
+
+        ApplySession(session);
+
+        WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (_, notification) =>
+        {
+            if (notification.AirportIdentifier != AirportIdentifier)
+                return;
+
+            ApplySession(notification.Session);
+        });
+    }
+
+    void ApplySession(SessionDto session)
+    {
+        Callsigns = session.DeSequencedFlights.Select(f => f.Callsign).ToList();
     }
 
     public string AirportIdentifier { get; }
