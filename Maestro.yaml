@@ -611,45 +611,47 @@ Airports:
   DefaultOffModeSeparationSeconds: 300
 
   RunwayModes:
+  
+  # 25 landings per hour = 144s
   - Identifier: 09
     Runways:
-    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: 16
     Runways:
-    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: 27
     Runways:
-    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: 34
     Runways:
-    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: 34/27
     DependencyRateSeconds: 60
     Runways:
-    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 180}
-    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 144}
+    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: 34/09
     DependencyRateSeconds: 60
     Runways:
-    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 180}
-    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "34", ApproachType: A, LandingRateSeconds: 144}
+    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: 16/27
     DependencyRateSeconds: 90
     Runways:
-    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
-    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 144}
+    - {Identifier: "27", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: 16/09
     DependencyRateSeconds: 90
     Runways:
-    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 180}
-    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "16", ApproachType: A, LandingRateSeconds: 144}
+    - {Identifier: "09", ApproachType: A, LandingRateSeconds: 144}
 
   TerminalTrajectories:
   - FeederFix: ALAXO
@@ -1086,15 +1088,17 @@ Airports:
   DefaultOffModeSeparationSeconds: 300
 
   RunwayModes:
+
+  # 25 landings per hour = 144s
   - Identifier: 19
     Runways:
-    - {Identifier: 19L, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [BLAKA, GOMOL, TEBOT, UGTUG]}
-    - {Identifier: 19R, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [ENLIP, WOODY, MORBI, SMOKA]}
+    - {Identifier: 19L, ApproachType: A, LandingRateSeconds: 144, FeederFixes: [BLAKA, GOMOL, TEBOT, UGTUG]}
+    - {Identifier: 19R, ApproachType: A, LandingRateSeconds: 144, FeederFixes: [ENLIP, WOODY, MORBI, SMOKA]}
 
   - Identifier: 01
     Runways:
-    - {Identifier: 01L, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [ENLIP, WOODY, MORBI, SMOKA]}
-    - {Identifier: 01R, ApproachType: A, LandingRateSeconds: 180, FeederFixes: [BLAKA, GOMOL, TEBOT, UGTUG]}
+    - {Identifier: 01L, ApproachType: A, LandingRateSeconds: 144, FeederFixes: [ENLIP, WOODY, MORBI, SMOKA]}
+    - {Identifier: 01R, ApproachType: A, LandingRateSeconds: 144, FeederFixes: [BLAKA, GOMOL, TEBOT, UGTUG]}
 
   - Identifier: SODPROPS
     Runways:
@@ -1902,31 +1906,34 @@ Airports:
   DefaultOffModeSeparationSeconds: 300
 
   RunwayModes:
+  
+  # 24 landings per hour = 150s
   - Identifier: 21/24
     DependencyRateSeconds: 30
     Runways:
-    - {Identifier: "21", ApproachType: A, LandingRateSeconds: 180}
-    - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "21", ApproachType: A, LandingRateSeconds: 150}
+    - {Identifier: "24", ApproachType: A, LandingRateSeconds: 150}
 
+  # 25 landings per hour = 144s
   - Identifier: "03"
     DependencyRateSeconds: 0
     Runways:
-    - {Identifier: "03", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "03", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: "06"
     DependencyRateSeconds: 0
     Runways:
-    - {Identifier: "06", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "06", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: "21"
     DependencyRateSeconds: 0
     Runways:
-    - {Identifier: "21", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "21", ApproachType: A, LandingRateSeconds: 144}
 
   - Identifier: "24"
     DependencyRateSeconds: 0
     Runways:
-    - {Identifier: "24", ApproachType: A, LandingRateSeconds: 180}
+    - {Identifier: "24", ApproachType: A, LandingRateSeconds: 144}
 
   TerminalTrajectories:
   - FeederFix: KAGMI
