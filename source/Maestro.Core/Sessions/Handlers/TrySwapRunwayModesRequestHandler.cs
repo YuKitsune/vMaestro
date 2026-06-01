@@ -30,7 +30,7 @@ public class TrySwapRunwayModesRequestHandler(
         SessionDto sessionDto;
         using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            if (!session.Sequence.TrySwapRunwayModes())
+            if (!session.Sequence.TrySwapTerminalConfiguration())
             {
                 logger.Debug("Did not swap runway modes for {AirportIdentifier}", request.AirportIdentifier);
                 return;

@@ -8,6 +8,17 @@ using Serilog;
 
 namespace Maestro.Core.Model;
 
+public interface ITerminalConfigurationChange;
+
+public record TerminalConfigurationChange(
+    RunwayMode NewRunwayMode,
+    DateTimeOffset LastLandingTimeInPreviousMode,
+    DateTimeOffset FirstLandingTimeInNewMode) : ITerminalConfigurationChange;
+
+public record LandingRatesChange(
+    RunwayMode UpdatedRunwayMode,
+    DateTimeOffset RatesChangeTime) : ITerminalConfigurationChange;
+
 public class Sequence
 {
     readonly object _gate = new();
@@ -28,9 +39,7 @@ public class Sequence
     public IReadOnlyList<Flight> Flights => _flights.AsReadOnly();
 
     public RunwayMode CurrentRunwayMode { get; private set; }
-    public RunwayMode? NextRunwayMode { get; private set; }
-    public DateTimeOffset? LastLandingTimeForCurrentMode { get; private set; }
-    public DateTimeOffset? FirstLandingTimeForNewMode { get; private set; }
+    public ITerminalConfigurationChange? PendingTerminalConfigurationChange { get; private set; }
 
     public Wind SurfaceWind { get; set; } = new(0, 0);
     public Wind UpperWind { get; set; } = new(0, 0);
@@ -77,50 +86,84 @@ public class Sequence
     {
         lock (_gate)
         {
-            var recomputeBoundary = LastLandingTimeForCurrentMode.HasValue
-                ? DateTimeOffsetHelpers.Earliest(LastLandingTimeForCurrentMode.Value, lastLandingTimeForOldMode)
+            var recomputeBoundary = PendingTerminalConfigurationChange is TerminalConfigurationChange terminalConfigurationChange
+                ? DateTimeOffsetHelpers.Earliest(terminalConfigurationChange.LastLandingTimeInPreviousMode, lastLandingTimeForOldMode)
                 : lastLandingTimeForOldMode;
 
-            NextRunwayMode = runwayMode;
-            LastLandingTimeForCurrentMode = lastLandingTimeForOldMode;
-            FirstLandingTimeForNewMode = firstLandingTimeForNewMode;
+            PendingTerminalConfigurationChange = new TerminalConfigurationChange(
+                runwayMode,
+                lastLandingTimeForOldMode,
+                firstLandingTimeForNewMode);
 
             var recomputeIndex = IndexOf(recomputeBoundary);
             Schedule(recomputeIndex);
         }
     }
 
-    public void CancelRunwayModeChange()
+    public void ChangeLandingRates(RunwayMode runwayMode, DateTimeOffset ratesChangeTime)
+    {
+        var currentRunways = CurrentRunwayMode.Runways.Select(x => x.Identifier).ToHashSet();
+        var newRunways = runwayMode.Runways.Select(x => x.Identifier).ToHashSet();
+        if (runwayMode.Identifier != CurrentRunwayMode.Identifier || !currentRunways.Equals(newRunways))
+        {
+            throw new MaestroException("Provided landing rates are not valid for the current runway mode");
+        }
+
+        PendingTerminalConfigurationChange = new LandingRatesChange(runwayMode, ratesChangeTime);
+
+        var recomputeIndex = IndexOf(ratesChangeTime);
+        Schedule(recomputeIndex);
+    }
+
+    public void CancelTerminalConfigurationChange()
     {
         lock (_gate)
         {
-            if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null)
+            if (PendingTerminalConfigurationChange is null)
                 return;
 
-            var recomputeIndex = IndexOf(LastLandingTimeForCurrentMode.Value);
+            var recomputeTime = PendingTerminalConfigurationChange switch
+            {
+                TerminalConfigurationChange terminalConfigurationChange => terminalConfigurationChange.FirstLandingTimeInNewMode,
+                LandingRatesChange landingRatesChange => landingRatesChange.RatesChangeTime,
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-            NextRunwayMode = null;
-            LastLandingTimeForCurrentMode = null;
-            FirstLandingTimeForNewMode = null;
+            var recomputeIndex = IndexOf(recomputeTime);
+
+            PendingTerminalConfigurationChange = null;
 
             Schedule(recomputeIndex);
         }
     }
 
-    public bool TrySwapRunwayModes()
+    public bool TrySwapTerminalConfiguration()
     {
         lock (_gate)
         {
-            if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null || FirstLandingTimeForNewMode is null)
+            if (PendingTerminalConfigurationChange is null)
                 return false;
 
-            if (_clock.UtcNow().IsBefore(FirstLandingTimeForNewMode.Value))
+            var changeTime = PendingTerminalConfigurationChange switch
+            {
+                TerminalConfigurationChange terminalConfigurationChange => terminalConfigurationChange.LastLandingTimeInPreviousMode,
+                LandingRatesChange landingRatesChange => landingRatesChange.RatesChangeTime,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            if (_clock.UtcNow().IsBefore(changeTime))
                 return false;
 
-            CurrentRunwayMode = NextRunwayMode;
-            NextRunwayMode = null;
-            LastLandingTimeForCurrentMode = null;
-            FirstLandingTimeForNewMode = null;
+            var nextMode = PendingTerminalConfigurationChange switch
+            {
+                TerminalConfigurationChange terminalConfigurationChange => terminalConfigurationChange.NewRunwayMode,
+                LandingRatesChange landingRatesChange => landingRatesChange.UpdatedRunwayMode,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            CurrentRunwayMode = nextMode;
+            PendingTerminalConfigurationChange = null;
+
             return true;
         }
     }
@@ -132,13 +175,27 @@ public class Sequence
     {
         lock (_gate)
         {
-            if (NextRunwayMode is null || LastLandingTimeForCurrentMode is null || FirstLandingTimeForNewMode is null)
+            if (PendingTerminalConfigurationChange is null)
                 return CurrentRunwayMode;
 
-            if (time.IsBefore(FirstLandingTimeForNewMode.Value))
+            var changeTime = PendingTerminalConfigurationChange switch
+            {
+                TerminalConfigurationChange terminalConfigurationChange => terminalConfigurationChange.LastLandingTimeInPreviousMode,
+                LandingRatesChange landingRatesChange => landingRatesChange.RatesChangeTime,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            if (time.IsBefore(changeTime))
                 return CurrentRunwayMode;
 
-            return NextRunwayMode;
+            var nextMode = PendingTerminalConfigurationChange switch
+            {
+                TerminalConfigurationChange terminalConfigurationChange => terminalConfigurationChange.NewRunwayMode,
+                LandingRatesChange landingRatesChange => landingRatesChange.UpdatedRunwayMode,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            return nextMode;
         }
     }
 
@@ -146,10 +203,10 @@ public class Sequence
     {
         lock (_gate)
         {
-            if (LastLandingTimeForCurrentMode is not null && FirstLandingTimeForNewMode is not null)
+            if (PendingTerminalConfigurationChange is TerminalConfigurationChange terminalConfigurationChange)
             {
-                if (landingTime.IsAfter(LastLandingTimeForCurrentMode.Value) &&
-                    landingTime.IsBefore(FirstLandingTimeForNewMode.Value))
+                if (landingTime.IsAfter(terminalConfigurationChange.LastLandingTimeInPreviousMode) &&
+                    landingTime.IsBefore(terminalConfigurationChange.FirstLandingTimeInNewMode))
                 {
                     throw new MaestroException($"Landing time {landingTime:HHmm} is unavailable due to a runway change.");
                 }
@@ -1200,5 +1257,12 @@ public class Sequence
         DateTimeOffset FirstLandingTimeInNewMode) : ISequenceItem
     {
         public DateTimeOffset Time => LastLandingTimeInPreviousMode;
+    }
+
+    record RatesChangeSequenceItem(
+        RunwayMode RunwayMode,
+        DateTimeOffset RatesChangeTime) : ISequenceItem
+    {
+        public DateTimeOffset Time => RatesChangeTime;
     }
 }
