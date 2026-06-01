@@ -198,7 +198,7 @@ There is no alert when required delays change. Controllers should regularly revi
 
 ### SuperStable
 
-Flights become SuperStable at their original `ETA_FF`. Processing is the same as Stable, but the flight is fixed in position. All new flights are positioned after it. Displacement only occurs through controller action on this flight or a preceding flight.
+Flights become SuperStable at their original `ETA_FF` (i.e. the `ETA_FF` at the time they became stable). Processing is the same as Stable, but the flight is fixed in position. All new flights are positioned after it. Displacement only occurs through controller action on this flight or a preceding flight.
 
 ### Frozen
 
