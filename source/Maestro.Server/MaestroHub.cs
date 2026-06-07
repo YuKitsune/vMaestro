@@ -104,9 +104,14 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
         return await RelayToMaster("ChangeRunwayMode", request);
     }
 
-    public async Task<ServerResponse> CancelRunwayModeChange(CancelRunwayModeChangeRequest request)
+    public async Task<ServerResponse> ChangeLandingRates(ChangeLandingRatesRequest request)
     {
-        return await RelayToMaster("CancelRunwayModeChange", request);
+        return await RelayToMaster("ChangeLandingRates", request);
+    }
+
+    public async Task<ServerResponse> CancelConfigurationChange(CancelConfigurationChangeRequest request)
+    {
+        return await RelayToMaster("CancelConfigurationChange", request);
     }
 
     public async Task<ServerResponse> ChangeFeederFixEstimate(ChangeFeederFixEstimateRequest request)

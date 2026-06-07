@@ -1,4 +1,4 @@
-﻿using Maestro.Contracts.Sessions;
+using Maestro.Contracts.Sessions;
 using Maestro.Core.Configuration;
 using Maestro.Core.Extensions;
 using Maestro.Core.Infrastructure;
@@ -12,16 +12,16 @@ using MediatR;
 
 namespace Maestro.Plugin.Handlers;
 
-public class OpenTerminalConfigurationWindowRequestHandler(
+public class OpenLandingRatesWindowRequestHandler(
     WindowManager windowManager,
     IAirportConfigurationProvider airportConfigurationProvider,
     ISessionManager sessionManager,
     IMediator mediator,
     IClock clock,
     IErrorReporter errorReporter)
-    : IRequestHandler<OpenTerminalConfigurationRequest>
+    : IRequestHandler<OpenLandingRatesRequest>
 {
-    public async Task Handle(OpenTerminalConfigurationRequest request, CancellationToken cancellationToken)
+    public async Task Handle(OpenLandingRatesRequest request, CancellationToken cancellationToken)
     {
         var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(request.AirportIdentifier);
 
@@ -38,27 +38,22 @@ public class OpenTerminalConfigurationWindowRequestHandler(
             .ToArray();
 
         windowManager.FocusOrCreateWindow(
-            WindowKeys.TerminalConfiguration(request.AirportIdentifier),
-            "TMA Configuration",
+            WindowKeys.LandingRates(request.AirportIdentifier),
+            "Landing Rates",
             windowHandle =>
             {
-                var pendingModeChange = sessionDto.Sequence.PendingConfigurationChange as TerminalConfigurationChangeDto;
+                var pendingRatesChange = sessionDto.Sequence.PendingConfigurationChange as LandingRatesChangeDto;
 
-                var lastLandingTime = pendingModeChange is null
+                var changeTime = pendingRatesChange is null
                     ? clock.UtcNow()
-                    : pendingModeChange.LastLandingTimeInPreviousMode;
+                    : pendingRatesChange.ChangeTime;
 
-                var firstLandingTime = pendingModeChange is null
-                    ? clock.UtcNow()
-                    : pendingModeChange.FirstLandingTimeInNewMode;
-
-                var viewModel = new TerminalConfigurationViewModel(
+                var viewModel = new LandingRatesViewModel(
                     request.AirportIdentifier,
                     runwayModes,
                     new RunwayModeViewModel(sessionDto.Sequence.CurrentRunwayMode),
-                    pendingModeChange is not null ? new RunwayModeViewModel(pendingModeChange.NewRunwayMode) : null,
-                    lastLandingTime,
-                    firstLandingTime,
+                    pendingRatesChange is not null ? new RunwayModeViewModel(sessionDto.Sequence.CurrentRunwayMode) : null,
+                    changeTime,
                     airportConfiguration,
                     sessionDto.Sequence.SurfaceWind,
                     mediator,
@@ -66,7 +61,7 @@ public class OpenTerminalConfigurationWindowRequestHandler(
                     clock,
                     errorReporter);
 
-                return new TerminalConfigurationView(viewModel);
+                return new LandingRatesView(viewModel);
             });
     }
 }

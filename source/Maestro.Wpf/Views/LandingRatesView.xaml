@@ -1,0 +1,114 @@
+﻿<UserControl x:Class="Maestro.Wpf.Views.LandingRatesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Maestro.Wpf"
+             xmlns:controls="clr-namespace:Maestro.Wpf.Controls"
+             xmlns:viewModels="clr-namespace:Maestro.Wpf.ViewModels"
+             xmlns:converters="clr-namespace:Maestro.Wpf.Converters"
+             mc:Ignorable="d"
+             Background="{x:Static local:Theme.BackgroundColor}"
+             d:DataContext="{d:DesignInstance Type=viewModels:LandingRatesViewModel}"
+             MinWidth="440"
+             MinHeight="240"
+             Padding="8">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Maestro.Wpf;component/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:BoolInversionConverter x:Key="BoolInversionConverter" />
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource GenericTextStyle}" />
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ButtonBaseStyle}" />
+
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel Orientation="Vertical">
+
+        <TextBlock Text="Runway Acceptance Rates:"/>
+        <Border Padding="0,2,0,0" />
+        <controls:BeveledBorder BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Sunken">
+            <Border Padding="2">
+                <ItemsControl ItemsSource="{Binding Path=RunwayConfigurationItems}" Margin="2">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DataTemplate.Resources>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}"/>
+                            </DataTemplate.Resources>
+
+                            <StackPanel Orientation="Vertical">
+                                <Slider Value="{Binding LandingRateSeconds}"
+                                        TickFrequency="5"
+                                        IsSnapToTickEnabled="true"
+                                        Minimum="{Binding DataContext.MinimumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+                                        Maximum="{Binding DataContext.MaximumLandingRateSeconds, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Identifier}"/>
+                                    <TextBlock Text=": "/>
+                                    <TextBlock Text="{Binding LandingRateSeconds}" Padding="4,0,2,0"/>
+                                    <TextBlock Text="s"/>
+                                    <TextBlock Text="/"/>
+                                    <TextBlock Text="{Binding NauticalMiles, StringFormat='{}{0:0.0}'}" Padding="4,0,2,0"/>
+                                    <TextBlock Text="NM"/>
+                                    <TextBlock Text="/"/>
+                                    <TextBlock Text="{Binding AircraftPerHour}" Padding="4,0,2,0"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+        </controls:BeveledBorder>
+
+        <Border Padding="2" />
+
+        <TextBlock Text="Apply:" />
+        <Border Padding="0,2,0,0" />
+        <controls:BeveledBorder
+            BorderThickness="{x:Static local:Theme.BeveledBorderThickness}"
+            BevelType="Sunken">
+            <Border Padding="2">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Change rates at "/>
+
+                    <controls:TimeControl Grid.Row="0" Grid.Column="1" Time="{Binding ChangeTime}"/>
+                </Grid>
+            </Border>
+        </controls:BeveledBorder>
+
+        <Border Padding="2" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Width="56" Command="{Binding ChangeLandingRatesCommand}">Ok</Button>
+            <Button Grid.Column="1" Width="Auto"
+                    Command="{Binding CancelPendingChangesCommand}"
+                    Visibility="{Binding HasPendingChange, Converter={StaticResource BoolToVisibilityConverter}}">Cancel Pending Changes</Button>
+            <Button Grid.Column="2" Width="56" Command="{Binding CloseWindowCommand}">Cancel</Button>
+        </Grid>
+
+    </StackPanel>
+</UserControl>

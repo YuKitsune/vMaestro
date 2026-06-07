@@ -1,5 +1,6 @@
 @page
 @model SessionModel
+@using Maestro.Contracts.Sessions
 @{
     ViewData["Title"] = $"{Model.Airport} - {Model.Environment}";
 }
@@ -15,17 +16,21 @@
 
 <h1>@Model.Airport <small class="text-muted">@Model.Environment</small></h1>
 
+@{
+    var pendingModeChange = Model.Session!.Sequence.PendingConfigurationChange as TerminalConfigurationChangeDto;
+}
+
 <div class="row mt-4">
     <div class="col-md-4">
         <div class="card mb-4">
             <div class="card-header">Current Runway Mode</div>
             <div class="card-body">
                 <h5 class="card-title">@Model.Session!.Sequence.CurrentRunwayMode.Identifier</h5>
-                @if (Model.Session.Sequence.NextRunwayMode is not null)
+                @if (pendingModeChange is not null)
                 {
                     <dl class="row mb-3">
                         <dt class="col-sm-8">Last Landing Time</dt>
-                        <dd class="col-sm-4 text-end">@FormatHelpers.ToDDHHMM(Model.Session.Sequence.LastLandingTimeForCurrentMode)</dd>
+                        <dd class="col-sm-4 text-end">@FormatHelpers.ToDDHHMM(pendingModeChange.LastLandingTimeInPreviousMode)</dd>
                     </dl>
                 }
                 <table class="table table-sm mb-0">
@@ -48,15 +53,15 @@
             </div>
         </div>
 
-        @if (Model.Session.Sequence.NextRunwayMode is not null)
+        @if (pendingModeChange is not null)
         {
             <div class="card mb-4">
                 <div class="card-header">Next Runway Mode</div>
                 <div class="card-body">
-                    <h5 class="card-title">@Model.Session.Sequence.NextRunwayMode.Identifier</h5>
+                    <h5 class="card-title">@pendingModeChange.NewRunwayMode.Identifier</h5>
                     <dl class="row mb-3">
                         <dt class="col-sm-8">First Landing Time</dt>
-                        <dd class="col-sm-4 text-end">@FormatHelpers.ToDDHHMM(Model.Session.Sequence.FirstLandingTimeForNextMode)</dd>
+                        <dd class="col-sm-4 text-end">@FormatHelpers.ToDDHHMM(pendingModeChange.FirstLandingTimeInNewMode)</dd>
                     </dl>
                     <table class="table table-sm mb-0">
                         <thead>
@@ -66,7 +71,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var runway in Model.Session.Sequence.NextRunwayMode.Runways)
+                            @foreach (var runway in pendingModeChange.NewRunwayMode.Runways)
                             {
                                 <tr>
                                     <td>@runway.Identifier</td>

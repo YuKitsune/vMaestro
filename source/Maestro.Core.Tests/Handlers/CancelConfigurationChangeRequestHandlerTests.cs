@@ -14,7 +14,7 @@ using Shouldly;
 
 namespace Maestro.Core.Tests.Handlers;
 
-public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture)
+public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixture)
 {
     const int DefaultDependencyRateSeconds = 30;
     const int DefaultOffModeSeconds = 300;
@@ -28,20 +28,20 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
 
         var mediator = Substitute.For<IMediator>();
 
-        var handler = new CancelRunwayModeChangeRequestHandler(
+        var handler = new CancelConfigurationChangeRequestHandler(
             sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
 
-        sequence.NextRunwayMode.ShouldBeNull("precondition: no mode change should be pending");
+        sequence.PendingConfigurationChange.ShouldBeNull("precondition: no mode change should be pending");
 
         // Act
-        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         sequence.CurrentRunwayMode.Identifier.ShouldBe("34IVA", "current mode should be unchanged");
-        sequence.NextRunwayMode.ShouldBeNull();
+        sequence.PendingConfigurationChange.ShouldBeNull();
         await mediator.DidNotReceive().Publish(Arg.Any<SessionUpdatedNotification>(), Arg.Any<CancellationToken>());
     }
 
@@ -57,23 +57,97 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
 
         await ScheduleModeChange(sessionManager, airportConfiguration, mediator, now.AddMinutes(20), now.AddMinutes(25));
 
-        sequence.NextRunwayMode.ShouldNotBeNull("precondition: mode change should be pending");
+        sequence.PendingConfigurationChange.ShouldNotBeNull("precondition: mode change should be pending");
         mediator.ClearReceivedCalls();
 
-        var handler = new CancelRunwayModeChangeRequestHandler(
+        var handler = new CancelConfigurationChangeRequestHandler(
             sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
 
         // Act
-        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         sequence.CurrentRunwayMode.Identifier.ShouldBe("34IVA", "current mode should be unchanged");
-        sequence.NextRunwayMode.ShouldBeNull();
-        sequence.LastLandingTimeForCurrentMode.ShouldBeNull();
-        sequence.FirstLandingTimeForNewMode.ShouldBeNull();
+        sequence.PendingConfigurationChange.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task WhenCancellingLandingRatesChange_ChangeIsCancelled()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var airportConfiguration = BuildAirportConfiguration();
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        await ScheduleLandingRatesChange(sessionManager, mediator, now.AddMinutes(20));
+
+        sequence.PendingConfigurationChange.ShouldBeOfType<LandingRatesChange>("precondition: a landing rates change should be pending");
+        mediator.ClearReceivedCalls();
+
+        var handler = new CancelConfigurationChangeRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        // Act
+        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+
+        // Assert
+        sequence.PendingConfigurationChange.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task WhenCancellingLandingRatesChange_FlightsAreRescheduledWithOriginalRate()
+    {
+        // Arrange
+        var now = clockFixture.Instance.UtcNow();
+        var airportConfiguration = BuildAirportConfiguration();
+
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(13))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithRunway("34L")
+            .WithFeederFix("RIVET")
+            .Build();
+
+        var (sessionManager, _, sequence) = new SessionBuilder(airportConfiguration)
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        var mediator = Substitute.For<IMediator>();
+
+        // Change time before both flights, so both pick up the new (larger) rate
+        await ScheduleLandingRatesChange(sessionManager, mediator, now.AddMinutes(5), TimeSpan.FromSeconds(300));
+
+        (flight2.LandingTime - flight1.LandingTime).ShouldBe(TimeSpan.FromSeconds(300),
+            "precondition: flights should be separated by the new rate");
+
+        var handler = new CancelConfigurationChangeRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            mediator,
+            Substitute.For<ILogger>());
+
+        // Act
+        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+
+        // Assert
+        sequence.PendingConfigurationChange.ShouldBeNull();
+        (flight2.LandingTime - flight1.LandingTime).ShouldBe(TimeSpan.FromSeconds(180),
+            "flights should revert to the original rate after cancel");
     }
 
     [Fact]
@@ -111,14 +185,14 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
         flight2.AssignedRunwayIdentifier.ShouldBe("16R", "precondition: flight2 should be in new mode zone");
         flight2.LandingTime.ShouldBe(firstLandingTimeForNewMode, "precondition: flight2 should be delayed to firstLandingTimeForNewMode");
 
-        var handler = new CancelRunwayModeChangeRequestHandler(
+        var handler = new CancelConfigurationChangeRequestHandler(
             sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
 
         // Act
-        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         flight1.AssignedRunwayIdentifier.ShouldBe("34L", "flight1 should remain on 34L");
@@ -187,13 +261,13 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
         // Act 2: Cancel mode change
         // Flight gets reassigned back to 34L
         // FF=T+10, TTG=30min (changed back!), ETA=T+40
-        var handler = new CancelRunwayModeChangeRequestHandler(
+        var handler = new CancelConfigurationChangeRequestHandler(
             sessionManager,
             new MockLocalConnectionManager(),
             mediator,
             Substitute.For<ILogger>());
 
-        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34L", "flight should be reassigned back to 34L");
@@ -221,13 +295,13 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
         var slaveConnectionManager = new MockSlaveConnectionManager();
         var mediator = Substitute.For<IMediator>();
 
-        var handler = new CancelRunwayModeChangeRequestHandler(
+        var handler = new CancelConfigurationChangeRequestHandler(
             sessionManager,
             slaveConnectionManager,
             mediator,
             Substitute.For<ILogger>());
 
-        var request = new CancelRunwayModeChangeRequest("YSSY");
+        var request = new CancelConfigurationChangeRequest("YSSY");
         var originalRunwayMode = sequence.CurrentRunwayMode.Identifier;
 
         // Act
@@ -256,6 +330,27 @@ public class CancelRunwayModeChangeRequestHandlerTests(ClockFixture clockFixture
 
         return handler.Handle(
             new ChangeRunwayModeRequest("YSSY", BuildNewModeDto(), lastLandingTimeForOldMode, firstLandingTimeForNewMode),
+            CancellationToken.None);
+    }
+
+    Task ScheduleLandingRatesChange(
+        ISessionManager sessionManager,
+        IMediator mediator,
+        DateTimeOffset changeTime,
+        TimeSpan? newRate = null)
+    {
+        var handler = new ChangeLandingRatesRequestHandler(
+            sessionManager,
+            new MockLocalConnectionManager(),
+            clockFixture.Instance,
+            mediator,
+            Substitute.For<ILogger>());
+
+        return handler.Handle(
+            new ChangeLandingRatesRequest(
+                "YSSY",
+                new Dictionary<string, TimeSpan> { ["34L"] = newRate ?? TimeSpan.FromSeconds(300) },
+                changeTime),
             CancellationToken.None);
     }
 

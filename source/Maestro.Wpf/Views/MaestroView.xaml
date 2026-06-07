@@ -136,7 +136,9 @@
                 <controls:BeveledLine Grid.Column="3" Width="{x:Static local:Theme.BeveledLineWidth}" Orientation="Vertical"/>
 
                 <!-- Runway Intervals -->
-                <controls:BeveledBorder Grid.Column="4" BorderThickness="{x:Static local:Theme.BeveledBorderThickness}" BevelType="Raised">
+                <Button
+                    Grid.Column="4"
+                    Command="{Binding OpenLandingRatesCommand}">
                     <ItemsControl ItemsSource="{Binding Path=RunwayIntervals}" VerticalAlignment="Center" Margin="2">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -167,7 +169,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </controls:BeveledBorder>
+                </Button>
 
                 <controls:BeveledLine
                     Grid.Column="5"

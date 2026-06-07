@@ -4,6 +4,7 @@ using Maestro.Contracts.Shared;
 using Maestro.Core.Configuration;
 using Maestro.Core.Handlers;
 using Maestro.Core.Infrastructure;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Maestro.Core.Tests.Mocks;
@@ -86,9 +87,7 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         sequence.CurrentRunwayMode.Identifier.ShouldBe("16IVA");
-        sequence.NextRunwayMode.ShouldBeNull();
-        sequence.LastLandingTimeForCurrentMode.ShouldBeNull();
-        sequence.FirstLandingTimeForNewMode.ShouldBeNull();
+        sequence.PendingConfigurationChange.ShouldBeNull();
     }
 
     [Fact]
@@ -161,10 +160,10 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
 
         // Assert
         sequence.CurrentRunwayMode.Identifier.ShouldBe("34IVA", "Current mode should remain unchanged");
-        sequence.NextRunwayMode.ShouldNotBeNull();
-        sequence.NextRunwayMode!.Identifier.ShouldBe("16IVA");
-        sequence.LastLandingTimeForCurrentMode.ShouldBe(lastLandingTimeForOldMode);
-        sequence.FirstLandingTimeForNewMode.ShouldBe(firstLandingTimeForNewMode);
+        var change = sequence.PendingConfigurationChange.ShouldBeOfType<TerminalConfigurationChange>();
+        change.NewRunwayMode.Identifier.ShouldBe("16IVA");
+        change.LastLandingTimeInPreviousMode.ShouldBe(lastLandingTimeForOldMode);
+        change.FirstLandingTimeInNewMode.ShouldBe(firstLandingTimeForNewMode);
     }
 
     [Fact]

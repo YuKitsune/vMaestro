@@ -32,9 +32,36 @@
         "dependencyRateSeconds": 120,
         "offModeSeparationSeconds": 180
       },
-      "nextRunwayMode": null,
-      "lastLandingTimeForCurrentMode": "2024-06-15T14:30:00+00:00",
-      "firstLandingTimeForNextMode": "2024-06-15T15:30:00+00:00",
+      "pendingConfigurationChange": {
+        "Type": "TerminalConfigurationChange",
+        "newRunwayMode": {
+          "identifier": "SODPROPS",
+          "runways": [
+            {
+              "identifier": "34L",
+              "approachType": "ILS",
+              "acceptanceRateSeconds": 90,
+              "feederFixes": [
+                "RIVET",
+                "BOREE"
+              ]
+            },
+            {
+              "identifier": "34R",
+              "approachType": "VISUAL",
+              "acceptanceRateSeconds": 90,
+              "feederFixes": [
+                "MARUB",
+                "SOSIJ"
+              ]
+            }
+          ],
+          "dependencyRateSeconds": 120,
+          "offModeSeparationSeconds": 180
+        },
+        "lastLandingTimeInPreviousMode": "2024-06-15T14:30:00+00:00",
+        "firstLandingTimeInNewMode": "2024-06-15T15:30:00+00:00"
+      },
       "flights": [
         {
           "callsign": "QFA123",

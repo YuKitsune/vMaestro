@@ -176,7 +176,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             // Requests
             ChangeRunwayRequest => "ChangeRunway",
             ChangeRunwayModeRequest => "ChangeRunwayMode",
-            CancelRunwayModeChangeRequest => "CancelRunwayModeChange",
+            CancelConfigurationChangeRequest => "CancelConfigurationChange",
             ChangeFeederFixEstimateRequest => "ChangeFeederFixEstimate",
             InsertFlightRequest => "InsertFlight",
             MoveFlightRequest => "MoveFlight",
@@ -377,9 +377,18 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeTerminalConfiguration);
         });
 
-        hubConnection.On<RequestEnvelope, ServerResponse>("CancelRunwayModeChange", async envelope =>
+        hubConnection.On<RequestEnvelope, ServerResponse>("ChangeLandingRates", async envelope =>
         {
-            var request = (CancelRunwayModeChangeRequest) envelope.Request;
+            var request = (ChangeLandingRatesRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
+                return ServerResponse.CreateFailure("Airport identifier mismatch");
+
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeLandingRates);
+        });
+
+        hubConnection.On<RequestEnvelope, ServerResponse>("CancelConfigurationChange", async envelope =>
+        {
+            var request = (CancelConfigurationChangeRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
