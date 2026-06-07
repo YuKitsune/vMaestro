@@ -182,7 +182,8 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             ChangeRunwayRequest => "ChangeRunway",
             ChangeRunwayModeRequest => "ChangeRunwayMode",
             ChangeLandingRatesRequest => "ChangeLandingRates",
-            CancelConfigurationChangeRequest => "CancelConfigurationChange",
+            CancelRunwayModeChangeRequest => "CancelRunwayModeChange",
+            CancelLandingRatesChangeRequest => "CancelLandingRatesChange",
             ChangeFeederFixEstimateRequest => "ChangeFeederFixEstimate",
             InsertFlightRequest => "InsertFlight",
             MoveFlightRequest => "MoveFlight",
@@ -392,23 +393,22 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeLandingRates);
         });
 
-        hubConnection.On<RequestEnvelope, ServerResponse>("CancelConfigurationChange", async envelope =>
+        hubConnection.On<RequestEnvelope, ServerResponse>("CancelRunwayModeChange", async envelope =>
         {
-            var request = (CancelConfigurationChangeRequest) envelope.Request;
+            var request = (CancelRunwayModeChangeRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
-            // TODO: This sucks, please refactor.
-            // Cancelling has no dedicated permission. The relevant permission is determined by the
-            // type of change being cancelled.
-            var session = await _sessionManager.GetSession(request.AirportIdentifier, GetMessageCancellationToken());
-            var actionKey = session.Sequence.PendingConfigurationChange switch
-            {
-                LandingRatesChange => ActionKeys.ChangeLandingRates,
-                _ => ActionKeys.ChangeTerminalConfiguration
-            };
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeTerminalConfiguration);
+        });
 
-            return await ProcessEnvelopedRequest(envelope, actionKey);
+        hubConnection.On<RequestEnvelope, ServerResponse>("CancelLandingRatesChange", async envelope =>
+        {
+            var request = (CancelLandingRatesChangeRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
+                return ServerResponse.CreateFailure("Airport identifier mismatch");
+
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeLandingRates);
         });
 
         hubConnection.On<RequestEnvelope, ServerResponse>("ChangeFeederFixEstimate", async envelope =>

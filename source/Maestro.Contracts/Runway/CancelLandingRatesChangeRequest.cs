@@ -5,6 +5,6 @@ using MessagePack;
 namespace Maestro.Contracts.Runway;
 
 [MessagePackObject]
-public record CancelConfigurationChangeRequest(
+public record CancelLandingRatesChangeRequest(
     [property: Key(0)] string AirportIdentifier)
-    : IRequest, IRelayableRequest ;
+    : IRequest, IRelayableRequest;

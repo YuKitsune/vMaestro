@@ -495,7 +495,7 @@ public class SequenceTests(ClockFixture clockFixture)
         sequence.ChangeLandingRates(new Dictionary<string, TimeSpan> { ["34L"] = newAcceptanceRate }, changeTime);
 
         // Act
-        sequence.CancelTerminalConfigurationChange();
+        sequence.CancelConfigurationChange();
 
         // Assert
         sequence.PendingConfigurationChange.ShouldBeNull();

@@ -82,20 +82,6 @@ public partial class TerminalConfigurationViewModel : ObservableObject
         FirstLandingTime = firstLandingTimeForNewMode;
 
         RunwayConfigurationItems = CreateRunwayConfigurationItems(SelectedRunwayMode);
-
-        WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (_, notification) =>
-        {
-            if (notification.AirportIdentifier != _airportIdentifier)
-                return;
-
-            var pendingModeChange = notification.Session.Sequence.PendingConfigurationChange as TerminalConfigurationChangeDto;
-
-            OriginalRunwayModeIdentifier = notification.Session.Sequence.CurrentRunwayMode.Identifier;
-            HasPendingModeChange = pendingModeChange is not null;
-            LastLandingTime = pendingModeChange is null
-                ? _clock.UtcNow()
-                : pendingModeChange.LastLandingTimeInPreviousMode;
-        });
     }
 
     partial void OnSelectedRunwayModeIdentifierChanged(string value)
@@ -155,7 +141,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(new CancelConfigurationChangeRequest(_airportIdentifier), CancellationToken.None);
+            _mediator.Send(new CancelRunwayModeChangeRequest(_airportIdentifier), CancellationToken.None);
             CloseWindow();
         }
         catch (Exception ex)
