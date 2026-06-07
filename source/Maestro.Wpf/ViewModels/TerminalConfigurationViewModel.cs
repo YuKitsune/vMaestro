@@ -88,11 +88,13 @@ public partial class TerminalConfigurationViewModel : ObservableObject
             if (notification.AirportIdentifier != _airportIdentifier)
                 return;
 
+            var pendingModeChange = notification.Session.Sequence.PendingConfigurationChange as TerminalConfigurationChangeDto;
+
             OriginalRunwayModeIdentifier = notification.Session.Sequence.CurrentRunwayMode.Identifier;
-            HasPendingModeChange = notification.Session.Sequence.NextRunwayMode is not null;
-            LastLandingTime = notification.Session.Sequence.LastLandingTimeForCurrentMode == default
+            HasPendingModeChange = pendingModeChange is not null;
+            LastLandingTime = pendingModeChange is null
                 ? _clock.UtcNow()
-                : notification.Session.Sequence.LastLandingTimeForCurrentMode;
+                : pendingModeChange.LastLandingTimeInPreviousMode;
         });
     }
 
@@ -153,7 +155,7 @@ public partial class TerminalConfigurationViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(new CancelRunwayModeChangeRequest(_airportIdentifier), CancellationToken.None);
+            _mediator.Send(new CancelConfigurationChangeRequest(_airportIdentifier), CancellationToken.None);
             CloseWindow();
         }
         catch (Exception ex)

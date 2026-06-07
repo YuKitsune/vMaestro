@@ -98,8 +98,17 @@ public static class TestBuilders
     public static ChangeRunwayModeRequest CreateChangeRunwayModeRequest() =>
         new("YSSY", CreateRunwayModeDto(), FixedTime.AddHours(1), FixedTime.AddHours(1).AddMinutes(5));
 
-    public static CancelRunwayModeChangeRequest CreateCancelRunwayModeChangeRequest() =>
+    public static CancelConfigurationChangeRequest CreateCancelConfigurationChangeRequest() =>
         new("YSSY");
+
+    public static ChangeLandingRatesRequest CreateChangeLandingRatesRequest() =>
+        new("YSSY",
+            new Dictionary<string, TimeSpan>
+            {
+                ["34L"] = TimeSpan.FromSeconds(180),
+                ["34R"] = TimeSpan.FromSeconds(200)
+            },
+            FixedTime.AddHours(1));
 
     // Slots
     public static SlotDto CreateSlotDto() =>
@@ -272,9 +281,10 @@ public static class TestBuilders
         new()
         {
             CurrentRunwayMode = CreateRunwayModeDto(),
-            NextRunwayMode = null,
-            LastLandingTimeForCurrentMode = FixedTime.AddHours(2),
-            FirstLandingTimeForNextMode = FixedTime.AddHours(3),
+            PendingConfigurationChange = new TerminalConfigurationChangeDto(
+                CreateRunwayModeDto(),
+                FixedTime.AddHours(2),
+                FixedTime.AddHours(3)),
             Flights = [CreateFlightDto()],
             Slots = [CreateSlotDto()],
             SurfaceWind = CreateWindDto(),

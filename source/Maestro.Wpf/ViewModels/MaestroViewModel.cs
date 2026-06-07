@@ -41,6 +41,9 @@ public partial class MaestroViewModel : ObservableObject
     RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
+    bool _landingRateChangeIsPlanned;
+
+    [ObservableProperty]
     DateTimeOffset? _runwayModeChangeTime;
 
     [ObservableProperty]
@@ -267,11 +270,15 @@ public partial class MaestroViewModel : ObservableObject
             if (notification.AirportIdentifier != AirportIdentifier)
                 return;
 
+            var pendingModeChange = notification.Session.Sequence.PendingConfigurationChange as TerminalConfigurationChangeDto;
+
             CurrentRunwayMode = new RunwayModeViewModel(notification.Session.Sequence.CurrentRunwayMode);
-            NextRunwayMode = notification.Session.Sequence.NextRunwayMode is not null
-                ? new RunwayModeViewModel(notification.Session.Sequence.NextRunwayMode)
+            NextRunwayMode = pendingModeChange is not null
+                ? new RunwayModeViewModel(pendingModeChange.NewRunwayMode)
                 : null;
-            RunwayModeChangeTime = notification.Session.Sequence.FirstLandingTimeForNextMode;
+            RunwayModeChangeTime = pendingModeChange?.FirstLandingTimeInNewMode;
+
+            LandingRateChangeIsPlanned = notification.Session.Sequence.PendingConfigurationChange is LandingRatesChangeDto;
 
             DeSequencedFlights = notification.Session.DeSequencedFlights.ToList();
             FlightDataRecords = notification.Session.FlightDataRecords;
@@ -473,6 +480,19 @@ public partial class MaestroViewModel : ObservableObject
         try
         {
             _mediator.Send(new OpenTerminalConfigurationRequest(AirportIdentifier));
+        }
+        catch (Exception ex)
+        {
+            _errorReporter.ReportError(ex);
+        }
+    }
+
+    [RelayCommand]
+    void OpenLandingRates()
+    {
+        try
+        {
+            _mediator.Send(new OpenLandingRatesRequest(AirportIdentifier));
         }
         catch (Exception ex)
         {

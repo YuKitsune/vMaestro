@@ -42,19 +42,21 @@ public class OpenTerminalConfigurationWindowRequestHandler(
             "TMA Configuration",
             windowHandle =>
             {
-                var lastLandingTime = sessionDto.Sequence.LastLandingTimeForCurrentMode == default
-                    ? clock.UtcNow()
-                    : sessionDto.Sequence.LastLandingTimeForCurrentMode;
+                var pendingModeChange = sessionDto.Sequence.PendingConfigurationChange as TerminalConfigurationChangeDto;
 
-                var firstLandingTime = sessionDto.Sequence.FirstLandingTimeForNextMode == default
+                var lastLandingTime = pendingModeChange is null
                     ? clock.UtcNow()
-                    : lastLandingTime.AddMinutes(5);
+                    : pendingModeChange.LastLandingTimeInPreviousMode;
+
+                var firstLandingTime = pendingModeChange is null
+                    ? clock.UtcNow()
+                    : pendingModeChange.FirstLandingTimeInNewMode;
 
                 var viewModel = new TerminalConfigurationViewModel(
                     request.AirportIdentifier,
                     runwayModes,
                     new RunwayModeViewModel(sessionDto.Sequence.CurrentRunwayMode),
-                    sessionDto.Sequence.NextRunwayMode is not null ? new RunwayModeViewModel(sessionDto.Sequence.NextRunwayMode) : null,
+                    pendingModeChange is not null ? new RunwayModeViewModel(pendingModeChange.NewRunwayMode) : null,
                     lastLandingTime,
                     firstLandingTime,
                     airportConfiguration,

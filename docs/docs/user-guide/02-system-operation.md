@@ -151,6 +151,33 @@ The Runway Acceptance Rates button displays each active runway with its current 
 
 The acceptance rate is the minimum time separation between successive landings on that runway.
 
+When a rate change is scheduled for the future, the button text turns white.
+
+![Image of the Runway Acceptance Rates button with a pending rate change](../../static/img/rates_change_button.png)
+
+### Changing the Landing Rates
+
+Changing the landing rates adjusts the acceptance rates of the current runway mode without changing the runway mode itself.
+Use this when the configuration stays the same but the throughput needs to change.
+
+Click the Runway Acceptance Rates button to open the Landing Rates window.
+
+![Image of the Landing Rates window](../../static/img/landing_rates.png)
+
+From this window you can:
+
+- Adjust the acceptance rate for each runway using the sliders
+- Schedule when the rate change takes effect
+
+Unlike a [TMA configuration change](#changing-the-configuration), a rate change takes effect at a single change time with no gap.
+Flights scheduled to land at or after the change time are separated using the new rates. Earlier flights are unaffected.
+
+:::info
+Landing rate changes and [TMA configuration changes](#tma-configuration) are mutually exclusive. Only one can be pending at a time. Scheduling one while the other is pending replaces it.
+:::
+
+To cancel a pending rate change, reopen the window and cancel the change. The rates revert to the current mode's values.
+
 ## Wind Configuration
 
 The Winds button displays the current surface and upper winds.

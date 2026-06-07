@@ -21,6 +21,14 @@ public class RunwayMode
             : defaultOffModeSeparation;
     }
 
+    public RunwayMode(string identifier, Runway[] runways, TimeSpan dependencyRate, TimeSpan offModeSeparation)
+    {
+        Identifier = identifier;
+        Runways = runways;
+        DependencyRate = dependencyRate;
+        OffModeSeparation = offModeSeparation;
+    }
+
     public RunwayMode(RunwayModeDto runwayModeDto)
     {
         Identifier = runwayModeDto.Identifier;

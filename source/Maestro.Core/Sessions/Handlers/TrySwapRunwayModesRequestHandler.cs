@@ -12,9 +12,9 @@ public class TrySwapRunwayModesRequestHandler(
     ISessionManager sessionManager,
     IMediator mediator,
     ILogger logger)
-    : IRequestHandler<TrySwapRunwayModesRequest>
+    : IRequestHandler<TrySwapConfigurationRequest>
 {
-    public async Task Handle(TrySwapRunwayModesRequest request, CancellationToken cancellationToken)
+    public async Task Handle(TrySwapConfigurationRequest request, CancellationToken cancellationToken)
     {
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
@@ -30,7 +30,7 @@ public class TrySwapRunwayModesRequestHandler(
         SessionDto sessionDto;
         using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            if (!session.Sequence.TrySwapRunwayModes())
+            if (!session.Sequence.TrySwapTerminalConfiguration())
             {
                 logger.Debug("Did not swap runway modes for {AirportIdentifier}", request.AirportIdentifier);
                 return;

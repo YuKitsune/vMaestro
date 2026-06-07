@@ -8,40 +8,40 @@ using Serilog;
 
 namespace Maestro.Core.Handlers;
 
-public class CancelRunwayModeChangeRequestHandler(
+public class CancelConfigurationChangeRequestHandler(
     ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IMediator mediator,
     ILogger logger)
-    : IRequestHandler<CancelRunwayModeChangeRequest>
+    : IRequestHandler<CancelConfigurationChangeRequest>
 {
-    public async Task Handle(CancelRunwayModeChangeRequest request, CancellationToken cancellationToken)
+    public async Task Handle(CancelConfigurationChangeRequest request, CancellationToken cancellationToken)
     {
         if (connectionManager.TryGetConnection(request.AirportIdentifier, out var connection) &&
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying CancelRunwayModeChangeRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Information("Relaying CancelConfigurationChangeRequest for {AirportIdentifier}", request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
 
-        logger.Verbose("Cancelling runway mode change for {AirportIdentifier}", request.AirportIdentifier);
+        logger.Verbose("Cancelling configuration change for {AirportIdentifier}", request.AirportIdentifier);
 
         var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
 
         using (await session.Semaphore.LockAsync(cancellationToken))
         {
-            if (session.Sequence.NextRunwayMode is null)
+            if (session.Sequence.PendingConfigurationChange is null)
             {
-                logger.Warning("Attempted to cancel runway mode change for {AirportIdentifier} but no mode change was pending", request.AirportIdentifier);
+                logger.Warning("Attempted to cancel configuration change for {AirportIdentifier} but no change was pending", request.AirportIdentifier);
                 return;
             }
 
-            session.Sequence.CancelRunwayModeChange();
+            session.Sequence.CancelTerminalConfigurationChange();
 
-            logger.Information("{AirportIdentifier} runway mode change cancelled", request.AirportIdentifier);
+            logger.Information("{AirportIdentifier} configuration change cancelled", request.AirportIdentifier);
 
             sessionDto = session.Snapshot();
         }

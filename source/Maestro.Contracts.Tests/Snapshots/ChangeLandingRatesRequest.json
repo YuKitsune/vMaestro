@@ -1,0 +1,8 @@
+{
+  "airportIdentifier": "YSSY",
+  "newLandingRates": {
+    "34L": "00:03:00",
+    "34R": "00:03:20"
+  },
+  "changeTime": "2024-06-15T13:30:00+00:00"
+}

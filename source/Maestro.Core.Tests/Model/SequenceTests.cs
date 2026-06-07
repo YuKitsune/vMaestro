@@ -1,5 +1,7 @@
 ﻿using Maestro.Contracts.Shared;
+using Maestro.Core;
 using Maestro.Core.Configuration;
+using Maestro.Core.Model;
 using Maestro.Core.Tests.Builders;
 using Maestro.Core.Tests.Fixtures;
 using Shouldly;
@@ -333,6 +335,197 @@ public class SequenceTests(ClockFixture clockFixture)
             "stable flight should retain its off-mode runway assignment");
         offModeFlight.LandingTime.ShouldBe(inModeFlight.LandingTime.Add(offModeSeparation),
             "off-mode flight should land exactly one off-mode separation after the in-mode flight");
+    }
+
+    [Fact]
+    public void ChangeLandingRates_FlightsLandingAfterChangeTime_UseNewRate()
+    {
+        // Arrange
+        var newAcceptanceRate = TimeSpan.FromSeconds(300);
+        var changeTime = _time.AddMinutes(11);
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        var flight1 = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(5))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var flight2 = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(13))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(8))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var flight3 = new FlightBuilder("GHI789")
+            .WithLandingEstimate(_time.AddMinutes(16))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(11))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
+        sequence.Insert(2, flight3);
+
+        // Act
+        sequence.ChangeLandingRates(new Dictionary<string, TimeSpan> { ["34L"] = newAcceptanceRate }, changeTime);
+
+        // Assert
+        flight1.LandingTime.ShouldBe(flight1.LandingEstimate,
+            "the first flight lands before the change time and is unaffected");
+        (flight2.LandingTime - flight1.LandingTime).ShouldBe(newAcceptanceRate,
+            "the second flight lands after the change time and is separated by the new rate");
+        (flight3.LandingTime - flight2.LandingTime).ShouldBe(newAcceptanceRate,
+            "the third flight lands after the change time and is separated by the new rate");
+    }
+
+    [Fact]
+    public void ChangeLandingRates_FlightsLandingBeforeChangeTime_UseOldRate()
+    {
+        // Arrange
+        var newAcceptanceRate = TimeSpan.FromSeconds(300);
+        var changeTime = _time.AddMinutes(30);
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        var flight1 = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(5))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var flight2 = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(12))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(7))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
+
+        // Act
+        sequence.ChangeLandingRates(new Dictionary<string, TimeSpan> { ["34L"] = newAcceptanceRate }, changeTime);
+
+        // Assert
+        (flight2.LandingTime - flight1.LandingTime).ShouldBe(_acceptanceRate,
+            "both flights land before the change time and are separated by the old rate");
+    }
+
+    [Fact]
+    public void ChangeLandingRates_WithRateForRunwayNotInCurrentMode_Throws()
+    {
+        // Arrange
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        // Act / Assert
+        Should.Throw<MaestroException>(() =>
+            sequence.ChangeLandingRates(
+                new Dictionary<string, TimeSpan> { ["34R"] = TimeSpan.FromSeconds(300) },
+                _time.AddMinutes(10)));
+    }
+
+    [Fact]
+    public void ChangeLandingRates_StoresPendingChange()
+    {
+        // Arrange
+        var newAcceptanceRate = TimeSpan.FromSeconds(300);
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        // Act
+        sequence.ChangeLandingRates(new Dictionary<string, TimeSpan> { ["34L"] = newAcceptanceRate }, _time.AddMinutes(10));
+
+        // Assert
+        var pending = sequence.PendingConfigurationChange.ShouldBeOfType<LandingRatesChange>();
+        pending.ChangeTime.ShouldBe(_time.AddMinutes(10));
+        pending.NewLandingRates["34L"].ShouldBe(newAcceptanceRate);
+        sequence.CurrentRunwayMode.Runways.Single(r => r.Identifier == "34L").AcceptanceRate.ShouldBe(_acceptanceRate,
+            "the current runway mode is unchanged until the change time is reached");
+    }
+
+    [Fact]
+    public void CancelTerminalConfigurationChange_AfterLandingRatesChange_RevertsToOldRate()
+    {
+        // Arrange
+        var newAcceptanceRate = TimeSpan.FromSeconds(300);
+        var changeTime = _time.AddMinutes(11);
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        var flight1 = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(5))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var flight2 = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(13))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(8))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        sequence.Insert(0, flight1);
+        sequence.Insert(1, flight2);
+        sequence.ChangeLandingRates(new Dictionary<string, TimeSpan> { ["34L"] = newAcceptanceRate }, changeTime);
+
+        // Act
+        sequence.CancelTerminalConfigurationChange();
+
+        // Assert
+        sequence.PendingConfigurationChange.ShouldBeNull();
+        (flight2.LandingTime - flight1.LandingTime).ShouldBe(_acceptanceRate,
+            "cancelling the change reverts separation to the old rate");
+    }
+
+    [Fact]
+    public void TrySwapTerminalConfiguration_WhenChangeTimeReached_PromotesNewRate()
+    {
+        // Arrange
+        var newAcceptanceRate = TimeSpan.FromSeconds(300);
+        var changeTime = _time.AddMinutes(10);
+        var clock = clockFixture.Instance;
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clock)
+            .Build();
+
+        sequence.ChangeLandingRates(new Dictionary<string, TimeSpan> { ["34L"] = newAcceptanceRate }, changeTime);
+
+        // Act
+        clock.SetTime(changeTime);
+        var swapped = sequence.TrySwapTerminalConfiguration();
+
+        // Assert
+        swapped.ShouldBeTrue();
+        sequence.PendingConfigurationChange.ShouldBeNull();
+        sequence.CurrentRunwayMode.Runways.Single(r => r.Identifier == "34L").AcceptanceRate.ShouldBe(newAcceptanceRate,
+            "the new rate becomes the current runway mode after the change time is reached");
     }
 
     static AirportConfiguration CreateSingleRunwayConfiguration(string runwayIdentifier, TimeSpan acceptanceRate)

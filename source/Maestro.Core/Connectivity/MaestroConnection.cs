@@ -7,6 +7,8 @@ using Maestro.Contracts.Slots;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Contracts;
+using Maestro.Core.Model;
+using Maestro.Core.Sessions;
 using MediatR;
 using MessagePack;
 using MessagePack.Resolvers;
@@ -23,6 +25,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
     readonly ServerConfiguration _serverConfiguration;
     readonly string _airportIdentifier;
     readonly IMediator _mediator;
+    readonly ISessionManager _sessionManager;
     readonly ILogger _logger;
 
     HubConnection? _hubConnection;
@@ -40,6 +43,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         string airportIdentifier,
         string environment,
         IMediator mediator,
+        ISessionManager sessionManager,
         ILogger logger)
     {
         _serverConfiguration = serverConfiguration;
@@ -47,6 +51,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         Environment = environment;
 
         _mediator = mediator;
+        _sessionManager = sessionManager;
         _logger = logger;
     }
 
@@ -176,7 +181,8 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             // Requests
             ChangeRunwayRequest => "ChangeRunway",
             ChangeRunwayModeRequest => "ChangeRunwayMode",
-            CancelRunwayModeChangeRequest => "CancelRunwayModeChange",
+            ChangeLandingRatesRequest => "ChangeLandingRates",
+            CancelConfigurationChangeRequest => "CancelConfigurationChange",
             ChangeFeederFixEstimateRequest => "ChangeFeederFixEstimate",
             InsertFlightRequest => "InsertFlight",
             MoveFlightRequest => "MoveFlight",
@@ -377,13 +383,32 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeTerminalConfiguration);
         });
 
-        hubConnection.On<RequestEnvelope, ServerResponse>("CancelRunwayModeChange", async envelope =>
+        hubConnection.On<RequestEnvelope, ServerResponse>("ChangeLandingRates", async envelope =>
         {
-            var request = (CancelRunwayModeChangeRequest) envelope.Request;
+            var request = (ChangeLandingRatesRequest) envelope.Request;
             if (request.AirportIdentifier != _airportIdentifier)
                 return ServerResponse.CreateFailure("Airport identifier mismatch");
 
-            return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeTerminalConfiguration);
+            return await ProcessEnvelopedRequest(envelope, ActionKeys.ChangeLandingRates);
+        });
+
+        hubConnection.On<RequestEnvelope, ServerResponse>("CancelConfigurationChange", async envelope =>
+        {
+            var request = (CancelConfigurationChangeRequest) envelope.Request;
+            if (request.AirportIdentifier != _airportIdentifier)
+                return ServerResponse.CreateFailure("Airport identifier mismatch");
+
+            // TODO: This sucks, please refactor.
+            // Cancelling has no dedicated permission. The relevant permission is determined by the
+            // type of change being cancelled.
+            var session = await _sessionManager.GetSession(request.AirportIdentifier, GetMessageCancellationToken());
+            var actionKey = session.Sequence.PendingConfigurationChange switch
+            {
+                LandingRatesChange => ActionKeys.ChangeLandingRates,
+                _ => ActionKeys.ChangeTerminalConfiguration
+            };
+
+            return await ProcessEnvelopedRequest(envelope, actionKey);
         });
 
         hubConnection.On<RequestEnvelope, ServerResponse>("ChangeFeederFixEstimate", async envelope =>

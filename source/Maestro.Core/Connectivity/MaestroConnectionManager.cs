@@ -1,4 +1,5 @@
 using Maestro.Core.Configuration;
+using Maestro.Core.Sessions;
 using MediatR;
 using Serilog;
 
@@ -8,6 +9,7 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
 {
     readonly ServerConfiguration _serverConfiguration;
     readonly IMediator _mediator;
+    readonly ISessionManager _sessionManager;
     readonly ILogger _logger;
     readonly SemaphoreSlim _semaphore = new(1, 1);
     readonly Dictionary<string, MaestroConnection> _connections = new();
@@ -15,10 +17,12 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
     public MaestroConnectionManager(
         ServerConfiguration serverConfiguration,
         IMediator mediator,
+        ISessionManager sessionManager,
         ILogger logger)
     {
         _serverConfiguration = serverConfiguration;
         _mediator = mediator;
+        _sessionManager = sessionManager;
         _logger = logger;
     }
 
@@ -41,6 +45,7 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
                 airportIdentifier,
                 environment,
                 _mediator,
+                _sessionManager,
                 _logger.ForContext<MaestroConnection>());
 
             _connections[airportIdentifier] = connection;
