@@ -26,7 +26,7 @@ public class CancelConfigurationChangeRequestHandler(
             return;
         }
 
-        logger.Verbose("Cancelling runway mode change for {AirportIdentifier}", request.AirportIdentifier);
+        logger.Verbose("Cancelling configuration change for {AirportIdentifier}", request.AirportIdentifier);
 
         var session = await sessionManager.GetSession(request.AirportIdentifier, cancellationToken);
         SessionDto sessionDto;
@@ -35,13 +35,13 @@ public class CancelConfigurationChangeRequestHandler(
         {
             if (session.Sequence.PendingConfigurationChange is null)
             {
-                logger.Warning("Attempted to cancel runway mode change for {AirportIdentifier} but no mode change was pending", request.AirportIdentifier);
+                logger.Warning("Attempted to cancel configuration change for {AirportIdentifier} but no change was pending", request.AirportIdentifier);
                 return;
             }
 
             session.Sequence.CancelTerminalConfigurationChange();
 
-            logger.Information("{AirportIdentifier} runway mode change cancelled", request.AirportIdentifier);
+            logger.Information("{AirportIdentifier} configuration change cancelled", request.AirportIdentifier);
 
             sessionDto = session.Snapshot();
         }
