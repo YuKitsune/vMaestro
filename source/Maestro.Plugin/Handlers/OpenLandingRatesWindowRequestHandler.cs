@@ -33,10 +33,6 @@ public class OpenLandingRatesWindowRequestHandler(
             sessionDto = session.Snapshot();
         }
 
-        var runwayModes = airportConfiguration.RunwayModes
-            .Select(r => new RunwayModeViewModel(r, airportConfiguration.DefaultOffModeSeparationSeconds))
-            .ToArray();
-
         windowManager.FocusOrCreateWindow(
             WindowKeys.LandingRates(request.AirportIdentifier),
             "Landing Rates",
@@ -44,16 +40,10 @@ public class OpenLandingRatesWindowRequestHandler(
             {
                 var pendingRatesChange = sessionDto.Sequence.PendingConfigurationChange as LandingRatesChangeDto;
 
-                var changeTime = pendingRatesChange is null
-                    ? clock.UtcNow()
-                    : pendingRatesChange.ChangeTime;
-
                 var viewModel = new LandingRatesViewModel(
                     request.AirportIdentifier,
-                    runwayModes,
-                    new RunwayModeViewModel(sessionDto.Sequence.CurrentRunwayMode),
-                    pendingRatesChange is not null ? new RunwayModeViewModel(sessionDto.Sequence.CurrentRunwayMode) : null,
-                    changeTime,
+                    sessionDto.Sequence.CurrentRunwayMode,
+                    pendingRatesChange,
                     airportConfiguration,
                     sessionDto.Sequence.SurfaceWind,
                     mediator,

@@ -21,9 +21,6 @@ public partial class LandingRatesViewModel : ObservableObject
     readonly WindDto _surfaceWind;
 
     [ObservableProperty]
-    RunwayModeViewModel _selectedRunwayMode;
-
-    [ObservableProperty]
     RunwayConfigurationItemViewModel[] _runwayConfigurationItems = [];
 
     [ObservableProperty]
@@ -37,10 +34,8 @@ public partial class LandingRatesViewModel : ObservableObject
 
     public LandingRatesViewModel(
         string airportIdentifier,
-        RunwayModeViewModel[] availableRunwayModes,
-        RunwayModeViewModel currentRunwayMode,
-        RunwayModeViewModel? nextTerminalConfiguration,
-        DateTimeOffset changeTime,
+        RunwayModeDto currentRunwayMode,
+        LandingRatesChangeDto? pendingLandingRatesChange,
         AirportConfiguration airportConfiguration,
         WindDto surfaceWind,
         IMediator mediator,
@@ -56,12 +51,12 @@ public partial class LandingRatesViewModel : ObservableObject
         _airportConfiguration = airportConfiguration;
         _surfaceWind = surfaceWind;
 
-        HasPendingChange = nextTerminalConfiguration != null;
-        SelectedRunwayMode = nextTerminalConfiguration ?? currentRunwayMode;
+        HasPendingChange = pendingLandingRatesChange != null;
+        RunwayConfigurationItems = pendingLandingRatesChange != null
+            ? CreateRunwayConfigurationItems(currentRunwayMode, pendingLandingRatesChange)
+            : CreateRunwayConfigurationItems(currentRunwayMode);
 
-        ChangeTime = changeTime;
-
-        RunwayConfigurationItems = CreateRunwayConfigurationItems(SelectedRunwayMode);
+        ChangeTime = pendingLandingRatesChange?.ChangeTime ?? DateTimeOffset.Now.AddMinutes(5);
 
         WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (_, notification) =>
         {
@@ -77,13 +72,28 @@ public partial class LandingRatesViewModel : ObservableObject
         });
     }
 
-    RunwayConfigurationItemViewModel[] CreateRunwayConfigurationItems(RunwayModeViewModel runwayMode)
+    RunwayConfigurationItemViewModel[] CreateRunwayConfigurationItems(RunwayModeDto currentRunwayMode)
     {
-        return runwayMode.Runways
+        return currentRunwayMode.Runways
             .Select(r => new RunwayConfigurationItemViewModel(
                 r.Identifier,
                 r.ApproachType,
-                r.LandingRateSeconds,
+                r.AcceptanceRateSeconds,
+                r.FeederFixes,
+                _airportConfiguration,
+                _surfaceWind))
+            .ToArray();
+    }
+
+    RunwayConfigurationItemViewModel[] CreateRunwayConfigurationItems(RunwayModeDto currentRunwayMode, LandingRatesChangeDto landingRatesChangeDto)
+    {
+        return currentRunwayMode.Runways
+            .Select(r => new RunwayConfigurationItemViewModel(
+                r.Identifier,
+                r.ApproachType,
+                landingRatesChangeDto.NewLandingRates.TryGetValue(r.Identifier, out var rate)
+                    ? (int)rate.TotalSeconds
+                    : r.AcceptanceRateSeconds,
                 r.FeederFixes,
                 _airportConfiguration,
                 _surfaceWind))
