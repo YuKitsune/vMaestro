@@ -57,19 +57,6 @@ public partial class LandingRatesViewModel : ObservableObject
             : CreateRunwayConfigurationItems(currentRunwayMode);
 
         ChangeTime = pendingLandingRatesChange?.ChangeTime ?? DateTimeOffset.Now.AddMinutes(5);
-
-        WeakReferenceMessenger.Default.Register<SessionUpdatedNotification>(this, (_, notification) =>
-        {
-            if (notification.AirportIdentifier != _airportIdentifier)
-                return;
-
-            var pendingRatesChange = notification.Session.Sequence.PendingConfigurationChange as LandingRatesChangeDto;
-
-            HasPendingChange = pendingRatesChange is not null;
-            ChangeTime = pendingRatesChange is null
-                ? _clock.UtcNow()
-                : pendingRatesChange.ChangeTime;
-        });
     }
 
     RunwayConfigurationItemViewModel[] CreateRunwayConfigurationItems(RunwayModeDto currentRunwayMode)
@@ -125,7 +112,7 @@ public partial class LandingRatesViewModel : ObservableObject
     {
         try
         {
-            _mediator.Send(new CancelConfigurationChangeRequest(_airportIdentifier), CancellationToken.None);
+            _mediator.Send(new CancelLandingRatesChangeRequest(_airportIdentifier), CancellationToken.None);
             CloseWindow();
         }
         catch (Exception ex)

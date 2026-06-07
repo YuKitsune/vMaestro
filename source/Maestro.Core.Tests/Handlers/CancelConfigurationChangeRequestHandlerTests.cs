@@ -37,7 +37,7 @@ public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixt
         sequence.PendingConfigurationChange.ShouldBeNull("precondition: no mode change should be pending");
 
         // Act
-        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         sequence.CurrentRunwayMode.Identifier.ShouldBe("34IVA", "current mode should be unchanged");
@@ -67,7 +67,7 @@ public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixt
             Substitute.For<ILogger>());
 
         // Act
-        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         sequence.CurrentRunwayMode.Identifier.ShouldBe("34IVA", "current mode should be unchanged");
@@ -96,7 +96,7 @@ public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixt
             Substitute.For<ILogger>());
 
         // Act
-        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelLandingRatesChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         sequence.PendingConfigurationChange.ShouldBeNull();
@@ -142,7 +142,7 @@ public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixt
             Substitute.For<ILogger>());
 
         // Act
-        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelLandingRatesChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         sequence.PendingConfigurationChange.ShouldBeNull();
@@ -192,7 +192,7 @@ public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixt
             Substitute.For<ILogger>());
 
         // Act
-        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         flight1.AssignedRunwayIdentifier.ShouldBe("34L", "flight1 should remain on 34L");
@@ -267,7 +267,7 @@ public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixt
             mediator,
             Substitute.For<ILogger>());
 
-        await handler.Handle(new CancelConfigurationChangeRequest("YSSY"), CancellationToken.None);
+        await handler.Handle(new CancelRunwayModeChangeRequest("YSSY"), CancellationToken.None);
 
         // Assert
         flight.AssignedRunwayIdentifier.ShouldBe("34L", "flight should be reassigned back to 34L");
@@ -301,7 +301,7 @@ public class CancelConfigurationChangeRequestHandlerTests(ClockFixture clockFixt
             mediator,
             Substitute.For<ILogger>());
 
-        var request = new CancelConfigurationChangeRequest("YSSY");
+        var request = new CancelRunwayModeChangeRequest("YSSY");
         var originalRunwayMode = sequence.CurrentRunwayMode.Identifier;
 
         // Act

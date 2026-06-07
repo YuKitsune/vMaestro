@@ -27,7 +27,8 @@ namespace Maestro.Contracts.Connectivity;
 [JsonDerivedType(typeof(DeleteSlotRequest), "DeleteSlot")]
 [JsonDerivedType(typeof(ChangeRunwayModeRequest), "ChangeRunwayMode")]
 [JsonDerivedType(typeof(ChangeLandingRatesRequest), "ChangeLandingRates")]
-[JsonDerivedType(typeof(CancelConfigurationChangeRequest), "CancelConfigurationChange")]
+[JsonDerivedType(typeof(CancelRunwayModeChangeRequest), "CancelRunwayModeChange")]
+[JsonDerivedType(typeof(CancelLandingRatesChangeRequest), "CancelLandingRatesChange")]
 [JsonDerivedType(typeof(ModifyWindRequest), "ModifyWind")]
 
 // Message Pack attributes
@@ -50,7 +51,8 @@ namespace Maestro.Contracts.Connectivity;
 [Union(16, typeof(ChangeRunwayModeRequest))]
 [Union(17, typeof(ModifyWindRequest))]
 [Union(18, typeof(ChangeLandingRatesRequest))]
-[Union(19, typeof(CancelConfigurationChangeRequest))]
+[Union(19, typeof(CancelRunwayModeChangeRequest))]
+[Union(20, typeof(CancelLandingRatesChangeRequest))]
 public interface IRelayableRequest
 {
     string AirportIdentifier { get; }

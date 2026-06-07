@@ -118,7 +118,7 @@ public class Sequence
         }
     }
 
-    public void CancelTerminalConfigurationChange()
+    public void CancelConfigurationChange()
     {
         lock (_gate)
         {

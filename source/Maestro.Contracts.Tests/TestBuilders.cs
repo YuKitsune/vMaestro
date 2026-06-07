@@ -98,7 +98,10 @@ public static class TestBuilders
     public static ChangeRunwayModeRequest CreateChangeRunwayModeRequest() =>
         new("YSSY", CreateRunwayModeDto(), FixedTime.AddHours(1), FixedTime.AddHours(1).AddMinutes(5));
 
-    public static CancelConfigurationChangeRequest CreateCancelConfigurationChangeRequest() =>
+    public static CancelRunwayModeChangeRequest CreateCancelRunwayModeChangeRequest() =>
+        new("YSSY");
+
+    public static CancelLandingRatesChangeRequest CreateCancelLandingRatesChangeRequest() =>
         new("YSSY");
 
     public static ChangeLandingRatesRequest CreateChangeLandingRatesRequest() =>
