@@ -27,9 +27,7 @@ public class SessionUpdatedNotificationHandlerTests
             Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
-                NextRunwayMode = null,
-                LastLandingTimeForCurrentMode = default,
-                FirstLandingTimeForNextMode = default,
+                PendingConfigurationChange = null,
                 Flights = [],
                 Slots = [],
                 UpperWind = new WindDto(0, 0),
@@ -78,9 +76,7 @@ public class SessionUpdatedNotificationHandlerTests
             Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
-                NextRunwayMode = null,
-                LastLandingTimeForCurrentMode = default,
-                FirstLandingTimeForNextMode = default,
+                PendingConfigurationChange = null,
                 Flights = [],
                 Slots = [],
                 UpperWind = new WindDto(0, 0),
@@ -133,9 +129,7 @@ public class SessionUpdatedNotificationHandlerTests
             Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
-                NextRunwayMode = null,
-                LastLandingTimeForCurrentMode = default,
-                FirstLandingTimeForNextMode = default,
+                PendingConfigurationChange = null,
                 Flights = [],
                 Slots = [],
                 UpperWind = new WindDto(0, 0),
@@ -191,9 +185,7 @@ public class SessionUpdatedNotificationHandlerTests
             Sequence = new SequenceDto
             {
                 CurrentRunwayMode = null,
-                NextRunwayMode = null,
-                LastLandingTimeForCurrentMode = default,
-                FirstLandingTimeForNextMode = default,
+                PendingConfigurationChange = null,
                 Flights = [],
                 Slots = [],
                 UpperWind = new WindDto(0, 0),
