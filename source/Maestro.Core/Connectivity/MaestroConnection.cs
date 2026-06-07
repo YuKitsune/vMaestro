@@ -176,6 +176,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
             // Requests
             ChangeRunwayRequest => "ChangeRunway",
             ChangeRunwayModeRequest => "ChangeRunwayMode",
+            ChangeLandingRatesRequest => "ChangeLandingRates",
             CancelConfigurationChangeRequest => "CancelConfigurationChange",
             ChangeFeederFixEstimateRequest => "ChangeFeederFixEstimate",
             InsertFlightRequest => "InsertFlight",
