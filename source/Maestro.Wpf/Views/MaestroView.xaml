@@ -148,7 +148,13 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <DataTemplate.Resources>
-                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}"/>
+                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource InteractiveTextStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.LandingRateChangeIsPlanned, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True">
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
                                 </DataTemplate.Resources>
 
                                 <StackPanel Orientation="Horizontal">

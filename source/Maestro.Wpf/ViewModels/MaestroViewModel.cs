@@ -41,6 +41,9 @@ public partial class MaestroViewModel : ObservableObject
     RunwayModeViewModel? _nextRunwayMode;
 
     [ObservableProperty]
+    bool _landingRateChangeIsPlanned;
+
+    [ObservableProperty]
     DateTimeOffset? _runwayModeChangeTime;
 
     [ObservableProperty]
@@ -274,6 +277,8 @@ public partial class MaestroViewModel : ObservableObject
                 ? new RunwayModeViewModel(pendingModeChange.NewRunwayMode)
                 : null;
             RunwayModeChangeTime = pendingModeChange?.FirstLandingTimeInNewMode;
+
+            LandingRateChangeIsPlanned = notification.Session.Sequence.PendingConfigurationChange is LandingRatesChangeDto;
 
             DeSequencedFlights = notification.Session.DeSequencedFlights.ToList();
             FlightDataRecords = notification.Session.FlightDataRecords;
