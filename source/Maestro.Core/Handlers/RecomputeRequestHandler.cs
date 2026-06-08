@@ -99,7 +99,7 @@ public class RecomputeRequestHandler(
             // Reset the state
             flight.SetState(State.Unstable, clock);
 
-            sequence.RepositionByLandingEstimate(flight);
+            sequence.RepositionByLandingEstimate(flight, forceRescheduleStable: true);
             flight.UpdateStateBasedOnTime(clock, airportConfiguration);
 
             logger.Information("{Callsign} recomputed", flight.Callsign);

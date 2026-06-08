@@ -528,6 +528,122 @@ public class SequenceTests(ClockFixture clockFixture)
             "the new rate becomes the current runway mode after the change time is reached");
     }
 
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    public void Schedule_WhenUnstableFlightAheadHasEtaChange_StableFlightBehindDoesNotMove(State stableFlightState)
+    {
+        // Arrange
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        var unstableFlight = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var stableFlight = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(stableFlightState)
+            .Build();
+
+        sequence.Insert(0, unstableFlight);
+        sequence.Insert(1, stableFlight);
+
+        var stableLandingTimeBefore = stableFlight.LandingTime;
+        stableLandingTimeBefore.ShouldBe(_time.AddMinutes(15));
+
+        // Act: unstable flight's ETA moves earlier, then sequence is recomputed without forcing
+        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(8));
+        sequence.Schedule(0);
+
+        // Assert
+        stableFlight.LandingTime.ShouldBe(stableLandingTimeBefore,
+            $"{stableFlightState} flight's landing time must not change when an unstable flight ahead recomputes");
+        unstableFlight.LandingTime.ShouldBe(_time.AddMinutes(8),
+            "unstable flight takes its new estimate");
+    }
+
+    [Fact]
+    public void Schedule_WhenUnstableFlightConflictsWithStableBehind_UnstableIsMovedBehindStable()
+    {
+        // Arrange
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        var unstableFlight = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var stableFlight = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        sequence.Insert(0, unstableFlight);
+        sequence.Insert(1, stableFlight);
+
+        var stableLandingTimeBefore = stableFlight.LandingTime;
+
+        // Act: unstable flight slows down into conflict with stable behind it
+        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(14));
+        sequence.Schedule(0);
+
+        // Assert
+        stableFlight.LandingTime.ShouldBe(stableLandingTimeBefore,
+            "stable flight's landing time must not move to accommodate a delayed unstable flight");
+        sequence.IndexOf(stableFlight).ShouldBe(0,
+            "stable flight should now lead the sequence");
+        sequence.IndexOf(unstableFlight).ShouldBe(1,
+            "unstable flight should be pushed behind the stable flight");
+        unstableFlight.LandingTime.ShouldBe(stableFlight.LandingTime.Add(_acceptanceRate),
+            "unstable flight must be separated from the stable flight by the acceptance rate");
+    }
+
+    [Fact]
+    public void Schedule_WithForceRescheduleStable_RecomputesStableFlights()
+    {
+        // Arrange
+        var airportConfig = CreateSingleRunwayConfiguration("34L", _acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        var unstableFlight = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Unstable)
+            .Build();
+
+        var stableFlight = new FlightBuilder("DEF456")
+            .WithLandingEstimate(_time.AddMinutes(15))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        sequence.Insert(0, unstableFlight);
+        sequence.Insert(1, stableFlight);
+
+        // Act: change unstable ETA, then force a reschedule of stable flights
+        unstableFlight.UpdateLandingEstimate(_time.AddMinutes(8));
+        sequence.Schedule(0, forceRescheduleStable: true);
+
+        // Assert
+        unstableFlight.LandingTime.ShouldBe(_time.AddMinutes(8),
+            "unstable flight takes its new estimate");
+        stableFlight.LandingTime.ShouldBe(_time.AddMinutes(15),
+            "stable flight retains its earlier landing estimate when unconstrained");
+    }
+
     static AirportConfiguration CreateSingleRunwayConfiguration(string runwayIdentifier, TimeSpan acceptanceRate)
     {
         return new AirportConfigurationBuilder("YSSY")

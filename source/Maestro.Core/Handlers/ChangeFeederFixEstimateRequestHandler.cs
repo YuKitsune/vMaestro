@@ -50,7 +50,7 @@ public class ChangeFeederFixEstimateRequestHandler(
 
             flight.UpdateFeederFixEstimate(request.NewFeederFixEstimate, manual: true);
 
-            session.Sequence.RepositionByLandingEstimate(flight);
+            session.Sequence.RepositionByLandingEstimate(flight, forceRescheduleStable: true);
             if (flight.State is State.Unstable)
                 flight.SetState(airportConfiguration.ManualInteractionState, clock); // TODO: Make configurable
 
