@@ -71,7 +71,7 @@ public class Sequence
         lock (_gate)
         {
             CurrentRunwayMode = runwayMode;
-            Schedule(0, forceRescheduleStable: true);
+            Schedule(0, forceRescheduleStable: true, reassignOffModeRunways: true);
         }
     }
 
@@ -96,7 +96,7 @@ public class Sequence
                 firstLandingTimeForNewMode);
 
             var recomputeIndex = IndexOf(recomputeBoundary);
-            Schedule(recomputeIndex, forceRescheduleStable: true);
+            Schedule(recomputeIndex, forceRescheduleStable: true, reassignOffModeRunways: true);
         }
     }
 
@@ -125,6 +125,8 @@ public class Sequence
             if (PendingConfigurationChange is null)
                 return;
 
+            var isTerminalChange = PendingConfigurationChange is TerminalConfigurationChange;
+
             var recomputeTime = PendingConfigurationChange switch
             {
                 TerminalConfigurationChange terminalConfigurationChange => terminalConfigurationChange.FirstLandingTimeInNewMode,
@@ -136,7 +138,7 @@ public class Sequence
 
             PendingConfigurationChange = null;
 
-            Schedule(recomputeIndex, forceRescheduleStable: true);
+            Schedule(recomputeIndex, forceRescheduleStable: true, reassignOffModeRunways: isTerminalChange);
         }
     }
 
@@ -545,7 +547,12 @@ public class Sequence
     ///     When <c>false</c>, flights that are not <see cref="State.Unstable"/> will not be affected. Any <see cref="State.Unstable"/> flights
     ///     in conflict with a non-<see cref="State.Unstable"/> flight will be moved behind them as to not adjust their landing times.
     /// </param>
-    public void Schedule(int startIndex, bool forceRescheduleStable = false)
+    /// <param name="reassignOffModeRunways">
+    ///     When <c>true</c>, Stable and SuperStable flights whose assigned runway is not in the current runway mode will
+    ///     be re-assigned to a runway in the current mode. Use when the runway mode itself has changed.
+    ///     When <c>false</c>, such flights retain their off-mode runway assignment.
+    /// </param>
+    public void Schedule(int startIndex, bool forceRescheduleStable = false, bool reassignOffModeRunways = false)
     {
         lock (_gate)
         {
@@ -596,7 +603,8 @@ public class Sequence
                 var runwayOptions = GetRunways(
                     _airportConfiguration,
                     currentFlight,
-                    currentRunwayMode);
+                    currentRunwayMode,
+                    reassignOffModeRunways);
 
                 log.Debug("Schedule {Callsign}: {Count} runway options found", currentFlight.Callsign, runwayOptions.Length);
 
@@ -1064,7 +1072,7 @@ public class Sequence
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, TerminalTrajectory Trajectory);
 
     // TODO: Extract this out into a separate service so we can test it
-    RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode)
+    RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode, bool reassignOffModeRunways = false)
     {
         // If a runway is assigned, and the flight is stable, leave it as-is
         // For stable flights, preserve both the runway AND the approach type
@@ -1077,10 +1085,14 @@ public class Sequence
                 return [new RunwayOption(runway.Identifier, flight.ApproachType, runway.AcceptanceRate, trajectory)];
             }
 
-            // Runway is off-mode, create an ad-hoc option
-            var separation = runwayMode.OffModeSeparation;
-            var offModeTrajectory = _trajectoryService.GetTrajectory(flight, flight.AssignedRunwayIdentifier, flight.ApproachType, [], UpperWind);
-            return [new RunwayOption(flight.AssignedRunwayIdentifier, flight.ApproachType, separation, offModeTrajectory)];
+            // Runway is off-mode. During a runway mode change, re-assign to a runway in the new mode.
+            // Otherwise preserve the off-mode assignment.
+            if (!reassignOffModeRunways)
+            {
+                var separation = runwayMode.OffModeSeparation;
+                var offModeTrajectory = _trajectoryService.GetTrajectory(flight, flight.AssignedRunwayIdentifier, flight.ApproachType, [], UpperWind);
+                return [new RunwayOption(flight.AssignedRunwayIdentifier, flight.ApproachType, separation, offModeTrajectory)];
+            }
         }
 
         var possibleRunways = new HashSet<RunwayOption>();
