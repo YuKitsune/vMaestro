@@ -91,7 +91,7 @@ public class ChangeRunwayRequestHandler(
             if (flight.State is State.Unstable)
                 flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
-            sequence.RepositionByFeederFixEstimate(flight);
+            sequence.RepositionByFeederFixEstimate(flight, forceRescheduleStable: true);
 
             logger.Information("{Callsign} runway changed to {Runway}", flight.Callsign, request.RunwayIdentifier);
 

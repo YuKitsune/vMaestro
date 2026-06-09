@@ -71,7 +71,7 @@ public class Sequence
         lock (_gate)
         {
             CurrentRunwayMode = runwayMode;
-            Schedule(0);
+            Schedule(0, forceRescheduleStable: true);
         }
     }
 
@@ -96,7 +96,7 @@ public class Sequence
                 firstLandingTimeForNewMode);
 
             var recomputeIndex = IndexOf(recomputeBoundary);
-            Schedule(recomputeIndex);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
         }
     }
 
@@ -114,7 +114,7 @@ public class Sequence
             PendingConfigurationChange = new LandingRatesChange(newLandingRates, ratesChangeTime);
 
             var recomputeIndex = IndexOf(ratesChangeTime);
-            Schedule(recomputeIndex);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
         }
     }
 
@@ -136,7 +136,7 @@ public class Sequence
 
             PendingConfigurationChange = null;
 
-            Schedule(recomputeIndex);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
         }
     }
 
@@ -264,7 +264,7 @@ public class Sequence
         {
             ValidateInsertionBetweenImmovableFlights(index, flight.AssignedRunwayIdentifier);
             _flights.Insert(index, flight);
-            Schedule(index);
+            Schedule(index, forceRescheduleStable: true);
         }
     }
 
@@ -342,7 +342,7 @@ public class Sequence
         }
     }
 
-    public void Move(Flight flight, int newIndex)
+    public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false)
     {
         lock (_gate)
         {
@@ -363,7 +363,7 @@ public class Sequence
             }
 
             var recomputeIndex = Math.Min(newIndex, currentIndex);
-            Schedule(recomputeIndex);
+            Schedule(recomputeIndex, forceRescheduleStable);
         }
     }
 
@@ -425,7 +425,7 @@ public class Sequence
 
             _flights.RemoveAt(index);
 
-            Schedule(index);
+            Schedule(index, forceRescheduleStable: true);
         }
     }
 
@@ -439,7 +439,7 @@ public class Sequence
             _slots.Add(slot);
 
             var recomputeIndex = IndexOf(start);
-            Schedule(recomputeIndex);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
 
             return id;
         }
@@ -461,7 +461,7 @@ public class Sequence
             // BUG: If a flight is scheduled to land after the start time, but estimated to land before it, they need
             //  to be recomputed. Maybe this is okay?
             var rescheduleIndex = IndexOf(start);
-            Schedule(rescheduleIndex);
+            Schedule(rescheduleIndex, forceRescheduleStable: true);
         }
     }
 
@@ -476,7 +476,7 @@ public class Sequence
             _slots.Remove(slot);
 
             var rescheduleIndex = IndexOf(slot.StartTime);
-            Schedule(rescheduleIndex);
+            Schedule(rescheduleIndex, forceRescheduleStable: true);
         }
     }
 
@@ -545,7 +545,7 @@ public class Sequence
     ///     When <c>false</c>, flights that are not <see cref="State.Unstable"/> will not be affected. Any <see cref="State.Unstable"/> flights
     ///     in conflict with a non-<see cref="State.Unstable"/> flight will be moved behind them as to not adjust their landing times.
     /// </param>
-    public void Schedule(int startIndex)
+    public void Schedule(int startIndex, bool forceRescheduleStable = false)
     {
         lock (_gate)
         {
@@ -569,6 +569,12 @@ public class Sequence
 
                 var currentFlight = flightItem.Flight;
                 if (currentFlight.State is State.Landed or State.Frozen)
+                {
+                    continue;
+                }
+
+                // Stable and SuperStable flights should not be rescheduled unless forced
+                if (!forceRescheduleStable && currentFlight.State is State.Stable or State.SuperStable)
                 {
                     continue;
                 }
@@ -791,9 +797,10 @@ public class Sequence
                     case SlotSequenceItem slotSequenceItem when slotSequenceItem.Slot.RunwayIdentifiers.Contains(referenceRunway.Identifier):
                         return slotSequenceItem.Slot.StartTime;
 
-                    // Landed and Frozen flights cannot move
+                    // Landed and Frozen flights cannot move.
+                    // Stable and SuperStable flights cannot move unless forced.
                     // Any other flight can be moved, so we'll ignore them and rely on the next iteration to re-calculate their STA
-                    case FlightSequenceItem { Flight.State: State.Landed or State.Frozen } flightSequenceItem:
+                    case FlightSequenceItem flightSequenceItem when IsImmovable(flightSequenceItem.Flight):
                     {
                         var requiredSeparation = GetRequiredSeparation(flightSequenceItem, referenceRunway, runwayMode);
                         if (requiredSeparation == TimeSpan.Zero)
@@ -804,6 +811,17 @@ public class Sequence
 
                     default: return null;
                 }
+            }
+
+            bool IsImmovable(Flight flight)
+            {
+                if (flight.State is State.Landed or State.Frozen)
+                    return true;
+
+                if (!forceRescheduleStable && flight.State is State.Stable or State.SuperStable)
+                    return true;
+
+                return false;
             }
 
             DateTimeOffset? GetEarliestLandingTimeFromItem(ISequenceItem item, RunwayMode runwayMode, Runway referenceRunway)

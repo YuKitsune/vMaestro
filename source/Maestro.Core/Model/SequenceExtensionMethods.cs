@@ -6,7 +6,8 @@ public static class SequenceExtensionMethods
 {
     public static void RepositionByFeederFixEstimate(
         this Sequence sequence,
-        Flight flight)
+        Flight flight,
+        bool forceRescheduleStable = false)
     {
         var newIndex = sequence.FindIndex(
             f => f.FeederFixEstimate.IsAfter(flight.FeederFixEstimate));
@@ -14,12 +15,13 @@ public static class SequenceExtensionMethods
         if (newIndex == -1)
             newIndex = sequence.Flights.Count;
 
-        sequence.Move(flight, newIndex);
+        sequence.Move(flight, newIndex, forceRescheduleStable);
     }
 
     public static void RepositionByLandingEstimate(
         this Sequence sequence,
-        Flight flight)
+        Flight flight,
+        bool forceRescheduleStable = false)
     {
         var newIndex = sequence.FindIndex(
             f => f.LandingEstimate.IsAfter(flight.LandingEstimate));
@@ -27,6 +29,6 @@ public static class SequenceExtensionMethods
         if (newIndex == -1)
             newIndex = sequence.Flights.Count;
 
-        sequence.Move(flight, newIndex);
+        sequence.Move(flight, newIndex, forceRescheduleStable);
     }
 }

@@ -86,7 +86,7 @@ public class MoveFlightRequestHandler(
             if (flight.State == State.Unstable)
                 flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
-            sequence.Move(flight, newIndex);
+            sequence.Move(flight, newIndex, forceRescheduleStable: true);
 
             logger.Information("Flight {Callsign} moved to {NewLandingTime}", flight.Callsign, flight.LandingTime);
 
