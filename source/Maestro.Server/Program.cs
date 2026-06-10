@@ -1,8 +1,10 @@
 using System.Reflection;
+using System.Threading.RateLimiting;
 using Maestro.Contracts.Sessions;
 using Maestro.Server;
 using MessagePack;
 using MessagePack.Resolvers;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi;
 using Serilog;
@@ -81,10 +83,31 @@ try
 
     builder.Services.AddRazorPages();
 
+    builder.Services.AddRateLimiter(options =>
+    {
+        var rateLimiting = builder.Configuration.GetSection("RateLimiting");
+        var permitLimit = rateLimiting.GetValue<int>("PermitLimit", 100);
+        var windowSeconds = rateLimiting.GetValue<int>("WindowSeconds", 60);
+
+        options.AddPolicy("api", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = permitLimit,
+                    Window = TimeSpan.FromSeconds(windowSeconds),
+                    QueueLimit = 0
+                }));
+
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    });
+
     var app = builder.Build();
 
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    app.UseRateLimiter();
 
     app.MapHub<MaestroHub>(
         "/hub",
@@ -100,7 +123,7 @@ try
         .Produces(200);
 
     // Session API
-    var api = app.MapGroup("/api");
+    var api = app.MapGroup("/api").RequireRateLimiting("api");
 
     api.MapGet("/sessions", (SessionCache cache) =>
     {
