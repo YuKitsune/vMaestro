@@ -621,39 +621,38 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task FlightsInNewMode_OffModeFlightSeparatedByOffModeRate()
+    public async Task StableFlights_WithOldModeRunway_AreReassignedToNewMode()
     {
         var now = clockFixture.Instance.UtcNow();
 
         // Arrange
-        const int offModeRateSeconds = 300;
+        const int acceptanceRateSeconds = 180;
 
         var airportConfiguration = new AirportConfigurationBuilder("YSSY")
             .WithRunways("34L", "34R", "16L", "16R")
             .WithFeederFixes("RIVET", "BOREE")
             .WithRunwayMode("34IVA",
-                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] },
-                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] })
+                new RunwayConfiguration { Identifier = "34L", ApproachType = "", LandingRateSeconds = acceptanceRateSeconds, FeederFixes = ["RIVET"] },
+                new RunwayConfiguration { Identifier = "34R", ApproachType = "", LandingRateSeconds = acceptanceRateSeconds, FeederFixes = ["BOREE"] })
             .WithRunwayMode(new RunwayModeConfiguration
             {
                 Identifier = "16IVA",
-                OffModeSeparationSeconds = offModeRateSeconds,
                 Runways =
                 [
-                    new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["BOREE"] },
-                    new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = 180, FeederFixes = ["RIVET"] }
+                    new RunwayConfiguration { Identifier = "16L", ApproachType = "", LandingRateSeconds = acceptanceRateSeconds, FeederFixes = ["BOREE"] },
+                    new RunwayConfiguration { Identifier = "16R", ApproachType = "", LandingRateSeconds = acceptanceRateSeconds, FeederFixes = ["RIVET"] }
                 ]
             })
             .Build();
 
-        // flight1 lands in the new mode on 16L
+        // flight1 is unstable with a BOREE feeder fix — gets assigned to 16L
         var flight1 = new FlightBuilder("QFA1")
             .WithLandingEstimate(now.AddMinutes(27))
             .WithLandingTime(now.AddMinutes(27))
             .WithFeederFix("BOREE")
             .Build();
 
-        // flight2 is stable on 34L (off-mode in 16IVA) — it retains its runway but must be separated by the off-mode rate
+        // flight2 is stable on 34L (old mode) — should be re-assigned to the new mode on mode change
         var flight2 = new FlightBuilder("QFA2")
             .WithLandingEstimate(now.AddMinutes(27))
             .WithLandingTime(now.AddMinutes(27))
@@ -680,11 +679,11 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
         var runwayModeDto = new RunwayModeDto(
             "16IVA",
             [
-                new RunwayDto("16L", string.Empty, 180, []),
-                new RunwayDto("16R", string.Empty, 180, [])
+                new RunwayDto("16L", string.Empty, acceptanceRateSeconds, []),
+                new RunwayDto("16R", string.Empty, acceptanceRateSeconds, [])
             ],
             DefaultDependencyRateSeconds,
-            offModeRateSeconds);
+            DefaultOffModeSeconds);
 
         var request = new ChangeRunwayModeRequest(
             "YSSY",
@@ -696,13 +695,12 @@ public class ChangeRunwayModeRequestHandlerTests(ClockFixture clockFixture)
         await handler.Handle(request, CancellationToken.None);
 
         // Assert
+        var firstLandingTimeForNewMode = now.AddMinutes(25);
         flight1.AssignedRunwayIdentifier.ShouldBe("16L", "QFA1 (BOREE) should be assigned to 16L in the new mode");
-        flight2.AssignedRunwayIdentifier.ShouldBe("34L", "stable QFA2 should retain its off-mode runway 34L");
-
-        var actualSeparation = flight2.LandingTime - flight1.LandingTime;
-        actualSeparation.ShouldBeGreaterThanOrEqualTo(
-            TimeSpan.FromSeconds(offModeRateSeconds),
-            "off-mode flight should be separated from in-mode flight by the off-mode rate");
+        flight2.AssignedRunwayIdentifier.ShouldBeOneOf("16L", "16R",
+            "stable QFA2 should be re-assigned to the new mode — its old 34L runway is no longer valid");
+        flight2.LandingTime.ShouldBeGreaterThanOrEqualTo(firstLandingTimeForNewMode,
+            "QFA2 must land at or after the new mode start time");
     }
 
     [Fact]
