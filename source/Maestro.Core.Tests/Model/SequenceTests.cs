@@ -338,6 +338,70 @@ public class SequenceTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public void Schedule_WhenOffModeFlightIsDisplacedPastModeChangeBoundary_OffModeSeparationIsApplied()
+    {
+        // Arrange
+        var offModeSeparation = TimeSpan.FromSeconds(300);
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate, offModeSeparationSeconds: (int)offModeSeparation.TotalSeconds);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        // Pending mode change: last 34IVA landing at T+659s, first 16IVA landing at T+720s.
+        // Boundary chosen so existing_34L.STA (T+480s) + acceptanceRate (180s) = T+660s exceeds
+        // lastLandingInOldMode (T+659s), forcing the off-mode flight into 16IVA territory via
+        // the backward search in EvaluateRunwayOption.
+        var lastLandingInOldMode = _time.AddSeconds(659);
+        var firstLandingInNewMode = _time.AddSeconds(720);
+        var newMode = new RunwayMode(
+            "16IVA",
+            [
+                new Runway("16L", string.Empty, _acceptanceRate, []),
+                new Runway("16R", string.Empty, _acceptanceRate, [])
+            ],
+            dependencyRate: TimeSpan.Zero,
+            offModeSeparation: offModeSeparation);
+        sequence.ChangeRunwayMode(newMode, lastLandingInOldMode, firstLandingInNewMode);
+
+        // Occupies the last available 34L slot in 34IVA territory
+        var existing34L = new FlightBuilder("EXISTING_34L")
+            .WithFeederFix(null)
+            .WithLandingEstimate(_time.AddSeconds(480))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+        sequence.Insert(0, existing34L);
+
+        // STA determines the 300s off-mode constraint for the off-mode flight in 16IVA territory
+        var existing34R = new FlightBuilder("EXISTING_34R")
+            .WithFeederFix(null)
+            .WithLandingEstimate(_time.AddSeconds(600))
+            .WithRunway("34R")
+            .WithState(State.Stable)
+            .Build();
+        sequence.Insert(1, existing34R);
+
+        // Stable flight on 34L (off-mode in 16IVA), ETA just after existing34L.
+        // Cannot fit in 34IVA territory (earliest T+660s > lastLanding T+659s), so the scheduler
+        // searches backward past the mode change boundary into 16IVA territory.
+        var offModeFlight = new FlightBuilder("OFF_MODE")
+            .WithFeederFix(null)
+            .WithLandingEstimate(_time.AddSeconds(490))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        // Act
+        sequence.Insert(1, offModeFlight);
+
+        // Assert
+        offModeFlight.AssignedRunwayIdentifier.ShouldBe("34L",
+            "stable flight should retain its off-mode runway assignment");
+        offModeFlight.LandingTime.ShouldBe(existing34R.LandingTime.Add(offModeSeparation),
+            "off-mode flight displaced past mode change boundary must have off-mode separation from the preceding runway flight");
+    }
+
+    [Fact]
     public void ChangeLandingRates_FlightsLandingAfterChangeTime_UseNewRate()
     {
         // Arrange

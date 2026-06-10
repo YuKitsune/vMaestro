@@ -741,6 +741,12 @@ public class Sequence
                 return currentIndex;
             }
 
+            RunwayMode GetRunwayModeAtIndex(int index) =>
+                sequence.Take(index)
+                    .OfType<RunwayModeChangeSequenceItem>()
+                    .LastOrDefault()
+                    ?.RunwayMode ?? throw new Exception("No runway mode found");
+
             DateTimeOffset GetEarliestLandingTimeForIndex(string callsign, int index, DateTimeOffset landingEstimate, RunwayMode runwayMode, Runway referenceRunway)
             {
                 ISequenceItem? constraintSource = null;
@@ -927,8 +933,11 @@ public class Sequence
                     var foundValidPosition = false;
                     for (var candidateIndex = position + 1; candidateIndex <= sequence.Count; candidateIndex++)
                     {
-                        var candidateEarliest = GetEarliestLandingTimeForIndex(flight.Callsign, candidateIndex, targetLandingTime, runwayMode, runway);
-                        var candidateLatest = GetLatestLandingTimeForIndex(flight.Callsign, candidateIndex, runwayMode, runway);
+                        // The runway mode may change as we search backward past a mode change item.
+                        // Use the mode at the candidate position so separation is computed correctly.
+                        var candidateRunwayMode = GetRunwayModeAtIndex(candidateIndex);
+                        var candidateEarliest = GetEarliestLandingTimeForIndex(flight.Callsign, candidateIndex, targetLandingTime, candidateRunwayMode, runway);
+                        var candidateLatest = GetLatestLandingTimeForIndex(flight.Callsign, candidateIndex, candidateRunwayMode, runway);
 
                         // Check if this position is valid
                         if (candidateLatest.HasValue && !candidateEarliest.IsSameOrBefore(candidateLatest.Value))
@@ -943,7 +952,7 @@ public class Sequence
                         if (candidateIndex < sequence.Count)
                         {
                             var itemAtPosition = sequence[candidateIndex];
-                            var latestFromDisplacedItem = GetLatestLandingTimeFromItem(itemAtPosition, runwayMode, runway);
+                            var latestFromDisplacedItem = GetLatestLandingTimeFromItem(itemAtPosition, candidateRunwayMode, runway);
                             if (latestFromDisplacedItem.HasValue && candidateEarliest.IsAfter(latestFromDisplacedItem.Value))
                             {
                                 log.Debug(
