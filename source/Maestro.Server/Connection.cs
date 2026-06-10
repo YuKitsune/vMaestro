@@ -10,7 +10,7 @@ public class Connection(string id, string version, string environment, string ai
     public string AirportIdentifier { get; } = airportIdentifier;
     public string Callsign { get; } = callsign;
     public Role Role { get; } = role;
-    public bool IsMaster { get; set; } = false;
+    public bool IsMaster { get; internal set; } = false;
 
     public override string ToString() => $"{Id} ({Callsign})";
 }

@@ -103,6 +103,8 @@ public class ClientDisconnectedNotificationHandlerTests
                 return true;
             }));
         connectionManager.Setup(x => x.GetPeers(primaryFlowController)).Returns([otherPeer, secondaryFlowController]);
+        connectionManager.Setup(x => x.PromoteMaster(secondaryFlowController))
+            .Callback<Connection>(c => c.IsMaster = true);
 
         var hubProxy = new Mock<IHubProxy>();
 
@@ -111,7 +113,7 @@ public class ClientDisconnectedNotificationHandlerTests
             .Handle(notification, CancellationToken.None);
 
         // Assert
-        primaryFlowController.IsMaster.ShouldBeTrue();
+        secondaryFlowController.IsMaster.ShouldBeTrue();
         otherPeer.IsMaster.ShouldBeFalse();
 
         hubProxy.Verify(x => x.Send(
@@ -161,6 +163,8 @@ public class ClientDisconnectedNotificationHandlerTests
                 return true;
             }));
         connectionManager.Setup(x => x.GetPeers(masterConnection)).Returns([nextMaster, observer]);
+        connectionManager.Setup(x => x.PromoteMaster(nextMaster))
+            .Callback<Connection>(c => c.IsMaster = true);
 
         var hubProxy = new Mock<IHubProxy>();
 
