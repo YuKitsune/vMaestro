@@ -42,7 +42,7 @@ public class ClientDisconnectedNotificationHandler(
             var newMaster = eligiblePeers.FirstOrDefault(c => c.Role == Role.Flow) ?? eligiblePeers.FirstOrDefault();
             if (newMaster is not null)
             {
-                newMaster.IsMaster = true;
+                connectionManager.PromoteMaster(newMaster);
 
                 await hubProxy.Send(
                     newMaster.Id,

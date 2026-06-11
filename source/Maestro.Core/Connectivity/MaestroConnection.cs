@@ -65,7 +65,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         var clientVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroConnection).Assembly);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(_serverConfiguration.Uri + $"?environment={Environment}&airportIdentifier={_airportIdentifier}&callsign={callsign}&role={Role}&version={clientVersion}")
+            .WithUrl(_serverConfiguration.Uri + $"?environment={Environment}&airportIdentifier={_airportIdentifier}&callsign={callsign}&version={clientVersion}")
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect(new InfiniteRetryPolicy())
             .WithStatefulReconnect()

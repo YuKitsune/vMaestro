@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Maestro.Contracts.Sessions;
 
 namespace Maestro.Server;
@@ -11,7 +12,7 @@ public record SessionKey(string Environment, string AirportIdentifier);
 
 public class SessionCache
 {
-    readonly Dictionary<SessionKey, SessionDto> _sessions = new();
+    readonly ConcurrentDictionary<SessionKey, SessionDto> _sessions = new();
 
     public SessionDto? Get(string environment, string airportIdentifier)
     {
@@ -25,18 +26,14 @@ public class SessionCache
         _sessions[key] = sessionDto;
     }
 
-    // BUG: Need to remove old entries after the last client disconnects
     public void Evict(string environment, string airportIdentifier)
     {
         var key = new SessionKey(environment, airportIdentifier);
-        _sessions.Remove(key);
+        _sessions.TryRemove(key, out _);
     }
 
     public IEnumerable<(SessionKey Key, SessionDto Session)> GetAll()
     {
-        foreach (var (key, session) in _sessions)
-        {
-            yield return (key, session);
-        }
+        return _sessions.Select(kvp => (kvp.Key, kvp.Value)).ToArray();
     }
 }

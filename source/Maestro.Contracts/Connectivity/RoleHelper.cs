@@ -1,6 +1,4 @@
-using Maestro.Contracts.Connectivity;
-
-namespace Maestro.Core.Connectivity;
+namespace Maestro.Contracts.Connectivity;
 
 public static class RoleHelper
 {

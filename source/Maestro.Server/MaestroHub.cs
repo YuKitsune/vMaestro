@@ -202,13 +202,7 @@ public class MaestroHub(IMediator mediator, ILogger logger) : Hub
             throw new HubException("Connection rejected: Callsign not provided");
         }
 
-        var roleString = httpContext.Request.Query["role"].FirstOrDefault();
-        if (!Enum.TryParse<Role>(roleString, out var role))
-        {
-            logger.Warning("{ConnectionId} attempted to connect with an invalid role {Role}", Context.ConnectionId, roleString);
-            Context.Abort();
-            return;
-        }
+        var role = RoleHelper.GetRoleFromCallsign(callsign);
 
         logger.Information("{ConnectionId} connected with version {ClientVersion}", Context.ConnectionId, clientVersion);
 
