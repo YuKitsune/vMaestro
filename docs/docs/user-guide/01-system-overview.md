@@ -274,7 +274,7 @@ Observers cannot make any modifications and are never eligible to be the Master.
 
 When no Flow controller is online, all connected Enroute and Approach controllers can modify the sequence without restriction. Permissions are only enforced when a Flow controller is online.
 
-The highest-priority connected controller acts as Master (shown as `ENR/FLOW` or `APP/FLOW`):
+The connection status shows `ENR/FLOW` or `APP/FLOW` to indicate no Flow controller is online. The highest-priority connected controller acts as Master:
 
 - If only Approach controllers are connected, one acts as Master
 - If an Enroute controller connects, they take over as Master
