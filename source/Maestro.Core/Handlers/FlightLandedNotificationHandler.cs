@@ -31,8 +31,6 @@ public class FlightLandedNotificationHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying FlightLandedNotification for {AirportIdentifier}", notification.AirportIdentifier);
-            await connection.Send(notification, cancellationToken);
             return;
         }
 

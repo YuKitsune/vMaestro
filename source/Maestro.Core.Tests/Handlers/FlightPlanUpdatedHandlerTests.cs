@@ -123,44 +123,6 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightPlanIsUpdated_AndTooSoonSinceLastUpdate_TheUpdateIsRateLimited()
-    {
-        // Arrange
-        var airportConfiguration = GetDefaultAirportConfiguration();
-        var clock = clockFixture.Instance;
-        var (sessionManager, session, _) = new SessionBuilder(airportConfiguration).Build();
-
-        var originalLastSeen = clock.UtcNow().AddSeconds(-5);
-        session.FlightDataRecords["QFA123"] = new FlightDataRecord(
-            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
-            "YMML", "YSSY", null,
-            TimeSpan.FromHours(1),
-            FlightPlanState.Active, _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(20))],
-            originalLastSeen);
-
-        var rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-        rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(false);
-
-        var notification = new FlightPlanUpdatedNotification(
-            "QFA123", "B744", AircraftCategory.Jet, WakeCategory.Heavy,
-            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1),
-            FlightPlanState.Active,
-            _position,
-            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
-
-        var handler = GetHandler(sessionManager, clock, rateLimiter: rateLimiter);
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        var record = session.FlightDataRecords["QFA123"];
-        record.LastSeen.ShouldBe(originalLastSeen, "FlightDataRecord should not update when rate-limited");
-        record.AircraftType.ShouldBe("B738", "FlightDataRecord should not update when rate-limited");
-    }
-
-    [Fact]
     public async Task WhenAFlightPlanIsUpdated_AndFlightIsActive_ActivateFlightRequestIsSent()
     {
         // Arrange
@@ -271,7 +233,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightPlanIsUpdated_AndConnectedToAServer_NotificationIsRelayedToMaster()
+    public async Task WhenAFlightPlanIsUpdated_AndConnectedToAServer_AndNotMaster_UpdateIsDiscarded()
     {
         // Arrange
         var airportConfiguration = GetDefaultAirportConfiguration();
@@ -293,9 +255,8 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        slaveConnectionManager.Connection.InvokedNotifications.Count.ShouldBe(1, "notification should be relayed to master");
-        slaveConnectionManager.Connection.InvokedNotifications[0].ShouldBe(notification);
-        session.FlightDataRecords.ShouldNotContainKey("QFA123", "slave should not update FlightDataRecords locally");
+        slaveConnectionManager.Connection.InvokedNotifications.Count.ShouldBe(0, "non-master should not relay notifications");
+        session.FlightDataRecords.ShouldNotContainKey("QFA123", "non-master should not update FlightDataRecords");
         await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
@@ -466,17 +427,10 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     FlightPlanUpdatedHandler GetHandler(
         ISessionManager sessionManager,
         IClock clock,
-        IFlightUpdateRateLimiter? rateLimiter = null,
         IMaestroConnectionManager? connectionManager = null,
         IAirportConfigurationProvider? airportConfigurationProvider = null,
         IMediator? mediator = null)
     {
-        if (rateLimiter is null)
-        {
-            rateLimiter = Substitute.For<IFlightUpdateRateLimiter>();
-            rateLimiter.ShouldUpdate(Arg.Any<DateTimeOffset>()).Returns(true);
-        }
-
         if (airportConfigurationProvider is null)
         {
             airportConfigurationProvider = Substitute.For<IAirportConfigurationProvider>();
@@ -490,7 +444,6 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             sessionManager,
             connectionManager,
             airportConfigurationProvider,
-            rateLimiter,
             mediator,
             clock,
             Substitute.For<ILogger>());

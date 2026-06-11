@@ -9,8 +9,8 @@ public record ClientDisconnectedNotification(string ConnectionId) : INotificatio
 // TODO: Test cases
 // - When connection is untracked, exception is thrown
 // - When leaving the sequence, peers are notified
-// - When master leaves the sequence, and another flow controller exists, the flow controller is promoted
-// - When master leaves the sequence, and no flow controller exists, the next available connection is promoted
+// - When master leaves the sequence, the highest-priority remaining connection is promoted
+// - When master leaves the sequence, and only observers remain, no new master is promoted
 
 public class ClientDisconnectedNotificationHandler(
     IConnectionManager connectionManager,
@@ -37,9 +37,7 @@ public class ClientDisconnectedNotificationHandler(
                 .Where(c => c.Role is not Role.Observer)
                 .ToArray();
 
-            // Master has left, need to re-assign to someone else
-            // Prefer another flow controller, otherwise the next eligible connection
-            var newMaster = eligiblePeers.FirstOrDefault(c => c.Role == Role.Flow) ?? eligiblePeers.FirstOrDefault();
+            var newMaster = eligiblePeers.OrderByDescending(c => GetMasterPriority(c.Role)).FirstOrDefault();
             if (newMaster is not null)
             {
                 connectionManager.PromoteMaster(newMaster);
@@ -69,4 +67,12 @@ public class ClientDisconnectedNotificationHandler(
                 cancellationToken);
         }
     }
+
+    static int GetMasterPriority(Role role) => role switch
+    {
+        Role.Flow => 3,
+        Role.Enroute => 2,
+        Role.Approach => 1,
+        _ => 0
+    };
 }

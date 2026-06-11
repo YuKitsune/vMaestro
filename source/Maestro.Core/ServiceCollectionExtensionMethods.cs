@@ -13,7 +13,6 @@ public static class ServiceCollectionExtensionMethods
         return services
             .AddSingleton<ISessionManager, SessionManager>()
             .AddSingleton<IMaestroConnectionManager, MaestroConnectionManager>()
-            .AddSingleton<IFlightUpdateRateLimiter, FlightUpdateRateLimiter>()
             .AddSingleton<ITrajectoryService, TrajectoryService>()
             .AddSingleton<IClock, SystemClock>();
     }

@@ -36,26 +36,27 @@ public class ConnectRequestHandler(
 
         logger.Information("{Connection} tracked", connection);
 
-        if (connection.Role == Role.Flow)
+        if (connection.Role != Role.Observer)
         {
-            var previousMaster = connectionManager.PromoteMaster(connection);
-            if (previousMaster is not null)
+            var currentMaster = peers.SingleOrDefault(c => c.IsMaster);
+            if (currentMaster is null)
+            {
+                logger.Information("Assigning {Connection} as master", connection);
+                connection.IsMaster = true;
+            }
+            else if (GetMasterPriority(request.Role) > GetMasterPriority(currentMaster.Role))
             {
                 logger.Information("Re-assigning master from {PreviousMaster} to {NewMaster}",
-                    previousMaster, connection);
+                    currentMaster, connection);
 
                 await hubProxy.Send(
-                    previousMaster.Id,
+                    currentMaster.Id,
                     "OwnershipRevoked",
                     new OwnershipRevokedNotification(request.AirportIdentifier),
                     cancellationToken);
+
+                connection.IsMaster = true;
             }
-        }
-        else if (peers.Length == 0 && connection.Role != Role.Observer)
-        {
-            // The first connection always becomes the master
-            logger.Information("Assigning {Connection} as master", connection);
-            connectionManager.PromoteMaster(connection);
         }
 
         // Broadcast to other clients that this client has connected
@@ -68,4 +69,12 @@ public class ConnectRequestHandler(
                 cancellationToken);
         }
     }
+
+    static int GetMasterPriority(Role role) => role switch
+    {
+        Role.Flow => 3,
+        Role.Enroute => 2,
+        Role.Approach => 1,
+        _ => 0
+    };
 }

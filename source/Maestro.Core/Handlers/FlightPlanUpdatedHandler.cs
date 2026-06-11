@@ -13,7 +13,6 @@ public class FlightPlanUpdatedHandler(
     ISessionManager sessionManager,
     IMaestroConnectionManager connectionManager,
     IAirportConfigurationProvider airportConfigurationProvider,
-    IFlightUpdateRateLimiter rateLimiter,
     IMediator mediator,
     IClock clock,
     ILogger logger)
@@ -28,36 +27,20 @@ public class FlightPlanUpdatedHandler(
 
             logger.Debug("FDR update received for {Callsign}", notification.Callsign);
 
-            var session = await sessionManager.GetSession(notification.Destination, cancellationToken);
-
             if (connectionManager.TryGetConnection(notification.Destination, out var connection) &&
                 connection!.IsConnected &&
                 !connection.IsMaster)
             {
-                if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
-                    !rateLimiter.ShouldUpdate(existingData.LastSeen))
-                {
-                    logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
-                    return;
-                }
-
-                logger.Debug("Relaying FlightPlanUpdatedNotification for {Callsign}", notification.Callsign);
-                await connection.Send(notification, cancellationToken);
                 return;
             }
+
+            var session = await sessionManager.GetSession(notification.Destination, cancellationToken);
 
             // Creation: store the latest flight plan data
             FlightDataRecord newRecord;
             bool alreadyActivated;
             using (await session.Semaphore.LockAsync(cancellationToken))
             {
-                if (session.FlightDataRecords.TryGetValue(notification.Callsign, out var existingData) &&
-                    !rateLimiter.ShouldUpdate(existingData.LastSeen))
-                {
-                    logger.Debug("FDR update for {Callsign} rate-limited", notification.Callsign);
-                    return;
-                }
-
                 newRecord = new FlightDataRecord(
                     notification.Callsign,
                     notification.AircraftType,
