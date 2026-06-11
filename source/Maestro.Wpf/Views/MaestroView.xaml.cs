@@ -840,6 +840,9 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
 
     void OnCanvasRightClick(object sender, MouseButtonEventArgs e)
     {
+        // Clear any stale suppression left by a prior gesture whose ContextMenuOpening never fired
+        _suppressContextMenu = false;
+
         // Right-clicking when a flight is selected will deselect it
         if (ViewModel.SelectedFlight != null)
         {
@@ -949,6 +952,14 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
         if (_isDragging)
             return;
 
+        // Second click of a double-click: ignore so it doesn't start a drag or select.
+        // The double-click handler deals with this gesture.
+        if (e.ClickCount >= 2)
+        {
+            e.Handled = true;
+            return;
+        }
+
         // Check if dragging is enabled for this flight label
         if (!flightLabel.IsDraggable)
         {
@@ -1008,6 +1019,13 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
 
         if (_draggingFlightLabel != flightLabel)
             return;
+
+        // Second click of a double-click must not run the click action (select/swap/deselect).
+        if (e.ClickCount >= 2)
+        {
+            e.Handled = true;
+            return;
+        }
 
         flightLabel.ReleaseMouseCapture();
 
@@ -1093,6 +1111,10 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
             flight.Callsign
         ));
 
+        // A double-click must not leave the flight selected from the first click
+        ViewModel.DeselectFlight();
+        TryDrawSequence();
+
         e.Handled = true;
     }
 
@@ -1100,6 +1122,9 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
     {
         if (sender is not FlightLabelView flightLabel)
             return;
+
+        // Clear any stale suppression left by a prior gesture whose ContextMenuOpening never fired
+        _suppressContextMenu = false;
 
         // Right-clicking a flight label deselects any selected flight and prevents context menu
         if (ViewModel.SelectedFlight != null)
