@@ -91,10 +91,11 @@ The Connection Status button (top-left) displays the current connection status.
 | ------ | ------- |
 | `OFFLINE` | Not connected to a server. All processing is local and all functions are available. |
 | `READY` | Connected to the server but not synchronised. Appears when connected before joining the VATSIM network. |
-| `FLOW` | Connected with the Flow role. Processing is done locally and the sequence is shared to all other clients. |
-| `APP` | Connected with the Approach role. Some functions may be restricted. |
-| `ENR` | Connected with the Enroute role. Some functions may be restricted. |
-| `ENR/FLOW` or `APP/FLOW` | Connected with Enroute or Approach role, but no dedicated Flow controller is online. All functions are available. |
+| `FLOW` | Connected with the Flow role. This client is the Master. |
+| `ENR` | Connected with the Enroute role. A Flow controller is online. Some functions may be restricted. |
+| `APP` | Connected with the Approach role. A Flow controller is online. Some functions may be restricted. |
+| `ENR/FLOW` | Connected with the Enroute role. No Flow controller is online. All functions are available. |
+| `APP/FLOW` | Connected with the Approach role. No Flow controller is online. All functions are available. |
 | `OBS` | Connected with the Observer role. The sequence is read-only. |
 
 Click the button to open the connection settings and start or stop the connection to the vMaestro server.

@@ -261,7 +261,7 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenConnectedAsSlave_RelaysNotificationToMaster()
+    public async Task WhenConnectedAsNonMaster_NotificationIsDiscarded()
     {
         // Arrange
         var now = clockFixture.Instance.UtcNow();
@@ -298,10 +298,8 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        slaveConnectionManager.Connection.InvokedNotifications.Count.ShouldBe(1);
-        slaveConnectionManager.Connection.InvokedNotifications[0].ShouldBe(notification);
+        slaveConnectionManager.Connection.InvokedNotifications.Count.ShouldBe(0, "non-master should not relay notifications");
 
-        // Should not process locally when relaying
         await mediator.DidNotReceive().Publish(
             Arg.Any<SessionUpdatedNotification>(),
             Arg.Any<CancellationToken>());

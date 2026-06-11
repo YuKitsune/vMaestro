@@ -353,6 +353,56 @@ public class ClientDisconnectedNotificationHandlerTests
         sessionCache.Get(environment, airportIdentifier).ShouldBeNull();
     }
 
+    [Fact]
+    public async Task WhenMasterLeavesTheSession_AndEnrouteAndApproachRemain_EnrouteIsPromoted()
+    {
+        // Arrange
+        const string connectionId = "master-connection";
+        const string environment = "environment-1";
+        const string airportIdentifier = "YSSY";
+        const string callsign = "SY_FMP";
+        const Role role = Role.Flow;
+
+        var notification = new ClientDisconnectedNotification(connectionId);
+
+        var masterConnection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role) { IsMaster = true };
+        var enrouteConnection = new Connection("enroute-connection", Version, environment, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = false };
+        var approachConnection = new Connection("approach-connection", Version, environment, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = false };
+
+        var connectionManager = new Mock<IConnectionManager>();
+        connectionManager.Setup(x => x.TryGetConnection(connectionId, out It.Ref<Connection?>.IsAny))
+            .Returns(new TryGetConnectionCallback((string id, out Connection? connection) =>
+            {
+                connection = masterConnection;
+                return true;
+            }));
+        connectionManager.Setup(x => x.GetPeers(masterConnection)).Returns([approachConnection, enrouteConnection]);
+        connectionManager.Setup(x => x.PromoteMaster(enrouteConnection))
+            .Callback<Connection>(c => c.IsMaster = true);
+
+        var hubProxy = new Mock<IHubProxy>();
+
+        // Act
+        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+            .Handle(notification, CancellationToken.None);
+
+        // Assert
+        enrouteConnection.IsMaster.ShouldBeTrue();
+        approachConnection.IsMaster.ShouldBeFalse();
+
+        hubProxy.Verify(x => x.Send(
+            enrouteConnection.Id,
+            "OwnershipGranted",
+            It.Is<OwnershipGrantedNotification>(n => n.AirportIdentifier == airportIdentifier),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        hubProxy.Verify(x => x.Send(
+            approachConnection.Id,
+            "OwnershipGranted",
+            It.IsAny<OwnershipGrantedNotification>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     ClientDisconnectedNotificationHandler GetHandler(
         IConnectionManager? connectionManager = null,
         SessionCache? sessionCache = null,

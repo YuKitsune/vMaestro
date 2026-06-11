@@ -159,6 +159,83 @@ public class ConnectRequestHandlerTests
     }
 
 
+    [Fact]
+    public async Task WhenPeersExist_AndAnEnrouteControllerJoins_AndCurrentMasterIsApproach_EnrouteBecomesmaster()
+    {
+        // Arrange
+        const string connectionId = "connection-2";
+        const string environment = "environment-1";
+        const string airportIdentifier = "YSSY";
+        const string callsign = "ML-BIK_CTR";
+        const Role role = Role.Enroute;
+
+        var request = new ConnectRequest(Version, environment, airportIdentifier, callsign, role);
+        var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
+
+        var existingConnection = new Connection("connection-1", Version, environment, airportIdentifier, "SY_APP", Role.Approach) { IsMaster = true };
+        var newConnection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role);
+
+        var connectionManager = new Mock<IConnectionManager>();
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([existingConnection]);
+        connectionManager.Setup(x => x.Add(connectionId, Version, environment, airportIdentifier, callsign, role)).Returns(newConnection);
+        connectionManager.Setup(x => x.PromoteMaster(newConnection))
+            .Callback<Connection>(_ => { existingConnection.IsMaster = false; newConnection.IsMaster = true; })
+            .Returns(existingConnection);
+
+        var hubProxy = new Mock<IHubProxy>();
+
+        // Act
+        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+            .Handle(wrappedRequest, CancellationToken.None);
+
+        // Assert
+        existingConnection.IsMaster.ShouldBeFalse();
+        newConnection.IsMaster.ShouldBeTrue();
+
+        hubProxy.Verify(x => x.Send(
+            existingConnection.Id,
+            "OwnershipRevoked",
+            It.Is<OwnershipRevokedNotification>(n => n.AirportIdentifier == airportIdentifier),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task WhenPeersExist_AndAnApproachControllerJoins_AndCurrentMasterIsEnroute_EnrouteRemainsMaster()
+    {
+        // Arrange
+        const string connectionId = "connection-2";
+        const string environment = "environment-1";
+        const string airportIdentifier = "YSSY";
+        const string callsign = "SY_APP";
+        const Role role = Role.Approach;
+
+        var request = new ConnectRequest(Version, environment, airportIdentifier, callsign, role);
+        var wrappedRequest = new RequestContextWrapper<ConnectRequest>(connectionId, request);
+
+        var existingConnection = new Connection("connection-1", Version, environment, airportIdentifier, "ML-BIK_CTR", Role.Enroute) { IsMaster = true };
+        var newConnection = new Connection(connectionId, Version, environment, airportIdentifier, callsign, role);
+
+        var connectionManager = new Mock<IConnectionManager>();
+        connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([existingConnection]);
+        connectionManager.Setup(x => x.Add(connectionId, Version, environment, airportIdentifier, callsign, role)).Returns(newConnection);
+
+        var hubProxy = new Mock<IHubProxy>();
+
+        // Act
+        await GetHandler(connectionManager: connectionManager.Object, hubProxy: hubProxy.Object)
+            .Handle(wrappedRequest, CancellationToken.None);
+
+        // Assert
+        existingConnection.IsMaster.ShouldBeTrue();
+        newConnection.IsMaster.ShouldBeFalse();
+
+        hubProxy.Verify(x => x.Send(
+            It.IsAny<string>(),
+            "OwnershipRevoked",
+            It.IsAny<OwnershipRevokedNotification>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     ConnectRequestHandler GetHandler(
         IConnectionManager? connectionManager = null,
         SessionCache? sessionCache = null,
