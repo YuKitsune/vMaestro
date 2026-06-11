@@ -71,7 +71,9 @@ public class Sequence
         lock (_gate)
         {
             CurrentRunwayMode = runwayMode;
-            Schedule(0, forceRescheduleStable: true, reassignOffModeRunways: true);
+
+            ResetRunwayAssignmentsFrom(0);
+            Schedule(0, forceRescheduleStable: true);
         }
     }
 
@@ -96,7 +98,9 @@ public class Sequence
                 firstLandingTimeForNewMode);
 
             var recomputeIndex = IndexOf(recomputeBoundary);
-            Schedule(recomputeIndex, forceRescheduleStable: true, reassignOffModeRunways: true);
+
+            ResetRunwayAssignmentsFrom(recomputeIndex);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
         }
     }
 
@@ -125,8 +129,6 @@ public class Sequence
             if (PendingConfigurationChange is null)
                 return;
 
-            var isTerminalChange = PendingConfigurationChange is TerminalConfigurationChange;
-
             var recomputeTime = PendingConfigurationChange switch
             {
                 TerminalConfigurationChange terminalConfigurationChange => terminalConfigurationChange.FirstLandingTimeInNewMode,
@@ -138,7 +140,7 @@ public class Sequence
 
             PendingConfigurationChange = null;
 
-            Schedule(recomputeIndex, forceRescheduleStable: true, reassignOffModeRunways: isTerminalChange);
+            Schedule(recomputeIndex, forceRescheduleStable: true);
         }
     }
 
@@ -387,21 +389,21 @@ public class Sequence
             // Swap landing times and runways
             var landingTime1 = flight1.LandingTime;
             var landingTime2 = flight2.LandingTime;
-            var runway1 = flight1.AssignedRunwayIdentifier;
-            var runway2 = flight2.AssignedRunwayIdentifier;
+            var runway1 = flight1.RunwayAssignment;
+            var runway2 = flight2.RunwayAssignment;
             var approachType1 = flight1.ApproachType;
             var approachType2 = flight2.ApproachType;
 
             var trajectory1 = _trajectoryService.GetTrajectory(
                 flight1,
-                runway2,
+                runway2.RunwayIdentifier,
                 approachType2,
                 [], // TODO
                 UpperWind);
 
             var trajectory2 = _trajectoryService.GetTrajectory(
                 flight2,
-                runway1,
+                runway1.RunwayIdentifier,
                 approachType1,
                 [], // TODO
                 UpperWind);
@@ -539,6 +541,22 @@ public class Sequence
     }
 
     /// <summary>
+    ///     Resets manual runway assignments to automatic runway assignments for flights landing from <paramref name="startIndex"/> onwards.
+    /// </summary>
+    void ResetRunwayAssignmentsFrom(int startIndex)
+    {
+        for (var i = startIndex; i < _flights.Count; i++)
+        {
+            if (_flights[i].RunwayAssignment is ManualRunwayAssignment manualRunwayAssignment)
+            {
+                _flights[i].SetRunway(
+                    new AutomaticRunwayAssignment(manualRunwayAssignment.RunwayIdentifier),
+                    _flights[i].TerminalTrajectory);
+            }
+        }
+    }
+
+    /// <summary>
     ///     Scans the sequence from the <paramref name="startIndex"/>, ensuring all flights are appropriately spaced
     ///     from any slots, runway changes, and other flights on the same or related runways.
     /// </summary>
@@ -547,12 +565,7 @@ public class Sequence
     ///     When <c>false</c>, flights that are not <see cref="State.Unstable"/> will not be affected. Any <see cref="State.Unstable"/> flights
     ///     in conflict with a non-<see cref="State.Unstable"/> flight will be moved behind them as to not adjust their landing times.
     /// </param>
-    /// <param name="reassignOffModeRunways">
-    ///     When <c>true</c>, Stable and SuperStable flights whose assigned runway is not in the current runway mode will
-    ///     be re-assigned to a runway in the current mode. Use when the runway mode itself has changed.
-    ///     When <c>false</c>, such flights retain their off-mode runway assignment.
-    /// </param>
-    public void Schedule(int startIndex, bool forceRescheduleStable = false, bool reassignOffModeRunways = false)
+    public void Schedule(int startIndex, bool forceRescheduleStable = false)
     {
         lock (_gate)
         {
@@ -599,33 +612,52 @@ public class Sequence
 
                 log.Debug("Schedule {Callsign}: Current Runway Mode is {RunwayMode}", currentFlight.Callsign, currentRunwayMode);
 
-                // TODO: Consider how we should handle delays into new runway modes
-                var runwayOptions = GetRunways(
-                    _airportConfiguration,
-                    currentFlight,
-                    currentRunwayMode,
-                    reassignOffModeRunways);
+                // A flight's available runways depend on the runway mode at its landing position.
+                // The backward search in EvaluateRunwayOption can delay a flight past a mode change
+                // boundary, so re-evaluate against the mode at the resulting position until it
+                // stabilises. Manual assignments are locked and never change runway.
+                var schedulingMode = currentRunwayMode;
+                (RunwayOption Option, DateTimeOffset LandingTime, int SequencePosition) result;
+                for (var attempt = 0; ; attempt++)
+                {
+                    var runwayOptions = GetRunways(_airportConfiguration, currentFlight, schedulingMode);
 
-                log.Debug("Schedule {Callsign}: {Count} runway options found", currentFlight.Callsign, runwayOptions.Length);
+                    log.Debug("Schedule {Callsign}: {Count} runway options found", currentFlight.Callsign, runwayOptions.Length);
 
-                // For each option, calculate the earliest landing time using the trajectory for that specific runway
-                var results = runwayOptions
-                    .Select(runwayOption =>
-                    {
-                        var targetLandingTime = CalculateTargetLandingTime(currentFlight, runwayOption);
-                        return EvaluateRunwayOption(runwayOption, currentFlight, i, targetLandingTime, currentRunwayMode);
-                    })
-                    .ToList();
+                    // For each option, calculate the earliest landing time using the trajectory for that specific runway
+                    var results = runwayOptions
+                        .Select(runwayOption =>
+                        {
+                            var targetLandingTime = CalculateTargetLandingTime(currentFlight, runwayOption);
+                            return EvaluateRunwayOption(runwayOption, currentFlight, i, targetLandingTime, schedulingMode);
+                        })
+                        .ToList();
 
-                // Select the runway option with the earliest landing time
-                var result = results
-                    .OrderBy(e => e.LandingTime)
-                    .First();
+                    // Prefer the earliest landing time, keeping the current runway on a tie to avoid needless reassignment
+                    result = results
+                        .OrderBy(e => e.LandingTime)
+                        .ThenByDescending(e => e.Option.RunwayIdentifier == currentFlight.AssignedRunwayIdentifier)
+                        .First();
 
-                if (results.Count > 1)
+                    if (results.Count > 1)
+                        log.Debug(
+                            "{Callsign} selected RWY {Runway} (earliest STA {LandingTime:HHmm} of {Count} options)",
+                            currentFlight.Callsign, result.Option.RunwayIdentifier, result.LandingTime, results.Count);
+
+                    // If the flight was delayed into a different runway mode, re-evaluate its runway
+                    // options against that mode so it lands on a compliant runway. Manual assignments
+                    // are locked and must not be reassigned.
+                    var modeAtResult = GetRunwayModeAtIndex(result.SequencePosition);
+                    if (currentFlight.RunwayAssignment is ManualRunwayAssignment
+                        || ReferenceEquals(modeAtResult, schedulingMode)
+                        || attempt >= 2)
+                        break;
+
                     log.Debug(
-                        "{Callsign} selected RWY {Runway} (earliest STA {LandingTime:HHmm} of {Count} options)",
-                        currentFlight.Callsign, result.Option.RunwayIdentifier, result.LandingTime, results.Count);
+                        "{Callsign} delayed into runway mode {RunwayMode}, re-evaluating runway options",
+                        currentFlight.Callsign, modeAtResult.Identifier);
+                    schedulingMode = modeAtResult;
+                }
 
                 // Move flight to the final position if needed
                 if (result.SequencePosition != i)
@@ -664,7 +696,11 @@ public class Sequence
                     currentFlight.LandingEstimate,
                     landingTime - currentFlight.LandingEstimate);
 
-                Schedule(currentFlight, landingTime, result.Option.RunwayIdentifier, result.Option.ApproachType, result.Option.Trajectory);
+                IRunwayAssignment runwayAssignment = currentFlight.RunwayAssignment is ManualRunwayAssignment
+                    ? new ManualRunwayAssignment(result.Option.RunwayIdentifier)
+                    : new AutomaticRunwayAssignment(result.Option.RunwayIdentifier);
+
+                Schedule(currentFlight, landingTime, runwayAssignment, result.Option.ApproachType, result.Option.Trajectory);
             }
 
             _flights.Clear();
@@ -863,20 +899,26 @@ public class Sequence
 
             TimeSpan GetRequiredSeparation(FlightSequenceItem flightSequenceItem, Runway referenceRunway, RunwayMode runwayMode)
             {
-                if (flightSequenceItem.Flight.AssignedRunwayIdentifier == referenceRunway.Identifier)
+                var otherRunwayIdentifier = flightSequenceItem.Flight.AssignedRunwayIdentifier;
+
+                if (otherRunwayIdentifier == referenceRunway.Identifier)
                 {
                     // Same runway, use the acceptance rate
                     return referenceRunway.AcceptanceRate;
                 }
 
-                if (runwayMode.Runways.Any(r => r.Identifier == referenceRunway.Identifier))
+                var referenceInMode = runwayMode.Runways.Any(r => r.Identifier == referenceRunway.Identifier);
+                var otherInMode = runwayMode.Runways.Any(r => r.Identifier == otherRunwayIdentifier);
+
+                // A flight on an off-mode runway must be separated from all other flights by the
+                // off-mode rate, regardless of which flight is being scheduled.
+                if (!referenceInMode || !otherInMode)
                 {
-                    // Same mode, use the dependency rate
-                    return runwayMode.DependencyRate;
+                    return runwayMode.OffModeSeparation;
                 }
 
-                // Runway not in mode, use off-mode rate
-                return runwayMode.OffModeSeparation;
+                // Both runways are in the current mode, use the dependency rate
+                return runwayMode.DependencyRate;
             }
 
             DateTimeOffset CalculateTargetLandingTime(Flight currentFlight, RunwayOption runwayOption)
@@ -1042,12 +1084,12 @@ public class Sequence
     void Schedule(
         Flight flight,
         DateTimeOffset landingTime,
-        string runwayIdentifier,
+        IRunwayAssignment runwayAssignment,
         string approachType,
         TerminalTrajectory trajectory)
     {
         // Atomic update: runway + trajectory + ETA + STA_FF
-        flight.SetRunway(runwayIdentifier, trajectory);
+        flight.SetRunway(runwayAssignment, trajectory);
         flight.SetApproachType(approachType, trajectory);
 
         // Compute delay distribution and derive control action
@@ -1064,7 +1106,7 @@ public class Sequence
         _logger.Verbose(
             "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
             flight.Callsign,
-            runwayIdentifier,
+            runwayAssignment.RunwayIdentifier,
             approachType,
             trajectory.NormalTimeToGo,
             trajectory.PressureTimeToGo,
@@ -1081,44 +1123,40 @@ public class Sequence
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, TerminalTrajectory Trajectory);
 
     // TODO: Extract this out into a separate service so we can test it
-    RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode, bool reassignOffModeRunways = false)
+    RunwayOption[] GetRunways(AirportConfiguration airportConfiguration, Flight flight, RunwayMode runwayMode)
     {
-        // If a runway is assigned, and the flight is stable, leave it as-is
-        // For stable flights, preserve both the runway AND the approach type
-        if (!string.IsNullOrEmpty(flight.AssignedRunwayIdentifier) && flight.State is not State.Unstable)
+        // Manual assignments are locked: the controller chose the runway and the algorithm must not change it.
+        // If the runway is off-mode, use the off-mode separation rate; otherwise the runway's acceptance rate.
+        if (flight.RunwayAssignment is ManualRunwayAssignment manualRunwayAssignment)
         {
-            var runway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == flight.AssignedRunwayIdentifier);
-            if (runway is not null)
-            {
-                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, flight.ApproachType, [], UpperWind);
-                return [new RunwayOption(runway.Identifier, flight.ApproachType, runway.AcceptanceRate, trajectory)];
-            }
-
-            // Runway is off-mode. During a runway mode change, re-assign to a runway in the new mode.
-            // Otherwise preserve the off-mode assignment.
-            if (!reassignOffModeRunways)
-            {
-                var separation = runwayMode.OffModeSeparation;
-                var offModeTrajectory = _trajectoryService.GetTrajectory(flight, flight.AssignedRunwayIdentifier, flight.ApproachType, [], UpperWind);
-                return [new RunwayOption(flight.AssignedRunwayIdentifier, flight.ApproachType, separation, offModeTrajectory)];
-            }
+            var manualRunway = runwayMode.Runways.FirstOrDefault(r => r.Identifier == manualRunwayAssignment.RunwayIdentifier);
+            var separation = manualRunway?.AcceptanceRate ?? runwayMode.OffModeSeparation;
+            var trajectory = _trajectoryService.GetTrajectory(flight, manualRunwayAssignment.RunwayIdentifier, flight.ApproachType, [], UpperWind);
+            return [new RunwayOption(manualRunwayAssignment.RunwayIdentifier, flight.ApproachType, separation, trajectory)];
         }
 
+        // Automatic assignments are free to be reassigned to any valid runway in the mode.
         var possibleRunways = new HashSet<RunwayOption>();
         foreach (var runway in runwayMode.Runways)
         {
+            // Preserve a customised approach type when keeping the flight on its current runway;
+            // otherwise use the runway's default approach type.
+            var approachType = runway.Identifier == flight.AssignedRunwayIdentifier
+                ? flight.ApproachType
+                : runway.ApproachType;
+
             // If the runway requires a feeder fix to match, and this aircraft is tracking via that fix, we can assign it
             if (!string.IsNullOrEmpty(flight.FeederFixIdentifier) && runway.FeederFixes.Contains(flight.FeederFixIdentifier))
             {
-                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, runway.ApproachType, [], UpperWind);
-                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate, trajectory));
+                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, approachType, [], UpperWind);
+                possibleRunways.Add(new RunwayOption(runway.Identifier, approachType, runway.AcceptanceRate, trajectory));
             }
 
             // Runway has no specific feeder fix requirements, so we can assign it regardless of the feeder
             if (!runway.FeederFixes.Any())
             {
-                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, runway.ApproachType, [], UpperWind);
-                possibleRunways.Add(new RunwayOption(runway.Identifier, runway.ApproachType, runway.AcceptanceRate, trajectory));
+                var trajectory = _trajectoryService.GetTrajectory(flight, runway.Identifier, approachType, [], UpperWind);
+                possibleRunways.Add(new RunwayOption(runway.Identifier, approachType, runway.AcceptanceRate, trajectory));
             }
         }
 

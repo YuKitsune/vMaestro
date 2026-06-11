@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Maestro.Contracts.Shared;
 using MessagePack;
 
@@ -118,10 +119,17 @@ public class FlightDto
     public required DateTimeOffset FeederFixTime { get; init; }
 
     /// <summary>
-    /// The identifier of the runway assigned to this flight.
+    /// How the flight's landing runway was assigned (automatic or manual).
     /// </summary>
     [Key(18)]
-    public required string AssignedRunwayIdentifier { get; init; }
+    public required IRunwayAssignmentDto RunwayAssignment { get; init; }
+
+    /// <summary>
+    /// Convenience accessor for the assigned runway identifier. <see cref="RunwayAssignment"/> is the source of truth.
+    /// </summary>
+    [IgnoreMember]
+    [JsonIgnore]
+    public string AssignedRunwayIdentifier => RunwayAssignment.RunwayIdentifier;
 
     /// <summary>
     /// The flight's position in the sequence for its assigned runway.

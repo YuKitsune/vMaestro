@@ -73,8 +73,8 @@ public class FlightLandedNotificationHandlerTests(ClockFixture clockFixture)
             .WithTrajectory(new TerminalTrajectory(TimeSpan.FromMinutes(10), default, default))
             .WithFeederFixEstimate(now.AddMinutes(-15))
             .WithLandingTime(now.AddMinutes(-5))
-            .WithRunway("16R") // Off-mode runway
-            .WithState(State.Stable) // Stabilize to prevent re-assigning to the in-mode runway
+            .WithManualRunway("16R") // Off-mode runway (manual assignment prevents re-assigning to the in-mode runway)
+            .WithState(State.Stable)
             .Build();
 
         var (sessionManager, session, _) = new SessionBuilder(airportConfiguration)

@@ -165,7 +165,7 @@ public static class TestBuilders
             FeederFixEstimate = FixedTime.AddMinutes(-10),
             ManualFeederFixEstimate = false,
             FeederFixTime = FixedTime.AddMinutes(-8),
-            AssignedRunwayIdentifier = "34L",
+            RunwayAssignment = new AutomaticRunwayAssignmentDto("34L"),
             NumberToLandOnRunway = 3,
             ApproachType = "ILS",
             InitialLandingEstimate = FixedTime.AddMinutes(5),
@@ -250,6 +250,10 @@ public static class TestBuilders
 
     public static AchievedRateDto CreateAchievedRateDto() =>
         new(TimeSpan.FromSeconds(90), TimeSpan.FromSeconds(-5));
+
+    public static AutomaticRunwayAssignmentDto CreateAutomaticRunwayAssignmentDto() => new("34L");
+
+    public static ManualRunwayAssignmentDto CreateManualRunwayAssignmentDto() => new("34R");
 
     public static RunwayLandingTimesDto CreateRunwayLandingTimesDto() =>
         new(

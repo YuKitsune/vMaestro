@@ -24,7 +24,7 @@ public static class FlightExtensionMethods
             InitialFeederFixEstimate = flight.InitialFeederFixEstimate,
             FeederFixEstimate = flight.FeederFixEstimate,
             FeederFixTime = flight.FeederFixTime,
-            AssignedRunwayIdentifier = flight.AssignedRunwayIdentifier,
+            RunwayAssignment = flight.RunwayAssignment.ToDto(),
             NumberToLandOnRunway = sequence.NumberForRunway(flight),
             InitialLandingEstimate = flight.InitialLandingEstimate,
             LandingEstimate = flight.LandingEstimate,
@@ -55,5 +55,25 @@ public static class FlightExtensionMethods
     public static AircraftPerformanceData GetPerformanceData(this Flight flight)
     {
         return new AircraftPerformanceData(flight.AircraftType, flight.AircraftCategory, flight.WakeCategory);
+    }
+
+    public static IRunwayAssignmentDto ToDto(this IRunwayAssignment runwayAssignment)
+    {
+        return runwayAssignment switch
+        {
+            ManualRunwayAssignment manual => new ManualRunwayAssignmentDto(manual.RunwayIdentifier),
+            AutomaticRunwayAssignment automatic => new AutomaticRunwayAssignmentDto(automatic.RunwayIdentifier),
+            _ => throw new ArgumentOutOfRangeException(nameof(runwayAssignment), runwayAssignment, "Unknown runway assignment type")
+        };
+    }
+
+    public static IRunwayAssignment ToModel(this IRunwayAssignmentDto runwayAssignment)
+    {
+        return runwayAssignment switch
+        {
+            ManualRunwayAssignmentDto manual => new ManualRunwayAssignment(manual.RunwayIdentifier),
+            AutomaticRunwayAssignmentDto automatic => new AutomaticRunwayAssignment(automatic.RunwayIdentifier),
+            _ => throw new ArgumentOutOfRangeException(nameof(runwayAssignment), runwayAssignment, "Unknown runway assignment type")
+        };
     }
 }

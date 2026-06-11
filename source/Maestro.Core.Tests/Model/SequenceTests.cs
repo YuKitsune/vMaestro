@@ -251,7 +251,7 @@ public class SequenceTests(ClockFixture clockFixture)
     [Theory]
     [InlineData(State.Stable)]
     [InlineData(State.SuperStable)]
-    public void Schedule_WhenFlightIsStable_AndNonPreferredRunwayIsAssigned_RunwayIsNotChanged(State stableFlightState)
+    public void Schedule_WhenAutomaticFlight_AndAnotherInModeRunwayLandsEarlier_IsReassigned(State stableFlightState)
     {
         // Arrange
         var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate);
@@ -270,13 +270,12 @@ public class SequenceTests(ClockFixture clockFixture)
 
         sequence.Insert(0, existingFlight);
 
-        // Insert stable flight assigned to 34L, even though 34R would provide earlier landing
+        // Insert an automatically-assigned flight on 34L; 34R (in-mode, empty) lands earlier
         var stableFlight = new FlightBuilder("ABC123")
             .WithLandingEstimate(_time.AddMinutes(10))
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(_time.AddMinutes(5))
             .WithRunway("34L")
-            .WithApproachType("A")
             .WithState(stableFlightState)
             .Build();
 
@@ -284,12 +283,54 @@ public class SequenceTests(ClockFixture clockFixture)
         sequence.Insert(1, stableFlight);
 
         // Assert
-        stableFlight.AssignedRunwayIdentifier.ShouldBe("34L",
-            $"flight in {stableFlightState} state should remain on 34L even though 34R provides earlier landing");
-        stableFlight.ApproachType.ShouldBe("A",
-            $"flight in {stableFlightState} state should retain its approach type");
-        stableFlight.LandingTime.ShouldBe(existingFlight.LandingTime.Add(_acceptanceRate),
-            "stable flight's STA should be adjusted for separation but runway should not change");
+        stableFlight.AssignedRunwayIdentifier.ShouldBe("34R",
+            $"automatic flight in {stableFlightState} state should be reassigned to 34R which lands earlier");
+        stableFlight.LandingTime.ShouldBe(existingFlight.LandingTime,
+            "the reassigned flight should land unconstrained on the empty runway");
+    }
+
+    [Theory]
+    [InlineData(State.Stable)]
+    [InlineData(State.SuperStable)]
+    public void Schedule_WhenManualFlight_AndAnotherInModeRunwayLandsEarlier_RunwayIsNotChanged(State stableFlightState)
+    {
+        // Arrange
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        // Insert an existing flight on 34L to create a delay
+        var existingFlight = new FlightBuilder("EXISTING")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(5))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        sequence.Insert(0, existingFlight);
+
+        // Insert a manually-assigned flight on 34L; even though 34R lands earlier, the manual assignment is locked
+        var manualFlight = new FlightBuilder("ABC123")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(5))
+            .WithManualRunway("34L")
+            .WithApproachType("A")
+            .WithState(stableFlightState)
+            .Build();
+
+        // Act
+        sequence.Insert(1, manualFlight);
+
+        // Assert
+        manualFlight.AssignedRunwayIdentifier.ShouldBe("34L",
+            $"manual flight in {stableFlightState} state should remain on 34L even though 34R provides earlier landing");
+        manualFlight.ApproachType.ShouldBe("A",
+            $"manual flight in {stableFlightState} state should retain its approach type");
+        manualFlight.LandingTime.ShouldBe(existingFlight.LandingTime.Add(_acceptanceRate),
+            "manual flight's STA should be adjusted for separation but runway should not change");
     }
 
     [Fact]
@@ -318,7 +359,7 @@ public class SequenceTests(ClockFixture clockFixture)
             .WithLandingEstimate(_time.AddMinutes(11))
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(_time.AddMinutes(6))
-            .WithRunway("16L")
+            .WithManualRunway("16L")
             .WithApproachType("A")
             .WithState(State.Stable)
             .Build();
@@ -387,7 +428,7 @@ public class SequenceTests(ClockFixture clockFixture)
         var offModeFlight = new FlightBuilder("OFF_MODE")
             .WithFeederFix(null)
             .WithLandingEstimate(_time.AddSeconds(490))
-            .WithRunway("34L")
+            .WithManualRunway("34L")
             .WithState(State.Stable)
             .Build();
 
@@ -399,6 +440,150 @@ public class SequenceTests(ClockFixture clockFixture)
             "stable flight should retain its off-mode runway assignment");
         offModeFlight.LandingTime.ShouldBe(existing34R.LandingTime.Add(offModeSeparation),
             "off-mode flight displaced past mode change boundary must have off-mode separation from the preceding runway flight");
+    }
+
+    [Fact]
+    public void Schedule_WhenAutomaticFlightIsDisplacedPastModeChangeBoundary_IsReassignedToNewModeRunway()
+    {
+        // Arrange
+        var offModeSeparation = TimeSpan.FromSeconds(300);
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate, offModeSeparationSeconds: (int)offModeSeparation.TotalSeconds);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        // Pending mode change from 34IVA to 16IVA.
+        var lastLandingInOldMode = _time.AddSeconds(659);
+        var firstLandingInNewMode = _time.AddSeconds(720);
+        var newMode = new RunwayMode(
+            "16IVA",
+            [
+                new Runway("16L", string.Empty, _acceptanceRate, []),
+                new Runway("16R", string.Empty, _acceptanceRate, [])
+            ],
+            dependencyRate: TimeSpan.Zero,
+            offModeSeparation: offModeSeparation);
+        sequence.ChangeRunwayMode(newMode, lastLandingInOldMode, firstLandingInNewMode);
+
+        // Occupy the last available slots on both in-mode runways in 34IVA territory so the displaced
+        // flight cannot fit on either before the boundary (next slot T+660s > lastLanding T+659s).
+        var existing34L = new FlightBuilder("EXISTING_34L")
+            .WithFeederFix(null)
+            .WithLandingEstimate(_time.AddSeconds(480))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+        sequence.Insert(0, existing34L);
+
+        var existing34R = new FlightBuilder("EXISTING_34R")
+            .WithFeederFix(null)
+            .WithLandingEstimate(_time.AddSeconds(485))
+            .WithRunway("34R")
+            .WithState(State.Stable)
+            .Build();
+        sequence.Insert(1, existing34R);
+
+        // Automatically-assigned flight on 34L, ETA just after the existing flights. It cannot fit in
+        // 34IVA territory on either runway (earliest T+660s/T+665s > lastLanding T+659s), so it is
+        // displaced past the mode change boundary into 16IVA territory, where the 34s are off-mode.
+        // Because the assignment is automatic, the scheduler must reassign it to an in-mode (16IVA)
+        // runway rather than leave it off-mode.
+        var displacedFlight = new FlightBuilder("DISPLACED")
+            .WithFeederFix(null)
+            .WithLandingEstimate(_time.AddSeconds(490))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        // Act
+        sequence.Insert(2, displacedFlight);
+
+        // Assert
+        displacedFlight.AssignedRunwayIdentifier.ShouldBeOneOf(["16L", "16R"],
+            "an automatic flight displaced past the mode change boundary must be reassigned to an in-mode runway");
+        displacedFlight.LandingTime.ShouldBeGreaterThanOrEqualTo(firstLandingInNewMode,
+            "the displaced flight should land in the new mode after the mode change boundary");
+    }
+
+    [Theory]
+    [InlineData(true)]  // manual assignment in the old mode
+    [InlineData(false)] // automatic assignment in the old mode
+    public void ChangeRunwayMode_WhenScheduled_FlightAfterBoundaryBecomesAutomaticOnNewModeRunway(bool initiallyManual)
+    {
+        // Arrange
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        // Flight on a 34IVA runway, landing after the pending boundary.
+        var flightBuilder = new FlightBuilder("ABC123")
+            .WithFeederFix(null)
+            .WithLandingEstimate(_time.AddMinutes(30))
+            .WithState(State.Stable);
+        flightBuilder = initiallyManual
+            ? flightBuilder.WithManualRunway("34L")
+            : flightBuilder.WithRunway("34L");
+        var flight = flightBuilder.Build();
+        sequence.Insert(0, flight);
+
+        var newMode = new RunwayMode(
+            "16IVA",
+            [
+                new Runway("16L", string.Empty, _acceptanceRate, []),
+                new Runway("16R", string.Empty, _acceptanceRate, [])
+            ],
+            dependencyRate: TimeSpan.Zero,
+            offModeSeparation: TimeSpan.FromSeconds(300));
+
+        // Act: schedule a mode change for T+20, before the flight's landing time
+        sequence.ChangeRunwayMode(newMode, _time.AddMinutes(20), _time.AddMinutes(20));
+
+        // Assert
+        flight.RunwayAssignment.ShouldBeOfType<AutomaticRunwayAssignment>(
+            "a scheduled mode change should clear the manual assignment so the algorithm manages the runway");
+        flight.AssignedRunwayIdentifier.ShouldBeOneOf(["16L", "16R"],
+            "the flight should be reassigned to a runway in the new mode");
+    }
+
+    [Fact]
+    public void Schedule_WhenInModeFlightFollowsOffModeFlight_IsSeparatedByOffModeRate()
+    {
+        // Arrange
+        var offModeSeparation = TimeSpan.FromSeconds(300);
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate, offModeSeparationSeconds: (int)offModeSeparation.TotalSeconds);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        // Off-mode flight (16L is not in 34IVA mode) lands first.
+        var offModeFlight = new FlightBuilder("OFF_MODE")
+            .WithLandingEstimate(_time.AddMinutes(10))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(5))
+            .WithManualRunway("16L")
+            .WithState(State.Stable)
+            .Build();
+
+        sequence.Insert(0, offModeFlight);
+
+        // In-mode flight (34L) lands shortly after, so it is scheduled against the
+        // off-mode flight as its predecessor. An off-mode flight must be separated
+        // from all other flights by the off-mode rate, regardless of direction.
+        var inModeFlight = new FlightBuilder("IN_MODE")
+            .WithLandingEstimate(_time.AddMinutes(11))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(6))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        // Act
+        sequence.Insert(1, inModeFlight);
+
+        // Assert
+        inModeFlight.LandingTime.ShouldBe(offModeFlight.LandingTime.Add(offModeSeparation),
+            "in-mode flight following an off-mode flight must be separated by the off-mode rate");
     }
 
     [Fact]

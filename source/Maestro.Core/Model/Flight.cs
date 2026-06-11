@@ -6,6 +6,15 @@ using Maestro.Core.Infrastructure;
 
 namespace Maestro.Core.Model;
 
+public interface IRunwayAssignment
+{
+    string RunwayIdentifier { get; }
+}
+
+public record AutomaticRunwayAssignment(string RunwayIdentifier) : IRunwayAssignment;
+
+public record ManualRunwayAssignment(string RunwayIdentifier) : IRunwayAssignment;
+
 public class Flight : IEquatable<Flight>
 {
     /// <summary>
@@ -25,7 +34,7 @@ public class Flight : IEquatable<Flight>
         DateTimeOffset? estimatedDepartureTime,
 
         // Runway and trajectory
-        string assignedRunwayIdentifier,
+        IRunwayAssignment runwayAssignment,
         string approachType,
         TerminalTrajectory terminalTrajectory,
         EnrouteTrajectory enrouteTrajectory,
@@ -54,7 +63,7 @@ public class Flight : IEquatable<Flight>
         IsFromDepartureAirport = isFromDepartureAirport;
         EstimatedDepartureTime = estimatedDepartureTime;
 
-        AssignedRunwayIdentifier = assignedRunwayIdentifier;
+        RunwayAssignment = runwayAssignment;
         ApproachType = approachType;
         EnrouteTrajectory = enrouteTrajectory;
         TerminalTrajectory = terminalTrajectory;
@@ -91,7 +100,7 @@ public class Flight : IEquatable<Flight>
         string aircraftType,
         AircraftCategory aircraftCategory,
         string destinationIdentifier,
-        string assignedRunwayIdentifier,
+        IRunwayAssignment runwayAssignment,
         string approachType,
         TerminalTrajectory terminalTrajectory,
         EnrouteTrajectory enrouteTrajectory,
@@ -109,7 +118,7 @@ public class Flight : IEquatable<Flight>
         IsFromDepartureAirport = false;
         EstimatedDepartureTime = null;
 
-        AssignedRunwayIdentifier = assignedRunwayIdentifier;
+        RunwayAssignment = runwayAssignment;
         ApproachType = approachType;
         TerminalTrajectory = terminalTrajectory;
         EnrouteTrajectory = enrouteTrajectory;
@@ -145,7 +154,12 @@ public class Flight : IEquatable<Flight>
         EstimatedDepartureTime = dto.EstimatedDepartureTime;
         IsFromDepartureAirport = dto.IsFromDepartureAirport;
 
-        AssignedRunwayIdentifier = dto.AssignedRunwayIdentifier;
+        RunwayAssignment = dto.RunwayAssignment switch
+        {
+            ManualRunwayAssignmentDto manual => new ManualRunwayAssignment(manual.RunwayIdentifier),
+            AutomaticRunwayAssignmentDto automatic => new AutomaticRunwayAssignment(automatic.RunwayIdentifier),
+            _ => throw new ArgumentOutOfRangeException(nameof(dto), dto.RunwayAssignment, "Unknown runway assignment type")
+        };
         ApproachType = dto.ApproachType;
         TerminalTrajectory = new TerminalTrajectory(dto.TerminalNormalTimeToGo, dto.TerminalPressureTimeToGo, dto.TerminalMaxPressureTimeToGo);
         EnrouteTrajectory = new EnrouteTrajectory(dto.EnrouteMaxLinearDelay, dto.EnrouteShortcutTimeToGain);
@@ -195,7 +209,12 @@ public class Flight : IEquatable<Flight>
     public bool ManualFeederFixEstimate { get; private set; }
     public DateTimeOffset FeederFixTime { get; private set; } // STA_FF
 
-    public string AssignedRunwayIdentifier { get; private set; }
+    public IRunwayAssignment RunwayAssignment { get; private set; }
+
+    /// <summary>
+    ///     Convenience accessor for the assigned runway identifier. The <see cref="RunwayAssignment"/> is the source of truth.
+    /// </summary>
+    public string AssignedRunwayIdentifier => RunwayAssignment.RunwayIdentifier;
     public string ApproachType { get; private set; }
     public TerminalTrajectory TerminalTrajectory { get; private set; }
     public EnrouteTrajectory EnrouteTrajectory { get; private set; }
@@ -221,9 +240,9 @@ public class Flight : IEquatable<Flight>
         State = state;
     }
 
-    public void SetRunway(string runwayIdentifier, TerminalTrajectory terminalTrajectory)
+    public void SetRunway(IRunwayAssignment runwayAssignment, TerminalTrajectory terminalTrajectory)
     {
-        AssignedRunwayIdentifier = runwayIdentifier;
+        RunwayAssignment = runwayAssignment;
         SetTrajectory(terminalTrajectory);
     }
 

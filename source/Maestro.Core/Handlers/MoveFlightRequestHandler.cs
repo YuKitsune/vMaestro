@@ -69,7 +69,7 @@ public class MoveFlightRequestHandler(
                 fixNames,
                 session.Sequence.UpperWind);
 
-            flight.SetRunway(request.RunwayIdentifier, trajectory);
+            flight.SetRunway(new ManualRunwayAssignment(request.RunwayIdentifier), trajectory);
 
             logger.Verbose(
                 "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",

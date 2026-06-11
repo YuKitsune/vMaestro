@@ -79,7 +79,10 @@
           "feederFixEstimate": "2024-06-15T12:20:00+00:00",
           "manualFeederFixEstimate": false,
           "feederFixTime": "2024-06-15T12:22:00+00:00",
-          "assignedRunwayIdentifier": "34L",
+          "runwayAssignment": {
+            "type": "Automatic",
+            "runwayIdentifier": "34L"
+          },
           "numberToLandOnRunway": 3,
           "approachType": "ILS",
           "initialLandingEstimate": "2024-06-15T12:35:00+00:00",

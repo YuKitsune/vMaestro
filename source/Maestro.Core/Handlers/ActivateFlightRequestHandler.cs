@@ -116,7 +116,7 @@ public class ActivateFlightRequestHandler(
             originIdentifier: record.Origin,
             isFromDepartureAirport: isFromDepartureAirport,
             estimatedDepartureTime: record.EstimatedDepartureTime,
-            assignedRunwayIdentifier: runway.Identifier,
+            runwayAssignment: new AutomaticRunwayAssignment(runway.Identifier),
             approachType: runway.ApproachType,
             enrouteTrajectory: enrouteTrajectory,
             terminalTrajectory: terminalTrajectory,
