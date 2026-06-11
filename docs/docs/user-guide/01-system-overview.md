@@ -213,37 +213,70 @@ Flights become Landed at the `STA`. Processing stops entirely. The last 5 landed
 vMaestro supports multi-user operation through an optional server component.
 This allows multiple controllers to collaborate on a single sequence in real-time.
 
+### Master and Slave Connections
+
+When multiple controllers are connected, one client acts as the **Master** and the rest act as **Slaves**.
+
+The Master client:
+
+- Receives and processes all flight data from vatSys
+- Runs the sequence processing cycle
+- Broadcasts the resulting sequence state to all connected clients
+
+Slave clients:
+
+- Receive the sequence state from the Master
+- Can make changes to the sequence, subject to configured permissions
+- Relay those changes to the Master for processing
+
+### Master Selection
+
+The Master is selected based on the controller's role. Roles with greater visibility range take higher priority, since a controller who can see more traffic produces a more accurate sequence.
+
+| Priority | Role |
+| -------- | ---- |
+| Highest | Flow (FMP) |
+| | Enroute (ENR) |
+| Lowest | Approach (APP) |
+
+When a controller with a higher-priority role connects, they automatically become the Master. The previous Master becomes a Slave.
+
+Observer connections are never eligible for Master.
+
 ### Roles
 
 #### Flow (FMP)
 
-The Flow role is intended for the Flow Management Position. When a controller with the Flow role is online:
+The Flow role is intended for the Flow Management Position. A Flow controller is always the Master when connected. When a Flow controller connects:
 
-- They control the master sequence
-- Their client performs all scheduling calculations
-- Changes are broadcast to all other connected clients
-
-#### Approach (APP)
-
-The Approach role is intended for Approach controllers working traffic within the TMA.
-Depending on configuration, some functions may be restricted.
+- They become the Master immediately, regardless of who was Master before
+- Their client receives all flight data from vatSys and runs the sequence processing cycle
+- The resulting sequence state is broadcast to all other connected clients
 
 #### Enroute (ENR)
 
-The Enroute role is intended for Enroute controllers managing traffic prior to the TMA boundary.
+The Enroute role is intended for Enroute controllers managing traffic prior to the TMA boundary. An Enroute controller acts as Master when no Flow controller is connected. If an Approach controller was the Master when the Enroute controller connects, the Enroute controller takes over as Master.
+
+Depending on configuration, some functions may be restricted.
+
+#### Approach (APP)
+
+The Approach role is intended for Approach controllers working traffic within the TMA. An Approach controller acts as Master only when no Flow or Enroute controller is connected.
+
 Depending on configuration, some functions may be restricted.
 
 #### Observer (OBS)
 
 The Observer role provides read-only access to the sequence.
-Observers cannot make any modifications.
+Observers cannot make any modifications and are never eligible to be the Master.
 
 ### Pseudo-Master Mode
 
-When no controller with the Flow role is online, all connected Approach and Enroute controllers operate in pseudo-master mode (shown as `ENR/FMP` or `APP/FMP`). In this mode:
+When no Flow controller is online, the highest-priority connected controller acts as Master (shown as `ENR/FLOW` or `APP/FLOW`). In this mode:
 
-- All functions are available
-- The first connected client becomes the master
+- All functions are available to the controller acting as Master
+- If only Approach controllers are connected, one acts as Master
+- If an Enroute controller connects, they take over as Master
 - Sequence changes are still synchronised across all clients
 
 ### Environments
