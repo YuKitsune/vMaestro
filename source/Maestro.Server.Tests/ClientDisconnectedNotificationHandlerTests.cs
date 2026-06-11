@@ -377,6 +377,8 @@ public class ClientDisconnectedNotificationHandlerTests
                 return true;
             }));
         connectionManager.Setup(x => x.GetPeers(masterConnection)).Returns([approachConnection, enrouteConnection]);
+        connectionManager.Setup(x => x.PromoteMaster(enrouteConnection))
+            .Callback<Connection>(c => c.IsMaster = true);
 
         var hubProxy = new Mock<IHubProxy>();
 

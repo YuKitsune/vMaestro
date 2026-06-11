@@ -42,20 +42,20 @@ public class ConnectRequestHandler(
             if (currentMaster is null)
             {
                 logger.Information("Assigning {Connection} as master", connection);
-                connection.IsMaster = true;
+                connectionManager.PromoteMaster(connection);
             }
             else if (GetMasterPriority(request.Role) > GetMasterPriority(currentMaster.Role))
             {
-                logger.Information("Re-assigning master from {PreviousMaster} to {NewMaster}",
+                logger.Information("Re-assigning master from {CurrentMaster} to {NewMaster}",
                     currentMaster, connection);
+
+                connectionManager.PromoteMaster(connection);
 
                 await hubProxy.Send(
                     currentMaster.Id,
                     "OwnershipRevoked",
                     new OwnershipRevokedNotification(request.AirportIdentifier),
                     cancellationToken);
-
-                connection.IsMaster = true;
             }
         }
 

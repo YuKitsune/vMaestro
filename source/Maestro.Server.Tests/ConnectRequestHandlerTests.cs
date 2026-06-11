@@ -178,6 +178,9 @@ public class ConnectRequestHandlerTests
         var connectionManager = new Mock<IConnectionManager>();
         connectionManager.Setup(x => x.GetConnections(environment, airportIdentifier)).Returns([existingConnection]);
         connectionManager.Setup(x => x.Add(connectionId, Version, environment, airportIdentifier, callsign, role)).Returns(newConnection);
+        connectionManager.Setup(x => x.PromoteMaster(newConnection))
+            .Callback<Connection>(_ => { existingConnection.IsMaster = false; newConnection.IsMaster = true; })
+            .Returns(existingConnection);
 
         var hubProxy = new Mock<IHubProxy>();
 
