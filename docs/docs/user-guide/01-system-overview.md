@@ -226,7 +226,7 @@ The Master client:
 Slave clients:
 
 - Receive the sequence state from the Master
-- Can make changes to the sequence, subject to configured permissions
+- Can make changes to the sequence, subject to permissions enforced by the Master
 - Relay those changes to the Master for processing
 
 ### Master Selection
@@ -235,9 +235,9 @@ The Master is selected based on the controller's role. Roles with greater visibi
 
 | Priority | Role |
 | -------- | ---- |
-| Highest | Flow (FMP) |
-| | Enroute (ENR) |
-| Lowest | Approach (APP) |
+| 3 | Flow (FMP) |
+| 2 | Enroute (ENR) |
+| 1 | Approach (APP) |
 
 When a controller with a higher-priority role connects, they automatically become the Master. The previous Master becomes a Slave.
 
@@ -257,13 +257,13 @@ The Flow role is intended for the Flow Management Position. A Flow controller is
 
 The Enroute role is intended for Enroute controllers managing traffic prior to the TMA boundary. An Enroute controller acts as Master when no Flow controller is connected. If an Approach controller was the Master when the Enroute controller connects, the Enroute controller takes over as Master.
 
-Depending on configuration, some functions may be restricted.
+When a Flow controller is online, some functions may be restricted depending on configuration.
 
 #### Approach (APP)
 
 The Approach role is intended for Approach controllers working traffic within the TMA. An Approach controller acts as Master only when no Flow or Enroute controller is connected.
 
-Depending on configuration, some functions may be restricted.
+When a Flow controller is online, some functions may be restricted depending on configuration.
 
 #### Observer (OBS)
 
@@ -272,12 +272,14 @@ Observers cannot make any modifications and are never eligible to be the Master.
 
 ### Pseudo-Master Mode
 
-When no Flow controller is online, the highest-priority connected controller acts as Master (shown as `ENR/FLOW` or `APP/FLOW`). In this mode:
+When no Flow controller is online, all connected Enroute and Approach controllers can modify the sequence without restriction. Permissions are only enforced when a Flow controller is online.
 
-- All functions are available to the controller acting as Master
+The highest-priority connected controller acts as Master (shown as `ENR/FLOW` or `APP/FLOW`):
+
 - If only Approach controllers are connected, one acts as Master
 - If an Enroute controller connects, they take over as Master
-- Sequence changes are still synchronised across all clients
+
+Sequence changes are still synchronised across all clients.
 
 ### Environments
 
