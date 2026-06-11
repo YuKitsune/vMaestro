@@ -23,6 +23,7 @@ public class FlightBuilder(string callsign)
 
     string _approachType = string.Empty;
     string _assignedRunway = "34L";
+    bool _manualRunway;
 
     bool _highPriority = false;
 
@@ -126,6 +127,14 @@ public class FlightBuilder(string callsign)
     public FlightBuilder WithRunway(string runway)
     {
         _assignedRunway = runway;
+        _manualRunway = false;
+        return this;
+    }
+
+    public FlightBuilder WithManualRunway(string runway)
+    {
+        _assignedRunway = runway;
+        _manualRunway = true;
         return this;
     }
 
@@ -177,7 +186,9 @@ public class FlightBuilder(string callsign)
                 aircraftType: _aircraftType,
                 aircraftCategory: _aircraftCategory,
                 destinationIdentifier: _destination,
-                assignedRunwayIdentifier: _assignedRunway,
+                runwayAssignment: _manualRunway
+                    ? new ManualRunwayAssignment(_assignedRunway)
+                    : new AutomaticRunwayAssignment(_assignedRunway),
                 approachType: _approachType,
                 terminalTrajectory: _terminalTrajectory,
                 enrouteTrajectory: _enrouteTrajectory,
@@ -196,7 +207,9 @@ public class FlightBuilder(string callsign)
                 originIdentifier: _origin,
                 isFromDepartureAirport: _isFromDepartureAirport,
                 estimatedDepartureTime: null,
-                assignedRunwayIdentifier: _assignedRunway,
+                runwayAssignment: _manualRunway
+                    ? new ManualRunwayAssignment(_assignedRunway)
+                    : new AutomaticRunwayAssignment(_assignedRunway),
                 approachType: _approachType,
                 terminalTrajectory: _terminalTrajectory,
                 enrouteTrajectory: _enrouteTrajectory,

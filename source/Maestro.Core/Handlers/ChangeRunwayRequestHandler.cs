@@ -72,7 +72,7 @@ public class ChangeRunwayRequestHandler(
                 fixNames,
                 session.Sequence.UpperWind);
 
-            flight.SetRunway(request.RunwayIdentifier, trajectory);
+            flight.SetRunway(new ManualRunwayAssignment(request.RunwayIdentifier), trajectory);
 
             // Update approach type if it changed
             if (flight.ApproachType != approachType)

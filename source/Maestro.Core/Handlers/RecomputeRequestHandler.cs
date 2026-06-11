@@ -82,7 +82,7 @@ public class RecomputeRequestHandler(
                 feederFix?.Estimate,
                 landingEstimate);
 
-            flight.SetRunway(runway.Identifier, trajectory);
+            flight.SetRunway(new AutomaticRunwayAssignment(runway.Identifier), trajectory);
             flight.SetApproachType(runway.ApproachType, trajectory);
 
             logger.Verbose(

@@ -140,6 +140,8 @@ public class InsertFlightRequestHandler(
                 runway,
                 landingEstimate: targetLandingTime);
 
+            // Exact insertion specifies the runway explicitly, so lock it as a manual assignment.
+            flight.SetRunway(new ManualRunwayAssignment(runway.Identifier), flight.TerminalTrajectory);
             flight.SetTargetLandingTime(targetLandingTime);
             flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
@@ -162,7 +164,7 @@ public class InsertFlightRequestHandler(
                 aircraftType: performanceData.TypeCode,
                 aircraftCategory: performanceData.AircraftCategory,
                 destinationIdentifier: airportIdentifier,
-                assignedRunwayIdentifier: runway.Identifier,
+                runwayAssignment: new ManualRunwayAssignment(runway.Identifier),
                 approachType: runway.ApproachType,
                 terminalTrajectory: trajectory,
                 enrouteTrajectory: enrouteTrajectory,
@@ -269,7 +271,7 @@ public class InsertFlightRequestHandler(
                 aircraftType: performanceData.TypeCode,
                 aircraftCategory: performanceData.AircraftCategory,
                 destinationIdentifier: airportIdentifier,
-                assignedRunwayIdentifier: runway.Identifier,
+                runwayAssignment: new AutomaticRunwayAssignment(runway.Identifier),
                 approachType: runway.ApproachType,
                 terminalTrajectory: trajectory,
                 enrouteTrajectory: enrouteTrajectory,
@@ -363,7 +365,7 @@ public class InsertFlightRequestHandler(
                 aircraftType: performanceData.TypeCode,
                 aircraftCategory: performanceData.AircraftCategory,
                 destinationIdentifier: airportIdentifier,
-                assignedRunwayIdentifier: runway.Identifier,
+                runwayAssignment: new AutomaticRunwayAssignment(runway.Identifier),
                 approachType: runway.ApproachType,
                 terminalTrajectory: trajectory,
                 enrouteTrajectory: enrouteTrajectory,
@@ -445,7 +447,7 @@ public class InsertFlightRequestHandler(
             originIdentifier: flightDataRecord.Origin,
             isFromDepartureAirport: isFromDepartureAirport,
             estimatedDepartureTime: flightDataRecord.EstimatedDepartureTime,
-            assignedRunwayIdentifier: runway.Identifier,
+            runwayAssignment: new AutomaticRunwayAssignment(runway.Identifier),
             approachType: runway.ApproachType,
             terminalTrajectory: terminalTrajectory,
             enrouteTrajectory: enrouteTrajectory,
