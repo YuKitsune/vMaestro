@@ -27,7 +27,7 @@ public class ChangeRunwayModeRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeRunwayModeRequest for {AirportIdentifier} to {RunwayMode}", request.AirportIdentifier, request.RunwayMode.Identifier);
+            logger.Debug("Relaying ChangeRunwayModeRequest for {AirportIdentifier} to {RunwayMode}", request.AirportIdentifier, request.RunwayMode.Identifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

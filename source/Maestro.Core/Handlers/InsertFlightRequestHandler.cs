@@ -32,7 +32,7 @@ public class InsertFlightRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying InsertFlightRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            logger.Debug("Relaying InsertFlightRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
@@ -89,7 +89,7 @@ public class InsertFlightRequestHandler(
                 _ => throw new NotSupportedException($"Unexpected insertion option: \"{request.Options.GetType()}\"")
             };
 
-            logger.Information("Inserted flight {Callsign} with landing time {LandingTime:HHmm} (target time {TargetTime:HHmm}", callsign, flight.LandingTime, flight.TargetLandingTime);
+            logger.Information("Inserted flight {Callsign} with landing time {LandingTime:HHmm} (target time {TargetTime:HHmm})", callsign, flight.LandingTime, flight.TargetLandingTime);
 
             sessionDto = session.Snapshot();
         }

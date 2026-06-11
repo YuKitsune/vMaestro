@@ -27,7 +27,7 @@ public class SwapFlightsRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying SwapFlightsRequest for {FirstCallsign} and {SecondCallsign} at {AirportIdentifier}", request.FirstFlightCallsign, request.SecondFlightCallsign, request.AirportIdentifier);
+            logger.Debug("Relaying SwapFlightsRequest for {FirstCallsign} and {SecondCallsign} at {AirportIdentifier}", request.FirstFlightCallsign, request.SecondFlightCallsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

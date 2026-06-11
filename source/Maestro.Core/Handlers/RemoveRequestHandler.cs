@@ -21,7 +21,7 @@ public class RemoveRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying RemoveRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            logger.Debug("Relaying RemoveRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

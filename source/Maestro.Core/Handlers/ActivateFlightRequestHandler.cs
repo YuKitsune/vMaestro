@@ -54,7 +54,7 @@ public class ActivateFlightRequestHandler(
         if (session.Sequence.FindFlight(callsign) is not null ||
             session.DeSequencedFlights.Any(f => f.Callsign == callsign))
         {
-            logger.Warning("{Callsign} already activated, skipping", callsign);
+            logger.Debug("{Callsign} already activated, skipping", callsign);
             return Task.FromResult(false);
         }
 
@@ -130,9 +130,8 @@ public class ActivateFlightRequestHandler(
 
         session.Sequence.Insert(insertionIndex, flight);
 
-        logger.Information("{Callsign} added to the sequence", callsign);
         logger.Information(
-            "{Callsign} allocated to RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
+            "{Callsign} added to the sequence — RWY {Runway} APCH {ApproachType} | TTG: {TimeToGo}, P: {Pressure}, PMax: {MaxPressure}",
             callsign,
             runway.Identifier,
             runway.ApproachType,

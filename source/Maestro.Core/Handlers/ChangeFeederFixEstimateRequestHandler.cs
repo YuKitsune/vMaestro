@@ -27,7 +27,7 @@ public class ChangeFeederFixEstimateRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeFeederFixEstimateRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            logger.Debug("Relaying ChangeFeederFixEstimateRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

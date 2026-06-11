@@ -28,7 +28,7 @@ public class ChangeRunwayRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeRunwayRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            logger.Debug("Relaying ChangeRunwayRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

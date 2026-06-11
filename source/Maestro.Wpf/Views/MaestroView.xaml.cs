@@ -1187,7 +1187,7 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
             if (matchingLadders.Count == 0)
             {
                 if (_flightLabels.Keys.Any(k => k.StartsWith($"{flight.Callsign}_")))
-                    _logger.Debug(
+                    _logger.Verbose(
                         "UpdateLabels: {Callsign} has no matching ladders — runway={Runway}, feederFix={FeederFix}",
                         flight.Callsign, flight.AssignedRunwayIdentifier, flight.FeederFixIdentifier);
                 continue;
@@ -1204,7 +1204,7 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
                 if (!isVisible)
                 {
                     if (_flightLabels.ContainsKey(key))
-                        _logger.Debug(
+                        _logger.Verbose(
                             "UpdateLabels: {Callsign} outside time window — STA {STA:HH:mm}, ref {Ref:HH:mm}, yOffset {YOffset:F0}px, ladderHeight {LadderHeight:F0}px",
                             flight.Callsign, referenceFlightTime.Value, referenceTime, yOffset, ladderHeight);
                     continue;
@@ -1219,7 +1219,7 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
                 if (ladderElement == null)
                 {
                     if (_flightLabels.ContainsKey(key))
-                        _logger.Debug(
+                        _logger.Verbose(
                             "UpdateLabels: {Callsign} ladder {Index} scrolled out of view",
                             flight.Callsign, ladderIndex);
                     continue;
@@ -1303,13 +1303,13 @@ public partial class MaestroView : IRecipient<VatsysTrackSelectedNotification>
 
         if (keysToRemove.Count > 0)
         {
-            _logger.Debug(
-                "UpdateLabels: removed {Count} label(s) — {Keys}",
+            _logger.Verbose(
+                "UpdateLabels: removed {Count} label(s): {Keys}",
                 keysToRemove.Count, string.Join(", ", keysToRemove));
 
             if (_flightLabels.Count == 0 && previousLabelCount > 0)
                 _logger.Warning(
-                    "UpdateLabels: all {PreviousCount} label(s) cleared — ViewModel.Flights={FlightCount}, currentFlights={CurrentCount}, expectedKeys={ExpectedCount}",
+                    "UpdateLabels: all {PreviousCount} label(s) cleared, viewModel.Flights={FlightCount}, currentFlights={CurrentCount}, expectedKeys={ExpectedCount}",
                     previousLabelCount, ViewModel.Flights.Count, currentFlights.Count, expectedKeys.Count);
         }
     }

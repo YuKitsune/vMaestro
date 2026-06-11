@@ -23,8 +23,6 @@ public class CreateConnectionRequestHandler(
 
             await mediator.Publish(new ConnectionCreatedNotification(request.AirportIdentifier), cancellationToken);
 
-            logger.Information("Connection for {AirportIdentifier} created", request.AirportIdentifier);
-
             // If connected to VATSIM, start the connection immediately
             var networkStatus = await TryGetNetworkStatusResponse(cancellationToken);
             if (networkStatus is not null && networkStatus.IsConnected)

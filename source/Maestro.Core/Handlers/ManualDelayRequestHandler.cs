@@ -21,7 +21,7 @@ public class ManualDelayRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ManualDelayRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
+            logger.Debug("Relaying ManualDelayRequest for {Callsign} at {AirportIdentifier}", request.Callsign, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

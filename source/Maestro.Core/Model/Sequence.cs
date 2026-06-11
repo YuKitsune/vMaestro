@@ -599,7 +599,7 @@ public class Sequence
                     continue;
                 }
 
-                log.Debug("Scheduling {Callsign} (i={Index})", currentFlight.Callsign, i);
+                log.Verbose("Scheduling {Callsign} (i={Index})", currentFlight.Callsign, i);
 
                 var runwayModeItem = sequence
                     .Take(i)
@@ -610,7 +610,7 @@ public class Sequence
 
                 var currentRunwayMode = runwayModeItem.RunwayMode;
 
-                log.Debug("Schedule {Callsign}: Current Runway Mode is {RunwayMode}", currentFlight.Callsign, currentRunwayMode);
+                log.Verbose("Schedule {Callsign}: Current Runway Mode is {RunwayMode}", currentFlight.Callsign, currentRunwayMode);
 
                 // A flight's available runways depend on the runway mode at its landing position.
                 // The backward search in EvaluateRunwayOption can delay a flight past a mode change
@@ -622,7 +622,7 @@ public class Sequence
                 {
                     var runwayOptions = GetRunways(_airportConfiguration, currentFlight, schedulingMode);
 
-                    log.Debug("Schedule {Callsign}: {Count} runway options found", currentFlight.Callsign, runwayOptions.Length);
+                    log.Verbose("Schedule {Callsign}: {Count} runway options found", currentFlight.Callsign, runwayOptions.Length);
 
                     // For each option, calculate the earliest landing time using the trajectory for that specific runway
                     var results = runwayOptions
@@ -640,7 +640,7 @@ public class Sequence
                         .First();
 
                     if (results.Count > 1)
-                        log.Debug(
+                        log.Verbose(
                             "{Callsign} selected RWY {Runway} (earliest STA {LandingTime:HHmm} of {Count} options)",
                             currentFlight.Callsign, result.Option.RunwayIdentifier, result.LandingTime, results.Count);
 
@@ -653,7 +653,7 @@ public class Sequence
                         || attempt >= 2)
                         break;
 
-                    log.Debug(
+                    log.Verbose(
                         "{Callsign} delayed into runway mode {RunwayMode}, re-evaluating runway options",
                         currentFlight.Callsign, modeAtResult.Identifier);
                     schedulingMode = modeAtResult;
@@ -662,7 +662,7 @@ public class Sequence
                 // Move flight to the final position if needed
                 if (result.SequencePosition != i)
                 {
-                    log.Debug(
+                    log.Verbose(
                         "{Callsign} repositioned from i={OldIndex} to i={NewIndex} (RWY {Runway}, STA {LandingTime:HHmm})",
                         currentFlight.Callsign, i, result.SequencePosition, result.Option.RunwayIdentifier, result.LandingTime);
 
@@ -680,7 +680,7 @@ public class Sequence
                     // to avoid skipping flights beyond the effective start index
                     if (result.SequencePosition < i)
                     {
-                        log.Debug("Moving forward to {NewIndex} to re-schedule {Callsign}", i, currentFlight.Callsign);
+                        log.Verbose("Moving forward to {NewIndex} to re-schedule {Callsign}", i, currentFlight.Callsign);
                         i = result.SequencePosition - 1;
                     }
                     continue;
@@ -689,7 +689,7 @@ public class Sequence
                 // Assign runway, approach type, landing time, and feeder fix time
                 var landingTime = result.LandingTime;
 
-                log.Debug(
+                log.Verbose(
                     "{Callsign} STA {LandingTime:HHmm} (ETA {Estimate:HHmm}, delay {Delay})",
                     currentFlight.Callsign,
                     landingTime,
@@ -726,7 +726,7 @@ public class Sequence
                 // Zero-delay flights can be delayed up to the runway acceptance rate
                 var effectiveMaximumDelay = EffectiveMaximumDelay(maximumDelay, referenceRunway);
 
-                log.Debug(
+                log.Verbose(
                     "  {Callsign} FindInsertionPoint RWY {Runway}: searching from i={From} toward i=0, max delay {Max}",
                     callsign, referenceRunway.Identifier, currentIndex - 1, effectiveMaximumDelay);
 
@@ -738,7 +738,7 @@ public class Sequence
                     // This slot isn't available, try the next one
                     if (latestLandingTime.HasValue && earliestLandingTime.IsAfter(latestLandingTime.Value))
                     {
-                        log.Debug(
+                        log.Verbose(
                             "  {Callsign} FindInsertionPoint i={Index}: slot unavailable — earliest {Earliest:HHmm} > latest {Latest:HHmm}",
                             callsign, candidateIndex, earliestLandingTime, latestLandingTime.Value);
                         continue;
@@ -751,7 +751,7 @@ public class Sequence
                     var latestFromDisplacedItem = GetLatestLandingTimeFromItem(itemAtPosition, runwayMode, referenceRunway);
                     if (latestFromDisplacedItem.HasValue && earliestLandingTime.IsAfter(latestFromDisplacedItem.Value))
                     {
-                        log.Debug(
+                        log.Verbose(
                             "  {Callsign} FindInsertionPoint i={Index}: would displace {Item} (max {Max:HHmm}), skipping",
                             callsign, candidateIndex, DescribeItem(itemAtPosition), latestFromDisplacedItem.Value);
                         continue;
@@ -760,20 +760,20 @@ public class Sequence
                     var totalDelay = earliestLandingTime - landingEstimate;
                     if (totalDelay > effectiveMaximumDelay)
                     {
-                        log.Debug(
+                        log.Verbose(
                             "  {Callsign} FindInsertionPoint i={Index}: delay {Delay} exceeds max {Max}, skipping",
                             callsign, candidateIndex, totalDelay, effectiveMaximumDelay);
                         continue;
                     }
 
-                    log.Debug(
+                    log.Verbose(
                         "  {Callsign} FindInsertionPoint i={Index}: valid — earliest {Earliest:HHmm}, delay {Delay}",
                         callsign, candidateIndex, earliestLandingTime, totalDelay);
                     return candidateIndex;
                 }
 
                 // Can't move any further forward
-                log.Debug("  {Callsign} FindInsertionPoint: no valid earlier position found, staying at i={Index}", callsign, currentIndex);
+                log.Verbose("  {Callsign} FindInsertionPoint: no valid earlier position found, staying at i={Index}", callsign, currentIndex);
                 return currentIndex;
             }
 
@@ -799,13 +799,13 @@ public class Sequence
 
                 if (maxTime.HasValue && maxTime.Value.IsAfter(landingEstimate))
                 {
-                    log.Debug(
+                    log.Verbose(
                         "  {Callsign} Earliest[i={Index}] RWY {Runway}: {Time:HHmm} — after {Constraint}",
                         callsign, index, referenceRunway.Identifier, maxTime.Value, DescribeItem(constraintSource!));
                     return maxTime.Value;
                 }
 
-                log.Debug(
+                log.Verbose(
                     "  {Callsign} Earliest[i={Index}] RWY {Runway}: {Time:HHmm} — unconstrained (ETA)",
                     callsign, index, referenceRunway.Identifier, landingEstimate);
                 return landingEstimate;
@@ -826,11 +826,11 @@ public class Sequence
                 }
 
                 if (minTime.HasValue)
-                    log.Debug(
+                    log.Verbose(
                         "  {Callsign} Latest[i={Index}] RWY {Runway}: {Time:HHmm} — before {Constraint}",
                         callsign, index, referenceRunway.Identifier, minTime.Value, DescribeItem(constraintSource!));
                 else
-                    log.Debug(
+                    log.Verbose(
                         "  {Callsign} Latest[i={Index}] RWY {Runway}: none",
                         callsign, index, referenceRunway.Identifier);
 
@@ -967,7 +967,7 @@ public class Sequence
                 var latestLandingTime = GetLatestLandingTimeForIndex(flight.Callsign, position, runwayMode, runway);
                 if (latestLandingTime.HasValue && earliestLandingTime.IsAfter(latestLandingTime.Value))
                 {
-                    log.Debug(
+                    log.Verbose(
                         "  {Callsign} RWY {Runway}: conflict at i={Index} with the proceeding entry. Earliest {Earliest:HHmm} > latest {Latest:HHmm}, searching backward",
                         flight.Callsign, runwayOption.RunwayIdentifier, position, earliestLandingTime, latestLandingTime.Value);
 
@@ -984,7 +984,7 @@ public class Sequence
                         // Check if this position is valid
                         if (candidateLatest.HasValue && !candidateEarliest.IsSameOrBefore(candidateLatest.Value))
                         {
-                            log.Debug(
+                            log.Verbose(
                                 "  {Callsign} RWY {Runway}: candidate i={Index} invalid — earliest {Earliest:HHmm} > latest {Latest:HHmm}",
                                 flight.Callsign, runwayOption.RunwayIdentifier, candidateIndex, candidateEarliest, candidateLatest.Value);
                             continue;
@@ -997,14 +997,14 @@ public class Sequence
                             var latestFromDisplacedItem = GetLatestLandingTimeFromItem(itemAtPosition, candidateRunwayMode, runway);
                             if (latestFromDisplacedItem.HasValue && candidateEarliest.IsAfter(latestFromDisplacedItem.Value))
                             {
-                                log.Debug(
+                                log.Verbose(
                                     "  {Callsign} RWY {Runway}: candidate i={Index} would displace {Item} (max {Max:HHmm}), skipping",
                                     flight.Callsign, runwayOption.RunwayIdentifier, candidateIndex, DescribeItem(itemAtPosition), latestFromDisplacedItem.Value);
                                 continue;
                             }
                         }
 
-                        log.Debug(
+                        log.Verbose(
                             "  {Callsign} RWY {Runway}: conflict resolved at i={Index}, earliest {Earliest:HHmm}",
                             flight.Callsign, runwayOption.RunwayIdentifier, candidateIndex, candidateEarliest);
 
@@ -1017,7 +1017,7 @@ public class Sequence
                     // If we couldn't find a valid position backward, stay at current position
                     if (!foundValidPosition)
                     {
-                        log.Debug(
+                        log.Verbose(
                             "  {Callsign} RWY {Runway}: no valid backward position found, staying at i={Index}",
                             flight.Callsign, runwayOption.RunwayIdentifier, currentIndex);
                         position = currentIndex;
@@ -1034,7 +1034,7 @@ public class Sequence
                     var effectiveMax = EffectiveMaximumDelay(flight.MaximumDelay.Value, runway);
                     if (totalDelay > effectiveMax)
                     {
-                        log.Debug(
+                        log.Verbose(
                             "  {Callsign} RWY {Runway}: delay {Delay} exceeds max {Max}, searching earlier",
                             flight.Callsign, runwayOption.RunwayIdentifier, totalDelay, effectiveMax);
 
@@ -1050,21 +1050,21 @@ public class Sequence
                         if (newPosition < position)
                         {
                             landingTime = GetEarliestLandingTimeForIndex(flight.Callsign, newPosition, targetLandingTime, runwayMode, runway);
-                            log.Debug(
+                            log.Verbose(
                                 "  {Callsign} RWY {Runway}: max delay — moved from i={OldIndex} to i={NewIndex}, STA {LandingTime:HHmm}",
                                 flight.Callsign, runwayOption.RunwayIdentifier, position, newPosition, landingTime);
                             position = newPosition;
                         }
                         else
                         {
-                            log.Debug(
+                            log.Verbose(
                                 "  {Callsign} RWY {Runway}: max delay exceeded but no earlier position available",
                                 flight.Callsign, runwayOption.RunwayIdentifier);
                         }
                     }
                 }
 
-                log.Debug(
+                log.Verbose(
                     "  {Callsign} RWY {Runway} evaluated: i={Index}, STA {LandingTime:HHmm}",
                     flight.Callsign, runwayOption.RunwayIdentifier, position, landingTime);
 
@@ -1163,7 +1163,7 @@ public class Sequence
         if (possibleRunways.Count == 0)
         {
             // Couldn't find a good match, just use the default
-            _logger.Debug(
+            _logger.Verbose(
                 "{Callsign}: no runway match for feeder fix {FeederFix}, using default {Default}",
                 flight.Callsign, flight.FeederFixIdentifier, runwayMode.Default.Identifier);
             var defaultTrajectory = _trajectoryService.GetTrajectory(flight, runwayMode.Default.Identifier, runwayMode.Default.ApproachType, [], UpperWind);

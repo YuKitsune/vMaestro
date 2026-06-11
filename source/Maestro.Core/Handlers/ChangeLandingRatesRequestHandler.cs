@@ -24,7 +24,7 @@ public class ChangeLandingRatesRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying ChangeLandingRatesRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Debug("Relaying ChangeLandingRatesRequest for {AirportIdentifier}", request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

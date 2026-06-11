@@ -30,7 +30,7 @@ public class CancelConfigurationChangeRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying {RequestType} for {AirportIdentifier}", typeof(TRequest).Name, airportIdentifier);
+            logger.Debug("Relaying {RequestType} for {AirportIdentifier}", typeof(TRequest).Name, airportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }
