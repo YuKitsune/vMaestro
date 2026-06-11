@@ -270,7 +270,7 @@ When a Flow controller is online, some functions may be restricted depending on 
 The Observer role provides read-only access to the sequence.
 Observers cannot make any modifications and are never eligible to be the Master.
 
-### Pseudo-Master Mode
+### Pseudo-Flow Mode
 
 When no Flow controller is online, all connected Enroute and Approach controllers can modify the sequence without restriction. Permissions are only enforced when a Flow controller is online.
 
