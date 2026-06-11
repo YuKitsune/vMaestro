@@ -3,8 +3,8 @@
 CheckForUpdates: false
 
 Logging:
-  LogLevel: Verbose
-  MaxFileAgeDays: 1
+  LogLevel: Debug
+  MaxFileAgeDays: 4
 
 Server:
   Uri: https://vatpac.maestro.eoinmotherway.dev/hub

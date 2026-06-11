@@ -28,7 +28,7 @@ public class ModifyWindRequestHandler(
                 return;
             }
 
-            logger.Information("Relaying ModifyWindRequest for {AirportIdentifier}", request.AirportIdentifier);
+            logger.Debug("Relaying ModifyWindRequest for {AirportIdentifier}", request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

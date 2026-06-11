@@ -31,7 +31,7 @@ public class RelayToMasterRequestHandler(IConnectionManager connectionManager, I
             return ServerResponse.CreateFailure("No master found");
         }
 
-        logger.Information(
+        logger.Debug(
             "Relaying {RequestType} from {Sender} to {Master}",
             wrappedRequest.Request.MethodName,
             connection.Callsign,

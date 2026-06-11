@@ -7,12 +7,11 @@ using Serilog;
 
 namespace Maestro.Plugin.Handlers;
 
-public class CoordinationMessageReceivedNotificationHandler(WindowManager windowManager, ILogger logger)
+public class CoordinationMessageReceivedNotificationHandler(WindowManager windowManager)
     : INotificationHandler<CoordinationMessageReceivedNotification>
 {
     public Task Handle(CoordinationMessageReceivedNotification notification, CancellationToken cancellationToken)
     {
-        logger.Information("Attempting to open information window with message {Message}", notification.Message);
         windowManager.FocusOrCreateWindow(
             WindowKeys.Information2(notification.AirportIdentifier),
             "Information",
@@ -21,8 +20,6 @@ public class CoordinationMessageReceivedNotificationHandler(WindowManager window
                 var viewModel = new InformationViewModel(notification.AirportIdentifier, windowHandle, notification);
                 return new InformationView2(viewModel);
             });
-
-        logger.Information("Information window opened");
 
         return Task.CompletedTask;
     }

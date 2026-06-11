@@ -52,7 +52,7 @@ public static class GitHubReleaseChecker
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
         {
-            logger.Warning("Failed to check for updates: request timed out");
+            logger.Warning(ex, "Failed to check for updates: request timed out");
         }
         catch (Exception ex)
         {

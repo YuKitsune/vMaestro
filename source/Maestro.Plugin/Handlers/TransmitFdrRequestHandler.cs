@@ -31,7 +31,7 @@ public class TransmitFdrRequestHandler(IMediator mediator, ISessionManager sessi
         // If any remaining estimates are null, ETOs haven't finished computing yet — wait for the next update
         if (routeSegments.Any(x => x.Dto.Estimate == DateTimeOffset.MaxValue))
         {
-            logger.Verbose("{Callsign} skipped: one or more ETOs not yet computed", updated.Callsign);
+            logger.Debug("{Callsign} skipped: one or more ETOs not yet computed", updated.Callsign);
             return;
         }
 

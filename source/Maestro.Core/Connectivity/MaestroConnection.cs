@@ -547,7 +547,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         }
         else
         {
-            _logger.Information("Request {ActionKey} from {Callsign} processed successfully",
+            _logger.Debug("Request {ActionKey} from {Callsign} processed successfully",
                 actionKey, envelope.OriginatingCallsign);
         }
 

@@ -93,7 +93,7 @@ public class Session : IAsyncDisposable
         }
         catch (Exception exception)
         {
-            _logger.Error(exception, "Background maintenance failed for {AirportIdentifier}", AirportIdentifier);
+            _logger.Fatal(exception, "Processing task for {AirportIdentifier} failed", AirportIdentifier);
         }
     }
 

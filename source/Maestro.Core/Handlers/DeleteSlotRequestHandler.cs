@@ -21,7 +21,7 @@ public class DeleteSlotRequestHandler(
             connection.IsConnected &&
             !connection.IsMaster)
         {
-            logger.Information("Relaying DeleteSlotRequest for slot {SlotId} at {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
+            logger.Debug("Relaying DeleteSlotRequest for slot {SlotId} at {AirportIdentifier}", request.SlotId, request.AirportIdentifier);
             await connection.Invoke(request, cancellationToken);
             return;
         }

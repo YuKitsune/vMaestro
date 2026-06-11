@@ -14,7 +14,7 @@ public class RelayRequestHandler(IMaestroConnectionManager connectionManager, Se
         var envelope = request.Envelope;
         var actionKey = request.ActionKey;
 
-        logger.Information("Processing {ActionKey} from {Callsign} (Role: {Role}) for airport {Airport}",
+        logger.Debug("Processing {ActionKey} from {Callsign} (Role: {Role}) for airport {Airport}",
             actionKey, envelope.OriginatingCallsign, envelope.OriginatingRole, envelope.Request.AirportIdentifier);
 
         var airportIdentifier = envelope.Request.AirportIdentifier;
