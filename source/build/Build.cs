@@ -13,7 +13,6 @@ using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitHub;
-using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.ILRepack;
 using Octokit;
 using Serilog;
@@ -60,8 +59,6 @@ class Build : NukeBuild
     [GitRepository]
     readonly GitRepository GitRepository;
 
-    [GitVersion]
-    readonly GitVersion GitVersion;
 
     const string ReleasePluginName = "MaestroPlugin";
     const string DebugPluginName = "MaestroPlugin - Debug";
@@ -116,12 +113,12 @@ class Build : NukeBuild
         {
             var semanticVersion = GetSemanticVersion();
             var tagName = $"v{semanticVersion}";
-            Log.Information("Tagging {CommitSha} with version {Version}", GitVersion.Sha, tagName);
+            Log.Information("Tagging {CommitSha} with version {Version}", GitRepository.Commit, tagName);
 
             GitTasks.Git($"tag {tagName}");
             GitTasks.Git($"push origin {tagName}");
 
-            Log.Information("{Version} pushed", GitVersion.Sha, tagName);
+            Log.Information("{Version} pushed", tagName);
         });
 
     Target DownloadVatSys => _ => _
@@ -191,8 +188,8 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .SetOutputDirectory(PluginBuildOutputDirectory)
                 .SetVersion(version)
-                .SetAssemblyVersion(GitVersion.MajorMinorPatch)
-                .SetFileVersion(GitVersion.MajorMinorPatch)
+                .SetAssemblyVersion(GetMajorMinorPatch())
+                .SetFileVersion(GetMajorMinorPatch())
                 .SetInformationalVersion(version)
                 .SetProperty("VatSysPath", VatSysExePath.Parent.Parent));
         });
@@ -391,8 +388,8 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .SetOutput(ServerBuildOutputDirectory)
                 .SetVersion(version)
-                .SetAssemblyVersion(GitVersion.MajorMinorPatch)
-                .SetFileVersion(GitVersion.MajorMinorPatch)
+                .SetAssemblyVersion(GetMajorMinorPatch())
+                .SetFileVersion(GetMajorMinorPatch())
                 .SetInformationalVersion(version));
 
             Log.Information("Server published to {OutputDirectory}", ServerBuildOutputDirectory);
@@ -436,8 +433,8 @@ class Build : NukeBuild
                     .SetRuntime(rid)
                     .SetSelfContained(true)
                     .SetVersion(version)
-                    .SetAssemblyVersion(GitVersion.MajorMinorPatch)
-                    .SetFileVersion(GitVersion.MajorMinorPatch)
+                    .SetAssemblyVersion(GetMajorMinorPatch())
+                    .SetFileVersion(GetMajorMinorPatch())
                     .SetInformationalVersion(version)
                     .SetProperty("PublishSingleFile", "true")
                     .SetProperty("IncludeNativeLibrariesForSelfExtract", "true"));
@@ -591,14 +588,12 @@ class Build : NukeBuild
 
     private string GetSemanticVersion()
     {
-        // For main/master branch, or if we're on a detached head (building from a tag)
-        // use major.minor.patch (e.g., "1.2.3")
-        if (string.IsNullOrEmpty(GitVersion.BranchName) || GitVersion.BranchName is "main" or "master")
-        {
-            return GitVersion.MajorMinorPatch;
-        }
+        var exactTag = GitTasks.Git("tag --points-at HEAD")
+            .Select(o => o.Text.Trim())
+            .FirstOrDefault(t => t.StartsWith("v"));
 
-        // For other branches (develop, hotfix, etc.): use SemVer format
-        return GitVersion.SemVer;
+        return exactTag != null ? exactTag.TrimStart('v') : "0.0.0-local";
     }
+
+    private string GetMajorMinorPatch() => GetSemanticVersion().Split('-')[0];
 }
