@@ -110,6 +110,10 @@ This will affect the `ETA_FF` used by vMaestro.
 
 For flights not tracking via a feeder fix, an average `TTG` will be calculated, and the `ETA_FF` is derived by subtracting the average `TTG` from the last estimate in the flight plan route.
 
+:::info
+Once a flight passes the feeder fix, its `ETA` stops updating. Delay figures on the label will not change after that point, regardless of the flight's state.
+:::
+
 ![Diagram of ETA_FF calculation](../../static/img/eta_ff.png)
 
 #### Current vs Initial Estimates
@@ -138,7 +142,7 @@ During scheduling, vMaestro assigns each flight a runway and calculates its sche
 
 Runways are assigned based on the active runway mode. If the runway mode specifies preferred feeder fixes, flights via those fixes are assigned to the corresponding runway. Otherwise, vMaestro calculates the `STA` for each available runway and assigns the one resulting in the earliest landing time. Flights not tracking via a feeder fix are assigned to the first runway in the runway mode.
 
-The `STA` is assigned based on the flight's sequence position and is never earlier than the `ETA` unless manually adjusted. The `STA_FF` is then derived by subtracting the trajectory time.
+The `STA` is assigned based on the flight's sequence position and is never earlier than the `ETA` unless manually adjusted. The `STA_FF` is derived from the `ETA_FF` plus the enroute portion of the required delay (the delay the aircraft must absorb before crossing the feeder fix). It is not derived from the `STA` and `TTG`.
 
 Flights allocated a maximum delay are prioritised. If their calculated delay exceeds the maximum, they are moved forward by swapping with preceding flights until their total delay is within the allocated maximum.
 

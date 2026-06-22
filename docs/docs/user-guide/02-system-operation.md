@@ -272,7 +272,7 @@ To resequence a flight that has conducted a missed approach:
 
 ![Insert a Flight window with an overshoot](../../static/img/insert_overshoot_window.png)
 
-**Before** inserts the flight ahead of the target, delaying the target flight. **After** inserts behind the target without affecting it.
+**Before** inserts the flight at the target's `STA`, displacing the target flight backwards. **After** inserts the flight one acceptance-rate behind the target, leaving the target unaffected.
 
 :::info
 Flights cannot be inserted between two Frozen flights when the gap is less than twice the acceptance rate.
@@ -307,6 +307,10 @@ Flights cannot be moved between two Frozen flights when the gap is less than twi
 :::
 
 ### Modifying Flights
+
+:::info
+Any manual intervention (Change Runway, Change Approach Type, Change `ETA_FF`, or Manual Delay) on an **Unstable** flight will cause it to become Stable. Intervention on a flight that is already Stable, SuperStable, or Frozen leaves the state unchanged. Only **Recompute** resets a flight back to Unstable.
+:::
 
 #### Change Runway
 
