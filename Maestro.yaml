@@ -506,7 +506,7 @@ Airports:
     - {Identifier: 34LLBS, Track: 017, DistanceNM: 11.8}
   
   - FeederFix: YAKKA
-    RunwayIdentifier: '34L'
+    RunwayIdentifier: '16L'
     Segments:
     - {Identifier: MEPIL, Track: 170, DistanceNM: 13}
     - {Identifier: LANOL, Track: 170, DistanceNM: 12}
@@ -514,7 +514,7 @@ Airports:
     - {Identifier: 16RF, Track: 155, DistanceNM: 11.8}
 
   - FeederFix: YAKKA
-    RunwayIdentifier: '34L'
+    RunwayIdentifier: '16L'
     Segments:
     - {Identifier: MEPIL, Track: 170, DistanceNM: 13}
     - {Identifier: LANOL, Track: 170, DistanceNM: 12}
