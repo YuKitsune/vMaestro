@@ -1,6 +1,7 @@
 Airports:
   - ICAO: YSSY
-    FeederFixes: [RIVET, WELSH, BOREE, YAKKA, MARLN]
+    # STAR is RIVET, but the feeder is ENLAD, outside the TMA
+    FeederFixes: [RIVET, AKMIR, BOREE, YAKKA, MARLN]
     Output: trajectories/yssy.yaml
 
   - ICAO: YMML
