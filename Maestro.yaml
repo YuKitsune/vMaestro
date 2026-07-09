@@ -114,7 +114,7 @@ Labels:
 
 Airports:
 - Identifier: YSSY
-  FeederFixes: [RIVET, WELSH, BOREE, YAKKA, MARLN]
+  FeederFixes: [AKMIR, ENLAD, BOREE, YAKKA, MARLN]
   Runways: [34L, 34R, 16L, 16R, "07", "25"]
   DefaultAircraftType: B738
   DefaultPendingFlightState: Stable
@@ -133,8 +133,8 @@ Airports:
 
   Colours:
     FeederFixes:
-      RIVET: 96, 0, 0
-      WELSH: 96, 0, 0
+      AKMIR: 96, 0, 0
+      ENLAD: 96, 0, 0
       BOREE: 0, 105, 0
       YAKKA: 0, 105, 0
       MARLN: 0, 235, 235
@@ -144,27 +144,27 @@ Airports:
   # 24 landings per hour = 150s
   - Identifier: 34IVA
     Runways:
-    - {Identifier: 34L, LandingRateSeconds: 150, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 34L, LandingRateSeconds: 150, FeederFixes: [AKMIR, ENLAD]}
     - {Identifier: 34R, LandingRateSeconds: 150, FeederFixes: [BOREE, YAKKA, MARLN]}
 
   # 20 landings per hour = 180s
   - Identifier: 34I
     DependencyRateSeconds: 60
     Runways:
-    - {Identifier: 34L, LandingRateSeconds: 180, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 34L, LandingRateSeconds: 180, FeederFixes: [AKMIR, ENLAD]}
     - {Identifier: 34R, LandingRateSeconds: 180, FeederFixes: [BOREE, YAKKA, MARLN]}
 
   # 24 landings per hour = 150s
   - Identifier: 16IVA
     Runways:
-    - {Identifier: 16R, LandingRateSeconds: 150, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 16R, LandingRateSeconds: 150, FeederFixes: [AKMIR, ENLAD]}
     - {Identifier: 16L, LandingRateSeconds: 150, FeederFixes: [BOREE, YAKKA, MARLN]}
 
   # 20 landings per hour = 180s
   - Identifier: 16I
     DependencyRateSeconds: 60
     Runways:
-    - {Identifier: 16R, LandingRateSeconds: 180, FeederFixes: [RIVET, WELSH]}
+    - {Identifier: 16R, LandingRateSeconds: 180, FeederFixes: [AKMIR, ENLAD]}
     - {Identifier: 16L, LandingRateSeconds: 180, FeederFixes: [BOREE, YAKKA, MARLN]}
 
   # 25 landings per hour = 144s
@@ -183,11 +183,82 @@ Airports:
     - {Identifier: 34L, LandingRateSeconds: 150}
 
   TerminalTrajectories:
-  - FeederFix: BOREE
+  - FeederFix: AKMIR
     RunwayIdentifier: '07'
     Segments:
+    - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+    - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+    - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+    - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+    - {Identifier: '07', Track: 74.3, DistanceNM: 14.4}
+
+  - FeederFix: AKMIR
+    RunwayIdentifier: 16L
+    Segments:
+    - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+    - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+    - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+    - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+    - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+    - {Identifier: TESAT, Track: 063, DistanceNM: 10}
+    - {Identifier: 16LODW, Track: 360, DistanceNM: 15.2}
+    - {Identifier: 16LBS, Track: 242, DistanceNM: 6}
+    - {Identifier: 16LF, Track: 155, DistanceNM: 14.1}
+
+  - FeederFix: AKMIR
+    RunwayIdentifier: 16R
+    Segments:
+    - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+    - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+    - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+    - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+    - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+    - {Identifier: 16RDW, Track: 340, DistanceNM: 14}
+    - {Identifier: 16RBS, Track: 067, DistanceNM: 9}
+    - {Identifier: 16RF, Track: 154, DistanceNM: 12.2}
+
+  - FeederFix: AKMIR
+    RunwayIdentifier: '25'
+    Segments:
+    - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+    - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+    - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+    - {Identifier: 25CDW, Track: 072, DistanceNM: 35.7}
+    - {Identifier: 25LBS, Track: 330, DistanceNM: 6.5}
+    - {Identifier: 25F, Track: 241, DistanceNM: 14.1}
+
+  - FeederFix: AKMIR
+    RunwayIdentifier: 34L
+    Segments:
+    - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+    - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+    - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+    - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+    - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+    - {Identifier: 34LDW, Track: 140, DistanceNM: 18}
+    - {Identifier: 34LBS, Track: 043, DistanceNM: 6}
+    - {Identifier: 34LF, Track: 335, DistanceNM: 14}
+
+  - FeederFix: AKMIR
+    RunwayIdentifier: 34R
+    Segments:
+    - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+    - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+    - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+    - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+    - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+    - {Identifier: TESAT, Track: 063, DistanceNM: 10}
+    - {Identifier: 34RDW, Track: 130, DistanceNM: 19}
+    - {Identifier: 34RBS, Track: 260, DistanceNM: 8}
+    - {Identifier: 34RF, Track: 335, DistanceNM: 13.1}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: '07'
+    ApproachType: A
+    Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
-    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: 07RDW, Track: 241, DistanceNM: 15.0}
     - {Identifier: 07RBS, Track: 160, DistanceNM: 14.5}
@@ -195,9 +266,11 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: '25'
+    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
-    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: 25RDW, Track: 075, DistanceNM: 14}
     - {Identifier: 25RBS, Track: 155, DistanceNM: 11}
@@ -205,25 +278,41 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: 16L
+    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
-    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: 16L, Track: 169.6, DistanceNM: 15.3}
 
   - FeederFix: BOREE
     RunwayIdentifier: 16R
+    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
-    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: 16R, Track: 172.1, DistanceNM: 13.8}
 
   - FeederFix: BOREE
-    RunwayIdentifier: 34L
+    RunwayIdentifier: 16R
+    ApproachType: P
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
-    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: DALAR, Track: 179.6, DistanceNM: 10.2}
+    - {Identifier: DUMOP, Track: 167.9, DistanceNM: 7}
+    - {Identifier: URDEN, Track: 167.9, DistanceNM: 5.9}
+    - {Identifier: 16R, Track: 167.9, DistanceNM: 11.3}
+
+  - FeederFix: BOREE
+    RunwayIdentifier: 34L
+    ApproachType: A
+    Segments:
+    - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: JENTL, Track: 170.8, DistanceNM: 6.7}
     - {Identifier: ZONKA, Track: 193.4, DistanceNM: 9.1}
@@ -233,9 +322,11 @@ Airports:
 
   - FeederFix: BOREE
     RunwayIdentifier: 34R
+    ApproachType: A
     Segments:
     - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
-    - {Identifier: BEROW, Track: 170.9, DistanceNM: 15}
+    - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+    - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: MAJAR, Track: 134.1, DistanceNM: 10.8}
     - {Identifier: DIPPA, Track: 167.8, DistanceNM: 8}
@@ -301,131 +392,82 @@ Airports:
     - {Identifier: JAKLN, Track: 167.7, DistanceNM: 6.4}
     - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
 
-  - FeederFix: RIVET
+  - FeederFix: ENLAD
     RunwayIdentifier: '07'
     Segments:
-    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: RIVET, Track: 49, DistanceNM: 12.9}
+    - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
     - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
     - {Identifier: 07OFR, Track: 034, DistanceNM: 10}
     - {Identifier: 07F, Track: 062, DistanceNM: 9.6}
 
-  - FeederFix: RIVET
+  - FeederFix: ENLAD
     RunwayIdentifier: 16L
     Segments:
-    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: RIVET, Track: 49, DistanceNM: 12.9}
+    - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
     - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
-    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
     - {Identifier: TESAT, Track: 62, DistanceNM: 10}
     - {Identifier: 16LODW, Track: 360, DistanceNM: 14.9}
     - {Identifier: 16LBS, Track: 245, DistanceNM: 6}
     - {Identifier: 16LF, Track: 155, DistanceNM: 14.1}
 
-  - FeederFix: RIVET
+  - FeederFix: ENLAD
     RunwayIdentifier: 16R
     Segments:
-    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: RIVET, Track: 49, DistanceNM: 12.9}
+    - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
     - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
-    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
     - {Identifier: 16RDW, Track: 340, DistanceNM: 17}
     - {Identifier: 16RBS, Track: 060, DistanceNM: 7.9}
     - {Identifier: 16RF, Track: 155, DistanceNM: 14.1}
 
-  - FeederFix: RIVET
+  - FeederFix: ENLAD
     RunwayIdentifier: '25'
     Segments:
-    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: RIVET, Track: 49, DistanceNM: 12.9}
+    - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
     - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
     - {Identifier: 25LDW, Track: 065, DistanceNM: 34.1}
     - {Identifier: 25LBS, Track: 330, DistanceNM: 6.5}
     - {Identifier: 25F, Track: 241, DistanceNM: 14.1}
 
-  - FeederFix: RIVET
+  - FeederFix: ENLAD
     RunwayIdentifier: 34L
     Segments:
-    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: RIVET, Track: 49, DistanceNM: 12.9}
+    - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
     - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
-    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
     - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
     - {Identifier: 34LDW, Track: 117, DistanceNM: 5}
     - {Identifier: 34LBS, Track: 015, DistanceNM: 5}
     - {Identifier: 34LF, Track: 335, DistanceNM: 13}
 
-  - FeederFix: RIVET
+  - FeederFix: ENLAD
     RunwayIdentifier: 34R
     Segments:
-    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 12.6}
+    - {Identifier: RIVET, Track: 49, DistanceNM: 12.9}
+    - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+    - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
     - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
-    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 10}
+    - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+    - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
     - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
     - {Identifier: 34LLDW, Track: 117, DistanceNM: 5}
     - {Identifier: 34LLBS, Track: 017, DistanceNM: 11.8}
-
-  - FeederFix: WELSH
-    RunwayIdentifier: '07'
-    Segments:
-    - {Identifier: ODALE, Track: 063, DistanceNM: 11}
-    - {Identifier: KABLO, Track: 063, DistanceNM: 4}
-    - {Identifier: MITSA, Track: 062, DistanceNM: 10}
-    - {Identifier: ANKUB, Track: 063, DistanceNM: 10}
-    - {Identifier: '07', Track: 063, DistanceNM: 10}
-
-  - FeederFix: WELSH
-    RunwayIdentifier: '25'
-    Segments:
-    - {Identifier: ODALE, Track: 063, DistanceNM: 11}
-    - {Identifier: KABLO, Track: 063, DistanceNM: 4}
-    - {Identifier: MITSA, Track: 062, DistanceNM: 10}
-    - {Identifier: 25CDW, Track: 072, DistanceNM: 35.7}
-    - {Identifier: 25LBS, Track: 330, DistanceNM: 6.5}
-    - {Identifier: 25F, Track: 241, DistanceNM: 14.1}
-  
-  - FeederFix: WELSH
-    RunwayIdentifier: 16L
-    Segments:
-    - {Identifier: ODALE, Track: 063, DistanceNM: 11}
-    - {Identifier: KABLO, Track: 063, DistanceNM: 4}
-    - {Identifier: MITSA, Track: 062, DistanceNM: 10}
-    - {Identifier: ANKUB, Track: 063, DistanceNM: 10}
-    - {Identifier: TESAT, Track: 063, DistanceNM: 10}
-    - {Identifier: 16LODW, Track: 360, DistanceNM: 15.2}
-    - {Identifier: 16LBS, Track: 242, DistanceNM: 6}
-    - {Identifier: 16LF, Track: 155, DistanceNM: 14.1}
-
-  - FeederFix: WELSH
-    RunwayIdentifier: 16R
-    Segments:
-    - {Identifier: ODALE, Track: 063, DistanceNM: 11}
-    - {Identifier: KABLO, Track: 063, DistanceNM: 4}
-    - {Identifier: MITSA, Track: 062, DistanceNM: 10}
-    - {Identifier: ANKUB, Track: 063, DistanceNM: 10}
-    - {Identifier: 16RDW, Track: 340, DistanceNM: 14}
-    - {Identifier: 16RBS, Track: 067, DistanceNM: 9}
-    - {Identifier: 16RF, Track: 154, DistanceNM: 12.2}
-
-  - FeederFix: WELSH
-    RunwayIdentifier: 34L
-    Segments:
-    - {Identifier: ODALE, Track: 063, DistanceNM: 11}
-    - {Identifier: KABLO, Track: 063, DistanceNM: 4}
-    - {Identifier: MITSA, Track: 062, DistanceNM: 10}
-    - {Identifier: ANKUB, Track: 063, DistanceNM: 10}
-    - {Identifier: 34LDW, Track: 140, DistanceNM: 18}
-    - {Identifier: 34LBS, Track: 043, DistanceNM: 6}
-    - {Identifier: 34LF, Track: 335, DistanceNM: 14}
-
-  - FeederFix: WELSH
-    RunwayIdentifier: 34R
-    Segments:
-    - {Identifier: ODALE, Track: 063, DistanceNM: 11}
-    - {Identifier: KABLO, Track: 063, DistanceNM: 4}
-    - {Identifier: MITSA, Track: 062, DistanceNM: 10}
-    - {Identifier: ANKUB, Track: 063, DistanceNM: 10}
-    - {Identifier: TESAT, Track: 063, DistanceNM: 10}
-    - {Identifier: 34RDW, Track: 130, DistanceNM: 19}
-    - {Identifier: 34RBS, Track: 260, DistanceNM: 8}
-    - {Identifier: 34RF, Track: 335, DistanceNM: 13.1}
 
   - FeederFix: YAKKA
     RunwayIdentifier: '07'
@@ -526,8 +568,8 @@ Airports:
     TimeWindowMinutes: 30
     Reference: FeederFixTime
     Ladders:
-    - {FeederFixes: [RIVET]}
-    - {FeederFixes: [WELSH]}
+    - {FeederFixes: [ENLAD]}
+    - {FeederFixes: [AKMIR]}
 
   - Identifier: ARL
     LabelLayout: Enroute
@@ -557,7 +599,7 @@ Airports:
     TimeWindowMinutes: 30
     Reference: FeederFixTime
     Ladders:
-    - {FeederFixes: [RIVET, WELSH]}
+    - {FeederFixes: [AKMIR, ENLAD]}
     - {FeederFixes: [BOREE, YAKKA, MARLN]}
 
   - Identifier: RWY

@@ -208,3 +208,75 @@
   - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
   PressureSegments: []
   MaxPressureSegments: []
+- FeederFix: RIVET
+  RunwayIdentifier: '07'
+  Segments:
+  - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+  - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
+  - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+  - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+  - {Identifier: '07', Track: 60.1, DistanceNM: 15.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RIVET
+  RunwayIdentifier: 16L
+  Segments:
+  - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+  - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
+  - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+  - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+  - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
+  - {Identifier: TESAT, Track: 62, DistanceNM: 10}
+  - {Identifier: 16L, Track: 146.4, DistanceNM: 0.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RIVET
+  RunwayIdentifier: 16R
+  Segments:
+  - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+  - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
+  - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+  - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+  - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
+  - {Identifier: TESAT, Track: 62, DistanceNM: 10}
+  - {Identifier: 16R, Track: 326.8, DistanceNM: 1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RIVET
+  RunwayIdentifier: '25'
+  Segments:
+  - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+  - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
+  - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+  - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+  - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
+  - {Identifier: TESAT, Track: 62, DistanceNM: 10}
+  - {Identifier: '25', Track: 41, DistanceNM: 0.5}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RIVET
+  RunwayIdentifier: 34L
+  Segments:
+  - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+  - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
+  - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+  - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+  - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
+  - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
+  - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+  - {Identifier: 34L, Track: 14.8, DistanceNM: 14.3}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RIVET
+  RunwayIdentifier: 34R
+  Segments:
+  - {Identifier: POMEL, Track: 61.6, DistanceNM: 6.8}
+  - {Identifier: BIGEM, Track: 61.6, DistanceNM: 5.8}
+  - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
+  - {Identifier: TAXAT, Track: 61.5, DistanceNM: 4}
+  - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
+  - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
+  - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+  - {Identifier: 34R, Track: 17.8, DistanceNM: 14.1}
+  PressureSegments: []
+  MaxPressureSegments: []
