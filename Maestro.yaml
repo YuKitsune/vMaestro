@@ -235,9 +235,10 @@ Airports:
     - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
     - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
     - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
-    - {Identifier: 34LDW, Track: 140, DistanceNM: 18}
-    - {Identifier: 34LBS, Track: 043, DistanceNM: 6}
-    - {Identifier: 34LF, Track: 335, DistanceNM: 14}
+    - {Identifier: 34LDW1, Track: 125, DistanceNM: 7.6}
+    - {Identifier: 34LDW2, Track: 155, DistanceNM: 7.1}
+    - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
+    - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
 
   - FeederFix: AKMIR
     RunwayIdentifier: 34R
@@ -318,7 +319,8 @@ Airports:
     - {Identifier: ZONKA, Track: 193.4, DistanceNM: 9.1}
     - {Identifier: DUDOK, Track: 193.5, DistanceNM: 7.5}
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
-    - {Identifier: 34L, Track: 14.8, DistanceNM: 14.3}
+    - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
+    - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
 
   - FeederFix: BOREE
     RunwayIdentifier: 34R
@@ -331,7 +333,8 @@ Airports:
     - {Identifier: MAJAR, Track: 134.1, DistanceNM: 10.8}
     - {Identifier: DIPPA, Track: 167.8, DistanceNM: 8}
     - {Identifier: JAKLN, Track: 167.8, DistanceNM: 11.6}
-    - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
+    - {Identifier: 34RBS, Track: 245, DistanceNM: 6.5}
+    - {Identifier: 34RF, Track: 335, DistanceNM: 12.2}
 
   - FeederFix: MARLN
     RunwayIdentifier: '07'
@@ -380,7 +383,10 @@ Airports:
     - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
     - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
     - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
-    - {Identifier: 34L, Track: 184.5, DistanceNM: 1.2}
+    - {Identifier: 34LDW1, Track: 200, DistanceNM: 9.1}
+    - {Identifier: 34LDW2, Track: 155, DistanceNM: 7.1}
+    - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
+    - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
 
   - FeederFix: MARLN
     RunwayIdentifier: 34R
@@ -390,7 +396,8 @@ Airports:
     - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
     - {Identifier: MANFA, Track: 199.3, DistanceNM: 5}
     - {Identifier: JAKLN, Track: 167.7, DistanceNM: 6.4}
-    - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
+    - {Identifier: 34RBS, Track: 245, DistanceNM: 6.5}
+    - {Identifier: 34RF, Track: 335, DistanceNM: 12.2}
 
   - FeederFix: ENLAD
     RunwayIdentifier: '07'
@@ -451,9 +458,8 @@ Airports:
     - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
     - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
-    - {Identifier: 34LDW, Track: 117, DistanceNM: 5}
-    - {Identifier: 34LBS, Track: 015, DistanceNM: 5}
-    - {Identifier: 34LF, Track: 335, DistanceNM: 13}
+    - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
+    - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
 
   - FeederFix: ENLAD
     RunwayIdentifier: 34R
@@ -466,8 +472,8 @@ Airports:
     - {Identifier: BOOGI, Track: 61.5, DistanceNM: 6}
     - {Identifier: DUDOK, Track: 133.6, DistanceNM: 5}
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
-    - {Identifier: 34LLDW, Track: 117, DistanceNM: 5}
-    - {Identifier: 34LLBS, Track: 017, DistanceNM: 11.8}
+    - {Identifier: 34RBS, Track: 065, DistanceNM: 7.1}
+    - {Identifier: 34RF, Track: 335, DistanceNM: 12.7}
 
   - FeederFix: YAKKA
     RunwayIdentifier: '07'
@@ -502,8 +508,8 @@ Airports:
     - {Identifier: LANOL, Track: 170, DistanceNM: 12}
     - {Identifier: DUDOK, Track: 179, DistanceNM: 28.8}
     - {Identifier: NASHO, Track: 155, DistanceNM: 7.1}
-    - {Identifier: 34LLDW, Track: 117, DistanceNM: 5}
-    - {Identifier: 34LLBS, Track: 017, DistanceNM: 11.8}
+    - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
+    - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
   
   - FeederFix: YAKKA
     RunwayIdentifier: '16L'
