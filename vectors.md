@@ -3,7 +3,7 @@
 
     AFTER ANKUB
     _DOWNWIND_1 125 7.6nm
-    _DOWNWIND_1 155 7.1nm
+    _DOWNWIND_2 155 7.1nm
     _BASE 065 6.5nm
     _FINAL 335 12.7nm
 
@@ -15,7 +15,7 @@
 
     AFTER TESAT
     _DOWNWIND_1 200 9.nm
-    _DOWNWIND_1 155 7.1nm
+    _DOWNWIND_2 155 7.1nm
     _BASE 065 6.5nm
     _FINAL 335 12.7nm
 
