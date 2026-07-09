@@ -1,0 +1,210 @@
+- FeederFix: AKMIR
+  RunwayIdentifier: '07'
+  Segments:
+  - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+  - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+  - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+  - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+  - {Identifier: '07', Track: 74.3, DistanceNM: 14.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: AKMIR
+  RunwayIdentifier: 16L
+  Segments:
+  - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+  - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+  - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+  - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+  - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+  - {Identifier: 16L, Track: 78.8, DistanceNM: 10.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: AKMIR
+  RunwayIdentifier: 16R
+  Segments:
+  - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+  - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+  - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+  - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+  - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+  - {Identifier: 16R, Track: 70.8, DistanceNM: 10.3}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: AKMIR
+  RunwayIdentifier: '25'
+  Segments:
+  - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+  - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+  - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+  - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+  - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+  - {Identifier: '25', Track: 74.6, DistanceNM: 11}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: AKMIR
+  RunwayIdentifier: 34L
+  Segments:
+  - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+  - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+  - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+  - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+  - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+  - {Identifier: 34L, Track: 82.5, DistanceNM: 10.3}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: AKMIR
+  RunwayIdentifier: 34R
+  Segments:
+  - {Identifier: UDODU, Track: 88.8, DistanceNM: 17.1}
+  - {Identifier: MUBDI, Track: 63.2, DistanceNM: 5}
+  - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
+  - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
+  - {Identifier: ANKUB, Track: 73.6, DistanceNM: 4.7}
+  - {Identifier: 34R, Track: 85, DistanceNM: 10.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOREE
+  RunwayIdentifier: '07'
+  ApproachType: A
+  Segments:
+  - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
+  - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+  - {Identifier: '07', Track: 174.1, DistanceNM: 14.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOREE
+  RunwayIdentifier: 16L
+  ApproachType: A
+  Segments:
+  - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
+  - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+  - {Identifier: 16L, Track: 169.6, DistanceNM: 15.3}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOREE
+  RunwayIdentifier: 16R
+  ApproachType: A
+  Segments:
+  - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
+  - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+  - {Identifier: 16R, Track: 172.1, DistanceNM: 13.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOREE
+  RunwayIdentifier: '25'
+  ApproachType: A
+  Segments:
+  - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
+  - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+  - {Identifier: '25', Track: 169, DistanceNM: 14.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOREE
+  RunwayIdentifier: 34L
+  ApproachType: A
+  Segments:
+  - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
+  - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+  - {Identifier: JENTL, Track: 170.8, DistanceNM: 6.7}
+  - {Identifier: ZONKA, Track: 193.4, DistanceNM: 9.1}
+  - {Identifier: DUDOK, Track: 193.5, DistanceNM: 7.5}
+  - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
+  - {Identifier: 34L, Track: 14.8, DistanceNM: 14.3}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOREE
+  RunwayIdentifier: 34R
+  ApproachType: A
+  Segments:
+  - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: KAFRI, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
+  - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
+  - {Identifier: MAJAR, Track: 134.1, DistanceNM: 10.8}
+  - {Identifier: DIPPA, Track: 167.8, DistanceNM: 8}
+  - {Identifier: JAKLN, Track: 167.8, DistanceNM: 11.6}
+  - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOREE
+  RunwayIdentifier: 16R
+  ApproachType: P
+  Segments:
+  - {Identifier: VASRA, Track: 170.9, DistanceNM: 7.9}
+  - {Identifier: DALAR, Track: 179.6, DistanceNM: 10.2}
+  - {Identifier: DUMOP, Track: 167.9, DistanceNM: 7}
+  - {Identifier: URDEN, Track: 167.9, DistanceNM: 5.9}
+  - {Identifier: 16R, Track: 167.9, DistanceNM: 11.3}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: MARLN
+  RunwayIdentifier: '07'
+  Segments:
+  - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+  - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+  - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+  - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+  - {Identifier: '07', Track: 270.2, DistanceNM: 0.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: MARLN
+  RunwayIdentifier: 16L
+  Segments:
+  - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+  - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+  - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+  - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+  - {Identifier: 16L, Track: 146.4, DistanceNM: 0.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: MARLN
+  RunwayIdentifier: 16R
+  Segments:
+  - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+  - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+  - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+  - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+  - {Identifier: 16R, Track: 326.8, DistanceNM: 1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: MARLN
+  RunwayIdentifier: '25'
+  Segments:
+  - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+  - {Identifier: VENUL, Track: 296.3, DistanceNM: 10.9}
+  - {Identifier: UXAMA, Track: 296.4, DistanceNM: 6.9}
+  - {Identifier: JELLI, Track: 253.2, DistanceNM: 4.2}
+  - {Identifier: '25', Track: 254.3, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: MARLN
+  RunwayIdentifier: 34L
+  Segments:
+  - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+  - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+  - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+  - {Identifier: TESAT, Track: 277, DistanceNM: 9.9}
+  - {Identifier: 34L, Track: 184.5, DistanceNM: 1.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: MARLN
+  RunwayIdentifier: 34R
+  Segments:
+  - {Identifier: BIKUS, Track: 276.9, DistanceNM: 14.4}
+  - {Identifier: WHALE, Track: 277, DistanceNM: 10.1}
+  - {Identifier: PRAWN, Track: 277.1, DistanceNM: 10}
+  - {Identifier: MANFA, Track: 199.3, DistanceNM: 5}
+  - {Identifier: JAKLN, Track: 167.7, DistanceNM: 6.4}
+  - {Identifier: 34R, Track: 319.8, DistanceNM: 13.8}
+  PressureSegments: []
+  MaxPressureSegments: []
