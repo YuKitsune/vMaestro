@@ -1159,25 +1159,20 @@ Airports:
     Segments:
     - {Identifier: VELKA, Track: 3.4, DistanceNM: 21}
     - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
-    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
-    - {Identifier: BISEK, Track: 311.6, DistanceNM: 7}
-    - {Identifier: VANTI, Track: 311.6, DistanceNM: 3.3}
-    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: DORAT, Track: 307.6, DistanceNM: 6}
+    - {Identifier: ADLOP, Track: 286.9, DistanceNM: 5.2}
+    - {Identifier: BUSLA, Track: 343.5, DistanceNM: 5.3}
+    - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
   - FeederFix: BLAKA
     RunwayIdentifier: 01R
     ApproachType: A
     Segments:
     - {Identifier: VELKA, Track: 3.4, DistanceNM: 21}
     - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
-    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
-    - {Identifier: ENTOX, Track: 308, DistanceNM: 7.5}
-    - {Identifier: VATRO, Track: 302.1, DistanceNM: 2.1}
-    - {Identifier: PULEX, Track: 349.3, DistanceNM: 1.9}
-    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
-    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
-
+    - {Identifier: DORAT, Track: 307.6, DistanceNM: 6}
+    - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
+    - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
+    - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
   - FeederFix: BLAKA
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1237,9 +1232,8 @@ Airports:
     - {Identifier: ODUTO, Track: 62.9, DistanceNM: 11.5}
     - {Identifier: ANSOR, Track: 54, DistanceNM: 6.1}
     - {Identifier: GORSO, Track: 27, DistanceNM: 5.5}
-    - {Identifier: TANIK, Track: 27, DistanceNM: 8.5}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: BUSLA, Track: 26.9, DistanceNM: 7.5}
+    - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
   - FeederFix: ENLIP
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1247,10 +1241,8 @@ Airports:
     - {Identifier: ODUTO, Track: 62.9, DistanceNM: 11.5}
     - {Identifier: OPITU, Track: 62.8, DistanceNM: 6.6}
     - {Identifier: MULNI, Track: 26.5, DistanceNM: 5.5}
-    - {Identifier: PULEX, Track: 26.9, DistanceNM: 7.1}
-    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
-    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
-
+    - {Identifier: ENTIK, Track: 26.7, DistanceNM: 5.1}
+    - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
   - FeederFix: ENLIP
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1313,12 +1305,10 @@ Airports:
     - {Identifier: SURSI, Track: 326.4, DistanceNM: 14.8}
     - {Identifier: VELKA, Track: 320.7, DistanceNM: 8.8}
     - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
-    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
-    - {Identifier: BISEK, Track: 311.6, DistanceNM: 7}
-    - {Identifier: VANTI, Track: 311.6, DistanceNM: 3.3}
-    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: DORAT, Track: 307.6, DistanceNM: 6}
+    - {Identifier: ADLOP, Track: 286.9, DistanceNM: 5.2}
+    - {Identifier: BUSLA, Track: 343.5, DistanceNM: 5.3}
+    - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
   - FeederFix: GOMOL
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1326,13 +1316,10 @@ Airports:
     - {Identifier: SURSI, Track: 326.4, DistanceNM: 14.8}
     - {Identifier: VELKA, Track: 320.7, DistanceNM: 8.8}
     - {Identifier: BERTI, Track: 323.1, DistanceNM: 5.2}
-    - {Identifier: PONOD, Track: 308, DistanceNM: 3.1}
-    - {Identifier: ENTOX, Track: 308, DistanceNM: 7.5}
-    - {Identifier: VATRO, Track: 302.1, DistanceNM: 2.1}
-    - {Identifier: PULEX, Track: 349.3, DistanceNM: 1.9}
-    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
-    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
-
+    - {Identifier: DORAT, Track: 307.6, DistanceNM: 6}
+    - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
+    - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
+    - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
   - FeederFix: GOMOL
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1363,8 +1350,8 @@ Airports:
     ApproachType: V
     Segments:
     - {Identifier: VERIK, Track: 339.8, DistanceNM: 21.7}
-    - {Identifier: LAGOB, Track: 339.9, DistanceNM: 4.3}
-    - {Identifier: ARONU, Track: 323.9, DistanceNM: 6.4}
+    - {Identifier: LAGOB, Track: 339.8, DistanceNM: 4.3}
+    - {Identifier: ARONU, Track: 324, DistanceNM: 6.4}
     - {Identifier: 01R, Track: 334.6, DistanceNM: 18.1}
 
   - FeederFix: GOMOL
@@ -1381,8 +1368,8 @@ Airports:
     ApproachType: X
     Segments:
     - {Identifier: VERIK, Track: 339.8, DistanceNM: 21.7}
-    - {Identifier: LAGOB, Track: 339.9, DistanceNM: 4.3}
-    - {Identifier: ARONU, Track: 323.9, DistanceNM: 6.4}
+    - {Identifier: LAGOB, Track: 339.8, DistanceNM: 4.3}
+    - {Identifier: ARONU, Track: 324, DistanceNM: 6.4}
     - {Identifier: COTON, Track: 323.5, DistanceNM: 4.2}
     - {Identifier: KASBA, Track: 324.8, DistanceNM: 3.4}
     - {Identifier: SORVA, Track: 322.4, DistanceNM: 2.3}
@@ -1460,12 +1447,11 @@ Airports:
     - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
     - {Identifier: DAYBO, Track: 176.1, DistanceNM: 11.6}
     - {Identifier: ONIPA, Track: 165.8, DistanceNM: 19.1}
-    - {Identifier: TAPUL, Track: 209.9, DistanceNM: 8.5}
-    - {Identifier: SULDO, Track: 162.8, DistanceNM: 2.3}
-    - {Identifier: DABKO, Track: 126.9, DistanceNM: 2.5}
-    - {Identifier: TANIK, Track: 65, DistanceNM: 2.5}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: IRPIM, Track: 209.1, DistanceNM: 4.6}
+    - {Identifier: TAPUL, Track: 210.8, DistanceNM: 3.9}
+    - {Identifier: VEGSU, Track: 160.6, DistanceNM: 4.8}
+    - {Identifier: BUSLA, Track: 69.7, DistanceNM: 3}
+    - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
   - FeederFix: MORBI
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1534,11 +1520,9 @@ Airports:
     - {Identifier: DAPTU, Track: 164.8, DistanceNM: 5.6}
     - {Identifier: RUKNO, Track: 165.1, DistanceNM: 5.6}
     - {Identifier: TAPUL, Track: 167.1, DistanceNM: 14.6}
-    - {Identifier: SULDO, Track: 162.8, DistanceNM: 2.3}
-    - {Identifier: DABKO, Track: 126.9, DistanceNM: 2.5}
-    - {Identifier: TANIK, Track: 65, DistanceNM: 2.5}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: VEGSU, Track: 160.6, DistanceNM: 4.8}
+    - {Identifier: BUSLA, Track: 69.7, DistanceNM: 3}
+    - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
   - FeederFix: SMOKA
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1626,12 +1610,11 @@ Airports:
     - {Identifier: ANIRI, Track: 190.4, DistanceNM: 14.8}
     - {Identifier: DOMBO, Track: 206.3, DistanceNM: 15.8}
     - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
-    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
-    - {Identifier: NIXEL, Track: 253.8, DistanceNM: 9.1}
-    - {Identifier: VANTI, Track: 296.8, DistanceNM: 3.3}
-    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: EGOTO, Track: 241.8, DistanceNM: 4.4}
+    - {Identifier: DORAT, Track: 232.2, DistanceNM: 8.7}
+    - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
+    - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
+    - {Identifier: 01L, Track: 23.6, DistanceNM: 17.8}
   - FeederFix: TEBOT
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1689,12 +1672,11 @@ Airports:
     - {Identifier: IRTED, Track: 280.5, DistanceNM: 7.5}
     - {Identifier: DOMBO, Track: 255.2, DistanceNM: 15.6}
     - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
-    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
-    - {Identifier: NIXEL, Track: 253.8, DistanceNM: 9.1}
-    - {Identifier: VANTI, Track: 296.8, DistanceNM: 3.3}
-    - {Identifier: TANIK, Track: 344.7, DistanceNM: 2.4}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: EGOTO, Track: 241.8, DistanceNM: 4.4}
+    - {Identifier: DORAT, Track: 232.2, DistanceNM: 8.7}
+    - {Identifier: ADLOP, Track: 286.9, DistanceNM: 5.2}
+    - {Identifier: BUSLA, Track: 343.5, DistanceNM: 5.3}
+    - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
   - FeederFix: UGTUG
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1702,14 +1684,11 @@ Airports:
     - {Identifier: IRTED, Track: 280.5, DistanceNM: 7.5}
     - {Identifier: DOMBO, Track: 255.2, DistanceNM: 15.6}
     - {Identifier: VEVEX, Track: 244.6, DistanceNM: 9.1}
-    - {Identifier: COTON, Track: 254, DistanceNM: 4.6}
-    - {Identifier: NUNDI, Track: 245.9, DistanceNM: 8}
-    - {Identifier: ENTOX, Track: 269, DistanceNM: 2.6}
-    - {Identifier: VATRO, Track: 302.1, DistanceNM: 2.1}
-    - {Identifier: PULEX, Track: 349.3, DistanceNM: 1.9}
-    - {Identifier: GLENN, Track: 27.5, DistanceNM: 3.4}
-    - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
-
+    - {Identifier: EGOTO, Track: 241.8, DistanceNM: 4.4}
+    - {Identifier: DORAT, Track: 232.2, DistanceNM: 8.7}
+    - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
+    - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
+    - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
   - FeederFix: UGTUG
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1762,11 +1741,9 @@ Airports:
     - {Identifier: NODUG, Track: 95.4, DistanceNM: 5.9}
     - {Identifier: RUKNO, Track: 115, DistanceNM: 7.6}
     - {Identifier: TAPUL, Track: 167.1, DistanceNM: 14.6}
-    - {Identifier: SULDO, Track: 162.8, DistanceNM: 2.3}
-    - {Identifier: DABKO, Track: 126.9, DistanceNM: 2.5}
-    - {Identifier: TANIK, Track: 65, DistanceNM: 2.5}
-    - {Identifier: 01L, Track: 27, DistanceNM: 14.4}
-
+    - {Identifier: VEGSU, Track: 160.6, DistanceNM: 4.8}
+    - {Identifier: BUSLA, Track: 69.7, DistanceNM: 3}
+    - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
   - FeederFix: WOODY
     RunwayIdentifier: 01R
     ApproachType: A
@@ -2078,7 +2055,7 @@ Airports:
     Segments:
     - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
     - {Identifier: ENRIP, Track: 208.7, DistanceNM: 4}
-    - {Identifier: WOORA, Track: 208.7, DistanceNM: 3.5}
+    - {Identifier: WOORA, Track: 208.6, DistanceNM: 3.5}
     - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
     - {Identifier: '21', Track: 193.9, DistanceNM: 8}
 

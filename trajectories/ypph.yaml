@@ -1,0 +1,488 @@
+- FeederFix: KAGMI
+  RunwayIdentifier: '03'
+  ApproachType: A
+  TransitionFix: IPMOR
+  Segments:
+  - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+  - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+  - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+  - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+  - {Identifier: HAYCO, Track: 151.4, DistanceNM: 18.4}
+  - {Identifier: SADOL, Track: 100.3, DistanceNM: 3.2}
+  - {Identifier: HARMN, Track: 100.2, DistanceNM: 7}
+  - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+  - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KAGMI
+  RunwayIdentifier: '06'
+  ApproachType: A
+  TransitionFix: IPMOR
+  Segments:
+  - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+  - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+  - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+  - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+  - {Identifier: VANRU, Track: 120.9, DistanceNM: 3}
+  - {Identifier: ORIDO, Track: 120.9, DistanceNM: 2}
+  - {Identifier: LENNY, Track: 120.9, DistanceNM: 10.9}
+  - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KAGMI
+  RunwayIdentifier: '21'
+  ApproachType: A
+  TransitionFix: IPMOR
+  Segments:
+  - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+  - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+  - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+  - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+  - {Identifier: GORMA, Track: 87.1, DistanceNM: 8.6}
+  - {Identifier: WOOFY, Track: 87, DistanceNM: 6}
+  - {Identifier: '21', Track: 118.4, DistanceNM: 8.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KAGMI
+  RunwayIdentifier: '24'
+  ApproachType: A
+  TransitionFix: IPMOR
+  Segments:
+  - {Identifier: BITAP, Track: 101.4, DistanceNM: 11.5}
+  - {Identifier: KALBO, Track: 101.3, DistanceNM: 7.5}
+  - {Identifier: TEMAP, Track: 105.4, DistanceNM: 11.5}
+  - {Identifier: IPMOR, Track: 105.3, DistanceNM: 2}
+  - {Identifier: GORMA, Track: 87.1, DistanceNM: 8.6}
+  - {Identifier: WOOFY, Track: 87, DistanceNM: 6}
+  - {Identifier: '24', Track: 117.6, DistanceNM: 9.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: JULIM
+  RunwayIdentifier: '03'
+  ApproachType: A
+  Segments:
+  - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+  - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+  - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+  - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+  - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+  - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: JULIM
+  RunwayIdentifier: '06'
+  ApproachType: A
+  Segments:
+  - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+  - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+  - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+  - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+  - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+  - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+  - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: JULIM
+  RunwayIdentifier: '21'
+  ApproachType: A
+  Segments:
+  - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+  - {Identifier: ENRIP, Track: 208.7, DistanceNM: 4}
+  - {Identifier: WOORA, Track: 208.6, DistanceNM: 3.5}
+  - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+  - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: JULIM
+  RunwayIdentifier: '24'
+  ApproachType: A
+  Segments:
+  - {Identifier: ISRUP, Track: 192.6, DistanceNM: 17.1}
+  - {Identifier: ANSEP, Track: 192.6, DistanceNM: 4}
+  - {Identifier: SPUDO, Track: 192.6, DistanceNM: 4}
+  - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: JULIM
+  RunwayIdentifier: '03'
+  ApproachType: V
+  Segments:
+  - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+  - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+  - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+  - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+  - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: JULIM
+  RunwayIdentifier: '06'
+  ApproachType: V
+  Segments:
+  - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+  - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+  - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+  - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+  - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+  - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+  - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: JULIM
+  RunwayIdentifier: '03'
+  ApproachType: X
+  Segments:
+  - {Identifier: YIREE, Track: 208.6, DistanceNM: 15.5}
+  - {Identifier: WOORA, Track: 208.7, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+  - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+  - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+  - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KABLI
+  RunwayIdentifier: '03'
+  ApproachType: A
+  Segments:
+  - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+  - {Identifier: MESAM, Track: 262.6, DistanceNM: 24.6}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+  - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KABLI
+  RunwayIdentifier: '06'
+  ApproachType: A
+  Segments:
+  - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+  - {Identifier: MESAM, Track: 262.6, DistanceNM: 24.6}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+  - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+  - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KABLI
+  RunwayIdentifier: '21'
+  ApproachType: A
+  Segments:
+  - {Identifier: BOOKA, Track: 308, DistanceNM: 15.6}
+  - {Identifier: DUDIN, Track: 308.1, DistanceNM: 7.3}
+  - {Identifier: VEPAN, Track: 301, DistanceNM: 9.9}
+  - {Identifier: MUMOS, Track: 301.1, DistanceNM: 3.4}
+  - {Identifier: ROLOB, Track: 301.2, DistanceNM: 4.5}
+  - {Identifier: WOORA, Track: 285.3, DistanceNM: 9}
+  - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+  - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KABLI
+  RunwayIdentifier: '24'
+  ApproachType: A
+  Segments:
+  - {Identifier: BOOKA, Track: 308, DistanceNM: 15.6}
+  - {Identifier: DUDIN, Track: 308.1, DistanceNM: 7.3}
+  - {Identifier: VEPAN, Track: 301, DistanceNM: 9.9}
+  - {Identifier: MUMOS, Track: 301.1, DistanceNM: 3.4}
+  - {Identifier: ROLOB, Track: 301.2, DistanceNM: 4.5}
+  - {Identifier: SPUDO, Track: 238.9, DistanceNM: 3.7}
+  - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KABLI
+  RunwayIdentifier: '03'
+  ApproachType: V
+  Segments:
+  - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+  - {Identifier: VAVGA, Track: 278.9, DistanceNM: 19.8}
+  - {Identifier: KARGO, Track: 281.5, DistanceNM: 7.3}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KABLI
+  RunwayIdentifier: '06'
+  ApproachType: V
+  Segments:
+  - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+  - {Identifier: VAVGA, Track: 278.9, DistanceNM: 19.8}
+  - {Identifier: KARGO, Track: 281.5, DistanceNM: 7.3}
+  - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+  - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: KABLI
+  RunwayIdentifier: '03'
+  ApproachType: X
+  Segments:
+  - {Identifier: KYEMA, Track: 278.6, DistanceNM: 14.1}
+  - {Identifier: VAVGA, Track: 278.9, DistanceNM: 19.8}
+  - {Identifier: KARGO, Track: 281.5, DistanceNM: 7.3}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: LAVEX
+  RunwayIdentifier: '03'
+  ApproachType: A
+  Segments:
+  - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+  - {Identifier: MESAM, Track: 247.9, DistanceNM: 28.2}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+  - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: LAVEX
+  RunwayIdentifier: '06'
+  ApproachType: A
+  Segments:
+  - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+  - {Identifier: MESAM, Track: 247.9, DistanceNM: 28.2}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+  - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+  - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: LAVEX
+  RunwayIdentifier: '21'
+  ApproachType: A
+  Segments:
+  - {Identifier: BUVOT, Track: 266.8, DistanceNM: 11.3}
+  - {Identifier: RONAN, Track: 285.1, DistanceNM: 6.9}
+  - {Identifier: UNDOW, Track: 285.2, DistanceNM: 9.6}
+  - {Identifier: BAHBA, Track: 285.3, DistanceNM: 3.7}
+  - {Identifier: ROLOB, Track: 285.3, DistanceNM: 4.5}
+  - {Identifier: WOORA, Track: 285.3, DistanceNM: 9}
+  - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+  - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: LAVEX
+  RunwayIdentifier: '24'
+  ApproachType: A
+  Segments:
+  - {Identifier: BUVOT, Track: 266.8, DistanceNM: 11.3}
+  - {Identifier: RONAN, Track: 285.1, DistanceNM: 6.9}
+  - {Identifier: UNDOW, Track: 285.2, DistanceNM: 9.6}
+  - {Identifier: BAHBA, Track: 285.3, DistanceNM: 3.7}
+  - {Identifier: ROLOB, Track: 285.3, DistanceNM: 4.5}
+  - {Identifier: SPUDO, Track: 238.9, DistanceNM: 3.7}
+  - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: LAVEX
+  RunwayIdentifier: '03'
+  ApproachType: V
+  Segments:
+  - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+  - {Identifier: MATJI, Track: 263.8, DistanceNM: 21.3}
+  - {Identifier: KARGO, Track: 264.9, DistanceNM: 7.2}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: LAVEX
+  RunwayIdentifier: '06'
+  ApproachType: V
+  Segments:
+  - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+  - {Identifier: MATJI, Track: 263.8, DistanceNM: 21.3}
+  - {Identifier: KARGO, Track: 264.9, DistanceNM: 7.2}
+  - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+  - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: LAVEX
+  RunwayIdentifier: '03'
+  ApproachType: X
+  Segments:
+  - {Identifier: BOOKA, Track: 241, DistanceNM: 16.1}
+  - {Identifier: MATJI, Track: 263.8, DistanceNM: 21.3}
+  - {Identifier: KARGO, Track: 264.9, DistanceNM: 7.2}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SAPKO
+  RunwayIdentifier: '03'
+  ApproachType: A
+  Segments:
+  - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+  - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+  - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+  - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+  - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+  - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SAPKO
+  RunwayIdentifier: '06'
+  ApproachType: A
+  Segments:
+  - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+  - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: GUNGN, Track: 156.6, DistanceNM: 9.2}
+  - {Identifier: PUDUS, Track: 159.4, DistanceNM: 6.5}
+  - {Identifier: TEREM, Track: 193, DistanceNM: 3.9}
+  - {Identifier: MESAM, Track: 193.1, DistanceNM: 3.8}
+  - {Identifier: WUNGO, Track: 269, DistanceNM: 5.9}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 6.8}
+  - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+  - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+  - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SAPKO
+  RunwayIdentifier: '21'
+  ApproachType: A
+  Segments:
+  - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+  - {Identifier: EGIXU, Track: 226.6, DistanceNM: 3.8}
+  - {Identifier: WOORA, Track: 226.6, DistanceNM: 3.7}
+  - {Identifier: HAIGH, Track: 232.7, DistanceNM: 4.6}
+  - {Identifier: '21', Track: 193.9, DistanceNM: 8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SAPKO
+  RunwayIdentifier: '24'
+  ApproachType: A
+  Segments:
+  - {Identifier: PATMU, Track: 209.2, DistanceNM: 15.9}
+  - {Identifier: UPNIS, Track: 209.3, DistanceNM: 3.6}
+  - {Identifier: SPUDO, Track: 209.4, DistanceNM: 3.9}
+  - {Identifier: '24', Track: 238.9, DistanceNM: 12.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SAPKO
+  RunwayIdentifier: '03'
+  ApproachType: V
+  Segments:
+  - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+  - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+  - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+  - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+  - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SAPKO
+  RunwayIdentifier: '06'
+  ApproachType: V
+  Segments:
+  - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+  - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+  - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+  - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+  - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+  - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+  - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SAPKO
+  RunwayIdentifier: '03'
+  ApproachType: X
+  Segments:
+  - {Identifier: OLGEK, Track: 226.4, DistanceNM: 16}
+  - {Identifier: WOORA, Track: 226.6, DistanceNM: 7.5}
+  - {Identifier: HERNE, Track: 190.3, DistanceNM: 4.7}
+  - {Identifier: RUMAK, Track: 156.6, DistanceNM: 7}
+  - {Identifier: SAPUG, Track: 106.6, DistanceNM: 5}
+  - {Identifier: TOGAM, Track: 185.9, DistanceNM: 5.9}
+  - {Identifier: KARGO, Track: 262.3, DistanceNM: 5}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SOLUS
+  RunwayIdentifier: '03'
+  ApproachType: A
+  Segments:
+  - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 11.7}
+  - {Identifier: BITUM, Track: 13.8, DistanceNM: 3.2}
+  - {Identifier: '03', Track: 13.8, DistanceNM: 9.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SOLUS
+  RunwayIdentifier: '06'
+  ApproachType: A
+  Segments:
+  - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+  - {Identifier: HARMN, Track: 284.4, DistanceNM: 11.7}
+  - {Identifier: BIBRA, Track: 308.9, DistanceNM: 5.8}
+  - {Identifier: LENNY, Track: 353.9, DistanceNM: 6.2}
+  - {Identifier: '06', Track: 64.6, DistanceNM: 9.2}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SOLUS
+  RunwayIdentifier: '21'
+  ApproachType: A
+  Segments:
+  - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+  - {Identifier: '21', Track: 335.9, DistanceNM: 19.1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SOLUS
+  RunwayIdentifier: '24'
+  ApproachType: A
+  Segments:
+  - {Identifier: MOCUR, Track: 333.2, DistanceNM: 17.7}
+  - {Identifier: '24', Track: 337.2, DistanceNM: 18.7}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SOLUS
+  RunwayIdentifier: '03'
+  ApproachType: V
+  Segments:
+  - {Identifier: MESAM, Track: 338.3, DistanceNM: 18.4}
+  - {Identifier: KARGO, Track: 344, DistanceNM: 8}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SOLUS
+  RunwayIdentifier: '06'
+  ApproachType: V
+  Segments:
+  - {Identifier: MESAM, Track: 338.3, DistanceNM: 18.4}
+  - {Identifier: KARGO, Track: 344, DistanceNM: 8}
+  - {Identifier: SAGAR, Track: 282.5, DistanceNM: 9.9}
+  - {Identifier: '06', Track: 23.9, DistanceNM: 6.1}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: SOLUS
+  RunwayIdentifier: '03'
+  ApproachType: X
+  Segments:
+  - {Identifier: MESAM, Track: 338.3, DistanceNM: 18.4}
+  - {Identifier: KARGO, Track: 344, DistanceNM: 8}
+  - {Identifier: '03', Track: 312.6, DistanceNM: 9.8}
+  PressureSegments: []
+  MaxPressureSegments: []

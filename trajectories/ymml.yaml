@@ -1,0 +1,314 @@
+- FeederFix: ALAXO
+  RunwayIdentifier: '09'
+  ApproachType: A
+  Segments:
+  - {Identifier: NIXEN, Track: 81.7, DistanceNM: 12.6}
+  - {Identifier: IKUNA, Track: 81.6, DistanceNM: 10}
+  - {Identifier: RIPMO, Track: 23.8, DistanceNM: 5.3}
+  - {Identifier: AVPIX, Track: 23.7, DistanceNM: 4}
+  - {Identifier: GUPUG, Track: 94.4, DistanceNM: 3}
+  - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ALAXO
+  RunwayIdentifier: '16'
+  ApproachType: A
+  Segments:
+  - {Identifier: IKUNA, Track: 81.7, DistanceNM: 22.6}
+  - {Identifier: KEELA, Track: 80.9, DistanceNM: 16.3}
+  - {Identifier: PASCO, Track: 81.2, DistanceNM: 8.4}
+  - {Identifier: JADEL, Track: 356.6, DistanceNM: 9.4}
+  - {Identifier: KIKEX, Track: 356.9, DistanceNM: 4.3}
+  - {Identifier: NEFER, Track: 356.9, DistanceNM: 3}
+  - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+  - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ALAXO
+  RunwayIdentifier: '27'
+  ApproachType: A
+  Segments:
+  - {Identifier: IKUNA, Track: 81.7, DistanceNM: 22.6}
+  - {Identifier: KEELA, Track: 80.9, DistanceNM: 16.3}
+  - {Identifier: NOMID, Track: 94.2, DistanceNM: 4}
+  - {Identifier: ROCEL, Track: 94.1, DistanceNM: 7}
+  - {Identifier: VISAS, Track: 3.9, DistanceNM: 5}
+  - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ALAXO
+  RunwayIdentifier: '34'
+  ApproachType: A
+  Segments:
+  - {Identifier: NIXEN, Track: 81.7, DistanceNM: 12.6}
+  - {Identifier: IKUNA, Track: 81.6, DistanceNM: 10}
+  - {Identifier: MEMEG, Track: 99.1, DistanceNM: 9.4}
+  - {Identifier: DUDAB, Track: 99, DistanceNM: 4}
+  - {Identifier: OBGAL, Track: 118.2, DistanceNM: 3.1}
+  - {Identifier: AKDEL, Track: 81.5, DistanceNM: 4}
+  - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ALAXO
+  RunwayIdentifier: '16'
+  ApproachType: P
+  Segments:
+  - {Identifier: IKUNA, Track: 81.7, DistanceNM: 22.6}
+  - {Identifier: KEELA, Track: 80.9, DistanceNM: 16.3}
+  - {Identifier: PASCO, Track: 81.2, DistanceNM: 8.4}
+  - {Identifier: EMSEK, Track: 356.6, DistanceNM: 4.6}
+  - {Identifier: '16', Track: 264.7, DistanceNM: 5.9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ARBEY
+  RunwayIdentifier: '09'
+  ApproachType: A
+  Segments:
+  - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+  - {Identifier: DABUX, Track: 199.6, DistanceNM: 7.7}
+  - {Identifier: OPAVA, Track: 213.5, DistanceNM: 6.7}
+  - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+  - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+  - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ARBEY
+  RunwayIdentifier: '16'
+  ApproachType: A
+  Segments:
+  - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+  - {Identifier: LASOL, Track: 172, DistanceNM: 4.9}
+  - {Identifier: BELTA, Track: 172, DistanceNM: 3}
+  - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ARBEY
+  RunwayIdentifier: '27'
+  ApproachType: A
+  Segments:
+  - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+  - {Identifier: BELTA, Track: 172, DistanceNM: 7.9}
+  - {Identifier: LAKEP, Track: 170.2, DistanceNM: 6.1}
+  - {Identifier: BOBEL, Track: 94, DistanceNM: 4.5}
+  - {Identifier: DOKNO, Track: 93.9, DistanceNM: 5.7}
+  - {Identifier: VISAS, Track: 183.9, DistanceNM: 5.9}
+  - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: ARBEY
+  RunwayIdentifier: '34'
+  ApproachType: A
+  Segments:
+  - {Identifier: TUNKA, Track: 168.1, DistanceNM: 10.1}
+  - {Identifier: BELTA, Track: 172, DistanceNM: 7.9}
+  - {Identifier: OVNER, Track: 200.6, DistanceNM: 8.1}
+  - {Identifier: RENER, Track: 183.2, DistanceNM: 7}
+  - {Identifier: GOSKO, Track: 180.7, DistanceNM: 2.9}
+  - {Identifier: DUDAB, Track: 180.6, DistanceNM: 4}
+  - {Identifier: OBGAL, Track: 118.2, DistanceNM: 3.1}
+  - {Identifier: AKDEL, Track: 81.5, DistanceNM: 4}
+  - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOOIN
+  RunwayIdentifier: '09'
+  ApproachType: A
+  Segments:
+  - {Identifier: MAXAL, Track: 270.7, DistanceNM: 10.5}
+  - {Identifier: SEKNU, Track: 270.9, DistanceNM: 12.1}
+  - {Identifier: ENSEG, Track: 271, DistanceNM: 7.5}
+  - {Identifier: NEFER, Track: 271.1, DistanceNM: 3}
+  - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+  - {Identifier: OPAVA, Track: 235.5, DistanceNM: 8.9}
+  - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+  - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+  - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOOIN
+  RunwayIdentifier: '16'
+  ApproachType: A
+  Segments:
+  - {Identifier: MAXAL, Track: 270.7, DistanceNM: 10.5}
+  - {Identifier: SEKNU, Track: 270.9, DistanceNM: 12.1}
+  - {Identifier: ENSEG, Track: 271, DistanceNM: 7.5}
+  - {Identifier: NEFER, Track: 271.1, DistanceNM: 3}
+  - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+  - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOOIN
+  RunwayIdentifier: '27'
+  ApproachType: A
+  Segments:
+  - {Identifier: ATPER, Track: 236.5, DistanceNM: 10.5}
+  - {Identifier: MAITE, Track: 236.6, DistanceNM: 11}
+  - {Identifier: ENDUM, Track: 262.5, DistanceNM: 5}
+  - {Identifier: VISAS, Track: 262.6, DistanceNM: 6.3}
+  - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOOIN
+  RunwayIdentifier: '34'
+  ApproachType: A
+  Segments:
+  - {Identifier: IBARU, Track: 233.7, DistanceNM: 10.7}
+  - {Identifier: VEPUD, Track: 233.8, DistanceNM: 14.4}
+  - {Identifier: AKSID, Track: 234, DistanceNM: 6.9}
+  - {Identifier: GOOLA, Track: 234.1, DistanceNM: 5}
+  - {Identifier: BOLTY, Track: 257.4, DistanceNM: 3.2}
+  - {Identifier: AKDEL, Track: 261.1, DistanceNM: 3.6}
+  - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOOIN
+  RunwayIdentifier: '34'
+  ApproachType: V
+  Segments:
+  - {Identifier: ATPER, Track: 236.5, DistanceNM: 10.5}
+  - {Identifier: MAITE, Track: 236.6, DistanceNM: 11}
+  - {Identifier: IGPON, Track: 236.6, DistanceNM: 2.5}
+  - {Identifier: MOSVO, Track: 236.7, DistanceNM: 6}
+  - {Identifier: EGEKA, Track: 267.9, DistanceNM: 4.4}
+  - {Identifier: SHEED, Track: 268, DistanceNM: 5}
+  - {Identifier: '34', Track: 307.7, DistanceNM: 4.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOYSE
+  RunwayIdentifier: '09'
+  ApproachType: A
+  Segments:
+  - {Identifier: VALES, Track: 256.2, DistanceNM: 15.7}
+  - {Identifier: LUSTU, Track: 256.4, DistanceNM: 5.4}
+  - {Identifier: ANBEL, Track: 256.5, DistanceNM: 5.9}
+  - {Identifier: BUVIV, Track: 256.5, DistanceNM: 5.5}
+  - {Identifier: NEFER, Track: 256.6, DistanceNM: 3}
+  - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+  - {Identifier: OPAVA, Track: 235.5, DistanceNM: 8.9}
+  - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+  - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+  - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOYSE
+  RunwayIdentifier: '16'
+  ApproachType: A
+  Segments:
+  - {Identifier: VALES, Track: 256.2, DistanceNM: 15.7}
+  - {Identifier: ANBEL, Track: 256.4, DistanceNM: 11.4}
+  - {Identifier: BUVIV, Track: 256.5, DistanceNM: 5.5}
+  - {Identifier: NEFER, Track: 256.6, DistanceNM: 3}
+  - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+  - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOYSE
+  RunwayIdentifier: '27'
+  ApproachType: A
+  Segments:
+  - {Identifier: MAXAL, Track: 233.9, DistanceNM: 14.9}
+  - {Identifier: ADKUK, Track: 234.1, DistanceNM: 10.6}
+  - {Identifier: VEXOP, Track: 234.2, DistanceNM: 6}
+  - {Identifier: VISAS, Track: 234.2, DistanceNM: 6.3}
+  - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOYSE
+  RunwayIdentifier: '34'
+  ApproachType: A
+  Segments:
+  - {Identifier: MAXAL, Track: 233.9, DistanceNM: 14.9}
+  - {Identifier: OLTUR, Track: 221.3, DistanceNM: 18.5}
+  - {Identifier: VENVO, Track: 221.5, DistanceNM: 5.8}
+  - {Identifier: GOOLA, Track: 221.6, DistanceNM: 5}
+  - {Identifier: BOLTY, Track: 257.4, DistanceNM: 3.2}
+  - {Identifier: AKDEL, Track: 261.1, DistanceNM: 3.6}
+  - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: BOYSE
+  RunwayIdentifier: '34'
+  ApproachType: V
+  Segments:
+  - {Identifier: MAXAL, Track: 233.9, DistanceNM: 14.9}
+  - {Identifier: APIGA, Track: 221.2, DistanceNM: 11.9}
+  - {Identifier: EMRIG, Track: 221, DistanceNM: 4.2}
+  - {Identifier: MOSVO, Track: 221, DistanceNM: 6}
+  - {Identifier: EGEKA, Track: 267.9, DistanceNM: 4.4}
+  - {Identifier: SHEED, Track: 268, DistanceNM: 5}
+  - {Identifier: '34', Track: 307.7, DistanceNM: 4.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RAZZI
+  RunwayIdentifier: '09'
+  ApproachType: A
+  Segments:
+  - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+  - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+  - {Identifier: OMBAT, Track: 335, DistanceNM: 11.5}
+  - {Identifier: AGTEV, Track: 298, DistanceNM: 2.7}
+  - {Identifier: BELTA, Track: 298, DistanceNM: 8.7}
+  - {Identifier: OPAVA, Track: 235.5, DistanceNM: 8.9}
+  - {Identifier: UPKAN, Track: 226.6, DistanceNM: 3}
+  - {Identifier: GUPUG, Track: 184.3, DistanceNM: 4}
+  - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RAZZI
+  RunwayIdentifier: '16'
+  ApproachType: A
+  Segments:
+  - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+  - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+  - {Identifier: OMBAT, Track: 335, DistanceNM: 11.5}
+  - {Identifier: LAGUG, Track: 334.3, DistanceNM: 4.3}
+  - {Identifier: NEFER, Track: 334.3, DistanceNM: 3}
+  - {Identifier: BELTA, Track: 259.9, DistanceNM: 7}
+  - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RAZZI
+  RunwayIdentifier: '27'
+  ApproachType: A
+  Segments:
+  - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+  - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+  - {Identifier: VISAS, Track: 308.5, DistanceNM: 5.2}
+  - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RAZZI
+  RunwayIdentifier: '34'
+  ApproachType: A
+  Segments:
+  - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+  - {Identifier: UPKID, Track: 282.3, DistanceNM: 3.9}
+  - {Identifier: GOOLA, Track: 282.3, DistanceNM: 5}
+  - {Identifier: BOLTY, Track: 257.4, DistanceNM: 3.2}
+  - {Identifier: AKDEL, Track: 261.1, DistanceNM: 3.6}
+  - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RAZZI
+  RunwayIdentifier: '16'
+  ApproachType: M
+  Segments:
+  - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+  - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+  - {Identifier: DUGOT, Track: 334.7, DistanceNM: 7.1}
+  - {Identifier: VENPU, Track: 334.8, DistanceNM: 4}
+  - {Identifier: LUVKA, Track: 318.6, DistanceNM: 3.7}
+  - {Identifier: '16', Track: 215, DistanceNM: 10.4}
+  PressureSegments: []
+  MaxPressureSegments: []
+- FeederFix: RAZZI
+  RunwayIdentifier: '34'
+  ApproachType: V
+  Segments:
+  - {Identifier: MICHM, Track: 331.1, DistanceNM: 11.8}
+  - {Identifier: MOSVO, Track: 332.2, DistanceNM: 8.1}
+  - {Identifier: EGEKA, Track: 267.9, DistanceNM: 4.4}
+  - {Identifier: SHEED, Track: 268, DistanceNM: 5}
+  - {Identifier: '34', Track: 307.7, DistanceNM: 4.4}
+  PressureSegments: []
+  MaxPressureSegments: []
