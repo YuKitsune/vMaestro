@@ -893,6 +893,54 @@ public class SequenceTests(ClockFixture clockFixture)
             "stable flight retains its earlier landing estimate when unconstrained");
     }
 
+    [Fact]
+    public void Schedule_AfterFlightsAreScheduled_FlightListIsOrderedByLandingTime()
+    {
+        // Regression: insertion into _flights uses LandingEstimate, while final LandingTime
+        // is assigned during Schedule. Without a post-schedule sort, _flights index order
+        // drifts from landing-time order — a later Insert then applies dependency-rate
+        // constraints against a "preceding" flight that actually lands later.
+        // See logs/maestro_log20260706.txt AAA100/L7A at 08:47:43Z.
+        var airportConfig = CreateDualRunwayConfiguration(_acceptanceRate);
+        var sequence = new SequenceBuilder(airportConfig)
+            .WithClock(clockFixture.Instance)
+            .Build();
+
+        var laterFlight = new FlightBuilder("LATER")
+            .WithLandingEstimate(_time.AddMinutes(15))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        var earlierFlight = new FlightBuilder("EARLIER")
+            .WithLandingEstimate(_time.AddMinutes(5))
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(_time.AddSeconds(30))
+            .WithRunway("34R")
+            .WithState(State.Stable)
+            .Build();
+
+        // Act: insert the later-landing flight first, then a flight that lands earlier on
+        // the other runway. The insertion index alone does not reflect landing-time order.
+        sequence.Insert(0, laterFlight);
+        sequence.Insert(1, earlierFlight);
+
+        // Assert
+        sequence.Flights.Select(f => f.Callsign).ShouldBe(
+            ["EARLIER", "LATER"],
+            "_flights must be ordered by LandingTime after Schedule so subsequent " +
+            "Insert / Schedule passes see a consistent index-to-time mapping");
+
+        for (var i = 1; i < sequence.Flights.Count; i++)
+        {
+            sequence.Flights[i].LandingTime.ShouldBeGreaterThanOrEqualTo(
+                sequence.Flights[i - 1].LandingTime,
+                $"flight at index {i} must land no earlier than the flight at index {i - 1}");
+        }
+    }
+
     static AirportConfiguration CreateSingleRunwayConfiguration(string runwayIdentifier, TimeSpan acceptanceRate)
     {
         return new AirportConfigurationBuilder("YSSY")

@@ -704,7 +704,10 @@ public class Sequence
             }
 
             _flights.Clear();
-            _flights.AddRange(sequence.OfType<FlightSequenceItem>().Select(f => f.Flight));
+            _flights.AddRange(
+                sequence.OfType<FlightSequenceItem>()
+                    .Select(f => f.Flight)
+                    .OrderBy(f => f.LandingTime));
 
             TimeSpan EffectiveMaximumDelay(TimeSpan maximumDelay, Runway referenceRunway)
             {
