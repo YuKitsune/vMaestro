@@ -7,7 +7,7 @@ Logging:
   MaxFileAgeDays: 4
 
 Server:
-  Uri: https://vatpac.maestro.eoinmotherway.dev/hub
+  Uri: https://vatpac-maestro.eoinmotherway.dev/hub
   Environments:
   - VATSIM
   - SweatBox-1
