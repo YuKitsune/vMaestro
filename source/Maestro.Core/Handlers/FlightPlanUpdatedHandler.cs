@@ -86,6 +86,12 @@ public class FlightPlanUpdatedHandler(
         if (config.DepartureAirports.Any(d => d.Identifier == record.Origin))
             return config.AutoActivateDepartures;
 
+        // Don't reactivate a flight that has already touched down. After landing the FDR
+        // continues to report Active during taxi until it transitions to STATE_FINISHED,
+        // which would otherwise re-insert a flight that a controller has just removed.
+        if (record.Position?.IsOnGround == true)
+            return false;
+
         var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
         if (landingEstimate is not null)
         {
@@ -97,9 +103,12 @@ public class FlightPlanUpdatedHandler(
         if (record.EstimatedFlightTime < TimeSpan.FromMinutes(config.MinimumAutoActivationFlightTimeMinutes))
             return false;
 
-        if (record.State is FlightPlanState.Active)
-            return true;
+        if (record.State is not FlightPlanState.Active)
+            return false;
 
-        return false;
+        // Require at least one future-dated route estimate. Once the route is fully overflown
+        // the FDR can still report Active briefly, and activating without a future estimate
+        // produces a flight whose entire trajectory is in the past.
+        return record.Estimates.Any(e => e.Estimate > now);
     }
 }

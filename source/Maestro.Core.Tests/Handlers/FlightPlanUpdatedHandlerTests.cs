@@ -397,6 +397,67 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndAircraftIsOnGround_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange — simulates a landed flight whose FDR is still Active during taxi.
+        // Without this guard, removing the flight then receiving another FDR would reactivate it.
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var onGroundPosition = new FlightPosition(
+            new Coordinate(0, 0),
+            0,
+            VerticalTrack.Maintaining,
+            0,
+            true);
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddHours(-2), TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
+            onGroundPosition,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(-5))]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndAllEstimatesAreInThePast_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange — covers the case where Position is unavailable but the route is fully overflown.
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddHours(-2), TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
+            Position: null,
+            [
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(-20)),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(-2))
+            ]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task WhenAFlightPlanIsUpdated_AndEstimatedFlightTimeIsBelowMinimum_ActivateFlightRequestIsNotSent()
     {
         // Arrange
