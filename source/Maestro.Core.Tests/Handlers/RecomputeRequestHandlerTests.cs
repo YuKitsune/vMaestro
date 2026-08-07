@@ -426,7 +426,6 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(now.AddMinutes(10), TimeSpan.FromMinutes(20))
             .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
-            .WithState(State.Stable)
             .Build();
 
         var flight2 = new FlightBuilder("QFA2")
@@ -434,7 +433,6 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
             .WithFeederFixEstimate(now.AddMinutes(11), TimeSpan.FromMinutes(20))
             .WithTrajectory(new TerminalTrajectory(ttg))
             .WithRunway("34L")
-            .WithState(State.Stable)
             .Build();
 
         var trajectoryService = new MockTrajectoryService(ttg);
@@ -449,6 +447,9 @@ public class RecomputeRequestHandlerTests(ClockFixture clockFixture)
         // Confirm initial delay is applied due to conflict
         flight2.LandingTime.ShouldBe(flight1.LandingTime.Add(AcceptanceRate), "flight2 should have delay due to initial conflict");
         flight2.RequiredEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(2), "flight2 should have delay due to initial conflict");
+
+        flight1.SetState(State.Stable, clockFixture.Instance);
+        flight2.SetState(State.Stable, clockFixture.Instance);
 
         // Update flight2's ETA to be well-separated (5 min gap from flight1 > 3 min acceptance rate)
         var newFeederFixEstimate = now.AddMinutes(15);

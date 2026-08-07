@@ -44,12 +44,12 @@ public class FlightTests(ClockFixture clockFixture)
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(_landingTime)
             .WithLandingTime(_landingTime.AddMinutes(5))
-            .WithState(State.Stable)
             .Build();
 
         // Sanity check
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
         (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        flight.SetState(State.Stable, clockFixture.Instance);
 
         // Act: New estimate after slowing down (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(2).Subtract(_defaultTtg));
@@ -81,12 +81,12 @@ public class FlightTests(ClockFixture clockFixture)
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(_landingTime)
             .WithLandingTime(_landingTime.AddMinutes(5))
-            .WithState(State.Stable)
             .Build();
 
         // Sanity check
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
         (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        flight.SetState(State.Stable, clockFixture.Instance);
 
         // Act: New estimate after speeding up (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(-2).Subtract(_defaultTtg));
@@ -118,12 +118,12 @@ public class FlightTests(ClockFixture clockFixture)
         var flight = new FlightBuilder("QFA1")
             .WithLandingEstimate(_landingTime)
             .WithLandingTime(_landingTime.AddMinutes(5))
-            .WithState(State.Stable)
             .Build();
 
         // Sanity check
         (flight.RequiredEnrouteDelay + flight.RequiredTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
         (flight.RemainingEnrouteDelay + flight.RemainingTerminalDelay).ShouldBe(TimeSpan.FromMinutes(5));
+        flight.SetState(State.Stable, clockFixture.Instance);
 
         // Act: New estimate after slowing down too much (update via feeder fix estimate, ETA = ETA_FF + TTG)
         flight.UpdateFeederFixEstimate(_landingTime.AddMinutes(8).Subtract(_defaultTtg));
