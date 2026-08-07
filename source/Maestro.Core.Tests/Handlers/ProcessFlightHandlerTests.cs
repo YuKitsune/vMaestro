@@ -375,7 +375,6 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
             .Build();
 
         var flight = new FlightBuilder("QFA123")
-            .WithState(state)
             .WithFeederFix("RIVET")
             .WithFeederFixEstimate(etaFF)
             .WithFeederFixTime(staFF)
@@ -389,6 +388,7 @@ public class ProcessFlightHandlerTests(ClockFixture clockFixture)
             .Build();
 
         // FDR updates ETA_FF by +2min: flight has absorbed 2min of its 3min delay
+        flight.SetState(state, clockFixture.Instance);
         var updatedEtaFF = etaFF.AddMinutes(2);
         session.FlightDataRecords["QFA123"] = MakeRecord("QFA123",
             estimates: [new FixEstimate("RIVET", updatedEtaFF), new FixEstimate("YSSY", updatedEtaFF.Add(ttg))]);

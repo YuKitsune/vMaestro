@@ -379,10 +379,15 @@ public class Flight : IEquatable<Flight>
     {
         LandingTime = landingTime;
         FeederFixTime = feederFixTime;
-        RequiredControlAction = requiredControlAction;
+
+        if (State is State.Unstable)
+        {
+            RequiredControlAction = requiredControlAction;
+            RequiredEnrouteDelay = enrouteDelay;
+            RequiredTerminalDelay = terminalDelay;
+        }
+
         RemainingControlAction = requiredControlAction;
-        RequiredEnrouteDelay = enrouteDelay;
-        RequiredTerminalDelay = terminalDelay;
         RemainingEnrouteDelay = enrouteDelay;
         RemainingTerminalDelay = terminalDelay;
     }
