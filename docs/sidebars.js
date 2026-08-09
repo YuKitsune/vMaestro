@@ -12,7 +12,6 @@ const sidebars = {
     'admin-guide/plugin-installation',
     'admin-guide/plugin-configuration',
     'admin-guide/server-deployment',
-    'admin-guide/api-access',
     'admin-guide/maestro-tools',
     {
       type: 'category',

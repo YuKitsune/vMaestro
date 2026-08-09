@@ -28,7 +28,6 @@ The **[Admin Guide](./admin-guide/plugin-installation)** covers installation, co
 - [Plugin Installation](./admin-guide/plugin-installation): Installing vMaestro into vatSys
 - [Plugin Configuration](./admin-guide/plugin-configuration): Configuring airports and runway modes
 - [Server Deployment](./admin-guide/server-deployment): Running the server for multi-user operation
-- [API Access](./admin-guide/api-access): Accessing the API documentation
 - [Maestro Tool](./admin-guide/maestro-tools): Extracting data from vatSys to construct the MAESTRO configuration file
 
 ### For Contributors
