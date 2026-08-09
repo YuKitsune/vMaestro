@@ -12,6 +12,7 @@ The server is a relay server. It does not calculate or persist the sequence. All
 
 - The first controller to connect to a session becomes the **master**. Their plugin calculates the sequence and broadcasts updates to all peers.
 - Other controllers connect as **slaves**. Their plugins receive sequence state from the master and relay any actions (runway changes, manual delays, etc.) back to the master for processing.
+- If a controller with a higher priority connects, that controller is promoted to the master.
 - When the master disconnects, the server promotes the next eligible connected controller to master.
 
 Session state is held in memory only for the duration of an active session. It is not calculated on the server and not written to disk. The only data persisted to disk are logs.
@@ -67,8 +68,7 @@ If Docker is not available, the server can be run directly using the .NET runtim
 ### Running
 
 ```bash
-dotnet publish source/Maestro.Server/Maestro.Server.csproj -c Release -o ./publish
-./publish/Maestro.Server
+./Maestro.Server
 ```
 
 Set the `DATA_PATH` environment variable to control where logs are written (default: `/app/data`):

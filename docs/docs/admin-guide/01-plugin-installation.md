@@ -14,7 +14,7 @@ This page covers how to install the vMaestro plugin into vatSys.
 ## Installation
 
 1. Download the [latest release from GitHub](https://github.com/YuKitsune/vMaestro/releases)
-2. Extract `Maestro.zip` into your vatSys plugins directory:
+2. Extract `Maestro.Plugin.<version>.zip` into your vatSys plugins directory:
    ```
    Documents\vatSys Files\Profiles\<Profile Name>\Plugins\MaestroPlugin
    ```
