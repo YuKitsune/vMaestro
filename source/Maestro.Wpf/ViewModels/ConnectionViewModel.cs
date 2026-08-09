@@ -1,7 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Maestro.Core.Configuration;
 using Maestro.Core.Connectivity.Contracts;
+using Maestro.Wpf.Contracts;
 using Maestro.Wpf.Integrations;
 using MediatR;
 
@@ -61,6 +63,15 @@ public partial class ConnectionViewModel : ObservableObject
         _mediator = mediator;
         _windowHandle = windowHandle;
         _errorReporter = errorReporter;
+
+        WeakReferenceMessenger.Default.Register<ConnectionStatusChangedNotification>(this, (r, m) =>
+        {
+            if (m.AirportIdentifier != _airportIdentifier)
+                return;
+
+            IsReady = m.IsReady;
+            IsConnected = m.IsConnected;
+        });
     }
 
     [RelayCommand]

@@ -2,4 +2,4 @@
 
 namespace Maestro.Wpf.Contracts;
 
-public record ConnectionStatusChangedNotification(string AirportIdentifier, string Status, Role Role, bool FlowIsOnline);
+public record ConnectionStatusChangedNotification(string AirportIdentifier, string Status, Role Role, bool FlowIsOnline, bool IsReady, bool IsConnected);
