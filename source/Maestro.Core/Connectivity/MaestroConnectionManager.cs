@@ -21,13 +21,17 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
         ILogger logger)
     {
         _serverConfiguration = serverConfiguration;
+        CurrentServerUrl = serverConfiguration.Uri;
         _mediator = mediator;
         _sessionManager = sessionManager;
         _logger = logger;
     }
 
+    public Uri CurrentServerUrl { get; private set; }
+
     public async Task<IMaestroConnection> CreateConnection(
         string airportIdentifier,
+        Uri serverUrl,
         string environment,
         CancellationToken cancellationToken)
     {
@@ -40,8 +44,11 @@ public class MaestroConnectionManager : IMaestroConnectionManager, IAsyncDisposa
                     $"Connection already exists for {airportIdentifier}.");
             }
 
+            CurrentServerUrl = serverUrl;
+
             var connection = new MaestroConnection(
                 _serverConfiguration,
+                serverUrl,
                 airportIdentifier,
                 environment,
                 _mediator,

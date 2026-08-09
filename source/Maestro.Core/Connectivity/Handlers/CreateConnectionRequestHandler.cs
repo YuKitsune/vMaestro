@@ -18,6 +18,7 @@ public class CreateConnectionRequestHandler(
         {
             var connection = await connectionManager.CreateConnection(
                 request.AirportIdentifier,
+                request.ServerUrl,
                 request.Environment,
                 cancellationToken);
 

@@ -14,7 +14,9 @@ public class MockSlaveConnectionManager : IMaestroConnectionManager
 
     public MockSlaveConnection Connection => _connection;
 
-    public Task<IMaestroConnection> CreateConnection(string airportIdentifier, string environment, CancellationToken cancellationToken)
+    public Uri CurrentServerUrl { get; } = new("http://localhost");
+
+    public Task<IMaestroConnection> CreateConnection(string airportIdentifier, Uri serverUrl, string environment, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

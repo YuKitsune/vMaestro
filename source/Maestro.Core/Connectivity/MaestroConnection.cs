@@ -23,6 +23,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
     readonly List<PeerInfo> _peers = new();
     readonly CancellationTokenSource _rootCancellationTokenSource = new();
     readonly ServerConfiguration _serverConfiguration;
+    readonly Uri _serverUrl;
     readonly string _airportIdentifier;
     readonly IMediator _mediator;
     readonly ISessionManager _sessionManager;
@@ -40,6 +41,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
 
     public MaestroConnection(
         ServerConfiguration serverConfiguration,
+        Uri serverUrl,
         string airportIdentifier,
         string environment,
         IMediator mediator,
@@ -47,6 +49,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         ILogger logger)
     {
         _serverConfiguration = serverConfiguration;
+        _serverUrl = serverUrl;
         _airportIdentifier = airportIdentifier;
         Environment = environment;
 
@@ -65,7 +68,7 @@ public class MaestroConnection : IMaestroConnection, IAsyncDisposable
         var clientVersion = AssemblyVersionHelper.GetVersion(typeof(MaestroConnection).Assembly);
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(_serverConfiguration.Uri + $"?environment={Environment}&airportIdentifier={_airportIdentifier}&callsign={callsign}&version={clientVersion}")
+            .WithUrl(_serverUrl + $"?environment={Environment}&airportIdentifier={_airportIdentifier}&callsign={callsign}&version={clientVersion}")
             .WithServerTimeout(TimeSpan.FromSeconds(_serverConfiguration.TimeoutSeconds))
             .WithAutomaticReconnect(new InfiniteRetryPolicy())
             .WithStatefulReconnect()

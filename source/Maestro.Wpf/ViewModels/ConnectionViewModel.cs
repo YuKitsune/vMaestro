@@ -14,6 +14,10 @@ public partial class ConnectionViewModel : ObservableObject
     readonly IErrorReporter _errorReporter;
 
     readonly string _airportIdentifier;
+    readonly Uri _defaultServerUrl;
+
+    [ObservableProperty]
+    string _serverUrl;
 
     [ObservableProperty]
     string[] _servers;
@@ -38,6 +42,7 @@ public partial class ConnectionViewModel : ObservableObject
     public ConnectionViewModel(
         string airportIdentifier,
         ServerConfiguration serverConfiguration,
+        Uri currentServerUrl,
         string environment,
         bool isConnected,
         bool isReady,
@@ -46,6 +51,8 @@ public partial class ConnectionViewModel : ObservableObject
         IErrorReporter errorReporter)
     {
         _airportIdentifier = airportIdentifier;
+        _defaultServerUrl = serverConfiguration.Uri;
+        ServerUrl = currentServerUrl.ToString();
         Servers = serverConfiguration.Environments;
         SelectedServer = !string.IsNullOrEmpty(environment) ? environment : serverConfiguration.Environments.First();
         IsConnected = isConnected;
@@ -67,7 +74,11 @@ public partial class ConnectionViewModel : ObservableObject
             }
             else
             {
-                _mediator.Send(new CreateConnectionRequest(_airportIdentifier, SelectedServer));
+                var serverUrl = string.IsNullOrWhiteSpace(ServerUrl)
+                    ? _defaultServerUrl
+                    : new Uri(ServerUrl);
+
+                _mediator.Send(new CreateConnectionRequest(_airportIdentifier, serverUrl, SelectedServer));
             }
 
             _windowHandle.Close();
