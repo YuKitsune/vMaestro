@@ -108,9 +108,11 @@ public class FlightPlanUpdatedHandler(
         if (record.State is not FlightPlanState.Active)
             return false;
 
-        // Require at least one future-dated route estimate. Once the route is fully overflown
-        // the FDR can still report Active briefly, and activating without a future estimate
-        // produces a flight whose entire trajectory is in the past.
-        return record.Estimates.Any(e => e.Estimate > now);
+        // Only auto-activate arrivals that still have a feeder fix ahead of them. A flight
+        // already inside the TMA (past the feeder fix) or filed without a feeder fix must be
+        // inserted manually, so that a flight the controller has removed cannot resurrect
+        // itself while absorbing delay on final.
+        return record.Estimates.Any(e =>
+            config.FeederFixes.Contains(e.FixIdentifier) && e.Estimate > now);
     }
 }
