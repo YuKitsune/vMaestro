@@ -80,8 +80,6 @@ public partial class ConnectionViewModel : ObservableObject
 
                 _mediator.Send(new CreateConnectionRequest(_airportIdentifier, serverUrl, SelectedServer));
             }
-
-            _windowHandle.Close();
         }
         catch (Exception ex)
         {
