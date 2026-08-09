@@ -83,7 +83,7 @@ A flight is activated in vMaestro when it is added to the sequence. This can hap
 
 Flights are automatically activated when their flight plan is active in vatSys and their estimated flight time and time-to-landing fall within the configured thresholds.
 
-Flights from departure airports are activated automatically when a flight plan update is received, or can be manually activated early from the Pending List.
+Flights from departure airports are activated automatically once they are airborne, or can be manually activated early from the Pending List.
 
 ## Pending List
 

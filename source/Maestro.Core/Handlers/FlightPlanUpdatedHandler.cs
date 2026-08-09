@@ -83,14 +83,22 @@ public class FlightPlanUpdatedHandler(
 
     static bool ShouldAutoActivate(FlightDataRecord record, AirportConfiguration config, DateTimeOffset now)
     {
-        if (config.DepartureAirports.Any(d => d.Identifier == record.Origin))
-            return config.AutoActivateDepartures;
+        // AutoActivateDepartures is a hard opt-out for departure-airport flights. When disabled, a
+        // flight originating from a configured departure airport is never auto-activated and must
+        // be inserted manually from the Pending List.
+        if (config.DepartureAirports.Any(d => d.Identifier == record.Origin) &&
+            !config.AutoActivateDepartures)
+        {
+            return false;
+        }
 
-        // Require a live position before auto-activating an arrival
+        // Require a live position before auto-activating a flight
         if (record.Position is null)
             return false;
 
-        // Don't reactivate a flight that has already touched down or not yet departed
+        // Don't activate a flight that is still on the ground. Departure-airport flights stay in the
+        // Pending List until they are airborne, and arrival flights that have already touched down
+        // must not be re-inserted.
         if (record.Position.IsOnGround)
             return false;
 
@@ -108,10 +116,10 @@ public class FlightPlanUpdatedHandler(
         if (record.State is not FlightPlanState.Active)
             return false;
 
-        // Only auto-activate arrivals that still have a feeder fix ahead of them. A flight
-        // already inside the TMA (past the feeder fix) or filed without a feeder fix must be
-        // inserted manually, so that a flight the controller has removed cannot resurrect
-        // itself while absorbing delay on final.
+        // Only auto-activate flights that still have a feeder fix ahead of them. A flight already
+        // inside the TMA (past the feeder fix) or filed without a feeder fix must be inserted
+        // manually, so that a flight the controller has removed cannot resurrect itself while
+        // absorbing delay on final.
         return record.Estimates.Any(e =>
             config.FeederFixes.Contains(e.FixIdentifier) && e.Estimate > now);
     }
