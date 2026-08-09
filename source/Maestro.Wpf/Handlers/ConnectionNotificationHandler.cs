@@ -19,7 +19,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
 {
     public Task Handle(ConnectionCreatedNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "READY", Role.Observer, false));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "READY", Role.Observer, false, IsReady: true, IsConnected: false));
         return Task.CompletedTask;
     }
 
@@ -29,13 +29,13 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
             return Task.CompletedTask;
 
         var flowIsOnline = connection.Peers.Any(p => p.Role == Role.Flow);
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection), connection.Role, flowIsOnline));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection), connection.Role, flowIsOnline, IsReady: true, IsConnected: connection.IsConnected));
         return Task.CompletedTask;
     }
 
     public Task Handle(ReconnectingNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "RECONN", Role.Observer, false));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "RECONN", Role.Observer, false, IsReady: true, IsConnected: false));
         return Task.CompletedTask;
     }
 
@@ -45,19 +45,19 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
             return Task.CompletedTask;
 
         var flowIsOnline = connection.Peers.Any(p => p.Role == Role.Flow);
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection), connection.Role, flowIsOnline));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection), connection.Role, flowIsOnline, IsReady: true, IsConnected: connection.IsConnected));
         return Task.CompletedTask;
     }
 
     public Task Handle(ConnectionStoppedNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "READY", Role.Observer, false));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "READY", Role.Observer, false, IsReady: true, IsConnected: false));
         return Task.CompletedTask;
     }
 
     public Task Handle(ConnectionDestroyedNotification notification, CancellationToken cancellationToken)
     {
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "OFFLINE", Role.Observer, false));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, "OFFLINE", Role.Observer, false, IsReady: false, IsConnected: false));
         return Task.CompletedTask;
     }
 
@@ -67,7 +67,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
             return Task.CompletedTask;
 
         var flowIsOnline = connection!.Peers.Any(p => p.Role == Role.Flow);
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection!), connection.Role, flowIsOnline));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection!), connection.Role, flowIsOnline, IsReady: true, IsConnected: connection.IsConnected));
         return Task.CompletedTask;
     }
 
@@ -77,7 +77,7 @@ public class ConnectionNotificationHandler(IMaestroConnectionManager connectionM
             return Task.CompletedTask;
 
         var flowIsOnline = connection!.Peers.Any(p => p.Role == Role.Flow);
-        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection!), connection.Role, flowIsOnline));
+        WeakReferenceMessenger.Default.Send(new ConnectionStatusChangedNotification(notification.AirportIdentifier, GetStatus(connection!), connection.Role, flowIsOnline, IsReady: true, IsConnected: connection.IsConnected));
         return Task.CompletedTask;
     }
 
