@@ -211,6 +211,67 @@ public class SwapFlightsRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public async Task WhenSwappingTwoStableFlights_HighSpeedFlagReflectsPostSwapDelays()
+    {
+        // Arrange
+        var ttg = TimeSpan.FromMinutes(10);
+
+        // Zero pressure windows so all delay is absorbed enroute
+        var trajectory = new TerminalTrajectory(ttg, ttg, ttg);
+
+        var firstEtaFf = _clock.UtcNow();               // firstFlight LandingEstimate = now+10m
+        var secondEtaFf = _clock.UtcNow().AddMinutes(15); // secondFlight LandingEstimate = now+25m
+
+        var firstFlight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithRunway("34L")
+            .WithFeederFixEstimate(firstEtaFf)
+            .WithTrajectory(trajectory)
+            .Build();
+
+        var secondFlight = new FlightBuilder("QFA2")
+            .WithFeederFix("MARLN")
+            .WithRunway("34R")
+            .WithFeederFixEstimate(secondEtaFf)
+            .WithTrajectory(trajectory)
+            .Build();
+
+        var trajectoryService = new MockTrajectoryService()
+            .WithTrajectory().OnRunway("34L").Returns(trajectory)
+            .WithTrajectory().OnRunway("34R").Returns(trajectory);
+
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
+            .WithSequence(s => s.WithTrajectoryService(trajectoryService).WithFlightsInOrder(firstFlight, secondFlight))
+            .Build();
+
+        // Seed pre-swap Required delays while flights are still Unstable so that Required* fields are set.
+        // firstFlight: STA=now+20m, LE=now+10m => 10m required delay (HighSpeed = false)
+        firstFlight.SetSequenceData(_clock.UtcNow().AddMinutes(20), firstFlight.FeederFixEstimate.AddMinutes(10), ControlAction.SpeedReduction, TimeSpan.FromMinutes(10), TimeSpan.Zero);
+        // secondFlight: STA=now+30m, LE=now+25m => 5m required delay (HighSpeed = false)
+        secondFlight.SetSequenceData(_clock.UtcNow().AddMinutes(30), secondFlight.FeederFixEstimate.AddMinutes(5), ControlAction.SpeedReduction, TimeSpan.FromMinutes(5), TimeSpan.Zero);
+
+        // Stabilise both flights so the swap operates on non-Unstable flights, matching the bug scenario.
+        firstFlight.SetState(State.Stable, _clock);
+        secondFlight.SetState(State.Stable, _clock);
+
+        // Sanity check
+        firstFlight.HighSpeed.ShouldBeFalse();
+        secondFlight.HighSpeed.ShouldBeFalse();
+
+        var handler = GetHandler(sessionManager);
+        var request = new SwapFlightsRequest("YSSY", "QFA1", "QFA2");
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert:
+        // firstFlight now targets STA=now+30m with LE=now+10m => 20m delay => HighSpeed = false
+        firstFlight.HighSpeed.ShouldBeFalse();
+        // secondFlight now targets STA=now+20m with LE=now+25m => -5m delay => EnrouteDelay = 0 => HighSpeed = true
+        secondFlight.HighSpeed.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task WhenSwappingTwoFlights_AndFirstFlightDoesNotExist_AnErrorIsThrown()
     {
         // Arrange

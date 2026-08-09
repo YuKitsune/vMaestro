@@ -31,8 +31,19 @@ Server:
     - SweatBox-1
     - SweatBox-2
 
+  # Whether to automatically connect to the MAESTRO server once the window has been opened.
+  # Optional, default: false
+  AutoConnect: false
+
   # Connection timeout in seconds (optional, default: 30)
   TimeoutSeconds: 30
+
+  # When true, MAESTRO creates a server connection for each airport session
+  # as soon as the session is opened. The connection uses the first environment
+  # above and starts once VATSIM is connected.
+  # When false, the user must connect manually from the connection window.
+  # Optional, default: false
+  AutoConnect: false
 
   # Role-based permissions for actions
   # Define which roles can perform each action

@@ -7,6 +7,7 @@ public class ServerConfiguration
     public required Uri Uri { get; init; }
     public required string[] Environments { get; init; } = ["Default"];
     public int TimeoutSeconds { get; init; } = 30;
+    public bool AutoConnect { get; init; } = false;
     public required Dictionary<string, Role[]> Permissions { get; init; }
 }
 

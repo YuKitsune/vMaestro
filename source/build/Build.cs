@@ -78,12 +78,13 @@ class Build : NukeBuild
     AbsolutePath PluginZipPath => TemporaryDirectory / $"Maestro.Plugin.{GetSemanticVersion()}.zip";
     AbsolutePath PluginPackageDirectory => TemporaryDirectory / "package-plugin";
 
-    // Server paths
+    // Server paths (self-contained linux-x64)
+    const string ServerRuntimeIdentifier = "linux-x64";
     AbsolutePath ServerProjectPath => RootDirectory / "source" / "Maestro.Server" / "Maestro.Server.csproj";
     AbsolutePath ServerBuildOutputDirectory => !string.IsNullOrEmpty(ServerOutputDirectory)
         ? (AbsolutePath)ServerOutputDirectory
         : TemporaryDirectory / "build-server";
-    AbsolutePath ServerZipPath => TemporaryDirectory / $"Maestro.Server.{GetSemanticVersion()}.zip";
+    AbsolutePath ServerZipPath => TemporaryDirectory / $"Maestro.Server.{GetSemanticVersion()}.{ServerRuntimeIdentifier}.zip";
     AbsolutePath ServerPackageDirectory => TemporaryDirectory / "package-server";
 
     // Tools paths
@@ -388,6 +389,7 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .SetOutput(ServerBuildOutputDirectory)
                 .SetVersion(version)
+                .SetRuntime(ServerRuntimeIdentifier)
                 .SetAssemblyVersion(GetMajorMinorPatch())
                 .SetFileVersion(GetMajorMinorPatch())
                 .SetInformationalVersion(version));

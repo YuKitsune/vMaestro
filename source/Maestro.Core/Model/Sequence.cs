@@ -408,8 +408,10 @@ public class Sequence
                 [], // TODO
                 UpperWind);
 
-            Schedule(flight1, landingTime2, runway2, approachType2, trajectory1);
-            Schedule(flight2, landingTime1, runway1, approachType1, trajectory2);
+            // Force update of Required delays: a swap re-targets each flight to the other's slot,
+            // so RequiredEnrouteDelay (which drives HighSpeed) must reflect the new target.
+            Schedule(flight1, landingTime2, runway2, approachType2, trajectory1, forceUpdateRequiredDelays: true);
+            Schedule(flight2, landingTime1, runway1, approachType1, trajectory2, forceUpdateRequiredDelays: true);
 
             // No need to re-schedule as we're exchanging two flights that are already scheduled
         }
@@ -1089,7 +1091,8 @@ public class Sequence
         DateTimeOffset landingTime,
         IRunwayAssignment runwayAssignment,
         string approachType,
-        TerminalTrajectory trajectory)
+        TerminalTrajectory trajectory,
+        bool forceUpdateRequiredDelays = false)
     {
         // Atomic update: runway + trajectory + ETA + STA_FF
         flight.SetRunway(runwayAssignment, trajectory);
@@ -1120,7 +1123,8 @@ public class Sequence
             feederFixTime,
             distribution.ControlAction,
             distribution.EnrouteDelay,
-            distribution.TerminalDelay);
+            distribution.TerminalDelay,
+            forceUpdateRequiredDelays);
     }
 
     record RunwayOption(string RunwayIdentifier, string ApproachType, TimeSpan RequiredSeparation, TerminalTrajectory Trajectory);

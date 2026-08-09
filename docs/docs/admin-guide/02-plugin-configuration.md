@@ -69,6 +69,7 @@ Server:
     - VATSIM
     - SweatBox-1
   TimeoutSeconds: 30
+  AutoConnect: false
   Permissions:
     ChangeTerminalConfiguration: [Flow]
     ChangeLandingRates: [Flow]
@@ -93,6 +94,7 @@ Server:
 | `Uri` | string | Yes | - | SignalR hub endpoint (must end in `/hub`) |
 | `Environments` | array | Yes | `["Default"]` | Available environments for session isolation |
 | `TimeoutSeconds` | integer | No | 30 | Connection timeout |
+| `AutoConnect` | boolean | No | `false` | When `true`, MAESTRO creates a server connection for each airport session as soon as the session is opened. The first environment is used, and the connection starts once VATSIM is connected. |
 | `Permissions` | object | Yes | - | Maps actions to permitted roles |
 
 ### Environments
