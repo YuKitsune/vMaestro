@@ -31,6 +31,10 @@ Server:
     - SweatBox-1
     - SweatBox-2
 
+  # Whether to automatically connect to the MAESTRO server once the window has been opened.
+  # Optional, default: false
+  AutoConnect: false
+
   # Connection timeout in seconds (optional, default: 30)
   TimeoutSeconds: 30
 

@@ -12,6 +12,7 @@ Server:
   - VATSIM
   - SweatBox-1
   - SweatBox-2
+  AutoConnect: true
   TimeoutSeconds: 30
   Permissions:
     ChangeTerminalConfiguration: [Flow]

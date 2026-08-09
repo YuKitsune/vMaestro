@@ -1,5 +1,7 @@
 ﻿using System.Windows;
 using Maestro.Core.Configuration;
+using Maestro.Core.Connectivity;
+using Maestro.Core.Connectivity.Contracts;
 using Maestro.Core.Sessions.Contracts;
 using Maestro.Plugin.Infrastructure;
 using Maestro.Wpf.Integrations;
@@ -14,6 +16,8 @@ namespace Maestro.Plugin.Handlers;
 public class MaestroSessionCreatedNotificationHandler(
     IAirportConfigurationProvider airportConfigurationProvider,
     LabelsConfiguration labelsConfiguration,
+    ServerConfiguration serverConfiguration,
+    IMaestroConnectionManager connectionManager,
     WindowManager windowManager,
     IMediator mediator,
     IErrorReporter errorReporter,
@@ -61,6 +65,16 @@ public class MaestroSessionCreatedNotificationHandler(
                     }
                 };
             });
+        
+        if (serverConfiguration.AutoConnect)
+        {
+            await mediator.Send(
+                new CreateConnectionRequest(
+                    notification.AirportIdentifier,
+                    connectionManager.CurrentServerUrl,
+                    serverConfiguration.Environments.First()),
+                cancellationToken);
+        }
 
         // Immediately start session if we're connected to VATSIM
         if (Network.IsConnected)
