@@ -224,7 +224,21 @@ class Build : NukeBuild
                 .SetInternalize(false)
                 .SetParallel(true)
                 .SetOutput(mainAssembly.ToString())
-                .SetLib(PluginBuildOutputDirectory.ToString());  // Tell ILRepack where to find referenced assemblies
+                .SetLib(PluginBuildOutputDirectory.ToString())  // Tell ILRepack where to find referenced assemblies
+                // MessagePack.Annotations 3.x ships BCL polyfills that clash with net472 runtime and BCL polyfill DLLs
+                .AddAllowDuplicate("System.Runtime.CompilerServices.AsyncMethodBuilderAttribute")
+                .AddAllowDuplicate("System.Runtime.CompilerServices.CallerArgumentExpressionAttribute")
+                .AddAllowDuplicate("System.Runtime.CompilerServices.CollectionBuilderAttribute")
+                .AddAllowDuplicate("System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute")
+                .AddAllowDuplicate("System.Runtime.CompilerServices.IsExternalInit")
+                .AddAllowDuplicate("System.Runtime.CompilerServices.SkipLocalsInitAttribute")
+                .AddAllowDuplicate("System.Diagnostics.CodeAnalysis.ConstantExpectedAttribute")
+                .AddAllowDuplicate("System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute")
+                .AddAllowDuplicate("System.Diagnostics.CodeAnalysis.DoesNotReturnIfAttribute")
+                .AddAllowDuplicate("System.Diagnostics.CodeAnalysis.ExperimentalAttribute")
+                .AddAllowDuplicate("System.Diagnostics.CodeAnalysis.StringSyntaxAttribute")
+                .AddAllowDuplicate("System.Diagnostics.CodeAnalysis.UnscopedRefAttribute")
+                .AddAllowDuplicate("Microsoft.CodeAnalysis.EmbeddedAttribute");
 
             Log.Information("Repacking {Count} assemblies into {MainAssembly}", existingAssemblies.Length, mainAssembly);
             foreach (var assembly in existingAssemblies)
