@@ -41,8 +41,6 @@ CheckForUpdates: false
 |----------|------|---------|-------------|
 | `CheckForUpdates` | boolean | `true` | Whether to check for updates on startup. Set to `false` to maintain control over plugin versions. |
 
-<!-- TODO: Suggest disabling if you need to maintain control over which version of MAESTRO is used for compatibility with a self-hosted server -->
-
 ## Logging
 
 ```yaml
