@@ -432,7 +432,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     [Fact]
     public async Task WhenAFlightPlanIsUpdated_AndAllEstimatesAreInThePast_ActivateFlightRequestIsNotSent()
     {
-        // Arrange — covers the case where Position is unavailable but the route is fully overflown.
+        // Arrange — an airborne FDR whose route is fully overflown must not reactivate.
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
         var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
@@ -442,10 +442,41 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
             "YMML", "YSSY", clock.UtcNow().AddHours(-2), TimeSpan.FromHours(1.5),
             FlightPlanState.Active,
-            Position: null,
+            _position,
             [
                 new FixEstimate("RIVET", clock.UtcNow().AddMinutes(-20)),
                 new FixEstimate("YSSY", clock.UtcNow().AddMinutes(-2))
+            ]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndPositionIsNull_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange — the FDR has no coupled track (typical for aircraft parked at the gate
+        // where CoupledTrack is null). Without a live position report we cannot confirm the
+        // aircraft is airborne, so an arrival must not auto-activate even if the residual
+        // route estimates are future-dated (e.g. after a callsign reuse).
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "QFA123", "B738", AircraftCategory.Jet, WakeCategory.Medium,
+            "YMML", "YSSY", clock.UtcNow().AddHours(-1), TimeSpan.FromHours(1.5),
+            FlightPlanState.Active,
+            Position: null,
+            [
+                new FixEstimate("RIVET", clock.UtcNow().AddMinutes(30)),
+                new FixEstimate("YSSY", clock.UtcNow().AddMinutes(50))
             ]);
 
         var handler = GetHandler(sessionManager, clock, mediator: mediator);

@@ -86,10 +86,12 @@ public class FlightPlanUpdatedHandler(
         if (config.DepartureAirports.Any(d => d.Identifier == record.Origin))
             return config.AutoActivateDepartures;
 
-        // Don't reactivate a flight that has already touched down. After landing the FDR
-        // continues to report Active during taxi until it transitions to STATE_FINISHED,
-        // which would otherwise re-insert a flight that a controller has just removed.
-        if (record.Position?.IsOnGround == true)
+        // Require a live position before auto-activating an arrival
+        if (record.Position is null)
+            return false;
+
+        // Don't reactivate a flight that has already touched down or not yet departed
+        if (record.Position.IsOnGround)
             return false;
 
         var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
