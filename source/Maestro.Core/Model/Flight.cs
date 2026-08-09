@@ -375,12 +375,13 @@ public class Flight : IEquatable<Flight>
         DateTimeOffset feederFixTime,
         ControlAction requiredControlAction,
         TimeSpan enrouteDelay,
-        TimeSpan terminalDelay)
+        TimeSpan terminalDelay,
+        bool forceUpdateRequiredDelays = false)
     {
         LandingTime = landingTime;
         FeederFixTime = feederFixTime;
 
-        if (State is State.Unstable)
+        if (State is State.Unstable || forceUpdateRequiredDelays)
         {
             RequiredControlAction = requiredControlAction;
             RequiredEnrouteDelay = enrouteDelay;
