@@ -4,6 +4,7 @@ using MessagePack;
 
 namespace Maestro.Contracts.Flights;
 
+[MessagePackObject]
 public record ChangeRunwayRequest(
     [property: Key(0)] string AirportIdentifier,
     [property: Key(1)] string Callsign,

@@ -14,15 +14,26 @@ public static class ExtractStarsCommand
 {
     public static Command Build()
     {
-        var airspaceOption = new Option<FileInfo>("--airspace", "Path to vatSys Airspace.xml") { IsRequired = true };
-        var configOption = new Option<FileInfo>("--config", "Path to maestro-tools.yaml config file") { IsRequired = true };
+        var airspaceOption = new Option<FileInfo>("--airspace")
+        {
+            Description = "Path to vatSys Airspace.xml",
+            Required = true
+        };
+        var configOption = new Option<FileInfo>("--config")
+        {
+            Description = "Path to maestro-tools.yaml config file",
+            Required = true
+        };
 
         var command = new Command("extract-stars", "Extract STAR segment geometry from a vatSys Airspace.xml file.");
-        command.AddOption(airspaceOption);
-        command.AddOption(configOption);
+        command.Options.Add(airspaceOption);
+        command.Options.Add(configOption);
 
-        command.SetHandler((airspace, configFile) =>
+        command.SetAction(parseResult =>
         {
+            var airspace = parseResult.GetValue(airspaceOption)!;
+            var configFile = parseResult.GetValue(configOption)!;
+
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(PascalCaseNamingConvention.Instance)
                 .Build();
@@ -52,7 +63,9 @@ public static class ExtractStarsCommand
 
                 Console.WriteLine($"Wrote {trajectories.Count} trajectories for {airportConfig.ICAO} to {outputPath}");
             }
-        }, airspaceOption, configOption);
+
+            return 0;
+        });
 
         return command;
     }
