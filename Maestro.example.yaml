@@ -34,6 +34,13 @@ Server:
   # Connection timeout in seconds (optional, default: 30)
   TimeoutSeconds: 30
 
+  # When true, MAESTRO creates a server connection for each airport session
+  # as soon as the session is opened. The connection uses the first environment
+  # above and starts once VATSIM is connected.
+  # When false, the user must connect manually from the connection window.
+  # Optional, default: false
+  AutoConnect: false
+
   # Role-based permissions for actions
   # Define which roles can perform each action
   # Available roles: Enroute, Approach, Flow
