@@ -63,8 +63,9 @@ public class AirportConfiguration
     public int MinimumAutoActivationFlightTimeMinutes { get; init; } = 25;
 
     /// <summary>
-    ///     When true, flights originating from a configured departure airport are auto-activated when the FDR state is active.
-    ///     When false, departure airport flights are not auto-activated.
+    ///     When true, flights originating from a configured departure airport are auto-activated once
+    ///     airborne, using the same criteria as any other arrival. When false, departure-airport
+    ///     flights are never auto-activated and must be inserted manually from the Pending List.
     /// </summary>
     public bool AutoActivateDepartures { get; init; } = true;
 

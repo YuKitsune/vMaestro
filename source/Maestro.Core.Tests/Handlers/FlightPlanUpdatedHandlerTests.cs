@@ -261,10 +261,11 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenAFlightPlanIsUpdated_AndFlightIsFromDepartureAirport_ActivateFlightRequestIsSent()
+    public async Task WhenAFlightPlanIsUpdated_AndFlightIsFromDepartureAirport_AndAirborneAndActive_ActivateFlightRequestIsSent()
     {
         // Arrange - YSCB is configured as a departure airport
-        // Ensure flights from departure airports auto-activate by themselves from departure airports once airborne
+        // A departure-airport flight auto-activates once it is airborne and the FDR is Active,
+        // matching the rules that apply to any other arrival.
         var airportConfiguration = GetDefaultAirportConfiguration();
         var clock = clockFixture.Instance;
         var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
@@ -279,7 +280,7 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
             "YSSY",
             clock.UtcNow(),
             TimeSpan.FromMinutes(35),
-            FlightPlanState.Preactive,
+            FlightPlanState.Active,
             _position,
             [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
 
@@ -290,6 +291,78 @@ public class FlightPlanUpdatedHandlerTests(ClockFixture clockFixture)
 
         // Assert
         await mediator.Received(1).Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndFlightIsFromDepartureAirport_AndIsOnGround_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange - YSCB is configured as a departure airport
+        // A departure-airport flight that is still parked on the ground must not be auto-activated,
+        // even when AutoActivateDepartures is enabled. It stays in the Pending List until airborne.
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var onGroundPosition = new FlightPosition(
+            new Coordinate(0, 0),
+            0,
+            VerticalTrack.Maintaining,
+            0,
+            true);
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "JST425",
+            "A320",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YSCB",
+            "YSSY",
+            clock.UtcNow(),
+            TimeSpan.FromMinutes(35),
+            FlightPlanState.Active,
+            onGroundPosition,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WhenAFlightPlanIsUpdated_AndFlightIsFromDepartureAirport_AndPositionIsNull_ActivateFlightRequestIsNotSent()
+    {
+        // Arrange - YSCB is configured as a departure airport
+        // A departure-airport flight with no coupled track (no position) must not be auto-activated.
+        var airportConfiguration = GetDefaultAirportConfiguration();
+        var clock = clockFixture.Instance;
+        var (sessionManager, _, _) = new SessionBuilder(airportConfiguration).Build();
+
+        var mediator = Substitute.For<IMediator>();
+        var notification = new FlightPlanUpdatedNotification(
+            "JST425",
+            "A320",
+            AircraftCategory.Jet,
+            WakeCategory.Medium,
+            "YSCB",
+            "YSSY",
+            clock.UtcNow(),
+            TimeSpan.FromMinutes(35),
+            FlightPlanState.Active,
+            null,
+            [new FixEstimate("RIVET", clock.UtcNow().AddMinutes(15))]);
+
+        var handler = GetHandler(sessionManager, clock, mediator: mediator);
+
+        // Act
+        await handler.Handle(notification, CancellationToken.None);
+
+        // Assert
+        await mediator.DidNotReceive().Send(Arg.Any<ActivateFlightRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
