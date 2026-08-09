@@ -86,10 +86,12 @@ public class FlightPlanUpdatedHandler(
         if (config.DepartureAirports.Any(d => d.Identifier == record.Origin))
             return config.AutoActivateDepartures;
 
-        // Don't reactivate a flight that has already touched down. After landing the FDR
-        // continues to report Active during taxi until it transitions to STATE_FINISHED,
-        // which would otherwise re-insert a flight that a controller has just removed.
-        if (record.Position?.IsOnGround == true)
+        // Require a live position before auto-activating an arrival
+        if (record.Position is null)
+            return false;
+
+        // Don't reactivate a flight that has already touched down or not yet departed
+        if (record.Position.IsOnGround)
             return false;
 
         var landingEstimate = record.Estimates.LastOrDefault()?.Estimate;
@@ -106,9 +108,11 @@ public class FlightPlanUpdatedHandler(
         if (record.State is not FlightPlanState.Active)
             return false;
 
-        // Require at least one future-dated route estimate. Once the route is fully overflown
-        // the FDR can still report Active briefly, and activating without a future estimate
-        // produces a flight whose entire trajectory is in the past.
-        return record.Estimates.Any(e => e.Estimate > now);
+        // Only auto-activate arrivals that still have a feeder fix ahead of them. A flight
+        // already inside the TMA (past the feeder fix) or filed without a feeder fix must be
+        // inserted manually, so that a flight the controller has removed cannot resurrect
+        // itself while absorbing delay on final.
+        return record.Estimates.Any(e =>
+            config.FeederFixes.Contains(e.FixIdentifier) && e.Estimate > now);
     }
 }
