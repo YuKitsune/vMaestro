@@ -23,7 +23,7 @@ public class OpenConnectionWindowRequestHandler(
         windowManager.FocusOrCreateWindow(
             WindowKeys.Connection(request.AirportIdentifier),
             "Setup",
-            windowHandle => new ConnectionView(new ConnectionViewModel(request.AirportIdentifier, serverConfiguration, environment, isConnected, isReady, mediator, windowHandle, errorReporter)));
+            windowHandle => new ConnectionView(new ConnectionViewModel(request.AirportIdentifier, serverConfiguration, connectionManager.CurrentServerUrl, environment, isConnected, isReady, mediator, windowHandle, errorReporter)));
 
         return Task.CompletedTask;
     }

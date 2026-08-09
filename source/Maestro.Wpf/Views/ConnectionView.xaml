@@ -76,9 +76,18 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Server"/>
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="Server URL"/>
+            <TextBox
+                Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}"
+                IsEnabled="{Binding CanChangeServer}"
+                Margin="0,2,0,2" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Server"/>
             <ComboBox
-                Grid.Row="0"
+                Grid.Row="2"
                 Grid.Column="1"
                 ItemsSource="{Binding Servers}"
                 SelectedValue="{Binding SelectedServer, Mode=TwoWay}"
