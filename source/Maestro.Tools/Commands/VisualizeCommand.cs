@@ -13,12 +13,18 @@ public static class VisualizeCommand
 {
     public static Command Build()
     {
-        var configOption = new Option<FileInfo>("--config", "Path to Maestro.yaml") { IsRequired = true };
-        var command = new Command("visualize", "Visualize trajectory segments from a Maestro.yaml file.");
-        command.AddOption(configOption);
-
-        command.SetHandler(configFile =>
+        var configOption = new Option<FileInfo>("--config")
         {
+            Description = "Path to Maestro.yaml",
+            Required = true
+        };
+        var command = new Command("visualize", "Visualize trajectory segments from a Maestro.yaml file.");
+        command.Options.Add(configOption);
+
+        command.SetAction(parseResult =>
+        {
+            var configFile = parseResult.GetValue(configOption)!;
+
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(NullNamingConvention.Instance)
                 .IgnoreUnmatchedProperties()
@@ -32,7 +38,9 @@ public static class VisualizeCommand
             AppBuilder.Configure(() => new VisualizerApp(trajectories))
                 .UsePlatformDetect()
                 .StartWithClassicDesktopLifetime([]);
-        }, configOption);
+
+            return 0;
+        });
 
         return command;
     }
