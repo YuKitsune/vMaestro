@@ -265,7 +265,7 @@ Airports:
 | `ManualInteractionState` | string | `Stable` | State after manual changes |
 | `MaximumAutoActivationLeadTimeMinutes` | integer | 120 | Flights with a landing estimate further out than this will not be auto-activated |
 | `MinimumAutoActivationFlightTimeMinutes` | integer | 25 | Flights with an estimated flight time shorter than this value will not be auto-activated |
-| `AutoActivateDepartures` | boolean | `true` | When `false`, flights from departure airports are not auto-activated |
+| `AutoActivateDepartures` | boolean | `true` | When `true`, flights from departure airports auto-activate once airborne, using the same criteria as any other arrival. When `false`, they are never auto-activated and must be inserted manually from the Pending List. |
 | `MinimumUnstableMinutes` | integer | 5 | Minimum time in Unstable state |
 | `StabilityThresholdMinutes` | integer | 25 | Minutes before ETA_FF to become Stable |
 | `FrozenThresholdMinutes` | integer | 15 | Minutes before STA to become Frozen |
