@@ -1,29 +1,16 @@
 # syntax=docker/dockerfile:1
 
-# Stage 1: Base image.
-## Start with a base image containing NodeJS so we can build Docusaurus.
-FROM node:lts AS base
-## Disable colour output from yarn to make logs easier to read.
+# Stage 1: Build the static site with Node.
+FROM node:lts-alpine AS build
 ENV FORCE_COLOR=0
-## Enable corepack.
 RUN corepack enable
-## Set the working directory to `/opt/docusaurus`.
-WORKDIR /opt/Docusaurus
-
-# Stage 2: Production build mode.
-FROM base AS prod
-## Set the working directory to `/opt/docusaurus`.
 WORKDIR /opt/docusaurus
-## Copy over the source code.
 COPY . /opt/docusaurus/
-## Install dependencies with `--immutable` to ensure reproducibility.
 RUN npm ci
-## Build the static site.
 RUN npm run build
 
-# Stage 3: Serve with `docusaurus serve`.
-FROM prod AS serve
-## Expose the port that Docusaurus will run on.
-EXPOSE 3000
-## Run the production server.
-CMD ["npm", "run", "serve", "--", "--host", "0.0.0.0", "--no-open"]
+# Stage 2: Serve the static site with Nginx.
+FROM nginx:alpine AS serve
+COPY --from=build /opt/docusaurus/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
