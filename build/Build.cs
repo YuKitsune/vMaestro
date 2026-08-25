@@ -5,15 +5,15 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.Versioning;
 using JetBrains.Annotations;
-using Nuke.Common;
-using Nuke.Common.CI.GitHubActions;
-using Nuke.Common.Git;
-using Nuke.Common.IO;
-using Nuke.Common.Tools.Docker;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Tools.Git;
-using Nuke.Common.Tools.GitHub;
-using Nuke.Common.Tools.ILRepack;
+using Fallout.Common;
+using Fallout.Common.CI.GitHubActions;
+using Fallout.Common.Git;
+using Fallout.Common.IO;
+using Fallout.Common.Tools.Docker;
+using Fallout.Common.Tools.DotNet;
+using Fallout.Common.Tools.Git;
+using Fallout.Common.Tools.GitHub;
+using Fallout.Common.Tools.ILRepack;
 using Octokit;
 using Serilog;
 
@@ -33,7 +33,7 @@ using Serilog;
     EnableGitHubToken = true,
     FetchDepth = 0,
     WritePermissions = [GitHubActionsPermissions.Contents])]
-class Build : NukeBuild
+class Build : FalloutBuild
 {
     /// Support plugins are available for:
     ///   - JetBrains ReSharper        https://nuke.build/resharper
@@ -100,13 +100,11 @@ class Build : NukeBuild
     AbsolutePath VatSysSetupDirectory => TemporaryDirectory / "vatsys-setup";
     AbsolutePath VatSysExePath => VatSysPath ?? VatSysSetupDirectory / "bin" / "vatSys.exe";
 
-    [UsedImplicitly]
     public Target CheckVersion => _ => _
         .Description("Prints the semantic version that will be assigned to the binaries.")
         .Unlisted()
         .Executes(() => Log.Information("Version: {Version}", GetSemanticVersion()));
 
-    [UsedImplicitly]
     public Target CreateRelease => _ => _
         .Description("Tags the current commit with an appropriate version, triggering the release workflow in GitHub.")
         .Requires(() => IsLocalBuild)
