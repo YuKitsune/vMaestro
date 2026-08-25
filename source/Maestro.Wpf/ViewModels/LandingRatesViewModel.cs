@@ -56,7 +56,7 @@ public partial class LandingRatesViewModel : ObservableObject
             ? CreateRunwayConfigurationItems(currentRunwayMode, pendingLandingRatesChange)
             : CreateRunwayConfigurationItems(currentRunwayMode);
 
-        ChangeTime = pendingLandingRatesChange?.ChangeTime.ToUniversalTime() ?? _clock.UtcNow().AddMinutes(5);
+        ChangeTime = pendingLandingRatesChange?.ChangeTime ?? _clock.UtcNow().AddMinutes(5);
     }
 
     RunwayConfigurationItemViewModel[] CreateRunwayConfigurationItems(RunwayModeDto currentRunwayMode)
