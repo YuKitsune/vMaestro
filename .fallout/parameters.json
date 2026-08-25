@@ -1,4 +1,4 @@
 {
   "$schema": "build.schema.json",
-  "Solution": "source/Maestro.sln"
+  "Solution": "source/Maestro.slnx"
 }
