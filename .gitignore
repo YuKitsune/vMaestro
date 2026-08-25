@@ -133,8 +133,8 @@ $RECYCLE.BIN/
 
 _NCrunch*
 
-# Nuke
-.nuke/temp
+# Fallout
+.fallout/temp
 
 # Build output
 .dist
