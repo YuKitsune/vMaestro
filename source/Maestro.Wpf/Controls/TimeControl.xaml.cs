@@ -49,7 +49,7 @@ public partial class TimeControl : UserControl, INotifyPropertyChanged
         }
         else
         {
-            Time = DateTimeOffset.Now.AddMinutes(1);
+            Time = DateTimeOffset.UtcNow.AddMinutes(1);
         }
     }
 
@@ -61,7 +61,7 @@ public partial class TimeControl : UserControl, INotifyPropertyChanged
         }
         else
         {
-            Time = DateTimeOffset.Now.AddMinutes(-1);
+            Time = DateTimeOffset.UtcNow.AddMinutes(-1);
         }
     }
 
@@ -73,7 +73,7 @@ public partial class TimeControl : UserControl, INotifyPropertyChanged
         }
         else
         {
-            Time = DateTimeOffset.Now.AddMinutes(5);
+            Time = DateTimeOffset.UtcNow.AddMinutes(5);
         }
     }
 
@@ -85,7 +85,7 @@ public partial class TimeControl : UserControl, INotifyPropertyChanged
         }
         else
         {
-            Time = DateTimeOffset.Now.AddMinutes(-5);
+            Time = DateTimeOffset.UtcNow.AddMinutes(-5);
         }
     }
 

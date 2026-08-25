@@ -12,7 +12,7 @@ public class FlightBuilder(string callsign)
     string _origin = "YMML";
     string _destination = "YSSY";
     string? _feederFixIdentifier = "RIVET";
-    DateTimeOffset _activationTime = DateTimeOffset.Now.AddHours(-1);
+    DateTimeOffset _activationTime = DateTimeOffset.UtcNow.AddHours(-1);
     DateTimeOffset _feederFixEstimate = default;
     bool _manualFeederFixEstimate = false;
     DateTimeOffset _feederFixTime = default;
