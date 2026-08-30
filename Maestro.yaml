@@ -1947,7 +1947,7 @@ Airports:
 
   # 
   - Identifier: "03/06V"
-    DependencyRateSeconds: 0
+    DependencyRateSeconds: 30
     Runways:
     - {Identifier: "03", ApproachType: V, LandingRateSeconds: 150}
     - {Identifier: "06", ApproachType: V, LandingRateSeconds: 150}
