@@ -21,4 +21,19 @@ public class TerminalTrajectoryConfiguration
     // Diverges after the specified segment.
     // Pmax (Maximum Pressure window) = ETI from feeder fix through After segment + ETI along alternative segments.
     public TrajectoryBranch? MaxPressure { get; init; }
+
+    /// <summary>
+    ///     The delay, in seconds, that may be allocated to a flight for linear absorption (vectors or speed
+    ///     control) within the TMA. Used in lieu of a <see cref="Pressure"/> trajectory. When neither is
+    ///     given, the airport's <see cref="AirportConfiguration.DefaultPressureSeconds"/> applies.
+    /// </summary>
+    public int? PressureSeconds { get; init; }
+
+    /// <summary>
+    ///     The absolute maximum delay, in seconds, that may be allocated to a flight for linear absorption
+    ///     (vectors or speed control) within the TMA. Delay beyond this value is allocated to the enroute
+    ///     phase. Used in lieu of a <see cref="MaxPressure"/> trajectory. When neither is given, the
+    ///     airport's <see cref="AirportConfiguration.DefaultMaxPressureSeconds"/> applies.
+    /// </summary>
+    public int? MaxPressureSeconds { get; init; }
 }

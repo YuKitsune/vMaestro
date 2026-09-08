@@ -130,6 +130,23 @@ public class AirportConfiguration
     public int DefaultTimeToGoMinutes { get; init; } = 20;
 
     /// <summary>
+    ///     The default delay, in seconds, that may be allocated to a flight for linear absorption (vectors or
+    ///     speed control) within the TMA. Used when a trajectory specifies neither a
+    ///     <see cref="TerminalTrajectoryConfiguration.Pressure"/> trajectory nor a
+    ///     <see cref="TerminalTrajectoryConfiguration.PressureSeconds"/> value.
+    /// </summary>
+    public int? DefaultPressureSeconds { get; init; }
+
+    /// <summary>
+    ///     The default absolute maximum delay, in seconds, that may be allocated to a flight for linear
+    ///     absorption (vectors or speed control) within the TMA. Delay beyond this value is allocated to the
+    ///     enroute phase. Used when a trajectory specifies neither a
+    ///     <see cref="TerminalTrajectoryConfiguration.MaxPressure"/> trajectory nor a
+    ///     <see cref="TerminalTrajectoryConfiguration.MaxPressureSeconds"/> value.
+    /// </summary>
+    public int? DefaultMaxPressureSeconds { get; init; }
+
+    /// <summary>
     ///     The delay distribution strategy used to allocate delay between the enroute and approach phases.
     /// </summary>
     public DelayStrategy DelayStrategy { get; init; } = DelayStrategy.EnrouteFirst;

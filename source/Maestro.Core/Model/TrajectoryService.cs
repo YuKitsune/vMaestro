@@ -30,8 +30,10 @@ public class TrajectoryService(
 
     public TerminalTrajectory GetTrajectory(Flight flight, string runwayIdentifier, string approachType, string[] fixNames, Wind upperWind)
     {
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(flight.DestinationIdentifier);
+
         var config = FindConfiguration(
-            flight.DestinationIdentifier,
+            airportConfiguration,
             flight.FeederFixIdentifier,
             fixNames,
             approachType,
@@ -48,7 +50,7 @@ public class TrajectoryService(
         }
 
         var speedBands = performanceLookup.GetSpeedProfile(flight.GetPerformanceData());
-        return ComputeTrajectory(config, speedBands, upperWind ?? new Wind(0, 0));
+        return ComputeTrajectory(airportConfiguration, config, speedBands, upperWind ?? new Wind(0, 0));
     }
 
     public TerminalTrajectory GetTrajectory(
@@ -60,8 +62,10 @@ public class TrajectoryService(
         string[] fixNames,
         Wind upperWind)
     {
+        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(destinationIdentifier);
+
         var config = FindConfiguration(
-            destinationIdentifier,
+            airportConfiguration,
             feederFixIdentifier,
             fixNames,
             approachType,
@@ -80,7 +84,7 @@ public class TrajectoryService(
         }
 
         var speedBands = performanceLookup.GetSpeedProfile(aircraftPerformanceData);
-        return ComputeTrajectory(config, speedBands, upperWind ?? new Wind(0, 0));
+        return ComputeTrajectory(airportConfiguration, config, speedBands, upperWind ?? new Wind(0, 0));
     }
 
     public TerminalTrajectory GetAverageTrajectory(string airportIdentifier)
@@ -90,13 +94,18 @@ public class TrajectoryService(
         if (airportConfiguration.TerminalTrajectories.Length == 0)
         {
             var defaultTtg = TimeSpan.FromMinutes(airportConfiguration.DefaultTimeToGoMinutes);
-            return new TerminalTrajectory(defaultTtg, defaultTtg, defaultTtg);
+            var defaultPressure = defaultTtg + TimeSpan.FromSeconds(airportConfiguration.DefaultPressureSeconds ?? 0);
+            var defaultMaxPressure = airportConfiguration.DefaultMaxPressureSeconds is null
+                ? defaultPressure
+                : defaultTtg + TimeSpan.FromSeconds(airportConfiguration.DefaultMaxPressureSeconds.Value);
+
+            return new TerminalTrajectory(defaultTtg, defaultPressure, defaultMaxPressure);
         }
 
         var zeroWind = new Wind(0, 0);
         var defaultSpeedBands = performanceLookup.GetSpeedProfile(AircraftPerformanceData.Default);
         var trajectories = airportConfiguration.TerminalTrajectories
-            .Select(t => ComputeTrajectory(t, defaultSpeedBands, zeroWind))
+            .Select(t => ComputeTrajectory(airportConfiguration, t, defaultSpeedBands, zeroWind))
             .ToArray();
 
         var avgTtg = TimeSpan.FromTicks((long)trajectories.Average(t => t.NormalTimeToGo.Ticks));
@@ -129,14 +138,12 @@ public class TrajectoryService(
     }
 
     TerminalTrajectoryConfiguration? FindConfiguration(
-        string airportIdentifier,
+        AirportConfiguration airportConfiguration,
         string? feederFixIdentifier,
         string[] fixNames,
         string approachType,
         string runwayIdentifier)
     {
-        var airportConfiguration = airportConfigurationProvider.GetAirportConfiguration(airportIdentifier);
-
         var matches = airportConfiguration.TerminalTrajectories
             .Where(x => x.FeederFix == feederFixIdentifier)
             .Where(x => x.ApproachType == approachType)
@@ -149,7 +156,7 @@ public class TrajectoryService(
         {
             logger.Warning(
                 "No trajectory found: Airport={AirportIdentifier}, FF={FeederFix}, RWY={RunwayIdentifier}, APCH={ApproachType}",
-                airportIdentifier,
+                airportConfiguration.Identifier,
                 feederFixIdentifier,
                 runwayIdentifier,
                 approachType);
@@ -160,7 +167,7 @@ public class TrajectoryService(
         {
             logger.Warning(
                 "Multiple trajectories found: Airport={AirportIdentifier}, FF={FeederFix}, RWY={RunwayIdentifier}, APCH={ApproachType}",
-                airportIdentifier,
+                airportConfiguration.Identifier,
                 feederFixIdentifier,
                 runwayIdentifier,
                 approachType);
@@ -169,32 +176,30 @@ public class TrajectoryService(
         return matches[0];
     }
 
-    TerminalTrajectory ComputeTrajectory(TerminalTrajectoryConfiguration config, SpeedBand[] speedBands, Wind wind)
+    TerminalTrajectory ComputeTrajectory(
+        AirportConfiguration airportConfiguration,
+        TerminalTrajectoryConfiguration config,
+        SpeedBand[] speedBands,
+        Wind wind)
     {
         var ttgHours = SumEti(config.Segments, speedBands, wind);
         var ttg = TimeSpan.FromHours(ttgHours);
 
-        // Pressure: branch from base trajectory, fly alternative path
-        var pressureHours = ComputeBranchingTrajectory(
-            config.Segments,
-            config.Pressure?.After,
-            config.Pressure?.Segments ?? [],
-            speedBands,
-            wind,
-            ttgHours,
-            "Pressure");
+        // Pressure: branch from base trajectory and fly the alternative path. When no pressure trajectory
+        // is given, add the hard-coded delay from the trajectory or the airport defaults.
+        var pressureSeconds = config.PressureSeconds ?? airportConfiguration.DefaultPressureSeconds ?? 0;
+        var pressureHours =
+            ComputeBranchingTrajectory(config.Segments, config.Pressure, speedBands, wind, "Pressure")
+            ?? ttgHours + ToHours(pressureSeconds);
 
-        // MaxPressure: branch from base trajectory, fly alternative path; fall back to Pressure if not configured
-        var maxPressureHours = config.MaxPressure is null
-            ? pressureHours
-            : ComputeBranchingTrajectory(
-                config.Segments,
-                config.MaxPressure.After,
-                config.MaxPressure.Segments,
-                speedBands,
-                wind,
-                ttgHours,
-                "MaxPressure");
+        // MaxPressure: same order of precedence, falling back to the pressure delay when neither a max
+        // pressure trajectory nor a hard-coded value is given.
+        var maxPressureSeconds = config.MaxPressureSeconds ?? airportConfiguration.DefaultMaxPressureSeconds;
+        var maxPressureHours =
+            ComputeBranchingTrajectory(config.Segments, config.MaxPressure, speedBands, wind, "MaxPressure")
+            ?? (maxPressureSeconds.HasValue
+                ? ttgHours + ToHours(maxPressureSeconds.Value)
+                : pressureHours);
 
         var pressure = TimeSpan.FromHours(pressureHours);
         var maxPressure = TimeSpan.FromHours(maxPressureHours);
@@ -202,28 +207,32 @@ public class TrajectoryService(
         return new TerminalTrajectory(ttg, pressure, maxPressure);
     }
 
-    double ComputeBranchingTrajectory(
+    // Computes the total estimated time in hours along a branching trajectory.
+    // Returns null when the branch is not configured, or cannot be resolved, so that the caller can fall
+    // back to a hard-coded delay.
+    double? ComputeBranchingTrajectory(
         TrajectorySegmentConfiguration[] baseSegments,
-        string? after,
-        TrajectorySegmentConfiguration[] alternativeSegments,
+        TrajectoryBranch? branch,
         SpeedBand[] speedBands,
         Wind wind,
-        double ttgHours,
         string trajectoryType)
     {
-        // No after segment or no alternative segments: fallback to TTG
-        if (string.IsNullOrEmpty(after) || alternativeSegments.Length == 0)
-            return ttgHours;
+        // No branch, no after segment, or no alternative segments: use the hard-coded delay
+        if (branch is null || string.IsNullOrEmpty(branch.After) || branch.Segments.Length == 0)
+            return null;
+
+        var after = branch.After;
+        var alternativeSegments = branch.Segments;
 
         // Find after segment in base trajectory
         var afterIdx = FindSegmentIndex(baseSegments, after);
         if (afterIdx is null)
         {
             logger.Error(
-                "{TrajectoryType} After segment '{After}' not found in base trajectory, using TTG",
+                "{TrajectoryType} After segment '{After}' not found in base trajectory",
                 trajectoryType,
                 after);
-            return ttgHours;
+            return null;
         }
 
         // Sum ETI from feeder fix through after segment, then along alternative path.
@@ -323,4 +332,6 @@ public class TrajectoryService(
     }
 
     static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
+
+    static double ToHours(int seconds) => seconds / 3600.0;
 }

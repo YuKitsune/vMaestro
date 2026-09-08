@@ -563,6 +563,257 @@ public class TrajectoryServiceTests(ClockFixture clockFixture)
     }
 
     [Fact]
+    public void GetTrajectory_HardCodedPressure_IsAddedToTTG()
+    {
+        // Arrange: no pressure trajectories, so the hard-coded delays on the trajectory apply
+        const int approachSpeedKnots = 150;
+        const double distanceNm = 25.0;
+        var expectedTtg = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithTrajectory(new TerminalTrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments = [new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm }],
+                PressureSeconds = 120,
+                MaxPressureSeconds = 300
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert: P and Pmax are the TTG plus the hard-coded delays
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.PressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(120), TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(300), TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void GetTrajectory_NoPressureOnTrajectory_UsesAirportDefaults()
+    {
+        // Arrange: the trajectory has no pressure of any kind, so the airport defaults apply
+        const int approachSpeedKnots = 150;
+        const double distanceNm = 25.0;
+        var expectedTtg = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithDefaultPressureSeconds(60)
+            .WithDefaultMaxPressureSeconds(240)
+            .WithTrajectory(new TerminalTrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments = [new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm }]
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert
+        trajectory.NormalTimeToGo.ShouldBe(expectedTtg, TimeSpan.FromSeconds(1));
+        trajectory.PressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(240), TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void GetTrajectory_HardCodedPressure_OverridesAirportDefaults()
+    {
+        // Arrange
+        const int approachSpeedKnots = 150;
+        const double distanceNm = 25.0;
+        var expectedTtg = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithDefaultPressureSeconds(60)
+            .WithDefaultMaxPressureSeconds(240)
+            .WithTrajectory(new TerminalTrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments = [new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm }],
+                PressureSeconds = 120,
+                MaxPressureSeconds = 300
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert: the trajectory values win over the airport defaults
+        trajectory.PressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(120), TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(300), TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void GetTrajectory_PressureTrajectory_OverridesHardCodedPressure()
+    {
+        // Arrange: a pressure trajectory and a hard-coded maximum pressure delay.
+        // P comes from the segments, Pmax comes from the hard-coded value.
+        const int approachSpeedKnots = 150;
+        const double distanceNm = 25.0;
+        var segmentTime = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithDefaultPressureSeconds(60)
+            .WithTrajectory(new TerminalTrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments =
+                [
+                    new TrajectorySegmentConfiguration { Identifier = "LEG1", Track = 0, DistanceNM = distanceNm }
+                ],
+                Pressure = new TrajectoryBranch
+                {
+                    After = "LEG1",
+                    Segments =
+                    [
+                        new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm }
+                    ]
+                },
+                PressureSeconds = 120,
+                MaxPressureSeconds = 900
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert
+        trajectory.NormalTimeToGo.ShouldBe(segmentTime, TimeSpan.FromSeconds(1));
+        trajectory.PressureTimeToGo.ShouldBe(segmentTime * 2, TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(segmentTime + TimeSpan.FromSeconds(900), TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void GetTrajectory_NoMaxPressure_FallsBackToPressure()
+    {
+        // Arrange: only a pressure delay is given, so Pmax matches P
+        const int approachSpeedKnots = 150;
+        const double distanceNm = 25.0;
+        var expectedTtg = TimeSpan.FromHours(distanceNm / approachSpeedKnots);
+
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithDefaultPressureSeconds(180)
+            .WithTrajectory(new TerminalTrajectoryConfiguration
+            {
+                FeederFix = "RIVET",
+                RunwayIdentifier = "34L",
+                Segments = [new TrajectorySegmentConfiguration { Track = 0, DistanceNM = distanceNm }]
+            })
+            .Build();
+
+        var performanceLookup = Substitute.For<IPerformanceLookup>();
+        performanceLookup.GetSpeedProfile(Arg.Any<AircraftPerformanceData>()).Returns(FlatProfile(approachSpeedKnots));
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, performanceLookup, Substitute.For<ILogger>());
+
+        var flight = new FlightBuilder("QFA1")
+            .WithFeederFix("RIVET")
+            .WithFeederFixEstimate(clockFixture.Instance.UtcNow().AddMinutes(10))
+            .WithRunway("34L")
+            .WithApproachType("")
+            .Build();
+
+        // Act
+        var trajectory = trajectoryService.GetTrajectory(flight, "34L", "", [], new Wind(0, 0));
+
+        // Assert
+        trajectory.PressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(180), TimeSpan.FromSeconds(1));
+        trajectory.MaxPressureTimeToGo.ShouldBe(expectedTtg + TimeSpan.FromSeconds(180), TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void GetAverageTrajectory_WithNoTrajectories_UsesDefaultPressure()
+    {
+        // Arrange: an airport with no trajectories at all, relying entirely on the defaults
+        var airportConfiguration = new AirportConfigurationBuilder("YSSY")
+            .WithFeederFixes("RIVET")
+            .WithRunways("34L")
+            .WithDefaultPressureSeconds(120)
+            .WithDefaultMaxPressureSeconds(600)
+            .Build();
+
+        var provider = new AirportConfigurationProvider([airportConfiguration]);
+        var trajectoryService = new TrajectoryService(provider, MockLookupWithFlatProfile(), Substitute.For<ILogger>());
+
+        // Act
+        var trajectory = trajectoryService.GetAverageTrajectory("YSSY");
+
+        // Assert
+        var defaultTtg = TimeSpan.FromMinutes(airportConfiguration.DefaultTimeToGoMinutes);
+        trajectory.NormalTimeToGo.ShouldBe(defaultTtg);
+        trajectory.PressureTimeToGo.ShouldBe(defaultTtg + TimeSpan.FromSeconds(120));
+        trajectory.MaxPressureTimeToGo.ShouldBe(defaultTtg + TimeSpan.FromSeconds(600));
+    }
+
+    [Fact]
     public void GetTrajectory_SpeedBand_SplitsSegmentAtBandBoundary()
     {
         // Arrange: one 30 NM segment from DTG=30 to DTG=0.
