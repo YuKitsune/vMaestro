@@ -451,13 +451,23 @@ Trajectories:
     MaxPressureSeconds: 300
 ```
 
-Each value is resolved on its own, in this order:
+#### Precedence
 
-1. The `Pressure` or `MaxPressure` trajectory, when given. The delay is derived from the segments.
-2. The `PressureSeconds` or `MaxPressureSeconds` value on the trajectory.
-3. The `DefaultPressureSeconds` or `DefaultMaxPressureSeconds` value on the airport.
+Maestro finds the pressure and the maximum pressure separately. There is no requirement to use the same method for both. A trajectory can have a `Pressure` trajectory and a hard-coded `MaxPressureSeconds`, or the opposite.
 
-When none of these is given, the pressure delay is zero, and the maximum pressure delay matches the pressure delay.
+To find the pressure, Maestro uses the first of these that is configured:
+
+1. The `Pressure` trajectory. The pressure is the difference between the time along this trajectory and the time along the normal trajectory.
+2. `PressureSeconds` on the trajectory.
+3. `DefaultPressureSeconds` on the airport.
+
+To find the maximum pressure, Maestro uses the first of these that is configured:
+
+1. The `MaxPressure` trajectory. The maximum pressure is the difference between the time along this trajectory and the time along the normal trajectory.
+2. `MaxPressureSeconds` on the trajectory.
+3. `DefaultMaxPressureSeconds` on the airport.
+
+When none of these is configured, the pressure is zero, and the maximum pressure is the same as the pressure.
 
 ### Enroute Trajectories
 
