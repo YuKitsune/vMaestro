@@ -81,6 +81,7 @@ public partial class PendingDeparturesViewModel : ObservableObject
         PendingFlights = session.FlightDataRecords
             .Where(r => !activatedCallsigns.Contains(r.Callsign) &&
                         _departureAirportIdentifiers.Contains(r.Origin, StringComparer.OrdinalIgnoreCase))
+            .OrderBy(r => r.Callsign, StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
@@ -125,9 +126,9 @@ public partial class PendingDeparturesViewModel : ObservableObject
             _mediator.Send(
                 new InsertFlightRequest(
                     _airportIdentifier,
-                    Callsign,
-                    AircraftType,
-                    new DepartureInsertionOptions(DepartureIdentifier, TakeoffTime)),
+                    Callsign.ToUpperInvariant(),
+                    AircraftType.ToUpperInvariant(),
+                    new DepartureInsertionOptions(DepartureIdentifier.ToUpperInvariant(), TakeoffTime)),
                 CancellationToken.None);
             CloseWindow();
         }

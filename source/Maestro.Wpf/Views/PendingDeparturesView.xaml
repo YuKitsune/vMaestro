@@ -11,7 +11,8 @@
              mc:Ignorable="d"
              Padding="8"
              MinWidth="320"
-             Height="280">
+             Height="280"
+             KeyDown="OnKeyDown">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -141,13 +142,25 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Callsign"/>
-            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Callsign, Mode=TwoWay}" />
+            <TextBox
+                Grid.Row="0"
+                Grid.Column="1"
+                CharacterCasing="Upper"
+                Text="{Binding Callsign, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Aircraft Type"/>
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding AircraftType, Mode=TwoWay}" />
+            <TextBox
+                Grid.Row="1"
+                Grid.Column="1"
+                CharacterCasing="Upper"
+                Text="{Binding AircraftType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Departure Airport"/>
-            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding DepartureIdentifier, Mode=TwoWay}" />
+            <TextBox
+                Grid.Row="2"
+                Grid.Column="1"
+                CharacterCasing="Upper"
+                Text="{Binding DepartureIdentifier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <!-- TODO: Revisit ETD -->
             <!-- <TextBlock Grid.Row="3" Grid.Column="0" Text="ETD"/> -->
