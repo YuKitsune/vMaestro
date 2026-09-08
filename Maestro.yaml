@@ -191,6 +191,8 @@ Airports:
     - {Identifier: MITSA, Track: 63.1, DistanceNM: 13.6}
     - {Identifier: GURSI, Track: 74.8, DistanceNM: 5.3}
     - {Identifier: '07', Track: 74.3, DistanceNM: 14.4}
+    PressureSeconds: 45
+    MaxPressureSeconds: 60
 
   - FeederFix: AKMIR
     RunwayIdentifier: 16L
@@ -204,6 +206,8 @@ Airports:
     - {Identifier: 16LODW, Track: 360, DistanceNM: 15.2}
     - {Identifier: 16LBS, Track: 242, DistanceNM: 6}
     - {Identifier: 16LF, Track: 155, DistanceNM: 14.1}
+    PressureSeconds: 90
+    MaxPressureSeconds: 135
 
   - FeederFix: AKMIR
     RunwayIdentifier: 16R
@@ -216,6 +220,8 @@ Airports:
     - {Identifier: 16RDW, Track: 340, DistanceNM: 14}
     - {Identifier: 16RBS, Track: 067, DistanceNM: 9}
     - {Identifier: 16RF, Track: 154, DistanceNM: 12.2}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: AKMIR
     RunwayIdentifier: '25'
@@ -226,6 +232,8 @@ Airports:
     - {Identifier: 25CDW, Track: 072, DistanceNM: 35.7}
     - {Identifier: 25LBS, Track: 330, DistanceNM: 6.5}
     - {Identifier: 25F, Track: 241, DistanceNM: 14.1}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: AKMIR
     RunwayIdentifier: 34L
@@ -239,6 +247,8 @@ Airports:
     - {Identifier: 34LDW2, Track: 155, DistanceNM: 7.1}
     - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
     - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
+    PressureSeconds: 75
+    MaxPressureSeconds: 105
 
   - FeederFix: AKMIR
     RunwayIdentifier: 34R
@@ -252,6 +262,8 @@ Airports:
     - {Identifier: 34RDW, Track: 130, DistanceNM: 19}
     - {Identifier: 34RBS, Track: 260, DistanceNM: 8}
     - {Identifier: 34RF, Track: 335, DistanceNM: 13.1}
+    PressureSeconds: 195
+    MaxPressureSeconds: 300
 
   - FeederFix: BOREE
     RunwayIdentifier: '07'
@@ -264,6 +276,8 @@ Airports:
     - {Identifier: 07RDW, Track: 241, DistanceNM: 15.0}
     - {Identifier: 07RBS, Track: 160, DistanceNM: 14.5}
     - {Identifier: 07F, Track: 062, DistanceNM: 13.6}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: BOREE
     RunwayIdentifier: '25'
@@ -276,6 +290,8 @@ Airports:
     - {Identifier: 25RDW, Track: 075, DistanceNM: 14}
     - {Identifier: 25RBS, Track: 155, DistanceNM: 11}
     - {Identifier: 25F, Track: 241, DistanceNM: 14.1}
+    PressureSeconds: 90
+    MaxPressureSeconds: 150
 
   - FeederFix: BOREE
     RunwayIdentifier: 16L
@@ -286,6 +302,8 @@ Airports:
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: 16L, Track: 169.6, DistanceNM: 15.3}
+    PressureSeconds: 60
+    MaxPressureSeconds: 90
 
   - FeederFix: BOREE
     RunwayIdentifier: 16R
@@ -296,6 +314,8 @@ Airports:
     - {Identifier: BEROW, Track: 170.9, DistanceNM: 7.1}
     - {Identifier: OVILS, Track: 170.7, DistanceNM: 5.4}
     - {Identifier: 16R, Track: 172.1, DistanceNM: 13.8}
+    PressureSeconds: 60
+    MaxPressureSeconds: 90
 
   - FeederFix: BOREE
     RunwayIdentifier: 16R
@@ -306,6 +326,8 @@ Airports:
     - {Identifier: DUMOP, Track: 167.9, DistanceNM: 7}
     - {Identifier: URDEN, Track: 167.9, DistanceNM: 5.9}
     - {Identifier: 16R, Track: 167.9, DistanceNM: 11.3}
+    PressureSeconds: 60
+    MaxPressureSeconds: 90
 
   - FeederFix: BOREE
     RunwayIdentifier: 34L
@@ -321,6 +343,8 @@ Airports:
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
     - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
     - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: BOREE
     RunwayIdentifier: 34R
@@ -335,6 +359,8 @@ Airports:
     - {Identifier: JAKLN, Track: 167.8, DistanceNM: 11.6}
     - {Identifier: 34RBS, Track: 245, DistanceNM: 6.5}
     - {Identifier: 34RF, Track: 335, DistanceNM: 12.2}
+    PressureSeconds: 90
+    MaxPressureSeconds: 150
 
   - FeederFix: MARLN
     RunwayIdentifier: '07'
@@ -344,6 +370,8 @@ Airports:
     - {Identifier: 07DW, Track: 241, DistanceNM: 34.0}
     - {Identifier: 07BS, Track: 335, DistanceNM: 8.2}
     - {Identifier: 07F, Track: 062, DistanceNM: 13.6}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: MARLN
     RunwayIdentifier: 16L
@@ -354,6 +382,8 @@ Airports:
     - {Identifier: 16LDW, Track: 335, DistanceNM: 20}
     - {Identifier: 16LBS, Track: 245, DistanceNM: 9}
     - {Identifier: 16LF, Track: 155, DistanceNM: 17.4}
+    PressureSeconds: 75
+    MaxPressureSeconds: 105
 
   - FeederFix: MARLN
     RunwayIdentifier: 16R
@@ -366,6 +396,8 @@ Airports:
     - {Identifier: 16RDW, Track: 335, DistanceNM: 8.5}
     - {Identifier: 16RBS, Track: 070, DistanceNM: 6.8}
     - {Identifier: 16RF, Track: 155, DistanceNM: 14.8}
+    PressureSeconds: 120
+    MaxPressureSeconds: 180
 
   - FeederFix: MARLN
     RunwayIdentifier: '25'
@@ -375,6 +407,8 @@ Airports:
     - {Identifier: UXAMA, Track: 296.4, DistanceNM: 6.9}
     - {Identifier: JELLI, Track: 253.2, DistanceNM: 4.2}
     - {Identifier: '25', Track: 254.3, DistanceNM: 9.8}
+    PressureSeconds: 45
+    MaxPressureSeconds: 60
 
   - FeederFix: MARLN
     RunwayIdentifier: 34L
@@ -387,6 +421,8 @@ Airports:
     - {Identifier: 34LDW2, Track: 155, DistanceNM: 7.1}
     - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
     - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
+    PressureSeconds: 120
+    MaxPressureSeconds: 180
 
   - FeederFix: MARLN
     RunwayIdentifier: 34R
@@ -398,6 +434,8 @@ Airports:
     - {Identifier: JAKLN, Track: 167.7, DistanceNM: 6.4}
     - {Identifier: 34RBS, Track: 245, DistanceNM: 6.5}
     - {Identifier: 34RF, Track: 335, DistanceNM: 12.2}
+    PressureSeconds: 75
+    MaxPressureSeconds: 105
 
   - FeederFix: ENLAD
     RunwayIdentifier: '07'
@@ -408,6 +446,8 @@ Airports:
     - {Identifier: TAMMI, Track: 61.5, DistanceNM: 9.9}
     - {Identifier: 07OFR, Track: 034, DistanceNM: 10}
     - {Identifier: 07F, Track: 062, DistanceNM: 9.6}
+    PressureSeconds: 45
+    MaxPressureSeconds: 60
 
   - FeederFix: ENLAD
     RunwayIdentifier: 16L
@@ -422,6 +462,8 @@ Airports:
     - {Identifier: 16LODW, Track: 360, DistanceNM: 14.9}
     - {Identifier: 16LBS, Track: 245, DistanceNM: 6}
     - {Identifier: 16LF, Track: 155, DistanceNM: 14.1}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: ENLAD
     RunwayIdentifier: 16R
@@ -435,6 +477,8 @@ Airports:
     - {Identifier: 16RDW, Track: 340, DistanceNM: 17}
     - {Identifier: 16RBS, Track: 060, DistanceNM: 7.9}
     - {Identifier: 16RF, Track: 155, DistanceNM: 14.1}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: ENLAD
     RunwayIdentifier: '25'
@@ -446,6 +490,8 @@ Airports:
     - {Identifier: 25LDW, Track: 065, DistanceNM: 34.1}
     - {Identifier: 25LBS, Track: 330, DistanceNM: 6.5}
     - {Identifier: 25F, Track: 241, DistanceNM: 14.1}
+    PressureSeconds: 75
+    MaxPressureSeconds: 120
 
   - FeederFix: ENLAD
     RunwayIdentifier: 34L
@@ -460,6 +506,8 @@ Airports:
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
     - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
     - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
+    PressureSeconds: 75
+    MaxPressureSeconds: 105
 
   - FeederFix: ENLAD
     RunwayIdentifier: 34R
@@ -474,6 +522,8 @@ Airports:
     - {Identifier: NASHO, Track: 167.9, DistanceNM: 7.1}
     - {Identifier: 34RBS, Track: 065, DistanceNM: 7.1}
     - {Identifier: 34RF, Track: 335, DistanceNM: 12.7}
+    PressureSeconds: 90
+    MaxPressureSeconds: 150
 
   - FeederFix: YAKKA
     RunwayIdentifier: '07'
@@ -483,6 +533,8 @@ Airports:
     - {Identifier: 07LDW, Track: 228, DistanceNM: 19.3}
     - {Identifier: 07RBS, Track: 160, DistanceNM: 14.5}
     - {Identifier: 07F, Track: 062, DistanceNM: 13.6}
+    PressureSeconds: 45
+    MaxPressureSeconds: 75
 
   - FeederFix: YAKKA
     RunwayIdentifier: '25'
@@ -491,6 +543,8 @@ Airports:
     - {Identifier: LANOL, Track: 170, DistanceNM: 12}
     - {Identifier: 25CBS, Track: 128, DistanceNM: 20.5}
     - {Identifier: 25F, Track: 241, DistanceNM: 14.1}
+    PressureSeconds: 60
+    MaxPressureSeconds: 90
 
   - FeederFix: YAKKA
     RunwayIdentifier: '34R'
@@ -500,6 +554,8 @@ Airports:
     - {Identifier: 34RDW, Track: 155, DistanceNM: 35}
     - {Identifier: 34RBS, Track: 240, DistanceNM: 4.5}
     - {Identifier: 34RF, Track: 335, DistanceNM: 14}
+    PressureSeconds: 90
+    MaxPressureSeconds: 135
 
   - FeederFix: YAKKA
     RunwayIdentifier: '34L'
@@ -510,7 +566,9 @@ Airports:
     - {Identifier: NASHO, Track: 155, DistanceNM: 7.1}
     - {Identifier: 34LBS, Track: 065, DistanceNM: 6.5}
     - {Identifier: 34LF, Track: 335, DistanceNM: 12.7}
-  
+    PressureSeconds: 60
+    MaxPressureSeconds: 90
+
   - FeederFix: YAKKA
     RunwayIdentifier: '16L'
     Segments:
@@ -518,6 +576,8 @@ Airports:
     - {Identifier: LANOL, Track: 170, DistanceNM: 12}
     - {Identifier: 16RBS, Track: 180, DistanceNM: 20.5}
     - {Identifier: 16RF, Track: 155, DistanceNM: 11.8}
+    PressureSeconds: 45
+    MaxPressureSeconds: 75
 
   - FeederFix: YAKKA
     RunwayIdentifier: '16L'
@@ -526,7 +586,9 @@ Airports:
     - {Identifier: LANOL, Track: 170, DistanceNM: 12}
     - {Identifier: 16RBS, Track: 180, DistanceNM: 19.3}
     - {Identifier: 16RF, Track: 155, DistanceNM: 14.1}
-  
+    PressureSeconds: 45
+    MaxPressureSeconds: 75
+
   DepartureAirports:
   - {Identifier: YPMQ, Aircraft: [JET], Distance: 209, EstimatedFlightTimeMinutes: 44}
   - {Identifier: YPMQ, Aircraft: [NONJET], Distance: 209, EstimatedFlightTimeMinutes: 41}
