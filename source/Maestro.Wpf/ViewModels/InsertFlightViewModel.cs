@@ -68,6 +68,7 @@ public partial class InsertFlightViewModel : ObservableObject
     {
         LandedFlights = session.Sequence.Flights
             .Where(f => f.State is State.Landed)
+            .OrderBy(f => f.Callsign, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         var activatedCallsigns = new HashSet<string>(
@@ -77,6 +78,7 @@ public partial class InsertFlightViewModel : ObservableObject
 
         PendingFlights = session.FlightDataRecords
             .Where(r => !activatedCallsigns.Contains(r.Callsign))
+            .OrderBy(r => r.Callsign, StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
@@ -112,8 +114,8 @@ public partial class InsertFlightViewModel : ObservableObject
             _mediator.Send(
                 new InsertFlightRequest(
                     _airportIdentifier,
-                    Callsign,
-                    AircraftType,
+                    Callsign.ToUpperInvariant(),
+                    AircraftType.ToUpperInvariant(),
                     _options),
                 CancellationToken.None);
 
