@@ -719,6 +719,8 @@ Airports:
   LandedFlightTimeoutMinutes: 10
   LostFlightTimeoutMinutes: 10
   DefaultOffModeSeparationSeconds: 300
+  DefaultPressureSeconds: 60
+  DefaultMaxPressureSeconds: 120
 
   RunwayModes:
   
@@ -774,6 +776,7 @@ Airports:
     - {Identifier: AVPIX, Track: 23.7, DistanceNM: 4}
     - {Identifier: GUPUG, Track: 94.4, DistanceNM: 3}
     - {Identifier: '09', Track: 94.4, DistanceNM: 11}
+    MaxPressureSeconds: 60
 
   - FeederFix: ALAXO
     RunwayIdentifier: '16'
@@ -840,6 +843,7 @@ Airports:
     - {Identifier: LASOL, Track: 172, DistanceNM: 4.9}
     - {Identifier: BELTA, Track: 172, DistanceNM: 3}
     - {Identifier: '16', Track: 171.4, DistanceNM: 11.6}
+    MaxPressureSeconds: 60
 
   - FeederFix: ARBEY
     RunwayIdentifier: '27'
@@ -901,6 +905,7 @@ Airports:
     - {Identifier: ENDUM, Track: 262.5, DistanceNM: 5}
     - {Identifier: VISAS, Track: 262.6, DistanceNM: 6.3}
     - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+    MaxPressureSeconds: 60
 
   - FeederFix: BOOIN
     RunwayIdentifier: '34'
@@ -961,6 +966,7 @@ Airports:
     - {Identifier: VEXOP, Track: 234.2, DistanceNM: 6}
     - {Identifier: VISAS, Track: 234.2, DistanceNM: 6.3}
     - {Identifier: '27', Track: 273.7, DistanceNM: 8.5}
+    MaxPressureSeconds: 60
 
   - FeederFix: BOYSE
     RunwayIdentifier: '34'
@@ -1031,6 +1037,7 @@ Airports:
     - {Identifier: BOLTY, Track: 257.4, DistanceNM: 3.2}
     - {Identifier: AKDEL, Track: 261.1, DistanceNM: 3.6}
     - {Identifier: '34', Track: 351.6, DistanceNM: 9}
+    MaxPressureSeconds: 60
 
   - FeederFix: RAZZI
     RunwayIdentifier: '16'
@@ -1052,6 +1059,7 @@ Airports:
     - {Identifier: EGEKA, Track: 267.9, DistanceNM: 4.4}
     - {Identifier: SHEED, Track: 268, DistanceNM: 5}
     - {Identifier: '34', Track: 307.7, DistanceNM: 4.4}
+    MaxPressureSeconds: 60
 
   
   DepartureAirports:
@@ -1196,6 +1204,8 @@ Airports:
   LandedFlightTimeoutMinutes: 10
   LostFlightTimeoutMinutes: 10
   DefaultOffModeSeparationSeconds: 300
+  DefaultPressureSeconds: 105
+  DefaultMaxPressureSeconds: 150
 
   RunwayModes:
 
@@ -1225,6 +1235,8 @@ Airports:
     - {Identifier: ADLOP, Track: 286.9, DistanceNM: 5.2}
     - {Identifier: BUSLA, Track: 343.5, DistanceNM: 5.3}
     - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
+    MaxPressureSeconds: 60
+
   - FeederFix: BLAKA
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1235,6 +1247,8 @@ Airports:
     - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
     - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
     - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
+    MaxPressureSeconds: 60
+
   - FeederFix: BLAKA
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1274,6 +1288,7 @@ Airports:
     - {Identifier: KASBA, Track: 324.8, DistanceNM: 3.4}
     - {Identifier: SORVA, Track: 322.4, DistanceNM: 2.3}
     - {Identifier: 01R, Track: 347.5, DistanceNM: 8.5}
+    MaxPressureSeconds: 60
 
   - FeederFix: BLAKA
     RunwayIdentifier: 19L
@@ -1296,6 +1311,8 @@ Airports:
     - {Identifier: GORSO, Track: 27, DistanceNM: 5.5}
     - {Identifier: BUSLA, Track: 26.9, DistanceNM: 7.5}
     - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
+    MaxPressureSeconds: 60
+
   - FeederFix: ENLIP
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1305,6 +1322,8 @@ Airports:
     - {Identifier: MULNI, Track: 26.5, DistanceNM: 5.5}
     - {Identifier: ENTIK, Track: 26.7, DistanceNM: 5.1}
     - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
+    MaxPressureSeconds: 60
+
   - FeederFix: ENLIP
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1371,6 +1390,8 @@ Airports:
     - {Identifier: ADLOP, Track: 286.9, DistanceNM: 5.2}
     - {Identifier: BUSLA, Track: 343.5, DistanceNM: 5.3}
     - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
+    MaxPressureSeconds: 120
+
   - FeederFix: GOMOL
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1382,6 +1403,8 @@ Airports:
     - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
     - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
     - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
+    MaxPressureSeconds: 120
+
   - FeederFix: GOMOL
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1415,6 +1438,7 @@ Airports:
     - {Identifier: LAGOB, Track: 339.8, DistanceNM: 4.3}
     - {Identifier: ARONU, Track: 324, DistanceNM: 6.4}
     - {Identifier: 01R, Track: 334.6, DistanceNM: 18.1}
+    MaxPressureSeconds: 120
 
   - FeederFix: GOMOL
     RunwayIdentifier: 19L
@@ -1436,6 +1460,7 @@ Airports:
     - {Identifier: KASBA, Track: 324.8, DistanceNM: 3.4}
     - {Identifier: SORVA, Track: 322.4, DistanceNM: 2.3}
     - {Identifier: 01R, Track: 347.5, DistanceNM: 8.5}
+    MaxPressureSeconds: 120
 
   - FeederFix: GOMOL
     RunwayIdentifier: 19L
@@ -1514,6 +1539,8 @@ Airports:
     - {Identifier: VEGSU, Track: 160.6, DistanceNM: 4.8}
     - {Identifier: BUSLA, Track: 69.7, DistanceNM: 3}
     - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
+    MaxPressureSeconds: 120
+
   - FeederFix: MORBI
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1526,6 +1553,7 @@ Airports:
     - {Identifier: MATBO, Track: 158.8, DistanceNM: 3.9}
     - {Identifier: GLENN, Track: 88.3, DistanceNM: 4.1}
     - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+    MaxPressureSeconds: 120
 
   - FeederFix: MORBI
     RunwayIdentifier: 19L
@@ -1562,6 +1590,7 @@ Airports:
     - {Identifier: GAYLA, Track: 152.1, DistanceNM: 2.6}
     - {Identifier: DAYBO, Track: 176.1, DistanceNM: 11.6}
     - {Identifier: 01L, Track: 143.1, DistanceNM: 19.7}
+    MaxPressureSeconds: 120
 
   - FeederFix: MORBI
     RunwayIdentifier: 19R
@@ -1585,6 +1614,8 @@ Airports:
     - {Identifier: VEGSU, Track: 160.6, DistanceNM: 4.8}
     - {Identifier: BUSLA, Track: 69.7, DistanceNM: 3}
     - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
+    MaxPressureSeconds: 120
+
   - FeederFix: SMOKA
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1598,6 +1629,7 @@ Airports:
     - {Identifier: MATBO, Track: 158.8, DistanceNM: 3.9}
     - {Identifier: GLENN, Track: 88.3, DistanceNM: 4.1}
     - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+    MaxPressureSeconds: 120
 
   - FeederFix: SMOKA
     RunwayIdentifier: 19L
@@ -1638,6 +1670,7 @@ Airports:
     - {Identifier: SAGTA, Track: 120.3, DistanceNM: 6.7}
     - {Identifier: BIPUD, Track: 156.6, DistanceNM: 4}
     - {Identifier: 01R, Track: 103.8, DistanceNM: 5.9}
+    MaxPressureSeconds: 120
 
   - FeederFix: SMOKA
     RunwayIdentifier: 01L
@@ -1650,6 +1683,7 @@ Airports:
     - {Identifier: RUKNO, Track: 165.1, DistanceNM: 5.6}
     - {Identifier: RUSVA, Track: 152.6, DistanceNM: 7.6}
     - {Identifier: 01L, Track: 76.5, DistanceNM: 11.5}
+    MaxPressureSeconds: 120
 
   - FeederFix: SMOKA
     RunwayIdentifier: 19R
@@ -1677,6 +1711,7 @@ Airports:
     - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
     - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
     - {Identifier: 01L, Track: 23.6, DistanceNM: 17.8}
+
   - FeederFix: TEBOT
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1739,6 +1774,7 @@ Airports:
     - {Identifier: ADLOP, Track: 286.9, DistanceNM: 5.2}
     - {Identifier: BUSLA, Track: 343.5, DistanceNM: 5.3}
     - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
+
   - FeederFix: UGTUG
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1751,6 +1787,7 @@ Airports:
     - {Identifier: GUTOR, Track: 281.4, DistanceNM: 5.5}
     - {Identifier: ENTIK, Track: 336.6, DistanceNM: 3.2}
     - {Identifier: 01R, Track: 27.1, DistanceNM: 17}
+
   - FeederFix: UGTUG
     RunwayIdentifier: 19L
     ApproachType: A
@@ -1806,6 +1843,8 @@ Airports:
     - {Identifier: VEGSU, Track: 160.6, DistanceNM: 4.8}
     - {Identifier: BUSLA, Track: 69.7, DistanceNM: 3}
     - {Identifier: 01L, Track: 27, DistanceNM: 15.4}
+    MaxPressureSeconds: 60
+
   - FeederFix: WOODY
     RunwayIdentifier: 01R
     ApproachType: A
@@ -1817,6 +1856,7 @@ Airports:
     - {Identifier: MATBO, Track: 158.8, DistanceNM: 3.9}
     - {Identifier: GLENN, Track: 88.3, DistanceNM: 4.1}
     - {Identifier: 01R, Track: 26.9, DistanceNM: 11.6}
+    MaxPressureSeconds: 60
 
   - FeederFix: WOODY
     RunwayIdentifier: 19L
@@ -1853,6 +1893,7 @@ Airports:
     - {Identifier: NODUG, Track: 95.4, DistanceNM: 5.9}
     - {Identifier: RUKNO, Track: 115, DistanceNM: 7.6}
     - {Identifier: 01L, Track: 105.3, DistanceNM: 15.2}
+    MaxPressureSeconds: 60
 
   - FeederFix: WOODY
     RunwayIdentifier: 19R
