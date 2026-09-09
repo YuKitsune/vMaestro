@@ -274,6 +274,8 @@ Airports:
 | `UpperWindAltitude` | integer | 6000 | Altitude in feet for upper winds from GRIB data |
 | `DefaultMaxEnrouteLinearDelayMinutes` | integer | `8` | Default enroute delay capacity used when no matching enroute trajectory is configured |
 | `DefaultOffModeSeparationSeconds` | integer | - | Required. Default separation applied to flights landing on a runway not defined in the active runway mode. Used when an individual runway mode does not specify its own `OffModeSeparationSeconds`. |
+| `DefaultPressureSeconds` | integer | - | Default delay, in seconds, that may be allocated to a flight for linear absorption (vectors or speed control) within the TMA. Used when a trajectory has no `Pressure` trajectory and no `PressureSeconds`. |
+| `DefaultMaxPressureSeconds` | integer | - | Default absolute maximum delay, in seconds, that may be allocated to a flight for linear absorption (vectors or speed control) within the TMA. Used when a trajectory has no `MaxPressure` trajectory and no `MaxPressureSeconds`. |
 
 Flight states: `Unstable`, `Stable`, `SuperStable`, `Frozen`
 
@@ -362,12 +364,14 @@ Trajectories:
 | `ApproachType` | string | No | Restricts to a specific approach type (e.g., `I`, `V`) |
 | `TransitionFix` | string | No | Restricts to routes passing through this fix (e.g. a common point on a STAR with transitions via the feeder fixes) |
 | `Segments` | array | Yes | Ordered segments from feeder fix to runway threshold |
-| `PressureSegments` | array | No | Segments representing a small delay-absorption extension |
-| `MaxPressureSegments` | array | No | Segments representing the maximum delay-absorption capacity |
+| `Pressure` | object | No | A branching trajectory representing a small delay-absorption extension |
+| `MaxPressure` | object | No | A branching trajectory representing the maximum delay-absorption capacity |
+| `PressureSeconds` | integer | No | Delay, in seconds, that may be allocated for linear absorption within the TMA. Used in lieu of a `Pressure` trajectory |
+| `MaxPressureSeconds` | integer | No | Absolute maximum delay, in seconds, that may be allocated for linear absorption within the TMA. Used in lieu of a `MaxPressure` trajectory |
 
 #### Segment Properties
 
-Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has the following properties:
+Each segment in `Segments`, `Pressure`, and `MaxPressure` has the following properties:
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -377,11 +381,11 @@ Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has th
 
 #### Pressure and Maximum Pressure
 
-`PressureSegments` represent a small path extension ATC can use to absorb minor delays, such as extending the downwind leg.
+`Pressure` represents a small path extension ATC can use to absorb minor delays, such as extending the downwind leg.
 
-`MaxPressureSegments` represent the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar.
+`MaxPressure` represents the maximum delay that can be absorbed through vectoring or speed control within the TMA. This may include extended off-STAR routing or similar.
 
-Both lists are optional. A trajectory with no pressure segments will result in all delay needing to be absorbed prior to the feeder fix (i.e. in the enroute phase)
+Both are optional. A trajectory with no pressure at all will result in all delay needing to be absorbed prior to the feeder fix (i.e. in the enroute phase)
 
 ```yaml
 Trajectories:
@@ -418,12 +422,36 @@ Trajectories:
 
 ##### Pressure and Maximum Pressure Properties
 
-Each segment in `Segments`, `PressureSegments`, and `MaxPressureSegments` has the following properties:
+`Pressure` and `MaxPressure` have the following properties:
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `After` | string | Yes | The name of the segment in the normal trajectory where this trajectory extends from |
 | `Segments` | array | Yes | Ordered segments from the branching point to runway threshold |
+
+#### Hard-Coded Pressure
+
+Where the pressure geometry is not known, or where a single figure is good enough, the delay can be hard-coded in seconds instead.
+
+`PressureSeconds` is the delay, in seconds, that may be allocated to a flight for linear absorption (vectors or speed control) within the TMA.
+
+`MaxPressureSeconds` is the absolute maximum delay, in seconds, that may be allocated to a flight for linear absorption (vectors or speed control) within the TMA. Delay beyond this value is allocated to the enroute phase.
+
+```yaml
+Trajectories:
+
+  # BOREE -> 34L
+  # Illustrates hard-coded pressure: 2 minutes of delay by default, 5 minutes at most
+  - FeederFix: BOREE
+    RunwayIdentifier: 34L
+    Segments:
+    - {Identifier: MEPIL, Track: 209.4, DistanceNM: 18.2}
+    - {Identifier: 34LF, Track: 335.2, DistanceNM: 12.8}
+    PressureSeconds: 120
+    MaxPressureSeconds: 300
+```
+
+When pressure segments exist, the hard-coded pressure is ignored. If no pressure is defined for a trajectory, the airport's default pressure is used. If no default pressure is defined, then all delay is allocated to enroute.
 
 ### Enroute Trajectories
 

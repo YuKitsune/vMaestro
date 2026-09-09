@@ -14,6 +14,8 @@ public class AirportConfigurationBuilder(string identifier)
     int _lostFlightTimeoutMinutes = 10;
     int _maximumAutoActivationLeadTimeMinutes = 120;
     bool _autoActivateDepartures = true;
+    int? _defaultPressureSeconds;
+    int? _defaultMaxPressureSeconds;
     List<RunwayModeConfiguration> _runwayModes = [];
     List<TerminalTrajectoryConfiguration> _trajectories = [];
     List<DepartureConfiguration> _departures = [];
@@ -51,6 +53,18 @@ public class AirportConfigurationBuilder(string identifier)
     public AirportConfigurationBuilder WithAutoActivateDepartures(bool autoActivateDepartures)
     {
         _autoActivateDepartures = autoActivateDepartures;
+        return this;
+    }
+
+    public AirportConfigurationBuilder WithDefaultPressureSeconds(int seconds)
+    {
+        _defaultPressureSeconds = seconds;
+        return this;
+    }
+
+    public AirportConfigurationBuilder WithDefaultMaxPressureSeconds(int seconds)
+    {
+        _defaultMaxPressureSeconds = seconds;
         return this;
     }
 
@@ -190,6 +204,8 @@ public class AirportConfigurationBuilder(string identifier)
             LostFlightTimeoutMinutes = _lostFlightTimeoutMinutes,
             MaximumAutoActivationLeadTimeMinutes = _maximumAutoActivationLeadTimeMinutes,
             AutoActivateDepartures = _autoActivateDepartures,
+            DefaultPressureSeconds = _defaultPressureSeconds,
+            DefaultMaxPressureSeconds = _defaultMaxPressureSeconds,
             RunwayModes = _runwayModes.ToArray(),
             TerminalTrajectories = _trajectories.ToArray(),
             DepartureAirports = _departures.ToArray(),
