@@ -415,7 +415,7 @@ public class Sequence
                 UpperWind);
 
             // Force update of Required delays: a swap re-targets each flight to the other's slot,
-            // so RequiredEnrouteDelay (which drives HighSpeed) must reflect the new target.
+            // so the Required delays must reflect the new target.
             Schedule(flight1, landingTime2, runway2, approachType2, trajectory1, forceUpdateRequiredDelays: true);
             Schedule(flight2, landingTime1, runway1, approachType1, trajectory2, forceUpdateRequiredDelays: true);
 
