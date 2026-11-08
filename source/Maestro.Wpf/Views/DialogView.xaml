@@ -10,6 +10,7 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              MaxWidth="400"
              Width="400"
+             Height="Auto"
              Padding="32,16,32,15">
     <UserControl.Resources>
         <ResourceDictionary>

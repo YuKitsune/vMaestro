@@ -9,8 +9,8 @@
              d:DataContext="{d:DesignInstance Type=viewModels:CoordinationViewModel}"
              mc:Ignorable="d"
              Padding="8"
-             MinWidth="400"
-             MaxHeight="240">
+             Width="400"
+             Height="160">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

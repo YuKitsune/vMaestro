@@ -11,6 +11,7 @@
         d:DataContext="{d:DesignInstance Type=viewModels:FlightInformationViewModel}"
         Background="{x:Static local:Theme.BackgroundColor}"
         MinWidth="640"
+        Height="Auto"
         Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>
