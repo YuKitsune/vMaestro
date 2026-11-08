@@ -11,7 +11,7 @@ public class WindowManager(GuiInvoker guiInvoker)
     public void FocusOrCreateWindow(
         string key,
         string title,
-        Func<IWindowHandle, UIElement> createView,
+        Func<IWindowHandle, FrameworkElement> createView,
         bool shrinkToContent = true,
         Size? size = null,
         Action<VatSysForm>? configureForm = null)

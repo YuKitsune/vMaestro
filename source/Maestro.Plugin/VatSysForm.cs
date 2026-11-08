@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms.Integration;
 using System.Windows.Forms;
 using Maestro.Wpf.Integrations;
@@ -20,7 +21,7 @@ public class VatSysForm : BaseForm
         Close();
     }
 
-    public VatSysForm(string title, Func<IWindowHandle, UIElement> childFactory, bool shrinkToContent)
+    public VatSysForm(string title, Func<IWindowHandle, FrameworkElement> childFactory, bool shrinkToContent)
     {
         MiddleClickClose = false; // This is on by default. Why...
 
@@ -29,39 +30,52 @@ public class VatSysForm : BaseForm
         WindowHandle = new WindowHandle(this);
         var child = childFactory(WindowHandle);
 
-        var elementHost = new ElementHost();
+        var elementHost = new ElementHost
+        {
+            Dock = DockStyle.Fill
+        };
+
         if (shrinkToContent)
         {
-            // For text wrapping to work correctly, we need to measure with a constraint
-            var maxWidth = 1000; // Maximum dialog width
-            child.Measure(new Size(maxWidth, double.PositiveInfinity));
-            child.Arrange(new Rect(child.DesiredSize));
-            child.UpdateLayout();
+            // A Canvas measures its child with no size limit. The view then always has its natural size,
+            // and SizeChanged occurs each time the content changes size.
+            var canvas = new Canvas();
+            canvas.Children.Add(child);
+            elementHost.Child = canvas;
 
-            var desired = child.DesiredSize;
-            elementHost.Child = child;
-            elementHost.Size = new System.Drawing.Size((int)Math.Ceiling(desired.Width), (int)Math.Ceiling(desired.Height));
-            elementHost.Location = new System.Drawing.Point(0, 0);
+            child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            ResizeToContent(child.DesiredSize);
+            child.SizeChanged += (_, e) => ResizeToContent(e.NewSize);
 
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            ClientSize = elementHost.Size;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
         }
         else
         {
             elementHost.Child = child;
-            elementHost.Dock = DockStyle.Fill;
-        }
 
-        if (!shrinkToContent)
-        {
-            elementHost.Dock = DockStyle.Fill;
+            FormBorderStyle = FormBorderStyle.Sizable;
+            Resizeable = true;
         }
 
         Controls.Add(elementHost);
 
         Padding = new Padding(0);
         Margin = new Padding(0);
-        PerformLayout();
+    }
+
+    void ResizeToContent(Size contentSize)
+    {
+        if (WindowState != FormWindowState.Normal)
+            return;
+
+        // vatSys draws its own border and title bar. The ClientSize setter uses the standard Windows border to
+        // calculate the form size, so it can give the wrong size. Use the real size of the border and title bar.
+        var borderWidth = Width - ClientSize.Width;
+        var borderHeight = Height - ClientSize.Height;
+
+        Size = new System.Drawing.Size(
+            (int)Math.Ceiling(contentSize.Width) + borderWidth,
+            (int)Math.Ceiling(contentSize.Height) + borderHeight);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
