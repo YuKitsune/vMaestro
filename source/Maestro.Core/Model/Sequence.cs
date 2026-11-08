@@ -359,7 +359,7 @@ public class Sequence
             var currentIndex = _flights.IndexOf(flight);
             if (newIndex != currentIndex)
             {
-                ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
+                ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier, flight);
                 if (currentIndex != -1)
                 {
                     _flights.RemoveAt(currentIndex);
@@ -1195,9 +1195,10 @@ public class Sequence
 
     // TODO: Invoke this from handlers rather than internally.
     // The schedule method will prevent frozen flights from being displaced
-    void ValidateInsertionBetweenImmovableFlights(int insertionIndex, string runwayIdentifier)
+    void ValidateInsertionBetweenImmovableFlights(int insertionIndex, string runwayIdentifier, Flight? movedFlight = null)
     {
         // Get the flights before and after the inserted item (excluding the inserted item itself)
+        // A moved flight is still in the sequence, so it must not be used as its own neighbour
         var previousFlight = GetPreviousFlightOnRunway();
         var nextFlight = GetNextFlightOnRunway();
 
@@ -1233,7 +1234,7 @@ public class Sequence
         {
             return _flights
                 .Take(insertionIndex)
-                .Where(f => f.AssignedRunwayIdentifier == runwayIdentifier)
+                .Where(f => f != movedFlight && f.AssignedRunwayIdentifier == runwayIdentifier)
                 .LastOrDefault();
         }
 
@@ -1241,7 +1242,7 @@ public class Sequence
         {
             return _flights
                 .Skip(insertionIndex)
-                .Where(f => f.AssignedRunwayIdentifier == runwayIdentifier)
+                .Where(f => f != movedFlight && f.AssignedRunwayIdentifier == runwayIdentifier)
                 .FirstOrDefault();
         }
     }

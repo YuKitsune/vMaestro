@@ -86,7 +86,11 @@ public class MoveFlightRequestHandler(
             if (flight.State == State.Unstable)
                 flight.SetState(airportConfiguration.ManualInteractionState, clock);
 
-            // Frozen and Landed flights keep their state, but must still be scheduled at the new landing time
+            // Landed flights that are moved have not landed yet
+            if (flight.State == State.Landed)
+                flight.SetState(State.Frozen, clock);
+
+            // Frozen flights keep their state, but must still be scheduled at the new landing time
             sequence.Move(flight, newIndex, forceRescheduleStable: true, forceRescheduleFlight: true);
 
             logger.Information("Flight {Callsign} moved to {NewLandingTime}", flight.Callsign, flight.LandingTime);
