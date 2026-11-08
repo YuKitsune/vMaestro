@@ -9,8 +9,8 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:DesequencedViewModel}"
              mc:Ignorable="d"
-             Width="220"
-             Height="240">
+             MinWidth="220"
+             MaxHeight="240">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

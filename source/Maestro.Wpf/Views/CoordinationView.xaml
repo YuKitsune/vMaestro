@@ -10,7 +10,7 @@
              mc:Ignorable="d"
              Padding="8"
              MinWidth="400"
-             Height="240">
+             MaxHeight="240">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -10,7 +10,6 @@
              d:DataContext="{d:DesignInstance Type=viewModels:InformationViewModel}"
              mc:Ignorable="d"
              Width="800"
-             Height="160"
              Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>
