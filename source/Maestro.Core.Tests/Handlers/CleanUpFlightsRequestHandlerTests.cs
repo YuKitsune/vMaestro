@@ -95,14 +95,15 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
     }
 
     [Fact]
-    public async Task WhenMoreThanMaxLandedFlights_ExcessFlightsAreRemoved()
+    public async Task WhenMoreThanMaxLandedFlights_EarliestLandedFlightsAreRemoved()
     {
         var airportConfiguration = CreateAirportConfiguration();
 
+        // QFA1 lands first (9 minutes ago), and QFA8 lands last (2 minutes ago)
         var landedFlights = Enumerable.Range(1, 8)
             .Select(i => new FlightBuilder($"QFA{i}")
                 .WithFeederFixEstimate(_now.AddMinutes(-25))
-                .WithLandingTime(_now.AddMinutes(-5))
+                .WithLandingTime(_now.AddMinutes(-10 + i))
                 .WithState(State.Landed)
                 .Build())
             .ToArray();
@@ -116,15 +117,15 @@ public class CleanUpFlightsRequestHandlerTests(ClockFixture clockFixture)
         var handler = GetHandler(sessionManager, airportConfiguration);
         await handler.Handle(new CleanUpFlightsRequest(airportConfiguration.Identifier), CancellationToken.None);
 
-        sequence.Flights.Count.ShouldBe(5, "First 5 landed flights should remain");
-        sequence.Flights.ShouldContain(landedFlights[0]);
-        sequence.Flights.ShouldContain(landedFlights[1]);
-        sequence.Flights.ShouldContain(landedFlights[2]);
+        sequence.Flights.Count.ShouldBe(5, "Last 5 landed flights should remain");
+        sequence.Flights.ShouldNotContain(landedFlights[0]);
+        sequence.Flights.ShouldNotContain(landedFlights[1]);
+        sequence.Flights.ShouldNotContain(landedFlights[2]);
         sequence.Flights.ShouldContain(landedFlights[3]);
         sequence.Flights.ShouldContain(landedFlights[4]);
-        sequence.Flights.ShouldNotContain(landedFlights[5]);
-        sequence.Flights.ShouldNotContain(landedFlights[6]);
-        sequence.Flights.ShouldNotContain(landedFlights[7]);
+        sequence.Flights.ShouldContain(landedFlights[5]);
+        sequence.Flights.ShouldContain(landedFlights[6]);
+        sequence.Flights.ShouldContain(landedFlights[7]);
     }
 
     [Fact]
