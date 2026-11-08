@@ -71,7 +71,7 @@ public partial class InsertFlightViewModel : ObservableObject
     {
         LandedFlights = session.Sequence.Flights
             .Where(f => f.State is State.Landed)
-            .OrderBy(f => f.Callsign, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(f => f.LandingTime)
             .ToArray();
 
         var activatedCallsigns = new HashSet<string>(

@@ -346,7 +346,13 @@ public class Sequence
         }
     }
 
-    public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false)
+    /// <summary>
+    ///     Moves the <paramref name="flight"/> to the <paramref name="newIndex"/>, and recomputes the sequence from
+    ///     the earlier of the old and new positions.
+    ///     When <paramref name="forceRescheduleFlight"/> is <c>true</c>, the <paramref name="flight"/> is scheduled
+    ///     even if it is <see cref="State.Frozen"/> or <see cref="State.Landed"/>.
+    /// </summary>
+    public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false, bool forceRescheduleFlight = false)
     {
         lock (_gate)
         {
@@ -367,7 +373,7 @@ public class Sequence
             }
 
             var recomputeIndex = Math.Min(newIndex, currentIndex);
-            Schedule(recomputeIndex, forceRescheduleStable);
+            Schedule(recomputeIndex, forceRescheduleStable, forceRescheduleFlight ? flight : null);
         }
     }
 
@@ -567,7 +573,11 @@ public class Sequence
     ///     When <c>false</c>, flights that are not <see cref="State.Unstable"/> will not be affected. Any <see cref="State.Unstable"/> flights
     ///     in conflict with a non-<see cref="State.Unstable"/> flight will be moved behind them as to not adjust their landing times.
     /// </param>
-    public void Schedule(int startIndex, bool forceRescheduleStable = false)
+    /// <param name="forceRescheduleFlight">
+    ///     A flight to schedule even if it is <see cref="State.Frozen"/> or <see cref="State.Landed"/>.
+    ///     Other flights do not use it as a fixed constraint, because its landing time is not known until it is scheduled.
+    /// </param>
+    public void Schedule(int startIndex, bool forceRescheduleStable = false, Flight? forceRescheduleFlight = null)
     {
         lock (_gate)
         {
@@ -590,7 +600,7 @@ public class Sequence
                 }
 
                 var currentFlight = flightItem.Flight;
-                if (currentFlight.State is State.Landed or State.Frozen)
+                if (currentFlight.State is State.Landed or State.Frozen && currentFlight != forceRescheduleFlight)
                 {
                     continue;
                 }
@@ -870,6 +880,9 @@ public class Sequence
 
             bool IsImmovable(Flight flight)
             {
+                if (flight == forceRescheduleFlight)
+                    return false;
+
                 if (flight.State is State.Landed or State.Frozen)
                     return true;
 

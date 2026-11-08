@@ -143,7 +143,6 @@ public class InsertFlightRequestHandler(
             // Exact insertion specifies the runway explicitly, so lock it as a manual assignment.
             flight.SetRunway(new ManualRunwayAssignment(runway.Identifier), flight.TerminalTrajectory);
             flight.SetTargetLandingTime(targetLandingTime);
-            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
         else
         {
@@ -191,10 +190,16 @@ public class InsertFlightRequestHandler(
 
         session.Sequence.Insert(insertionIndex, flight);
 
+        // Set the state after the flight is scheduled.
+        // The required delays are only calculated when the flight is Unstable.
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
             flight.SetState(airportConfiguration.DefaultDummyFlightState, clock);
+        }
+        else
+        {
+            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
 
         return flight;
@@ -250,7 +255,6 @@ public class InsertFlightRequestHandler(
                 landingEstimate: targetLandingTime);
 
             flight.SetTargetLandingTime(targetLandingTime);
-            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
         else
         {
@@ -298,10 +302,16 @@ public class InsertFlightRequestHandler(
 
         session.Sequence.Insert(insertionIndex, flight);
 
+        // Set the state after the flight is scheduled.
+        // The required delays are only calculated when the flight is Unstable.
         // Freeze dummy flights as soon as they've been scheduled
         if (flight.IsManuallyInserted)
         {
             flight.SetState(airportConfiguration.DefaultDummyFlightState, clock);
+        }
+        else
+        {
+            flight.SetState(airportConfiguration.DefaultPendingFlightState, clock);
         }
 
         return flight;

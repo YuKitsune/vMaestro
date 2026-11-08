@@ -584,6 +584,92 @@ public class MoveFlightRequestHandlerTests(ClockFixture clockFixture)
         flight2.LandingTime.ShouldBe(flight3.LandingTime.Add(AcceptanceRate), "Second frozen flight should remain unchanged");
     }
 
+    [Theory]
+    [InlineData(State.Frozen)]
+    [InlineData(State.Landed)]
+    public async Task FrozenAndLandedFlightsAreScheduledAtTheTargetTime(State state)
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Stable)
+            .Build();
+
+        // The landing estimate is earlier than flight1's landing time
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(9))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithRunway("34L")
+            .WithState(state)
+            .Build();
+
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        var handler = GetRequestHandler(sessionManager);
+
+        var newLandingTime = now.AddMinutes(16);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA2",
+            "34L",
+            newLandingTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight2.LandingTime.ShouldBe(newLandingTime, "Moved flight should move to the target time, not the landing estimate");
+        flight2.State.ShouldBe(state, $"Flight state should remain {state} after being moved");
+        flight1.LandingTime.ShouldBe(now.AddMinutes(10), "Preceding flight should be unaffected");
+    }
+
+    [Fact]
+    public async Task FrozenFlightMovedToSuperStableFlightTakesItsPlace()
+    {
+        var now = clockFixture.Instance.UtcNow();
+
+        // Arrange
+        var flight1 = new FlightBuilder("QFA1")
+            .WithLandingEstimate(now.AddMinutes(10))
+            .WithLandingTime(now.AddMinutes(10))
+            .WithRunway("34L")
+            .WithState(State.Frozen)
+            .Build();
+
+        var flight2 = new FlightBuilder("QFA2")
+            .WithLandingEstimate(now.AddMinutes(13))
+            .WithLandingTime(now.AddMinutes(13))
+            .WithRunway("34L")
+            .WithState(State.SuperStable)
+            .Build();
+
+        var (sessionManager, _, _) = new SessionBuilder(CreateAirportConfiguration())
+            .WithSequence(s => s.WithFlightsInOrder(flight1, flight2))
+            .Build();
+
+        var handler = GetRequestHandler(sessionManager);
+
+        var newLandingTime = now.AddMinutes(13);
+        var request = new MoveFlightRequest(
+            "YSSY",
+            "QFA1",
+            "34L",
+            newLandingTime);
+
+        // Act
+        await handler.Handle(request, CancellationToken.None);
+
+        // Assert
+        flight1.LandingTime.ShouldBe(newLandingTime, "Moved flight should take the SuperStable flight's place");
+        flight2.LandingTime.ShouldBe(newLandingTime.Add(AcceptanceRate), "SuperStable flight should be delayed behind the moved flight");
+    }
+
     [Fact]
     public async Task RedirectsToMaster()
     {
