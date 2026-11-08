@@ -346,14 +346,20 @@ public class Sequence
         }
     }
 
-    public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false)
+    /// <summary>
+    ///     Moves the <paramref name="flight"/> to the <paramref name="newIndex"/>, and recomputes the sequence from
+    ///     the earlier of the old and new positions.
+    ///     When <paramref name="forceRescheduleFlight"/> is <c>true</c>, the <paramref name="flight"/> is scheduled
+    ///     even if it is <see cref="State.Frozen"/> or <see cref="State.Landed"/>.
+    /// </summary>
+    public void Move(Flight flight, int newIndex, bool forceRescheduleStable = false, bool forceRescheduleFlight = false)
     {
         lock (_gate)
         {
             var currentIndex = _flights.IndexOf(flight);
             if (newIndex != currentIndex)
             {
-                ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier);
+                ValidateInsertionBetweenImmovableFlights(newIndex, flight.AssignedRunwayIdentifier, flight);
                 if (currentIndex != -1)
                 {
                     _flights.RemoveAt(currentIndex);
@@ -367,7 +373,7 @@ public class Sequence
             }
 
             var recomputeIndex = Math.Min(newIndex, currentIndex);
-            Schedule(recomputeIndex, forceRescheduleStable);
+            Schedule(recomputeIndex, forceRescheduleStable, forceRescheduleFlight ? flight : null);
         }
     }
 
@@ -567,7 +573,11 @@ public class Sequence
     ///     When <c>false</c>, flights that are not <see cref="State.Unstable"/> will not be affected. Any <see cref="State.Unstable"/> flights
     ///     in conflict with a non-<see cref="State.Unstable"/> flight will be moved behind them as to not adjust their landing times.
     /// </param>
-    public void Schedule(int startIndex, bool forceRescheduleStable = false)
+    /// <param name="forceRescheduleFlight">
+    ///     A flight to schedule even if it is <see cref="State.Frozen"/> or <see cref="State.Landed"/>.
+    ///     Other flights do not use it as a fixed constraint, because its landing time is not known until it is scheduled.
+    /// </param>
+    public void Schedule(int startIndex, bool forceRescheduleStable = false, Flight? forceRescheduleFlight = null)
     {
         lock (_gate)
         {
@@ -590,7 +600,7 @@ public class Sequence
                 }
 
                 var currentFlight = flightItem.Flight;
-                if (currentFlight.State is State.Landed or State.Frozen)
+                if (currentFlight.State is State.Landed or State.Frozen && currentFlight != forceRescheduleFlight)
                 {
                     continue;
                 }
@@ -870,6 +880,9 @@ public class Sequence
 
             bool IsImmovable(Flight flight)
             {
+                if (flight == forceRescheduleFlight)
+                    return false;
+
                 if (flight.State is State.Landed or State.Frozen)
                     return true;
 
@@ -1182,9 +1195,10 @@ public class Sequence
 
     // TODO: Invoke this from handlers rather than internally.
     // The schedule method will prevent frozen flights from being displaced
-    void ValidateInsertionBetweenImmovableFlights(int insertionIndex, string runwayIdentifier)
+    void ValidateInsertionBetweenImmovableFlights(int insertionIndex, string runwayIdentifier, Flight? movedFlight = null)
     {
         // Get the flights before and after the inserted item (excluding the inserted item itself)
+        // A moved flight is still in the sequence, so it must not be used as its own neighbour
         var previousFlight = GetPreviousFlightOnRunway();
         var nextFlight = GetNextFlightOnRunway();
 
@@ -1220,7 +1234,7 @@ public class Sequence
         {
             return _flights
                 .Take(insertionIndex)
-                .Where(f => f.AssignedRunwayIdentifier == runwayIdentifier)
+                .Where(f => f != movedFlight && f.AssignedRunwayIdentifier == runwayIdentifier)
                 .LastOrDefault();
         }
 
@@ -1228,7 +1242,7 @@ public class Sequence
         {
             return _flights
                 .Skip(insertionIndex)
-                .Where(f => f.AssignedRunwayIdentifier == runwayIdentifier)
+                .Where(f => f != movedFlight && f.AssignedRunwayIdentifier == runwayIdentifier)
                 .FirstOrDefault();
         }
     }

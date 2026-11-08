@@ -57,6 +57,7 @@ public class CleanUpFlightsRequestHandler(
         var sequence = session.Sequence;
         var landedFlights = sequence.Flights
             .Where(f => f.State == State.Landed)
+            .OrderByDescending(f => f.LandingTime)
             .ToArray();
 
         for (var i = 0; i < landedFlights.Length; i++)

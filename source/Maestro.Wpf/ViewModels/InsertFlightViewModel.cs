@@ -29,6 +29,9 @@ public partial class InsertFlightViewModel : ObservableObject
     FlightDataRecord[] _pendingFlights = [];
 
     [ObservableProperty]
+    FlightDto? _selectedLandedFlight;
+
+    [ObservableProperty]
     FlightDataRecord? _selectedFlight;
 
     [ObservableProperty]
@@ -68,7 +71,7 @@ public partial class InsertFlightViewModel : ObservableObject
     {
         LandedFlights = session.Sequence.Flights
             .Where(f => f.State is State.Landed)
-            .OrderBy(f => f.Callsign, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(f => f.LandingTime)
             .ToArray();
 
         var activatedCallsigns = new HashSet<string>(
@@ -82,9 +85,26 @@ public partial class InsertFlightViewModel : ObservableObject
             .ToArray();
     }
 
+    // Landed flights are still in the sequence. Inserting one moves it back into the sequence at the requested time.
+    partial void OnSelectedLandedFlightChanged(FlightDto? value)
+    {
+        if (_isUpdatingFromSelection)
+            return;
+
+        _isUpdatingFromSelection = true;
+        SelectedFlight = null;
+        Callsign = value?.Callsign ?? "";
+        AircraftType = value?.AircraftType ?? "";
+        _isUpdatingFromSelection = false;
+    }
+
     partial void OnSelectedFlightChanged(FlightDataRecord? value)
     {
+        if (_isUpdatingFromSelection)
+            return;
+
         _isUpdatingFromSelection = true;
+        SelectedLandedFlight = null;
         Callsign = value?.Callsign ?? "";
         AircraftType = value?.AircraftType ?? "";
         _isUpdatingFromSelection = false;
@@ -95,7 +115,7 @@ public partial class InsertFlightViewModel : ObservableObject
         if (_isUpdatingFromSelection)
             return;
 
-        SelectedFlight = null;
+        ClearSelection();
     }
 
     partial void OnAircraftTypeChanged(string _)
@@ -103,15 +123,23 @@ public partial class InsertFlightViewModel : ObservableObject
         if (_isUpdatingFromSelection)
             return;
 
+        ClearSelection();
+    }
+
+    void ClearSelection()
+    {
+        _isUpdatingFromSelection = true;
+        SelectedLandedFlight = null;
         SelectedFlight = null;
+        _isUpdatingFromSelection = false;
     }
 
     [RelayCommand]
-    public void Insert()
+    public async Task Insert()
     {
         try
         {
-            _mediator.Send(
+            await _mediator.Send(
                 new InsertFlightRequest(
                     _airportIdentifier,
                     Callsign.ToUpperInvariant(),
