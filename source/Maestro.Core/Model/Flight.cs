@@ -231,7 +231,7 @@ public class Flight : IEquatable<Flight>
     public TimeSpan RemainingTerminalDelay { get; private set; }
     public ControlAction RequiredControlAction { get; private set; } = ControlAction.NoDelay;
     public ControlAction RemainingControlAction { get; private set; } = ControlAction.NoDelay;
-    public bool HighSpeed => RequiredEnrouteDelay < TimeSpan.FromMinutes(1);
+    public bool HighSpeed => RemainingEnrouteDelay < TimeSpan.FromMinutes(1);
 
     public FlightPosition? Position { get; private set; }
 

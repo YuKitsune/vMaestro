@@ -351,5 +351,48 @@ public class FlightTests(ClockFixture clockFixture)
 
             flight.HighSpeed.ShouldBeTrue();
         }
+
+        [Fact]
+        public void WhenStableFlightIsAllocatedEnrouteDelay_HighSpeedIsFalse()
+        {
+            var flight = new FlightBuilder("QFA1")
+                .WithLandingEstimate(_now.AddMinutes(20))
+                .WithState(State.Stable)
+                .Build();
+
+            // Required delays do not change for stable flights, only the Remaining delays change
+            flight.SetSequenceData(
+                landingTime: _now.AddMinutes(25),
+                feederFixTime: _now.AddMinutes(5),
+                requiredControlAction: ControlAction.SpeedReduction,
+                enrouteDelay: TimeSpan.FromMinutes(5),
+                terminalDelay: TimeSpan.Zero);
+
+            flight.RequiredEnrouteDelay.ShouldBe(TimeSpan.Zero);
+            flight.HighSpeed.ShouldBeFalse();
+        }
+
+        [Fact]
+        public void WhenRemainingEnrouteDelayIsAbsorbed_HighSpeedIsTrue()
+        {
+            var flight = new FlightBuilder("QFA1")
+                .WithLandingEstimate(_now.AddMinutes(20))
+                .Build();
+
+            flight.SetSequenceData(
+                landingTime: _now.AddMinutes(25),
+                feederFixTime: _now.AddMinutes(5),
+                requiredControlAction: ControlAction.SpeedReduction,
+                enrouteDelay: TimeSpan.FromMinutes(5),
+                terminalDelay: TimeSpan.Zero);
+
+            flight.HighSpeed.ShouldBeFalse();
+
+            flight.SetRemainingDelayData(
+                new DelayDistribution(TimeSpan.Zero, TimeSpan.Zero, ControlAction.NoDelay));
+
+            flight.RequiredEnrouteDelay.ShouldBe(TimeSpan.FromMinutes(5));
+            flight.HighSpeed.ShouldBeTrue();
+        }
     }
 }
