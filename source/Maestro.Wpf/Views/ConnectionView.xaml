@@ -10,7 +10,7 @@
              d:DataContext="{d:DesignInstance Type=viewModels:ConnectionViewModel}"
              mc:Ignorable="d"
              Padding="8"
-             Width="240"
+             Width="320"
              Height="Auto">
     <UserControl.Resources>
         <ResourceDictionary>

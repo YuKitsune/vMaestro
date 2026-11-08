@@ -9,8 +9,8 @@
              Background="{x:Static local:Theme.BackgroundColor}"
              d:DataContext="{d:DesignInstance Type=viewModels:SlotViewModel}"
              mc:Ignorable="d"
-             Width="260"
-             Height="100"
+             MinWidth="320"
+             Height="Auto"
              Padding="8">
     <UserControl.Resources>
         <ResourceDictionary>
