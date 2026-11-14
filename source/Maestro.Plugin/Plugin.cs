@@ -195,11 +195,6 @@ public class Plugin : IPlugin
         if (windowManager.TryGetWindow(WindowKeys.Maestro(airportIdentifier), out var windowHandle))
         {
             windowHandle!.Focus();
-
-            var guiInvoker = Ioc.Default.GetRequiredService<GuiInvoker>();
-            guiInvoker.InvokeOnUiThread(_ =>
-            {
-            });
         }
         else
         {
